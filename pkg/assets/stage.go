@@ -17,10 +17,13 @@ func Stage(dataDir string) error {
 			return err
 		}
 		p := filepath.Join(dataDir, name)
-		logrus.Info("Writing static file: ", p)
+		logrus.Debug("Writing static file: ", p)
 		os.MkdirAll(filepath.Dir(p), 0700)
 		if err := ioutil.WriteFile(p, content, 0600); err != nil {
 			return errors.Wrapf(err, "failed to write to %s", name)
+		}
+		if err := os.Chmod(p, 0500); err != nil {
+			return errors.Wrapf(err, "failed to chmod %s", name)
 		}
 	}
 	return nil
