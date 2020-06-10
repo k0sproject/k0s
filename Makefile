@@ -7,6 +7,8 @@ bin/runc:
 
 bin/containerd: bin
 	curl -L https://github.com/containerd/containerd/releases/download/v1.3.4/containerd-1.3.4.linux-amd64.tar.gz | tar zxvf -
+	rm bin/containerd-stress
+	rm bin/ctr
 
 bin/kubelet: bin
 	curl -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v1.18.2/bin/linux/amd64/kubelet
