@@ -3,6 +3,8 @@ RUNC_VERSION = 1.0.0-rc90
 CONTAINERD_VERSION = 1.3.4
 KUBLET_VERSION = 1.18.2
 
+all: build
+
 bin:
 	mkdir -p bin/
 
