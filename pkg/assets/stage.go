@@ -18,7 +18,10 @@ func Stage(dataDir string) error {
 		}
 		p := filepath.Join(dataDir, name)
 		logrus.Debug("Writing static file: ", p)
-		os.MkdirAll(filepath.Dir(p), 0700)
+		err = os.MkdirAll(filepath.Dir(p), 0700)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
+		}
 		if err := ioutil.WriteFile(p, content, 0600); err != nil {
 			return errors.Wrapf(err, "failed to write to %s", name)
 		}

@@ -35,8 +35,10 @@ func main() {
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:  "debug,d",
-				Usage: "Debug logging",
+				Name:    "debug",
+				Usage:   "Debug logging",
+				Aliases: []string{"d"},
+				EnvVars: []string{"DEBUG"},
 			},
 		},
 		Before: func(ctx *cli.Context) error {
