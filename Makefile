@@ -27,6 +27,9 @@ pkg/assets/zz_generated_bindata.go: bin/kubelet bin/containerd bin/runc
 build: pkg/assets/zz_generated_bindata.go
 	go build -o mke main.go
 
+mke:
+	go build -o mke main.go
+
 clean:
 	rm -f pkg/assets/zz_generated_bindata.go mke
 	rm -rf bin/
