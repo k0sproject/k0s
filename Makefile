@@ -12,16 +12,16 @@ all: build
 
 bin/runc:
 	mkdir -p $(dir $@)
-	curl -L -o bin/runc https://github.com/opencontainers/runc/releases/download/v$(RUNC_VERSION)/runc.$(ARCH)
+	curl --silent -L -o bin/runc https://github.com/opencontainers/runc/releases/download/v$(RUNC_VERSION)/runc.$(ARCH)
 
 bin/containerd:
 	mkdir -p $(dir $@)
-	curl -L https://github.com/containerd/containerd/releases/download/v$(CONTAINERD_VERSION)/containerd-$(CONTAINERD_VERSION).linux-$(ARCH).tar.gz \
+	curl --silent -L https://github.com/containerd/containerd/releases/download/v$(CONTAINERD_VERSION)/containerd-$(CONTAINERD_VERSION).linux-$(ARCH).tar.gz \
 		| tar zxv bin/containerd bin/containerd-shim
 
 bin/kubelet:
 	mkdir -p $(dir $@)
-	curl -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kubelet
+	curl --silent -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kubelet
 
 bin/kine:
 	if ! [ -d kine ]; then \
