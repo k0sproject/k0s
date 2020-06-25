@@ -22,6 +22,7 @@ func Stage(dataDir string) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
 		}
+		os.Remove(p);
 		if err := ioutil.WriteFile(p, content, 0600); err != nil {
 			return errors.Wrapf(err, "failed to write to %s", name)
 		}
