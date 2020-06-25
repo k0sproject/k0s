@@ -14,9 +14,8 @@ bin/runc:
 
 bin/containerd:
 	mkdir -p $(dir $@)
-	curl -L https://github.com/containerd/containerd/releases/download/v$(CONTAINERD_VERSION)/containerd-$(CONTAINERD_VERSION).linux-$(ARCH).tar.gz | tar zxvf -
-	rm bin/containerd-stress
-	rm bin/ctr
+	curl -L https://github.com/containerd/containerd/releases/download/v$(CONTAINERD_VERSION)/containerd-$(CONTAINERD_VERSION).linux-$(ARCH).tar.gz \
+		| tar zxv bin/containerd bin/containerd-shim
 
 bin/kubelet:
 	mkdir -p $(dir $@)
