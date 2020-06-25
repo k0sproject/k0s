@@ -4,6 +4,8 @@ CONTAINERD_VERSION = 1.3.4
 KUBE_VERSION = 1.18.4
 KINE_VERSION = 0.4.0
 
+GO_SRCS := $(shell find -name '*.go')
+
 ARCH = amd64
 
 all: build
@@ -46,11 +48,10 @@ bin/kube-controller-manager:
 pkg/assets/zz_generated_bindata.go: bin/kube-scheduler bin/kube-apiserver bin/kube-controller-manager bin/kubelet bin/containerd bin/runc bin/kine
 	go-bindata -o pkg/assets/zz_generated_bindata.go -pkg assets bin/
 
-build: pkg/assets/zz_generated_bindata.go
+mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
 	go build -o mke main.go
 
-mke:
-	go build -o mke main.go
+build: mke
 
 clean:
 	rm -f pkg/assets/zz_generated_bindata.go mke
