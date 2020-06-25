@@ -33,6 +33,12 @@ func startServer(ctx *cli.Context) error {
 	components["containerd"] = component.ContainerD{}
 	components["containerd"].Run()
 
+	components["kubelet"] = component.Kubelet{}
+	components["kubelet"].Run()
+
+	components["etcd"] = component.Etcd{}
+	components["etcd"].Run()
+
 	// Wait for mke process termination
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
