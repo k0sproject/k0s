@@ -3,9 +3,12 @@ package cmd
 import (
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/component"
+	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,10 +23,10 @@ func ServerCommand() *cli.Command {
 }
 
 func startServer(ctx *cli.Context) error {
-	// err := assets.Stage(path.Join(constant.DataDir))
-	// if err != nil {
-	// 	return err
-	// }
+	err := assets.Stage(path.Join(constant.DataDir))
+	if err != nil {
+		return err
+	}
 
 	components := make(map[string]component.Component)
 
