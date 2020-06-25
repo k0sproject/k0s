@@ -1,7 +1,7 @@
 
 RUNC_VERSION = 1.0.0-rc90
 CONTAINERD_VERSION = 1.3.4
-KUBLET_VERSION = 1.18.2
+KUBE_VERSION = 1.18.4
 KINE_VERSION = 0.4.0
 
 ARCH = amd64
@@ -20,7 +20,7 @@ bin/containerd:
 
 bin/kubelet:
 	mkdir -p $(dir $@)
-	curl -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v$(KUBLET_VERSION)/bin/linux/$(ARCH)/kubelet
+	curl -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kubelet
 
 bin/kine:
 	if ! [ -d kine ]; then \
@@ -28,7 +28,23 @@ bin/kine:
 	fi
 	cd kine && go build -o ../$@
 
-pkg/assets/zz_generated_bindata.go: bin/kubelet bin/containerd bin/runc bin/kine
+# k8s control plane components
+# TODO We might be better of by getting hyperkube bin, but that doesn't seem to be downloadable from the release package URL :(
+bin/kube-apiserver:
+	mkdir -p $(dir $@)
+	curl -L -o bin/kube-apiserver https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kube-apiserver
+
+
+bin/kube-scheduler:
+	mkdir -p $(dir $@)
+	curl -L -o bin/kube-scheduler https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kube-scheduler
+
+bin/kube-controller-manager:
+	mkdir -p $(dir $@)
+	curl -L -o bin/kube-controller-manager https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kube-controller-manager
+
+
+pkg/assets/zz_generated_bindata.go: bin/kube-scheduler bin/kube-apiserver bin/kube-controller-manager bin/kubelet bin/containerd bin/runc bin/kine
 	go-bindata -o pkg/assets/zz_generated_bindata.go -pkg assets bin/
 
 build: pkg/assets/zz_generated_bindata.go

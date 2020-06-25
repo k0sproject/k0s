@@ -1,3 +1,5 @@
 bin/
 pkg/assets/zz_generated_bindata.go
 mke
+db/
+kine/
