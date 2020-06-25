@@ -29,5 +29,6 @@ func Stage(dataDir string) error {
 			return errors.Wrapf(err, "failed to chmod %s", name)
 		}
 	}
+
 	return nil
 }

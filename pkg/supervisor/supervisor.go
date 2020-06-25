@@ -33,7 +33,7 @@ func (s *Supervisor) Supervise() {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 
 			s.cmd.Env = getEnv()
-			log.Debugf("child env: %s", s.cmd.Env)
+
 			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.
 			s.cmd.Stdout = os.Stdout
 			s.cmd.Stderr = os.Stderr
