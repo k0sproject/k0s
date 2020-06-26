@@ -30,14 +30,23 @@ func startServer(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
-	components["containerd"] = component.ContainerD{}
-	components["containerd"].Run()
+	certs := component.Certificates{}
 
-	components["kubelet"] = component.Kubelet{}
-	components["kubelet"].Run()
+	if err := certs.Run(); err != nil {
+		return err
+	}
 
-	components["etcd"] = component.Etcd{}
-	components["etcd"].Run()
+	components["kine"] = component.Kine{}
+	components["kine"].Run()
+
+	components["kube-apiserver"] = component.ApiServer{}
+	components["kube-apiserver"].Run()
+
+	components["kube-scheduler"] = component.Scheduler{}
+	components["kube-scheduler"].Run()
+
+	components["kube-ccm"] = component.ControllerManager{}
+	components["kube-ccm"].Run()
 
 	// Wait for mke process termination
 	c := make(chan os.Signal)
