@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"path"
@@ -14,7 +13,9 @@ import (
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // WorkerCommand ...
@@ -32,11 +33,20 @@ func WorkerCommand() *cli.Command {
 }
 
 func startWorker(ctx *cli.Context) error {
+	// TODO We need to be able to tell which bins we really need. worker does not need everything
 	err := assets.Stage(path.Join(constant.DataDir))
 	if err != nil {
 		return err
 	}
 
+	//logrus.Infof("args: %s", ctx.Args().Slice())
+
+	serverAddress := ctx.Args().First()
+	if serverAddress == "" {
+		return fmt.Errorf("mke worker join needs the controller address as single argument")
+	}
+
+	logrus.Debugf("using server address %s", serverAddress)
 	token := ctx.String("join-token")
 	if token == "" && !util.FileExists("/var/lib/mke/kubelet.conf") {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
@@ -44,14 +54,17 @@ func startWorker(ctx *cli.Context) error {
 
 	// Dump join token into kubelet-bootstrap kubeconfig
 	if token != "" {
-
 		kubeconfig, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			return errors.Wrap(err, "joint-token does not seem to be proper token created by 'mke token create'")
 		}
-		err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, 0600)
+
+		kc, err := clientcmd.Load(kubeconfig)
+		kc.Clusters["mke"].Server = serverAddress
+
+		err = clientcmd.WriteToFile(*kc, constant.KubeletBootstrapConfigPath)
 		if err != nil {
-			return errors.Wrap(err, "joint-token does not seem to be proper token created by 'mke token create'")
+			return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 		}
 	}
 

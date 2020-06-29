@@ -12,7 +12,7 @@ $ make build
 
 Currently mke makes only very basic default (hardcoded) configs for everything.
 
-Move the built `mke` binary to eahc of the nodes.
+Move the built `mke` binary to each of the nodes.
 
 ### Control plane
 
@@ -33,5 +33,6 @@ mke token create
 
 Join a new worker node to the cluster by running:
 ```
-mke worker --join-token "superlongtokenfrompreviousphase"
+mke worker --join-token "superlongtokenfrompreviousphase" https://controller-address:6443
 ```
+

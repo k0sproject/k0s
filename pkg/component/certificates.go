@@ -156,6 +156,7 @@ func (c *Certificates) Run() error {
 		return err
 	}
 
+	// TODO add way to configure DNS names and public IPs etc.
 	hostnames := []string{
 		"kubernetes",
 		"kubernetes.default",
@@ -164,8 +165,14 @@ func (c *Certificates) Run() error {
 		"kubernetes.svc.cluster.local",
 		"127.0.0.1",
 		"localhost",
-		// TODO add way to configure DNS names and public IPs etc.
 	}
+
+	// Add all local addresses into the serving certs alt names
+	additionalAddresses, err := util.AllAddresses()
+	if err != nil {
+		return err
+	}
+	hostnames = append(hostnames, additionalAddresses...)
 
 	serverReq := certReq{
 		name:      "server",
@@ -178,8 +185,6 @@ func (c *Certificates) Run() error {
 	if err := c.loadOrGenerateCert(serverReq); err != nil {
 		return err
 	}
-
-	// Generate the needed kubeconfigs too
 
 	return nil
 }
