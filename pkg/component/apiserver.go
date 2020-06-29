@@ -28,7 +28,7 @@ func (a *ApiServer) Run() error {
 			// "--etcd-cafile=/var/lib/mke/pki/etcd/ca.crt",
 			// "--etcd-certfile=/var/lib/mke/pki/apiserver-etcd-client.crt",
 			// "--etcd-keyfile=/var/lib/mke/pki/apiserver-etcd-client.key",
-			"--etcd-servers=http://127.0.0.1:2379",
+			"--etcd-servers=http://127.0.0.1:2379", // kine endpoint
 			"--insecure-port=0",
 			"--kubelet-client-certificate=/var/lib/mke/pki/apiserver-kubelet-client.crt",
 			"--kubelet-client-key=/var/lib/mke/pki/apiserver-kubelet-client.key",
@@ -45,6 +45,7 @@ func (a *ApiServer) Run() error {
 			"--service-cluster-ip-range=10.96.0.0/12",
 			"--tls-cert-file=/var/lib/mke/pki/server.crt",
 			"--tls-private-key-file=/var/lib/mke/pki/server.key",
+			"--enable-bootstrap-token-auth",
 		},
 	}
 

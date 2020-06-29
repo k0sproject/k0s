@@ -44,6 +44,8 @@ func (k *Kubelet) Run() error {
 			"--container-runtime=remote",
 			"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
+			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
+			"--kubeconfig=/var/lib/mke/kubelet.conf",
 		},
 	}
 	// TODO Make proper kubelet config

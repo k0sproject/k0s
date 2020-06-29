@@ -32,6 +32,8 @@ func main() {
 		Usage:   "Mirantis Kubernetes Engine",
 		Commands: []*cli.Command{
 			cmd.ServerCommand(),
+			cmd.WorkerCommand(),
+			cmd.TokenCommand(),
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
