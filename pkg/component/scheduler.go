@@ -16,7 +16,7 @@ type Scheduler struct {
 }
 
 // Run runs kube scheduler
-func (a Scheduler) Run() error {
+func (a *Scheduler) Run() error {
 	logrus.Info("Starting kube-scheduler")
 	schedulerAuthConf := filepath.Join(constant.CertRoot, "scheduler.conf")
 	a.supervisor = supervisor.Supervisor{
@@ -38,6 +38,6 @@ func (a Scheduler) Run() error {
 }
 
 // Stop stops Scheduler
-func (a Scheduler) Stop() error {
+func (a *Scheduler) Stop() error {
 	return a.supervisor.Stop()
 }

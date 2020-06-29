@@ -35,7 +35,7 @@ type KubeletConfig struct {
 }
 
 // Run runs kubelet
-func (k Kubelet) Run() error {
+func (k *Kubelet) Run() error {
 	logrus.Info("Starting containerD")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
@@ -65,6 +65,6 @@ func (k Kubelet) Run() error {
 }
 
 // Stop stops kubelet
-func (k Kubelet) Stop() error {
+func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }

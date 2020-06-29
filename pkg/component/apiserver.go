@@ -14,7 +14,7 @@ type ApiServer struct {
 }
 
 // Run runs kube api
-func (a ApiServer) Run() error {
+func (a *ApiServer) Run() error {
 	logrus.Info("Starting kube-apiserver")
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-apiserver",
@@ -54,6 +54,6 @@ func (a ApiServer) Run() error {
 }
 
 // Stop stops kine
-func (a ApiServer) Stop() error {
+func (a *ApiServer) Stop() error {
 	return a.supervisor.Stop()
 }

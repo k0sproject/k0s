@@ -16,7 +16,7 @@ type ControllerManager struct {
 }
 
 // Run runs kube ControllerManager
-func (a ControllerManager) Run() error {
+func (a *ControllerManager) Run() error {
 	logrus.Info("Starting kube-ccm")
 	ccmAuthConf := filepath.Join(constant.CertRoot, "ccm.conf")
 	a.supervisor = supervisor.Supervisor{
@@ -51,6 +51,6 @@ func (a ControllerManager) Run() error {
 }
 
 // Stop stops ControllerManager
-func (a ControllerManager) Stop() error {
+func (a *ControllerManager) Stop() error {
 	return a.supervisor.Stop()
 }
