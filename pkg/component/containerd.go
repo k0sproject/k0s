@@ -15,7 +15,7 @@ type ContainerD struct {
 }
 
 // Run runs containerD
-func (c ContainerD) Run() error {
+func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
@@ -29,6 +29,6 @@ func (c ContainerD) Run() error {
 }
 
 // Stop stops containerD
-func (c ContainerD) Stop() error {
+func (c *ContainerD) Stop() error {
 	return c.supervisor.Stop()
 }

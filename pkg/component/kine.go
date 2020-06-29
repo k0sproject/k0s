@@ -14,7 +14,7 @@ type Kine struct {
 }
 
 // Run runs kine
-func (k Kine) Run() error {
+func (k *Kine) Run() error {
 	logrus.Info("Starting kine")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
@@ -28,6 +28,6 @@ func (k Kine) Run() error {
 }
 
 // Stop stops kine
-func (k Kine) Stop() error {
+func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
 }

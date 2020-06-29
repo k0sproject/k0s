@@ -36,16 +36,16 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 
-	components["kine"] = component.Kine{}
+	components["kine"] = &component.Kine{}
 	components["kine"].Run()
 
-	components["kube-apiserver"] = component.ApiServer{}
+	components["kube-apiserver"] = &component.ApiServer{}
 	components["kube-apiserver"].Run()
 
-	components["kube-scheduler"] = component.Scheduler{}
+	components["kube-scheduler"] = &component.Scheduler{}
 	components["kube-scheduler"].Run()
 
-	components["kube-ccm"] = component.ControllerManager{}
+	components["kube-ccm"] = &component.ControllerManager{}
 	components["kube-ccm"].Run()
 
 	// Wait for mke process termination
