@@ -36,6 +36,10 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 
+	// Block signal til we started up all components
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	components["kine"] = &component.Kine{}
 	components["kine"].Run()
 
@@ -49,14 +53,12 @@ func startServer(ctx *cli.Context) error {
 	components["kube-ccm"].Run()
 
 	// Wait for mke process termination
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 
-	// Stop stuff does not really work yet
-	// for _, comp := range components {
-	// 	comp.Stop()
-	// }
+	components["kube-ccm"].Stop()
+	components["kube-scheduler"].Stop()
+	components["kube-apiserver"].Stop()
+	components["kine"].Stop()
 
 	return nil
 
