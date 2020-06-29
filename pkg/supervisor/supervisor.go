@@ -20,19 +20,31 @@ type Supervisor struct {
 	Args    []string
 
 	cmd     *exec.Cmd
-	running bool
+	quit	chan bool
+	done	chan bool
 }
 
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise() {
-	s.running = true
+	s.quit = make(chan bool)
+	s.done = make(chan bool)
 	go func() {
 		log := logrus.WithField("component", s.Name)
 		log.Info("Starting to supervise")
+		defer func() {
+			s.done <- true
+		}()
 		for {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 
 			s.cmd.Env = getEnv()
+
+			// detach from the process group so children don't
+			// get signals sent directly to parent.
+			s.cmd.SysProcAttr = &syscall.SysProcAttr {
+				Setpgid: true,
+				Pgid: 0,
+			}
 
 			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.
 			s.cmd.Stdout = os.Stdout
@@ -44,24 +56,45 @@ func (s *Supervisor) Supervise() {
 			} else {
 				log.Info("Started succesfully, go nuts")
 			}
-			err = s.cmd.Wait()
-			log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
-			if !s.running {
+			waitresult := make(chan error)
+			go func() {
+				waitresult <- s.cmd.Wait()
+			}()
+
+			select {
+			case <-s.quit:
+				log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
+				err = s.cmd.Process.Signal(syscall.SIGTERM)
+				if err != nil {
+					log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
+				} else {
+					err = <-waitresult
+				}
 				return
+			case err = <-waitresult:
+				log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
+
 			}
+
 			// TODO Maybe some backoff thingy would be nice
 			log.Info("respawning in 5 secs")
-			time.Sleep(5 * time.Second)
+
+			select {
+			case <-s.quit:
+				log.Debug("respawn cancelled")
+				return
+			case <-time.After(5 * time.Second):
+				log.Debug("respawning")
+			}
 		}
 	}()
 }
 
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
-	s.running = false
-	err := s.cmd.Process.Signal(syscall.SIGTERM)
-	err = s.cmd.Wait()
-	return err
+	s.quit <- true
+	<-s.done
+	return nil
 }
 
 // Modifies the current processes env so that we inject mke embedded bins into path
