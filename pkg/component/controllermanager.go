@@ -42,6 +42,7 @@ func (a ControllerManager) Run() error {
 			"--service-account-private-key-file=/var/lib/mke/pki/sa.key",
 			"--service-cluster-ip-range=10.96.0.0/12",
 			"--use-service-account-credentials=true",
+			"--controllers=*,tokencleaner",
 		},
 	}
 
