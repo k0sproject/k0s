@@ -26,7 +26,7 @@ func WorkerCommand() *cli.Command {
 		Action: startWorker,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "join-token",
+				Name: "server",
 			},
 		},
 	}
@@ -41,13 +41,13 @@ func startWorker(ctx *cli.Context) error {
 
 	//logrus.Infof("args: %s", ctx.Args().Slice())
 
-	serverAddress := ctx.Args().First()
+	serverAddress := ctx.String("server")
 	if serverAddress == "" {
-		return fmt.Errorf("mke worker join needs the controller address as single argument")
+		return fmt.Errorf("mke worker needs the controller address as --server option")
 	}
 
 	logrus.Debugf("using server address %s", serverAddress)
-	token := ctx.String("join-token")
+	token := ctx.Args().First()
 	if token == "" && !util.FileExists("/var/lib/mke/kubelet.conf") {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
