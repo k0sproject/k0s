@@ -70,15 +70,17 @@ func startWorker(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
-	components["containerd"] = component.ContainerD{}
+	// Block signals til all components are started
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	components["containerd"] = &component.ContainerD{}
 	components["containerd"].Run()
 
-	components["kubelet"] = component.Kubelet{}
+	components["kubelet"] = &component.Kubelet{}
 	components["kubelet"].Run()
 
 	// Wait for mke process termination
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 
 	// Stop stuff does not really work yet
