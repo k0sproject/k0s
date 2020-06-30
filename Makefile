@@ -27,7 +27,9 @@ bin/kine:
 	if ! [ -d kine ]; then \
 		git clone -b v$(KINE_VERSION) --depth=1 https://github.com/rancher/kine.git; \
 	fi
-	cd kine && go build -o ../$@
+	cd kine \
+		&& curl -L --silent https://github.com/rancher/kine/pull/39.patch | git apply \
+		&& go build -o ../$@
 
 # k8s control plane components
 # TODO We might be better of by getting hyperkube bin, but that doesn't seem to be downloadable from the release package URL :(
