@@ -18,10 +18,11 @@ type Supervisor struct {
 	Name    string
 	BinPath string
 	Args    []string
+	Dir     string
 
-	cmd     *exec.Cmd
-	quit	chan bool
-	done	chan bool
+	cmd  *exec.Cmd
+	quit chan bool
+	done chan bool
 }
 
 // Supervise Starts supervising the given process
@@ -36,14 +37,15 @@ func (s *Supervisor) Supervise() {
 		}()
 		for {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
+			s.cmd.Dir = s.Dir
 
 			s.cmd.Env = getEnv()
 
 			// detach from the process group so children don't
 			// get signals sent directly to parent.
-			s.cmd.SysProcAttr = &syscall.SysProcAttr {
+			s.cmd.SysProcAttr = &syscall.SysProcAttr{
 				Setpgid: true,
-				Pgid: 0,
+				Pgid:    0,
 			}
 
 			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.

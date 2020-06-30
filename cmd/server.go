@@ -10,6 +10,8 @@ import (
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/urfave/cli/v2"
+
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 )
 
 // ServerCommand ...
@@ -28,6 +30,8 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 
+	spec := config.DefaultClusterSpec()
+
 	components := make(map[string]component.Component)
 
 	certs := component.Certificates{}
@@ -40,7 +44,9 @@ func startServer(ctx *cli.Context) error {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	components["kine"] = &component.Kine{}
+	components["kine"] = &component.Kine{
+		Config: spec.Storage.Kine,
+	}
 	components["kine"].Run()
 
 	components["kube-apiserver"] = &component.ApiServer{}
