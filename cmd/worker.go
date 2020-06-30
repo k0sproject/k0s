@@ -39,8 +39,6 @@ func startWorker(ctx *cli.Context) error {
 		return err
 	}
 
-	//logrus.Infof("args: %s", ctx.Args().Slice())
-
 	serverAddress := ctx.String("server")
 	if serverAddress == "" {
 		return fmt.Errorf("mke worker needs the controller address as --server option")
