@@ -33,6 +33,6 @@ mke token create
 
 Join a new worker node to the cluster by running:
 ```
-mke worker --join-token "superlongtokenfrompreviousphase" https://controller-address:6443
+mke worker --server https://controller-address:6443 "superlongtokenfrompreviousphase"
 ```
 
