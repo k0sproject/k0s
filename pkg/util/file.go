@@ -17,12 +17,8 @@ func FileExists(filename string) bool {
 }
 
 func IsDirectory(name string) bool {
-	if fi, err := os.Stat(name); err == nil {
-		if fi.Mode().IsDir() {
-			return true
-		}
-	}
-	return false
+	fi, err := os.Stat(name)
+	return err == nil && fi.Mode().IsDir()
 }
 
 func GetAllDirs(base string) ([]string, error) {

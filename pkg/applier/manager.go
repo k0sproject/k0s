@@ -29,16 +29,13 @@ func (m *Manager) Run() error {
 
 	m.applier, err = NewApplier(bundlePath)
 
-	if err := m.applier.Apply(); err != nil {
-		log.Warnf("initial manifest sync failed: %s", err.Error())
-	}
-
 	// Make the done channels
-	m.tickerDone = make(chan struct{}, 1)
-	m.watcherDone = make(chan struct{}, 1)
+	m.tickerDone = make(chan struct{})
+	m.watcherDone = make(chan struct{})
 
 	var changesDetected atomic.Value
-	changesDetected.Store(false)
+	// to make first tick to sync everything and retry until it succeeds
+	changesDetected.Store(true)
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
@@ -54,8 +51,10 @@ func (m *Manager) Run() error {
 				if err := m.applier.Apply(); err != nil {
 					// Not much we can do
 					log.Warnf("failed to apply manifests: %s", err.Error())
+				} else {
+					// Only set if the apply succeeds, will make it retry on every tick in case of failures
+					changesDetected.Store(false)
 				}
-				changesDetected.Store(false)
 			case <-m.tickerDone:
 				log.Info("manifest ticker done")
 				return

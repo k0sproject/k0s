@@ -5,7 +5,6 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
-	"time"
 
 	"github.com/Mirantis/mke/pkg/applier"
 	"github.com/Mirantis/mke/pkg/assets"
@@ -60,9 +59,6 @@ func startServer(ctx *cli.Context) error {
 
 	components["kube-ccm"] = &component.ControllerManager{}
 	components["kube-ccm"].Run()
-
-	// TODO Figure out proper way to wait for api to be alive
-	time.Sleep(20 * time.Second)
 
 	components["bundle-manager"] = &applier.Manager{}
 	components["bundle-manager"].Run()
