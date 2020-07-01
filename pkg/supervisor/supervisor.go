@@ -2,9 +2,11 @@ package supervisor
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,6 +21,7 @@ type Supervisor struct {
 	BinPath string
 	Args    []string
 	Dir     string
+	PidFile string
 
 	cmd  *exec.Cmd
 	quit chan bool
@@ -29,6 +32,8 @@ type Supervisor struct {
 func (s *Supervisor) Supervise() {
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
+	s.PidFile = path.Join(constant.PidDir, s.Name) + ".pid"
+	os.MkdirAll(constant.PidDir, 0755) // ignore errors in case directory exists
 	go func() {
 		log := logrus.WithField("component", s.Name)
 		log.Info("Starting to supervise")
@@ -63,6 +68,9 @@ func (s *Supervisor) Supervise() {
 				waitresult <- s.cmd.Wait()
 			}()
 
+			pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid)+"\n")
+			ioutil.WriteFile(s.PidFile, pidbuf, 0644)
+
 			select {
 			case <-s.quit:
 				log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
@@ -96,6 +104,7 @@ func (s *Supervisor) Supervise() {
 func (s *Supervisor) Stop() error {
 	s.quit <- true
 	<-s.done
+	os.Remove(s.PidFile)
 	return nil
 }
 
