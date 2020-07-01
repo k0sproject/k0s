@@ -13,7 +13,7 @@ func DefaultStorageSpec() *StorageSpec {
 	return &StorageSpec{
 		Type: "kine",
 		Kine: &KineConfig{
-			DataSource: "/var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared",
+			DataSource: "sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared",
 		},
 	}
 }
