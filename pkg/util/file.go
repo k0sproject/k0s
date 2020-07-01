@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -15,8 +16,20 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+func IsDirectory(name string) bool {
+	if fi, err := os.Stat(name); err == nil {
+		if fi.Mode().IsDir() {
+			return true
+		}
+	}
+	return false
+}
+
 func GetAllDirs(base string) ([]string, error) {
 	var dirs []string
+	if !IsDirectory(base) {
+		return dirs, fmt.Errorf("%s is not a directory", base)
+	}
 	fileInfos, err := ioutil.ReadDir(base)
 	if err != nil {
 		return dirs, err

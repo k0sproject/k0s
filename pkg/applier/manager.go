@@ -3,16 +3,20 @@ package applier
 import (
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/fsnotify.v1"
 )
 
 type Manager struct {
-	Bundles map[string]Applier
+	applier Applier
+
+	tickerDone  chan struct{}
+	watcherDone chan struct{}
 }
 
 func (m *Manager) Run() error {
@@ -22,34 +26,65 @@ func (m *Manager) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to create manifest bundle dir %s", bundlePath)
 	}
-	m.Bundles = make(map[string]Applier)
+
+	m.applier, err = NewApplier(bundlePath)
+
+	if err := m.applier.Apply(); err != nil {
+		log.Warnf("initial manifest sync failed: %s", err.Error())
+	}
+
+	// Make the done channels
+	m.tickerDone = make(chan struct{}, 1)
+	m.watcherDone = make(chan struct{}, 1)
+
+	var changesDetected atomic.Value
+	changesDetected.Store(false)
 
 	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
 		for {
-			dirs, err := util.GetAllDirs(bundlePath)
-			if err != nil {
-				log.Warnf("failed to read bundle dirs: %s", err)
-			} else {
-				for _, d := range dirs {
-					if _, exists := m.Bundles[d]; !exists {
-						applier, err := NewApplier(filepath.Join(bundlePath, d))
-						if err != nil {
-							log.Warnf("failed to create applier for %s: %w", d, err)
-							continue
-						}
-						err = applier.Run()
-						if err != nil {
-							log.Warnf("failed to run applier for %s: %w", d, err)
-							continue
-						}
-						m.Bundles[d] = applier
-					} else {
-						log.Debugf("applier already running for %s", d)
-					}
+			select {
+			case <-ticker.C:
+				changes := changesDetected.Load().(bool)
+				if !changes {
+					continue // Wait for next check
 				}
+				// Do actual apply
+				if err := m.applier.Apply(); err != nil {
+					// Not much we can do
+					log.Warnf("failed to apply manifests: %s", err.Error())
+				}
+				changesDetected.Store(false)
+			case <-m.tickerDone:
+				log.Info("manifest ticker done")
+				return
 			}
+		}
+	}()
 
-			time.Sleep(10 * time.Second)
+	go func() {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Errorf("failed to create fs watcher for %s: %s", bundlePath, err.Error())
+			return
+		}
+		defer watcher.Close()
+
+		watcher.Add(bundlePath)
+		for {
+			select {
+			// watch for events
+			case event := <-watcher.Events:
+				log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
+				changesDetected.Store(true)
+				// watch for errors
+			case err := <-watcher.Errors:
+				log.Warnf("watch error: %s", err.Error())
+			case <-m.watcherDone:
+				log.Info("manifest watcher done")
+				return
+			}
 		}
 	}()
 
@@ -57,11 +92,8 @@ func (m *Manager) Run() error {
 }
 
 func (m *Manager) Stop() error {
-	for _, a := range m.Bundles {
-		err := a.Stop()
-		if err != nil {
-			logrus.Warnf("failed to stop bundle applier %s", a.Name)
-		}
-	}
+
+	close(m.tickerDone)
+	close(m.watcherDone)
 	return nil
 }

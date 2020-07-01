@@ -6,10 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"gopkg.in/fsnotify.v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/kubectl/pkg/cmd/util"
 	"sigs.k8s.io/cli-utils/cmd/printers"
@@ -17,16 +16,21 @@ import (
 	"sigs.k8s.io/cli-utils/pkg/config"
 	"sigs.k8s.io/cli-utils/pkg/manifestreader"
 
-	applycmd "sigs.k8s.io/cli-utils/cmd/apply"
-
+	"github.com/Mirantis/mke/pkg/constant"
 	fileutil "github.com/Mirantis/mke/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	applycmd "sigs.k8s.io/cli-utils/cmd/apply"
 )
 
 type Applier struct {
 	Name string
 	Dir  string
 
-	log *logrus.Entry
+	log           *logrus.Entry
+	watcher       *fsnotify.Watcher
+	reader        *manifestreader.PathManifestReader
+	streams       genericclioptions.IOStreams
+	clientFactory util.Factory
 }
 
 func NewApplier(dir string) (Applier, error) {
@@ -42,95 +46,89 @@ func NewApplier(dir string) (Applier, error) {
 		Name: name,
 	}
 
+	err := a.init()
+	if err != nil {
+		return a, err
+	}
+
 	return a, nil
 }
 
-func (a *Applier) Run() error {
-	a.log.Info("starting reconcile loop")
-
+func (a *Applier) init() error {
 	kubeConfigPath := filepath.Join(constant.CertRoot, "admin.conf")
 
-	f := util.NewFactory(&genericclioptions.ConfigFlags{
+	a.clientFactory = util.NewFactory(&genericclioptions.ConfigFlags{
 		KubeConfig: &kubeConfigPath,
 	})
 
 	readerOptions := manifestreader.ReaderOptions{
-		Factory:   f,
+		Factory:   a.clientFactory,
 		Namespace: "default",
 	}
 
-	reader := &manifestreader.PathManifestReader{
+	a.reader = &manifestreader.PathManifestReader{
 		Path:          a.Dir,
 		ReaderOptions: readerOptions,
 	}
-	streams := genericclioptions.IOStreams{
+	a.streams = genericclioptions.IOStreams{
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	}
 
 	// Check if we need to run init
 	if !fileutil.FileExists(filepath.Join(a.Dir, "inventory-template.yaml")) {
-		a.log.Info("initializing new bundle")
+		a.log.Info("initializing manifest bundle")
 		// Need to run init
-		io := config.NewInitOptions(streams)
+		io := config.NewInitOptions(a.streams)
+		io.InventoryID = "mke-manifests"
 		io.Complete([]string{a.Dir})
 		if err := io.Run(); err != nil {
 			a.log.Warnf("bundle init failed: %s", err.Error())
 			return errors.Wrapf(err, "bundle init failed")
 		}
 	} else {
-		a.log.Info("bundle already initialized")
+		a.log.Info("manifest bundle already initialized")
 	}
-
-	// applier is now ready to be run in a reconcile loop fashion
-	go func() {
-		for {
-			// TODO Maybe we need to make the command parse all the flags
-			flags := []string{
-				"--no-prune=false",
-				a.Dir,
-			}
-			applyCmd := applycmd.ApplyCommand(f, streams)
-			applyCmd.ParseFlags(flags)
-
-			applier := apply.NewApplier(f, streams)
-
-			if err := applier.Initialize(applyCmd); err != nil {
-				a.log.Warnf("failed to initialize resource applier: %s", err.Error())
-			}
-
-			infos, err := reader.Read()
-			if err != nil {
-				a.log.Warnf("failed to read manifests: %w", err)
-			} else if len(infos) > 0 {
-				a.log.Debugf("found %d manifests:", len(infos))
-				for _, i := range infos {
-					a.log.Debugln(i.ObjectName())
-				}
-				ch := applier.Run(context.Background(), infos, apply.Options{
-					PollInterval:           2 * time.Second,
-					ReconcileTimeout:       0,
-					EmitStatusEvents:       false,
-					NoPrune:                false,
-					DryRun:                 false,
-					PrunePropagationPolicy: metav1.DeletePropagationBackground,
-					PruneTimeout:           5 * time.Minute,
-				})
-				// TODO We probably want to implement our own printer so we can log properly based on bundle name etc.
-				printer := printers.GetPrinter(printers.TablePrinter, streams)
-				printer.Print(ch, false)
-			}
-
-			// TODO Would be better to have some inotify thingy to trigger this
-			time.Sleep(10 * time.Second)
-		}
-
-	}()
 	return nil
 }
 
-func (a *Applier) Stop() error {
-	a.log.Info("stop reconcile loop")
-	// TODO well, actually make the thing stop :D
+func (a *Applier) Apply() error {
+	// TODO Maybe we need to make the command parse all the flags
+	flags := []string{
+		"--no-prune=false",
+		a.Dir,
+	}
+	applyCmd := applycmd.ApplyCommand(a.clientFactory, a.streams)
+	applyCmd.ParseFlags(flags)
+
+	applier := apply.NewApplier(a.clientFactory, a.streams)
+
+	if err := applier.Initialize(applyCmd); err != nil {
+		a.log.Warnf("failed to initialize resource applier: %s", err.Error())
+	}
+
+	infos, err := a.reader.Read()
+	if err != nil {
+		return errors.Wrap(err, "failed to read manifests")
+	}
+	if len(infos) > 0 {
+		a.log.Debugf("found %d manifests:", len(infos))
+		for _, i := range infos {
+			a.log.Debugln(i.ObjectName())
+		}
+		ch := applier.Run(context.Background(), infos, apply.Options{
+			PollInterval:           2 * time.Second,
+			ReconcileTimeout:       0,
+			EmitStatusEvents:       false,
+			NoPrune:                false,
+			DryRun:                 false,
+			PrunePropagationPolicy: metav1.DeletePropagationBackground,
+			PruneTimeout:           5 * time.Minute,
+		})
+		// TODO We probably want to implement our own printer so we can log properly based on bundle name etc.
+		printer := printers.GetPrinter(printers.TablePrinter, a.streams)
+		printer.Print(ch, false)
+	}
+
 	return nil
 }

@@ -46,6 +46,7 @@ func startServer(ctx *cli.Context) error {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	// Components started one-by-one as there's specific order we want
 	components["kine"] = &component.Kine{
 		Config: spec.Storage.Kine,
 	}
@@ -69,11 +70,12 @@ func startServer(ctx *cli.Context) error {
 	// Wait for mke process termination
 	<-c
 
+	// There's specific order we want to shutdown things
+	components["bundle-manager"].Stop()
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()
 	components["kube-apiserver"].Stop()
 	components["kine"].Stop()
 
 	return nil
-
 }
