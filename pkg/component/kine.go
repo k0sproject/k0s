@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/sirupsen/logrus"
@@ -15,6 +16,11 @@ import (
 type Kine struct {
 	Config     *config.KineConfig
 	supervisor supervisor.Supervisor
+}
+
+// Init extracts the needed binaries
+func (k *Kine) Init() error {
+	return assets.Stage(constant.DataDir, path.Join("bin","kine"))
 }
 
 // Run runs kine

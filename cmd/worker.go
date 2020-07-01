@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
-	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
@@ -33,12 +31,6 @@ func WorkerCommand() *cli.Command {
 }
 
 func startWorker(ctx *cli.Context) error {
-	// TODO We need to be able to tell which bins we really need. worker does not need everything
-	err := assets.Stage(path.Join(constant.DataDir))
-	if err != nil {
-		return err
-	}
-
 	serverAddress := ctx.String("server")
 	if serverAddress == "" {
 		return fmt.Errorf("mke worker needs the controller address as --server option")
@@ -68,23 +60,28 @@ func startWorker(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
+	components["containerd"] = &component.ContainerD{}
+	components["kubelet"] = &component.Kubelet{}
+
+	// extract needed components
+	for _,comp := range components {
+		if err := comp.Init(); err != nil {
+			return err
+		}
+	}
+
 	// Block signals til all components are started
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	components["containerd"] = &component.ContainerD{}
 	components["containerd"].Run()
-
-	components["kubelet"] = &component.Kubelet{}
 	components["kubelet"].Run()
 
 	// Wait for mke process termination
 	<-c
 
-	// Stop stuff does not really work yet
-	// for _, comp := range components {
-	// 	comp.Stop()
-	// }
+	components["kubelet"].Stop()
+	components["containerd"].Stop()
 
 	return nil
 

@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/sirupsen/logrus"
@@ -13,6 +14,11 @@ import (
 // ControllerManager implement the component interface to run kube scheduler
 type ControllerManager struct {
 	supervisor supervisor.Supervisor
+}
+
+// Init extracts the needed binaries
+func (a *ControllerManager) Init() error {
+	return assets.Stage(constant.DataDir, path.Join("bin","kube-controller-manager"))
 }
 
 // Run runs kube ControllerManager

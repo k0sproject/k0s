@@ -3,14 +3,20 @@ package component
 import (
 	"path"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/sirupsen/logrus"
 )
 
-// Kine implement the component interface to run kube api
+// ApiServer implement the component interface to run kube api
 type ApiServer struct {
 	supervisor supervisor.Supervisor
+}
+
+// Init extracts needed binaries
+func (a *ApiServer) Init() error {
+	return assets.Stage(constant.DataDir, path.Join("bin","kube-apiserver"))
 }
 
 // Run runs kube api
