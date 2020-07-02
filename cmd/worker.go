@@ -10,6 +10,7 @@ import (
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
+	"github.com/Mirantis/mke/pkg/worker"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -35,6 +36,8 @@ func startWorker(ctx *cli.Context) error {
 	if serverAddress == "" {
 		return fmt.Errorf("mke worker needs the controller address as --server option")
 	}
+
+	worker.KernelSetup()
 
 	logrus.Debugf("using server address %s", serverAddress)
 	token := ctx.Args().First()
