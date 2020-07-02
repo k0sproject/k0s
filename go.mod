@@ -15,6 +15,7 @@ require (
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
 	golang.org/x/tools v0.0.0-20200414131530-0037cb7812fa // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
+	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
 	k8s.io/cli-runtime v0.17.2

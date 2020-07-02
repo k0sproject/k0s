@@ -10,6 +10,9 @@ const (
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
 
+	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
+	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
+
 	// PidDir defines the location of supervised pid files
 	PidDir = "/run/mke"
 )

@@ -28,3 +28,21 @@ func AllAddresses() ([]string, error) {
 
 	return addresses, nil
 }
+
+func FirstPublicAddress() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "127.0.0.1", errors.Wrap(err, "failed to list network interfaces")
+	}
+
+	for _, a := range addrs {
+		// check the address type and skip if loopback
+		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil && !ipnet.IP.IsLoopback() {
+				return ipnet.IP.String(), nil
+			}
+		}
+	}
+
+	return "127.0.0.1", nil
+}

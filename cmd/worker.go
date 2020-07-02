@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,11 +50,19 @@ func startWorker(ctx *cli.Context) error {
 	if token != "" {
 		kubeconfig, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
-			return errors.Wrap(err, "joint-token does not seem to be proper token created by 'mke token create'")
+			return errors.Wrap(err, "join-token does not seem to be proper token created by 'mke token create'")
 		}
 
 		kc, err := clientcmd.Load(kubeconfig)
 		kc.Clusters["mke"].Server = serverAddress
+
+		if !util.FileExists("/var/lib/mke/pki/ca.crt") {
+			os.MkdirAll(constant.CertRoot, 0755) // ignore errors in case directory exists
+			err = ioutil.WriteFile("/var/lib/mke/pki/ca.crt", kc.Clusters["mke"].CertificateAuthorityData, 0600)
+			if err != nil {
+				return errors.Wrap(err, "failed to write ca client cert")
+			}
+		}
 
 		err = clientcmd.WriteToFile(*kc, constant.KubeletBootstrapConfigPath)
 		if err != nil {
