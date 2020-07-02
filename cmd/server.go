@@ -6,6 +6,7 @@ import (
 	"path"
 	"syscall"
 
+	"github.com/Mirantis/mke/pkg/applier"
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/constant"
@@ -44,6 +45,7 @@ func startServer(ctx *cli.Context) error {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	// Components started one-by-one as there's specific order we want
 	components["kine"] = &component.Kine{
 		Config: spec.Storage.Kine,
 	}
@@ -58,14 +60,18 @@ func startServer(ctx *cli.Context) error {
 	components["kube-ccm"] = &component.ControllerManager{}
 	components["kube-ccm"].Run()
 
+	components["bundle-manager"] = &applier.Manager{}
+	components["bundle-manager"].Run()
+
 	// Wait for mke process termination
 	<-c
 
+	// There's specific order we want to shutdown things
+	components["bundle-manager"].Stop()
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()
 	components["kube-apiserver"].Stop()
 	components["kine"].Stop()
 
 	return nil
-
 }
