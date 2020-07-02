@@ -55,7 +55,10 @@ func startWorker(ctx *cli.Context) error {
 
 		if !util.FileExists("/var/lib/mke/pki/ca.crt") {
 			os.MkdirAll(constant.CertRoot, 0755) // ignore errors in case directory exists
-			ioutil.WriteFile("/var/lib/mke/pki/ca.crt", kc.Clusters["mke"].CertificateAuthorityData, 0600)
+			err = ioutil.WriteFile("/var/lib/mke/pki/ca.crt", kc.Clusters["mke"].CertificateAuthorityData, 0600)
+			if err != nil {
+				return errors.Wrap(err, "failed to write ca client cert")
+			}
 		}
 
 		err = clientcmd.WriteToFile(*kc, constant.KubeletBootstrapConfigPath)
