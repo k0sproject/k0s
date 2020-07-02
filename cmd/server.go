@@ -3,13 +3,10 @@ package cmd
 import (
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
 	"github.com/Mirantis/mke/pkg/applier"
-	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/component"
-	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/urfave/cli/v2"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -26,14 +23,24 @@ func ServerCommand() *cli.Command {
 }
 
 func startServer(ctx *cli.Context) error {
-	err := assets.Stage(path.Join(constant.DataDir))
-	if err != nil {
-		return err
-	}
-
 	spec := config.DefaultClusterSpec()
 
 	components := make(map[string]component.Component)
+
+	components["kine"] = &component.Kine{
+		Config: spec.Storage.Kine,
+	}
+	components["kube-apiserver"] = &component.ApiServer{}
+	components["kube-scheduler"] = &component.Scheduler{}
+	components["kube-ccm"] = &component.ControllerManager{}
+	components["bundle-manager"] = &applier.Manager{}
+
+	// extract needed components
+	for _,comp := range components {
+		if err := comp.Init(); err != nil {
+			return err
+		}
+	}
 
 	certs := component.Certificates{}
 
@@ -45,22 +52,10 @@ func startServer(ctx *cli.Context) error {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// Components started one-by-one as there's specific order we want
-	components["kine"] = &component.Kine{
-		Config: spec.Storage.Kine,
-	}
 	components["kine"].Run()
-
-	components["kube-apiserver"] = &component.ApiServer{}
 	components["kube-apiserver"].Run()
-
-	components["kube-scheduler"] = &component.Scheduler{}
 	components["kube-scheduler"].Run()
-
-	components["kube-ccm"] = &component.ControllerManager{}
 	components["kube-ccm"].Run()
-
-	components["bundle-manager"] = &applier.Manager{}
 	components["bundle-manager"].Run()
 
 	// Wait for mke process termination

@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 )
@@ -12,6 +13,11 @@ import (
 // ContainerD implement the component interface to manage containerd as mke component
 type ContainerD struct {
 	supervisor supervisor.Supervisor
+}
+
+// Init extracts the needed binaries
+func (c *ContainerD) Init() error {
+	return assets.Stage(constant.DataDir, path.Join("bin","containerd"))
 }
 
 // Run runs containerD

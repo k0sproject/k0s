@@ -27,31 +27,29 @@ func ExecutableIsOlder(filepath string) bool {
 }
 
 // Stage ...
-func Stage(dataDir string) error {
-	for _, name := range AssetNames() {
-		p := filepath.Join(dataDir, name)
+func Stage(dataDir, name string) error {
+	p := filepath.Join(dataDir, name)
 
-		if ExecutableIsOlder(p) {
-			logrus.Debug("Re-use existing file:", p)
-			continue
-		}
+	if ExecutableIsOlder(p) {
+		logrus.Debug("Re-use existing file:", p)
+		return nil
+	}
 
-		content, err := Asset(name)
-		if err != nil {
-			return err
-		}
-		logrus.Debug("Writing static file: ", p)
-		err = os.MkdirAll(filepath.Dir(p), 0700)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
-		}
-		os.Remove(p)
-		if err := ioutil.WriteFile(p, content, 0600); err != nil {
-			return errors.Wrapf(err, "failed to write to %s", name)
-		}
-		if err := os.Chmod(p, 0500); err != nil {
-			return errors.Wrapf(err, "failed to chmod %s", name)
-		}
+	content, err := Asset(name)
+	if err != nil {
+		return err
+	}
+	logrus.Debug("Writing static file: ", p)
+	err = os.MkdirAll(filepath.Dir(p), 0700)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
+	}
+	os.Remove(p)
+	if err := ioutil.WriteFile(p, content, 0600); err != nil {
+		return errors.Wrapf(err, "failed to write to %s", name)
+	}
+	if err := os.Chmod(p, 0500); err != nil {
+		return errors.Wrapf(err, "failed to chmod %s", name)
 	}
 
 	return nil

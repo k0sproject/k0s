@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/pkg/errors"
@@ -32,6 +33,11 @@ type Kubelet struct {
 }
 
 type KubeletConfig struct {
+}
+
+// Init extracts the needed binaries
+func (k *Kubelet) Init() error {
+	return assets.Stage(constant.DataDir, path.Join("bin", "kubelet"))
 }
 
 // Run runs kubelet

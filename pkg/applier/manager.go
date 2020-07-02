@@ -14,20 +14,24 @@ import (
 
 type Manager struct {
 	applier Applier
-
+	bundlePath string
 	tickerDone  chan struct{}
 	watcherDone chan struct{}
 }
 
-func (m *Manager) Run() error {
-	log := logrus.WithField("component", "applier-manager")
-	bundlePath := filepath.Join(constant.DataDir, "manifests")
-	err := os.MkdirAll(bundlePath, 0700)
+func (m *Manager) Init() error {
+	m.bundlePath = filepath.Join(constant.DataDir, "manifests")
+	err := os.MkdirAll(m.bundlePath, 0700)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create manifest bundle dir %s", bundlePath)
+		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.bundlePath)
 	}
 
-	m.applier, err = NewApplier(bundlePath)
+	m.applier, err = NewApplier(m.bundlePath)
+	return err
+}
+
+func (m *Manager) Run() error {
+	log := logrus.WithField("component", "applier-manager")
 
 	// Make the done channels
 	m.tickerDone = make(chan struct{})
@@ -65,12 +69,12 @@ func (m *Manager) Run() error {
 	go func() {
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			log.Errorf("failed to create fs watcher for %s: %s", bundlePath, err.Error())
+			log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
 			return
 		}
 		defer watcher.Close()
 
-		watcher.Add(bundlePath)
+		watcher.Add(m.bundlePath)
 		for {
 			select {
 			// watch for events
