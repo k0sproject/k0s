@@ -17,7 +17,13 @@ type ContainerD struct {
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin","containerd"))
+	var err error
+	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd"))
+	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim"))
+	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v1"))
+	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v2"))
+	err = assets.Stage(constant.DataDir, path.Join("bin", "runc"))
+	return err
 }
 
 // Run runs containerD
