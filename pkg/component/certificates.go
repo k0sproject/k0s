@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/cloudflare/cfssl/cli"
@@ -58,6 +59,14 @@ type Cert struct {
 type Certificates struct {
 	CACert string
 	Certs  map[string]Cert
+
+	clusterSpec *config.ClusterSpec
+}
+
+func NewCertificates(clusterSpec *config.ClusterSpec) *Certificates {
+	return &Certificates{
+		clusterSpec: clusterSpec,
+	}
 }
 
 func (c *Certificates) Run() error {
@@ -167,12 +176,11 @@ func (c *Certificates) Run() error {
 		"localhost",
 	}
 
-	// Add all local addresses into the serving certs alt names
-	additionalAddresses, err := util.AllAddresses()
-	if err != nil {
-		return err
-	}
-	hostnames = append(hostnames, additionalAddresses...)
+	hostnames = append(hostnames, c.clusterSpec.API.Address)
+	hostnames = append(hostnames, c.clusterSpec.API.SANs...)
+
+	// TODO When we make serviceCIDR configurable, change this too
+	hostnames = append(hostnames, "10.96.0.1")
 
 	serverReq := certReq{
 		name:      "server",

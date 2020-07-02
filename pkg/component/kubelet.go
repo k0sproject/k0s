@@ -14,16 +14,20 @@ import (
 const kubeletConfig = `
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
-address: 127.0.0.1
 staticPodPath: /etc/kubernetes/manifests
 authentication:
   anonymous:
-    enabled: true
-  webhook:
     enabled: false
+  webhook:
+    enabled: true
+    cacheTTL: "2m"
+  x509:
+    clientCAFile: /var/lib/mke/pki/ca.crt
 authorization:
-  mode: AlwaysAllow
-
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: "5m"
+    cacheUnauthorizedTTL: "30s"
 `
 
 const kubeletConfigPath = "/var/lib/mke/kubelet-config.yaml"

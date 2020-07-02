@@ -1,0 +1,14 @@
+
+apiVersion: mke.mirantis.com/v1beta1
+kind: Cluster
+metadata:
+  name: foobar
+spec:
+  # storage:
+  #   type: kine
+  #   kine:
+  #     dataSource: sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared
+  api:
+    address: 172.17.0.2 # Address where the k8s API is accessed at (nodes public IP or LB)
+    sans: # If you want to incorporate multiple addresses into the generates api server certs
+      - 13.48.10.8
