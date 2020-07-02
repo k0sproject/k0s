@@ -2,11 +2,15 @@ package component
 
 import (
 	"fmt"
+	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -20,20 +24,30 @@ type Kine struct {
 
 // Init extracts the needed binaries
 func (k *Kine) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin","kine"))
+	dsURL, err := url.Parse(k.Config.DataSource)
+	if err != nil {
+		return err
+	}
+	if dsURL.Scheme == "sqlite" {
+		// Make sure the db basedir exists
+		err = os.MkdirAll(filepath.Dir(dsURL.Path), 0700)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(dsURL.Path))
+		}
+	}
+	return assets.Stage(constant.DataDir, path.Join("bin", "kine"))
 }
 
 // Run runs kine
 func (k *Kine) Run() error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
+
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
 		BinPath: path.Join(constant.DataDir, "bin", "kine"),
-		Dir:     constant.DataDir, // makes kine sqlite db to be created on /var/lib/mke/db
+		Dir:     constant.DataDir,
 		Args: []string{
-			// Does not work yet because of https://github.com/rancher/kine/blob/26bd5085f45f9c0c687d1ac652fa4526b07d2653/pkg/endpoint/endpoint.go#L145
-			// kine will only always default to /.db ... :()
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
 		},
 	}
