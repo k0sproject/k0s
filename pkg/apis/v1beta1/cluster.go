@@ -23,6 +23,7 @@ type ClusterMeta struct {
 type ClusterSpec struct {
 	API     *APISpec     `yaml:"api"`
 	Storage *StorageSpec `yaml:"storage"`
+	Network *Network     `yaml:"network"`
 }
 
 type APISpec struct {
@@ -65,6 +66,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	c.Spec = &ClusterSpec{
 		Storage: DefaultStorageSpec(),
+		Network: DefaultNetwork(),
 	}
 
 	type yclusterconfig ClusterConfig

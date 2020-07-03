@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
@@ -204,9 +205,10 @@ spec:
 `
 
 type CoreDNS struct {
-	client     *kubernetes.Clientset
-	tickerDone chan struct{}
-	log        *logrus.Entry
+	client        *kubernetes.Clientset
+	tickerDone    chan struct{}
+	log           *logrus.Entry
+	clusterConfig *config.ClusterSpec
 }
 
 type coreDNSConfig struct {
@@ -215,15 +217,16 @@ type coreDNSConfig struct {
 	ClusterDomain string
 }
 
-func NewCoreDNS() (*CoreDNS, error) {
+func NewCoreDNS(clusterConfig *config.ClusterSpec) (*CoreDNS, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	log := logrus.WithFields(logrus.Fields{"component": "coredns"})
 	return &CoreDNS{
-		client: client,
-		log:    log,
+		client:        client,
+		log:           log,
+		clusterConfig: clusterConfig,
 	}, nil
 }
 
@@ -276,10 +279,15 @@ func (c *CoreDNS) Run() error {
 }
 
 func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
+	dns, err := c.clusterConfig.Network.DNSAddress()
+	if err != nil {
+		return coreDNSConfig{}, err
+	}
+
 	config := coreDNSConfig{
 		Replicas:      1,
 		ClusterDomain: "cluster.local",
-		ClusterDNSIP:  "10.96.0.10",
+		ClusterDNSIP:  dns,
 	}
 
 	return config, nil
