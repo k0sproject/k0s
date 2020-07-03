@@ -35,15 +35,26 @@ func startServer(ctx *cli.Context) error {
 
 	logrus.Infof("using public address: %s", clusterConfig.Spec.API.Address)
 	logrus.Infof("using sans: %s", clusterConfig.Spec.API.SANs)
+	dnsAddress, err := clusterConfig.Spec.Network.DNSAddress()
+	if err != nil {
+		return err
+	}
+	logrus.Infof("DNS address: %s", dnsAddress)
+
+	// os.Exit(42)
 
 	components := make(map[string]component.Component)
 
 	components["kine"] = &component.Kine{
 		Config: clusterConfig.Spec.Storage.Kine,
 	}
-	components["kube-apiserver"] = &component.ApiServer{}
+	components["kube-apiserver"] = &component.ApiServer{
+		ClusterConfig: clusterConfig,
+	}
 	components["kube-scheduler"] = &component.Scheduler{}
-	components["kube-ccm"] = &component.ControllerManager{}
+	components["kube-ccm"] = &component.ControllerManager{
+		ClusterConfig: clusterConfig,
+	}
 	components["bundle-manager"] = &applier.Manager{}
 
 	// extract needed components
@@ -108,7 +119,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["kube-proxy"] = proxy
 	}
 
-	coreDNS, err := component.NewCoreDNS()
+	coreDNS, err := component.NewCoreDNS(clusterSpec)
 	if err != nil {
 		logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
 	} else {

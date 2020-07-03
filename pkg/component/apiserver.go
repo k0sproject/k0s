@@ -1,8 +1,10 @@
 package component
 
 import (
+	"fmt"
 	"path"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
@@ -11,12 +13,14 @@ import (
 
 // ApiServer implement the component interface to run kube api
 type ApiServer struct {
+	ClusterConfig *config.ClusterConfig
+
 	supervisor supervisor.Supervisor
 }
 
 // Init extracts needed binaries
 func (a *ApiServer) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin","kube-apiserver"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kube-apiserver"))
 }
 
 // Run runs kube api
@@ -48,7 +52,7 @@ func (a *ApiServer) Run() error {
 			"--requestheader-username-headers=X-Remote-User",
 			"--secure-port=6443",
 			"--service-account-key-file=/var/lib/mke/pki/sa.pub",
-			"--service-cluster-ip-range=10.96.0.0/12",
+			fmt.Sprintf("--service-cluster-ip-range=%s", a.ClusterConfig.Spec.Network.ServiceCIDR),
 			"--tls-cert-file=/var/lib/mke/pki/server.crt",
 			"--tls-private-key-file=/var/lib/mke/pki/server.key",
 			"--enable-bootstrap-token-auth",
