@@ -5,6 +5,7 @@ KUBE_VERSION = 1.18.4
 KINE_VERSION = 0.4.0
 
 GO_SRCS := $(shell find -name '*.go')
+TMPDIR ?= .tmp
 
 ARCH = amd64
 
@@ -24,10 +25,12 @@ bin/kubelet:
 	curl --silent -L -o bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kubelet
 
 bin/kine:
-	if ! [ -d kine ]; then \
-		git clone -b v$(KINE_VERSION) --depth=1 https://github.com/rancher/kine.git; \
+	if ! [ -d $(TMPDIR)/kine ]; then \
+		mkdir -p $(TMPDIR) \
+			&& cd $(TMPDIR) \
+			&& git clone -b v$(KINE_VERSION) --depth=1 https://github.com/rancher/kine.git; \
 	fi
-	cd kine && go build -o ../$@
+	cd $(TMPDIR)/kine && go build -o $(PWD)/$@
 
 # k8s control plane components
 # TODO We might be better of by getting hyperkube bin, but that doesn't seem to be downloadable from the release package URL :(
@@ -55,4 +58,5 @@ build: mke
 
 clean:
 	rm -f pkg/assets/zz_generated_bindata.go mke
-	rm -rf bin/ kine/
+	rm -rf bin/ $(TMPDIR)/kine
+	rmdir $(TMPDIR) 2>/dev/null || true
