@@ -34,6 +34,7 @@ func main() {
 			cmd.ServerCommand(),
 			cmd.WorkerCommand(),
 			cmd.TokenCommand(),
+			cmd.SingleCommand(),
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
