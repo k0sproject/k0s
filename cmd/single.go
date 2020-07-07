@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/component/single"
@@ -16,6 +17,12 @@ func SingleCommand() *cli.Command {
 		Name:   "single",
 		Usage:  "Run both server and worker as single node cluster",
 		Action: startSingle,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "test",
+				Usage: "Shut down after bootstrap",
+			},
+		},
 	}
 }
 
@@ -44,7 +51,14 @@ func startSingle(ctx *cli.Context) error {
 	components["mke-worker"].Run()
 
 	// Wait for mke process termination
-	<-c
+	if ctx.Bool("test") {
+		select {
+		case <-c:
+		case <-time.After(5 * time.Second):
+		}
+	} else {
+		<-c
+	}
 
 	components["mke-worker"].Stop()
 	components["mke-server"].Stop()
