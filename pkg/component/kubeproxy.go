@@ -6,6 +6,7 @@ import (
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,7 +50,7 @@ func (c *KubeProxy) Run() error {
 					c.log.Infof("current config matches existing, not gonna do anything")
 					continue
 				}
-				tw := TemplateWriter{
+				tw := util.TemplateWriter{
 					Name:     "kube--proxy",
 					Template: proxyTemplate,
 					Data:     config,

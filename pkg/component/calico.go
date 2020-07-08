@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mirantis/mke/pkg/constant"
 	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -46,7 +47,7 @@ func (c *Calico) Run() error {
 	var emptryStruct struct{}
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
-	tw := TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "calico",
 		Template: calicoCrds,
 		Data:     emptryStruct,
@@ -72,7 +73,7 @@ func (c *Calico) Run() error {
 					c.log.Infof("current config matches existing, not gonna do anything")
 					continue
 				}
-				tw := TemplateWriter{
+				tw := util.TemplateWriter{
 					Name:     "calico",
 					Template: calicoTemplate,
 					Data:     config,

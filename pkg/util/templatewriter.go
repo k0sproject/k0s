@@ -1,4 +1,4 @@
-package component
+package util
 
 import (
 	"os"

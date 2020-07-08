@@ -7,6 +7,7 @@ import (
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -59,7 +60,7 @@ func (k *Kubelet) Run() error {
 		},
 	}
 	// TODO Make proper kubelet config
-	tw := TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "kubeletConfig",
 		Template: kubeletConfig,
 		Data:     KubeletConfig{},

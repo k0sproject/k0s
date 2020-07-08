@@ -7,6 +7,7 @@ import (
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 )
@@ -256,7 +257,7 @@ func (c *CoreDNS) Run() error {
 					c.log.Infof("current config matches existing, not gonna do anything")
 					continue
 				}
-				tw := TemplateWriter{
+				tw := util.TemplateWriter{
 					Name:     "coredns",
 					Template: coreDnsTemplate,
 					Data:     config,
