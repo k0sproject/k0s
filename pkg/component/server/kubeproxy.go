@@ -1,4 +1,4 @@
-package component
+package server
 
 import (
 	"path/filepath"
