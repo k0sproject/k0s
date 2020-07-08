@@ -7,6 +7,7 @@ import (
 
 	"github.com/Mirantis/mke/pkg/applier"
 	"github.com/Mirantis/mke/pkg/component"
+	"github.com/Mirantis/mke/pkg/component/server"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
@@ -48,14 +49,14 @@ func startServer(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
-	components["kine"] = &component.Kine{
+	components["kine"] = &server.Kine{
 		Config: clusterConfig.Spec.Storage.Kine,
 	}
-	components["kube-apiserver"] = &component.ApiServer{
+	components["kube-apiserver"] = &server.ApiServer{
 		ClusterConfig: clusterConfig,
 	}
-	components["kube-scheduler"] = &component.Scheduler{}
-	components["kube-ccm"] = &component.ControllerManager{
+	components["kube-scheduler"] = &server.Scheduler{}
+	components["kube-ccm"] = &server.ControllerManager{
 		ClusterConfig: clusterConfig,
 	}
 	components["bundle-manager"] = &applier.Manager{}
@@ -67,7 +68,7 @@ func startServer(ctx *cli.Context) error {
 		}
 	}
 
-	certs := component.NewCertificates(clusterConfig.Spec)
+	certs := server.NewCertificates(clusterConfig.Spec)
 	if err := certs.Run(); err != nil {
 		return err
 	}
@@ -77,9 +78,6 @@ func startServer(ctx *cli.Context) error {
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// Components started one-by-one as there's specific order we want
-	components["kine"] = &component.Kine{
-		Config: clusterConfig.Spec.Storage.Kine,
-	}
 	components["kine"].Run()
 	components["kube-apiserver"].Run()
 	components["kube-scheduler"].Run()
@@ -115,21 +113,21 @@ func startServer(ctx *cli.Context) error {
 func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
 
-	proxy, err := component.NewKubeProxy(clusterSpec)
+	proxy, err := server.NewKubeProxy(clusterSpec)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())
 	} else {
 		reconcilers["kube-proxy"] = proxy
 	}
 
-	coreDNS, err := component.NewCoreDNS(clusterSpec)
+	coreDNS, err := server.NewCoreDNS(clusterSpec)
 	if err != nil {
 		logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
 	} else {
 		reconcilers["coredns"] = coreDNS
 	}
 
-	calico, err := component.NewCalico()
+	calico, err := server.NewCalico()
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 	} else {
