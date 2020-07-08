@@ -9,9 +9,9 @@ import (
 	"syscall"
 
 	"github.com/Mirantis/mke/pkg/component"
+	"github.com/Mirantis/mke/pkg/component/worker"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/Mirantis/mke/pkg/worker"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -72,8 +72,8 @@ func startWorker(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
-	components["containerd"] = &component.ContainerD{}
-	components["kubelet"] = &component.Kubelet{}
+	components["containerd"] = &worker.ContainerD{}
+	components["kubelet"] = &worker.Kubelet{}
 
 	// extract needed components
 	for _,comp := range components {
