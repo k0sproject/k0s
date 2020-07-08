@@ -26,7 +26,16 @@ func (n *Network) DNSAddress() (string, error) {
 	}
 
 	address := ipnet.IP.To4()
-	address[3] = address[3] + 10
+	prefixlen, _ := ipnet.Mask.Size()
+	if prefixlen < 29 {
+		address[3] = address[3] + 10
+	} else {
+		address[3] = address[3] + 2
+	}
+
+	if !ipnet.Contains(address) {
+		return "", errors.Wrapf(err, "failed to calculate a valid DNS address: %s", address.String())
+	}
 
 	return address.String(), nil
 }
