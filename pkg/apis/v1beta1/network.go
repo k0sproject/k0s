@@ -39,3 +39,15 @@ func (n *Network) DNSAddress() (string, error) {
 
 	return address.String(), nil
 }
+
+// DNSAddress calculates the 10th address of configured service CIDR block.
+func (n *Network) InternalAPIAddress() (string, error) {
+	_, ipnet, err := net.ParseCIDR(n.ServiceCIDR)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to parse service CIDR %s: %s", n.ServiceCIDR, err.Error())
+	}
+
+	address := ipnet.IP.To4()
+	address[3] = address[3] + 1
+	return address.String(), nil
+}

@@ -41,8 +41,6 @@ func startServer(ctx *cli.Context) error {
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
 
-	// os.Exit(42)
-
 	components := make(map[string]component.Component)
 
 	components["kine"] = &component.Kine{
