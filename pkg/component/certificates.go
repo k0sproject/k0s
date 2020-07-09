@@ -179,8 +179,11 @@ func (c *Certificates) Run() error {
 	hostnames = append(hostnames, c.clusterSpec.API.Address)
 	hostnames = append(hostnames, c.clusterSpec.API.SANs...)
 
-	// TODO When we make serviceCIDR configurable, change this too
-	hostnames = append(hostnames, "10.96.0.1")
+	internalAPIAddress, err := c.clusterSpec.Network.InternalAPIAddress()
+	if err != nil {
+		return err
+	}
+	hostnames = append(hostnames, internalAPIAddress)
 
 	serverReq := certReq{
 		name:      "server",
