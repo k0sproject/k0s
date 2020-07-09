@@ -48,10 +48,7 @@ func (s *Supervisor) Supervise() {
 
 			// detach from the process group so children don't
 			// get signals sent directly to parent.
-			s.cmd.SysProcAttr = &syscall.SysProcAttr{
-				Setpgid: true,
-				Pgid:    0,
-			}
+			s.cmd.SysProcAttr = DetachAttr()
 
 			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.
 			s.cmd.Stdout = os.Stdout
