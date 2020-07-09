@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -60,13 +61,23 @@ func CreateCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "create",
 		Usage: "Create join token",
-		Flags: []cli.Flag{},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name: "expiry",
+				Usage: "set duration time for token",
+				Value: "0",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			m, err := token.NewManager(c.String("kubeconfig"))
 			if err != nil {
 				return err
 			}
-			token, err := m.Create()
+			expiry, err := time.ParseDuration(c.String("expiry"))
+			if err != nil {
+				return err
+			}
+			token, err := m.Create(expiry)
 			if err != nil {
 				return err
 			}

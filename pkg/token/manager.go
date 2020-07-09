@@ -2,6 +2,7 @@ package token
 
 import (
 	"fmt"
+	"time"
 
 	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/Mirantis/mke/pkg/util"
@@ -50,14 +51,17 @@ stringData:
   token-id: 07401b
   token-secret: f395accd246ae52d
 
+  # Expiration. Optional.
+  expiration: 2020-03-10T03:22:11Z
+
   # Allowed usages.
   usage-bootstrap-authentication: "true"
   usage-bootstrap-signing: "true"
 */
-func (m *Manager) Create() (string, error) {
+func (m *Manager) Create(valid time.Duration) (string, error) {
 	err := m.ensureTokenRBAC()
 	if err != nil {
-		return "", ers.Wrapf(err, "failedto ensure presense of bootstrap token related rbac rules")
+		return "", ers.Wrapf(err, "failed to ensure presense of bootstrap token related rbac rules")
 	}
 	tokenID := util.RandomString(6)
 	tokenSecret := util.RandomString(16)
@@ -70,6 +74,10 @@ func (m *Manager) Create() (string, error) {
 	data["token-secret"] = tokenSecret
 	data["usage-bootstrap-authentication"] = "true"
 	data["usage-bootstrap-signing"] = "true"
+	if valid != 0 {
+		data["expiration"] = time.Now().Add(valid).UTC().Format(time.RFC3339)
+		logrus.Debugf("Set expiry to %s", data["expiration"])
+	}
 
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
