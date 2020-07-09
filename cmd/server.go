@@ -19,12 +19,17 @@ func ServerCommand() *cli.Command {
 		Name:            "server",
 		Usage:           "Run server",
 		Action:          startServer,
-		SkipFlagParsing: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name: "config",
+				Value: "mke.yaml",
+			},
+		},
 	}
 }
 
 func startServer(ctx *cli.Context) error {
-	clusterConfig, err := config.FromYaml("mke.yaml")
+	clusterConfig, err := config.FromYaml(ctx.String("config"))
 	if err != nil {
 		logrus.Errorf("Failed to read cluster config: %s", err.Error())
 		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
