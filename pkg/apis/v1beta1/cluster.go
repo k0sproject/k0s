@@ -82,6 +82,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func DefaultClusterSpec() *ClusterSpec {
 	defaultSpec := ClusterSpec{
 		Storage: DefaultStorageSpec(),
+		Network: DefaultNetwork(),
 	}
 	// Collect all nodes addresses for sans
 	addresses, err := util.AllAddresses()
