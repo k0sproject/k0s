@@ -32,7 +32,7 @@ func (m *MkeWorker) Run() error {
 	if m.Debug {
 		m.supervisor.Args = append(m.supervisor.Args, "--debug")
 	}
-	m.supervisor.Args = append(m.supervisor.Args, "worker", "--server", "localhost")
+	m.supervisor.Args = append(m.supervisor.Args, "worker", "--server", "https://localhost:6443")
 
 	if !util.FileExists("/var/lib/mke/kubelet.conf") {
 		// wait for server to start up
