@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
@@ -35,10 +36,6 @@ func (a *ApiServer) Run() error {
 			"--client-ca-file=/var/lib/mke/pki/ca.crt",
 			"--enable-admission-plugins=NodeRestriction",
 			"--enable-bootstrap-token-auth=true",
-			// "--etcd-cafile=/var/lib/mke/pki/etcd/ca.crt",
-			// "--etcd-certfile=/var/lib/mke/pki/apiserver-etcd-client.crt",
-			// "--etcd-keyfile=/var/lib/mke/pki/apiserver-etcd-client.key",
-			"--etcd-servers=http://127.0.0.1:2379", // kine endpoint
 			"--insecure-port=0",
 			"--kubelet-client-certificate=/var/lib/mke/pki/apiserver-kubelet-client.crt",
 			"--kubelet-client-key=/var/lib/mke/pki/apiserver-kubelet-client.key",
@@ -57,6 +54,18 @@ func (a *ApiServer) Run() error {
 			"--tls-private-key-file=/var/lib/mke/pki/server.key",
 			"--enable-bootstrap-token-auth",
 		},
+	}
+	switch a.ClusterConfig.Spec.Storage.Type {
+	case "kine":
+		a.supervisor.Args = append(a.supervisor.Args, "--etcd-servers=http://127.0.0.1:2379") // kine endpoint
+	case "etcd":
+		a.supervisor.Args = append(a.supervisor.Args,
+			"--etcd-servers=https://127.0.0.1:2379",
+			"--etcd-cafile=/var/lib/mke/pki/etcd/ca.crt",
+			"--etcd-certfile=/var/lib/mke/pki/apiserver-etcd-client.crt",
+			"--etcd-keyfile=/var/lib/mke/pki/apiserver-etcd-client.key")
+	default:
+		return errors.New(fmt.Sprintf("invalid storate type: %s", a.ClusterConfig.Spec.Storage.Type))
 	}
 
 	a.supervisor.Supervise()
