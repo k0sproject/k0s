@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,12 +19,12 @@ import (
 // ServerCommand ...
 func ServerCommand() *cli.Command {
 	return &cli.Command{
-		Name:            "server",
-		Usage:           "Run server",
-		Action:          startServer,
+		Name:   "server",
+		Usage:  "Run server",
+		Action: startServer,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "config",
+				Name:  "config",
 				Value: "mke.yaml",
 			},
 		},
@@ -49,9 +51,18 @@ func startServer(ctx *cli.Context) error {
 
 	components := make(map[string]component.Component)
 
-	components["kine"] = &server.Kine{
-		Config: clusterConfig.Spec.Storage.Kine,
+	switch clusterConfig.Spec.Storage.Type {
+	case "kine", "":
+		components["storage"] = &server.Kine{
+			Config: clusterConfig.Spec.Storage.Kine,
+		}
+	case "etcd":
+		components["storage"] = &server.Etcd{}
+	default:
+		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
+	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
+
 	components["kube-apiserver"] = &server.ApiServer{
 		ClusterConfig: clusterConfig,
 	}
@@ -60,7 +71,6 @@ func startServer(ctx *cli.Context) error {
 		ClusterConfig: clusterConfig,
 	}
 	components["bundle-manager"] = &applier.Manager{}
-
 	// extract needed components
 	for _, comp := range components {
 		if err := comp.Init(); err != nil {
@@ -78,7 +88,7 @@ func startServer(ctx *cli.Context) error {
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// Components started one-by-one as there's specific order we want
-	components["kine"].Run()
+	components["storage"].Run()
 	components["kube-apiserver"].Run()
 	components["kube-scheduler"].Run()
 	components["kube-ccm"].Run()
@@ -105,7 +115,7 @@ func startServer(ctx *cli.Context) error {
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()
 	components["kube-apiserver"].Stop()
-	components["kine"].Stop()
+	components["storage"].Stop()
 
 	return nil
 }
