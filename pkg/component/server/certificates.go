@@ -87,6 +87,45 @@ func (c *Certificates) Run() error {
 	}
 	c.CACert = string(cert)
 
+	if c.clusterSpec.Storage.Type == "etcd" {
+		// Etcd CA
+		if err := c.loadOrGenerateCA(filepath.Join("etcd", "ca"), "etcd-ca"); err != nil {
+			return err
+		}
+
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
+		// etcd client cert
+		etcdCertReq := certReq{
+			name:   "apiserver-etcd-client",
+			cn:     "apiserver-etcd-client",
+			o:      "apiserver-etcd-client",
+			caCert: etcdCaCertPath,
+			caKey:  etcdCaCertKey,
+			hostnames: []string{
+				"127.0.0.1",
+				"localhost",
+			},
+		}
+		if err := c.loadOrGenerateCert(etcdCertReq); err != nil {
+			return err
+		}
+		// etcd server cert
+		etcdCertReq = certReq{
+			name:   filepath.Join("etcd", "server"),
+			cn:     "etcd-server",
+			o:      "etcd-server",
+			caCert: etcdCaCertPath,
+			caKey:  etcdCaCertKey,
+			hostnames: []string{
+				"127.0.0.1",
+				"localhost",
+			},
+		}
+		if err := c.loadOrGenerateCert(etcdCertReq); err != nil {
+			return err
+		}
+	}
+
 	// Front proxy CA
 	if err := c.loadOrGenerateCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
 		return err
@@ -213,7 +252,7 @@ func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
 		return nil
 	}
 
-	err := os.MkdirAll(constant.CertRoot, 0700)
+	err := os.MkdirAll(filepath.Dir(keyFile), 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
 	}

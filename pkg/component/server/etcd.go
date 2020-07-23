@@ -31,8 +31,12 @@ func (k *Etcd) Run() error {
 		Dir:     constant.DataDir,
 		Args: []string{
 			"--data-dir=/var/lib/mke/etcd",
-			"--listen-client-urls=http://127.0.0.1:2379",
-			"--advertise-client-urls=http://127.0.0.1:2379",
+			"--listen-client-urls=https://127.0.0.1:2379",
+			"--advertise-client-urls=https://127.0.0.1:2379",
+			"--client-cert-auth=true",
+			"--trusted-ca-file=/var/lib/mke/pki/etcd/ca.crt",
+			"--cert-file=/var/lib/mke/pki/etcd/server.crt",
+			"--key-file=/var/lib/mke/pki/etcd/server.key",
 		},
 	}
 
