@@ -20,7 +20,7 @@ type ControllerManager struct {
 
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"), constant.Group)
 }
 
 // Run runs kube ControllerManager

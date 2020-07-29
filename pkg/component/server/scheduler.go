@@ -18,7 +18,7 @@ type Scheduler struct {
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-scheduler"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kube-scheduler"), constant.Group)
 }
 
 // Run runs kube scheduler

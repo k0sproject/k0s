@@ -35,7 +35,7 @@ func (k *Kine) Init() error {
 			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(dsURL.Path))
 		}
 	}
-	return assets.Stage(constant.DataDir, path.Join("bin", "kine"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kine"), constant.Group)
 }
 
 // Run runs kine

@@ -15,4 +15,7 @@ const (
 
 	// PidDir defines the location of supervised pid files
 	PidDir = "/run/mke"
+
+	// Group defines group name for shared directories
+	Group = "mke"
 )

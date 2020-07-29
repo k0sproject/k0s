@@ -21,7 +21,7 @@ type ApiServer struct {
 
 // Init extracts needed binaries
 func (a *ApiServer) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-apiserver"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kube-apiserver"), constant.Group)
 }
 
 // Run runs kube api

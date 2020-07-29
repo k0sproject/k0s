@@ -252,9 +252,17 @@ func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
 		return nil
 	}
 
-	err := os.MkdirAll(filepath.Dir(keyFile), 0700)
+	err := os.MkdirAll(filepath.Dir(keyFile), 0750)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
+	}
+
+	gid, err := util.GetGid("mke")
+	if err != nil {
+		err = os.Chown(filepath.Dir(keyFile), -1, gid)
+		if err != nil {
+			logrus.Warning(err)
+		}
 	}
 
 	req := new(csr.CertificateRequest)
