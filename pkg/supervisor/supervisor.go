@@ -28,6 +28,38 @@ type Supervisor struct {
 	done chan bool
 }
 
+// processWantQuit waits for a process to exit or a shut down signal
+// returns true if shutdown is requested
+func (s *Supervisor) processWantQuit() bool {
+	log := logrus.WithField("component", s.Name)
+	waitresult := make(chan error)
+	go func() {
+		waitresult <- s.cmd.Wait()
+	}()
+
+	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
+	ioutil.WriteFile(s.PidFile, pidbuf, 0644)
+
+	select {
+	case <-s.quit:
+		log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
+		err := s.cmd.Process.Signal(syscall.SIGTERM)
+		if err != nil {
+			log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
+		} else {
+			err = <-waitresult
+		}
+		return true
+	case err := <-waitresult:
+		if err != nil {
+			log.Warn(err)
+		} else {
+			log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
+		}
+	}
+	return false
+}
+
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise() {
 	s.quit = make(chan bool)
@@ -59,28 +91,9 @@ func (s *Supervisor) Supervise() {
 				log.Warnf("Failed to start: %s", err)
 			} else {
 				log.Info("Started succesfully, go nuts")
-			}
-			waitresult := make(chan error)
-			go func() {
-				waitresult <- s.cmd.Wait()
-			}()
-
-			pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid)+"\n")
-			ioutil.WriteFile(s.PidFile, pidbuf, 0644)
-
-			select {
-			case <-s.quit:
-				log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
-				err = s.cmd.Process.Signal(syscall.SIGTERM)
-				if err != nil {
-					log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
-				} else {
-					err = <-waitresult
+				if s.processWantQuit() {
+					return
 				}
-				return
-			case err = <-waitresult:
-				log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
-
 			}
 
 			// TODO Maybe some backoff thingy would be nice
