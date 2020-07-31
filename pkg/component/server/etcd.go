@@ -27,7 +27,7 @@ type Etcd struct {
 // Init extracts the needed binaries
 func (e *Etcd) Init() error {
 	var err error
-	e.uid, err = util.GetUid("etcd")
+	e.uid, err = util.GetUid(constant.EtcdUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
@@ -46,11 +46,6 @@ func (e *Etcd) Init() error {
 	}
 
 	e.certDir = path.Join(constant.CertRoot, "etcd")
-	err = os.Chown(e.certDir, e.uid, e.gid)
-	if err != nil {
-		return errors.Wrapf(err, "failed to chown %s", e.certDir)
-	}
-
 	os.Chown(path.Join(e.certDir, "ca.crt"), e.uid, e.gid)
 	os.Chown(path.Join(e.certDir, "server.crt"), e.uid, e.gid)
 	os.Chown(path.Join(e.certDir, "server.key"), e.uid, e.gid)

@@ -18,4 +18,10 @@ const (
 
 	// Group defines group name for shared directories
 	Group = "mke"
+
+	// User accounts for services
+	EtcdUser      = "etcd"
+	ApiserverUser = "kube-apiserver"
+	CcmUser       = "kube-ccm"
+	SchedulerUser = "kube-scheduler"
 )
