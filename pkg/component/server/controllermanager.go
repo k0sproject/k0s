@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/Mirantis/mke/pkg/util"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,10 +19,23 @@ import (
 type ControllerManager struct {
 	ClusterConfig *config.ClusterConfig
 	supervisor    supervisor.Supervisor
+	uid           int
+	gid           int
 }
 
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
+	var err error
+	a.uid, err = util.GetUid(constant.ControllerManagerUser)
+	if err != nil {
+		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
+	}
+	a.gid, _ = util.GetGid(constant.Group)
+
+	// controller manager should be the only component that needs access to
+	// ca.key so let it own it.
+	os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1)
+
 	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"), constant.Group)
 }
 
@@ -52,6 +68,8 @@ func (a *ControllerManager) Run() error {
 			"--use-service-account-credentials=true",
 			"--controllers=*,tokencleaner",
 		},
+		Uid: a.uid,
+		Gid: a.gid,
 	}
 
 	a.supervisor.Supervise()

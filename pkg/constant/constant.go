@@ -20,8 +20,8 @@ const (
 	Group = "mke"
 
 	// User accounts for services
-	EtcdUser      = "etcd"
-	ApiserverUser = "kube-apiserver"
-	CcmUser       = "kube-ccm"
-	SchedulerUser = "kube-scheduler"
+	EtcdUser              = "etcd"
+	ApiserverUser         = "kube-apiserver"
+	ControllerManagerUser = "kube-controller-manager"
+	SchedulerUser         = "kube-scheduler"
 )

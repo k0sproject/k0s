@@ -170,7 +170,7 @@ func (c *Certificates) Run() error {
 		caCert: caCertPath,
 		caKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(ccmReq, constant.CcmUser); err != nil {
+	if err := c.loadOrGenerateCert(ccmReq, constant.ControllerManagerUser); err != nil {
 		return err
 	}
 
