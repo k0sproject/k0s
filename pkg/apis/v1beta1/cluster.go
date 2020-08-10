@@ -67,6 +67,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Spec = &ClusterSpec{
 		Storage: DefaultStorageSpec(),
 		Network: DefaultNetwork(),
+		API:     DefaultAPISpec(),
 	}
 
 	type yclusterconfig ClusterConfig
@@ -79,26 +80,20 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func DefaultClusterSpec() *ClusterSpec {
-	defaultSpec := ClusterSpec{
-		Storage: DefaultStorageSpec(),
-		Network: DefaultNetwork(),
-	}
+func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
-	addresses, err := util.AllAddresses()
-	if err != nil {
-		return &defaultSpec
-	}
-
-	publicAddress, err := util.FirstPublicAddress()
-	if err != nil {
-		return &defaultSpec
-	}
-
-	defaultSpec.API = &APISpec{
+	addresses, _ := util.AllAddresses()
+	publicAddress, _ := util.FirstPublicAddress()
+	return &APISpec{
 		SANs:    append(addresses, publicAddress),
 		Address: publicAddress,
 	}
+}
 
-	return &defaultSpec
+func DefaultClusterSpec() *ClusterSpec {
+	return &ClusterSpec{
+		Storage: DefaultStorageSpec(),
+		Network: DefaultNetwork(),
+		API:     DefaultAPISpec(),
+	}
 }
