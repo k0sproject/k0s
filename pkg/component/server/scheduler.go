@@ -8,16 +8,27 @@ import (
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/Mirantis/mke/pkg/util"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
 	supervisor supervisor.Supervisor
+	uid        int
+	gid        int
 }
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init() error {
+	var err error
+	a.uid, err = util.GetUid(constant.SchedulerUser)
+	if err != nil {
+		logrus.Warning(errors.Wrap(err, "Running kube-scheduler as root"))
+	}
+	a.gid, _ = util.GetGid(constant.Group)
+
 	return assets.Stage(constant.DataDir, path.Join("bin", "kube-scheduler"), constant.Group)
 }
 
@@ -35,6 +46,8 @@ func (a *Scheduler) Run() error {
 			"--bind-address=127.0.0.1",
 			"--leader-elect=true",
 		},
+		Uid: a.uid,
+		Gid: a.gid,
 	}
 	// TODO We need to dump the config file suited for mke use
 
