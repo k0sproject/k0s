@@ -41,13 +41,14 @@ func FromYaml(filename string) (*ClusterConfig, error) {
 		return nil, errors.Wrapf(err, "failed to read config file at %s", filename)
 	}
 
-	config := &ClusterConfig{
-		Spec: DefaultClusterSpec(),
-	}
-
+	config := &ClusterConfig{}
 	err = yaml.Unmarshal(buf, &config)
 	if err != nil {
 		return config, err
+	}
+
+	if config.Spec == nil {
+		config.Spec = DefaultClusterSpec()
 	}
 
 	return config, nil
