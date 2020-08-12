@@ -22,6 +22,8 @@ type Supervisor struct {
 	Args    []string
 	Dir     string
 	PidFile string
+	Uid     int
+	Gid     int
 
 	cmd  *exec.Cmd
 	quit chan bool
@@ -80,7 +82,7 @@ func (s *Supervisor) Supervise() {
 
 			// detach from the process group so children don't
 			// get signals sent directly to parent.
-			s.cmd.SysProcAttr = DetachAttr()
+			s.cmd.SysProcAttr = DetachAttr(s.Uid, s.Gid)
 
 			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.
 			s.cmd.Stdout = os.Stdout

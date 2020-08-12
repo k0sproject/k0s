@@ -42,7 +42,7 @@ type KubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kubelet"))
+	return assets.Stage(constant.DataDir, path.Join("bin", "kubelet"), constant.Group)
 }
 
 // Run runs kubelet

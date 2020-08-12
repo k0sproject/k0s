@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/Mirantis/mke/pkg/util"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,11 +19,24 @@ import (
 type ControllerManager struct {
 	ClusterConfig *config.ClusterConfig
 	supervisor    supervisor.Supervisor
+	uid           int
+	gid           int
 }
 
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"))
+	var err error
+	a.uid, err = util.GetUid(constant.ControllerManagerUser)
+	if err != nil {
+		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
+	}
+	a.gid, _ = util.GetGid(constant.Group)
+
+	// controller manager should be the only component that needs access to
+	// ca.key so let it own it.
+	os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1)
+
+	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"), constant.Group)
 }
 
 // Run runs kube ControllerManager
@@ -36,22 +52,24 @@ func (a *ControllerManager) Run() error {
 			fmt.Sprintf("--authorization-kubeconfig=%s", ccmAuthConf),
 			fmt.Sprintf("--kubeconfig=%s", ccmAuthConf),
 			"--bind-address=127.0.0.1",
-			"--client-ca-file=/var/lib/mke/pki/ca.crt",
+			fmt.Sprintf("--client-ca-file=%s", path.Join(constant.CertRoot, "ca.crt")),
 			fmt.Sprintf("--cluster-cidr=%s", a.ClusterConfig.Spec.Network.PodCIDR),
 			"--cluster-name=mke",
-			"--cluster-signing-cert-file=/var/lib/mke/pki/ca.crt",
-			"--cluster-signing-key-file=/var/lib/mke/pki/ca.key",
+			fmt.Sprintf("--cluster-signing-cert-file=%s", path.Join(constant.CertRoot, "ca.crt")),
+			fmt.Sprintf("--cluster-signing-key-file=%s", path.Join(constant.CertRoot, "ca.key")),
 			"--controllers=*,bootstrapsigner,tokencleaner",
 			"--enable-hostpath-provisioner=true",
 			"--leader-elect=true",
 			"--node-cidr-mask-size=24",
-			"--requestheader-client-ca-file=/var/lib/mke/pki/front-proxy-ca.crt",
-			"--root-ca-file=/var/lib/mke/pki/ca.crt",
-			"--service-account-private-key-file=/var/lib/mke/pki/sa.key",
+			fmt.Sprintf("--requestheader-client-ca-file=%s", path.Join(constant.CertRoot, "front-proxy-ca.crt")),
+			fmt.Sprintf("--root-ca-file=%s", path.Join(constant.CertRoot, "ca.crt")),
+			fmt.Sprintf("--service-account-private-key-file=%s", path.Join(constant.CertRoot, "sa.key")),
 			fmt.Sprintf("--service-cluster-ip-range=%s", a.ClusterConfig.Spec.Network.ServiceCIDR),
 			"--use-service-account-credentials=true",
 			"--controllers=*,tokencleaner",
 		},
+		Uid: a.uid,
+		Gid: a.gid,
 	}
 
 	a.supervisor.Supervise()

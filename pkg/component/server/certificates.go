@@ -106,7 +106,7 @@ func (c *Certificates) Run() error {
 				"localhost",
 			},
 		}
-		if err := c.loadOrGenerateCert(etcdCertReq); err != nil {
+		if err := c.loadOrGenerateCert(etcdCertReq, constant.ApiserverUser); err != nil {
 			return err
 		}
 		// etcd server cert
@@ -121,7 +121,7 @@ func (c *Certificates) Run() error {
 				"localhost",
 			},
 		}
-		if err := c.loadOrGenerateCert(etcdCertReq); err != nil {
+		if err := c.loadOrGenerateCert(etcdCertReq, constant.EtcdUser); err != nil {
 			return err
 		}
 	}
@@ -140,7 +140,7 @@ func (c *Certificates) Run() error {
 		caCert: proxyCertPath,
 		caKey:  proxyCertKey,
 	}
-	if err := c.loadOrGenerateCert(proxyClientReq); err != nil {
+	if err := c.loadOrGenerateCert(proxyClientReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
@@ -152,7 +152,7 @@ func (c *Certificates) Run() error {
 		caCert: caCertPath,
 		caKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(adminReq); err != nil {
+	if err := c.loadOrGenerateCert(adminReq, "root"); err != nil {
 		return err
 	}
 	if err := kubeConfig(filepath.Join(constant.CertRoot, "admin.conf"), "https://localhost:6443", c.CACert, c.Certs["admin"].Cert, c.Certs["admin"].Key); err != nil {
@@ -170,7 +170,7 @@ func (c *Certificates) Run() error {
 		caCert: caCertPath,
 		caKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(ccmReq); err != nil {
+	if err := c.loadOrGenerateCert(ccmReq, constant.ControllerManagerUser); err != nil {
 		return err
 	}
 
@@ -185,7 +185,7 @@ func (c *Certificates) Run() error {
 		caCert: caCertPath,
 		caKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(schedulerReq); err != nil {
+	if err := c.loadOrGenerateCert(schedulerReq, constant.SchedulerUser); err != nil {
 		return err
 	}
 
@@ -200,7 +200,7 @@ func (c *Certificates) Run() error {
 		caCert: caCertPath,
 		caKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(kubeletClientReq); err != nil {
+	if err := c.loadOrGenerateCert(kubeletClientReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
@@ -232,7 +232,7 @@ func (c *Certificates) Run() error {
 		caKey:     caCertKey,
 		hostnames: hostnames,
 	}
-	if err := c.loadOrGenerateCert(serverReq); err != nil {
+	if err := c.loadOrGenerateCert(serverReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
@@ -252,7 +252,7 @@ func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
 		return nil
 	}
 
-	err := os.MkdirAll(filepath.Dir(keyFile), 0700)
+	err := os.MkdirAll(filepath.Dir(keyFile), 0750)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
 	}
@@ -271,7 +271,25 @@ func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
 	}
 
 	err = ioutil.WriteFile(keyFile, key, 0600)
-	err = ioutil.WriteFile(certFile, cert, 0600)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(certFile, cert, 0640)
+	if err != nil {
+		return err
+	}
+
+	gid, err := util.GetGid(constant.Group)
+	if err == nil {
+		paths := []string{filepath.Dir(keyFile), keyFile, certFile}
+		for _, path := range paths {
+			err = os.Chown(path, -1, gid)
+			if err != nil {
+				logrus.Warning(err)
+			}
+		}
+	}
 
 	return err
 }
@@ -285,11 +303,17 @@ type certReq struct {
 	hostnames []string
 }
 
-func (c *Certificates) loadOrGenerateCert(certReq certReq) error {
+func (c *Certificates) loadOrGenerateCert(certReq certReq, ownerName string) error {
 	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.name))
 	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.name))
 
+	gid, err := util.GetGid(constant.Group)
+	uid, err := util.GetUid(ownerName)
+
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
+		_ = os.Chown(keyFile, uid, gid)
+		_ = os.Chown(certFile, uid, gid)
+
 		cert, err := ioutil.ReadFile(certFile)
 		key, err := ioutil.ReadFile(keyFile)
 		if err != nil {
@@ -317,7 +341,7 @@ func (c *Certificates) loadOrGenerateCert(certReq certReq) error {
 
 	var key, csrBytes []byte
 	g := &csr.Generator{Validator: genkey.Validator}
-	csrBytes, key, err := g.ProcessRequest(&req)
+	csrBytes, key, err = g.ProcessRequest(&req)
 	if err != nil {
 		key = nil
 		return err
@@ -349,7 +373,10 @@ func (c *Certificates) loadOrGenerateCert(certReq certReq) error {
 		Cert: string(cert),
 	}
 	err = ioutil.WriteFile(keyFile, key, 0600)
-	err = ioutil.WriteFile(certFile, cert, 0600)
+	err = ioutil.WriteFile(certFile, cert, 0640)
+
+	err = os.Chown(keyFile, uid, gid)
+	err = os.Chown(certFile, uid, gid)
 
 	return nil
 }

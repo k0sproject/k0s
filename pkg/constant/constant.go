@@ -15,4 +15,13 @@ const (
 
 	// PidDir defines the location of supervised pid files
 	PidDir = "/run/mke"
+
+	// Group defines group name for shared directories
+	Group = "mke"
+
+	// User accounts for services
+	EtcdUser              = "etcd"
+	ApiserverUser         = "kube-apiserver"
+	ControllerManagerUser = "kube-controller-manager"
+	SchedulerUser         = "kube-scheduler"
 )
