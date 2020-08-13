@@ -10,6 +10,7 @@ TMPDIR ?= .tmp
 
 ARCH = amd64
 
+.PHONY: all
 all: build
 
 bin/runc:
@@ -60,8 +61,10 @@ pkg/assets/zz_generated_bindata.go: bin/kube-scheduler bin/kube-apiserver bin/ku
 mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
 	go build -o mke main.go
 
+.PHONY: build
 build: mke
 
+.PHONY: clean
 clean:
 	rm -f pkg/assets/zz_generated_bindata.go mke
 	rm -rf bin/ $(TMPDIR)/kine
