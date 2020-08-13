@@ -55,14 +55,21 @@ bin/kube-controller-manager:
 	curl --silent -L -o bin/kube-controller-manager https://storage.googleapis.com/kubernetes-release/release/v$(KUBE_VERSION)/bin/linux/$(ARCH)/kube-controller-manager
 
 
-pkg/assets/zz_generated_bindata.go: bin/kube-scheduler bin/kube-apiserver bin/kube-controller-manager bin/kubelet bin/containerd bin/runc bin/kine bin/etcd
-	go-bindata -o pkg/assets/zz_generated_bindata.go -pkg assets bin/
+pkg/assets/zz_generated_bindata.go: bins
+	go-bindata -o pkg/assets/zz_generated_bindata.go \
+		-pkg assets \
+		-prefix embedded-bins/staging/linux/ \
+		embedded-bins/staging/linux/bin \
 
 mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
 	go build -o mke main.go
 
 .PHONY: build
 build: mke
+
+.PHONY: bins
+bins:
+	$(MAKE) -C embedded-bins
 
 .PHONY: clean
 clean:
