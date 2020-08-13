@@ -1,0 +1,24 @@
+FROM alpine:3.12 AS build
+
+ENV VERSION=1.18.5
+ENV GOPATH=/go
+ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
+
+RUN apk add build-base git go go-bindata linux-headers rsync grep coreutils bash
+
+RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
+RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
+WORKDIR /go/src/github.com/kubernetes/kubernetes
+RUN \
+	for cmd in $COMMANDS; do \
+		make GOFLAGS="-v" GOLDFLAGS="-extldflags=-static" WHAT=cmd/$cmd || break;\
+	done
+
+FROM scratch
+COPY --from=build \
+	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kubelet \
+	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kube-apiserver \
+	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kube-scheduler \
+	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kube-controller-manager \
+	/bin/
+CMD ["/bin/kubelet"]
