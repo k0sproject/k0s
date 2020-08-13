@@ -1,0 +1,4 @@
+.container.*
+.docker-image.*
+*.tar
+
