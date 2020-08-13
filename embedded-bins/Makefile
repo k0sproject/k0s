@@ -1,9 +1,15 @@
 
-tarballs = $(patsubst %/Dockerfile,%.tar,$(wildcard */Dockerfile))
+staging-pkgs = $(patsubst %/Dockerfile,staging/.%,$(wildcard */Dockerfile))
 
-%.tar: .container.%
-	docker export $$(cat $<) > $@.tmp
-	mv $@.tmp $@
+.PHONY: all
+all: $(staging-pkgs) $(patsubst staging/.%,.container.%,$(staging-pkgs))
+
+staging/linux/bin:
+	mkdir -p $@
+
+staging/.%: .container.% | staging/linux/bin
+	docker export $$(cat $<) | tar -C staging/linux -xv bin/
+	touch $@
 
 .container.%: .docker-image.%.stamp
 	docker create mkebuild$(basename $<) > $@.tmp
@@ -12,9 +18,6 @@ tarballs = $(patsubst %/Dockerfile,%.tar,$(wildcard */Dockerfile))
 .docker-image.%.stamp: %/Dockerfile
 	docker build -t mkebuild$(basename $@) -f $< .
 	touch $@
-
-.PHONY: all
-all: $(tarballs) $(patsubst %.tar,.container.%,$(tarballs))
 
 .PHONY: clean
 clean:
@@ -29,4 +32,4 @@ clean:
 				&& rm $$i;\
 		fi; \
 	done
-	rm *.tar
+	rm -rf staging
