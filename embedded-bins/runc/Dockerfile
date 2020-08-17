@@ -1,6 +1,6 @@
 FROM alpine:edge AS build
 
-ENV VERSION=1.0.0-rc92
+ARG VERSION
 
 ENV GOPATH=/go
 

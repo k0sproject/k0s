@@ -1,6 +1,6 @@
 FROM alpine:edge AS build
 
-ENV VERSION=1.3.7
+ARG VERSION
 ENV GOPATH=/go
 
 RUN apk upgrade -U -a && apk add \
