@@ -1,5 +1,5 @@
 
-runc_version = 1.0.0-rc90
+runc_version = 1.0.0-rc92
 containerd_version = 1.3.6
 kubernetes_version = 1.18.5
 kine_version = 0.4.0
@@ -45,7 +45,7 @@ staging/.%: .container.% | $(bindir)
 	mv $@.tmp $@
 
 .docker-image.%.stamp: %/Dockerfile
-	docker build -t mkebuild$(basename $@) -f $< .
+	docker build -t mkebuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
 	touch $@
 
 else

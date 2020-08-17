@@ -7,7 +7,7 @@ EMBEDDED_BINS_BUILDMODE=docker
 .PHONY: all
 all: build
 
-pkg/assets/zz_generated_bindata.go: bins
+pkg/assets/zz_generated_bindata.go: .bins.stamp
 	go-bindata -o pkg/assets/zz_generated_bindata.go \
 		-pkg assets \
 		-prefix embedded-bins/staging/linux/ \
@@ -20,11 +20,14 @@ mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
 build: mke
 
 .PHONY: bins
-bins:
+bins: .bins.stamp
+
+.bins.stamp:
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE)
+	touch $@
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_bindata.go mke
+	rm -f pkg/assets/zz_generated_bindata.go mke .bins.stamp
 	$(MAKE) -C embedded-bins clean
 

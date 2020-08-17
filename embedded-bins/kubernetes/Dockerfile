@@ -1,6 +1,6 @@
 FROM alpine:3.12 AS build
 
-ENV VERSION=1.18.5
+ARG VERSION
 ENV GOPATH=/go
 ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
 

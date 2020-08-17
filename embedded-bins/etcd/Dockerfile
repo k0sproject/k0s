@@ -1,6 +1,6 @@
 FROM alpine:3.12 AS build
 
-ENV VERSION=3.4.10
+ARG VERSION
 
 RUN apk add build-base git go
 
