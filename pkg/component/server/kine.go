@@ -61,7 +61,7 @@ func (k *Kine) Run() error {
 
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
-		BinPath: path.Join(constant.DataDir, "bin", "kine"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "kine"),
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),

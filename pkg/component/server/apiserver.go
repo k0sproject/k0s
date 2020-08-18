@@ -39,7 +39,7 @@ func (a *ApiServer) Run() error {
 	logrus.Info("Starting kube-apiserver")
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-apiserver",
-		BinPath: path.Join(constant.DataDir, "bin", "kube-apiserver"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "kube-apiserver"),
 		Args: []string{
 			"--allow-privileged=true",
 			"--authorization-mode=Node,RBAC",
