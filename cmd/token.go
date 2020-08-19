@@ -30,6 +30,11 @@ func TokenCommand() *cli.Command {
 				EnvVars:   []string{"KUBECONFIG"},
 				TakesFile: true,
 			},
+			&cli.StringFlag{
+				Name:  "role",
+				Usage: "Either worker or controller",
+				Value: "worker",
+			},
 		},
 	}
 }
@@ -45,13 +50,13 @@ clusters:
 contexts:
 - context:
     cluster: mke
-    user: kubelet-bootstrap
+    user: {{.User}}
   name: mke
 current-context: mke
 kind: Config
 preferences: {}
 users:
-- name: kubelet-bootstrap
+- name: {{.User}}
   user:
     token: {{.Token}}
 `))
@@ -63,7 +68,7 @@ func CreateCommand() *cli.Command {
 		Usage: "Create join token",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "expiry",
+				Name:  "expiry",
 				Usage: "set duration time for token",
 				Value: "0",
 			},
@@ -77,7 +82,7 @@ func CreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			token, err := m.Create(expiry)
+			token, err := m.Create(expiry, c.String("role"))
 			if err != nil {
 				return err
 			}
@@ -89,9 +94,16 @@ func CreateCommand() *cli.Command {
 			data := struct {
 				CACert string
 				Token  string
+				User   string
 			}{
 				CACert: base64.StdEncoding.EncodeToString(caCert),
 				Token:  token,
+			}
+
+			if c.String("role") == "worker" {
+				data.User = "kubelet-bootstrap"
+			} else {
+				data.User = "controller-bootstrap"
 			}
 
 			var buf bytes.Buffer
