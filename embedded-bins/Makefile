@@ -84,6 +84,6 @@ $(bindir)/kine: | $(bindir)
 			&& cd $(tmpdir) \
 			&& git clone -b v$(kine_version) --depth=1 https://github.com/rancher/kine.git; \
 	fi
-	cd $(tmpdir)/kine && go build -o $(PWD)/$@
+	cd $(tmpdir)/kine && go build -o $(CURDIR)/$@
 
 endif
