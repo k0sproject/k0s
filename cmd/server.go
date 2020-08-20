@@ -171,8 +171,3 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 
 	return reconcilers
 }
-
-func syncCA(joinAddress string, token string) error {
-
-	return nil
-}
