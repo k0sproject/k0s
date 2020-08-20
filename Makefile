@@ -14,7 +14,7 @@ pkg/assets/zz_generated_bindata.go: .bins.stamp
 		embedded-bins/staging/linux/bin \
 
 mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
-	go build -o mke main.go
+	CGO_ENABLED=0 go build -o mke main.go
 
 .PHONY: build
 build: mke
