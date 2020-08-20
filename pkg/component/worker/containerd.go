@@ -31,7 +31,7 @@ func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
-		BinPath: path.Join(constant.DataDir, "bin", "containerd"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "containerd"),
 	}
 	// TODO We need to dump the config file suited for mke use
 

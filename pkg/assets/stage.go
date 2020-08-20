@@ -27,6 +27,15 @@ func ExecutableIsOlder(filepath string) bool {
 	return exinfo.ModTime().Unix() < pathinfo.ModTime().Unix()
 }
 
+// StagedBinPath returns the path of the staged bin or the name without path if it does not exist
+func StagedBinPath(dataDir, name string) string {
+	p := filepath.Join(dataDir, "bin", name)
+	if util.FileExists(p) {
+		return p
+	}
+	return name
+}
+
 // Stage ...
 func Stage(dataDir, name, group string) error {
 	p := filepath.Join(dataDir, name)
@@ -37,7 +46,7 @@ func Stage(dataDir, name, group string) error {
 	}
 
 	content, err := Asset(name)
-	if err != nil {
+	if err != nil || content == nil {
 		return err
 	}
 	logrus.Debug("Writing static file: ", p)

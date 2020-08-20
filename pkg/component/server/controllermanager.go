@@ -45,7 +45,7 @@ func (a *ControllerManager) Run() error {
 	ccmAuthConf := filepath.Join(constant.CertRoot, "ccm.conf")
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-ccm",
-		BinPath: path.Join(constant.DataDir, "bin", "kube-controller-manager"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "kube-controller-manager"),
 		Args: []string{
 			"--allocate-node-cidrs=true",
 			fmt.Sprintf("--authentication-kubeconfig=%s", ccmAuthConf),

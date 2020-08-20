@@ -59,7 +59,7 @@ func (e *Etcd) Run() error {
 
 	e.supervisor = supervisor.Supervisor{
 		Name:    "etcd",
-		BinPath: path.Join(constant.DataDir, "bin", "etcd"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "etcd"),
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--data-dir=%s", e.etcdDataDir),

@@ -38,7 +38,7 @@ func (a *Scheduler) Run() error {
 	schedulerAuthConf := filepath.Join(constant.CertRoot, "scheduler.conf")
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
-		BinPath: path.Join(constant.DataDir, "bin", "kube-scheduler"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "kube-scheduler"),
 		Args: []string{
 			fmt.Sprintf("--authentication-kubeconfig=%s", schedulerAuthConf),
 			fmt.Sprintf("--authorization-kubeconfig=%s", schedulerAuthConf),

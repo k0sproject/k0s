@@ -50,7 +50,7 @@ func (k *Kubelet) Run() error {
 	logrus.Info("Starting containerD")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
-		BinPath: path.Join(constant.DataDir, "bin", "kubelet"),
+		BinPath: assets.StagedBinPath(constant.DataDir, "kubelet"),
 		Args: []string{
 			"--container-runtime=remote",
 			"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",

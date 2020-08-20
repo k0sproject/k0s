@@ -4,14 +4,26 @@ GO_SRCS := $(shell find -name '*.go')
 # EMBEDDED_BINS_BUILDMODE can be either 'docker' or 'fetch'
 EMBEDDED_BINS_BUILDMODE=docker
 
+
 .PHONY: all
 all: build
 
+ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
+pkg/assets/zz_generated_bindata.go:
+	printf "%s\n\n%s" \
+		"package assets" \
+		"func Asset(name string) ([]byte, error) { return nil, nil }" \
+		> $@
+else
+
 pkg/assets/zz_generated_bindata.go: .bins.stamp
-	go-bindata -o pkg/assets/zz_generated_bindata.go \
+	go-bindata -o $@ \
 		-pkg assets \
 		-prefix embedded-bins/staging/linux/ \
-		embedded-bins/staging/linux/bin \
+		embedded-bins/staging/linux/bin
+
+endif
+
 
 mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
 	CGO_ENABLED=0 go build -o mke main.go
