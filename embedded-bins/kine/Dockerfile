@@ -6,7 +6,7 @@ RUN apk add build-base git go
 
 RUN git clone -b v$VERSION --depth=1 https://github.com/rancher/kine.git
 WORKDIR /kine
-RUN go build -ldflags="-extldflags=-static" -o kine
+RUN go build -ldflags="-extldflags=-static -w -s" -o kine
 
 FROM scratch
 COPY --from=build /kine/kine /bin/kine

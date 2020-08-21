@@ -30,7 +30,7 @@ endif
 
 
 mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
-	CGO_ENABLED=0 go build -o mke main.go
+	CGO_ENABLED=0 go build -ldflags="-w -s" -o mke main.go
 
 .PHONY: build
 build: mke

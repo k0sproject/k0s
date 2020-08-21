@@ -10,7 +10,7 @@ RUN apk upgrade -U -a && apk add build-base git go \
 RUN mkdir -p $GOPATH/src/github.com/opencontainers/runc
 RUN git clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
 WORKDIR /go/src/github.com/opencontainers/runc
-RUN make EXTRA_LDFLAGS="-extldflags=-static"
+RUN make EXTRA_LDFLAGS="-extldflags=-static -w -s"
 
 FROM scratch
 COPY --from=build /go/src/github.com/opencontainers/runc/runc /bin/runc
