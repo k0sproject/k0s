@@ -136,8 +136,8 @@ spec:
         args:
           - --cert-dir=/tmp
           - --secure-port=4443
-		  - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-		  # Until we have proper serving cert (signed by cluster CA & proper IP sans etc.) on kubelet, not much else we can do
+          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+         # Until we have proper serving cert (signed by cluster CA & proper IP sans etc.) on kubelet, not much else we can do
           - --kubelet-insecure-tls
         ports:
         - name: https
