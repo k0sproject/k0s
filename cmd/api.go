@@ -110,7 +110,6 @@ func authMiddleware(next http.Handler) http.Handler {
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) == 2 {
 			token := parts[1]
-			// FIXME Need to check the token from kube secrets
 			if !isValidToken(token) {
 				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
 				return
