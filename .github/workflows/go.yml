@@ -34,6 +34,4 @@ jobs:
       run: go get -u github.com/go-bindata/go-bindata/...
 
     - name: Build
-      run: make build
-      env:
-        EMBEDDED_BINS_BUILDMODE: fetch
+      run: make build EMBEDDED_BINS_BUILDMODE=fetch
