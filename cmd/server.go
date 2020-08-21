@@ -27,6 +27,10 @@ func ServerCommand() *cli.Command {
 				Name:  "config",
 				Value: "mke.yaml",
 			},
+			&cli.StringFlag{
+				Name:  "join-address",
+				Usage: "The address of a pre-existing controlplane node to join into to create HA controlplane",
+			},
 		},
 	}
 }
@@ -40,6 +44,25 @@ func startServer(ctx *cli.Context) error {
 			Spec: config.DefaultClusterSpec(),
 		}
 	}
+	components := make(map[string]component.Component)
+
+	joinAddress := ctx.String("join-address")
+	if joinAddress != "" {
+		token := ctx.Args().First()
+		if token == "" {
+			return fmt.Errorf("need to give the controlplane join token as first argument")
+		}
+		components["ca-syncer"] = &server.CASyncer{
+			JoinAddress: joinAddress,
+			Token:       token,
+		}
+
+		err = components["ca-syncer"].Init()
+		err = components["ca-syncer"].Run()
+		if err != nil {
+			logrus.Warnf("something failed in CA sync: %s", err.Error())
+		}
+	}
 
 	logrus.Infof("using public address: %s", clusterConfig.Spec.API.Address)
 	logrus.Infof("using sans: %s", clusterConfig.Spec.API.SANs)
@@ -48,8 +71,6 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
-
-	components := make(map[string]component.Component)
 
 	switch clusterConfig.Spec.Storage.Type {
 	case "kine", "":
@@ -71,6 +92,8 @@ func startServer(ctx *cli.Context) error {
 		ClusterConfig: clusterConfig,
 	}
 	components["bundle-manager"] = &applier.Manager{}
+	components["mke-controlapi"] = &server.MkeControlApi{}
+
 	// extract needed components
 	for _, comp := range components {
 		if err := comp.Init(); err != nil {
@@ -93,6 +116,7 @@ func startServer(ctx *cli.Context) error {
 	components["kube-scheduler"].Run()
 	components["kube-ccm"].Run()
 	components["bundle-manager"].Run()
+	components["mke-controlapi"].Run()
 
 	// in-cluster component reconcilers
 	reconcilers := createClusterReconcilers(clusterConfig.Spec)
@@ -111,6 +135,7 @@ func startServer(ctx *cli.Context) error {
 	}
 
 	// There's specific order we want to shutdown things
+	components["mke-controlapi"].Stop()
 	components["bundle-manager"].Stop()
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()

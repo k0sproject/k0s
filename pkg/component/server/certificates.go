@@ -204,7 +204,6 @@ func (c *Certificates) Run() error {
 		return err
 	}
 
-	// TODO add way to configure DNS names and public IPs etc.
 	hostnames := []string{
 		"kubernetes",
 		"kubernetes.default",
@@ -233,6 +232,19 @@ func (c *Certificates) Run() error {
 		hostnames: hostnames,
 	}
 	if err := c.loadOrGenerateCert(serverReq, constant.ApiserverUser); err != nil {
+		return err
+	}
+
+	mkeAPIReq := certReq{
+		name:      "mke-api",
+		cn:        "mke-api",
+		o:         "kubernetes",
+		caCert:    caCertPath,
+		caKey:     caCertKey,
+		hostnames: hostnames,
+	}
+	// TODO Not sure about the user...
+	if err := c.loadOrGenerateCert(mkeAPIReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 

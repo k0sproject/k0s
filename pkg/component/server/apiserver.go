@@ -77,7 +77,7 @@ func (a *ApiServer) Run() error {
 			fmt.Sprintf("--etcd-certfile=%s", path.Join(constant.CertRoot, "apiserver-etcd-client.crt")),
 			fmt.Sprintf("--etcd-keyfile=%s", path.Join(constant.CertRoot, "apiserver-etcd-client.key")))
 	default:
-		return errors.New(fmt.Sprintf("invalid storate type: %s", a.ClusterConfig.Spec.Storage.Type))
+		return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
 	}
 
 	a.supervisor.Supervise()
