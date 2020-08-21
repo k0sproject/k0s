@@ -31,7 +31,7 @@ jobs:
         fi
 
     - name: Install go-bindata
-      run: apt-get update && apt-get install -y go-bindata
+      run: go get -u github.com/go-bindata/go-bindata/...
 
     - name: Build
       run: make build
