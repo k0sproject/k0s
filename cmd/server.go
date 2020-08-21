@@ -144,5 +144,12 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["calico"] = calico
 	}
 
+	metricServer, err := server.NewMetricServer(clusterSpec)
+	if err != nil {
+		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
+	} else {
+		reconcilers["metricServer"] = metricServer
+	}
+
 	return reconcilers
 }
