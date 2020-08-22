@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/cloudflare/cfssl v1.4.1
+	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/gobuffalo/packr/v2 v2.8.0 // indirect
 	github.com/gorilla/mux v1.7.4
