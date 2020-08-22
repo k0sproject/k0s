@@ -230,7 +230,6 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(mapper *restmapper.Defe
 			} else {
 				// need to query each namespace separately
 				for _, namespace := range namespaces {
-					//fmt.Println(namespace)
 					for _, res := range s.getPruneableResources(drClient.Namespace(namespace)) {
 						pruneableResources = append(pruneableResources, res)
 					}
