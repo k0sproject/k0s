@@ -4,23 +4,23 @@ go 1.13
 
 require (
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
-	github.com/gobuffalo/packr/v2 v2.8.0 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/evanphx/json-patch v4.5.0+incompatible
+	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gorilla/mux v1.7.4
+	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
-	github.com/spf13/cobra v1.0.0 // indirect
+	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/urfave/cli/v2 v2.2.0
 	golang.org/x/crypto v0.0.0-20200414155820-4f8f47aa7992 // indirect
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a // indirect
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
-	golang.org/x/tools v0.0.0-20200414131530-0037cb7812fa // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
-	k8s.io/cli-runtime v0.17.2
 	k8s.io/client-go v0.17.2
-	k8s.io/kubectl v0.0.0-20191219154910-1528d4eea6dd
-	sigs.k8s.io/cli-utils v0.15.0
 )
