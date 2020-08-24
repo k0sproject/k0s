@@ -29,4 +29,5 @@ require (
 replace (
 	github.com/google/certificate-transparency-go => github.com/google/certificate-transparency-go v1.1.0
 	go.etcd.io/etcd => go.etcd.io/etcd v3.3.24+incompatible
+	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.2.8
 )
