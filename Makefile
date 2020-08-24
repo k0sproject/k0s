@@ -42,6 +42,10 @@ bins: .bins.stamp
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE)
 	touch $@
 
+.PHONY: check
+check: mke
+	$(MAKE) -C tests check
+
 .PHONY: clean
 clean:
 	rm -f pkg/assets/zz_generated_bindata.go mke .bins.stamp

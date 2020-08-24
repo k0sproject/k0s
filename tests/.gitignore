@@ -1,0 +1,4 @@
+.test-*
+bin/
+footloose-*.yaml
+id_ed25519_mke*
