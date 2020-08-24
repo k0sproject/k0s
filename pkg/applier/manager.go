@@ -13,8 +13,8 @@ import (
 )
 
 type Manager struct {
-	applier Applier
-	bundlePath string
+	applier     Applier
+	bundlePath  string
 	tickerDone  chan struct{}
 	watcherDone chan struct{}
 }
@@ -53,7 +53,6 @@ func (m *Manager) Run() error {
 				}
 				// Do actual apply
 				if err := m.applier.Apply(); err != nil {
-					// Not much we can do
 					log.Warnf("failed to apply manifests: %s", err.Error())
 				} else {
 					// Only set if the apply succeeds, will make it retry on every tick in case of failures
@@ -95,7 +94,6 @@ func (m *Manager) Run() error {
 }
 
 func (m *Manager) Stop() error {
-
 	close(m.tickerDone)
 	close(m.watcherDone)
 	return nil

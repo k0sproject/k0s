@@ -91,7 +91,7 @@ func startServer(ctx *cli.Context) error {
 	components["kube-ccm"] = &server.ControllerManager{
 		ClusterConfig: clusterConfig,
 	}
-	components["bundle-manager"] = &applier.Manager{}
+	components["manifest-manager"] = &applier.Manager{}
 	components["mke-controlapi"] = &server.MkeControlApi{}
 
 	// extract needed components
@@ -115,7 +115,7 @@ func startServer(ctx *cli.Context) error {
 	components["kube-apiserver"].Run()
 	components["kube-scheduler"].Run()
 	components["kube-ccm"].Run()
-	components["bundle-manager"].Run()
+	components["manifest-manager"].Run()
 	components["mke-controlapi"].Run()
 
 	// in-cluster component reconcilers
@@ -136,7 +136,7 @@ func startServer(ctx *cli.Context) error {
 
 	// There's specific order we want to shutdown things
 	components["mke-controlapi"].Stop()
-	components["bundle-manager"].Stop()
+	components["manifest-manager"].Stop()
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()
 	components["kube-apiserver"].Stop()

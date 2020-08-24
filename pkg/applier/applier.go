@@ -42,11 +42,6 @@ func NewApplier(dir string) (Applier, error) {
 		Name: name,
 	}
 
-	err := a.init()
-	if err != nil {
-		return a, err
-	}
-
 	return a, nil
 }
 
@@ -57,6 +52,7 @@ func (a *Applier) init() error {
 	if err != nil {
 		return err
 	}
+
 	client, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return err
@@ -73,7 +69,11 @@ func (a *Applier) init() error {
 	return nil
 }
 
+// Apply resources
 func (a *Applier) Apply() error {
+	if a.client == nil {
+		a.init()
+	}
 	files, err := filepath.Glob(path.Join(a.Dir, "*.yaml"))
 	if err != nil {
 		return err
@@ -85,7 +85,12 @@ func (a *Applier) Apply() error {
 		Client:    a.client,
 		Discovery: a.discoveryClient,
 	}
-	return stack.Apply(true)
+	err = stack.Apply(true)
+	if err != nil {
+		a.discoveryClient.Invalidate()
+	}
+
+	return err
 }
 
 func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, error) {
@@ -102,8 +107,10 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 			item := &unstructured.Unstructured{
 				Object: resource,
 			}
-			resources = append(resources, item)
-			resource = nil
+			if item.GetAPIVersion() != "" && item.GetKind() != "" {
+				resources = append(resources, item)
+				resource = nil
+			}
 		}
 	}
 
