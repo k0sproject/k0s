@@ -21,13 +21,14 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.9
-	k8s.io/apimachinery v0.17.9
-	k8s.io/client-go v0.17.9
+	k8s.io/api v0.17.11
+	k8s.io/apimachinery v0.17.11
+	k8s.io/client-go v0.17.11
 )
 
 replace (
 	github.com/google/certificate-transparency-go => github.com/google/certificate-transparency-go v1.1.0
 	go.etcd.io/etcd => go.etcd.io/etcd v3.3.24+incompatible
+	golang.org/x/text => golang.org/x/text v0.3.3
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.2.8
 )
