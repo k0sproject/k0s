@@ -301,9 +301,11 @@ func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
 				logrus.Warning(err)
 			}
 		}
+	} else {
+		logrus.Warning(err)
 	}
 
-	return err
+	return nil
 }
 
 type certReq struct {
