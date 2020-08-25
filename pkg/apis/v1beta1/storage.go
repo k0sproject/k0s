@@ -1,8 +1,9 @@
 package v1beta1
 
 type StorageSpec struct {
-	Type string      `yaml:"type" validate:"oneof=kine"`
+	Type string      `yaml:"type"`
 	Kine *KineConfig `yaml:"kine"`
+	Etcd *EtcdConfig `yaml:"etcd"`
 }
 
 type KineConfig struct {
@@ -16,4 +17,8 @@ func DefaultStorageSpec() *StorageSpec {
 			DataSource: "sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared",
 		},
 	}
+}
+
+type EtcdConfig struct {
+	PeerAddress string `yaml:"peerAddress"`
 }
