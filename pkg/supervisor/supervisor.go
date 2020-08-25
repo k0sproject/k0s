@@ -30,9 +30,9 @@ type Supervisor struct {
 	done chan bool
 }
 
-// processWantQuit waits for a process to exit or a shut down signal
+// processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWantQuit() bool {
+func (s *Supervisor) processWaitQuit() bool {
 	log := logrus.WithField("component", s.Name)
 	waitresult := make(chan error)
 	go func() {
@@ -94,7 +94,7 @@ func (s *Supervisor) Supervise() {
 				log.Warnf("Failed to start: %s", err)
 			} else {
 				log.Info("Started succesfully, go nuts")
-				if s.processWantQuit() {
+				if s.processWaitQuit() {
 					return
 				}
 			}
