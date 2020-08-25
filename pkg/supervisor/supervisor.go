@@ -115,8 +115,10 @@ func (s *Supervisor) Supervise() {
 
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
-	s.quit <- true
-	<-s.done
+	if s.quit != nil {
+		s.quit <- true
+		<-s.done
+	}
 	return nil
 }
 
