@@ -8,6 +8,7 @@ import (
 
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/component/single"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -43,8 +44,9 @@ func startSingle(ctx *cli.Context) error {
 		}
 	}
 
-	// Block signals til all components are started
-	c := make(chan os.Signal)
+	// Set up signal handling. Use bufferend channel so we dont miss
+	// signals during startup
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	components["mke-server"].Run()
@@ -59,6 +61,7 @@ func startSingle(ctx *cli.Context) error {
 	} else {
 		<-c
 	}
+	logrus.Info("Shutting down mke single")
 
 	components["mke-worker"].Stop()
 	components["mke-server"].Stop()
