@@ -41,6 +41,7 @@ func (s *Supervisor) processWantQuit() bool {
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
 	ioutil.WriteFile(s.PidFile, pidbuf, 0644)
+	defer os.Remove(s.PidFile)
 
 	select {
 	case <-s.quit:
@@ -116,7 +117,6 @@ func (s *Supervisor) Supervise() {
 func (s *Supervisor) Stop() error {
 	s.quit <- true
 	<-s.done
-	os.Remove(s.PidFile)
 	return nil
 }
 
