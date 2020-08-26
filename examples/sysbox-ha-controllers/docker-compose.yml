@@ -1,0 +1,36 @@
+version: "3"
+services:
+  controller0:
+    #image: quay.io/footloose/ubuntu18.04
+    build: .
+    runtime: sysbox-runc
+    command: /bin/systemd
+    working_dir: /root
+    ports:
+      - 6443:6443
+      - 8080:8080
+    volumes:
+      - ../../mke:/usr/local/bin/mke
+      - /var/lib/mke
+      - /var/lib/containerd
+      - /var/lib/kubelet
+  controller1:
+    image: quay.io/footloose/ubuntu18.04
+    runtime: sysbox-runc
+    command: /bin/systemd
+    working_dir: /root
+    volumes:
+      - ../../mke:/usr/local/bin/mke
+      - /var/lib/mke
+      - /var/lib/containerd
+      - /var/lib/kubelet
+  controller2:
+    image: quay.io/footloose/ubuntu18.04
+    runtime: sysbox-runc
+    command: /bin/systemd
+    working_dir: /root
+    volumes:
+      - ../../mke:/usr/local/bin/mke
+      - /var/lib/mke
+      - /var/lib/containerd
+      - /var/lib/kubelet
