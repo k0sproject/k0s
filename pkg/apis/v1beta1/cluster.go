@@ -6,7 +6,7 @@ import (
 
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type ClusterConfig struct {
@@ -62,6 +62,7 @@ func DefaultClusterConfig() *ClusterConfig {
 
 // UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
 func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.Kind = "Cluster"
 	c.Metadata = &ClusterMeta{
 		Name: "mke",
 	}
