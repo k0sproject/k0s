@@ -10,8 +10,7 @@ type CaResponse struct {
 
 // EtcdRequest defines the etcd control api request structure
 type EtcdRequest struct {
-	Node string `json:"node"`
-	// ListenAddress string `json:"listenAddress"`
+	Node        string `json:"node"`
 	PeerAddress string `json:"peerAddress"`
 }
 
@@ -20,10 +19,6 @@ func (e *EtcdRequest) Validate() error {
 	if e.Node == "" {
 		return fmt.Errorf("node cannot be empty")
 	}
-
-	// if e.ListenAddress == "" {
-	// 	return fmt.Errorf("listenAddress cannot be empty")
-	// }
 
 	if e.PeerAddress == "" {
 		return fmt.Errorf("peerAddress cannot be empty")

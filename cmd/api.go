@@ -64,7 +64,6 @@ func startApi(ctx *cli.Context) error {
 
 func etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-		logrus.Warn("********* etcd handler *********")
 		var etcdReq v1beta1.EtcdRequest
 		err := json.NewDecoder(req.Body).Decode(&etcdReq)
 		if err != nil {

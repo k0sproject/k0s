@@ -118,12 +118,9 @@ func (e *Etcd) Run() error {
 				return err
 			}
 		}
-		// etcd sync API cannot give our own address back, we need to add it
-		logrus.Warnf("********** initial cluster arg: %v, len: %d", etcdResponse.InitialCluster, len(etcdResponse.InitialCluster))
+
 		args = append(args, fmt.Sprintf("--initial-cluster=%s", strings.Join(etcdResponse.InitialCluster, ",")))
 		args = append(args, "--initial-cluster-state=existing")
-	} else {
-		//args = append(args, fmt.Sprintf("--initial-cluster=%s=https://%s:2380", name, e.Config.PeerAddress))
 	}
 
 	if err := e.setupCerts(); err != nil {
