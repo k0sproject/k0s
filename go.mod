@@ -6,6 +6,8 @@ require (
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
+
+	github.com/google/certificate-transparency-go v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.6 // indirect
@@ -20,7 +22,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/api v0.17.9
-	k8s.io/apimachinery v0.17.9
-	k8s.io/client-go v0.17.9
+	k8s.io/api v0.17.11
+	k8s.io/apimachinery v0.17.11
+	k8s.io/client-go v0.17.11
 )
