@@ -19,6 +19,8 @@ require (
 	golang.org/x/crypto v0.0.0-20200414155820-4f8f47aa7992 // indirect
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
+
+	golang.org/x/text v0.3.3 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.3.0
