@@ -1,7 +1,8 @@
 package assets
 
 import (
-	"io/ioutil"
+	"compress/gzip"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -39,40 +40,69 @@ func StagedBinPath(dataDir, name string) string {
 // Stage ...
 func Stage(dataDir, name, group string) error {
 	p := filepath.Join(dataDir, name)
+	logrus.Infof("Staging %s", name)
+
+	err := os.MkdirAll(filepath.Dir(p), 0750)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
+	}
+
+	/* set group woner of the directories */
+	gid, _ := util.GetGid(group)
+	if gid != 0 {
+		for _, path := range []string{dataDir, filepath.Dir(p)} {
+			logrus.Debugf("setting group ownership for %s to %d", path, gid)
+			err := os.Chown(path, -1, gid)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	if ExecutableIsOlder(p) {
 		logrus.Debug("Re-use existing file:", p)
 		return nil
 	}
 
-	content, err := Asset(name)
-	if err != nil || content == nil {
+	gzname := name + ".gz"
+	offs, embedded := Offsets[gzname]
+	if !embedded {
+		logrus.Debug("Skipping not embedded file:", gzname)
+		return nil
+	}
+	logrus.Debugf("%s is at offset %d", gzname, offs)
+
+	infile, err := os.Open(os.Args[0])
+	if err != nil {
+		logrus.Warn("Failed to open ", os.Args[0])
 		return err
 	}
-	logrus.Debug("Writing static file: ", p)
-	err = os.MkdirAll(filepath.Dir(p), 0750)
+	defer infile.Close()
+
+	// find location at EOF - BinDataSize + offs
+	infile.Seek(-BinDataSize+offs, 2)
+	gz, err := gzip.NewReader(infile)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
+		return errors.Wrapf(err, "Failed to create gzip reader for %s", name)
 	}
+
+	logrus.Debug("Writing static file: ", p)
 
 	os.Remove(p)
-	if err := ioutil.WriteFile(p, content, 0640); err != nil {
-		return errors.Wrapf(err, "failed to write to %s", name)
+	f, err := os.Create(p)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s", p)
 	}
-	if err := os.Chmod(p, 0550); err != nil {
-		return errors.Wrapf(err, "failed to chmod %s", name)
+	defer f.Close()
+
+	err = f.Chmod(0550)
+	if err != nil {
+		return errors.Wrapf(err, "failed to chmod %s", p)
 	}
 
-	gid, _ := util.GetGid(group)
-	if gid != 0 {
-		paths := []string{dataDir, filepath.Dir(p), p}
-		for _, path := range paths {
-			logrus.Debugf("setting group ownership for %s to %d", path, gid)
-			err = os.Chown(path, -1, gid)
-			if err != nil {
-				return err
-			}
-		}
+	_, err = io.Copy(f, gz)
+	if err != nil {
+		return errors.Wrapf(err, "failed to write to %s", name)
 	}
 
 	return nil
