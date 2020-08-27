@@ -52,6 +52,6 @@ check: mke
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_bindata.go mke .bins.stamp
+	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp
 	$(MAKE) -C embedded-bins clean
 
