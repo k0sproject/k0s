@@ -1,0 +1,8 @@
+[Unit]
+Description=Mirantis Kubernetes Engine
+
+[Service]
+ExecStart=/usr/local/bin/mke server --config /etc/mke/config.yaml
+
+[Install]
+WantedBy=multi-user.target
