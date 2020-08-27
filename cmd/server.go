@@ -103,7 +103,9 @@ func startServer(ctx *cli.Context) error {
 	components["kube-apiserver"] = &server.ApiServer{
 		ClusterConfig: clusterConfig,
 	}
-	components["kube-scheduler"] = &server.Scheduler{}
+	components["kube-scheduler"] = &server.Scheduler{
+		ClusterConfig: clusterConfig,
+	}
 	components["kube-ccm"] = &server.ControllerManager{
 		ClusterConfig: clusterConfig,
 	}
