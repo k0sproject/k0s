@@ -125,8 +125,9 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 
-	// Block signal til we started up all components
-	c := make(chan os.Signal)
+	// Set up signal handling. Use bufferend channel so we dont miss
+	// signals during startup
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// Components started one-by-one as there's specific order we want
@@ -149,6 +150,7 @@ func startServer(ctx *cli.Context) error {
 
 	// Wait for mke process termination
 	<-c
+	logrus.Info("Shutting down mke server")
 
 	// Stop all reconcilers first
 	for _, reconciler := range reconcilers {

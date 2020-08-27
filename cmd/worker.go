@@ -76,14 +76,15 @@ func startWorker(ctx *cli.Context) error {
 	components["kubelet"] = &worker.Kubelet{}
 
 	// extract needed components
-	for _,comp := range components {
+	for _, comp := range components {
 		if err := comp.Init(); err != nil {
 			return err
 		}
 	}
 
-	// Block signals til all components are started
-	c := make(chan os.Signal)
+	// Set up signal handling. Use bufferend channel so we dont miss
+	// signals during startup
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	components["containerd"].Run()
@@ -91,6 +92,7 @@ func startWorker(ctx *cli.Context) error {
 
 	// Wait for mke process termination
 	<-c
+	logrus.Info("Shutting down mke worker")
 
 	components["kubelet"].Stop()
 	components["containerd"].Stop()

@@ -30,9 +30,9 @@ type Supervisor struct {
 	done chan bool
 }
 
-// processWantQuit waits for a process to exit or a shut down signal
+// processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWantQuit() bool {
+func (s *Supervisor) processWaitQuit() bool {
 	log := logrus.WithField("component", s.Name)
 	waitresult := make(chan error)
 	go func() {
@@ -41,6 +41,7 @@ func (s *Supervisor) processWantQuit() bool {
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
 	ioutil.WriteFile(s.PidFile, pidbuf, 0644)
+	defer os.Remove(s.PidFile)
 
 	select {
 	case <-s.quit:
@@ -93,7 +94,7 @@ func (s *Supervisor) Supervise() {
 				log.Warnf("Failed to start: %s", err)
 			} else {
 				log.Info("Started succesfully, go nuts")
-				if s.processWantQuit() {
+				if s.processWaitQuit() {
 					return
 				}
 			}
@@ -114,9 +115,10 @@ func (s *Supervisor) Supervise() {
 
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
-	s.quit <- true
-	<-s.done
-	os.Remove(s.PidFile)
+	if s.quit != nil {
+		s.quit <- true
+		<-s.done
+	}
 	return nil
 }
 
