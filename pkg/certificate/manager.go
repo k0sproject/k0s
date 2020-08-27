@@ -82,9 +82,11 @@ func (m *Manager) EnsureCA(name, cn string) error {
 				logrus.Warning(err)
 			}
 		}
+	} else {
+		logrus.Warning(err)
 	}
 
-	return err
+	return nil
 }
 
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
