@@ -65,12 +65,12 @@ func Stage(dataDir, name, group string) error {
 	}
 
 	gzname := name + ".gz"
-	offs, embedded := Offsets[gzname]
+	bin, embedded := BinData[gzname]
 	if !embedded {
 		logrus.Debug("Skipping not embedded file:", gzname)
 		return nil
 	}
-	logrus.Debugf("%s is at offset %d", gzname, offs)
+	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
 
 	infile, err := os.Open(os.Args[0])
 	if err != nil {
@@ -80,8 +80,8 @@ func Stage(dataDir, name, group string) error {
 	defer infile.Close()
 
 	// find location at EOF - BinDataSize + offs
-	infile.Seek(-BinDataSize+offs, 2)
-	gz, err := gzip.NewReader(infile)
+	infile.Seek(-BinDataSize+bin.offset, 2)
+	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create gzip reader for %s", name)
 	}

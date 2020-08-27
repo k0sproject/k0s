@@ -14,12 +14,12 @@ rm -f "$bindata" "$gooffsets"
 package $pkg
 
 var (
-	Offsets = map[string]int64 {
+	BinData = map[string]struct { offset, size int64 }{
 HEADER
 
 for f; do
 	size=$(stat -c "%s" $f)
-	printf '\t\t"%s": %d,\n' "${f#$prefix}" $offset
+	printf '\t\t"%s": {%d, %d},\n' "${f#$prefix}" $offset $size
 	cat $f >> $bindata
 	offset=$(($offset + $size))
 done
@@ -31,4 +31,4 @@ cat <<FOOTER
 )
 
 FOOTER
-) | gofmt > "$gooffsets"
+) | gofmt > "$gooffsets.tmp" && mv "$gooffsets.tmp" "$gooffsets"
