@@ -47,7 +47,7 @@ func Stage(dataDir, name, group string) error {
 		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
 	}
 
-	/* set group woner of the directories */
+	/* set group owner of the directories */
 	gid, _ := util.GetGid(group)
 	if gid != 0 {
 		for _, path := range []string{dataDir, filepath.Dir(p)} {
