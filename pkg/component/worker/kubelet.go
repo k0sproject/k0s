@@ -76,7 +76,7 @@ func (k *Kubelet) Run() error {
 			fmt.Sprintf("--root-dir=%s", k.dataDir),
 			fmt.Sprintf("--volume-plugin-dir=%s", kubeletVolumePluginDir),
 			"--container-runtime=remote",
-			"--container-runtime-endpoint=unix:///run/mke-containerd.sock",
+			"--container-runtime-endpoint=unix:///run/mke/containerd.sock",
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
 			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 			"--kubeconfig=/var/lib/mke/kubelet.conf",

@@ -35,8 +35,8 @@ func (c *ContainerD) Run() error {
 		BinPath: assets.StagedBinPath(constant.DataDir, "containerd"),
 		Args: []string{
 			fmt.Sprintf("--root=%s", path.Join(constant.DataDir, "containerd")),
-			fmt.Sprintf("--state=%s", "/run/mke-containerd"),
-			fmt.Sprintf("--address=%s", "/run/mke-containerd.sock"),
+			fmt.Sprintf("--state=%s", "/run/mke/containerd"),
+			fmt.Sprintf("--address=%s", "/run/mke/containerd.sock"),
 			"--config=/etc/mke/containerd.toml",
 		},
 	}
