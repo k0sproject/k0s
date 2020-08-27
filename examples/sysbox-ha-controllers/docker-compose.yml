@@ -1,7 +1,6 @@
 version: "3"
 services:
   controller0:
-    #image: quay.io/footloose/ubuntu18.04
     build: .
     runtime: sysbox-runc
     command: /bin/systemd
@@ -15,7 +14,7 @@ services:
       - /var/lib/containerd
       - /var/lib/kubelet
   controller1:
-    image: quay.io/footloose/ubuntu18.04
+    build: .
     runtime: sysbox-runc
     command: /bin/systemd
     working_dir: /root
@@ -25,7 +24,7 @@ services:
       - /var/lib/containerd
       - /var/lib/kubelet
   controller2:
-    image: quay.io/footloose/ubuntu18.04
+    build: .
     runtime: sysbox-runc
     command: /bin/systemd
     working_dir: /root
