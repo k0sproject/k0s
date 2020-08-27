@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"github.com/Mirantis/mke/pkg/assets"
@@ -15,7 +16,6 @@ import (
 const kubeletConfig = `
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
-staticPodPath: /etc/kubernetes/manifests
 authentication:
   anonymous:
     enabled: false
@@ -31,10 +31,15 @@ authorization:
     cacheUnauthorizedTTL: "30s"
 `
 
-const kubeletConfigPath = "/var/lib/mke/kubelet-config.yaml"
+const (
+	kubeletConfigPath      = "/var/lib/mke/kubelet-config.yaml"
+	kubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
+)
 
 type Kubelet struct {
-	supervisor supervisor.Supervisor
+	supervisor      supervisor.Supervisor
+	dataDir         string
+	volumePluginDir string
 }
 
 type KubeletConfig struct {
@@ -42,7 +47,23 @@ type KubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	return assets.Stage(constant.DataDir, path.Join("bin", "kubelet"), constant.Group)
+	err := assets.Stage(constant.DataDir, path.Join("bin", "kubelet"), constant.Group)
+	if err != nil {
+		return err
+	}
+
+	k.dataDir = path.Join(constant.DataDir, "kubelet")
+	err = os.MkdirAll(k.dataDir, 0700)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s", k.dataDir)
+	}
+
+	err = os.MkdirAll(kubeletVolumePluginDir, 0700)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s", kubeletVolumePluginDir)
+	}
+
+	return nil
 }
 
 // Run runs kubelet
@@ -52,8 +73,10 @@ func (k *Kubelet) Run() error {
 		Name:    "kubelet",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kubelet"),
 		Args: []string{
+			fmt.Sprintf("--root-dir=%s", k.dataDir),
+			fmt.Sprintf("--volume-plugin-dir=%s", kubeletVolumePluginDir),
 			"--container-runtime=remote",
-			"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
+			"--container-runtime-endpoint=unix:///run/mke-containerd.sock",
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
 			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 			"--kubeconfig=/var/lib/mke/kubelet.conf",
