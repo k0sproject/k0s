@@ -44,7 +44,7 @@ func startApi(ctx *cli.Context) error {
 	router := mux.NewRouter()
 	router.Use(authMiddleware)
 
-	router.Path(prefix + "/etcd").Methods("POST").Handler(etcdHandler())
+	router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
 	router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
 
 	srv := &http.Server{

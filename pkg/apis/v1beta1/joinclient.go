@@ -99,7 +99,7 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (EtcdResponse, error) {
 	buf := new(bytes.Buffer)
 	json.NewEncoder(buf).Encode(etcdRequest)
 
-	req, err := http.NewRequest(http.MethodPost, j.joinAddress+"/v1beta1/etcd", buf)
+	req, err := http.NewRequest(http.MethodPost, j.joinAddress+"/v1beta1/etcd/members", buf)
 	if err != nil {
 		return etcdResponse, err
 	}
