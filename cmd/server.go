@@ -1,18 +1,20 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Mirantis/mke/pkg/applier"
+	"github.com/Mirantis/mke/pkg/certificate"
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/component/server"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
+	"github.com/Mirantis/mke/pkg/apis/v1beta1"
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 )
 
@@ -45,16 +47,21 @@ func startServer(ctx *cli.Context) error {
 		}
 	}
 	components := make(map[string]component.Component)
+	certificateManager := certificate.Manager{}
 
 	joinAddress := ctx.String("join-address")
+	var joinClient *v1beta1.JoinClient
 	if joinAddress != "" {
 		token := ctx.Args().First()
 		if token == "" {
 			return fmt.Errorf("need to give the controlplane join token as first argument")
 		}
+		joinClient, err = v1beta1.JoinClientFromToken(joinAddress, token)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create join client")
+		}
 		components["ca-syncer"] = &server.CASyncer{
-			JoinAddress: joinAddress,
-			Token:       token,
+			JoinClient: joinClient,
 		}
 
 		err = components["ca-syncer"].Init()
@@ -78,7 +85,16 @@ func startServer(ctx *cli.Context) error {
 			Config: clusterConfig.Spec.Storage.Kine,
 		}
 	case "etcd":
-		components["storage"] = &server.Etcd{}
+		etcd := &server.Etcd{
+			Config:      clusterConfig.Spec.Storage.Etcd,
+			Join:        false,
+			CertManager: certificateManager,
+		}
+		if joinAddress != "" {
+			etcd.Join = true
+			etcd.JoinClient = joinClient
+		}
+		components["storage"] = etcd
 	default:
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
@@ -101,7 +117,10 @@ func startServer(ctx *cli.Context) error {
 		}
 	}
 
-	certs := server.NewCertificates(clusterConfig.Spec)
+	certs := server.Certificates{
+		ClusterSpec: clusterConfig.Spec,
+		CertManager: certificateManager,
+	}
 	if err := certs.Run(); err != nil {
 		return err
 	}
@@ -112,7 +131,9 @@ func startServer(ctx *cli.Context) error {
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// Components started one-by-one as there's specific order we want
-	components["storage"].Run()
+	if err := components["storage"].Run(); err != nil {
+		return err
+	}
 	components["kube-apiserver"].Run()
 	components["kube-scheduler"].Run()
 	components["kube-ccm"].Run()

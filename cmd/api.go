@@ -19,6 +19,8 @@ import (
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
+
+	"github.com/Mirantis/mke/pkg/etcd"
 )
 
 func ApiCommand() *cli.Command {
@@ -42,8 +44,8 @@ func startApi(ctx *cli.Context) error {
 	router := mux.NewRouter()
 	router.Use(authMiddleware)
 
-	router.Path(prefix + "/config").Handler(configHandler())
-	router.Path(prefix + "/ca").Handler(caHandler())
+	router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
+	router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
 
 	srv := &http.Server{
 		Handler:      router,
@@ -60,10 +62,52 @@ func startApi(ctx *cli.Context) error {
 	return nil
 }
 
-func configHandler() http.Handler {
+func etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		var etcdReq v1beta1.EtcdRequest
+		err := json.NewDecoder(req.Body).Decode(&etcdReq)
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+		logrus.Infof("etcd API, adding new member: %s", etcdReq.PeerAddress)
+		err = etcdReq.Validate()
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
 
-		resp.WriteHeader(http.StatusNotImplemented)
+		etcdClient, err := etcd.NewClient()
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+
+		memberList, err := etcdClient.AddMember(etcdReq.Node, etcdReq.PeerAddress)
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+
+		etcdResp := v1beta1.EtcdResponse{
+			InitialCluster: memberList,
+		}
+
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
+		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
+		etcdCAKey, err := ioutil.ReadFile(etcdCaCertKey)
+
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+
+		etcdResp.CA = v1beta1.CaResponse{
+			Key:  etcdCAKey,
+			Cert: etcdCACert,
+		}
+		resp.Header().Set("content-type", "application/json")
+		json.NewEncoder(resp).Encode(etcdResp)
 	})
 }
 

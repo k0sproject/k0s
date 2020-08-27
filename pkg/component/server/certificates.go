@@ -13,14 +13,9 @@ import (
 	"text/template"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
+	"github.com/Mirantis/mke/pkg/certificate"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/cloudflare/cfssl/cli"
-	"github.com/cloudflare/cfssl/cli/genkey"
-	"github.com/cloudflare/cfssl/cli/sign"
-	"github.com/cloudflare/cfssl/csr"
-	"github.com/cloudflare/cfssl/initca"
-	"github.com/cloudflare/cfssl/signer"
 	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
@@ -51,30 +46,17 @@ users:
 `))
 )
 
-type Cert struct {
-	Key  string
-	Cert string
-}
-
 type Certificates struct {
 	CACert string
-	Certs  map[string]Cert
 
-	clusterSpec *config.ClusterSpec
-}
-
-func NewCertificates(clusterSpec *config.ClusterSpec) *Certificates {
-	return &Certificates{
-		clusterSpec: clusterSpec,
-	}
+	CertManager certificate.Manager
+	ClusterSpec *config.ClusterSpec
 }
 
 func (c *Certificates) Run() error {
 
-	c.Certs = make(map[string]Cert)
-
 	// Common CA
-	if err := c.loadOrGenerateCA("ca", "kubernetes-ca"); err != nil {
+	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
 	}
 
@@ -87,75 +69,37 @@ func (c *Certificates) Run() error {
 	}
 	c.CACert = string(cert)
 
-	if c.clusterSpec.Storage.Type == "etcd" {
-		// Etcd CA
-		if err := c.loadOrGenerateCA(filepath.Join("etcd", "ca"), "etcd-ca"); err != nil {
-			return err
-		}
-
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
-		// etcd client cert
-		etcdCertReq := certReq{
-			name:   "apiserver-etcd-client",
-			cn:     "apiserver-etcd-client",
-			o:      "apiserver-etcd-client",
-			caCert: etcdCaCertPath,
-			caKey:  etcdCaCertKey,
-			hostnames: []string{
-				"127.0.0.1",
-				"localhost",
-			},
-		}
-		if err := c.loadOrGenerateCert(etcdCertReq, constant.ApiserverUser); err != nil {
-			return err
-		}
-		// etcd server cert
-		etcdCertReq = certReq{
-			name:   filepath.Join("etcd", "server"),
-			cn:     "etcd-server",
-			o:      "etcd-server",
-			caCert: etcdCaCertPath,
-			caKey:  etcdCaCertKey,
-			hostnames: []string{
-				"127.0.0.1",
-				"localhost",
-			},
-		}
-		if err := c.loadOrGenerateCert(etcdCertReq, constant.EtcdUser); err != nil {
-			return err
-		}
-	}
-
 	// Front proxy CA
-	if err := c.loadOrGenerateCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
+	if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
 		return err
 	}
 
 	proxyCertPath, proxyCertKey := filepath.Join(constant.CertRoot, "front-proxy-ca.crt"), filepath.Join(constant.CertRoot, "front-proxy-ca.key")
 
-	proxyClientReq := certReq{
-		name:   "front-proxy-client",
-		cn:     "front-proxy-client",
-		o:      "front-proxy-client",
-		caCert: proxyCertPath,
-		caKey:  proxyCertKey,
+	proxyClientReq := certificate.Request{
+		Name:   "front-proxy-client",
+		CN:     "front-proxy-client",
+		O:      "front-proxy-client",
+		CACert: proxyCertPath,
+		CAKey:  proxyCertKey,
 	}
-	if err := c.loadOrGenerateCert(proxyClientReq, constant.ApiserverUser); err != nil {
+	if _, err := c.CertManager.EnsureCertificate(proxyClientReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
 	// admin cert & kubeconfig
-	adminReq := certReq{
-		name:   "admin",
-		cn:     "kubernetes-admin",
-		o:      "system:masters",
-		caCert: caCertPath,
-		caKey:  caCertKey,
+	adminReq := certificate.Request{
+		Name:   "admin",
+		CN:     "kubernetes-admin",
+		O:      "system:masters",
+		CACert: caCertPath,
+		CAKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(adminReq, "root"); err != nil {
+	adminCert, err := c.CertManager.EnsureCertificate(adminReq, "root")
+	if err != nil {
 		return err
 	}
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "admin.conf"), "https://localhost:6443", c.CACert, c.Certs["admin"].Cert, c.Certs["admin"].Key); err != nil {
+	if err := kubeConfig(filepath.Join(constant.CertRoot, "admin.conf"), "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
 		return err
 	}
 
@@ -163,44 +107,46 @@ func (c *Certificates) Run() error {
 		return err
 	}
 
-	ccmReq := certReq{
-		name:   "ccm",
-		cn:     "system:kube-controller-manager",
-		o:      "system:kube-controller-manager",
-		caCert: caCertPath,
-		caKey:  caCertKey,
+	ccmReq := certificate.Request{
+		Name:   "ccm",
+		CN:     "system:kube-controller-manager",
+		O:      "system:kube-controller-manager",
+		CACert: caCertPath,
+		CAKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(ccmReq, constant.ControllerManagerUser); err != nil {
+	ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, constant.ControllerManagerUser)
+	if err != nil {
 		return err
 	}
 
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "ccm.conf"), "https://localhost:6443", c.CACert, c.Certs["ccm"].Cert, c.Certs["ccm"].Key); err != nil {
+	if err := kubeConfig(filepath.Join(constant.CertRoot, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key); err != nil {
 		return err
 	}
 
-	schedulerReq := certReq{
-		name:   "scheduler",
-		cn:     "system:kube-scheduler",
-		o:      "system:kube-scheduler",
-		caCert: caCertPath,
-		caKey:  caCertKey,
+	schedulerReq := certificate.Request{
+		Name:   "scheduler",
+		CN:     "system:kube-scheduler",
+		O:      "system:kube-scheduler",
+		CACert: caCertPath,
+		CAKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(schedulerReq, constant.SchedulerUser); err != nil {
+	schedulerCert, err := c.CertManager.EnsureCertificate(schedulerReq, constant.SchedulerUser)
+	if err != nil {
 		return err
 	}
 
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "scheduler.conf"), "https://localhost:6443", c.CACert, c.Certs["scheduler"].Cert, c.Certs["scheduler"].Key); err != nil {
+	if err := kubeConfig(filepath.Join(constant.CertRoot, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key); err != nil {
 		return err
 	}
 
-	kubeletClientReq := certReq{
-		name:   "apiserver-kubelet-client",
-		cn:     "apiserver-kubelet-client",
-		o:      "system:masters",
-		caCert: caCertPath,
-		caKey:  caCertKey,
+	kubeletClientReq := certificate.Request{
+		Name:   "apiserver-kubelet-client",
+		CN:     "apiserver-kubelet-client",
+		O:      "system:masters",
+		CACert: caCertPath,
+		CAKey:  caCertKey,
 	}
-	if err := c.loadOrGenerateCert(kubeletClientReq, constant.ApiserverUser); err != nil {
+	if _, err := c.CertManager.EnsureCertificate(kubeletClientReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
@@ -214,37 +160,37 @@ func (c *Certificates) Run() error {
 		"localhost",
 	}
 
-	hostnames = append(hostnames, c.clusterSpec.API.Address)
-	hostnames = append(hostnames, c.clusterSpec.API.SANs...)
+	hostnames = append(hostnames, c.ClusterSpec.API.Address)
+	hostnames = append(hostnames, c.ClusterSpec.API.SANs...)
 
-	internalAPIAddress, err := c.clusterSpec.Network.InternalAPIAddress()
+	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddress()
 	if err != nil {
 		return err
 	}
 	hostnames = append(hostnames, internalAPIAddress)
 
-	serverReq := certReq{
-		name:      "server",
-		cn:        "kubernetes",
-		o:         "kubernetes",
-		caCert:    caCertPath,
-		caKey:     caCertKey,
-		hostnames: hostnames,
+	serverReq := certificate.Request{
+		Name:      "server",
+		CN:        "kubernetes",
+		O:         "kubernetes",
+		CACert:    caCertPath,
+		CAKey:     caCertKey,
+		Hostnames: hostnames,
 	}
-	if err := c.loadOrGenerateCert(serverReq, constant.ApiserverUser); err != nil {
+	if _, err := c.CertManager.EnsureCertificate(serverReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
-	mkeAPIReq := certReq{
-		name:      "mke-api",
-		cn:        "mke-api",
-		o:         "kubernetes",
-		caCert:    caCertPath,
-		caKey:     caCertKey,
-		hostnames: hostnames,
+	mkeAPIReq := certificate.Request{
+		Name:      "mke-api",
+		CN:        "mke-api",
+		O:         "kubernetes",
+		CACert:    caCertPath,
+		CAKey:     caCertKey,
+		Hostnames: hostnames,
 	}
 	// TODO Not sure about the user...
-	if err := c.loadOrGenerateCert(mkeAPIReq, constant.ApiserverUser); err != nil {
+	if _, err := c.CertManager.EnsureCertificate(mkeAPIReq, constant.ApiserverUser); err != nil {
 		return err
 	}
 
@@ -252,146 +198,6 @@ func (c *Certificates) Run() error {
 }
 
 func (c *Certificates) Stop() error {
-	return nil
-}
-
-func (c *Certificates) loadOrGenerateCA(name, commonName string) error {
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", name))
-
-	if util.FileExists(keyFile) && util.FileExists(certFile) {
-
-		return nil
-	}
-
-	err := os.MkdirAll(filepath.Dir(keyFile), 0750)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create pki dir")
-	}
-
-	req := new(csr.CertificateRequest)
-	req.KeyRequest = csr.NewKeyRequest()
-	req.KeyRequest.A = "rsa"
-	req.KeyRequest.S = 2048
-	req.CN = commonName
-	req.CA = &csr.CAConfig{
-		Expiry: "87600h",
-	}
-	cert, _, key, err := initca.New(req)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(keyFile, key, 0600)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(certFile, cert, 0640)
-	if err != nil {
-		return err
-	}
-
-	gid, err := util.GetGid(constant.Group)
-	if err == nil {
-		paths := []string{filepath.Dir(keyFile), keyFile, certFile}
-		for _, path := range paths {
-			err = os.Chown(path, -1, gid)
-			if err != nil {
-				logrus.Warning(err)
-			}
-		}
-	} else {
-		logrus.Warning(err)
-	}
-
-	return nil
-}
-
-type certReq struct {
-	name      string
-	cn        string
-	o         string
-	caKey     string
-	caCert    string
-	hostnames []string
-}
-
-func (c *Certificates) loadOrGenerateCert(certReq certReq, ownerName string) error {
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.name))
-
-	gid, err := util.GetGid(constant.Group)
-	uid, err := util.GetUid(ownerName)
-
-	if util.FileExists(keyFile) && util.FileExists(certFile) {
-		_ = os.Chown(keyFile, uid, gid)
-		_ = os.Chown(certFile, uid, gid)
-
-		cert, err := ioutil.ReadFile(certFile)
-		key, err := ioutil.ReadFile(keyFile)
-		if err != nil {
-			return errors.Wrapf(err, "failed to read ca cert or key for %s", certReq.name)
-		}
-
-		c.Certs[certReq.name] = Cert{
-			Key:  string(key),
-			Cert: string(cert),
-		}
-		return nil
-	}
-
-	req := csr.CertificateRequest{
-		KeyRequest: csr.NewKeyRequest(),
-		CN:         certReq.cn,
-		Names: []csr.Name{
-			csr.Name{O: certReq.o},
-		},
-	}
-
-	req.KeyRequest.A = "rsa"
-	req.KeyRequest.S = 2048
-	req.Hosts = certReq.hostnames
-
-	var key, csrBytes []byte
-	g := &csr.Generator{Validator: genkey.Validator}
-	csrBytes, key, err = g.ProcessRequest(&req)
-	if err != nil {
-		key = nil
-		return err
-	}
-	config := cli.Config{
-		CAFile:    certReq.caCert, //filepath.Join(constant.CertRoot, "ca.crt"),
-		CAKeyFile: certReq.caKey,  //filepath.Join(constant.CertRoot, "ca.key"),
-	}
-	s, err := sign.SignerFromConfig(config)
-	if err != nil {
-		return err
-	}
-
-	var cert []byte
-	signReq := signer.SignRequest{
-		Request: string(csrBytes),
-		Profile: "kubernetes",
-	}
-
-	cert, err = s.Sign(signReq)
-	if err != nil {
-		return err
-	}
-	if err != nil {
-		return err
-	}
-	c.Certs[certReq.name] = Cert{
-		Key:  string(key),
-		Cert: string(cert),
-	}
-	err = ioutil.WriteFile(keyFile, key, 0600)
-	err = ioutil.WriteFile(certFile, cert, 0640)
-
-	err = os.Chown(keyFile, uid, gid)
-	err = os.Chown(certFile, uid, gid)
-
 	return nil
 }
 

@@ -30,11 +30,6 @@ func TokenCommand() *cli.Command {
 				EnvVars:   []string{"KUBECONFIG"},
 				TakesFile: true,
 			},
-			&cli.StringFlag{
-				Name:  "role",
-				Usage: "Either worker or controller",
-				Value: "worker",
-			},
 		},
 	}
 }
@@ -71,6 +66,11 @@ func CreateCommand() *cli.Command {
 				Name:  "expiry",
 				Usage: "set duration time for token",
 				Value: "0",
+			},
+			&cli.StringFlag{
+				Name:  "role",
+				Usage: "Either worker or controller",
+				Value: "worker",
 			},
 		},
 		Action: func(c *cli.Context) error {
