@@ -65,6 +65,7 @@ func (k *Kine) Run() error {
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
+			"--listen-address=unix:///run/kine.sock:2379",
 		},
 		Uid: k.uid,
 		Gid: k.gid,

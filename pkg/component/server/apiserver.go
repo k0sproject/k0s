@@ -69,7 +69,7 @@ func (a *ApiServer) Run() error {
 	}
 	switch a.ClusterConfig.Spec.Storage.Type {
 	case "kine":
-		a.supervisor.Args = append(a.supervisor.Args, "--etcd-servers=http://127.0.0.1:2379") // kine endpoint
+		a.supervisor.Args = append(a.supervisor.Args, "--etcd-servers=unix:///run/kine.sock:2379") // kine endpoint
 	case "etcd":
 		a.supervisor.Args = append(a.supervisor.Args,
 			"--etcd-servers=https://127.0.0.1:2379",
