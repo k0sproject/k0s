@@ -5,4 +5,5 @@ RUN apt-get update && apt-get install -y vim && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD mke.yaml /root/mke.yaml
+ADD mke.service /etc/systemd/system/mke.service
+ADD mke.yaml /etc/mke/config.yaml
