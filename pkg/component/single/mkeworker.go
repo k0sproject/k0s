@@ -35,16 +35,17 @@ func (m *MkeWorker) Run() error {
 	m.supervisor.Args = append(m.supervisor.Args, "worker", "--server", "https://localhost:6443")
 
 	if !util.FileExists("/var/lib/mke/kubelet.conf") {
-		// wait for server to start up
-		// TODO: monitor needed config file instead of sleep
-		time.Sleep(4 * time.Second)
 		// create token
-		token, err := exec.Command(os.Args[0], "token", "create").Output()
-		if err != nil {
-			logrus.Error("failed to execute mke token create: ", err)
-			return err
+		for {
+			time.Sleep(2 * time.Second)
+			token, err := exec.Command(os.Args[0], "token", "create").Output()
+			if err != nil {
+				logrus.Warn("failed to execute mke token create: ", err)
+			} else {
+				m.supervisor.Args = append(m.supervisor.Args, string(token))
+				break
+			}
 		}
-		m.supervisor.Args = append(m.supervisor.Args, string(token))
 	}
 	m.supervisor.Supervise()
 
