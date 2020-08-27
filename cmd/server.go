@@ -29,10 +29,6 @@ func ServerCommand() *cli.Command {
 				Name:  "config",
 				Value: "mke.yaml",
 			},
-			&cli.StringFlag{
-				Name:  "join-address",
-				Usage: "The address of a pre-existing controlplane node to join into to create HA controlplane",
-			},
 		},
 	}
 }
@@ -49,14 +45,12 @@ func startServer(ctx *cli.Context) error {
 	components := make(map[string]component.Component)
 	certificateManager := certificate.Manager{}
 
-	joinAddress := ctx.String("join-address")
+	var join = false
 	var joinClient *v1beta1.JoinClient
-	if joinAddress != "" {
-		token := ctx.Args().First()
-		if token == "" {
-			return fmt.Errorf("need to give the controlplane join token as first argument")
-		}
-		joinClient, err = v1beta1.JoinClientFromToken(joinAddress, token)
+	token := ctx.Args().First()
+	if token != "" {
+		join = true
+		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}
@@ -87,12 +81,9 @@ func startServer(ctx *cli.Context) error {
 	case "etcd":
 		etcd := &server.Etcd{
 			Config:      clusterConfig.Spec.Storage.Etcd,
-			Join:        false,
+			Join:        join,
 			CertManager: certificateManager,
-		}
-		if joinAddress != "" {
-			etcd.Join = true
-			etcd.JoinClient = joinClient
+			JoinClient:  joinClient,
 		}
 		components["storage"] = etcd
 	default:

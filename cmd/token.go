@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/token"
 )
 
@@ -39,7 +41,7 @@ var (
 apiVersion: v1
 clusters:
 - cluster:
-    server: https://127.0.0.1:6443
+    server: {{.JoinAddress}}
     certificate-authority-data: {{.CACert}}
   name: mke
 contexts:
@@ -72,8 +74,22 @@ func CreateCommand() *cli.Command {
 				Usage: "Either worker or controller",
 				Value: "worker",
 			},
+			&cli.StringFlag{
+				Name:      "config",
+				Value:     "mke.yaml",
+				TakesFile: true,
+			},
 		},
 		Action: func(c *cli.Context) error {
+
+			clusterConfig, err := config.FromYaml(c.String("config"))
+			if err != nil {
+				logrus.Errorf("Failed to read cluster config: %s", err.Error())
+				logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
+				clusterConfig = &config.ClusterConfig{
+					Spec: config.DefaultClusterSpec(),
+				}
+			}
 			m, err := token.NewManager(c.String("kubeconfig"))
 			if err != nil {
 				return err
@@ -92,9 +108,10 @@ func CreateCommand() *cli.Command {
 				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
 			}
 			data := struct {
-				CACert string
-				Token  string
-				User   string
+				CACert      string
+				Token       string
+				User        string
+				JoinAddress string
 			}{
 				CACert: base64.StdEncoding.EncodeToString(caCert),
 				Token:  token,
@@ -102,8 +119,10 @@ func CreateCommand() *cli.Command {
 
 			if c.String("role") == "worker" {
 				data.User = "kubelet-bootstrap"
+				data.JoinAddress = clusterConfig.Spec.API.APIAddress()
 			} else {
 				data.User = "controller-bootstrap"
+				data.JoinAddress = clusterConfig.Spec.API.ControllerJoinAddress()
 			}
 
 			var buf bytes.Buffer
@@ -112,8 +131,6 @@ func CreateCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-
-			// kubeconfig := buf.String()
 
 			fmt.Println(base64.StdEncoding.EncodeToString(buf.Bytes()))
 

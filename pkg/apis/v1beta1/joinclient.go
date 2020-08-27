@@ -23,7 +23,7 @@ type JoinClient struct {
 }
 
 // FromToken creates a new join api client from a token
-func JoinClientFromToken(joinAddress, token string) (*JoinClient, error) {
+func JoinClientFromToken(token string) (*JoinClient, error) {
 	data, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode token")
@@ -48,7 +48,7 @@ func JoinClientFromToken(joinAddress, token string) (*JoinClient, error) {
 		httpClient:  http.Client{Transport: tr},
 		bearerToken: config.BearerToken,
 	}
-	c.joinAddress = joinAddress
+	c.joinAddress = config.Host
 	logrus.Info("initialized join client succesfully")
 	return c, nil
 }
