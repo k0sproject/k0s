@@ -4,7 +4,7 @@ build:
 	$(MAKE) -C ../../ build tmpdir=/tmp/mke-build
 
 .PHONY: create-cluster
-cluster: build
+create-cluster: build
 	envsubst < footloose.yaml.tpl > footloose.yaml
 	footloose create
 
