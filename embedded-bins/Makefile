@@ -12,7 +12,7 @@ bindir = staging/linux/bin
 buildmode = docker
 
 # allow override with the faster pigz
-GZIP ?= gzip
+gzip ?= gzip
 
 .PHONY: all
 all:
@@ -39,7 +39,7 @@ all: .compress.stamp
 ifeq ($(buildmode),docker)
 
 .compress.stamp: $(staging-pkgs) $(patsubst staging/.%,.container.%,$(staging-pkgs))
-	$(GZIP) -9 $(bindir)/*
+	$(gzip) -9 $(bindir)/*
 	touch $@
 
 staging/.%: .container.% | $(bindir)
@@ -76,7 +76,7 @@ tmpdir ?= .tmp
 arch = amd64
 
 .compress.stamp: $(addprefix $(bindir)/, $(bins))
-	$(GZIP) -9 $(bindir)/*
+	$(gzip) -9 $(bindir)/*
 
 $(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager): | $(bindir)
 	$(curl) -o $@ $($(notdir $@)_url)
