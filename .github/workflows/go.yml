@@ -27,3 +27,6 @@ jobs:
 
     - name: Build
       run: make build EMBEDDED_BINS_BUILDMODE=fetch
+
+    - name: smoke
+      run: make check
