@@ -72,7 +72,12 @@ func Stage(dataDir, name, group string) error {
 	}
 	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
 
-	infile, err := os.Open(os.Args[0])
+	selfexe, err := os.Executable()
+	if err != nil {
+		logrus.Warn(err)
+		return err
+	}
+	infile, err := os.Open(selfexe)
 	if err != nil {
 		logrus.Warn("Failed to open ", os.Args[0])
 		return err
