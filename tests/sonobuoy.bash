@@ -18,10 +18,10 @@ _setup_cluster() {
   token=$(./bin/footloose ssh --config $footlooseconfig root@node0 "mke token create --role=worker")
   ip=$(./bin/footloose ssh --config $footlooseconfig root@node0 "hostname -i")
   logline "join worker"
-  ./bin/footloose ssh --config $footlooseconfig root@node1 "nohup mke worker --server https://${ip}:6443 ${token} > /dev/null 2>&1 &"
+  ./bin/footloose ssh --config $footlooseconfig root@node1 "mke worker --server https://${ip}:6443 ${token}"
   logline "wait a bit ..."
   while true; do
-    >/dev/null 2>&1 ./bin/footloose ssh -c $footlooseconfig root@node1 "ps | grep coredns" && break
+    ./bin/footloose ssh -c $footlooseconfig root@node1 "ps | grep coredns" && break
     sleep 1
   done
   ./bin/footloose ssh --config $footlooseconfig root@node0 "cat /var/lib/mke/pki/admin.conf" > kubeconfig
@@ -34,15 +34,15 @@ export KUBECONFIG=./kubeconfig
 (
   sleep 10
   exec ./bin/sonobuoy logs -f
-) & 2>&1 | sed -le "s#^#sonobuoy:logs: #;"
+)& 2>&1 | sed -le "s#^#sonobuoy:logs: #;"
 logs_pid=$!
 logline "run sonobuoy:"
 set +e
-  ./bin/sonobuoy run --mode=quick --wait=4
+  ./bin/sonobuoy run --mode=quick --wait=4 >/dev/null 2>&1
   result=$?
+  kill $logs_pid
+  wait $logs_pid
 set -e
-kill $logs_pid
-wait $logs_pid
 if [ "${result}" = "0" ]; then
   title "SUCCESS!!!"
   exit 0
