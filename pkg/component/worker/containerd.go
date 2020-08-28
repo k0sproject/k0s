@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/sirupsen/logrus"
@@ -32,6 +33,12 @@ func (c *ContainerD) Run() error {
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
 		BinPath: assets.StagedBinPath(constant.DataDir, "containerd"),
+		Args: []string{
+			fmt.Sprintf("--root=%s", path.Join(constant.DataDir, "containerd")),
+			fmt.Sprintf("--state=%s", "/run/mke/containerd"),
+			fmt.Sprintf("--address=%s", "/run/mke/containerd.sock"),
+			"--config=/etc/mke/containerd.toml",
+		},
 	}
 	// TODO We need to dump the config file suited for mke use
 

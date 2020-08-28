@@ -5,7 +5,7 @@ machines:
 - count: 3
   backend: docker
   spec:
-    image: quay.io/footloose/ubuntu18.04
+    image: mke-footloose:latest
     name: controller%d
     privileged: true
     volumes:
@@ -18,13 +18,8 @@ machines:
     - type: bind
       source: $PWD/mke.yaml
       destination: /etc/mke/config.yaml
-    - type: bind
-      source: $PWD/mke.service
-      destination: /etc/systemd/system/mke.service
     - type: volume
-      destination: /var/lib/containerd
-    - type: volume
-      destination: /var/lib/kubelet
+      destination: /var/lib/mke
     portMappings:
     - containerPort: 22
       hostPort: 9222
