@@ -41,7 +41,7 @@ var (
 apiVersion: v1
 clusters:
 - cluster:
-    server: {{.JoinAddress}}
+    server: {{.JoinURL}}
     certificate-authority-data: {{.CACert}}
   name: mke
 contexts:
@@ -108,10 +108,10 @@ func CreateCommand() *cli.Command {
 				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
 			}
 			data := struct {
-				CACert      string
-				Token       string
-				User        string
-				JoinAddress string
+				CACert  string
+				Token   string
+				User    string
+				JoinURL string
 			}{
 				CACert: base64.StdEncoding.EncodeToString(caCert),
 				Token:  token,
@@ -119,10 +119,10 @@ func CreateCommand() *cli.Command {
 
 			if c.String("role") == "worker" {
 				data.User = "kubelet-bootstrap"
-				data.JoinAddress = clusterConfig.Spec.API.APIAddress()
+				data.JoinURL = clusterConfig.Spec.API.APIAddress()
 			} else {
 				data.User = "controller-bootstrap"
-				data.JoinAddress = clusterConfig.Spec.API.ControllerJoinAddress()
+				data.JoinURL = clusterConfig.Spec.API.ControllerJoinAddress()
 			}
 
 			var buf bytes.Buffer

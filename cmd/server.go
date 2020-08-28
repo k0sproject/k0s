@@ -30,6 +30,7 @@ func ServerCommand() *cli.Command {
 				Value: "mke.yaml",
 			},
 		},
+		ArgsUsage: "[join-token]",
 	}
 }
 
