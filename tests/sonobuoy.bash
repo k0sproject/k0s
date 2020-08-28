@@ -18,10 +18,10 @@ _setup_cluster() {
   token=$(./bin/footloose ssh --config $footlooseconfig root@node0 "mke token create --role=worker")
   ip=$(./bin/footloose ssh --config $footlooseconfig root@node0 "hostname -i")
   logline "join worker"
-  ./bin/footloose ssh --config $footlooseconfig root@node1 "mke worker --server https://${ip}:6443 ${token}"
+  ./bin/footloose ssh --config $footlooseconfig root@node1 "nohup mke worker --server https://${ip}:6443 ${token} >/dev/null 2>&1 &"
   logline "wait a bit ..."
   while true; do
-    ./bin/footloose ssh -c $footlooseconfig root@node1 "ps | grep coredns" && break
+    >/dev/null 2>&1  ./bin/footloose ssh -c $footlooseconfig root@node1 "ps | grep coredns" && break
     sleep 1
   done
   ./bin/footloose ssh --config $footlooseconfig root@node0 "cat /var/lib/mke/pki/admin.conf" > kubeconfig
