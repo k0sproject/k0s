@@ -9,12 +9,14 @@ import (
 type Network struct {
 	PodCIDR     string `yaml:"podCIDR"`
 	ServiceCIDR string `yaml:"serviceCIDR"`
+	Provider    string `yaml:"provider"`
 }
 
 func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:     "10.244.0.0/16",
 		ServiceCIDR: "10.96.0.0/12",
+		Provider:    "calico",
 	}
 }
 

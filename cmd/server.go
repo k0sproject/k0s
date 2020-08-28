@@ -187,11 +187,15 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["coredns"] = coreDNS
 	}
 
-	calico, err := server.NewCalico()
-	if err != nil {
-		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
+	if clusterSpec.Network.Provider == "calico" {
+		calico, err := server.NewCalico()
+		if err != nil {
+			logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
+		} else {
+			reconcilers["calico"] = calico
+		}
 	} else {
-		reconcilers["calico"] = calico
+		logrus.Warnf("network provider set to unsupported '%s', mke will not manage it", clusterSpec.Network.Provider)
 	}
 
 	metricServer, err := server.NewMetricServer(clusterSpec)
