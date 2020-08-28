@@ -2,7 +2,7 @@ cluster:
   name: $CLUSTER_NAME
   privateKey: id_ed25519_mke
 machines:
-- count: 1
+- count: 2
   backend: docker
   spec:
     image: $LINUX_IMAGE
@@ -13,12 +13,10 @@ machines:
       source: $MKE_BINARY
       destination: /usr/bin/mke
     - type: volume
-      destination: /var/lib/containerd
-    - type: volume
-      destination: /var/lib/kubelet
-    networks:
-    - $NETWORK_NAME
+      destination: /var/lib/mke
     portMappings:
     - containerPort: 22
       hostPort: 9022
+    - containerPort: 6443
+      hostPort: 6443
 

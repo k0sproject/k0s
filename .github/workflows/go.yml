@@ -28,10 +28,5 @@ jobs:
     - name: Build
       run: make build EMBEDDED_BINS_BUILDMODE=fetch
 
-    - name: Setup BATS testing framework
-      uses: mig4/setup-bats@v1.0.1
-      with:
-        bats-version: 1.2.1
-
     - name: Run smoke test
       run: make check
