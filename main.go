@@ -9,6 +9,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+//go:generate go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/linux/ embedded-bins/staging/linux/bin
+
 // Version gets overridden at build time using -X main.Version=$VERSION
 var (
 	Version = "dev"
