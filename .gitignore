@@ -1,3 +1,5 @@
-pkg/assets/zz_generated_bindata.go
+pkg/assets/zz_generated_offsets.go
 mke
+mke.code
+bindata
 .*.stamp

@@ -28,9 +28,13 @@ pkg/assets/zz_generated_bindata.go: .bins.stamp
 
 endif
 
+pkg/assets/zz_generated_offsets.go: .bins.stamp embedded-bins/generate-bindata.sh
+	gooffsets=$@ prefix=embedded-bins/staging/linux/ pkg=assets \
+		sh embedded-bins/generate-bindata.sh embedded-bins/staging/linux/bin/*
 
-mke: pkg/assets/zz_generated_bindata.go $(GO_SRCS)
-	CGO_ENABLED=0 go build -ldflags="-w -s" -o mke main.go
+mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
+	CGO_ENABLED=0 go build -ldflags="-w -s" -o mke.code main.go
+	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
 build: mke
@@ -48,6 +52,6 @@ check: mke
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_bindata.go mke .bins.stamp
+	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp
 	$(MAKE) -C embedded-bins clean
 
