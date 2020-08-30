@@ -1,29 +1,32 @@
-setup_file() {
-	export name=$(basename ${BATS_TEST_FILENAME%.bats})
-	export netname=mke-test-$name
+title() {
+  echo "==> TEST: ${1}"
+}
+
+logline() {
+  echo "    ${1}"
+}
+
+_setup() {
+	export name=$(basename ${0%.bash})
 	export footlooseconfig=footloose-$name.yaml
 
-	bin/docker network inspect $netname 2>/dev/null \
-		|| bin/docker network create $netname
-
+  echo "==> SETUP"
+  logline "creating footloose config ..."
 	CLUSTER_NAME=$name \
 		LINUX_IMAGE=quay.io/footloose/ubuntu18.04 \
-		NETWORK_NAME=$netname \
 		MKE_BINARY=${MKE_BINARY:-$(readlink -f ../mke)} \
 		envsubst < ${footlooseconfig}.tpl > $footlooseconfig
-	echo "footloose config created"
-	echo "starting to create footloose nodes"
 
-	bin/footloose create --config $footlooseconfig
-	export node0=$(printf "$(bin/footloose --config $footlooseconfig show -o json \
-		| jq --raw-output '.machines[0].spec.name')\n" 0)
-
-	bin/footloose ssh --config $footlooseconfig root@$node0 "addgroup --system mke"
-	
+	logline "starting to create footloose nodes ..."
+	>/dev/null 2>&1 ./bin/footloose create --config $footlooseconfig
+  logline "create mke groups on nodes ..."
+	>/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node0 "addgroup --system mke"
+  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node1 "addgroup --system mke"
 }
 
-teardown_file() {
-	bin/footloose delete --config $footlooseconfig
-	bin/docker network rm $netname
+_cleanup() {
+  set +e
+    >/dev/null 2>&1 ./bin/footloose delete --config $footlooseconfig
+    >/dev/null 2>&1 rm -f $footlooseconfig
+    >/dev/null 2>&1 docker volume prune -f
 }
-

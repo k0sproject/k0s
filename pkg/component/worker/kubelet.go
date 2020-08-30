@@ -29,6 +29,7 @@ authorization:
   webhook:
     cacheAuthorizedTTL: "5m"
     cacheUnauthorizedTTL: "30s"
+failSwapOn: false
 `
 
 const (
