@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
@@ -15,9 +16,10 @@ import (
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	supervisor supervisor.Supervisor
-	uid        int
-	gid        int
+	ClusterConfig *config.ClusterConfig
+	supervisor    supervisor.Supervisor
+	uid           int
+	gid           int
 }
 
 // Init extracts the needed binaries
@@ -36,18 +38,22 @@ func (a *Scheduler) Init() error {
 func (a *Scheduler) Run() error {
 	logrus.Info("Starting kube-scheduler")
 	schedulerAuthConf := filepath.Join(constant.CertRoot, "scheduler.conf")
+	args := []string{
+		fmt.Sprintf("--authentication-kubeconfig=%s", schedulerAuthConf),
+		fmt.Sprintf("--authorization-kubeconfig=%s", schedulerAuthConf),
+		fmt.Sprintf("--kubeconfig=%s", schedulerAuthConf),
+		"--bind-address=127.0.0.1",
+		"--leader-elect=true",
+	}
+	for _, arg := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
+		args = append(args, arg)
+	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-scheduler"),
-		Args: []string{
-			fmt.Sprintf("--authentication-kubeconfig=%s", schedulerAuthConf),
-			fmt.Sprintf("--authorization-kubeconfig=%s", schedulerAuthConf),
-			fmt.Sprintf("--kubeconfig=%s", schedulerAuthConf),
-			"--bind-address=127.0.0.1",
-			"--leader-elect=true",
-		},
-		Uid: a.uid,
-		Gid: a.gid,
+		Args:    args,
+		Uid:     a.uid,
+		Gid:     a.gid,
 	}
 	// TODO We need to dump the config file suited for mke use
 

@@ -9,6 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// ClusterConfig ...
 type ClusterConfig struct {
 	APIVersion string       `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
 	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
@@ -16,25 +17,43 @@ type ClusterConfig struct {
 	Spec       *ClusterSpec `yaml:"spec"`
 }
 
+// ClusterMeta ...
 type ClusterMeta struct {
 	Name string `yaml:"name" validate:"required"`
 }
 
+// ClusterSpec ...
 type ClusterSpec struct {
-	API     *APISpec     `yaml:"api"`
-	Storage *StorageSpec `yaml:"storage"`
-	Network *Network     `yaml:"network"`
+	API               *APISpec               `yaml:"api"`
+	ControllerManager *ControllerManagerSpec `yaml:"controllerManager"`
+	Scheduler         *SchedulerSpec         `yaml:"scheduler"`
+	Storage           *StorageSpec           `yaml:"storage"`
+	Network           *Network               `yaml:"network"`
 }
 
+// APISpec ...
 type APISpec struct {
-	Address string   `yaml:"address"`
-	SANs    []string `yaml:"sans"`
+	Address   string   `yaml:"address"`
+	SANs      []string `yaml:"sans"`
+	ExtraArgs []string `yaml:"extraArgs"`
 }
 
+// ControllerManagerSpec ...
+type ControllerManagerSpec struct {
+	ExtraArgs []string `yaml:"extraArgs"`
+}
+
+// SchedulerSpec ...
+type SchedulerSpec struct {
+	ExtraArgs []string `yaml:"extraArgs"`
+}
+
+// APIAddress ...
 func (a *APISpec) APIAddress() string {
 	return fmt.Sprintf("https://%s:6443", a.Address)
 }
 
+// FromYaml ...
 func FromYaml(filename string) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -54,6 +73,7 @@ func FromYaml(filename string) (*ClusterConfig, error) {
 	return config, nil
 }
 
+// DefaultClusterConfig ...
 func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
 		Spec: DefaultClusterSpec(),
@@ -66,11 +86,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Metadata = &ClusterMeta{
 		Name: "mke",
 	}
-	c.Spec = &ClusterSpec{
-		Storage: DefaultStorageSpec(),
-		Network: DefaultNetwork(),
-		API:     DefaultAPISpec(),
-	}
+	c.Spec = DefaultClusterSpec()
 
 	type yclusterconfig ClusterConfig
 	yc := (*yclusterconfig)(c)
@@ -82,6 +98,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// DefaultAPISpec ...
 func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
 	addresses, _ := util.AllAddresses()
@@ -92,10 +109,13 @@ func DefaultAPISpec() *APISpec {
 	}
 }
 
+// DefaultClusterSpec ...
 func DefaultClusterSpec() *ClusterSpec {
 	return &ClusterSpec{
-		Storage: DefaultStorageSpec(),
-		Network: DefaultNetwork(),
-		API:     DefaultAPISpec(),
+		Storage:           DefaultStorageSpec(),
+		Network:           DefaultNetwork(),
+		API:               DefaultAPISpec(),
+		ControllerManager: &ControllerManagerSpec{},
+		Scheduler:         &SchedulerSpec{},
 	}
 }
