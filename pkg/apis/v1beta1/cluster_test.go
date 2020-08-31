@@ -86,7 +86,7 @@ metadata:
   name: foobar
 spec:
   network:
-    provider: custom
+    provider: calico
   storage:
     type: etcd
 `
