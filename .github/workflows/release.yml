@@ -29,11 +29,11 @@ jobs:
       - name: Build
         run: make build EMBEDDED_BINS_BUILDMODE=fetch
         env:
-          VERSION: ${{ env.TAG_NAME }}
+          VERSION: ${{ steps.branch_name.outputs.TAG_NAME }}
 
       - name: Run smoke test
         run: make check
-        
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -53,5 +53,4 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./mke
-          asset_name: mke-${{ env.TAG_NAME }}-amd64
-          asset_content_type: application/zip
+          asset_name: mke-${{ steps.branch_name.outputs.TAG_NAME }}-amd64
