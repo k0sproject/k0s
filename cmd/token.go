@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -84,8 +83,6 @@ func CreateCommand() *cli.Command {
 
 			clusterConfig, err := config.FromYaml(c.String("config"))
 			if err != nil {
-				logrus.Errorf("Failed to read cluster config: %s", err.Error())
-				logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
 				clusterConfig = &config.ClusterConfig{
 					Spec: config.DefaultClusterSpec(),
 				}

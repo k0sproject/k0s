@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"github.com/Mirantis/mke/pkg/component"
@@ -44,9 +45,18 @@ func startWorker(ctx *cli.Context) error {
 		}
 
 		// Load the bootstrap kubeconfig to validate it
-		_, err = clientcmd.Load(kubeconfig)
+		clientCfg, err := clientcmd.Load(kubeconfig)
 		if err != nil {
 			return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
+		}
+
+		kubeletCAPath := path.Join(constant.CertRoot, "ca.crt")
+		if !util.FileExists(kubeletCAPath) {
+			os.MkdirAll(constant.CertRoot, 0755) // ignore errors in case directory exists
+			err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, 0600)
+			if err != nil {
+				return errors.Wrap(err, "failed to write ca client cert")
+			}
 		}
 
 		err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, 0600)

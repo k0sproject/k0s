@@ -18,7 +18,7 @@ _setup_cluster() {
   token=$(./bin/footloose ssh --config $footlooseconfig root@node0 "mke token create --role=worker")
   ip=$(./bin/footloose ssh --config $footlooseconfig root@node0 "hostname -i")
   logline "join worker"
-  ./bin/footloose ssh --config $footlooseconfig root@node1 "nohup mke worker --server https://${ip}:6443 ${token} >/dev/null 2>&1 &"
+  ./bin/footloose ssh --config $footlooseconfig root@node1 "nohup mke worker ${token} >/tmp/worker.log 2>&1 &"
   logline "wait a bit ..."
   while true; do
     >/dev/null 2>&1  ./bin/footloose ssh -c $footlooseconfig root@node1 "ps | grep coredns" && break
