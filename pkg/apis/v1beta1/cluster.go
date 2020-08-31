@@ -48,6 +48,16 @@ type SchedulerSpec struct {
 	ExtraArgs []string `yaml:"extraArgs"`
 }
 
+// Validate validates cluster config
+func (c *ClusterConfig) Validate() []error {
+	var errors []error
+
+	errors = append(errors, c.Spec.Network.Validate()...)
+	// TODO We need to validate all other parts too
+
+	return errors
+}
+
 // APIAddress ...
 func (a *APISpec) APIAddress() string {
 	return fmt.Sprintf("https://%s:6443", a.Address)

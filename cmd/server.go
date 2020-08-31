@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/Mirantis/mke/pkg/applier"
@@ -44,6 +45,15 @@ func startServer(ctx *cli.Context) error {
 		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
 		clusterConfig = &config.ClusterConfig{
 			Spec: config.DefaultClusterSpec(),
+		}
+	} else {
+		errors := clusterConfig.Validate()
+		if len(errors) > 0 {
+			messages := make([]string, len(errors))
+			for _, e := range errors {
+				messages = append(messages, e.Error())
+			}
+			return fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
 		}
 	}
 	components := make(map[string]component.Component)
@@ -195,7 +205,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 			reconcilers["calico"] = calico
 		}
 	} else {
-		logrus.Warnf("network provider set to unsupported '%s', mke will not manage it", clusterSpec.Network.Provider)
+		logrus.Warnf("network provider set to custom, mke will not manage it", clusterSpec.Network.Provider)
 	}
 
 	metricServer, err := server.NewMetricServer(clusterSpec)
