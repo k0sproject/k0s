@@ -54,3 +54,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./mke
           asset_name: mke-${{ steps.branch_name.outputs.TAG_NAME }}-amd64
+          asset_content_type: application/octet-stream
