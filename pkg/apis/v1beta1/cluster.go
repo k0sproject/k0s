@@ -33,19 +33,19 @@ type ClusterSpec struct {
 
 // APISpec ...
 type APISpec struct {
-	Address   string   `yaml:"address"`
-	SANs      []string `yaml:"sans"`
-	ExtraArgs []string `yaml:"extraArgs"`
+	Address   string            `yaml:"address"`
+	SANs      []string          `yaml:"sans"`
+	ExtraArgs map[string]string `yaml:"extraArgs"`
 }
 
 // ControllerManagerSpec ...
 type ControllerManagerSpec struct {
-	ExtraArgs []string `yaml:"extraArgs"`
+	ExtraArgs map[string]string `yaml:"extraArgs"`
 }
 
 // SchedulerSpec ...
 type SchedulerSpec struct {
-	ExtraArgs []string `yaml:"extraArgs"`
+	ExtraArgs map[string]string `yaml:"extraArgs"`
 }
 
 // APIAddress ...

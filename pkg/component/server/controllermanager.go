@@ -23,6 +23,17 @@ type ControllerManager struct {
 	gid           int
 }
 
+var cmDefaultArgs = map[string]string{
+	"allocate-node-cidrs":             "true",
+	"bind-address":                    "127.0.0.1",
+	"cluster-name":                    "mke",
+	"controllers":                     "*,bootstrapsigner,tokencleaner",
+	"enable-hostpath-provisioner":     "true",
+	"leader-elect":                    "true",
+	"node-cidr-mask-size":             "24",
+	"use-service-account-credentials": "true",
+}
+
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
 	var err error
@@ -41,37 +52,40 @@ func (a *ControllerManager) Init() error {
 
 // Run runs kube ControllerManager
 func (a *ControllerManager) Run() error {
-	logrus.Info("Starting kube-ccm")
+	logrus.Info("Starting kube-controller-manager")
 	ccmAuthConf := filepath.Join(constant.CertRoot, "ccm.conf")
-	args := []string{
-		"--allocate-node-cidrs=true",
-		fmt.Sprintf("--authentication-kubeconfig=%s", ccmAuthConf),
-		fmt.Sprintf("--authorization-kubeconfig=%s", ccmAuthConf),
-		fmt.Sprintf("--kubeconfig=%s", ccmAuthConf),
-		"--bind-address=127.0.0.1",
-		fmt.Sprintf("--client-ca-file=%s", path.Join(constant.CertRoot, "ca.crt")),
-		fmt.Sprintf("--cluster-cidr=%s", a.ClusterConfig.Spec.Network.PodCIDR),
-		"--cluster-name=mke",
-		fmt.Sprintf("--cluster-signing-cert-file=%s", path.Join(constant.CertRoot, "ca.crt")),
-		fmt.Sprintf("--cluster-signing-key-file=%s", path.Join(constant.CertRoot, "ca.key")),
-		"--controllers=*,bootstrapsigner,tokencleaner",
-		"--enable-hostpath-provisioner=true",
-		"--leader-elect=true",
-		"--node-cidr-mask-size=24",
-		fmt.Sprintf("--requestheader-client-ca-file=%s", path.Join(constant.CertRoot, "front-proxy-ca.crt")),
-		fmt.Sprintf("--root-ca-file=%s", path.Join(constant.CertRoot, "ca.crt")),
-		fmt.Sprintf("--service-account-private-key-file=%s", path.Join(constant.CertRoot, "sa.key")),
-		fmt.Sprintf("--service-cluster-ip-range=%s", a.ClusterConfig.Spec.Network.ServiceCIDR),
-		"--use-service-account-credentials=true",
-		"--controllers=*,tokencleaner",
+	args := map[string]string{
+		"authentication-kubeconfig":        ccmAuthConf,
+		"authorization-kubeconfig":         ccmAuthConf,
+		"kubeconfig":                       ccmAuthConf,
+		"client-ca-file":                   path.Join(constant.CertRoot, "ca.crt"),
+		"cluster-cidr":                     a.ClusterConfig.Spec.Network.PodCIDR,
+		"cluster-signing-cert-file":        path.Join(constant.CertRoot, "ca.crt"),
+		"cluster-signing-key-file":         path.Join(constant.CertRoot, "ca.key"),
+		"requestheader-client-ca-file":     path.Join(constant.CertRoot, "front-proxy-ca.crt"),
+		"root-ca-file":                     path.Join(constant.CertRoot, "ca.crt"),
+		"service-account-private-key-file": path.Join(constant.CertRoot, "sa.key"),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
 	}
-	for _, arg := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
-		args = append(args, arg)
+	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
+		if args[name] != "" {
+			return fmt.Errorf("cannot override kube-controller-manager flag: %s", name)
+		}
+		args[name] = value
+	}
+	for name, value := range cmDefaultArgs {
+		if args[name] == "" {
+			args[name] = value
+		}
+	}
+	cmArgs := []string{}
+	for name, value := range args {
+		cmArgs = append(cmArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
 	a.supervisor = supervisor.Supervisor{
-		Name:    "kube-ccm",
+		Name:    "kube-controller-manager",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-controller-manager"),
-		Args:    args,
+		Args:    cmArgs,
 		Uid:     a.uid,
 		Gid:     a.gid,
 	}
