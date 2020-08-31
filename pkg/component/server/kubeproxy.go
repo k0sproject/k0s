@@ -239,7 +239,7 @@ spec:
       priorityClassName: system-node-critical
       containers:
       - name: kube-proxy
-        image: k8s.gcr.io/kube-proxy:v1.18.5
+        image: k8s.gcr.io/kube-proxy:v1.19.0
         imagePullPolicy: IfNotPresent
         command:
         - /usr/local/bin/kube-proxy
