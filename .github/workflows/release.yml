@@ -19,14 +19,21 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      # Ugly hack to get the tag name
+      # github.ref gives the full reference like refs.tags.v0.0.1-beta1
+      - name: Branch name
+        id: branch_name
+        run: |
+          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
+
       - name: Build
         run: make build EMBEDDED_BINS_BUILDMODE=fetch
         env:
-          VERSION: GITHUB_REF
+          VERSION: ${{ env.TAG_NAME }}
 
       - name: Run smoke test
         run: make check
-      
+        
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -35,7 +42,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-          draft: true
+          draft: true # So we can manually edit before publishing
           prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
 
       - name: Upload Release Assets
@@ -46,5 +53,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./mke
-          asset_name: mke-${{ github.ref }}-amd64
+          asset_name: mke-${{ env.TAG_NAME }}-amd64
           asset_content_type: application/zip
