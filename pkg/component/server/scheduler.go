@@ -38,20 +38,27 @@ func (a *Scheduler) Init() error {
 func (a *Scheduler) Run() error {
 	logrus.Info("Starting kube-scheduler")
 	schedulerAuthConf := filepath.Join(constant.CertRoot, "scheduler.conf")
-	args := []string{
-		fmt.Sprintf("--authentication-kubeconfig=%s", schedulerAuthConf),
-		fmt.Sprintf("--authorization-kubeconfig=%s", schedulerAuthConf),
-		fmt.Sprintf("--kubeconfig=%s", schedulerAuthConf),
-		"--bind-address=127.0.0.1",
-		"--leader-elect=true",
+	args := map[string]string{
+		"authentication-kubeconfig": schedulerAuthConf,
+		"authorization-kubeconfig":  schedulerAuthConf,
+		"kubeconfig":                schedulerAuthConf,
+		"bind-address":              "127.0.0.1",
+		"leader-elect":              "true",
 	}
-	for _, arg := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
-		args = append(args, arg)
+	for name, value := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
+		if args[name] != "" {
+			return fmt.Errorf("cannot override kube-scheduler flag: %s", name)
+		}
+		args[name] = value
+	}
+	schedulerArgs := []string{}
+	for name, value := range args {
+		schedulerArgs = append(schedulerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-scheduler"),
-		Args:    args,
+		Args:    schedulerArgs,
 		Uid:     a.uid,
 		Gid:     a.gid,
 	}

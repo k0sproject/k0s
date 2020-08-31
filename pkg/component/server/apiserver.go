@@ -22,6 +22,15 @@ type ApiServer struct {
 	gid        int
 }
 
+var apiDefaultArgs = map[string]string{
+	"allow-privileged":                   "true",
+	"enable-admission-plugins":           "NodeRestriction",
+	"requestheader-extra-headers-prefix": "X-Remote-Extra-",
+	"requestheader-group-headers":        "X-Remote-Group",
+	"requestheader-username-headers":     "X-Remote-User",
+	"secure-port":                        "6443",
+}
+
 // Init extracts needed binaries
 func (a *ApiServer) Init() error {
 	var err error
@@ -37,35 +46,42 @@ func (a *ApiServer) Init() error {
 // Run runs kube api
 func (a *ApiServer) Run() error {
 	logrus.Info("Starting kube-apiserver")
-	args := []string{
-		"--allow-privileged=true",
-		"--authorization-mode=Node,RBAC",
-		fmt.Sprintf("--client-ca-file=%s", path.Join(constant.CertRoot, "ca.crt")),
-		"--enable-admission-plugins=NodeRestriction",
-		"--enable-bootstrap-token-auth=true",
-		fmt.Sprintf("--kubelet-client-certificate=%s", path.Join(constant.CertRoot, "apiserver-kubelet-client.crt")),
-		fmt.Sprintf("--kubelet-client-key=%s", path.Join(constant.CertRoot, "apiserver-kubelet-client.key")),
-		"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
-		fmt.Sprintf("--proxy-client-cert-file=%s", path.Join(constant.CertRoot, "front-proxy-client.crt")),
-		fmt.Sprintf("--proxy-client-key-file=%s", path.Join(constant.CertRoot, "front-proxy-client.key")),
-		"--requestheader-allowed-names=front-proxy-client",
-		fmt.Sprintf("--requestheader-client-ca-file=%s", path.Join(constant.CertRoot, "front-proxy-ca.crt")),
-		"--requestheader-extra-headers-prefix=X-Remote-Extra-",
-		"--requestheader-group-headers=X-Remote-Group",
-		"--requestheader-username-headers=X-Remote-User",
-		"--secure-port=6443",
-		fmt.Sprintf("--service-account-key-file=%s", path.Join(constant.CertRoot, "sa.pub")),
-		fmt.Sprintf("--service-cluster-ip-range=%s", a.ClusterConfig.Spec.Network.ServiceCIDR),
-		fmt.Sprintf("--tls-cert-file=%s", path.Join(constant.CertRoot, "server.crt")),
-		fmt.Sprintf("--tls-private-key-file=%s", path.Join(constant.CertRoot, "server.key")),
+	args := map[string]string{
+		"authorization-mode":              "Node,RBAC",
+		"client-ca-file":                  path.Join(constant.CertRoot, "ca.crt"),
+		"enable-bootstrap-token-auth":     "true",
+		"kubelet-client-certificate":      path.Join(constant.CertRoot, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":              path.Join(constant.CertRoot, "apiserver-kubelet-client.key"),
+		"kubelet-preferred-address-types": "InternalIP,ExternalIP,Hostname",
+		"proxy-client-cert-file":          path.Join(constant.CertRoot, "front-proxy-client.crt"),
+		"proxy-client-key-file":           path.Join(constant.CertRoot, "front-proxy-client.key"),
+		"requestheader-allowed-names":     "front-proxy-client",
+		"requestheader-client-ca-file":    path.Join(constant.CertRoot, "front-proxy-ca.crt"),
+		"service-account-key-file":        path.Join(constant.CertRoot, "sa.pub"),
+		"service-cluster-ip-range":        a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"tls-cert-file":                   path.Join(constant.CertRoot, "server.crt"),
+		"tls-private-key-file":            path.Join(constant.CertRoot, "server.key"),
 	}
-	for _, arg := range a.ClusterConfig.Spec.API.ExtraArgs {
-		args = append(args, arg)
+	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
+		if args[name] != "" {
+			return fmt.Errorf("cannot override apiserver flag: %s", name)
+		}
+		args[name] = value
 	}
+	for name, value := range apiDefaultArgs {
+		if args[name] == "" {
+			args[name] = value
+		}
+	}
+	apiServerArgs := []string{}
+	for name, value := range args {
+		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
+	}
+
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-apiserver",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-apiserver"),
-		Args:    args,
+		Args:    apiServerArgs,
 		Uid:     a.uid,
 		Gid:     a.gid,
 	}
