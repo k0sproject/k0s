@@ -27,7 +27,7 @@ jobs:
           echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
 
       - name: Build
-        run: make build EMBEDDED_BINS_BUILDMODE=docker
+        run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
         env:
           VERSION: ${{ steps.branch_name.outputs.TAG_NAME }}
 
