@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -38,6 +39,7 @@ func main() {
 			cmd.TokenCommand(),
 			cmd.SingleCommand(),
 			cmd.ApiCommand(),
+			versionCommand(),
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -59,5 +61,16 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func versionCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "version",
+		Usage: "Print version info",
+		Action: func(ctx *cli.Context) error {
+			fmt.Println(Version)
+			return nil
+		},
 	}
 }

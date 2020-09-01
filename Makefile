@@ -8,6 +8,7 @@ GO_SRCS := $(shell find -name '*.go')
 
 EMBEDDED_BINS_BUILDMODE ?= fetch
 
+VERSION ?= dev
 
 .PHONY: all
 all: build
@@ -32,7 +33,7 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
 	go generate
 
 mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	CGO_ENABLED=0 go build -ldflags="-w -s" -o mke.code main.go
+	CGO_ENABLED=0 go build -ldflags="-w -s -X main.Version=$(VERSION)" -o mke.code main.go
 	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
