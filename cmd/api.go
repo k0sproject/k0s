@@ -191,5 +191,9 @@ func isValidToken(token string) bool {
 	if string(secret.Data["token-secret"]) != parts[1] {
 		return false
 	}
+
+	if string(secret.Data["usage-controller-join"]) != "true" {
+		return false
+	}
 	return true
 }
