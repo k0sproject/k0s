@@ -3,10 +3,28 @@
 
 ## Build
 
+`mke` can be built in 3 different ways:
+
+Fetch official binaries (except `kine`, which is built from source):
 ```
-$ make build
+make EMBEDDED_BINS_BUILDMODE=fetch
 ```
 
+Build kubernetes components from source as static binaries (requires docker):
+```
+make EMBEDDED_BINS_BUILDMODE=docker
+```
+
+Build mke without any embedded binaries (requires that kubernets
+binaries are pre-installed on the runtime system):
+```
+make EMBEDDED_BINS_BUILDMODE=none
+```
+
+Builds can be done in parallel:
+```
+make -j$(nproc)
+```
 
 ## Cluster bootstrapping
 
@@ -17,8 +35,9 @@ Move the built `mke` binary to each of the nodes.
 ### Control plane
 
 Currently only single node control planes are supported!
-
-`mke server`
+```
+mke server
+```
 
 This create all the necessary certs and configs in `/var/lib/mke/pki`. Mke runs all control plane components in separate "naked" processes, does not depend on kubelet or container engine.
 
