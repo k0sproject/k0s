@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/Mirantis/mke/pkg/util"
@@ -13,27 +14,29 @@ import (
 )
 
 type Calico struct {
-	client     *kubernetes.Clientset
-	tickerDone chan struct{}
-	log        *logrus.Entry
+	client      *kubernetes.Clientset
+	clusterSpec *config.ClusterSpec
+	tickerDone  chan struct{}
+	log         *logrus.Entry
 }
 
 type calicoConfig struct {
-	MTU  int
-	Mode string
+	MTU         int
+	Mode        string
+	ClusterCIDR string
 }
 
 // NewCalico creates new Calico reconciler component
-// TODO We probably need/want to take in the whole cluster config and read some values from there.
-func NewCalico() (*Calico, error) {
+func NewCalico(clusterSpec *config.ClusterSpec) (*Calico, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
-		client: client,
-		log:    log,
+		client:      client,
+		clusterSpec: clusterSpec,
+		log:         log,
 	}, nil
 }
 
@@ -42,13 +45,12 @@ func (c *Calico) Init() error {
 }
 
 func (c *Calico) Run() error {
-
 	c.tickerDone = make(chan struct{})
 	var emptryStruct struct{}
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
 	tw := util.TemplateWriter{
-		Name:     "calico",
+		Name:     "calico-crds",
 		Template: calicoCrds,
 		Data:     emptryStruct,
 		Path:     filepath.Join(constant.DataDir, "manifests", "calico-crds.yaml"),
@@ -81,7 +83,7 @@ func (c *Calico) Run() error {
 				}
 				err = tw.Write()
 				if err != nil {
-					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error)
+					c.log.Errorf("error writing calico manifests: %s. will retry", err.Error)
 					continue
 				}
 				previousConfig = config
@@ -97,8 +99,9 @@ func (c *Calico) Run() error {
 
 func (c *Calico) getConfig() (calicoConfig, error) {
 	config := calicoConfig{
-		MTU:  1440,
-		Mode: "vxlan",
+		MTU:         1440, // TODO: allow to configure
+		Mode:        "vxlan",
+		ClusterCIDR: c.clusterSpec.Network.PodCIDR,
 	}
 
 	return config, nil
@@ -249,8 +252,6 @@ subjects:
 - kind: ServiceAccount
   name: calico-kube-controllers
   namespace: kube-system
----
-
 ---
 # Source: calico/templates/calico-node-rbac.yaml
 # Include a clusterrole for the calico-node DaemonSet,
@@ -574,8 +575,8 @@ spec:
             # The default IPv4 pool to create on startup if none exists. Pod IPs will be
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within '--cluster-cidr'.
-            # - name: CALICO_IPV4POOL_CIDR
-            #   value: "192.168.0.0/16"
+            - name: CALICO_IPV4POOL_CIDR
+              value: "{{ .ClusterCIDR }}"
             # Set MTU for the Wireguard tunnel device.
             - name: FELIX_WIREGUARDMTU
               valueFrom:

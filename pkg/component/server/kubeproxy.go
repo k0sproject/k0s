@@ -81,6 +81,7 @@ func (c *KubeProxy) getConfig() (proxyConfig, error) {
 	config := proxyConfig{
 		// FIXME get this from somewhere
 		ControlPlaneEndpoint: c.clusterSpec.API.APIAddress(),
+		ClusterCIDR:          c.clusterSpec.Network.PodCIDR,
 	}
 
 	return config, nil
@@ -88,6 +89,7 @@ func (c *KubeProxy) getConfig() (proxyConfig, error) {
 
 type proxyConfig struct {
 	ControlPlaneEndpoint string
+	ClusterCIDR          string
 }
 
 const proxyTemplate = `
@@ -180,7 +182,7 @@ data:
       contentType: ""
       kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
       qps: 0
-    clusterCIDR: ""
+    clusterCIDR: {{ .ClusterCIDR }}
     configSyncPeriod: 0s
     conntrack:
       maxPerCore: null

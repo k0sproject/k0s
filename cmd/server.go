@@ -190,7 +190,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 	}
 
 	if clusterSpec.Network.Provider == "calico" {
-		calico, err := server.NewCalico()
+		calico, err := server.NewCalico(clusterSpec)
 		if err != nil {
 			logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 		} else {

@@ -52,6 +52,10 @@ embedded-bins/staging/linux/bin: .bins.stamp
 check: mke
 	$(MAKE) -C tests check
 
+.PHONY: check-network
+check-network: mke
+	$(MAKE) -C tests check-network
+
 .PHONY: clean
 clean:
 	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata
