@@ -1,4 +1,4 @@
-FROM alpine:3.12 AS build
+FROM golang:1.15-alpine AS build
 
 ARG VERSION
 ENV GOPATH=/go
