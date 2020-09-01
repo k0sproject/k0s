@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/pkg/errors"
@@ -9,13 +10,24 @@ import (
 type Network struct {
 	PodCIDR     string `yaml:"podCIDR"`
 	ServiceCIDR string `yaml:"serviceCIDR"`
+	Provider    string `yaml:"provider"`
 }
 
 func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:     "10.244.0.0/16",
 		ServiceCIDR: "10.96.0.0/12",
+		Provider:    "calico",
 	}
+}
+
+// Validate validates all the settings make sense and should work
+func (n *Network) Validate() []error {
+	var errors []error
+	if n.Provider != "calico" && n.Provider != "custom" {
+		errors = append(errors, fmt.Errorf("unsupported network provider: %s", n.Provider))
+	}
+	return errors
 }
 
 // DNSAddress calculates the 10th address of configured service CIDR block.
@@ -40,7 +52,7 @@ func (n *Network) DNSAddress() (string, error) {
 	return address.String(), nil
 }
 
-// DNSAddress calculates the 10th address of configured service CIDR block.
+// InternalAPIAddress calculates the internal API address of configured service CIDR block.
 func (n *Network) InternalAPIAddress() (string, error) {
 	_, ipnet, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
