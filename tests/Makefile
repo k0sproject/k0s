@@ -21,7 +21,7 @@ bin/footloose bin/kubectl: | bin
 	chmod +x $@.tmp && mv $@.tmp $@
 
 bin/sonobuoy:
-	$(curl) $(sonobuoy_url) | tar -C bin/ --exclude "LICENSE" -zxv $($(notdir $@)_extract)
+	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
 id_ed25519_mke:
 	ssh-keygen -t ed25519 -N "" -f $@
