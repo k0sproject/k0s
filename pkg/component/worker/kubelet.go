@@ -30,6 +30,9 @@ authorization:
     cacheAuthorizedTTL: "5m"
     cacheUnauthorizedTTL: "30s"
 failSwapOn: false
+clusterDNS:
+- "{{ .ClusterDNS }}"
+clusterDomain: "{{ .ClusterDomain }}"
 `
 
 const (
@@ -44,6 +47,8 @@ type Kubelet struct {
 }
 
 type KubeletConfig struct {
+	ClusterDNS    string
+	ClusterDomain string
 }
 
 // Init extracts the needed binaries
@@ -87,8 +92,11 @@ func (k *Kubelet) Run() error {
 	tw := util.TemplateWriter{
 		Name:     "kubeletConfig",
 		Template: kubeletConfig,
-		Data:     KubeletConfig{},
-		Path:     kubeletConfigPath,
+		Data: KubeletConfig{
+			ClusterDNS:    "10.96.0.10", // TODO: should be coming from config
+			ClusterDomain: "cluster.local",
+		},
+		Path: kubeletConfigPath,
 	}
 
 	err := tw.Write()
