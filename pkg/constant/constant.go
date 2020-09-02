@@ -13,14 +13,15 @@ const (
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
 
-	// PidDir defines the location of supervised pid files
-	PidDir = "/run/mke"
+	// RunDir defines the location of supervised pid files and sockets
+	RunDir = "/run/mke"
 
 	// Group defines group name for shared directories
 	Group = "mke"
 
 	// User accounts for services
 	EtcdUser              = "etcd"
+	KineUser              = "kine"
 	ApiserverUser         = "kube-apiserver"
 	ControllerManagerUser = "kube-controller-manager"
 	SchedulerUser         = "kube-scheduler"
