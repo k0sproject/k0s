@@ -67,8 +67,8 @@ func (s *Supervisor) processWaitQuit() bool {
 func (s *Supervisor) Supervise() {
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
-	s.PidFile = path.Join(constant.PidDir, s.Name) + ".pid"
-	os.MkdirAll(constant.PidDir, 0755) // ignore errors in case directory exists
+	s.PidFile = path.Join(constant.RunDir, s.Name) + ".pid"
+	os.MkdirAll(constant.RunDir, 0755) // ignore errors in case directory exists
 	go func() {
 		log := logrus.WithField("component", s.Name)
 		log.Info("Starting to supervise")
