@@ -25,8 +25,12 @@ _setup() {
 }
 
 _cleanup() {
+  echo ""
+  echo "==> CLEANUP"
   set +e
+  logline "cleaning up footloose cluster"
     >/dev/null 2>&1 ./bin/footloose delete --config $footlooseconfig
     >/dev/null 2>&1 rm -f $footlooseconfig
+  logline "pruning docker volumes"
     >/dev/null 2>&1 docker volume prune -f
 }
