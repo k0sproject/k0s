@@ -31,6 +31,22 @@ var apiDefaultArgs = map[string]string{
 	"secure-port":                        "6443",
 }
 
+const egressSelectorConfigTemplate = `
+apiVersion: apiserver.k8s.io/v1beta1
+kind: EgressSelectorConfiguration
+egressSelections:
+- name: cluster
+  connection:
+    proxyProtocol: GRPC
+    transport:
+      uds:
+        udsName: {{ .UDSName }}
+`
+
+type egressSelectorConfig struct {
+	UDSName string
+}
+
 // Init extracts needed binaries
 func (a *ApiServer) Init() error {
 	var err error
@@ -45,22 +61,32 @@ func (a *ApiServer) Init() error {
 
 // Run runs kube api
 func (a *ApiServer) Run() error {
+	err := a.writeKonnectivityConfig()
+	if err != nil {
+		return err
+	}
+
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
-		"authorization-mode":              "Node,RBAC",
-		"client-ca-file":                  path.Join(constant.CertRoot, "ca.crt"),
-		"enable-bootstrap-token-auth":     "true",
-		"kubelet-client-certificate":      path.Join(constant.CertRoot, "apiserver-kubelet-client.crt"),
-		"kubelet-client-key":              path.Join(constant.CertRoot, "apiserver-kubelet-client.key"),
-		"kubelet-preferred-address-types": "InternalIP,ExternalIP,Hostname",
-		"proxy-client-cert-file":          path.Join(constant.CertRoot, "front-proxy-client.crt"),
-		"proxy-client-key-file":           path.Join(constant.CertRoot, "front-proxy-client.key"),
-		"requestheader-allowed-names":     "front-proxy-client",
-		"requestheader-client-ca-file":    path.Join(constant.CertRoot, "front-proxy-ca.crt"),
-		"service-account-key-file":        path.Join(constant.CertRoot, "sa.pub"),
-		"service-cluster-ip-range":        a.ClusterConfig.Spec.Network.ServiceCIDR,
-		"tls-cert-file":                   path.Join(constant.CertRoot, "server.crt"),
-		"tls-private-key-file":            path.Join(constant.CertRoot, "server.key"),
+		"advertise-address":                a.ClusterConfig.Spec.API.Address,
+		"authorization-mode":               "Node,RBAC",
+		"client-ca-file":                   path.Join(constant.CertRoot, "ca.crt"),
+		"enable-bootstrap-token-auth":      "true",
+		"kubelet-client-certificate":       path.Join(constant.CertRoot, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":               path.Join(constant.CertRoot, "apiserver-kubelet-client.key"),
+		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
+		"proxy-client-cert-file":           path.Join(constant.CertRoot, "front-proxy-client.crt"),
+		"proxy-client-key-file":            path.Join(constant.CertRoot, "front-proxy-client.key"),
+		"requestheader-allowed-names":      "front-proxy-client",
+		"requestheader-client-ca-file":     path.Join(constant.CertRoot, "front-proxy-ca.crt"),
+		"service-account-key-file":         path.Join(constant.CertRoot, "sa.pub"),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"tls-cert-file":                    path.Join(constant.CertRoot, "server.crt"),
+		"tls-private-key-file":             path.Join(constant.CertRoot, "server.key"),
+		"egress-selector-config-file":      path.Join(constant.DataDir, "konnectivity.conf"),
+		"service-account-signing-key-file": path.Join(constant.CertRoot, "sa.key"),
+		"service-account-issuer":           "api",
+		"api-audiences":                    "system:konnectivity-server",
 	}
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
 		if args[name] != "" {
@@ -100,6 +126,23 @@ func (a *ApiServer) Run() error {
 	}
 
 	a.supervisor.Supervise()
+
+	return nil
+}
+
+func (a *ApiServer) writeKonnectivityConfig() error {
+	tw := util.TemplateWriter{
+		Name:     "konnectivity",
+		Template: egressSelectorConfigTemplate,
+		Data: egressSelectorConfig{
+			UDSName: path.Join(constant.RunDir, "konnectivity-server.sock"),
+		},
+		Path: path.Join(constant.DataDir, "konnectivity.conf"),
+	}
+	err := tw.Write()
+	if err != nil {
+		return errors.Wrap(err, "failed to write konnectivity config")
+	}
 
 	return nil
 }

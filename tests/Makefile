@@ -1,6 +1,6 @@
 
 footloose_version = 0.6.3
-kubectl_version = 1.18.6
+kubectl_version = 1.19.0
 
 footloose_url = https://github.com/weaveworks/footloose/releases/download/$(footloose_version)/footloose-$(footloose_version)-linux-x86_64
 kubectl_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubectl_version)/bin/linux/amd64/kubectl
@@ -32,7 +32,7 @@ id_ed25519_mke:
 	touch $@
 
 .PHONY: check
-check: $(bins) .test-sonobuoy
+check: $(bins) .test-sig-network
 
 .PHONY: clean
 clean:

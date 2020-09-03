@@ -2,7 +2,7 @@ cluster:
   name: $CLUSTER_NAME
   privateKey: id_ed25519_mke
 machines:
-- count: 2
+- count: 3
   backend: docker
   spec:
     image: $LINUX_IMAGE

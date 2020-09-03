@@ -4,6 +4,7 @@ containerd_version = 1.4.0
 kubernetes_version = 1.19.0
 kine_version = 0.4.0
 etcd_version = 3.4.12
+konnectivity_version = 0.0.12
 
 staging-pkgs = $(patsubst %/Dockerfile,staging/.%,$(wildcard */Dockerfile))
 
@@ -57,7 +58,7 @@ staging/.%: .container.% | $(bindir)
 else
 # fetch official binaires
 #
-bins = runc kubelet containerd kube-apiserver kube-scheduler kube-controller-manager etcd kine
+bins = runc kubelet containerd kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
 curl = curl --silent -L
 
 runc_url = https://github.com/opencontainers/runc/releases/download/v$(runc_version)/runc.$(arch)
@@ -92,5 +93,14 @@ $(bindir)/kine: | $(bindir)
 			&& git clone -b v$(kine_version) --depth=1 https://github.com/rancher/kine.git; \
 	fi
 	cd $(tmpdir)/kine && go build -o $(CURDIR)/$@
+
+# konnectivity does not ship precompiled binaries so lets build it from source
+$(bindir)/konnectivity-server: | $(bindir)
+	if ! [ -d $(tmpdir)/apiserver-network-proxy ]; then \
+		mkdir -p $(tmpdir) \
+			&& cd $(tmpdir) \
+			&& git clone -b v$(konnectivity_version) --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git; \
+	fi
+	cd $(tmpdir)/apiserver-network-proxy && make bin/proxy-server && cp bin/proxy-server $(CURDIR)/$@
 
 endif
