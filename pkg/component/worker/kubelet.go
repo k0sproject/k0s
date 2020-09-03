@@ -74,7 +74,7 @@ func (k *Kubelet) Init() error {
 
 // Run runs kubelet
 func (k *Kubelet) Run() error {
-	logrus.Info("Starting containerD")
+	logrus.Info("Starting kubelet")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kubelet"),

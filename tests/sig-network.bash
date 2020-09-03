@@ -22,7 +22,7 @@ _setup_worker() {
 
 _setup_cluster() {
   logline "start server"
-  ./bin/footloose ssh --config $footlooseconfig root@node0 "nohup mke server >/dev/null 2>&1 &"
+  ./bin/footloose ssh --config $footlooseconfig root@node0 "nohup mke server >/tmp/server.log 2>&1 &"
   logline "wait a bit ..."
   while true; do
      >/dev/null 2>&1 ./bin/footloose ssh -c $footlooseconfig root@node0 "ps | grep kube-apiserver" && break
@@ -38,6 +38,7 @@ _setup_cluster() {
 _setup
 title "sonobuoy[sig-network]: 1 controller, 2 workers"
 _setup_cluster
+
 export KUBECONFIG=./kubeconfig
 (
   sleep 10
@@ -57,6 +58,5 @@ if [ "${result}" = "0" ]; then
   exit 0
 else
   title "sonobuoy[sig-network]: FAILURE!!!"
-  #exit $result
-  sleep 600
+  exit $result
 fi

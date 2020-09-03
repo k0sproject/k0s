@@ -32,10 +32,7 @@ id_ed25519_mke:
 	touch $@
 
 .PHONY: check
-check: $(bins) .test-sonobuoy
-
-.PHONY: check-network
-check-network: $(bins) .test-sig-network
+check: $(bins) .test-sig-network
 
 .PHONY: clean
 clean:

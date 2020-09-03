@@ -111,6 +111,9 @@ func startServer(ctx *cli.Context) error {
 	components["kube-ccm"] = &server.ControllerManager{
 		ClusterConfig: clusterConfig,
 	}
+	components["konnectivity"] = &server.Konnectivity{
+		ClusterConfig: clusterConfig,
+	}
 	components["manifest-manager"] = &applier.Manager{}
 	components["mke-controlapi"] = &server.MkeControlApi{}
 
@@ -139,6 +142,7 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	components["kube-apiserver"].Run()
+	components["konnectivity"].Run()
 	components["kube-scheduler"].Run()
 	components["kube-ccm"].Run()
 	components["manifest-manager"].Run()
@@ -166,6 +170,7 @@ func startServer(ctx *cli.Context) error {
 	components["manifest-manager"].Stop()
 	components["kube-ccm"].Stop()
 	components["kube-scheduler"].Stop()
+	components["konnectivity"].Stop()
 	components["kube-apiserver"].Stop()
 	components["storage"].Stop()
 
