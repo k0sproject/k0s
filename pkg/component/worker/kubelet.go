@@ -9,6 +9,7 @@ import (
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -69,14 +70,23 @@ func (k *Kubelet) Run() error {
 		},
 	}
 
-	kubeletconfig, err := k.KubeletConfigClient.Get()
+	err := retry.Do(func() error {
+		kubeletconfig, err := k.KubeletConfigClient.Get()
+		if err != nil {
+			return err
+		}
+
+		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0700)
+		if err != nil {
+			return errors.Wrap(err, "failed to write kubelet config to disk")
+		}
+
+		return nil
+
+	})
+
 	if err != nil {
 		return err
-	}
-
-	err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0700)
-	if err != nil {
-		return errors.Wrap(err, "failed to write kubelet config to disk")
 	}
 
 	k.supervisor.Supervise()

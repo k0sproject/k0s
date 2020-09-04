@@ -65,16 +65,18 @@ func startWorker(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 		}
-		kubeletConfigClient, err = worker.NewKubeletConfigClient(constant.KubeletBootstrapConfigPath)
-		if err != nil {
-			return err
-		}
-	} else {
-		var err error
-		kubeletConfigClient, err = worker.NewKubeletConfigClient("/var/lib/mke/kubelet.conf")
-		if err != nil {
-			return err
-		}
+
+	}
+
+	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
+	clientConfigPath := constant.KubeletBootstrapConfigPath
+	if util.FileExists("/var/lib/mke/kubelet.conf") {
+		clientConfigPath = "/var/lib/mke/kubelet.conf"
+	}
+
+	kubeletConfigClient, err := worker.NewKubeletConfigClient(clientConfigPath)
+	if err != nil {
+		return err
 	}
 
 	components := make(map[string]component.Component)
@@ -96,9 +98,12 @@ func startWorker(ctx *cli.Context) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	components["containerd"].Run()
-	components["kubelet"].Run()
-
+	err = components["containerd"].Run()
+	err = components["kubelet"].Run()
+	if err != nil {
+		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
+		c <- syscall.SIGTERM
+	}
 	// Wait for mke process termination
 	<-c
 	logrus.Info("Shutting down mke worker")

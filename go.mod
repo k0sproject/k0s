@@ -3,6 +3,7 @@ module github.com/Mirantis/mke
 go 1.13
 
 require (
+	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
