@@ -212,5 +212,12 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["metricServer"] = metricServer
 	}
 
+	kubeletConfig, err := server.NewKubeletConfig(clusterSpec)
+	if err != nil {
+		logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
+	} else {
+		reconcilers["kubeletConfig"] = kubeletConfig
+	}
+
 	return reconcilers
 }

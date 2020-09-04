@@ -25,4 +25,7 @@ const (
 	ApiserverUser         = "kube-apiserver"
 	ControllerManagerUser = "kube-controller-manager"
 	SchedulerUser         = "kube-scheduler"
+
+	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
+	KubernetesMajorMinorVersion = "1.19"
 )

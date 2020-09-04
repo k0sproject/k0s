@@ -2,38 +2,16 @@ package worker
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
-	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
-
-const kubeletConfig = `
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-authentication:
-  anonymous:
-    enabled: false
-  webhook:
-    enabled: true
-    cacheTTL: "2m"
-  x509:
-    clientCAFile: /var/lib/mke/pki/ca.crt
-authorization:
-  mode: Webhook
-  webhook:
-    cacheAuthorizedTTL: "5m"
-    cacheUnauthorizedTTL: "30s"
-failSwapOn: false
-clusterDNS:
-- "{{ .ClusterDNS }}"
-clusterDomain: "{{ .ClusterDomain }}"
-`
 
 const (
 	kubeletConfigPath      = "/var/lib/mke/kubelet-config.yaml"
@@ -41,6 +19,8 @@ const (
 )
 
 type Kubelet struct {
+	KubeletConfigClient *KubeletConfigClient
+
 	supervisor      supervisor.Supervisor
 	dataDir         string
 	volumePluginDir string
@@ -88,20 +68,15 @@ func (k *Kubelet) Run() error {
 			"--kubeconfig=/var/lib/mke/kubelet.conf",
 		},
 	}
-	// TODO Make proper kubelet config
-	tw := util.TemplateWriter{
-		Name:     "kubeletConfig",
-		Template: kubeletConfig,
-		Data: KubeletConfig{
-			ClusterDNS:    "10.96.0.10", // TODO: should be coming from config
-			ClusterDomain: "cluster.local",
-		},
-		Path: kubeletConfigPath,
+
+	kubeletconfig, err := k.KubeletConfigClient.Get()
+	if err != nil {
+		return err
 	}
 
-	err := tw.Write()
+	err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0700)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create kubelet config file")
+		return errors.Wrap(err, "failed to write kubelet config to disk")
 	}
 
 	k.supervisor.Supervise()
