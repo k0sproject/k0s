@@ -26,6 +26,18 @@ jobs:
         run: |
           echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
 
+      - name: Set up Docker Buildx
+        uses: crazy-max/ghaction-docker-buildx@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: /tmp/mke-buildx-build
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build
         run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
         env:
@@ -46,7 +58,7 @@ jobs:
           prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
 
       - name: Upload Release Assets
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions

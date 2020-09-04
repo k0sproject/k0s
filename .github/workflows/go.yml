@@ -22,8 +22,20 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: /tmp/mke-buildx-build
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
     - name: Build
-      run: make build EMBEDDED_BINS_BUILDMODE=fetch
+      run: make build
 
     - name: Run smoke test
       run: make check

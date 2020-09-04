@@ -52,7 +52,9 @@ staging/.%: .container.% | $(bindir)
 	mv $@.tmp $@
 
 .docker-image.%.stamp: %/Dockerfile
-	docker build -t mkebuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
+	docker buildx rm mkebuild$(basename $@) || true
+	docker buildx create --use --name=mkebuild$(basename $@)
+	docker buildx build --cache-from=type=local,src=/tmp/mke-buildx-build --cache-to=type=local,dest=/tmp/mke-buildx-build -o type=docker -t mkebuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
 	touch $@
 
 else
