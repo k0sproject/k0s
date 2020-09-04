@@ -45,13 +45,14 @@ export KUBECONFIG=./kubeconfig
   exec ./bin/sonobuoy logs -f
 )& 2>&1 | sed -le "s#^#sonobuoy:logs: #;"
 logs_pid=$!
+
 logline "run sonobuoy:"
 set +e
-  ./bin/sonobuoy run --wait=60 --plugin-env=e2e.E2E_USE_GO_RUNNER=true '--e2e-focus=\[sig-network\].*\[Conformance\]' '--e2e-skip=\[Serial\]' --e2e-parallel=y
-  result=$?
-  echo $result
-  kill $logs_pid
-  wait $logs_pid
+./bin/sonobuoy run --wait=60 --plugin-env=e2e.E2E_USE_GO_RUNNER=true '--e2e-focus=\[sig-network\].*\[Conformance\]' '--e2e-skip=\[Serial\]' --e2e-parallel=y
+result=$?
+echo $result
+kill $logs_pid
+wait $logs_pid
 set -e
 if [ "${result}" = "0" ]; then
   title "sonobuoy[sig-network]: SUCCESS!!!"
