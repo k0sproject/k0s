@@ -50,6 +50,9 @@ _setup_cluster
 
 
 export KUBECONFIG=./kubeconfig
+./bin/kubectl get nodes -o wide
+./bin/kubectl get pods --all-namespaces -o wide
+
 (
   sleep 10
   exec ./bin/sonobuoy logs -f

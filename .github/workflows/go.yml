@@ -22,8 +22,23 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Cache embedded-bins
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: |
+          .bins.stamp
+          embedded-bins/staging/linux/bin/
+        key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+        restore-keys: |
+          ${{ runner.os }}-embedded-bins-
+
     - name: Build
-      run: make build EMBEDDED_BINS_BUILDMODE=fetch
+      run: make build
+
+    - name: Clean Docker
+      run: |
+        docker system prune --all --volumes --force
 
     - name: Run smoke test
       run: make check
