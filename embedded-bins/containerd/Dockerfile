@@ -1,11 +1,10 @@
-FROM alpine:edge AS build
+FROM golang:1.13-alpine AS build
 
 ARG VERSION
 ENV GOPATH=/go
 
 RUN apk upgrade -U -a && apk add \
-	build-base git go \
-	libseccomp-dev libseccomp-static \
+	build-base git \
 	btrfs-progs-dev btrfs-progs-static \
 	protoc
 
