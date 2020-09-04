@@ -24,10 +24,13 @@ _setup_cluster() {
   logline "start server"
   ./bin/footloose ssh --config $footlooseconfig root@node0 "nohup mke server >/tmp/mke-server.log 2>&1 &"
   logline "wait a bit ..."
+  ## TODO Maybe we could replace all the sleeps with polling of the healthz endpoint
   while true; do
      >/dev/null 2>&1 ./bin/footloose ssh -c $footlooseconfig root@node0 "ps | grep kube-apiserver" && break
     sleep 1
   done
+  # API is up, but it needs to do quite a bit of init work still
+  sleep 10
 
   ./bin/footloose ssh --config $footlooseconfig root@node0 "cat /var/lib/mke/pki/admin.conf" > kubeconfig
 
