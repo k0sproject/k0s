@@ -4,7 +4,7 @@ ARG VERSION
 ENV GOPATH=/go
 ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
 
-RUN apk add build-base git go go-bindata linux-headers rsync grep coreutils bash
+RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
