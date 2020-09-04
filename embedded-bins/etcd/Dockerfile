@@ -1,10 +1,10 @@
-FROM alpine:3.12 AS build
+FROM golang:1.13-alpine AS build
 
 ARG VERSION
 
-RUN apk add build-base git go
+RUN apk add build-base git
 
-RUN git clone -b v$VERSION --depth=1 https://github.com/etcd-io/etcd.git
+RUN cd / && git clone -b v$VERSION --depth=1 https://github.com/etcd-io/etcd.git
 WORKDIR /etcd
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o etcd
 

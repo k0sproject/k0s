@@ -1,10 +1,10 @@
-FROM alpine:3.12 AS build
-
+FROM golang:1.13-alpine AS build
 ARG VERSION
 
-RUN apk add build-base git go
+RUN apk add build-base git
 
-RUN git clone -b v$VERSION --depth=1 https://github.com/rancher/kine.git
+
+RUN cd / && git clone -b v$VERSION --depth=1 https://github.com/rancher/kine.git
 WORKDIR /kine
 RUN go build -ldflags="-extldflags=-static -w -s" -o kine
 
