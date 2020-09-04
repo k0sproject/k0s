@@ -156,8 +156,9 @@ func (m *Manager) ensureTokenRBAC() error {
 			if err != nil {
 				return err
 			}
+		} else {
+			return err
 		}
-
 	}
 
 	return nil
