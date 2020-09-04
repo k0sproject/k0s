@@ -219,5 +219,12 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["kubeletConfig"] = kubeletConfig
 	}
 
+	systemRBAC, err := server.NewSystemRBAC(clusterSpec)
+	if err != nil {
+		logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
+	} else {
+		reconcilers["systemRBAC"] = systemRBAC
+	}
+
 	return reconcilers
 }
