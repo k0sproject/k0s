@@ -70,8 +70,8 @@ func startWorker(ctx *cli.Context) error {
 
 	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
 	clientConfigPath := constant.KubeletBootstrapConfigPath
-	if util.FileExists("/var/lib/mke/kubelet.conf") {
-		clientConfigPath = "/var/lib/mke/kubelet.conf"
+	if util.FileExists(constant.KubeletAuthConfigPath) {
+		clientConfigPath = constant.KubeletAuthConfigPath
 	}
 
 	kubeletConfigClient, err := worker.NewKubeletConfigClient(clientConfigPath)
