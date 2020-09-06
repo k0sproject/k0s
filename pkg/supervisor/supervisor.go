@@ -85,9 +85,8 @@ func (s *Supervisor) Supervise() {
 			// get signals sent directly to parent.
 			s.cmd.SysProcAttr = DetachAttr(s.Uid, s.Gid)
 
-			// TODO Wire up the stdout&stderr to somehow through logger to be able to distinguis the components.
-			s.cmd.Stdout = os.Stdout
-			s.cmd.Stderr = os.Stderr
+			s.cmd.Stdout = log.Writer()
+			s.cmd.Stderr = log.Writer()
 
 			err := s.cmd.Start()
 			if err != nil {
