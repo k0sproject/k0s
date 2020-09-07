@@ -56,6 +56,8 @@ staging/.%: .container.% | $(bindir)
 	docker buildx create --use --name=mkebuild$(basename $@)
 	docker buildx build --cache-from=type=local,src=/tmp/mke-buildx-build --cache-to=type=local,dest=/tmp/mke-buildx-build -o type=docker -t mkebuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
 	touch $@
+	# Remove the builder, takes ~1G disk per builder which we don't really need
+	docker buildx rm mkebuild$(basename $@) || true
 
 else
 # fetch official binaires
