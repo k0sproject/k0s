@@ -38,7 +38,7 @@ jobs:
       run: make build
 
     - name: Clean Docker
-      run: docker system prune --volumes -f
+      run: docker builder prune --all --force
 
     - name: Run smoke test
       run: make check
