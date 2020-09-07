@@ -8,10 +8,168 @@ on:
 
 jobs:
 
-  build:
-    name: Build
+  build-containerd:
+    name: Build containerd
     runs-on: ubuntu-latest
     steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build containerd
+      run: |
+        cd embedded-bins
+        make staging/.containerd
+    - name: Upload containerd
+      uses: actions/upload-artifact@v2
+      with:
+        name: containerd
+        path: |
+          embedded-bins/.container.containerd
+          embedded-bins/staging/.containerd
+          embedded-bins/staging/linux/bin/*containerd*
+ 
+  build-etcd:
+    name: Build etcd
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build etcd
+      run: |
+        cd embedded-bins
+        make staging/.etcd
+    - name: Upload etcd
+      uses: actions/upload-artifact@v2
+      with:
+        name: etcd
+        path: |
+          embedded-bins/.container.etcd
+          embedded-bins/staging/.etcd
+          embedded-bins/staging/linux/bin/etcd
+
+  build-kine:
+    name: Build kine
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build kine
+      run: |
+        cd embedded-bins
+        make staging/.kine
+    - name: Upload kine
+      uses: actions/upload-artifact@v2
+      with:
+        name: kine
+        path: |
+          embedded-bins/.container.kine
+          embedded-bins/staging/.kine
+          embedded-bins/staging/linux/bin/kine
+
+  build-konnectivity:
+    name: Build konnectivity
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build konnectivity
+      run: |
+        cd embedded-bins
+        make staging/.konnectivity
+    - name: Upload konnectivity
+      uses: actions/upload-artifact@v2
+      with:
+        name: kine
+        path: |
+          embedded-bins/.container.konnectivity
+          embedded-bins/staging/.konnectivity
+          embedded-bins/staging/linux/bin/konnectivity
+
+  build-kubernetes:
+    name: Build kubernetes
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build kubernetes
+      run: |
+        cd embedded-bins
+        make staging/.kubernetes
+    - name: Upload kubernetes
+      uses: actions/upload-artifact@v2
+      with:
+        name: kine
+        path: |
+          embedded-bins/.container.kubernetes
+          embedded-bins/staging/.kubernetes
+          embedded-bins/staging/linux/bin/*kube*
+
+  build-runc:
+    name: Build runc
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+    - name: Build runc
+      run: |
+        cd embedded-bins
+        make staging/.runc
+    - name: Upload runc
+      uses: actions/upload-artifact@v2
+      with:
+        name: kine
+        path: |
+          embedded-bins/.container.runc
+          embedded-bins/staging/.runc
+          embedded-bins/staging/linux/bin/runc
+
+
+
+  build-mke:
+    name: Build mke
+    needs: [build-containerd,build-etcd,build-kine,build-konnectivity,build-kubernetes,build-runc]
+    runs-on: ubuntu-latest
+    steps:
+
+    # Download all the bins
+    - uses: actions/download-artifact@v2
+      with:
+        name: containerd
+        path: embedded-bins/
+    - uses: actions/download-artifact@v2
+      with:
+        name: etcd
+        path: embedded-bins/
+    - uses: actions/download-artifact@v2
+      with:
+        name: kine
+        path: embedded-bins/
+    - uses: actions/download-artifact@v2
+      with:
+        name: konnectivity
+        path: embedded-bins/
+    - uses: actions/download-artifact@v2
+      with:
+        name: kubernetes
+        path: embedded-bins/
+    - uses: actions/download-artifact@v2
+      with:
+        name: runc
+        path: embedded-bins/
+
+    - name: Debug fs
+      run: ls -R embedded-bins/
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
@@ -22,31 +180,16 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Set up Docker Buildx
-      uses: crazy-max/ghaction-docker-buildx@v3
-
-    - name: Cache Docker layers
-      uses: actions/cache@v2
-      id: cache
-      with:
-        path: /tmp/mke-buildx-build
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
 
     - name: Build
       run: make build
 
-    - name: Clean Docker
-      run: |
-        docker system prune --all --volumes --force
+    # - name: Run smoke test
+    #   run: make check
 
-    - name: Run smoke test
-      run: make check
-
-    - name: Collect smoke test logs
-      if: failure()
-      uses: actions/upload-artifact@v2
-      with:
-        name: logs
-        path: tests/*.log
+    # - name: Collect smoke test logs
+    #   if: failure()
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: logs
+    #     path: tests/*.log
