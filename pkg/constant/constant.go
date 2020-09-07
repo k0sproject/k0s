@@ -9,6 +9,8 @@ const (
 
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
+	// KubeletAuthConfigPath
+	KubeletAuthConfigPath = "/var/lib/mke/kubelet.conf"
 
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
@@ -25,4 +27,7 @@ const (
 	ApiserverUser         = "kube-apiserver"
 	ControllerManagerUser = "kube-controller-manager"
 	SchedulerUser         = "kube-scheduler"
+
+	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
+	KubernetesMajorMinorVersion = "1.19"
 )

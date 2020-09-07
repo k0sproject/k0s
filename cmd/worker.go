@@ -37,8 +37,10 @@ func startWorker(ctx *cli.Context) error {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 
-	// Dump join token into kubelet-bootstrap kubeconfig
-	if token != "" {
+	var kubeletConfigClient *worker.KubeletConfigClient
+
+	// Dump join token into kubelet-bootstrap kubeconfig if it does not already exist
+	if token != "" && !util.FileExists(constant.KubeletBootstrapConfigPath) {
 		kubeconfig, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
 			return errors.Wrap(err, "join-token does not seem to be proper token created by 'mke token create'")
@@ -63,12 +65,26 @@ func startWorker(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 		}
+
+	}
+
+	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
+	clientConfigPath := constant.KubeletBootstrapConfigPath
+	if util.FileExists(constant.KubeletAuthConfigPath) {
+		clientConfigPath = constant.KubeletAuthConfigPath
+	}
+
+	kubeletConfigClient, err := worker.NewKubeletConfigClient(clientConfigPath)
+	if err != nil {
+		return err
 	}
 
 	components := make(map[string]component.Component)
 
 	components["containerd"] = &worker.ContainerD{}
-	components["kubelet"] = &worker.Kubelet{}
+	components["kubelet"] = &worker.Kubelet{
+		KubeletConfigClient: kubeletConfigClient,
+	}
 
 	// extract needed components
 	for _, comp := range components {
@@ -82,9 +98,12 @@ func startWorker(ctx *cli.Context) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	components["containerd"].Run()
-	components["kubelet"].Run()
-
+	err = components["containerd"].Run()
+	err = components["kubelet"].Run()
+	if err != nil {
+		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
+		c <- syscall.SIGTERM
+	}
 	// Wait for mke process termination
 	<-c
 	logrus.Info("Shutting down mke worker")

@@ -27,3 +27,10 @@ jobs:
 
     - name: Run smoke test
       run: make check
+
+    - name: Collect smoke test logs
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: logs
+        path: tests/*.log
