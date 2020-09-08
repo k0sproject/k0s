@@ -2,7 +2,7 @@
 
 ## Control plane
 
-MKE Control plane can be configured via yaml config file. By default `mke server` command reads a file called `mke.yaml` but can be told to read any yaml file via `--config` option.
+MKE Control plane can be configured via a YAML config file. By default `mke server` command reads a file called `mke.yaml` but can be told to read any yaml file via `--config` option.
 
 An example config file with defaults:
 

@@ -1,6 +1,6 @@
 # Creating cluster with MKE
 
-As MKE binary has everything it needs packaged as a single binary, it makes it super easy to spin up Kubernetes clusters.
+As MKE binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
 
 ## Pre-requisites
 
@@ -31,7 +31,7 @@ mke token create --role=worker
 
 This will output a long [token](#tokens) which we will use to join the worker. To enhance security, we can also set an expiration time on the tokens by using:
 ```sh
-mke tome create --role=worker --expiry="100h"
+mke token create --role=worker --expiry="100h"
 ```
 
 
@@ -71,4 +71,3 @@ The on the new controller, run:
 ```sh
 mke server "long-join-token"
 ```
-
