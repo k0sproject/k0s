@@ -10,6 +10,8 @@ curl = curl -L --silent
 
 bins = bin/footloose bin/kubectl bin/sonobuoy
 
+mke = $(shell readlink -f ../mke)
+
 .PHONY: all
 all: $(bins) id_ed25519_mke
 
@@ -27,7 +29,14 @@ id_ed25519_mke:
 	ssh-keygen -t ed25519 -N "" -f $@
 
 
-.test-%: %.bash footloose-%.yaml.tpl $(bins) id_ed25519_mke ../mke
+footloose-%.yaml: footloose-%.yaml.tpl
+	CLUSTER_NAME=$(@:footloose-%.yaml=%) \
+	LINUX_IMAGE=quay.io/footloose/ubuntu18.04 \
+	MKE_BINARY=$(mke) \
+	envsubst < $< > $@.tmp
+	mv $@.tmp $@
+
+.test-%: %.bash footloose-%.yaml $(bins) id_ed25519_mke $(mke)
 	bash $<
 	touch $@
 

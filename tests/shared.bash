@@ -11,12 +11,9 @@ _setup() {
   export footlooseconfig=footloose-$name.yaml
 
   echo "==> SETUP"
-  logline "creating footloose config ..."
-  CLUSTER_NAME=$name \
-    LINUX_IMAGE=quay.io/footloose/ubuntu18.04 \
-    MKE_BINARY=${MKE_BINARY:-$(readlink -f ../mke)} \
-    envsubst < ${footlooseconfig}.tpl > $footlooseconfig
-
+  if ! [ -f "$footlooseconfig" ]; then
+    >/dev/null 2>&1 make $footlooseconfig
+  fi
   logline "starting to create footloose nodes ..."
   >/dev/null 2>&1 ./bin/footloose create --config $footlooseconfig
 
@@ -45,6 +42,6 @@ _collect_logs() {
   nodes=("node0" "node1" "node2")
   for node in "${nodes[@]}";
   do
-    >$node.log ./bin/footloose ssh --config $footlooseconfig root@$node "cat /tmp/mke-*.log"  
+    >$node.log ./bin/footloose ssh --config $footlooseconfig root@$node "cat /tmp/mke-*.log"
   done
 }
