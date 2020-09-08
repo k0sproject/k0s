@@ -1,11 +1,21 @@
-FROM alpine:edge AS build
+FROM golang:1.13-alpine AS build
 
 ARG VERSION
+ARG LIBSECCOMP_VERSION=2.5.0
 
 ENV GOPATH=/go
 
-RUN apk upgrade -U -a && apk add build-base git go \
-	libseccomp-dev libseccomp-static
+RUN apk add build-base git \
+	curl linux-headers gperf bash pkgconf
+
+RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v$LIBSECCOMP_VERSION/libseccomp-$LIBSECCOMP_VERSION.tar.gz \
+	| tar -C / -zx
+
+RUN cd /libseccomp-$LIBSECCOMP_VERSION && ./configure --sysconfdir=/etc --enable-static
+
+RUN make -j$(nproc) -C /libseccomp-$LIBSECCOMP_VERSION
+RUN make -j$(nproc) -C /libseccomp-$LIBSECCOMP_VERSION check
+RUN make -C /libseccomp-$LIBSECCOMP_VERSION install
 
 RUN mkdir -p $GOPATH/src/github.com/opencontainers/runc
 RUN git clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
