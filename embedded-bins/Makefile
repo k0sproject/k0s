@@ -12,9 +12,6 @@ bindir = staging/linux/bin
 
 buildmode = docker
 
-# allow override with the faster pigz
-gzip ?= gzip
-
 .PHONY: all
 all:
 
@@ -35,12 +32,8 @@ clean:
 $(bindir):
 	mkdir -p $@
 
-all: .compress.stamp
 ifeq ($(buildmode),docker)
-
-.compress.stamp: $(staging-pkgs) $(patsubst staging/.%,.container.%,$(staging-pkgs))
-	$(gzip) -9 $(bindir)/*
-	touch $@
+all: $(staging-pkgs) $(patsubst staging/.%,.container.%,$(staging-pkgs))
 
 staging/.%: .container.% | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/
@@ -75,8 +68,7 @@ etcd_extract = etcd-v$(etcd_version)-linux-$(arch)/etcd
 tmpdir ?= .tmp
 arch = amd64
 
-.compress.stamp: $(addprefix $(bindir)/, $(bins))
-	$(gzip) -9 $(bindir)/*
+all: $(addprefix $(bindir)/, $(bins))
 
 $(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager): | $(bindir)
 	$(curl) -o $@ $($(notdir $@)_url)

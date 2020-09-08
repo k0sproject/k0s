@@ -3,6 +3,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"text/template"
 )
 
@@ -21,7 +23,66 @@ var Usage = func() {
 
 type fileInfo struct {
 	Name         string
+	Path         string
+	TempFile     string
 	Offset, Size int64
+}
+
+func compressFiles(prefix string) []fileInfo {
+	var tmpFiles []fileInfo
+
+	// compress the files
+	var wg sync.WaitGroup
+	for _, dir := range flag.Args() {
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, f := range files {
+			tmpf, err := ioutil.TempFile("", f.Name())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			filePath := path.Join(dir, f.Name())
+			name := strings.TrimPrefix(filePath, prefix) + ".gz"
+			tmpFiles = append(tmpFiles, fileInfo{
+				Name:     name,
+				Path:     filePath,
+				TempFile: tmpf.Name(),
+			})
+
+			gz, err := gzip.NewWriterLevel(tmpf, gzip.BestCompression)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			inf, err := os.Open(filePath)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			wg.Add(1)
+			go func(wg *sync.WaitGroup) {
+				size, err := io.Copy(gz, inf)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				fi, err := tmpf.Stat()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				inf.Close()
+				gz.Close()
+				fmt.Fprintf(os.Stderr, "%s: %d/%d MiB\n", name, fi.Size()/(1024*1024), size/(1024*1024))
+				wg.Done()
+			}(&wg)
+		}
+	}
+	wg.Wait()
+	return tmpFiles
 }
 
 func main() {
@@ -40,6 +101,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	tmpFiles := compressFiles(prefix)
+
 	outf, err := os.Create(outfile)
 	if err != nil {
 		log.Fatal(err)
@@ -48,30 +111,25 @@ func main() {
 
 	var offset int64 = 0
 
-	for _, dir := range flag.Args() {
-		files, err := ioutil.ReadDir(dir)
+	fmt.Fprintf(os.Stderr, "Writing %s...\n", outfile)
+	for _, t := range tmpFiles {
+		inf, err := os.Open(t.TempFile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, f := range files {
-			filePath := path.Join(dir, f.Name())
-			p := strings.TrimPrefix(filePath, prefix)
 
-			inf, err := os.Open(filePath)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			size, err := io.Copy(outf, inf)
-			inf.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			bindata = append(bindata, fileInfo{Name: p, Offset: offset, Size: size})
-			fmt.Fprintf(os.Stderr, "%s: %d %d\n", p, offset, size)
-			offset += size
+		size, err := io.Copy(outf, inf)
+		inf.Close()
+		if err != nil {
+			log.Fatal(err)
 		}
+		os.Remove(t.TempFile)
+
+		t.Offset = offset
+		t.Size = size
+		bindata = append(bindata, t)
+
+		offset += size
 	}
 
 	f, err := os.Create(gofile)
