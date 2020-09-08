@@ -55,7 +55,7 @@ See more in [architecture docs](docs/architecture.md)
 
 `mke` can be built in 3 different ways:
 
-Fetch official binaries (except `kine`, which is built from source):
+Fetch official binaries (except `kine` and `konnectivity-server`, which are built from source):
 ```
 make EMBEDDED_BINS_BUILDMODE=fetch
 ```
@@ -82,8 +82,6 @@ Currently mke makes only very basic default (hardcoded) configs for everything.
 
 Move the built `mke` binary to each of the nodes.
 
-### Control plane
-
 ```
 mke server
 ```
@@ -96,12 +94,10 @@ After control plane boots up, we need to create a join token for worker node:
 mke token create --role=worker
 ```
 
-*Note:* The token is super long atm, we intend to make it shorter at some point
-
-### Worker node
-
 Join a new worker node to the cluster by running:
 ```
 mke worker "superlongtokenfrompreviousphase"
 ```
+
+For more detailed description see [creating cluster documentation](docs/create-cluster.md) 
 
