@@ -1,5 +1,18 @@
 # MKE - Mirantis Kubernetes Engine
 
+**Note:** The name of the project will probably change in near future.
+
+MKE is yet another Kubernetes distro. Yes. But we do some of the things pretty differently than other distros out there.
+
+Some of the high level goals of the project:
+- Packaged as single binary
+- Self-hosted, isolated control plane
+- Variety of storage backends: etcd, SQLite, MySQL (or any compatible), PostgreSQL
+- Elastic control-plane
+- Vanilla upstream Kubernetes
+
+See more in [architecture docs](docs/architecture.md)
+
 ## Features
 
 - One static binary
@@ -35,7 +48,7 @@ Build kubernetes components from source as static binaries (requires docker):
 make EMBEDDED_BINS_BUILDMODE=docker
 ```
 
-Build mke without any embedded binaries (requires that kubernets
+Build mke without any embedded binaries (requires that kubernetes
 binaries are pre-installed on the runtime system):
 ```
 make EMBEDDED_BINS_BUILDMODE=none
@@ -58,7 +71,7 @@ Move the built `mke` binary to each of the nodes.
 mke server
 ```
 
-This create all the necessary certs and configs in `/var/lib/mke/pki`. Mke runs all control plane components in separate "naked" processes, does not depend on kubelet or container engine.
+This creates all the necessary certs and configs in `/var/lib/mke/pki`. Mke runs all control plane components in separate "naked" processes, does not depend on kubelet or container engine.
 
 After control plane boots up, we need to create a join token for worker node:
 
