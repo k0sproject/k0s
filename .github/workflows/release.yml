@@ -31,8 +31,20 @@ jobs:
         env:
           VERSION: ${{ steps.branch_name.outputs.TAG_NAME }}
 
+
+      - name: Clean Docker
+        run: |
+          docker system prune --all --volumes --force
+
       - name: Run smoke test
         run: make check
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
 
       - name: Create Release
         id: create_release
