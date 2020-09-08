@@ -19,19 +19,15 @@ const DefaultKineDataSource = "sqlite:///var/lib/mke/db/state.db?more=rwc&_journ
 
 func DefaultStorageSpec() *StorageSpec {
 	return &StorageSpec{
-		Type: "kine",
-		Kine: &KineConfig{
-			DataSource: DefaultKineDataSource,
-		},
+		Type: "etcd",
+		Etcd: DefaultEtcdConfig(),
 	}
 }
 
 // UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
 func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	s.Type = "kine"
-	s.Kine = &KineConfig{
-		DataSource: DefaultKineDataSource,
-	}
+	s.Type = "etcd"
+	s.Etcd = DefaultEtcdConfig()
 
 	type ystorageconfig StorageSpec
 	yc := (*ystorageconfig)(s)
@@ -40,8 +36,8 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if s.Type == "etcd" && s.Etcd == nil {
-		s.Etcd = DefaultEtcdConfig()
+	if s.Type == "kine" && s.Kine == nil {
+		s.Kine = DefaultKineConfig()
 	}
 
 	return nil
@@ -59,5 +55,11 @@ func DefaultEtcdConfig() *EtcdConfig {
 	}
 	return &EtcdConfig{
 		PeerAddress: addr,
+	}
+}
+
+func DefaultKineConfig() *KineConfig {
+	return &KineConfig{
+		DataSource: DefaultKineDataSource,
 	}
 }

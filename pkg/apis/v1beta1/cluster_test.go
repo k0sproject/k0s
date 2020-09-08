@@ -26,8 +26,10 @@ metadata:
 
 	c, err := fromYaml(t, yamlData)
 	assert.NoError(t, err)
-	assert.Equal(t, "kine", c.Spec.Storage.Type)
-	assert.Equal(t, DefaultKineDataSource, c.Spec.Storage.Kine.DataSource)
+	assert.Equal(t, "etcd", c.Spec.Storage.Type)
+	addr, err := util.FirstPublicAddress()
+	assert.NoError(t, err)
+	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }
 
 func TestEtcdDefaults(t *testing.T) {

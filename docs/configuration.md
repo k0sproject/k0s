@@ -13,9 +13,9 @@ metadata:
   name: mke
 spec:
   storage:
-    type: kine
-    kine:
-      dataSource: sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared
+    type: etcd
+    etcd:
+      peerAddress: 1.2.3.4 # Defaults to first non-local address found on the node.
   api:
     address: 172.17.0.3 # Address where the k8s API is accessed at.
     sans: # If you want to incorporate multiple addresses into the generates api server certs
