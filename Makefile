@@ -6,7 +6,7 @@ GO_SRCS := $(shell find -name '*.go')
 #   fetch	fetch precompiled binaries from internet (except kine)
 #   none	does not embed any binaries
 
-EMBEDDED_BINS_BUILDMODE ?= fetch
+EMBEDDED_BINS_BUILDMODE ?= docker
 
 VERSION ?= dev
 

@@ -22,13 +22,12 @@ all:
 clean:
 	for i in .container.*; do \
 		if [ -f $$i ]; then \
-			docker rm $$(cat $$i) && rm $$i; \
+			docker rm $$(cat $$i); rm $$i; \
 		fi; \
 	done
 	for i in .docker-image.*; do \
 		if [ -f $$i ]; then \
-			docker rmi mkebuild$$(basename $$i .stamp) \
-				&& rm $$i;\
+			docker rmi mkebuild$$(basename $$i .stamp) ; rm $$i;\
 		fi; \
 	done
 	rm -rf staging
