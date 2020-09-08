@@ -14,7 +14,7 @@ MKE is packaged as sinlge binary. This has many benefits:
 
 ## Control plane
 
-MKE as a single binary acts as the process supervisor for all other control plane components. This means there's no container engine running on controllers and also no kubelet (by default). This means there is no way for a cluster user to schedule workloads onto controller nodes.
+MKE as a single binary acts as the process supervisor for all other control plane components. This means there's no container engine running on controllers and also no kubelet (by default). Which means there is no way for a cluster user to schedule workloads onto controller nodes.
 
 ![MKE Controller processes](mke_controller_processes.png)
 
@@ -33,4 +33,3 @@ In case of MKE managed etcd, MKE manages the full lifecycle of the etcd cluster.
 ![MKE worker processes](mke_worker_processes.png)
 
 As for the control plane, MKE creates and manages the core worker components as naked processes on the worker node. Currently we support only [containerd](containerd.io) as the container engine.
-
