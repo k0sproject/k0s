@@ -6,14 +6,13 @@ kine_version = 0.4.0
 etcd_version = 3.4.12
 konnectivity_version = 0.0.12
 
-staging-pkgs = $(patsubst %/Dockerfile,staging/.%,$(wildcard */Dockerfile))
-
 bindir = staging/linux/bin
+bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
 
 buildmode = docker
 
 .PHONY: all
-all:
+all: $(addprefix $(bindir)/, $(bins))
 
 .PHONY: clean
 clean:
@@ -33,11 +32,16 @@ $(bindir):
 	mkdir -p $@
 
 ifeq ($(buildmode),docker)
-all: $(staging-pkgs) $(patsubst staging/.%,.container.%,$(staging-pkgs))
 
-staging/.%: .container.% | $(bindir)
-	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/
-	touch $@
+$(bindir)/runc: .container.runc
+$(bindir)/containerd $(bindir)/containerd-shim $(bindir)/containerd-shim-runc-v1 $(bindir)/containerd-shim-runc-v2: .container.containerd
+$(bindir)/etcd: .container.etcd
+$(bindir)/kine: .container.kine
+$(bindir)/konnectivity-server: .container.konnectivity
+$(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
+
+$(addprefix $(bindir)/, $(bins)): | $(bindir)
+	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@)
 
 .container.%: .docker-image.%.stamp
 	docker create mkebuild$(basename $<) > $@.tmp
@@ -50,7 +54,6 @@ staging/.%: .container.% | $(bindir)
 else
 # fetch official binaires
 #
-bins = runc kubelet containerd kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
 curl = curl --silent -L
 
 runc_url = https://github.com/opencontainers/runc/releases/download/v$(runc_version)/runc.$(arch)
@@ -68,7 +71,6 @@ etcd_extract = etcd-v$(etcd_version)-linux-$(arch)/etcd
 tmpdir ?= .tmp
 arch = amd64
 
-all: $(addprefix $(bindir)/, $(bins))
 
 $(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager): | $(bindir)
 	$(curl) -o $@ $($(notdir $@)_url)
