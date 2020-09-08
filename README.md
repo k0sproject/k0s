@@ -38,8 +38,8 @@ See more in [architecture docs](docs/architecture.md)
 - Kubernetes 1.19
 - Containerd 1.4
 - Control plane storage options:
-  - sqlite (in-cluster, default)
-  - etcd (in-cluster, managed)
+  - sqlite (in-cluster)
+  - etcd (in-cluster, managed, default)
   - mysql (external)
   - postgresql (external)
 - CNI providers
