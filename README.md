@@ -4,6 +4,8 @@
 
 MKE is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
 
+MKE is a single binary all-inclusive kubernetes distribution with all the required bells and whistles preconfigured to make building a kubernetes clusters a matter of just copying an executable to every host and running it.
+
 ## Motivation
 
 **Note:** Some of these goals are not 100% fulfilled yet.

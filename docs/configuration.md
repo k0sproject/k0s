@@ -29,7 +29,8 @@ spec:
 ### `spec.storage`
 
 - `type`: Type of the data store, either `etcd` or `kine`.
-- `kine.dataSource`: [kine](https://github.com/rancher/kine/) URL.
+- `etcd.peerAddress`: Nodes address to be used for etcd cluster peering.
+- `kine.dataSource`: [kine](https://github.com/rancher/kine/) datasource URL.
 
 Using type `etcd` will make mke to create and manage an elastic etcd cluster within the controller nodes.
 
