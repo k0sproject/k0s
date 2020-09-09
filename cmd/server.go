@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Mirantis/mke/pkg/applier"
 	"github.com/Mirantis/mke/pkg/certificate"
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/component/server"
+	"github.com/Mirantis/mke/pkg/component/worker"
+	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/util"
+	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -29,6 +35,10 @@ func ServerCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:  "config",
 				Value: "mke.yaml",
+			},
+			&cli.BoolFlag{
+				Name:  "enable-worker",
+				Value: false,
 			},
 		},
 		ArgsUsage: "[join-token]",
@@ -53,7 +63,7 @@ func startServer(ctx *cli.Context) error {
 			return fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
 		}
 	}
-	components := make(map[string]component.Component)
+	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{}
 
 	var join = false
@@ -65,12 +75,12 @@ func startServer(ctx *cli.Context) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}
-		components["ca-syncer"] = &server.CASyncer{
+		caSyncer := &server.CASyncer{
 			JoinClient: joinClient,
 		}
 
-		err = components["ca-syncer"].Init()
-		err = components["ca-syncer"].Run()
+		err = caSyncer.Init()
+		err = caSyncer.Run()
 		if err != nil {
 			logrus.Warnf("something failed in CA sync: %s", err.Error())
 		}
@@ -86,42 +96,39 @@ func startServer(ctx *cli.Context) error {
 
 	switch clusterConfig.Spec.Storage.Type {
 	case "kine", "":
-		components["storage"] = &server.Kine{
+		componentManager.Add(&server.Kine{
 			Config: clusterConfig.Spec.Storage.Kine,
-		}
+		})
 	case "etcd":
-		etcd := &server.Etcd{
+		componentManager.Add(&server.Etcd{
 			Config:      clusterConfig.Spec.Storage.Etcd,
 			Join:        join,
 			CertManager: certificateManager,
 			JoinClient:  joinClient,
-		}
-		components["storage"] = etcd
+		})
 	default:
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
 
-	components["kube-apiserver"] = &server.ApiServer{
+	componentManager.Add(&server.ApiServer{
 		ClusterConfig: clusterConfig,
-	}
-	components["kube-scheduler"] = &server.Scheduler{
+	})
+	componentManager.Add(&server.Konnectivity{
 		ClusterConfig: clusterConfig,
-	}
-	components["kube-ccm"] = &server.ControllerManager{
+	})
+	componentManager.Add(&server.Scheduler{
 		ClusterConfig: clusterConfig,
-	}
-	components["konnectivity"] = &server.Konnectivity{
+	})
+	componentManager.Add(&server.ControllerManager{
 		ClusterConfig: clusterConfig,
-	}
-	components["manifest-manager"] = &applier.Manager{}
-	components["mke-controlapi"] = &server.MkeControlApi{}
+	})
+	componentManager.Add(&applier.Manager{})
+	componentManager.Add(&server.MkeControlApi{})
 
-	// extract needed components
-	for _, comp := range components {
-		if err := comp.Init(); err != nil {
-			return err
-		}
+	// init components
+	if err := componentManager.Init(); err != nil {
+		return err
 	}
 
 	certs := server.Certificates{
@@ -137,23 +144,29 @@ func startServer(ctx *cli.Context) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// Components started one-by-one as there's specific order we want
-	if err := components["storage"].Run(); err != nil {
-		return err
+	// Start components
+	err = componentManager.Start()
+	if err != nil {
+		logrus.Errorf("failed to start server components: %s", err)
+		c <- syscall.SIGTERM
 	}
-	components["kube-apiserver"].Run()
-	components["konnectivity"].Run()
-	components["kube-scheduler"].Run()
-	components["kube-ccm"].Run()
-	components["manifest-manager"].Run()
-	components["mke-controlapi"].Run()
 
 	// in-cluster component reconcilers
 	reconcilers := createClusterReconcilers(clusterConfig.Spec)
+	if err == nil {
+		// Start all reconcilers
+		for _, reconciler := range reconcilers {
+			reconciler.Run()
+		}
+	}
 
-	// Start all reconcilers
-	for _, reconciler := range reconcilers {
-		reconciler.Run()
+	if err == nil && ctx.Bool("enable-worker") {
+		err = enableServerWorker(clusterConfig, componentManager)
+		if err != nil {
+			logrus.Errorf("failed to start worker components: %s", err)
+			componentManager.Stop()
+			return err
+		}
 	}
 
 	// Wait for mke process termination
@@ -165,14 +178,8 @@ func startServer(ctx *cli.Context) error {
 		reconciler.Stop()
 	}
 
-	// There's specific order we want to shutdown things
-	components["mke-controlapi"].Stop()
-	components["manifest-manager"].Stop()
-	components["kube-ccm"].Stop()
-	components["kube-scheduler"].Stop()
-	components["konnectivity"].Stop()
-	components["kube-apiserver"].Stop()
-	components["storage"].Stop()
+	// Stop components
+	componentManager.Stop()
 
 	return nil
 }
@@ -227,4 +234,57 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 	}
 
 	return reconcilers
+}
+
+func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *component.Manager) error {
+	if !util.FileExists(path.Join(constant.DataDir, "kubelet.conf")) {
+		// wait for server to start up
+		err := retry.Do(func() error {
+			if !util.FileExists(constant.AdminKubeconfigConfigPath) {
+				return fmt.Errorf("file does not exist: %s", constant.AdminKubeconfigConfigPath)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		var bootstrapConfig string
+		err = retry.Do(func() error {
+			config, err := createKubeletBootstrapConfig(clusterConfig, "worker", time.Minute)
+			if err != nil {
+				return err
+			}
+			bootstrapConfig = config
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+		if err := handleKubeletBootstrapToken(bootstrapConfig); err != nil {
+			return err
+		}
+	}
+	worker.KernelSetup()
+
+	kubeletConfigClient, err := loadKubeletConfigClient()
+	if err != nil {
+		return err
+	}
+
+	containerd := &worker.ContainerD{}
+	kubelet := &worker.Kubelet{
+		KubeletConfigClient: kubeletConfigClient,
+	}
+	containerd.Init()
+	kubelet.Init()
+	containerd.Run()
+	kubelet.Run()
+
+	componentManager.Add(containerd)
+	componentManager.Add(kubelet)
+
+	return nil
 }
