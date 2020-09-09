@@ -37,7 +37,6 @@ func main() {
 			cmd.ServerCommand(),
 			cmd.WorkerCommand(),
 			cmd.TokenCommand(),
-			cmd.SingleCommand(),
 			cmd.ApiCommand(),
 			versionCommand(),
 		},

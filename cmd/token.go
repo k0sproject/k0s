@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"path"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
+	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/token"
 )
 
@@ -80,58 +82,65 @@ func CreateCommand() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-
 			clusterConfig, err := config.FromYaml(c.String("config"))
 			if err != nil {
 				clusterConfig = &config.ClusterConfig{
 					Spec: config.DefaultClusterSpec(),
 				}
 			}
-			m, err := token.NewManager(c.String("kubeconfig"))
-			if err != nil {
-				return err
-			}
 			expiry, err := time.ParseDuration(c.String("expiry"))
 			if err != nil {
 				return err
 			}
-			token, err := m.Create(expiry, c.String("role"))
+
+			bootstrapConfig, err := createKubeletBootstrapConfig(clusterConfig, c.String("role"), expiry)
 			if err != nil {
 				return err
 			}
 
-			caCert, err := ioutil.ReadFile("/var/lib/mke/pki/ca.crt")
-			if err != nil {
-				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
-			}
-			data := struct {
-				CACert  string
-				Token   string
-				User    string
-				JoinURL string
-			}{
-				CACert: base64.StdEncoding.EncodeToString(caCert),
-				Token:  token,
-			}
-
-			if c.String("role") == "worker" {
-				data.User = "kubelet-bootstrap"
-				data.JoinURL = clusterConfig.Spec.API.APIAddress()
-			} else {
-				data.User = "controller-bootstrap"
-				data.JoinURL = clusterConfig.Spec.API.ControllerJoinAddress()
-			}
-
-			var buf bytes.Buffer
-
-			err = kubeconfigTemplate.Execute(&buf, &data)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(base64.StdEncoding.EncodeToString(buf.Bytes()))
+			fmt.Println(bootstrapConfig)
 
 			return nil
 		},
 	}
+}
+
+func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
+	caCert, err := ioutil.ReadFile(path.Join(constant.CertRoot, "ca.crt"))
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
+	}
+	manager, err := token.NewManager(path.Join(constant.AdminKubeconfigConfigPath))
+	if err != nil {
+		return "", err
+	}
+	token, err := manager.Create(expiry, role)
+	if err != nil {
+		return "", err
+	}
+	data := struct {
+		CACert  string
+		Token   string
+		User    string
+		JoinURL string
+	}{
+		CACert: base64.StdEncoding.EncodeToString(caCert),
+		Token:  token,
+	}
+	if role == "worker" {
+		data.User = "kubelet-bootstrap"
+		data.JoinURL = clusterConfig.Spec.API.APIAddress()
+	} else {
+		data.User = "controller-bootstrap"
+		data.JoinURL = clusterConfig.Spec.API.ControllerJoinAddress()
+	}
+
+	var buf bytes.Buffer
+
+	err = kubeconfigTemplate.Execute(&buf, &data)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
