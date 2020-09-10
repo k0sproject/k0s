@@ -31,7 +31,7 @@ jobs:
           embedded-bins/staging/linux/bin/
         key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
         restore-keys: |
-          ${{ runner.os }}-embedded-bins-
+          ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
 
     - name: Build
       run: make build

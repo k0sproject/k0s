@@ -11,7 +11,7 @@ RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.gi
 WORKDIR /go/src/github.com/kubernetes/kubernetes
 RUN \
 	for cmd in $COMMANDS; do \
-		make GOFLAGS="-v" GOLDFLAGS="-extldflags=-static -w -s" WHAT=cmd/$cmd || break;\
+		make GOFLAGS="-v -tags=providerless" GOLDFLAGS="-extldflags=-static -w -s" WHAT=cmd/$cmd || break;\
 	done
 
 FROM scratch
