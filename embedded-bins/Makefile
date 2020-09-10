@@ -33,6 +33,12 @@ $(bindir):
 
 ifeq ($(buildmode),docker)
 
+dockerfiles := $(wildcard */Dockerfile)
+images := $(patsubst %/Dockerfile,%,$(dockerfiles))
+
+containers: $(images:%=.container.%)
+docker-images: $(images:%=.docker-image.%.stamp)
+
 $(bindir)/runc: .container.runc
 $(bindir)/containerd $(bindir)/containerd-shim $(bindir)/containerd-shim-runc-v1 $(bindir)/containerd-shim-runc-v2: .container.containerd
 $(bindir)/etcd: .container.etcd
@@ -41,7 +47,7 @@ $(bindir)/konnectivity-server: .container.konnectivity
 $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
-	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@)
+	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
 .container.%: .docker-image.%.stamp
 	docker create mkebuild$(basename $<) > $@.tmp
