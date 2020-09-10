@@ -45,14 +45,19 @@ func (s *Supervisor) processWaitQuit() bool {
 
 	select {
 	case <-s.quit:
-		log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
-		err := s.cmd.Process.Signal(syscall.SIGTERM)
-		if err != nil {
-			log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
-		} else {
-			err = <-waitresult
+		for {
+			log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
+			err := s.cmd.Process.Signal(syscall.SIGTERM)
+			if err != nil {
+				log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
+			}
+			select {
+			case <-time.After(5 * time.Second):
+				continue
+			case err = <-waitresult:
+				return true
+			}
 		}
-		return true
 	case err := <-waitresult:
 		if err != nil {
 			log.Warn(err)
