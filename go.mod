@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
+	github.com/coreos/etcd v2.3.8+incompatible // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/googleapis/gnostic v0.3.1 // indirect
@@ -15,7 +16,7 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli/v2 v2.2.0
-	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
+	go.etcd.io/etcd v2.3.8+incompatible
 	golang.org/x/crypto v0.0.0-20200414155820-4f8f47aa7992 // indirect
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
