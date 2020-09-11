@@ -185,7 +185,7 @@ data:
     clusterCIDR: {{ .ClusterCIDR }}
     configSyncPeriod: 0s
     conntrack:
-      maxPerCore: null
+      maxPerCore: 0
       min: null
       tcpCloseWaitTimeout: null
       tcpEstablishedTimeout: null
