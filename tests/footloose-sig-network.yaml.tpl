@@ -12,6 +12,9 @@ machines:
     - type: bind
       source: $MKE_BINARY
       destination: /usr/bin/mke
+    - type: bind
+      source: /lib/modules
+      destination: /lib/modules
     - type: volume
       destination: /var/lib/mke
     portMappings:
