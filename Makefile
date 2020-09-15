@@ -42,9 +42,12 @@ embedded-bins/staging/linux/bin: .bins.stamp
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE)
 	touch $@
 
+
+
 .PHONY: lint
 lint:
-	GO111MODULE=off go run -u golang.org/x/lint/golint -set_exit_status ./...
+	$(shell which golint || GO111MODULE=off go get golang.org/x/lint/golint)
+	golint -set_exit_status ./...
 
 .PHONY: check
 check: mke
