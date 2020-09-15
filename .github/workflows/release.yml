@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted,linux]
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
