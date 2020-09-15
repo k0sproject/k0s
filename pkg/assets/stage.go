@@ -1,5 +1,3 @@
-// +build !codeanalysis
-
 package assets
 
 import (
