@@ -44,7 +44,7 @@ embedded-bins/staging/linux/bin: .bins.stamp
 
 .PHONY: lint
 lint:
-	GO111MODULE=off go run golang.org/x/lint/golint -set_exit_status ./...
+	GO111MODULE=off go run -u golang.org/x/lint/golint -set_exit_status ./...
 
 .PHONY: check
 check: mke
