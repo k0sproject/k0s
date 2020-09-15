@@ -46,6 +46,7 @@ users:
 `))
 )
 
+// Certificates is the Component implementation to manage all mke certs
 type Certificates struct {
 	CACert string
 
@@ -53,6 +54,7 @@ type Certificates struct {
 	ClusterSpec *config.ClusterSpec
 }
 
+// Run runs the certificate component
 func (c *Certificates) Run() error {
 
 	// Common CA
@@ -197,6 +199,7 @@ func (c *Certificates) Run() error {
 	return nil
 }
 
+// Stop does nothing, the cert component is not constantly running
 func (c *Certificates) Stop() error {
 	return nil
 }

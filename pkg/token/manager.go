@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// NewManager creates a new token manager using given kubeconfig
 func NewManager(kubeconfig string) (*Manager, error) {
 	logrus.Debugf("loading kubeconfig from: %s", kubeconfig)
 	client, err := k8sutil.Client(kubeconfig)
@@ -23,6 +24,7 @@ func NewManager(kubeconfig string) (*Manager, error) {
 	}, nil
 }
 
+// Manager is responsible to manage the join tokens in kube API as secrets in kube-system namespace
 type Manager struct {
 	client *kubernetes.Clientset
 }

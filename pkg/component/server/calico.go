@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Calico is the Component interface implementation to manage Calico
 type Calico struct {
 	client      *kubernetes.Clientset
 	clusterSpec *config.ClusterSpec
@@ -40,10 +41,12 @@ func NewCalico(clusterSpec *config.ClusterSpec) (*Calico, error) {
 	}, nil
 }
 
+// Init does nothing
 func (c *Calico) Init() error {
 	return nil
 }
 
+// Run runs the calico reconciler
 func (c *Calico) Run() error {
 	c.tickerDone = make(chan struct{})
 	var emptryStruct struct{}
@@ -68,7 +71,7 @@ func (c *Calico) Run() error {
 			case <-ticker.C:
 				config, err := c.getConfig()
 				if err != nil {
-					c.log.Errorf("error calculating calico configs: %s. will retry", err.Error)
+					c.log.Errorf("error calculating calico configs: %s. will retry", err.Error())
 					continue
 				}
 				if config == previousConfig {
@@ -83,7 +86,7 @@ func (c *Calico) Run() error {
 				}
 				err = tw.Write()
 				if err != nil {
-					c.log.Errorf("error writing calico manifests: %s. will retry", err.Error)
+					c.log.Errorf("error writing calico manifests: %s. will retry", err.Error())
 					continue
 				}
 				previousConfig = config
@@ -107,6 +110,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 	return config, nil
 }
 
+// Stop stops the calico reconciler
 func (c *Calico) Stop() error {
 	close(c.tickerDone)
 	return nil

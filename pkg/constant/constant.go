@@ -9,7 +9,7 @@ const (
 
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
-	// KubeletAuthConfigPath
+	// KubeletAuthConfigPath defines the default kubelet auth config path
 	KubeletAuthConfigPath = "/var/lib/mke/kubelet.conf"
 
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
@@ -22,11 +22,17 @@ const (
 	Group = "mke"
 
 	// User accounts for services
-	EtcdUser              = "etcd"
-	KineUser              = "kine"
-	ApiserverUser         = "kube-apiserver"
+
+	// EtcdUser defines the user to use for running etcd process
+	EtcdUser = "etcd"
+	// KineUser defines the user to use for running kine process
+	KineUser = "kine"
+	// ApiserverUser defines the user to use for running k8s api-server process
+	ApiserverUser = "kube-apiserver"
+	// ControllerManagerUser defines the user to use for running k8s controller manager process
 	ControllerManagerUser = "kube-controller-manager"
-	SchedulerUser         = "kube-scheduler"
+	// SchedulerUser defines the user to use for running k8s scheduler
+	SchedulerUser = "kube-scheduler"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.19"

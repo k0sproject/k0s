@@ -17,7 +17,7 @@ import (
 	"github.com/Mirantis/mke/pkg/token"
 )
 
-// TokenCommand ...
+// TokenCommand creates new token management command
 func TokenCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "token",
@@ -60,6 +60,7 @@ users:
 `))
 )
 
+// CreateCommand creates new command to create join tokens
 func CreateCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "create",

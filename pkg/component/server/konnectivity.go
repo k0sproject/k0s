@@ -24,12 +24,12 @@ type Konnectivity struct {
 // Init ...
 func (k *Konnectivity) Init() error {
 	var err error
-	k.uid, err = util.GetUid(constant.ApiserverUser)
+	k.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running konnectivity as root"))
 	}
 
-	k.gid, _ = util.GetGid(constant.Group)
+	k.gid, _ = util.GetGID(constant.Group)
 
 	return assets.Stage(constant.DataDir, path.Join("bin", "konnectivity-server"), constant.Group)
 }
@@ -57,8 +57,8 @@ func (k *Konnectivity) Run() error {
 			"--stderrthreshold=1",
 			"-v=2",
 		},
-		Uid: k.uid,
-		Gid: k.gid,
+		UID: k.uid,
+		GID: k.gid,
 	}
 
 	k.supervisor.Supervise()

@@ -10,10 +10,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// KubeletConfigClient is the client used to fetch kubelet config from a common config map
 type KubeletConfigClient struct {
 	kubeClient *kubernetes.Clientset
 }
 
+// NewKubeletConfigClient creates new KubeletConfigClient using the specified kubeconfig
 func NewKubeletConfigClient(kubeconfigPath string) (*KubeletConfigClient, error) {
 	kubeClient, err := k8sutil.Client(kubeconfigPath)
 	if err != nil {

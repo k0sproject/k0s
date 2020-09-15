@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// CASyncer is the Component implementation to sync CAs between multiple controllers
 type CASyncer struct {
 	JoinClient *v1beta1.JoinClient
 }

@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const coreDnsTemplate = `
+const coreDNSTemplate = `
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -205,6 +205,7 @@ spec:
     protocol: TCP
 `
 
+// CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
 	client        *kubernetes.Clientset
 	tickerDone    chan struct{}
@@ -218,6 +219,7 @@ type coreDNSConfig struct {
 	ClusterDomain string
 }
 
+// NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(clusterConfig *config.ClusterSpec) (*CoreDNS, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
@@ -231,10 +233,12 @@ func NewCoreDNS(clusterConfig *config.ClusterSpec) (*CoreDNS, error) {
 	}, nil
 }
 
+// Init does nothing
 func (c *CoreDNS) Init() error {
 	return nil
 }
 
+// Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
 
 	c.tickerDone = make(chan struct{})
@@ -250,7 +254,7 @@ func (c *CoreDNS) Run() error {
 			case <-ticker.C:
 				config, err := c.getConfig()
 				if err != nil {
-					c.log.Errorf("error calculating coredns configs: %s. will retry", err.Error)
+					c.log.Errorf("error calculating coredns configs: %s. will retry", err.Error())
 					continue
 				}
 				if config == previousConfig {
@@ -259,13 +263,13 @@ func (c *CoreDNS) Run() error {
 				}
 				tw := util.TemplateWriter{
 					Name:     "coredns",
-					Template: coreDnsTemplate,
+					Template: coreDNSTemplate,
 					Data:     config,
 					Path:     filepath.Join(constant.DataDir, "manifests", "coredns.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {
-					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error)
+					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error())
 					continue
 				}
 				previousConfig = config
@@ -294,6 +298,7 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 	return config, nil
 }
 
+// Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
 	close(c.tickerDone)
 	return nil

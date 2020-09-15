@@ -5,18 +5,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// StorageSpec defines the storage related config options
 type StorageSpec struct {
 	Type string      `yaml:"type"`
 	Kine *KineConfig `yaml:"kine"`
 	Etcd *EtcdConfig `yaml:"etcd"`
 }
 
+// KineConfig defines the Kine related config options
 type KineConfig struct {
 	DataSource string `yaml:"dataSource"`
 }
 
+// DefaultKineDataSource sets the default kine datasource URL
 const DefaultKineDataSource = "sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared"
 
+// DefaultStorageSpec creates StorageSpec with sane defaults
 func DefaultStorageSpec() *StorageSpec {
 	return &StorageSpec{
 		Type: "etcd",
@@ -43,10 +47,12 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// EtcdConfig defines etcd related config options
 type EtcdConfig struct {
 	PeerAddress string `yaml:"peerAddress"`
 }
 
+// DefaultEtcdConfig creates EtcdConfig with sane defaults
 func DefaultEtcdConfig() *EtcdConfig {
 	addr, err := util.FirstPublicAddress()
 	if err != nil {
@@ -58,6 +64,7 @@ func DefaultEtcdConfig() *EtcdConfig {
 	}
 }
 
+// DefaultKineConfig creates KineConfig with sane defaults
 func DefaultKineConfig() *KineConfig {
 	return &KineConfig{
 		DataSource: DefaultKineDataSource,

@@ -19,6 +19,7 @@ import (
 	"github.com/Mirantis/mke/pkg/constant"
 )
 
+// Applier manages all the "static" manifests and applies them on the k8s API
 type Applier struct {
 	Name string
 	Dir  string
@@ -29,6 +30,7 @@ type Applier struct {
 	discoveryClient discovery.CachedDiscoveryInterface
 }
 
+// NewApplier creates new Applier
 func NewApplier(dir string) (Applier, error) {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{

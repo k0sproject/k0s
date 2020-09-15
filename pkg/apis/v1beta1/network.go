@@ -7,12 +7,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Network defines the network related config options
 type Network struct {
 	PodCIDR     string `yaml:"podCIDR"`
 	ServiceCIDR string `yaml:"serviceCIDR"`
 	Provider    string `yaml:"provider"`
 }
 
+// DefaultNetwork creates the Network config stcut with sane default values
 func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:     "10.244.0.0/16",

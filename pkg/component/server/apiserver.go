@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ApiServer implement the component interface to run kube api
-type ApiServer struct {
+// APIServer implement the component interface to run kube api
+type APIServer struct {
 	ClusterConfig *config.ClusterConfig
 
 	supervisor supervisor.Supervisor
@@ -48,19 +48,19 @@ type egressSelectorConfig struct {
 }
 
 // Init extracts needed binaries
-func (a *ApiServer) Init() error {
+func (a *APIServer) Init() error {
 	var err error
-	a.uid, err = util.GetUid(constant.ApiserverUser)
+	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-apiserver as root"))
 	}
-	a.gid, _ = util.GetGid(constant.Group)
+	a.gid, _ = util.GetGID(constant.Group)
 
 	return assets.Stage(constant.DataDir, path.Join("bin", "kube-apiserver"), constant.Group)
 }
 
 // Run runs kube api
-func (a *ApiServer) Run() error {
+func (a *APIServer) Run() error {
 	err := a.writeKonnectivityConfig()
 	if err != nil {
 		return err
@@ -108,8 +108,8 @@ func (a *ApiServer) Run() error {
 		Name:    "kube-apiserver",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-apiserver"),
 		Args:    apiServerArgs,
-		Uid:     a.uid,
-		Gid:     a.gid,
+		UID:     a.uid,
+		GID:     a.gid,
 	}
 	switch a.ClusterConfig.Spec.Storage.Type {
 	case "kine":
@@ -130,7 +130,7 @@ func (a *ApiServer) Run() error {
 	return nil
 }
 
-func (a *ApiServer) writeKonnectivityConfig() error {
+func (a *APIServer) writeKonnectivityConfig() error {
 	tw := util.TemplateWriter{
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
@@ -148,6 +148,6 @@ func (a *ApiServer) writeKonnectivityConfig() error {
 }
 
 // Stop stops kine
-func (a *ApiServer) Stop() error {
+func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
 }

@@ -16,11 +16,13 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// IsDirectory check the given path exists and is a directory
 func IsDirectory(name string) bool {
 	fi, err := os.Stat(name)
 	return err == nil && fi.Mode().IsDir()
 }
 
+// GetAllDirs return a list of dirs in given base path
 func GetAllDirs(base string) ([]string, error) {
 	var dirs []string
 	if !IsDirectory(base) {

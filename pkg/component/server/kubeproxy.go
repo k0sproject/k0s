@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// KubeProxy is the compoennt implementation to manage kube-proxy
 type KubeProxy struct {
 	//client     *kubernetes.Clientset
 	tickerDone  chan struct{}
@@ -17,6 +18,7 @@ type KubeProxy struct {
 	clusterSpec *config.ClusterSpec
 }
 
+// NewKubeProxy creates new KubeProxy component
 func NewKubeProxy(clusterSpec *config.ClusterSpec) (*KubeProxy, error) {
 
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
@@ -26,13 +28,15 @@ func NewKubeProxy(clusterSpec *config.ClusterSpec) (*KubeProxy, error) {
 	}, nil
 }
 
-func (p *KubeProxy) Init() error {
+// Init does nothing
+func (k *KubeProxy) Init() error {
 	return nil
 }
 
-func (c *KubeProxy) Run() error {
+// Run runs the kube-proxy reconciler
+func (k *KubeProxy) Run() error {
 
-	c.tickerDone = make(chan struct{})
+	k.tickerDone = make(chan struct{})
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -41,29 +45,29 @@ func (c *KubeProxy) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				config, err := c.getConfig()
+				config, err := k.getConfig()
 				if err != nil {
-					c.log.Errorf("error calculating proxy configs: %s. will retry", err.Error)
+					k.log.Errorf("error calculating proxy configs: %s. will retry", err.Error())
 					continue
 				}
 				if config == previousConfig {
-					c.log.Infof("current config matches existing, not gonna do anything")
+					k.log.Infof("current config matches existing, not gonna do anything")
 					continue
 				}
 				tw := util.TemplateWriter{
-					Name:     "kube--proxy",
+					Name:     "kube-proxy",
 					Template: proxyTemplate,
 					Data:     config,
 					Path:     filepath.Join(constant.DataDir, "manifests", "kube-proxy.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {
-					c.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error)
+					k.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error())
 					continue
 				}
 				previousConfig = config
-			case <-c.tickerDone:
-				c.log.Info("proxy reconciler done")
+			case <-k.tickerDone:
+				k.log.Info("proxy reconciler done")
 				return
 			}
 		}
@@ -72,16 +76,17 @@ func (c *KubeProxy) Run() error {
 	return nil
 }
 
-func (c *KubeProxy) Stop() error {
-	close(c.tickerDone)
+// Stop stop the reconcilier
+func (k *KubeProxy) Stop() error {
+	close(k.tickerDone)
 	return nil
 }
 
-func (c *KubeProxy) getConfig() (proxyConfig, error) {
+func (k *KubeProxy) getConfig() (proxyConfig, error) {
 	config := proxyConfig{
 		// FIXME get this from somewhere
-		ControlPlaneEndpoint: c.clusterSpec.API.APIAddress(),
-		ClusterCIDR:          c.clusterSpec.Network.PodCIDR,
+		ControlPlaneEndpoint: k.clusterSpec.API.APIAddress(),
+		ClusterCIDR:          k.clusterSpec.Network.PodCIDR,
 	}
 
 	return config, nil

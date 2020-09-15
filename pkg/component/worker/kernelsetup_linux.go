@@ -38,10 +38,12 @@ func enableSysCtl(entry string) {
 	file := path.Join("/proc", "sys", entry)
 	err := ioutil.WriteFile(file, []byte("1"), 0644)
 	if err != nil {
-		logrus.Warnf("Failed to enable %s:", file, err)
+		logrus.Warnf("Failed to enable %s: %s", file, err.Error())
 	}
 }
 
+// KernelSetup sets the needed kernel tuning params. If setting the options fails, it only logs
+// a warning but does not prevent the starting of worker
 func KernelSetup() {
 	if !hasFilesystem("overlay") {
 		modprobe("overlay")

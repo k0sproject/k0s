@@ -1,3 +1,5 @@
+// +build !codeanalysis
+
 package assets
 
 import (
@@ -11,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// return true if currently running executable is older than given filepath
+// ExecutableIsOlder return true if currently running executable is older than given filepath
 func ExecutableIsOlder(filepath string) bool {
 	ex, err := os.Executable()
 	if err != nil {
@@ -48,7 +50,7 @@ func Stage(dataDir, name, group string) error {
 	}
 
 	/* set group owner of the directories */
-	gid, _ := util.GetGid(group)
+	gid, _ := util.GetGID(group)
 	if gid != 0 {
 		for _, path := range []string{dataDir, filepath.Dir(p)} {
 			logrus.Debugf("setting group ownership for %s to %d", path, gid)
