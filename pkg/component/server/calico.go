@@ -24,6 +24,8 @@ type Calico struct {
 type calicoConfig struct {
 	MTU         int
 	Mode        string
+	VxlanPort   int
+	VxlanVNI    int
 	ClusterCIDR string
 }
 
@@ -102,8 +104,10 @@ func (c *Calico) Run() error {
 
 func (c *Calico) getConfig() (calicoConfig, error) {
 	config := calicoConfig{
-		MTU:         1440, // TODO: allow to configure
-		Mode:        "vxlan",
+		MTU:         c.clusterSpec.Network.Calico.MTU,
+		Mode:        c.clusterSpec.Network.Calico.Mode,
+		VxlanPort:   c.clusterSpec.Network.Calico.VxlanPort,
+		VxlanVNI:    c.clusterSpec.Network.Calico.VxlanVNI,
 		ClusterCIDR: c.clusterSpec.Network.PodCIDR,
 	}
 
@@ -552,12 +556,26 @@ spec:
             # Auto-detect the BGP IP address.
             - name: IP
               value: "autodetect"
+            {{if eq .Mode "ipip"}}
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
-              value: "off"
+              value: "Always"
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
+              value: "Never"
+            {{end}}
+            {{if eq .Mode "vxlan"}}
+            # Disable IPIP
+            - name: CALICO_IPV4POOL_IPIP
+              value: "Never"
+            # Enable VXLAN on the default IP pool.
+            - name: CALICO_IPV4POOL_VXLAN
               value: "Always"
+            - name: FELIX_VXLANPORT
+              value: "{{ .VxlanPort }}"
+            - name: FELIX_VXLANVNI
+              value: "{{ .VxlanVNI }}"
+            {{end}}
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
               valueFrom:
