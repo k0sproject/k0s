@@ -9,9 +9,10 @@ import (
 
 // Network defines the network related config options
 type Network struct {
-	PodCIDR     string `yaml:"podCIDR"`
-	ServiceCIDR string `yaml:"serviceCIDR"`
-	Provider    string `yaml:"provider"`
+	PodCIDR     string  `yaml:"podCIDR"`
+	ServiceCIDR string  `yaml:"serviceCIDR"`
+	Provider    string  `yaml:"provider"`
+	Calico      *Calico `yaml:"calico"`
 }
 
 // DefaultNetwork creates the Network config stcut with sane default values
@@ -20,6 +21,7 @@ func DefaultNetwork() *Network {
 		PodCIDR:     "10.244.0.0/16",
 		ServiceCIDR: "10.96.0.0/12",
 		Provider:    "calico",
+		Calico:      DefaultCalico(),
 	}
 }
 
@@ -64,4 +66,22 @@ func (n *Network) InternalAPIAddress() (string, error) {
 	address := ipnet.IP.To4()
 	address[3] = address[3] + 1
 	return address.String(), nil
+}
+
+// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
+func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	n.Provider = "calico"
+
+	type ynetwork Network
+	yc := (*ynetwork)(n)
+
+	if err := unmarshal(yc); err != nil {
+		return err
+	}
+
+	if n.Provider == "calico" && n.Calico == nil {
+		n.Calico = DefaultCalico()
+	}
+
+	return nil
 }

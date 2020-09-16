@@ -24,6 +24,12 @@ spec:
     provider: calico
     podCIDR: "10.244.0.0/16"
     serviceCIDR: "10.96.0.0/12"
+    calico:
+      mode: vxlan # ipip also supported
+      mtu: 1450
+      vxlanPort: 4789
+      vxlanVNI: 4096
+
 ```
 
 ### `spec.storage`
@@ -45,6 +51,12 @@ Using type `etcd` will make mke to create and manage an elastic etcd cluster wit
 - `podCIDR`: Pod network CIDR to be used in the cluster
 - `serviceCIDR`: Network CIDR to be used for cluster VIP services.
 
+#### `spec.network.calico`
+
+- `mode`: `vxlan` (default) or `ipip`
+- `vxlanPort`: The UDP port to use for VXLAN (default `4789`)
+- `vxlanVNI`: The virtual network ID to use for VXLAN. (default: `4096`)
+- `mtu`: MTU to use for overlay network (default `1450`)
 
 ## Configuring multi-node controlplane
 
