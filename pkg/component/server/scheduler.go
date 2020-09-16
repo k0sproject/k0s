@@ -25,11 +25,11 @@ type Scheduler struct {
 // Init extracts the needed binaries
 func (a *Scheduler) Init() error {
 	var err error
-	a.uid, err = util.GetUid(constant.SchedulerUser)
+	a.uid, err = util.GetUID(constant.SchedulerUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-scheduler as root"))
 	}
-	a.gid, _ = util.GetGid(constant.Group)
+	a.gid, _ = util.GetGID(constant.Group)
 
 	return assets.Stage(constant.DataDir, path.Join("bin", "kube-scheduler"), constant.Group)
 }
@@ -59,8 +59,8 @@ func (a *Scheduler) Run() error {
 		Name:    "kube-scheduler",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-scheduler"),
 		Args:    schedulerArgs,
-		Uid:     a.uid,
-		Gid:     a.gid,
+		UID:     a.uid,
+		GID:     a.gid,
 	}
 	// TODO We need to dump the config file suited for mke use
 

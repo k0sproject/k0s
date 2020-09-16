@@ -36,7 +36,7 @@ type Etcd struct {
 // Init extracts the needed binaries
 func (e *Etcd) Init() error {
 	var err error
-	e.uid, err = util.GetUid(constant.EtcdUser)
+	e.uid, err = util.GetUID(constant.EtcdUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
@@ -47,7 +47,7 @@ func (e *Etcd) Init() error {
 		return errors.Wrapf(err, "failed to create %s", e.etcdDataDir)
 	}
 
-	e.gid, _ = util.GetGid(constant.Group)
+	e.gid, _ = util.GetGID(constant.Group)
 
 	err = os.Chown(e.etcdDataDir, e.uid, e.gid)
 	if err != nil {
@@ -134,8 +134,8 @@ func (e *Etcd) Run() error {
 		BinPath: assets.StagedBinPath(constant.DataDir, "etcd"),
 		Dir:     constant.DataDir,
 		Args:    args,
-		Uid:     e.uid,
-		Gid:     e.gid,
+		UID:     e.uid,
+		GID:     e.gid,
 	}
 
 	e.supervisor.Supervise()

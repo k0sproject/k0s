@@ -37,7 +37,7 @@ func main() {
 			cmd.ServerCommand(),
 			cmd.WorkerCommand(),
 			cmd.TokenCommand(),
-			cmd.ApiCommand(),
+			cmd.APICommand(),
 			versionCommand(),
 		},
 		Flags: []cli.Flag{

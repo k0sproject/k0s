@@ -16,13 +16,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// JoinClient is the client we can use to call mke join APIs
 type JoinClient struct {
 	joinAddress string
 	httpClient  http.Client
 	bearerToken string
 }
 
-// FromToken creates a new join api client from a token
+// JoinClientFromToken creates a new join api client from a token
 func JoinClientFromToken(token string) (*JoinClient, error) {
 	data, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
@@ -53,6 +54,7 @@ func JoinClientFromToken(token string) (*JoinClient, error) {
 	return c, nil
 }
 
+// GetCA calls the CA sync API
 func (j *JoinClient) GetCA() (CaResponse, error) {
 	var caData CaResponse
 	req, err := http.NewRequest(http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
@@ -85,6 +87,7 @@ func (j *JoinClient) GetCA() (CaResponse, error) {
 	return caData, nil
 }
 
+// JoinEtcd calls the etcd join API
 func (j *JoinClient) JoinEtcd(peerAddress string) (EtcdResponse, error) {
 	var etcdResponse EtcdResponse
 	etcdRequest := EtcdRequest{

@@ -32,6 +32,7 @@ func (k *KubeletConfig) Init() error {
 	return nil
 }
 
+// Stop does nothign, nothing actually running
 func (k *KubeletConfig) Stop() error {
 	return nil
 }

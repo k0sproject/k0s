@@ -37,11 +37,11 @@ var cmDefaultArgs = map[string]string{
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
 	var err error
-	a.uid, err = util.GetUid(constant.ControllerManagerUser)
+	a.uid, err = util.GetUID(constant.ControllerManagerUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
 	}
-	a.gid, _ = util.GetGid(constant.Group)
+	a.gid, _ = util.GetGID(constant.Group)
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
@@ -86,8 +86,8 @@ func (a *ControllerManager) Run() error {
 		Name:    "kube-controller-manager",
 		BinPath: assets.StagedBinPath(constant.DataDir, "kube-controller-manager"),
 		Args:    cmArgs,
-		Uid:     a.uid,
-		Gid:     a.gid,
+		UID:     a.uid,
+		GID:     a.gid,
 	}
 
 	a.supervisor.Supervise()

@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TemplateWriter is a helper to write templated kube manifests
 type TemplateWriter struct {
 	Name     string
 	Template string
@@ -15,6 +16,7 @@ type TemplateWriter struct {
 	Path     string
 }
 
+// Write writes executes the template and writes the results on disk
 func (p *TemplateWriter) Write() error {
 	err := os.MkdirAll(filepath.Dir(p.Path), 0700)
 	if err != nil {

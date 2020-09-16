@@ -18,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Request defines the certificate request fields
 type Request struct {
 	Name      string
 	CN        string
@@ -27,11 +28,13 @@ type Request struct {
 	Hostnames []string
 }
 
+// Certificate is a helper struct to be able to return the created key and cert data
 type Certificate struct {
 	Key  string
 	Cert string
 }
 
+// Manager is the certificate manager
 type Manager struct {
 }
 
@@ -73,7 +76,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	gid, err := util.GetGid(constant.Group)
+	gid, err := util.GetGID(constant.Group)
 	if err == nil {
 		paths := []string{filepath.Dir(keyFile), keyFile, certFile}
 		for _, path := range paths {
@@ -89,13 +92,14 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	return nil
 }
 
+// EnsureCertificate creates the specified certificate if it does not already exist
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
 
 	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.Name))
 
-	gid, err := util.GetGid(constant.Group)
-	uid, err := util.GetUid(ownerName)
+	gid, err := util.GetGID(constant.Group)
+	uid, err := util.GetUID(ownerName)
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 		_ = os.Chown(keyFile, uid, gid)

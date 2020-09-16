@@ -192,10 +192,12 @@ func NewMetricServer(clusterConfig *config.ClusterSpec) (*MetricServer, error) {
 	}, nil
 }
 
+// Init does nothing
 func (m *MetricServer) Init() error {
 	return nil
 }
 
+// Run runs the metric server reconciler
 func (m *MetricServer) Run() error {
 	m.tickerDone = make(chan struct{})
 
@@ -215,7 +217,7 @@ func (m *MetricServer) Run() error {
 				}
 				err := tw.Write()
 				if err != nil {
-					m.log.Errorf("error writing metric server manifests: %s. will retry", err.Error)
+					m.log.Errorf("error writing metric server manifests: %s. will retry", err.Error())
 					continue
 				}
 			case <-m.tickerDone:
@@ -228,6 +230,7 @@ func (m *MetricServer) Run() error {
 	return nil
 }
 
+// Stop stops the reconciler
 func (m *MetricServer) Stop() error {
 	close(m.tickerDone)
 	return nil

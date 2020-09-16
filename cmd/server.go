@@ -111,7 +111,7 @@ func startServer(ctx *cli.Context) error {
 	}
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
 
-	componentManager.Add(&server.ApiServer{
+	componentManager.Add(&server.APIServer{
 		ClusterConfig: clusterConfig,
 	})
 	componentManager.Add(&server.Konnectivity{
@@ -124,7 +124,7 @@ func startServer(ctx *cli.Context) error {
 		ClusterConfig: clusterConfig,
 	})
 	componentManager.Add(&applier.Manager{})
-	componentManager.Add(&server.MkeControlApi{})
+	componentManager.Add(&server.MkeControlAPI{})
 
 	// init components
 	if err := componentManager.Init(); err != nil {
@@ -209,7 +209,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 			reconcilers["calico"] = calico
 		}
 	} else {
-		logrus.Warnf("network provider set to custom, mke will not manage it", clusterSpec.Network.Provider)
+		logrus.Warnf("network provider set to custom, mke will not manage it")
 	}
 
 	metricServer, err := server.NewMetricServer(clusterSpec)

@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// AllAddresses returns a list of all network addresses on a node
 func AllAddresses() ([]string, error) {
 	addresses := make([]string, 0, 5)
 
@@ -29,6 +30,7 @@ func AllAddresses() ([]string, error) {
 	return addresses, nil
 }
 
+// FirstPublicAddress return the first found non-local address
 func FirstPublicAddress() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

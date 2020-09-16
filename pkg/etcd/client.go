@@ -11,10 +11,12 @@ import (
 	"go.etcd.io/etcd/pkg/transport"
 )
 
+// Client is our internal helper to access some of the etcd APIs
 type Client struct {
 	client *clientv3.Client
 }
 
+// NewClient creates new Client
 func NewClient() (*Client, error) {
 	client := &Client{}
 	tlsInfo := transport.TLSInfo{
@@ -38,6 +40,7 @@ func NewClient() (*Client, error) {
 	return client, nil
 }
 
+// ListMembers gets a list of current etcd members
 func (c *Client) ListMembers() (map[string]string, error) {
 	memberList := make(map[string]string)
 	members, err := c.client.MemberList(context.TODO())
@@ -52,6 +55,7 @@ func (c *Client) ListMembers() (map[string]string, error) {
 	return memberList, nil
 }
 
+// AddMember add new member to etcd cluster
 func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
 
 	addResp, err := c.client.MemberAdd(context.TODO(), []string{peerAddress})
@@ -76,6 +80,7 @@ func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
 	return memberList, nil
 }
 
+// Close closes the etcd client
 func (c *Client) Close() {
 	c.client.Close()
 }

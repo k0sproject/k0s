@@ -26,7 +26,7 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
 	go generate
 endif
 
-mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
+mke: lint pkg/assets/zz_generated_offsets.go $(GO_SRCS)
 	CGO_ENABLED=0 go build -ldflags="-w -s -X main.Version=$(VERSION)" -o mke.code main.go
 	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
@@ -41,6 +41,11 @@ embedded-bins/staging/linux/bin: .bins.stamp
 .bins.stamp:
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE)
 	touch $@
+
+.PHONY: lint
+lint:
+	$(shell which golint || GO111MODULE=off go get -u golang.org/x/lint/golint)
+	go run golang.org/x/lint/golint -set_exit_status ./...
 
 .PHONY: check
 check: mke

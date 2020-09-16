@@ -12,6 +12,7 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
+// Manager is the Component interface wrapper for Applier
 type Manager struct {
 	applier     Applier
 	bundlePath  string
@@ -19,6 +20,7 @@ type Manager struct {
 	watcherDone chan struct{}
 }
 
+// Init initializes the Manager
 func (m *Manager) Init() error {
 	m.bundlePath = filepath.Join(constant.DataDir, "manifests")
 	err := os.MkdirAll(m.bundlePath, 0700)
@@ -30,6 +32,7 @@ func (m *Manager) Init() error {
 	return err
 }
 
+// Run runs the Manager
 func (m *Manager) Run() error {
 	log := logrus.WithField("component", "applier-manager")
 
@@ -93,6 +96,7 @@ func (m *Manager) Run() error {
 	return nil
 }
 
+// Stop stops the Manager
 func (m *Manager) Stop() error {
 	close(m.tickerDone)
 	close(m.watcherDone)

@@ -28,12 +28,12 @@ type Kine struct {
 // Init extracts the needed binaries
 func (k *Kine) Init() error {
 	var err error
-	k.uid, err = util.GetUid(constant.KineUser)
+	k.uid, err = util.GetUID(constant.KineUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kine as root"))
 	}
 
-	k.gid, _ = util.GetGid(constant.Group)
+	k.gid, _ = util.GetGID(constant.Group)
 
 	dsURL, err := url.Parse(k.Config.DataSource)
 	if err != nil {
@@ -67,8 +67,8 @@ func (k *Kine) Run() error {
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
 			fmt.Sprintf("--listen-address=unix://%s", path.Join(constant.RunDir, "kine.sock:2379")),
 		},
-		Uid: k.uid,
-		Gid: k.gid,
+		UID: k.uid,
+		GID: k.gid,
 	}
 
 	k.supervisor.Supervise()

@@ -19,6 +19,7 @@ const (
 	kubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
 )
 
+// Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
 	KubeletConfigClient *KubeletConfigClient
 
@@ -27,6 +28,7 @@ type Kubelet struct {
 	volumePluginDir string
 }
 
+// KubeletConfig defines the kubelet related config options
 type KubeletConfig struct {
 	ClusterDNS    string
 	ClusterDomain string

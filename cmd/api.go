@@ -23,18 +23,19 @@ import (
 	"github.com/Mirantis/mke/pkg/etcd"
 )
 
-func ApiCommand() *cli.Command {
+// APICommand creates new command for running the mke join API
+func APICommand() *cli.Command {
 	return &cli.Command{
 		Name:   "api",
 		Usage:  "Run the controller api",
-		Action: startApi,
+		Action: startAPI,
 		Flags:  []cli.Flag{},
 	}
 }
 
 var kubeClient *k8s.Clientset
 
-func startApi(ctx *cli.Context) error {
+func startAPI(ctx *cli.Context) error {
 	var err error
 	kubeClient, err = kubernetes.Client(filepath.Join(constant.CertRoot, "admin.conf"))
 	if err != nil {

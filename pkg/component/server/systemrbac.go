@@ -40,6 +40,7 @@ func (s *SystemRBAC) Run() error {
 	return nil
 }
 
+// Stop does currently nothing
 func (s *SystemRBAC) Stop() error {
 	return nil
 }

@@ -7,21 +7,21 @@ import (
 	"github.com/Mirantis/mke/pkg/supervisor"
 )
 
-// MkeControlApi
-type MkeControlApi struct {
+// MkeControlAPI implements the mke control API component
+type MkeControlAPI struct {
 	ClusterConfig *config.ClusterConfig
 
 	supervisor supervisor.Supervisor
 }
 
-func (m *MkeControlApi) Init() error {
+// Init does currently nothing
+func (m *MkeControlAPI) Init() error {
 	// We need to create a serving cert for the api
-
 	return nil
 }
 
 // Run runs mke control api as separate process
-func (m *MkeControlApi) Run() error {
+func (m *MkeControlAPI) Run() error {
 	// TODO: Make the api process to use some other user
 	m.supervisor = supervisor.Supervisor{
 		Name:    "mke control api",
@@ -36,6 +36,6 @@ func (m *MkeControlApi) Run() error {
 }
 
 // Stop stops mke api
-func (m *MkeControlApi) Stop() error {
+func (m *MkeControlAPI) Stop() error {
 	return m.supervisor.Stop()
 }
