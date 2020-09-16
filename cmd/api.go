@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -183,7 +184,7 @@ func isValidToken(token string) bool {
 	}
 
 	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
-	secret, err := kubeClient.CoreV1().Secrets("kube-system").Get(secretName, v1.GetOptions{})
+	secret, err := kubeClient.CoreV1().Secrets("kube-system").Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
 		return false

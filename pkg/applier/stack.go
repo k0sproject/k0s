@@ -1,6 +1,7 @@
 package applier
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -39,7 +40,7 @@ type Stack struct {
 }
 
 // Apply applies stack resources
-func (s *Stack) Apply(prune bool) error {
+func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
 	sortedResources := []*unstructured.Unstructured{}
 	for _, resource := range s.Resources {
@@ -64,9 +65,9 @@ func (s *Stack) Apply(prune bool) error {
 		} else {
 			drClient = s.Client.Resource(mapping.Resource)
 		}
-		serverResource, err := drClient.Get(resource.GetName(), metav1.GetOptions{})
+		serverResource, err := drClient.Get(ctx, resource.GetName(), metav1.GetOptions{})
 		if apiErrors.IsNotFound(err) {
-			_, err := drClient.Create(resource, metav1.CreateOptions{})
+			_, err := drClient.Create(ctx, resource, metav1.CreateOptions{})
 			if err != nil {
 				return fmt.Errorf("cannot create resource %s: %s", resource.GetName(), err)
 			}
@@ -74,9 +75,9 @@ func (s *Stack) Apply(prune bool) error {
 			return fmt.Errorf("unknown api error: %s", err)
 		} else {
 			if serverResource.GetLabels()[LastConfigAnnotation] == "" {
-				_, err = drClient.Update(resource, metav1.UpdateOptions{})
+				_, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
 			} else {
-				err = s.patchResource(drClient, serverResource, resource)
+				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 		}
 		s.keepResource(resource)
@@ -84,7 +85,7 @@ func (s *Stack) Apply(prune bool) error {
 
 	var err error
 	if prune {
-		err = s.prune(mapper)
+		err = s.prune(ctx, mapper)
 	}
 
 	return err
@@ -94,10 +95,10 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 	s.keepResources = append(s.keepResources, generateResourceID(*resource))
 }
 
-func (s *Stack) getAllAccessibleNamespaces() []string {
+func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
 	namespaces := []string{}
 	nsGroupVersionResource := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	nsList, err := s.Client.Resource(nsGroupVersionResource).List(metav1.ListOptions{})
+	nsList, err := s.Client.Resource(nsGroupVersionResource).List(ctx, metav1.ListOptions{})
 	if apiErrors.IsForbidden(err) {
 		for _, resource := range s.Resources {
 			if ns := resource.GetNamespace(); ns != "" {
@@ -116,15 +117,15 @@ func (s *Stack) getAllAccessibleNamespaces() []string {
 	return namespaces
 }
 
-func (s *Stack) prune(mapper *restmapper.DeferredDiscoveryRESTMapper) error {
-	pruneableResources, err := s.findPruneableResources(mapper)
+func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
 		return err
 	}
 
 	for _, resource := range pruneableResources {
 		if resource.GetNamespace() != "" {
-			err = s.deleteResource(mapper, resource)
+			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
 			}
@@ -132,7 +133,7 @@ func (s *Stack) prune(mapper *restmapper.DeferredDiscoveryRESTMapper) error {
 	}
 	for _, resource := range pruneableResources {
 		if resource.GetNamespace() == "" {
-			err = s.deleteResource(mapper, resource)
+			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
 			}
@@ -144,7 +145,7 @@ func (s *Stack) prune(mapper *restmapper.DeferredDiscoveryRESTMapper) error {
 	return nil
 }
 
-func (s *Stack) findPruneableResources(mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
+func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
 	pruneableResources := []*unstructured.Unstructured{}
 	apiGroups, apiResourceLists, err := s.Discovery.ServerGroupsAndResources()
 	if err != nil {
@@ -167,12 +168,12 @@ func (s *Stack) findPruneableResources(mapper *restmapper.DeferredDiscoveryRESTM
 		}
 	}
 	wg := sync.WaitGroup{}
-	namespaces := s.getAllAccessibleNamespaces()
+	namespaces := s.getAllAccessibleNamespaces(ctx)
 	for _, groupVersionKind := range groupVersionKinds {
 		wg.Add(1)
 		go func(groupVersionKind *schema.GroupVersionKind) {
 			defer wg.Done()
-			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(mapper, groupVersionKind, namespaces)
+			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind, namespaces)
 			pruneableResources = append(pruneableResources, pruneableForGvk...)
 		}(groupVersionKind)
 	}
@@ -181,13 +182,13 @@ func (s *Stack) findPruneableResources(mapper *restmapper.DeferredDiscoveryRESTM
 	return pruneableResources, nil
 }
 
-func (s *Stack) deleteResource(mapper *restmapper.DeferredDiscoveryRESTMapper, resource *unstructured.Unstructured) error {
+func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, resource *unstructured.Unstructured) error {
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
 		return err
 	}
-	err = drClient.Delete(resource.GetName(), &metav1.DeleteOptions{
+	err = drClient.Delete(ctx, resource.GetName(), metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
@@ -211,7 +212,7 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 	return drClient, nil
 }
 
-func (s *Stack) findPruneableResourceForGroupVersionKind(mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind, namespaces []string) []*unstructured.Unstructured {
+func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind, namespaces []string) []*unstructured.Unstructured {
 	pruneableResources := []*unstructured.Unstructured{}
 	groupKind := schema.GroupKind{
 		Group: groupVersionKind.Group,
@@ -221,23 +222,23 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(mapper *restmapper.Defe
 	if mapping != nil {
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 			drClient := s.Client.Resource(mapping.Resource)
-			_, err := drClient.List(metav1.ListOptions{Limit: 1})
+			_, err := drClient.List(ctx, metav1.ListOptions{Limit: 1})
 			if err == nil {
 				// rights to fetch all namespaces at once
-				for _, res := range s.getPruneableResources(drClient) {
+				for _, res := range s.getPruneableResources(ctx, drClient) {
 					pruneableResources = append(pruneableResources, res)
 				}
 			} else {
 				// need to query each namespace separately
 				for _, namespace := range namespaces {
-					for _, res := range s.getPruneableResources(drClient.Namespace(namespace)) {
+					for _, res := range s.getPruneableResources(ctx, drClient.Namespace(namespace)) {
 						pruneableResources = append(pruneableResources, res)
 					}
 				}
 			}
 		} else {
 			drClient := s.Client.Resource(mapping.Resource)
-			for _, res := range s.getPruneableResources(drClient) {
+			for _, res := range s.getPruneableResources(ctx, drClient) {
 				pruneableResources = append(pruneableResources, res)
 			}
 		}
@@ -257,9 +258,9 @@ func findAPIGroupForAPIService(apiGroups []*metav1.APIGroup, apiResource *metav1
 	return nil
 }
 
-func (s *Stack) getPruneableResources(drClient dynamic.ResourceInterface) []*unstructured.Unstructured {
+func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []*unstructured.Unstructured {
 	pruneableResources := []*unstructured.Unstructured{}
-	resourceList, err := drClient.List(metav1.ListOptions{
+	resourceList, err := drClient.List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", Label, s.Name),
 	})
 	if err != nil {
@@ -283,7 +284,7 @@ func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 	return false
 }
 
-func (s *Stack) patchResource(drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
+func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
 	original := serverResource.GetLabels()[LastConfigAnnotation]
 	if original == "" {
 		return fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
@@ -293,7 +294,7 @@ func (s *Stack) patchResource(drClient dynamic.ResourceInterface, serverResource
 	if err != nil {
 		return err
 	}
-	_, err = drClient.Patch(localResource.GetName(), types.JSONPatchType, patch, metav1.PatchOptions{})
+	_, err = drClient.Patch(ctx, localResource.GetName(), types.JSONPatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return err
 	}

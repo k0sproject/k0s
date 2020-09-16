@@ -2,6 +2,7 @@ package applier
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -87,7 +88,7 @@ func (a *Applier) Apply() error {
 		Client:    a.client,
 		Discovery: a.discoveryClient,
 	}
-	err = stack.Apply(true)
+	err = stack.Apply(context.Background(), true)
 	if err != nil {
 		a.discoveryClient.Invalidate()
 	}
