@@ -1,6 +1,7 @@
 package token
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -64,7 +65,7 @@ func (m *Manager) Create(valid time.Duration, role string) (string, error) {
 		StringData: data,
 	}
 
-	_, err := m.client.CoreV1().Secrets("kube-system").Create(secret)
+	_, err := m.client.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
