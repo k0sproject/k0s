@@ -1,5 +1,5 @@
 
-GO_SRCS := $(shell find -name '*.go')
+GO_SRCS := $(shell find . -type f -name '*.go')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker

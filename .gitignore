@@ -3,3 +3,4 @@ mke
 mke.code
 bindata
 .*.stamp
+.tmp
