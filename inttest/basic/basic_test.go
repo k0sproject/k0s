@@ -1,6 +1,7 @@
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Mirantis/mke/inttest/common"
@@ -25,7 +26,7 @@ func (s *BasicSuite) TestMkeGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(v1.ListOptions{
+	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
 		Limit: 100,
 	})
 	s.NoError(err)

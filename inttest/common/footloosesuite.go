@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -253,7 +254,7 @@ func (s *FootlooseSuite) KubeClient(node string) (*kubernetes.Clientset, error) 
 func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset) error {
 	s.T().Logf("waiting to see %s ready in kube API", node)
 	return wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
-		n, err := kc.CoreV1().Nodes().Get(node, v1.GetOptions{})
+		n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -321,7 +322,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 
 	return config.Config{
 		Cluster: config.Cluster{
-			Name:       "footloose-test",
+			Name:       s.T().Name(),
 			PrivateKey: path.Join(s.keyDir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
