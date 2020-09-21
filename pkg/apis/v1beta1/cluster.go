@@ -29,6 +29,7 @@ type ClusterSpec struct {
 	Scheduler         *SchedulerSpec         `yaml:"scheduler"`
 	Storage           *StorageSpec           `yaml:"storage"`
 	Network           *Network               `yaml:"network"`
+	PodSecurityPolicy *PodSecurityPolicy     `yaml:"podSecurityPolicy"`
 }
 
 // APISpec ...
@@ -132,5 +133,6 @@ func DefaultClusterSpec() *ClusterSpec {
 		API:               DefaultAPISpec(),
 		ControllerManager: &ControllerManagerSpec{},
 		Scheduler:         &SchedulerSpec{},
+		PodSecurityPolicy: DefaultPodSecurityPolicy(),
 	}
 }

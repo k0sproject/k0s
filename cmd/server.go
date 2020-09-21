@@ -187,6 +187,13 @@ func startServer(ctx *cli.Context) error {
 func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
 
+	defaultPSP, err := server.NewDefaultPSP(clusterSpec)
+	if err != nil {
+		logrus.Warnf("failed to initialize default PSP reconciler: %s", err.Error())
+	} else {
+		reconcilers["default-psp"] = defaultPSP
+	}
+
 	proxy, err := server.NewKubeProxy(clusterSpec)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())

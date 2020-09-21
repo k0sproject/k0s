@@ -29,7 +29,8 @@ spec:
       mtu: 1450
       vxlanPort: 4789
       vxlanVNI: 4096
-
+  podSecurityPolicy:
+    defaultPolicy: 00-mke-privileged
 ```
 
 ### `spec.storage`
@@ -57,6 +58,15 @@ Using type `etcd` will make mke to create and manage an elastic etcd cluster wit
 - `vxlanPort`: The UDP port to use for VXLAN (default `4789`)
 - `vxlanVNI`: The virtual network ID to use for VXLAN. (default: `4096`)
 - `mtu`: MTU to use for overlay network (default `1450`)
+
+### `spec.podSecurityPolicy`
+
+Configures the default [psp](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) to be set. MKE creates two PSPs out of box:
+
+- `00-mke-privileged` (default): no restrictions, always also used for kubernetes/mke level system pods
+- `99-mke-restricted`: no host namespaces or root users allowed, no bind mounts from host
+
+As a user you can of course create any supplemental PSPs and bind them to users / access accounts as you need.
 
 ## Configuring multi-node controlplane
 
