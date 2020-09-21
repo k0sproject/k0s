@@ -79,12 +79,14 @@ func (e *Etcd) Run() error {
 		"--client-cert-auth=true",
 		fmt.Sprintf("--listen-peer-urls=%s", peerURL),
 		fmt.Sprintf("--initial-advertise-peer-urls=%s", peerURL),
-		// TODO Do we want to make the peer certs ourselves?
-		"--peer-auto-tls",
 		fmt.Sprintf("--name=%s", name),
 		fmt.Sprintf("--trusted-ca-file=%s", path.Join(e.certDir, "ca.crt")),
 		fmt.Sprintf("--cert-file=%s", path.Join(e.certDir, "server.crt")),
 		fmt.Sprintf("--key-file=%s", path.Join(e.certDir, "server.key")),
+		fmt.Sprintf("--peer-trusted-ca-file=%s", path.Join(e.certDir, "ca.crt")),
+		fmt.Sprintf("--peer-key-file=%s", path.Join(e.certDir, "peer.key")),
+		fmt.Sprintf("--peer-cert-file=%s", path.Join(e.certDir, "peer.crt")),
+		"--peer-client-cert-auth=true",
 	}
 
 	if util.FileExists(filepath.Join(e.etcdDataDir, "member", "snap", "db")) {
@@ -181,6 +183,20 @@ func (e *Etcd) setupCerts() error {
 		},
 	}
 	if _, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.EtcdUser); err != nil {
+		return err
+	}
+
+	etcdPeerCertReq := certificate.Request{
+		Name:   filepath.Join("etcd", "peer"),
+		CN:     e.Config.PeerAddress,
+		O:      "etcd-peer",
+		CACert: etcdCaCertPath,
+		CAKey:  etcdCaCertKey,
+		Hostnames: []string{
+			e.Config.PeerAddress,
+		},
+	}
+	if _, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, constant.EtcdUser); err != nil {
 		return err
 	}
 

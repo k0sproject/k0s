@@ -87,6 +87,7 @@ func (a *APIServer) Run() error {
 		"service-account-signing-key-file": path.Join(constant.CertRoot, "sa.key"),
 		"service-account-issuer":           "api",
 		"api-audiences":                    "system:konnectivity-server",
+		"insecure-port":                    "0",
 	}
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
 		if args[name] != "" {
