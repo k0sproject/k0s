@@ -78,6 +78,13 @@ Builds can be done in parallel:
 make -j$(nproc)
 ```
 
+## Smoke test
+
+To run a smoke test after build:
+```
+make check
+```
+
 ## Cluster bootstrapping
 
 Currently mke makes only very basic default (hardcoded) configs for everything.
