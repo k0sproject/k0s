@@ -36,4 +36,7 @@ const (
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.19"
+
+	// DefaultPSP defines the system level default PSP to apply
+	DefaultPSP = "00-mke-privileged"
 )
