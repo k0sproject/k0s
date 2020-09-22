@@ -395,7 +395,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			config.MachineReplicas{
 				Count: s.ControllerCount,
 				Spec: config.Machine{
-					Image:        "quay.io/footloose/ubuntu18.04",
+					Image:        "footloose-alpine",
 					Name:         "controller%d",
 					Privileged:   true,
 					Volumes:      volumes,
@@ -405,7 +405,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			config.MachineReplicas{
 				Count: s.WorkerCount,
 				Spec: config.Machine{
-					Image:        "quay.io/footloose/ubuntu18.04",
+					Image:        "footloose-alpine",
 					Name:         "worker%d",
 					Privileged:   true,
 					Volumes:      volumes,
