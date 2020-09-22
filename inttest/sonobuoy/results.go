@@ -14,6 +14,8 @@ type Result struct {
 	Passed  int
 	Failed  int
 	Skipped int
+
+	ResultPath string
 }
 
 // ResultFromString constructs the Result struct from "sonobuoy results ..." output

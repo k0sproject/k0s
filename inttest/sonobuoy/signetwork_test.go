@@ -79,6 +79,9 @@ func (s *NetworkSuite) TestSigNetwork() {
 
 	s.Equal("passed", results.Status)
 	s.Equal(0, results.Failed)
+	if results.Status != "passed" {
+		s.T().Logf("sonobuoy run failed, you can see more details on the failing tests with: %s results %s", s.sonoBin, results.ResultPath)
+	}
 
 }
 
@@ -100,6 +103,11 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return Result{}, err
+	}
+	resultPath = path.Join(cwd, resultPath)
 
 	s.T().Logf("sonobuoy results stored at: %s", resultPath)
 
@@ -114,7 +122,9 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 		s.T().Logf("sono results output:\n%s", string(resultOutput))
 		return Result{}, err
 	}
-	return ResultFromString(string(resultOutput))
+	result, err := ResultFromString(string(resultOutput))
+	result.ResultPath = resultPath
+	return result, err
 
 }
 
