@@ -16,8 +16,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
+	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -39,6 +41,8 @@ type FootlooseSuite struct {
 
 	tearDownTimer *time.Timer
 
+	footlooseConfig config.Config
+
 	keyDir string
 }
 
@@ -50,8 +54,8 @@ func (s *FootlooseSuite) SetupSuite() {
 		s.T().FailNow()
 	}
 	s.keyDir = dir
-
-	cluster, err := cluster.New(s.createConfig())
+	s.footlooseConfig = s.createConfig()
+	cluster, err := cluster.New(s.footlooseConfig)
 	if err != nil {
 		s.T().Logf("ERROR: failed to load footloose config: %s", err.Error())
 		s.T().FailNow()
@@ -119,14 +123,46 @@ func (s *FootlooseSuite) TearDownSuite() {
 		s.T().Logf("wrote log of node %s to %s", m.Hostname(), logPath)
 	}
 
-	err = s.Cluster.Delete()
-	if err != nil {
-		s.T().Logf("failed to delete footloose cluster, we might've left some thrash around: %s", err.Error())
+	if s.keepEnvironment() {
+		footlooseYaml, err := yaml.Marshal(s.footlooseConfig)
+		if err != nil {
+			s.T().Logf("failed to marshall footloose yaml: %s", err.Error())
+			return
+		}
+		filename := path.Join(os.TempDir(), util.RandomString(8)+"-footloose.yaml")
+		err = ioutil.WriteFile(filename, footlooseYaml, 0700)
+		if err != nil {
+			s.T().Logf("failed to write footloose yaml: %s", err.Error())
+			return
+		}
+		s.T().Logf("footloose cluster left intact for debugging. Needs to be manually cleaned with: footloose delete --config %s", filename)
+	} else {
+		err = s.Cluster.Delete()
+		if err != nil {
+			s.T().Logf("failed to delete footloose cluster, we might've left some thrash around: %s", err.Error())
+		}
+		err = os.RemoveAll(s.keyDir)
+		if err != nil {
+			s.T().Logf("ERROR: failed to remove footloose keys: %s", err.Error())
+		}
+
 	}
 
-	err = os.RemoveAll(s.keyDir)
-	if err != nil {
-		s.T().Logf("ERROR: failed to remove footloose keys: %s", err.Error())
+}
+
+const keepAfterTestsEnv = "MKE_KEEP_AFTER_TESTS"
+
+func (s *FootlooseSuite) keepEnvironment() bool {
+	keepAfterTests := os.Getenv(keepAfterTestsEnv)
+	switch keepAfterTests {
+	case "", "never":
+		return false
+	case "always":
+		return true
+	case "failure":
+		return s.T().Failed()
+	default:
+		return false
 	}
 }
 
