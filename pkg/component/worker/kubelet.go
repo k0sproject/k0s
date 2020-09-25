@@ -69,6 +69,9 @@ func (k *Kubelet) Run() error {
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
 			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 			"--kubeconfig=/var/lib/mke/kubelet.conf",
+			"--kube-reserved-cgroup=system.slice",
+			"--runtime-cgroups=/system.slice/containerd.service",
+			"--kubelet-cgroups=/system.slice/containerd.service",
 		},
 	}
 
