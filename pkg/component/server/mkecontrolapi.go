@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"os"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -9,6 +10,7 @@ import (
 
 // MkeControlAPI implements the mke control API component
 type MkeControlAPI struct {
+	ConfigPath    string
 	ClusterConfig *config.ClusterConfig
 
 	supervisor supervisor.Supervisor
@@ -28,6 +30,7 @@ func (m *MkeControlAPI) Run() error {
 		BinPath: os.Args[0],
 		Args: []string{
 			"api",
+			fmt.Sprintf("--config=%s", m.ConfigPath),
 		},
 	}
 

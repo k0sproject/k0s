@@ -1,6 +1,8 @@
 package v1beta1
 
 import (
+	"strings"
+
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/sirupsen/logrus"
 )
@@ -26,6 +28,27 @@ func DefaultStorageSpec() *StorageSpec {
 		Type: "etcd",
 		Etcd: DefaultEtcdConfig(),
 	}
+}
+
+// IsJoinable returns true only if the storage config is such that another controller can join the cluster
+func (s *StorageSpec) IsJoinable() bool {
+	if s.Type == "etcd" {
+		return true
+	}
+
+	if strings.HasPrefix(s.Kine.DataSource, "sqlite://") {
+		return false
+	}
+
+	if strings.HasPrefix(s.Kine.DataSource, "mysql://") {
+		return true
+	}
+
+	if strings.HasPrefix(s.Kine.DataSource, "postgres://") {
+		return true
+	}
+
+	return false
 }
 
 // UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
