@@ -1,12 +1,12 @@
 package applier
 
 import (
-	"os"
 	"path/filepath"
 	"sync/atomic"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
@@ -23,7 +23,7 @@ type Manager struct {
 // Init initializes the Manager
 func (m *Manager) Init() error {
 	m.bundlePath = filepath.Join(constant.DataDir, "manifests")
-	err := os.MkdirAll(m.bundlePath, 0700)
+	err := util.InitDirectory(m.bundlePath, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.bundlePath)
 	}
