@@ -42,7 +42,7 @@ func Stage(dataDir, name, group string) error {
 	p := filepath.Join(dataDir, name)
 	logrus.Infof("Staging %s", name)
 
-	err := os.MkdirAll(filepath.Dir(p), 0750)
+	err := util.InitDirectory(filepath.Dir(p), 0750)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
 	}

@@ -18,7 +18,7 @@ type TemplateWriter struct {
 
 // Write writes executes the template and writes the results on disk
 func (p *TemplateWriter) Write() error {
-	err := os.MkdirAll(filepath.Dir(p.Path), 0700)
+	err := InitDirectory(filepath.Dir(p.Path), 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p.Path))
 	}

@@ -3,12 +3,12 @@ package worker
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -42,12 +42,12 @@ func (k *Kubelet) Init() error {
 	}
 
 	k.dataDir = path.Join(constant.DataDir, "kubelet")
-	err = os.MkdirAll(k.dataDir, 0700)
+	err = util.InitDirectory(k.dataDir, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", k.dataDir)
 	}
 
-	err = os.MkdirAll(kubeletVolumePluginDir, 0700)
+	err = util.InitDirectory(kubeletVolumePluginDir, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", kubeletVolumePluginDir)
 	}
