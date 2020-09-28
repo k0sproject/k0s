@@ -30,14 +30,23 @@ func APICommand() *cli.Command {
 		Name:   "api",
 		Usage:  "Run the controller api",
 		Action: startAPI,
-		Flags:  []cli.Flag{},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "config",
+				Value: "mke.yaml",
+			},
+		},
 	}
 }
 
 var kubeClient *k8s.Clientset
 
 func startAPI(ctx *cli.Context) error {
-	var err error
+	clusterConfig, err := configFromCmdFlag(ctx)
+	if err != nil {
+		return err
+	}
+
 	kubeClient, err = kubernetes.Client(filepath.Join(constant.CertRoot, "admin.conf"))
 	if err != nil {
 		return err
@@ -46,8 +55,15 @@ func startAPI(ctx *cli.Context) error {
 	router := mux.NewRouter()
 	router.Use(authMiddleware)
 
-	router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
-	router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
+	if clusterConfig.Spec.Storage.Type == "etcd" {
+		// Only mount the etcd handler if we're running on etcd storage
+		// by default the mux will return 404 back which the caller should handle
+		router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
+	}
+
+	if clusterConfig.Spec.Storage.IsJoinable() {
+		router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
+	}
 
 	srv := &http.Server{
 		Handler:      router,

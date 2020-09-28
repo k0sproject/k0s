@@ -45,7 +45,7 @@ func ServerCommand() *cli.Command {
 	}
 }
 
-func startServer(ctx *cli.Context) error {
+func configFromCmdFlag(ctx *cli.Context) (*config.ClusterConfig, error) {
 	clusterConfig, err := config.FromYaml(ctx.String("config"))
 	if err != nil {
 		logrus.Errorf("Failed to read cluster config: %s", err.Error())
@@ -60,8 +60,17 @@ func startServer(ctx *cli.Context) error {
 			for _, e := range errors {
 				messages = append(messages, e.Error())
 			}
-			return fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
+			return nil, fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
 		}
+	}
+
+	return clusterConfig, nil
+}
+
+func startServer(ctx *cli.Context) error {
+	clusterConfig, err := configFromCmdFlag(ctx)
+	if err != nil {
+		return err
 	}
 	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{}
@@ -124,7 +133,9 @@ func startServer(ctx *cli.Context) error {
 		ClusterConfig: clusterConfig,
 	})
 	componentManager.Add(&applier.Manager{})
-	componentManager.Add(&server.MkeControlAPI{})
+	componentManager.Add(&server.MkeControlAPI{
+		ConfigPath: ctx.String("config"),
+	})
 
 	// init components
 	if err := componentManager.Init(); err != nil {

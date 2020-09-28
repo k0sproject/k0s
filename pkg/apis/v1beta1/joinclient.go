@@ -113,7 +113,7 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (EtcdResponse, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return etcdResponse, fmt.Errorf("unexpected response status: %s", resp.Status)
+		return etcdResponse, fmt.Errorf("unexpected response status when trying to join etcd cluster: %s", resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
