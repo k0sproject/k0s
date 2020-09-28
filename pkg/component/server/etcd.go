@@ -42,7 +42,7 @@ func (e *Etcd) Init() error {
 	}
 
 	e.etcdDataDir = path.Join(constant.DataDir, "etcd")
-	err = os.MkdirAll(e.etcdDataDir, 0700)
+	err = util.InitDirectory(e.etcdDataDir, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", e.etcdDataDir)
 	}
@@ -106,7 +106,7 @@ func (e *Etcd) Run() error {
 		if util.FileExists(etcdCaCertPath) && util.FileExists(etcdCaCertKey) {
 			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 		} else {
-			err := os.MkdirAll(filepath.Dir(etcdCaCertKey), 0750)
+			err := util.InitDirectory(filepath.Dir(etcdCaCertKey), 0750)
 			if err != nil {
 				return errors.Wrapf(err, "failed to create etcd cert dir")
 			}

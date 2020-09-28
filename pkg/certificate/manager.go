@@ -48,7 +48,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return nil
 	}
 
-	err := os.MkdirAll(filepath.Dir(keyFile), 0750)
+	err := util.InitDirectory(filepath.Dir(keyFile), 0750)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
 	}

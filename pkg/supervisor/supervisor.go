@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -73,7 +74,7 @@ func (s *Supervisor) Supervise() {
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
 	s.PidFile = path.Join(constant.RunDir, s.Name) + ".pid"
-	os.MkdirAll(constant.RunDir, 0755) // ignore errors in case directory exists
+	util.InitDirectory(constant.RunDir, 0755) // ignore errors in case directory exists
 	go func() {
 		log := logrus.WithField("component", s.Name)
 		log.Info("Starting to supervise")

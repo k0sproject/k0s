@@ -2,7 +2,6 @@ package util
 
 import (
 	"os"
-	"path/filepath"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -18,11 +17,6 @@ type TemplateWriter struct {
 
 // Write writes executes the template and writes the results on disk
 func (p *TemplateWriter) Write() error {
-	err := os.MkdirAll(filepath.Dir(p.Path), 0700)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p.Path))
-	}
-
 	t, err := template.New(p.Name).Parse(p.Template)
 	if err != nil {
 		return errors.Wrapf(err, "failed to parse template for %s", p.Name)
