@@ -41,14 +41,15 @@ jobs:
         docker system prune --all --volumes --force
 
     - name: Run smoke test
-      run: make check
+      run: make check-network
 
-    - name: Collect smoke test logs
+    - name: Collect test logs
       if: failure()
       uses: actions/upload-artifact@v2
       with:
-        name: logs
-        path: tests/*.log
+        path: |
+          /tmp/*.log
+          inttest/**/*.tar.gz
 
   lint:
     name: Lint
@@ -66,4 +67,3 @@ jobs:
 
     - name: Lint
       run: make lint
-

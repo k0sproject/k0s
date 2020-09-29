@@ -51,13 +51,9 @@ embedded-bins/staging/linux/bin: .bins.stamp
 lint:
 	$(golint) -set_exit_status ./...
 
-.PHONY: check
-check: mke
-	$(MAKE) -C tests check
-
 .PHONY: check-network
 check-network: mke
-	$(MAKE) -C tests check-network
+	$(MAKE) -C inttest check-network
 
 .PHONY: clean
 clean:
