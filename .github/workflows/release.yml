@@ -36,8 +36,8 @@ jobs:
         run: |
           docker system prune --all --volumes --force
 
-      - name: Run smoke test
-        run: make check-network
+      - name: Run basic smoke test
+        run: make check-basic
 
       - name: Collect smoke test logs
         if: failure()

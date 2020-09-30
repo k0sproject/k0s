@@ -55,6 +55,10 @@ lint:
 check-network: mke
 	$(MAKE) -C inttest check-network
 
+.PHONY: check-basic
+check-basic: mke
+	$(MAKE) -C inttest check-basic
+
 .PHONY: clean
 clean:
 	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata
