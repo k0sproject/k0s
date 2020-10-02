@@ -82,7 +82,7 @@ make -j$(nproc)
 
 To run a smoke test after build:
 ```
-make check
+make check-basic
 ```
 
 ## Cluster bootstrapping
