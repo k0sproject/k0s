@@ -8,6 +8,9 @@ GO_SRCS := $(shell find . -type f -name '*.go')
 
 EMBEDDED_BINS_BUILDMODE ?= docker
 
+GOOS ?= linux
+GOARCH ?= amd64
+
 VERSION ?= dev
 golint := $(shell which golint)
 
@@ -32,7 +35,7 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
 endif
 
 mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	CGO_ENABLED=0 go build -ldflags="-w -s -X main.Version=$(VERSION)" -o mke.code main.go
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X main.Version=$(VERSION)" -o mke.code main.go
 	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
