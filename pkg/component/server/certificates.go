@@ -101,7 +101,7 @@ func (c *Certificates) Run() error {
 	if err != nil {
 		return err
 	}
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "admin.conf"), "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
+	if err := kubeConfig(constant.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
 		return err
 	}
 

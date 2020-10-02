@@ -2,7 +2,6 @@ package worker
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -35,7 +34,7 @@ func (c *ContainerD) Run() error {
 		Name:    "containerd",
 		BinPath: assets.BinPath("containerd"),
 		Args: []string{
-			fmt.Sprintf("--root=%s", path.Join(constant.DataDir, "containerd")),
+			fmt.Sprintf("--root=%s", filepath.Join(constant.DataDir, "containerd")),
 			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
 			"--config=/etc/mke/containerd.toml",

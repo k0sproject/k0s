@@ -29,7 +29,7 @@ func TokenCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:      "kubeconfig",
 				Usage:     "path to kubeconfig",
-				Value:     "/var/lib/mke/pki/admin.conf",
+				Value:     constant.AdminKubeconfigConfigPath,
 				EnvVars:   []string{"KUBECONFIG"},
 				TakesFile: true,
 			},

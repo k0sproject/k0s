@@ -3,6 +3,7 @@ package v1beta1
 import (
 	"strings"
 
+	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/sirupsen/logrus"
 )
@@ -26,7 +27,7 @@ type KineConfig struct {
 }
 
 // DefaultKineDataSource sets the default kine datasource URL
-const DefaultKineDataSource = "sqlite:///var/lib/mke/db/state.db?more=rwc&_journal=WAL&cache=shared"
+const DefaultKineDataSource = "sqlite://" + constant.DataDir + "/db/state.db?more=rwc&_journal=WAL&cache=shared"
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
 func DefaultStorageSpec() *StorageSpec {
