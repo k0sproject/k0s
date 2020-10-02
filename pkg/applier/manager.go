@@ -2,7 +2,6 @@ package applier
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
@@ -29,14 +28,13 @@ type Manager struct {
 
 // Init initializes the Manager
 func (m *Manager) Init() error {
-	m.bundlePath = filepath.Join(constant.DataDir, "manifests")
-	err := util.InitDirectory(m.bundlePath, 0700)
+	err := util.InitDirectory(constant.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.bundlePath)
+		return errors.Wrapf(err, "failed to create manifest bundle dir %s", constant.ManifestsDir)
 	}
 	m.log = logrus.WithField("component", "applier-manager")
 
-	m.applier, err = NewApplier(m.bundlePath)
+	m.applier, err = NewApplier(constant.ManifestsDir)
 	return err
 }
 
@@ -109,7 +107,7 @@ func (m *Manager) runFSWatcher() {
 	log := logrus.WithField("component", "applier-manager")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
+		log.Errorf("failed to create fs watcher for %s: %s", constant.ManifestsDir, err.Error())
 		return
 	}
 	defer watcher.Close()
@@ -129,7 +127,7 @@ func (m *Manager) runFSWatcher() {
 	defer debouncer.Stop()
 	go debouncer.Start()
 
-	watcher.Add(m.bundlePath)
+	watcher.Add(constant.ManifestsDir)
 	for {
 		select {
 		case err := <-watcher.Errors:

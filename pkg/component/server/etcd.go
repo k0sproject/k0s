@@ -42,7 +42,7 @@ func (e *Etcd) Init() error {
 	}
 
 	e.etcdDataDir = path.Join(constant.DataDir, "etcd")
-	err = util.InitDirectory(e.etcdDataDir, 0700)
+	err = util.InitDirectory(e.etcdDataDir, constant.DataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", e.etcdDataDir)
 	}
@@ -59,7 +59,7 @@ func (e *Etcd) Init() error {
 	os.Chown(path.Join(e.certDir, "server.crt"), e.uid, e.gid)
 	os.Chown(path.Join(e.certDir, "server.key"), e.uid, e.gid)
 
-	return assets.Stage(constant.DataDir, path.Join("bin", "etcd"), constant.Group)
+	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode, constant.Group)
 }
 
 // Run runs etcd
@@ -106,16 +106,16 @@ func (e *Etcd) Run() error {
 		if util.FileExists(etcdCaCertPath) && util.FileExists(etcdCaCertKey) {
 			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 		} else {
-			err := util.InitDirectory(filepath.Dir(etcdCaCertKey), 0750)
+			err := util.InitDirectory(filepath.Dir(etcdCaCertKey), constant.CertRootSecureMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 			if err != nil {
 				return errors.Wrapf(err, "failed to create etcd cert dir")
 			}
-			err = ioutil.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, 0600)
+			err = ioutil.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertRootSecureMode)
 			if err != nil {
 				return err
 			}
 
-			err = ioutil.WriteFile(etcdCaCertPath, etcdResponse.CA.Cert, 0640)
+			err = ioutil.WriteFile(etcdCaCertPath, etcdResponse.CA.Cert, constant.CertRootSecureMode)
 			if err != nil {
 				return err
 			}
@@ -133,7 +133,7 @@ func (e *Etcd) Run() error {
 
 	e.supervisor = supervisor.Supervisor{
 		Name:    "etcd",
-		BinPath: assets.StagedBinPath(constant.DataDir, "etcd"),
+		BinPath: assets.BinPath("etcd"),
 		Dir:     constant.DataDir,
 		Args:    args,
 		UID:     e.uid,

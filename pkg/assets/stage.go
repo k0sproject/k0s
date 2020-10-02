@@ -4,8 +4,10 @@ import (
 	"compress/gzip"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 
+	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -28,27 +30,40 @@ func ExecutableIsOlder(filepath string) bool {
 	return exinfo.ModTime().Unix() < pathinfo.ModTime().Unix()
 }
 
-// StagedBinPath returns the path of the staged bin or the name without path if it does not exist
-func StagedBinPath(dataDir, name string) string {
-	p := filepath.Join(dataDir, "bin", name)
-	if util.FileExists(p) {
-		return p
+// BinPath searches for a binary on disk:
+// - in the BinDir folder,
+// - in the PATH.
+// The first to be found is the one returned.
+func BinPath(name string) string {
+	// Look into the BinDir folder.
+	path := filepath.Join(constant.BinDir, name)
+	if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
+		return path
 	}
-	return name
+
+	// If we still haven't found the executable, look for it in the PATH.
+	if path, err := exec.LookPath(name); err == nil {
+		path, _ := filepath.Abs(path)
+		return path
+	}
+	return ""
 }
 
 // Stage ...
-func Stage(dataDir, name, group string) error {
+func Stage(dataDir string, name string, filemode os.FileMode, group string) error {
 	p := filepath.Join(dataDir, name)
-	logrus.Infof("Staging %s", name)
+	logrus.Infof("Staging %s", p)
 
-	err := util.InitDirectory(filepath.Dir(p), 0750)
+	err := util.InitDirectory(filepath.Dir(p), filemode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
 	}
 
 	/* set group owner of the directories */
-	gid, _ := util.GetGID(group)
+	gid, err := util.GetGID(group)
+	if err != nil {
+		logrus.Error(err)
+	}
 	if gid != 0 {
 		for _, path := range []string{dataDir, filepath.Dir(p)} {
 			logrus.Debugf("setting group ownership for %s to %d", path, gid)
@@ -64,7 +79,7 @@ func Stage(dataDir, name, group string) error {
 		return nil
 	}
 
-	gzname := name + ".gz"
+	gzname := "bin/" + name + ".gz"
 	bin, embedded := BinData[gzname]
 	if !embedded {
 		logrus.Debug("Skipping not embedded file:", gzname)

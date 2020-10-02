@@ -66,7 +66,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(keyFile, key, 0600)
+	err = ioutil.WriteFile(keyFile, key, constant.CertRootSecureMode)
 	if err != nil {
 		return err
 	}
@@ -162,8 +162,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		Key:  string(key),
 		Cert: string(cert),
 	}
-	err = ioutil.WriteFile(keyFile, key, 0600)
-	err = ioutil.WriteFile(certFile, cert, 0640)
+	err = ioutil.WriteFile(keyFile, key, constant.CertRootSecureMode)
+	err = ioutil.WriteFile(certFile, cert, constant.CertRootSecureMode)
 
 	err = os.Chown(keyFile, uid, gid)
 	err = os.Chown(certFile, uid, gid)

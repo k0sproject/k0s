@@ -4,6 +4,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/pkg/errors"
 )
 
@@ -22,7 +23,7 @@ func (p *TemplateWriter) Write() error {
 		return errors.Wrapf(err, "failed to parse template for %s", p.Name)
 	}
 
-	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0700)
+	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertRootMode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to open pod file for %s", p.Name)
 	}

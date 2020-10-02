@@ -3,6 +3,8 @@ package worker
 import (
 	"fmt"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -18,13 +20,24 @@ type ContainerD struct {
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
-	var err error
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v1"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v2"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "runc"), constant.Group)
-	return err
+	//var err error
+	var allErrors []string
+	err := assets.Stage(constant.BinDir, "containerd", constant.BinDirMode, constant.Group)
+	allErrors = append(allErrors, err.Error())
+
+	err = assets.Stage(constant.BinDir, "containerd-shim", constant.BinDirMode, constant.Group)
+	allErrors = append(allErrors, err.Error())
+
+	err = assets.Stage(constant.BinDir, "containerd-shim-runc-v1", constant.BinDirMode, constant.Group)
+	allErrors = append(allErrors, err.Error())
+
+	err = assets.Stage(constant.BinDir, "containerd-shim-runc-v2", constant.BinDirMode, constant.Group)
+	allErrors = append(allErrors, err.Error())
+
+	err = assets.Stage(constant.BinDir, "runc", constant.BinDirMode, constant.Group)
+	allErrors = append(allErrors, err.Error())
+
+	return fmt.Errorf(strings.Join(allErrors, "\n"))
 }
 
 // Run runs containerD
@@ -32,11 +45,11 @@ func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
-		BinPath: assets.StagedBinPath(constant.DataDir, "containerd"),
+		BinPath: assets.BinPath("containerd"),
 		Args: []string{
 			fmt.Sprintf("--root=%s", path.Join(constant.DataDir, "containerd")),
-			fmt.Sprintf("--state=%s", "/run/mke/containerd"),
-			fmt.Sprintf("--address=%s", "/run/mke/containerd.sock"),
+			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
+			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
 			"--config=/etc/mke/containerd.toml",
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"path/filepath"
 
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/constant"
@@ -14,8 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	kubeletConfigPath      = "/var/lib/mke/kubelet-config.yaml"
+var (
+	kubeletConfigPath      = filepath.Join(constant.DataDir, "kubelet-config.yaml")
 	kubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
 )
 
@@ -36,13 +37,13 @@ type KubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	err := assets.Stage(constant.DataDir, path.Join("bin", "kubelet"), constant.Group)
+	err := assets.Stage(constant.BinDir, "kubelet", constant.BinDirMode, constant.Group)
 	if err != nil {
 		return err
 	}
 
 	k.dataDir = path.Join(constant.DataDir, "kubelet")
-	err = util.InitDirectory(k.dataDir, 0700)
+	err = util.InitDirectory(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", k.dataDir)
 	}
@@ -60,7 +61,7 @@ func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
-		BinPath: assets.StagedBinPath(constant.DataDir, "kubelet"),
+		BinPath: assets.BinPath("kubelet"),
 		Args: []string{
 			fmt.Sprintf("--root-dir=%s", k.dataDir),
 			fmt.Sprintf("--volume-plugin-dir=%s", kubeletVolumePluginDir),
@@ -81,15 +82,13 @@ func (k *Kubelet) Run() error {
 			return err
 		}
 
-		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0700)
+		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertRootSecureMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write kubelet config to disk")
 		}
 
 		return nil
-
 	})
-
 	if err != nil {
 		return err
 	}
