@@ -47,7 +47,7 @@ func startAPI(ctx *cli.Context) error {
 		return err
 	}
 
-	kubeClient, err = kubernetes.Client(filepath.Join(constant.CertRoot, "admin.conf"))
+	kubeClient, err = kubernetes.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
