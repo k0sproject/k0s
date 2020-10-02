@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"github.com/Mirantis/mke/pkg/component"
 	"github.com/Mirantis/mke/pkg/component/worker"
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/token"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -95,10 +95,10 @@ func loadKubeletConfigClient() (*worker.KubeletConfigClient, error) {
 	return kubeletConfigClient, nil
 }
 
-func handleKubeletBootstrapToken(token string) error {
-	kubeconfig, err := base64.StdEncoding.DecodeString(token)
+func handleKubeletBootstrapToken(encodedToken string) error {
+	kubeconfig, err := token.JoinDecode(encodedToken)
 	if err != nil {
-		return errors.Wrap(err, "join-token does not seem to be proper token created by 'mke token create'")
+		return errors.Wrap(err, "failed to decode token")
 	}
 
 	// Load the bootstrap kubeconfig to validate it

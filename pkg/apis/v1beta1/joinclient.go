@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 
+	"github.com/Mirantis/mke/pkg/token"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,12 +24,13 @@ type JoinClient struct {
 }
 
 // JoinClientFromToken creates a new join api client from a token
-func JoinClientFromToken(token string) (*JoinClient, error) {
-	data, err := base64.StdEncoding.DecodeString(token)
+func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
+	tokenBytes, err := token.JoinDecode(encodedToken)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode token")
 	}
-	clientConfig, err := clientcmd.NewClientConfigFromBytes(data)
+
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)
 	if err != nil {
 		return nil, err
 	}
