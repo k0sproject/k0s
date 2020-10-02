@@ -115,7 +115,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 	if err != nil {
 		return "", err
 	}
-	token, err := manager.Create(expiry, role)
+	tokenString, err := manager.Create(expiry, role)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +126,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		JoinURL string
 	}{
 		CACert: base64.StdEncoding.EncodeToString(caCert),
-		Token:  token,
+		Token:  tokenString,
 	}
 	if role == "worker" {
 		data.User = "kubelet-bootstrap"
@@ -143,5 +143,5 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
+	return token.JoinEncode(&buf)
 }
