@@ -7,7 +7,7 @@ import (
 )
 
 // Client creates new k8s client based of the given kubeconfig
-func Client(kubeconfig string) (*kubernetes.Clientset, error) {
+func Client(kubeconfig string) (kubernetes.Interface, error) {
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {

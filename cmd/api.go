@@ -39,7 +39,7 @@ func APICommand() *cli.Command {
 	}
 }
 
-var kubeClient *k8s.Clientset
+var kubeClient k8s.Interface
 
 func startAPI(ctx *cli.Context) error {
 	clusterConfig, err := configFromCmdFlag(ctx)

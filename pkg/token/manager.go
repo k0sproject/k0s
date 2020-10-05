@@ -27,7 +27,7 @@ func NewManager(kubeconfig string) (*Manager, error) {
 
 // Manager is responsible to manage the join tokens in kube API as secrets in kube-system namespace
 type Manager struct {
-	client *kubernetes.Clientset
+	client kubernetes.Interface
 }
 
 // Create creates a new bootstrap token
