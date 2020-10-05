@@ -13,7 +13,7 @@ import (
 
 // KubeletConfigClient is the client used to fetch kubelet config from a common config map
 type KubeletConfigClient struct {
-	kubeClient *kubernetes.Clientset
+	kubeClient kubernetes.Interface
 }
 
 // NewKubeletConfigClient creates new KubeletConfigClient using the specified kubeconfig

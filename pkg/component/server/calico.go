@@ -15,7 +15,7 @@ import (
 
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	clusterSpec *config.ClusterSpec
 	tickerDone  chan struct{}
 	log         *logrus.Entry

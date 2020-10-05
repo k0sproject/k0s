@@ -207,7 +207,7 @@ spec:
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	client        *kubernetes.Clientset
+	client        kubernetes.Interface
 	tickerDone    chan struct{}
 	log           *logrus.Entry
 	clusterConfig *config.ClusterSpec
