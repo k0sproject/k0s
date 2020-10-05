@@ -1,5 +1,8 @@
 
-sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.19.0/sonobuoy_0.19.0_linux_amd64.tar.gz
+ARCH = $(shell go env GOARCH)
+OS = $(shell go env GOOS)
+
+sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.19.0/sonobuoy_0.19.0_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
 
