@@ -149,6 +149,12 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 	return nil
 }
 
+// ignoredResources defines a list of resources which as ignored in prune phase
+// The reason for ignoring these are:
+// - v1:Endpoints inherit the stack label but do not have owner ref set --> each apply would prune all stack related endpoints
+// Defined is the form of api-group/version:kind. The core group kinds are defined as v1:<kind>
+var ignoredResources = []string{"v1:Endpoints"}
+
 func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
 	pruneableResources := []*unstructured.Unstructured{}
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
@@ -165,6 +171,10 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		for _, apiResource := range apiResourceList.APIResources {
 			key := fmt.Sprintf("%s:%s", apiResourceList.GroupVersion, apiResource.Kind)
 			if !util.StringSliceContains(apiResource.Verbs, "delete") {
+				continue
+			}
+			if util.StringSliceContains(ignoredResources, key) {
+				logrus.Debugf("skipping resource %s from prune", key)
 				continue
 			}
 			if groupVersionKinds[key] == nil {
