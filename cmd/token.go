@@ -83,12 +83,7 @@ func CreateCommand() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			clusterConfig, err := config.FromYaml(c.String("config"))
-			if err != nil {
-				clusterConfig = &config.ClusterConfig{
-					Spec: config.DefaultClusterSpec(),
-				}
-			}
+			clusterConfig := ConfigFromYaml(c)
 			expiry, err := time.ParseDuration(c.String("expiry"))
 			if err != nil {
 				return err
