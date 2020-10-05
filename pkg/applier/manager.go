@@ -2,13 +2,12 @@ package applier
 
 import (
 	"context"
+	"github.com/denisbrodbeck/machineid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-	"os"
 	"path/filepath"
 	"sync/atomic"
 	"time"
@@ -70,77 +69,14 @@ func (m *Manager) Run() error {
 		_ = m.ensureKubeClient()
 		time.Sleep(time.Second)
 	}
-	hasLease := &atomic.Value{}
-	hasLease.Store(false)
 
-	hostname, err := os.Hostname()
+	machineID, err := machineid.ProtectedID("mirantis-mke")
 
 	if err != nil {
 		return err
 	}
 
-	go electLeader(m.client.CoordinationV1(), "mke-manifest-applier", "kube-node-lease", hostname, hasLease)
-
-	var changesDetected atomic.Value
-	// to make first tick to sync everything and retry until it succeeds
-	changesDetected.Store(true)
-
-	// todo: we could probably move this whole thing out and run it in `onStartedLeading`
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				lease := hasLease.Load().(bool)
-				if !lease {
-					log.Debug("node does not hold manifest lease")
-					continue
-				}
-
-				changes := changesDetected.Load().(bool)
-				if !changes {
-					continue // Wait for next check
-				}
-				// Do actual apply
-				if err := m.applier.Apply(); err != nil {
-					log.Warnf("failed to apply manifests: %s", err.Error())
-				} else {
-					// Only set if the apply succeeds, will make it retry on every tick in case of failures
-					changesDetected.Store(false)
-				}
-			case <-m.tickerDone:
-				log.Info("manifest ticker done")
-				return
-			}
-		}
-	}()
-
-	// todo: move this along with the above block so we don't watch files unless we hold a lease to apply changes
-	go func() {
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
-			return
-		}
-		defer watcher.Close()
-
-		watcher.Add(m.bundlePath)
-		for {
-			select {
-			// watch for events
-			case event := <-watcher.Events:
-				log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
-				changesDetected.Store(true)
-				// watch for errors
-			case err := <-watcher.Errors:
-				log.Warnf("watch error: %s", err.Error())
-			case <-m.watcherDone:
-				log.Info("manifest watcher done")
-				return
-			}
-		}
-	}()
+	go m.electLeader("mke-manifest-applier", "kube-node-lease", machineID)
 
 	return nil
 }
@@ -152,7 +88,7 @@ func (m *Manager) Stop() error {
 	return nil
 }
 
-func electLeader(client v1.LeasesGetter, name, namespace, id string, elected *atomic.Value) error {
+func (m *Manager) electLeader(name, namespace, id string) error {
 	log := logrus.WithField("component", "applier-manager")
 
 	lock := &resourcelock.LeaseLock{
@@ -160,7 +96,7 @@ func electLeader(client v1.LeasesGetter, name, namespace, id string, elected *at
 			Name:      name,
 			Namespace: namespace,
 		},
-		Client: client,
+		Client: m.client.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: id,
 		},
@@ -174,11 +110,16 @@ func electLeader(client v1.LeasesGetter, name, namespace, id string, elected *at
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
 				log.Info("acquired leader lease")
-				elected.Store(true)
+				changesDetected := &atomic.Value{}
+				// to make first tick to sync everything and retry until it succeeds
+				changesDetected.Store(true)
+				m.runFSWatcher(changesDetected)
+				m.runApplier(changesDetected)
 			},
 			OnStoppedLeading: func() {
 				log.Info("lost leader lease")
-				elected.Store(false)
+				m.tickerDone <- struct{}{}
+				m.watcherDone <- struct{}{}
 			},
 			OnNewLeader: nil,
 		},
@@ -194,4 +135,55 @@ func electLeader(client v1.LeasesGetter, name, namespace, id string, elected *at
 	le.Run(context.TODO())
 
 	return nil
+}
+
+func (m *Manager) runApplier(changesDetected *atomic.Value) {
+	log := logrus.WithField("component", "applier-manager")
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			changes := changesDetected.Load().(bool)
+			if !changes {
+				continue // Wait for next check
+			}
+			// Do actual apply
+			if err := m.applier.Apply(); err != nil {
+				log.Warnf("failed to apply manifests: %s", err.Error())
+			} else {
+				// Only set if the apply succeeds, will make it retry on every tick in case of failures
+				changesDetected.Store(false)
+			}
+		case <-m.tickerDone:
+			log.Info("manifest ticker done")
+			return
+		}
+	}
+}
+
+func(m *Manager) runFSWatcher(changesDetected *atomic.Value) {
+	log := logrus.WithField("component", "applier-manager")
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
+		return
+	}
+	defer watcher.Close()
+
+	watcher.Add(m.bundlePath)
+	for {
+		select {
+		// watch for events
+		case event := <-watcher.Events:
+			log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
+			changesDetected.Store(true)
+			// watch for errors
+		case err := <-watcher.Errors:
+			log.Warnf("watch error: %s", err.Error())
+		case <-m.watcherDone:
+			log.Info("manifest watcher done")
+			return
+		}
+	}
 }
