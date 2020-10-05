@@ -82,7 +82,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.Address,
 		},
-		Path: path.Join(constant.DataDir, "manifests", "konnectivity-agent.yaml"),
+		Path: path.Join(constant.DataDir, "manifests", "konnectivity", "konnectivity-agent.yaml"),
 	}
 	err := tw.Write()
 	if err != nil {

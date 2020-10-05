@@ -57,7 +57,7 @@ func (k *KubeletConfig) Run() error {
 		Name:     "kubelet-config",
 		Template: kubeletConfigTemplate,
 		Data:     config,
-		Path:     filepath.Join(constant.DataDir, "manifests", "kubelet-config.yaml"),
+		Path:     filepath.Join(constant.DataDir, "manifests", "kubeletconfig", "kubelet-config.yaml"),
 	}
 	err = tw.Write()
 	if err != nil {

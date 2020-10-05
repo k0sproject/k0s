@@ -58,7 +58,7 @@ func (k *KubeProxy) Run() error {
 					Name:     "kube-proxy",
 					Template: proxyTemplate,
 					Data:     config,
-					Path:     filepath.Join(constant.DataDir, "manifests", "kube-proxy.yaml"),
+					Path:     filepath.Join(constant.DataDir, "manifests", "kubeproxy", "kube-proxy.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {

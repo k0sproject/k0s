@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -26,13 +25,12 @@ type Applier struct {
 	Dir  string
 
 	log             *logrus.Entry
-	watcher         *fsnotify.Watcher
 	client          dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string) (Applier, error) {
+func NewApplier(dir string) Applier {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{
 		"component": "applier",
@@ -45,7 +43,7 @@ func NewApplier(dir string) (Applier, error) {
 		Name: name,
 	}
 
-	return a, nil
+	return a
 }
 
 func (a *Applier) init() error {
@@ -82,8 +80,9 @@ func (a *Applier) Apply() error {
 		return err
 	}
 	resources, err := a.parseFiles(files)
+	logrus.Debugf("parsed %d resources for stack %s from dir %s", len(resources), a.Name, a.Dir)
 	stack := Stack{
-		Name:      "mke-stack",
+		Name:      a.Name,
 		Resources: resources,
 		Client:    a.client,
 		Discovery: a.discoveryClient,
@@ -93,6 +92,19 @@ func (a *Applier) Apply() error {
 		a.discoveryClient.Invalidate()
 	}
 
+	return err
+}
+
+// Delete deletes the entires stack by applying it with empty set of resources
+func (a *Applier) Delete() error {
+	stack := Stack{
+		Name:      a.Name,
+		Resources: []*unstructured.Unstructured{},
+		Client:    a.client,
+		Discovery: a.discoveryClient,
+	}
+	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
+	err := stack.Apply(context.Background(), true)
 	return err
 }
 

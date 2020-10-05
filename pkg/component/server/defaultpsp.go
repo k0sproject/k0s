@@ -39,7 +39,7 @@ func (d *DefaultPSP) Run() error {
 		Data: struct{ DefaultPSP string }{
 			DefaultPSP: d.clusterSpec.PodSecurityPolicy.DefaultPolicy,
 		},
-		Path: filepath.Join(constant.DataDir, "manifests", "default-psp.yaml"),
+		Path: filepath.Join(constant.DataDir, "manifests", "defaultpsp", "default-psp.yaml"),
 	}
 	err := tw.Write()
 	if err != nil {

@@ -58,7 +58,7 @@ func (c *Calico) Run() error {
 		Name:     "calico-crds",
 		Template: calicoCrds,
 		Data:     emptryStruct,
-		Path:     filepath.Join(constant.DataDir, "manifests", "calico-crds.yaml"),
+		Path:     filepath.Join(constant.DataDir, "manifests", "calico", "calico-crds.yaml"),
 	}
 	err := tw.Write()
 	if err != nil {
@@ -84,7 +84,7 @@ func (c *Calico) Run() error {
 					Name:     "calico",
 					Template: calicoTemplate,
 					Data:     config,
-					Path:     filepath.Join(constant.DataDir, "manifests", "calico.yaml"),
+					Path:     filepath.Join(constant.DataDir, "manifests", "calico", "calico.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {

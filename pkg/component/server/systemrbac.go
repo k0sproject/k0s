@@ -30,7 +30,7 @@ func (s *SystemRBAC) Run() error {
 		Name:     "bootstrap-rbac",
 		Template: bootstrapRBACTemplate,
 		Data:     struct{}{},
-		Path:     filepath.Join(constant.DataDir, "manifests", "bootstrap-rbac.yaml"),
+		Path:     filepath.Join(constant.DataDir, "manifests", "bootstraprbac", "bootstrap-rbac.yaml"),
 	}
 	err := tw.Write()
 	if err != nil {

@@ -265,7 +265,7 @@ func (c *CoreDNS) Run() error {
 					Name:     "coredns",
 					Template: coreDNSTemplate,
 					Data:     config,
-					Path:     filepath.Join(constant.DataDir, "manifests", "coredns.yaml"),
+					Path:     filepath.Join(constant.DataDir, "manifests", "coredns", "coredns.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {

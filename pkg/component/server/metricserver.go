@@ -213,7 +213,7 @@ func (m *MetricServer) Run() error {
 					Name:     "metricServer",
 					Template: metricServerTemplate,
 					Data:     struct{}{},
-					Path:     filepath.Join(constant.DataDir, "manifests", "metric_server.yaml"),
+					Path:     filepath.Join(constant.DataDir, "manifests", "metricserver", "metric_server.yaml"),
 				}
 				err := tw.Write()
 				if err != nil {
