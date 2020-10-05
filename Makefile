@@ -8,8 +8,9 @@ GO_SRCS := $(shell find . -type f -name '*.go')
 
 EMBEDDED_BINS_BUILDMODE ?= docker
 
+# mke runs on linux even if its built on mac or windows
 GOOS ?= linux
-GOARCH ?= amd64
+GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
 VERSION ?= dev

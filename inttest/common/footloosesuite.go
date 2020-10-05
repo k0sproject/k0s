@@ -175,7 +175,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("nohup mke server >/tmp/mke-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup mke server >/tmp/mke-server.log 2>&1 &")
 	if err != nil {
 		return err
 	}
