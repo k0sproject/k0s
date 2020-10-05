@@ -56,7 +56,7 @@ lint:
 
 .PHONY: check-network
 check-network: mke
-	$(MAKE) -C inttest check-network
+	$(MAKE) -C tests check
 
 .PHONY: check-basic
 check-basic: mke
