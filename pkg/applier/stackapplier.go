@@ -90,26 +90,6 @@ func (s *StackApplier) Start() error {
 		}
 	}()
 
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		// watch for events
-	// 		case event, ok := <-s.fsWatcher.Events:
-	// 			if !ok {
-	// 				return
-	// 			}
-	// 			s.log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
-	// 			changesDetected.Store(true)
-	// 		// watch for errors
-	// 		case err, ok := <-s.fsWatcher.Errors:
-	// 			if !ok {
-	// 				return
-	// 			}
-	// 			s.log.Warnf("watch error: %s", err.Error())
-	// 		}
-	// 	}
-	// }()
-
 	return nil
 }
 
@@ -125,11 +105,4 @@ func (s *StackApplier) Stop() error {
 // DeleteStack deletes the associated stack
 func (s *StackApplier) DeleteStack() error {
 	return s.applier.Delete()
-	// return retry.Do(func() error {
-	// 	err := s.applier.Delete()
-	// 	if err != nil {
-	// 		s.log.Warnf("error deleting stack %s, will retry few times: %s", s.applier.Name, err.Error())
-	// 	}
-	// 	return err
-	// }, retry.Attempts(3))
 }
