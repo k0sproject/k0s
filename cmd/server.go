@@ -46,22 +46,15 @@ func ServerCommand() *cli.Command {
 }
 
 func configFromCmdFlag(ctx *cli.Context) (*config.ClusterConfig, error) {
-	clusterConfig, err := config.FromYaml(ctx.String("config"))
-	if err != nil {
-		logrus.Errorf("Failed to read cluster config: %s", err.Error())
-		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
-		clusterConfig = &config.ClusterConfig{
-			Spec: config.DefaultClusterSpec(),
+	clusterConfig := ConfigFromYaml(ctx)
+
+	errors := clusterConfig.Validate()
+	if len(errors) > 0 {
+		messages := make([]string, len(errors))
+		for _, e := range errors {
+			messages = append(messages, e.Error())
 		}
-	} else {
-		errors := clusterConfig.Validate()
-		if len(errors) > 0 {
-			messages := make([]string, len(errors))
-			for _, e := range errors {
-				messages = append(messages, e.Error())
-			}
-			return nil, fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
-		}
+		return nil, fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
 	}
 
 	return clusterConfig, nil
