@@ -1,3 +1,5 @@
+![Go build](https://github.com/Mirantis/mke/workflows/Go%20build/badge.svg)
+
 # MKE - Mirantis Kubernetes Engine
 
 **Note:** The name of the project will probably change in near future.
