@@ -26,7 +26,7 @@ func (m *MkeControlAPI) Init() error {
 func (m *MkeControlAPI) Run() error {
 	// TODO: Make the api process to use some other user
 	m.supervisor = supervisor.Supervisor{
-		Name:    "mke control api",
+		Name:    "mke-control-api",
 		BinPath: os.Args[0],
 		Args: []string{
 			"api",
