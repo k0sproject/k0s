@@ -40,6 +40,20 @@ func NewClient() (*Client, error) {
 	return client, nil
 }
 
+// ListMembers gets a list of current etcd members
+func (c *Client) ListMembers(ctx context.Context) (map[string]string, error) {
+	memberList := make(map[string]string)
+	members, err := c.client.MemberList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range members.Members {
+		memberList[m.Name] = m.PeerURLs[0]
+	}
+
+	return memberList, nil
+}
+
 // AddMember add new member to etcd cluster
 func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]string, error) {
 

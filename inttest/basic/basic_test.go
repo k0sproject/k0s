@@ -2,10 +2,10 @@ package basic
 
 import (
 	"context"
+	"github.com/stretchr/testify/suite"
 	"testing"
 
 	"github.com/Mirantis/mke/inttest/common"
-	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -14,7 +14,7 @@ type BasicSuite struct {
 }
 
 func (s *BasicSuite) TestMkeGetsUp() {
-	s.NoError(s.RunControllers())
+	s.NoError(s.InitMainController())
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0")
@@ -46,7 +46,5 @@ func TestBasicSuite(t *testing.T) {
 			WorkerCount:     2,
 		},
 	}
-
 	suite.Run(t, &s)
-
 }
