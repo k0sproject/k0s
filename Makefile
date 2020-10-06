@@ -12,10 +12,10 @@ GOOS ?= linux
 GOARCH ?= amd64
 
 VERSION ?= dev
-golint := $(shell which golint)
+golint := $(shell which golangci-lint)
 
 ifeq ($(golint),)
-golint := GO111MODULE=off go get -u golang.org/x/lint/golint && GO111MODULE=off go run golang.org/x/lint/golint
+golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && golangci-lint
 endif
 
 .PHONY: all
@@ -51,8 +51,8 @@ embedded-bins/staging/linux/bin: .bins.stamp
 	touch $@
 
 .PHONY: lint
-lint:
-	$(golint) -set_exit_status ./...
+lint: pkg/assets/zz_generated_offsets.go
+	$(golint) run ./...
 
 .PHONY: check-network
 check-network: mke
@@ -67,7 +67,7 @@ check-etcd: mke
 	$(MAKE) -C inttest check-etcd
 
 .PHONY: check-unit
-check-unit:
+check-unit: pkg/assets/zz_generated_offsets.go
 	go test -race ./pkg/...
 
 .PHONY: clean
