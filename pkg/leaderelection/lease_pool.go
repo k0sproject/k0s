@@ -12,21 +12,20 @@ import (
 	"time"
 )
 
-// the LeasePool represents a single lease accessed by multiple clients (considered part of the "pool")
+// The LeasePool represents a single lease accessed by multiple clients (considered part of the "pool")
 type LeasePool struct {
 	events *LeaseEvents
 	config LeaseConfiguration
 	client kubernetes.Interface
 }
 
+// LeaseEvents contains channels to inform the consumer when a lease is acquired and lost
 type LeaseEvents struct {
 	AcquiredLease chan struct{}
 	LostLease     chan struct{}
 }
 
-// the configuration allows passing through various options to customise
-// the lease. We set sensible defaults for everything, but this makes
-// it easier to reuse, extract, and test the leader election/lease.
+// The LeaseConfiguration allows passing through various options to customise the lease.
 type LeaseConfiguration struct {
 	name          string
 	identity      string
@@ -38,8 +37,10 @@ type LeaseConfiguration struct {
 	ctx           context.Context
 }
 
+// A LeaseOpt is a function that modifies a LeaseConfiguration
 type LeaseOpt func(config LeaseConfiguration) LeaseConfiguration
 
+// WithDuration sets the duration of the lease (for new leases)
 func WithDuration(duration time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.duration = duration
@@ -47,6 +48,7 @@ func WithDuration(duration time.Duration) LeaseOpt {
 	}
 }
 
+// WithRenewDeadline sets the renew deadline of the lease
 func WithRenewDeadline(deadline time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.renewDeadline = deadline
@@ -54,13 +56,15 @@ func WithRenewDeadline(deadline time.Duration) LeaseOpt {
 	}
 }
 
-func withRetryPeriod(retryPeriod time.Duration) LeaseOpt {
+// WithRetryPeriod specifies the retry period of the lease
+func WithRetryPeriod(retryPeriod time.Duration) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.retryPeriod = retryPeriod
 		return config
 	}
 }
 
+// WithLogger allows the consumer to pass a different logrus entry with additional context
 func WithLogger(logger *logrus.Entry) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.log = logger
@@ -68,6 +72,7 @@ func WithLogger(logger *logrus.Entry) LeaseOpt {
 	}
 }
 
+// WithContext allows the consumer to pass its own context, for example a cancelable context
 func WithContext(ctx context.Context) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.ctx = ctx
@@ -75,6 +80,7 @@ func WithContext(ctx context.Context) LeaseOpt {
 	}
 }
 
+// WithIdentity sets the identity of the lease holder
 func WithIdentity(identity string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.identity = identity
@@ -82,6 +88,7 @@ func WithIdentity(identity string) LeaseOpt {
 	}
 }
 
+// WithNamespace specifies which namespace the lease should be created in, defaults to kube-node-lease
 func WithNamespace(namespace string) LeaseOpt {
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.namespace = namespace
@@ -89,6 +96,7 @@ func WithNamespace(namespace string) LeaseOpt {
 	}
 }
 
+// NewLeasePool creates a new LeasePool struct to interact with a lease
 func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
@@ -123,27 +131,29 @@ func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*
 	}, nil
 }
 
-type WatchOptions struct {
+type watchOptions struct {
 	channels *LeaseEvents
 }
 
-type WatchOpt func(options WatchOptions) WatchOptions
+// WatchOpt is a callback that alters the watchOptions configuration
+type WatchOpt func(options watchOptions) watchOptions
 
-// this explicit option allows us to pass through channels with
+// WithOutputChannels allows us to pass through channels with
 // a size greater than 0, which makes testing a lot easier.
 func WithOutputChannels(channels *LeaseEvents) WatchOpt {
-	return func(options WatchOptions) WatchOptions {
+	return func(options watchOptions) watchOptions {
 		options.channels = channels
 		return options
 	}
 }
 
+// Watch is the primary function of LeasePool, and starts the leader election process
 func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, error) {
 	if p.events != nil {
 		return p.events, nil, nil
 	}
 
-	watchOptions := WatchOptions{
+	watchOptions := watchOptions{
 		channels: &LeaseEvents{
 			AcquiredLease: make(chan struct{}),
 			LostLease: make(chan struct{}),
