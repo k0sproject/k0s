@@ -19,7 +19,7 @@ func (s *EtcdSuite) getMembers(fromControllerIdx int) map[string]string {
 	node := fmt.Sprintf("controller%d", fromControllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
-	output, err := sshCon.ExecWithOutput("mke etcd list")
+	output, err := sshCon.ExecWithOutput("mke etcd member-list")
 	output = lastLine(output)
 	s.NoError(err)
 
