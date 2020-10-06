@@ -26,11 +26,10 @@ type Etcd struct {
 	JoinClient  *v1beta1.JoinClient
 	CertManager certificate.Manager
 
-	supervisor  supervisor.Supervisor
-	uid         int
-	gid         int
-	etcdDataDir string
-	certDir     string
+	supervisor supervisor.Supervisor
+	uid        int
+	gid        int
+	certDir    string
 }
 
 // Init extracts the needed binaries
@@ -41,18 +40,12 @@ func (e *Etcd) Init() error {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
 
-	e.etcdDataDir = path.Join(constant.DataDir, "etcd")
-	err = util.InitDirectory(e.etcdDataDir, constant.DataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
+	err = util.InitDirectory(constant.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", e.etcdDataDir)
+		return errors.Wrapf(err, "failed to create %s", constant.EtcdDataDir)
 	}
 
 	e.gid, _ = util.GetGID(constant.Group)
-
-	err = os.Chown(e.etcdDataDir, e.uid, e.gid)
-	if err != nil {
-		return errors.Wrapf(err, "failed to chown %s", e.etcdDataDir)
-	}
 
 	e.certDir = path.Join(constant.CertRoot, "etcd")
 	os.Chown(path.Join(e.certDir, "ca.crt"), e.uid, e.gid)
@@ -73,7 +66,7 @@ func (e *Etcd) Run() error {
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
 	args := []string{
-		fmt.Sprintf("--data-dir=%s", e.etcdDataDir),
+		fmt.Sprintf("--data-dir=%s", constant.EtcdDataDir),
 		"--listen-client-urls=https://127.0.0.1:2379",
 		"--advertise-client-urls=https://127.0.0.1:2379",
 		"--client-cert-auth=true",
@@ -89,7 +82,7 @@ func (e *Etcd) Run() error {
 		"--peer-client-cert-auth=true",
 	}
 
-	if util.FileExists(filepath.Join(e.etcdDataDir, "member", "snap", "db")) {
+	if util.FileExists(filepath.Join(constant.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 		e.Join = false
 	}

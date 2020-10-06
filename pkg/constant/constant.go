@@ -5,6 +5,10 @@ const (
 	DataDir = "/var/lib/mke"
 	// DataDirMode is the expected directory permissions for DataDir
 	DataDirMode = 0755
+	// EtcdDataDir contains etcd state
+	EtcdDataDir = "/var/lib/mke/etcd"
+	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
+	EtcdDataDirMode = 0700
 	// CertRoot defines the root location for all pki related artifacts
 	CertRoot = "/var/lib/mke/pki"
 	// CertRootMode is the expected directory permissions for CertRoot. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
