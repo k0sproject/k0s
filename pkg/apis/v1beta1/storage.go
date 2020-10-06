@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// supported storage types
 const (
 	EtcdStorageType = "etcd"
 	KineStorageType = "kine"

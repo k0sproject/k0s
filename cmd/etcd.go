@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/etcd"
@@ -38,7 +37,6 @@ func LeaveCommand() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			clusterConfig := ConfigFromYaml(c)
-
 			// if there would be any more commands for etcd management
 			// it's better to move that check to the Before hook
 			if clusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
@@ -52,22 +50,21 @@ func LeaveCommand() *cli.Command {
 				return fmt.Errorf("can't leave etcd cluster: peer address is empty, check the config file or use cli argument")
 			}
 
-			peerURL := fmt.Sprintf("https://%s:2380", peerAddress) // TODO: copy-paste driven
+			peerURL := fmt.Sprintf("https://%s:2380", peerAddress)
 
 			etcdClient, err := etcd.NewClient()
 
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %v", err)
 			}
-			ctx := context.Background()
 
-			peerID, err := etcdClient.GetPeerIDByAddress(ctx, peerURL)
+			peerID, err := etcdClient.GetPeerIDByAddress(c.Context, peerURL)
 			if err != nil {
 				logrus.WithField("peerURL", peerURL).Errorf("Failed to get peer name")
 				return err
 			}
 
-			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
+			if err := etcdClient.DeleteMember(c.Context, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
 					WithField("peerID", peerID).

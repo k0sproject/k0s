@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 )
@@ -41,25 +40,10 @@ func NewClient() (*Client, error) {
 	return client, nil
 }
 
-// ListMembers gets a list of current etcd members
-func (c *Client) ListMembers() (map[string]string, error) {
-	memberList := make(map[string]string)
-	members, err := c.client.MemberList(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	for _, m := range members.Members {
-		logrus.Infof("peer: %s, peerAddresses: %v", m.Name, m.PeerURLs)
-		memberList[m.Name] = m.PeerURLs[0]
-	}
-
-	return memberList, nil
-}
-
 // AddMember add new member to etcd cluster
-func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
+func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]string, error) {
 
-	addResp, err := c.client.MemberAdd(context.TODO(), []string{peerAddress})
+	addResp, err := c.client.MemberAdd(ctx, []string{peerAddress})
 	if err != nil {
 		// TODO we should try to detect possible double add for a peer
 		// Not sure though if we can return correct initial-cluster as the order
