@@ -62,6 +62,10 @@ check-network: mke
 check-basic: mke
 	$(MAKE) -C inttest check-basic
 
+.PHONY: check-basic
+check-etcd: mke
+	$(MAKE) -C inttest check-etcd
+
 .PHONY: check-unit
 check-unit:
 	go test -race ./pkg/...

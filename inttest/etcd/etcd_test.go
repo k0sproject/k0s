@@ -1,4 +1,4 @@
-package basic
+package etcd
 
 import (
 	"encoding/json"
