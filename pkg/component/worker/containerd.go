@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -20,24 +19,13 @@ type ContainerD struct {
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
-	//var err error
-	var allErrors []string
-	err := assets.Stage(constant.BinDir, "containerd", constant.BinDirMode, constant.Group)
-	allErrors = append(allErrors, err.Error())
-
-	err = assets.Stage(constant.BinDir, "containerd-shim", constant.BinDirMode, constant.Group)
-	allErrors = append(allErrors, err.Error())
-
-	err = assets.Stage(constant.BinDir, "containerd-shim-runc-v1", constant.BinDirMode, constant.Group)
-	allErrors = append(allErrors, err.Error())
-
-	err = assets.Stage(constant.BinDir, "containerd-shim-runc-v2", constant.BinDirMode, constant.Group)
-	allErrors = append(allErrors, err.Error())
-
-	err = assets.Stage(constant.BinDir, "runc", constant.BinDirMode, constant.Group)
-	allErrors = append(allErrors, err.Error())
-
-	return fmt.Errorf(strings.Join(allErrors, "\n"))
+	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
+		err := assets.Stage(constant.BinDir, bin, constant.BinDirMode, constant.Group)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Run runs containerD
