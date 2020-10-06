@@ -21,11 +21,12 @@ import (
 
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
-	client      kubernetes.Interface
-	applier     Applier
-	bundlePath  string
-	tickerDone  chan struct{}
-	watcherDone chan struct{}
+	client               kubernetes.Interface
+	applier              Applier
+	bundlePath           string
+	tickerDone           chan struct{}
+	watcherDone          chan struct{}
+	cancelLeaderElection context.CancelFunc
 }
 
 // Init initializes the Manager
@@ -85,6 +86,7 @@ func (m *Manager) Run() error {
 func (m *Manager) Stop() error {
 	close(m.tickerDone)
 	close(m.watcherDone)
+	m.cancelLeaderElection()
 	return nil
 }
 
@@ -113,8 +115,8 @@ func (m *Manager) electLeader(name, namespace, id string) error {
 				changesDetected := &atomic.Value{}
 				// to make first tick to sync everything and retry until it succeeds
 				changesDetected.Store(true)
-				m.runFSWatcher(changesDetected)
-				m.runApplier(changesDetected)
+				go m.runFSWatcher(changesDetected)
+				go m.runApplier(changesDetected)
 			},
 			OnStoppedLeading: func() {
 				log.Info("lost leader lease")
@@ -132,7 +134,10 @@ func (m *Manager) electLeader(name, namespace, id string) error {
 		lec.WatchDog.SetLeaderElection(le)
 	}
 
-	le.Run(context.TODO())
+	ctx, cancel := context.WithCancel(context.TODO())
+	m.cancelLeaderElection = cancel
+
+	le.Run(ctx)
 
 	return nil
 }
@@ -162,7 +167,7 @@ func (m *Manager) runApplier(changesDetected *atomic.Value) {
 	}
 }
 
-func(m *Manager) runFSWatcher(changesDetected *atomic.Value) {
+func (m *Manager) runFSWatcher(changesDetected *atomic.Value) {
 	log := logrus.WithField("component", "applier-manager")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
