@@ -97,11 +97,11 @@ func startServer(ctx *cli.Context) error {
 	logrus.Infof("DNS address: %s", dnsAddress)
 
 	switch clusterConfig.Spec.Storage.Type {
-	case "kine", "":
+	case v1beta1.KineStorageType, "":
 		componentManager.Add(&server.Kine{
 			Config: clusterConfig.Spec.Storage.Kine,
 		})
-	case "etcd":
+	case v1beta1.EtcdStorageType:
 		componentManager.Add(&server.Etcd{
 			Config:      clusterConfig.Spec.Storage.Etcd,
 			Join:        join,
