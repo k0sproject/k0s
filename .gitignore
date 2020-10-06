@@ -4,3 +4,5 @@ mke.code
 bindata
 .*.stamp
 .tmp
+.terraform
+*.tfstate*

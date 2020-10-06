@@ -1,0 +1,33 @@
+name: MKE Check Network
+on:
+  pull_request_review:
+    types: [submitted, edited]
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-west-1
+      TF_VERSION: 0.13.4
+    name: "K8s Network Conformance Testing"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "./inttest/terraform/test-cluster"
+    steps:
+      - name: Run git checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Plan
+        env:
+          GITHUB_SHA: $(git rev-parse --short ${{ github.sha }})
+          BRANCH: $(echo ${{ github.ref }} | cut -d / -f 3)
+          TF_VAR_cluster_name: mke_${GITHUB_SHA}_$BRANCH
+        run: terraform plan
