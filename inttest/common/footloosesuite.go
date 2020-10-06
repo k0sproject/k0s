@@ -182,7 +182,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	return s.WaitForKubeAPI(controllerNode)
 }
 
-// InitMainController runs all the controller nodes
+// JoinController joins the cluster with a given token
 func (s *FootlooseSuite) JoinController(idx int, token string) error {
 	controllerNode := fmt.Sprintf("controller%d", idx)
 	ssh, err := s.SSH(controllerNode)
