@@ -10,7 +10,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: [self-hosted,linux]
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.x
@@ -41,7 +41,7 @@ jobs:
         docker system prune --all --volumes --force
 
     - name: Run smoke test
-      run: make check-network
+      run: make check-basic
 
     - name: Collect test logs
       if: failure()
