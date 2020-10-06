@@ -55,10 +55,6 @@ func (m *Manager) retrieveKubeClient() error {
 func (m *Manager) Run() error {
 	log := m.log
 
-	// Make the done channels
-	m.tickerDone = make(chan struct{})
-	m.watcherDone = make(chan struct{})
-
 	for m.client == nil {
 		log.Debug("retrieving kube client config")
 		_ = m.retrieveKubeClient()
@@ -87,8 +83,6 @@ func (m *Manager) Run() error {
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
-	close(m.tickerDone)
-	close(m.watcherDone)
 	m.cancelLeaderElection()
 	return nil
 }
@@ -103,12 +97,14 @@ func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
 			changesDetected := &atomic.Value{}
 			// to make first tick to sync everything and retry until it succeeds
 			changesDetected.Store(true)
+			m.tickerDone = make(chan struct{})
+			m.watcherDone = make(chan struct{})
 			go m.runFSWatcher(changesDetected)
 			go m.runApplier(changesDetected)
 		case <-events.LostLease:
 			log.Info("lost leader lease")
-			m.tickerDone <- struct{}{}
-			m.watcherDone <- struct{}{}
+			close(m.tickerDone)
+			close(m.watcherDone)
 		}
 	}
 }
