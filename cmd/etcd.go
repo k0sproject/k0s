@@ -44,9 +44,9 @@ func LeaveCommand() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			clusterConfig := ConfigFromYaml(c)
 			peerAddress := c.String("peer-address")
 			if peerAddress == "" {
+				clusterConfig := ConfigFromYaml(c)
 				peerAddress = clusterConfig.Spec.Storage.Etcd.PeerAddress
 			}
 			if peerAddress == "" {
@@ -86,8 +86,8 @@ func LeaveCommand() *cli.Command {
 // ListCommand returns members of the etcd cluster
 func ListCommand() *cli.Command {
 	return &cli.Command{
-		Name:  "list",
-		Usage: "returns ",
+		Name:  "member-list",
+		Usage: "returns etcd cluster members list",
 		Action: func(c *cli.Context) error {
 			etcdClient, err := etcd.NewClient()
 			if err != nil {
