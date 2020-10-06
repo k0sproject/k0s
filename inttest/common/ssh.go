@@ -1,9 +1,7 @@
 package common
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -11,7 +9,6 @@ import (
 	ssh "golang.org/x/crypto/ssh"
 
 	"github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
 )
 
 // SSHConnection describes an SSH connection
@@ -58,70 +55,6 @@ func (c *SSHConnection) Connect() error {
 	c.client = client
 
 	return nil
-}
-
-// ExecCmd executes a command on the host
-func (c *SSHConnection) ExecCmd(cmd string, stdin string, streamStdout bool) error {
-	session, err := c.client.NewSession()
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
-	if stdin == "" {
-		// FIXME not requesting a pty for commands with stdin input for now,
-		// as it appears the pipe doesn't get closed with stdinpipe.Close()
-		modes := ssh.TerminalModes{}
-		err = session.RequestPty("xterm", 80, 40, modes)
-		if err != nil {
-			return err
-		}
-	}
-
-	stdout, err := session.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	stderr, err := session.StderrPipe()
-	if err != nil {
-		return err
-	}
-
-	stdinPipe, err := session.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	if err := session.Start(cmd); err != nil {
-		return err
-	}
-
-	if stdin != "" {
-		if len(stdin) > 256 {
-			log.Debugf("%s: writing %d bytes to command stdin", c.Address, len(stdin))
-		} else {
-			log.Debugf("%s: writing %d bytes to command stdin: %s", c.Address, len(stdin), stdin)
-		}
-
-		go func() {
-			defer stdinPipe.Close()
-			io.WriteString(stdinPipe, stdin)
-		}()
-	}
-
-	multiReader := io.MultiReader(stdout, stderr)
-	outputScanner := bufio.NewScanner(multiReader)
-
-	for outputScanner.Scan() {
-		if streamStdout {
-			log.Infof("%s:  %s", c.Address, outputScanner.Text())
-		}
-	}
-	if err := outputScanner.Err(); err != nil {
-		log.Errorf("%s:  %s", c.Address, err.Error())
-	}
-
-	return session.Wait()
 }
 
 // ExecWithOutput execs a command on the host and returns its output
