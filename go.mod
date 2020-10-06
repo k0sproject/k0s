@@ -6,6 +6,7 @@ require (
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.6 // indirect
@@ -17,9 +18,7 @@ require (
 	github.com/urfave/cli/v2 v2.2.0
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	golang.org/x/crypto v0.0.0-20200414155820-4f8f47aa7992
-	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.3.0
