@@ -1,9 +1,5 @@
 name: Go build
 
-
-env:
-  cachePrefix: mke-${{ github.run_number }}-${{ github.sha }}
-
 on:
   push:
     branches: [ main ]
@@ -16,6 +12,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=mke-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
@@ -67,6 +67,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=mke-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
@@ -87,6 +91,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=mke-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
@@ -108,6 +116,10 @@ jobs:
     if: false
 
     steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=mke-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 

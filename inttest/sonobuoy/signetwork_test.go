@@ -10,14 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Mirantis/mke/inttest/common"
 	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/Mirantis/mke/inttest/common"
 )
 
 type NetworkSuite struct {
-	common.FootlooseSuite
+	common.VMSuite
 	sonoBin string
 }
 
@@ -25,13 +26,13 @@ func (s *NetworkSuite) TestSigNetwork() {
 	s.NoError(s.InitMainController())
 	s.NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient("controller0")
+	kc, err := s.KubeClient(s.ControllerIP)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady("worker-0", kc)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker1", kc)
+	err = s.WaitForNodeReady("worker-1", kc)
 	s.NoError(err)
 
 	kubeconfigPath := s.dumpKubeConfig()
@@ -83,7 +84,6 @@ func (s *NetworkSuite) TestSigNetwork() {
 	if results.Status != "passed" {
 		s.T().Logf("sonobuoy run failed, you can see more details on the failing tests with: %s results %s", s.sonoBin, results.ResultPath)
 	}
-
 }
 
 func (s *NetworkSuite) retrieveResults() (Result, error) {
@@ -130,45 +130,39 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 }
 
 func (s *NetworkSuite) dumpKubeConfig() string {
-	machine, err := s.MachineForName("controller0")
-	s.NoError(err)
-	hostPort, err := machine.HostPort(6443)
-	s.NoError(err)
-
 	dir, err := ioutil.TempDir("", "sig-network-kubeconfig-")
 	s.NoError(err)
-	ssh, err := s.SSH("controller0")
+	ssh, err := s.SSH(s.ControllerIP)
 	s.NoError(err)
 	defer ssh.Disconnect()
 
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/mke/pki/admin.conf")
+	kubeConf, err := ssh.ExecWithOutput("sudo -h 127.0.0.1 cat /var/lib/mke/pki/admin.conf")
 	s.NoError(err)
 
 	cfg, err := clientcmd.Load([]byte(kubeConf))
 	s.NoError(err)
 
-	cfg.Clusters["local"].Server = fmt.Sprintf("https://localhost:%d", hostPort)
+	cfg.Clusters["local"].Server = fmt.Sprintf("https://%s:%d", s.ControllerIP, 6443)
+	// Our CA data is valid for localhost, but we need to change that in order to connect from outside
+	cfg.Clusters["local"].InsecureSkipTLSVerify = true
+	cfg.Clusters["local"].CertificateAuthorityData = nil
 
 	kubeconfigPath := path.Join(dir, "kubeconfig")
-
 	err = clientcmd.WriteToFile(*cfg, kubeconfigPath)
 	s.NoError(err)
 
 	return kubeconfigPath
 }
 
-func TestNetworkSuite(t *testing.T) {
+
+func TestVMNetworkSuite(t *testing.T) {
 	sonoPath := os.Getenv("SONOBUOY_PATH")
 	if sonoPath == "" {
 		t.Fatal("SONOBUOY_PATH env needs to be set")
 	}
 	s := NetworkSuite{
-		common.FootlooseSuite{
-			ControllerCount: 1,
-			WorkerCount:     2,
-		},
+		common.VMSuite{},
 		sonoPath,
 	}
-
 	suite.Run(t, &s)
 }

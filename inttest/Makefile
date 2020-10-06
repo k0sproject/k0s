@@ -22,7 +22,11 @@ bin/sonobuoy: | bin
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
 	MKE_PATH=$(realpath ../mke) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestNetworkSuite$
+		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestFootlooseNetworkSuite$
+
+check-network-vm: bin/sonobuoy
+	MKE_PATH=$(realpath ../mke) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
+		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
 check-basic: .footloose-alpine.stamp
 	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/basic

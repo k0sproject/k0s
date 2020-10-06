@@ -1,0 +1,95 @@
+name: MKE Check Network
+on:
+  workflow_dispatch:
+    inputs:
+      prNumber:
+        description: PR against which to this workflow
+        required: true
+
+jobs:
+  terraform:
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-west-1
+      TF_VERSION: 0.13.4
+
+    name: "K8s Network Conformance Testing"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./inttest/terraform/test-cluster
+    steps:
+      - name: Get PR Reference
+        run: |
+          re='^[0-9]+$'
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          ## if it's not a number, then set the PR reference manually
+          if ! [[ $PR_NUMBER =~ $re ]] ; then
+            GIT_REF="refs/pull/${{ github.event.inputs.prNumber }}/merge"
+            echo "github_ref=$GIT_REF" >> $GITHUB_ENV
+          else
+            # leave unchanged
+            echo "github_ref=$GITHUB_REF" >> $GITHUB_ENV
+          fi
+        working-directory: ./
+      - name: Run git checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.github_ref }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Prepare Environment
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+        run: ./scripts/prepare-env.sh
+
+      - name: Terraform Apply
+        run: |
+          export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
+
+          # Start SSH Agent
+          eval `ssh-agent -s`
+
+          terraform apply -auto-approve
+
+      - name: Bindata
+        uses: actions/cache@v2
+        id: generated-bindata
+        with:
+          path: |
+            .bins.stamp
+            embedded-bins/staging/linux/bin/
+            bindata
+            pkg/assets/zz_generated_offsets.go
+
+          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+
+      - name: Build MKE Binary
+        run: make build
+        working-directory: ./
+
+      - name: Deploy MKE to Hosts
+        run: |
+          terraform output -json > out.json
+          ./scripts/deploy-mke.sh
+
+      - name: Check Network
+        run: make check-network-vm
+        working-directory: ./inttest
+
+      - name: Terraform Destroy
+        run: |
+          export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
+          terraform destroy -auto-approve
+        if: ${{ always() }}
