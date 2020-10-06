@@ -1,5 +1,9 @@
 name: Go build
 
+
+env:
+  cachePrefix: mke-${{ github.run_number }}-${{ github.sha }}
+
 on:
   push:
     branches: [ main ]
@@ -12,64 +16,133 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
 
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-    - name: Cache embedded-bins
-      uses: actions/cache@v2
-      id: cache
-      with:
-        path: |
-          .bins.stamp
-          embedded-bins/staging/linux/bin/
-        key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-        restore-keys: |
-          ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+      - name: Bindata
+        uses: actions/cache@v2
+        id: generated-bindata
+        with:
+          path: |
+            .bins.stamp
+            embedded-bins/staging/linux/bin/
+            bindata
+            pkg/assets/zz_generated_offsets.go
 
-    - name: Build
-      run: make build
+          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
 
-    - name: Clean Docker
-      run: |
-        docker system prune --all --volumes --force
+      - name: Run unit tests
+        run: make check-unit
 
-    - name: Run unit tests
-      run: make check-unit
+      - name: Build
+        run: make build
 
-    - name: Run smoke test
-      run: make check-basic
+      - name: Cache compiled binary for further testing
+        uses: actions/cache@v2
+        id: cache-compiled-binary
+        with:
+          path: |
+            mke
+          key: build-${{env.cachePrefix}}
 
-    - name: Run etcd smoke test
-      run: make check-etcd
+  smoketest:
+    name: Smoke test
+    needs: build
+    runs-on: ubuntu-latest
 
-    - name: Collect test logs
-      if: failure()
-      uses: actions/upload-artifact@v2
-      with:
-        path: |
-          /tmp/*.log
-          inttest/**/*.tar.gz
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-  lint:
-    name: Lint
+      - name: Cache compiled binary for smoke testing
+        uses: actions/cache@v2
+        id: restore-compiled-binary
+        with:
+          path: |
+            mke
+          key: build-${{env.cachePrefix}}
+
+      - name: Run test .
+        run: make -C inttest check-basic
+
+  smoketest-etcd:
+    name: Smoke test for etcd operations
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Cache compiled binary for smoke testing
+        uses: actions/cache@v2
+        id: restore-compiled-binary
+        with:
+          path: |
+            mke
+          key: build-${{env.cachePrefix}}
+
+      - name: Run etcd test .
+        run: make -C inttest check-etcd
+
+  smoketest-network:
+    name: Smoke test for network
+    needs: build
+    runs-on: ubuntu-latest
+    if: false
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Cache compiled binary for smoke testing
+        uses: actions/cache@v2
+        id: restore-compiled-binary
+        with:
+          path: |
+            mke
+          key: build-${{env.cachePrefix}}
+
+      - name: Run smoke test .
+        run: make -C inttest check-etcd
+
+  golangci:
+    name: lint
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
 
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
+      - name: codegen1
+        run: make pkg/assets/zz_generated_offsets.go
+        env:
+          EMBEDDED_BINS_BUILDMODE: none
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
 
-    - name: Lint
-      run: make lint
+          # Optional: working directory, useful for monorepos
+          # working-directory: somedir
+
+          # Optional: golangci-lint command line arguments.
+          # args: --issues-exit-code=0
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # only-new-issues: true
