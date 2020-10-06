@@ -82,6 +82,7 @@ func startAPI(ctx *cli.Context) error {
 
 func etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
 		err := json.NewDecoder(req.Body).Decode(&etcdReq)
 		if err != nil {
@@ -101,7 +102,7 @@ func etcdHandler() http.Handler {
 			return
 		}
 
-		memberList, err := etcdClient.AddMember(etcdReq.Node, etcdReq.PeerAddress)
+		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
 			sendError(err, resp)
 			return
