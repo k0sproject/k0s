@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"path/filepath"
 
 	"github.com/Mirantis/mke/pkg/constant"
@@ -78,6 +79,28 @@ func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
 	}
 
 	return memberList, nil
+}
+
+// GetPeerIDByAddress looks up peer id by peer url
+func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (uint64, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, errors.Wrap(err, "etcd member list failed")
+	}
+	for _, m := range resp.Members {
+		for _, peerURL := range m.PeerURLs {
+			if peerURL == peerAddress {
+				return m.ID, nil
+			}
+		}
+	}
+	return 0, errors.Errorf("peer not found: %s", peerAddress)
+}
+
+// DeleteMember deletes member by peer name
+func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
+	_, err := c.client.MemberRemove(ctx, peerID)
+	return err
 }
 
 // Close closes the etcd client

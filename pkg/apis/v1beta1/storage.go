@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	EtcdStorageType = "etcd"
+	KineStorageType = "kine"
+)
+
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
 	Type string      `yaml:"type"`
@@ -25,14 +30,14 @@ const DefaultKineDataSource = "sqlite:///var/lib/mke/db/state.db?more=rwc&_journ
 // DefaultStorageSpec creates StorageSpec with sane defaults
 func DefaultStorageSpec() *StorageSpec {
 	return &StorageSpec{
-		Type: "etcd",
+		Type: EtcdStorageType,
 		Etcd: DefaultEtcdConfig(),
 	}
 }
 
 // IsJoinable returns true only if the storage config is such that another controller can join the cluster
 func (s *StorageSpec) IsJoinable() bool {
-	if s.Type == "etcd" {
+	if s.Type == EtcdStorageType {
 		return true
 	}
 
@@ -53,7 +58,7 @@ func (s *StorageSpec) IsJoinable() bool {
 
 // UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
 func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	s.Type = "etcd"
+	s.Type = EtcdStorageType
 	s.Etcd = DefaultEtcdConfig()
 
 	type ystorageconfig StorageSpec
@@ -63,7 +68,7 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if s.Type == "kine" && s.Kine == nil {
+	if s.Type == KineStorageType && s.Kine == nil {
 		s.Kine = DefaultKineConfig()
 	}
 
