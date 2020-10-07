@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/discovery/cached/memory"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic/fake"
-	testing2 "k8s.io/client-go/testing"
+	kubetesting "k8s.io/client-go/testing"
 	"testing"
 )
 
@@ -49,20 +49,7 @@ spec:
 	assert.Nil(t, err)
 
 	a.client = fake.NewSimpleDynamicClient(runtime.NewScheme())
-	//fakeDiscovery := "{\"kind\":\"APIResourceList\",\"apiVersion\":\"v1\",\"groupVersion\":\"v1\",\"resources\":[{\"name\":\"configmaps\",\"singularName\":\"\",\"namespaced\":true,\"kind\":\"ConfigMap\",\"verbs\":[\"create\",\"delete\",\"deletecollection\",\"get\",\"list\",\"patch\",\"update\",\"watch\"],\"shortNames\":[\"cm\"],\"categories\":[\"all\"]}]}"
-	//ns := scheme.Codecs.WithoutConversion()
-	//c := &restfake.RESTClient{
-	//	NegotiatedSerializer: ns,
-	//	Client: restfake.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
-	//		return &http.Response{
-	//			StatusCode: http.StatusOK,
-	//			Body:       ioutil.NopCloser(bytes.NewBuffer([]byte(fakeDiscovery))),
-	//		}, nil
-	//	}),
-	//}
-
-	//discoveryFake := discovery.NewDiscoveryClient(c)
-	fakeDiscoveryClient := &discoveryfake.FakeDiscovery{Fake: &testing2.Fake{}}
+	fakeDiscoveryClient := &discoveryfake.FakeDiscovery{Fake: &kubetesting.Fake{}}
 	fakeDiscoveryClient.Resources = []*metav1.APIResourceList{
 		{
 			GroupVersion: corev1.SchemeGroupVersion.String(),

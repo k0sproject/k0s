@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
-	kubernetes2 "github.com/Mirantis/mke/pkg/kubernetes"
+	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/Mirantis/mke/pkg/leaderelection"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
@@ -41,7 +41,7 @@ func (m *Manager) Init() error {
 }
 
 func (m *Manager) retrieveKubeClient() error {
-	client, err := kubernetes2.Client(constant.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
