@@ -4,20 +4,19 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
+	"k8s.io/client-go/tools/clientcmd"
 	"path"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 
+	"github.com/Mirantis/mke/pkg/constant"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/Mirantis/mke/pkg/constant"
 )
 
 // Applier manages all the "static" manifests and applies them on the k8s API
@@ -49,9 +48,7 @@ func NewApplier(dir string) (Applier, error) {
 }
 
 func (a *Applier) init() error {
-	kubeConfigPath := filepath.Join(constant.CertRoot, "admin.conf")
-
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	cfg, err := clientcmd.BuildConfigFromFlags("", constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
