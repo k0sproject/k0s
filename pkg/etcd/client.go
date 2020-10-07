@@ -3,10 +3,10 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"path/filepath"
 
 	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
 )
@@ -41,14 +41,13 @@ func NewClient() (*Client, error) {
 }
 
 // ListMembers gets a list of current etcd members
-func (c *Client) ListMembers() (map[string]string, error) {
+func (c *Client) ListMembers(ctx context.Context) (map[string]string, error) {
 	memberList := make(map[string]string)
-	members, err := c.client.MemberList(context.TODO())
+	members, err := c.client.MemberList(ctx)
 	if err != nil {
 		return nil, err
 	}
 	for _, m := range members.Members {
-		logrus.Infof("peer: %s, peerAddresses: %v", m.Name, m.PeerURLs)
 		memberList[m.Name] = m.PeerURLs[0]
 	}
 
@@ -56,9 +55,9 @@ func (c *Client) ListMembers() (map[string]string, error) {
 }
 
 // AddMember add new member to etcd cluster
-func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
+func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]string, error) {
 
-	addResp, err := c.client.MemberAdd(context.TODO(), []string{peerAddress})
+	addResp, err := c.client.MemberAdd(ctx, []string{peerAddress})
 	if err != nil {
 		// TODO we should try to detect possible double add for a peer
 		// Not sure though if we can return correct initial-cluster as the order
@@ -78,6 +77,28 @@ func (c *Client) AddMember(name, peerAddress string) ([]string, error) {
 	}
 
 	return memberList, nil
+}
+
+// GetPeerIDByAddress looks up peer id by peer url
+func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (uint64, error) {
+	resp, err := c.client.MemberList(ctx)
+	if err != nil {
+		return 0, errors.Wrap(err, "etcd member list failed")
+	}
+	for _, m := range resp.Members {
+		for _, peerURL := range m.PeerURLs {
+			if peerURL == peerAddress {
+				return m.ID, nil
+			}
+		}
+	}
+	return 0, errors.Errorf("peer not found: %s", peerAddress)
+}
+
+// DeleteMember deletes member by peer name
+func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
+	_, err := c.client.MemberRemove(ctx, peerID)
+	return err
 }
 
 // Close closes the etcd client

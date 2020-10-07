@@ -62,6 +62,14 @@ check-network: mke
 check-basic: mke
 	$(MAKE) -C inttest check-basic
 
+.PHONY: check-basic
+check-etcd: mke
+	$(MAKE) -C inttest check-etcd
+
+.PHONY: check-unit
+check-unit:
+	go test -race ./pkg/...
+
 .PHONY: clean
 clean:
 	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata

@@ -166,12 +166,8 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
-// RunControllers runs all the controller nodes
-// TODO Supports currently only one controller, we need to automate running and joining
-func (s *FootlooseSuite) RunControllers() error {
-	if s.ControllerCount > 1 {
-		return fmt.Errorf("RunControllers does not yet support many controllers")
-	}
+// InitMainController inits first contorller assuming it's first controller in the cluster
+func (s *FootlooseSuite) InitMainController() error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -183,7 +179,43 @@ func (s *FootlooseSuite) RunControllers() error {
 	if err != nil {
 		return err
 	}
-	return s.WaitForKubeAPI("controller0")
+	return s.WaitForKubeAPI(controllerNode)
+}
+
+// JoinController joins the cluster with a given token
+func (s *FootlooseSuite) JoinController(idx int, token string) error {
+	controllerNode := fmt.Sprintf("controller%d", idx)
+	ssh, err := s.SSH(controllerNode)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup mke server %s >/tmp/mke-server.log 2>&1 &", token))
+	if err != nil {
+		return err
+	}
+	return s.WaitForKubeAPI(controllerNode)
+}
+
+// GetJoinToken generates join token for the asked role
+func (s *FootlooseSuite) GetJoinToken(role string) (string, error) {
+	// assume we have main on 1 node always
+	controllerNode := fmt.Sprintf("controller%d", 0)
+	s.Contains([]string{"controller", "worker"}, role, "Bad role")
+	ssh, err := s.SSH(controllerNode)
+	if err != nil {
+		return "", err
+	}
+	defer ssh.Disconnect()
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("mke token create --role=%s", role))
+	if err != nil {
+		return "", fmt.Errorf("can't get join token: %v", err)
+	}
+	outputParts := strings.Split(token, "\n")
+	// in case of no mke.conf given, there might be warnings on the first few lines
+	token = outputParts[len(outputParts)-1]
+	return token, nil
+
 }
 
 // RunWorkers joins all the workers to the cluster
@@ -193,15 +225,13 @@ func (s *FootlooseSuite) RunWorkers() error {
 		return err
 	}
 	defer ssh.Disconnect()
-
-	token, err := ssh.ExecWithOutput("mke token create --role=worker")
+	token, err := s.GetJoinToken("worker")
 	if err != nil {
 		return err
 	}
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-
 	workerCommand := fmt.Sprintf(`nohup mke worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := fmt.Sprintf("worker%d", i)

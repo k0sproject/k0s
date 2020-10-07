@@ -40,8 +40,14 @@ jobs:
       run: |
         docker system prune --all --volumes --force
 
+    - name: Run unit tests
+      run: make check-unit
+
     - name: Run smoke test
       run: make check-basic
+
+    - name: Run etcd smoke test
+      run: make check-etcd
 
     - name: Collect test logs
       if: failure()

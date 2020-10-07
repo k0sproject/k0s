@@ -38,6 +38,7 @@ func main() {
 			cmd.WorkerCommand(),
 			cmd.TokenCommand(),
 			cmd.APICommand(),
+			cmd.EtcdCommand(),
 			versionCommand(),
 		},
 		Flags: []cli.Flag{

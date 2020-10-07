@@ -22,7 +22,7 @@ type NetworkSuite struct {
 }
 
 func (s *NetworkSuite) TestSigNetwork() {
-	s.NoError(s.RunControllers())
+	s.NoError(s.InitMainController())
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0")

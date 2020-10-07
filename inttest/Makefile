@@ -21,6 +21,9 @@ check-network: bin/sonobuoy
 check-basic:
 	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/basic
 
+check-etcd:
+	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/etcd
+
 .PHONY: clean
 clean:
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz

@@ -55,7 +55,7 @@ func startAPI(ctx *cli.Context) error {
 	router := mux.NewRouter()
 	router.Use(authMiddleware)
 
-	if clusterConfig.Spec.Storage.Type == "etcd" {
+	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
@@ -82,6 +82,7 @@ func startAPI(ctx *cli.Context) error {
 
 func etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
 		err := json.NewDecoder(req.Body).Decode(&etcdReq)
 		if err != nil {
@@ -101,7 +102,7 @@ func etcdHandler() http.Handler {
 			return
 		}
 
-		memberList, err := etcdClient.AddMember(etcdReq.Node, etcdReq.PeerAddress)
+		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
 			sendError(err, resp)
 			return
