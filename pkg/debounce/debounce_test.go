@@ -2,6 +2,7 @@ package debounce
 
 import (
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -11,11 +12,16 @@ import (
 
 func TestDebounce(t *testing.T) {
 	eventChan := make(chan fsnotify.Event)
-	var debounceCalled = 0
-	var lastEvent string
+	var debounceCalled atomic.Value
+	debounceCalled.Store(0)
+
+	var lastEvent atomic.Value
+	lastEvent.Store("")
 	debouncer := New(1*time.Second, eventChan, func(arg fsnotify.Event) {
-		debounceCalled++
-		lastEvent = arg.Name
+		val := debounceCalled.Load().(int)
+		val++
+		debounceCalled.Store(val)
+		lastEvent.Store(arg.Name)
 	})
 	go debouncer.Start()
 
@@ -24,30 +30,36 @@ func TestDebounce(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	debouncer.Stop()
-	assert.Equal(t, 1, debounceCalled)
-	assert.Equal(t, "event#4", lastEvent)
+	assert.Equal(t, 1, debounceCalled.Load())
+	assert.Equal(t, "event#4", lastEvent.Load())
 }
 
 func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 	eventChan := make(chan fsnotify.Event)
-	var debounceCalled = 0
-	var lastEvent string
+	var debounceCalled atomic.Value
+	debounceCalled.Store(0)
+
+	var lastEvent atomic.Value
+	lastEvent.Store("")
 	debouncer := New(10*time.Second, eventChan, func(arg fsnotify.Event) {
-		debounceCalled++
-		lastEvent = arg.Name
+		val := debounceCalled.Load().(int)
+		val++
+		debounceCalled.Store(val)
+		lastEvent.Store(arg.Name)
 
 	})
-	startReturned := false
+	var startReturned atomic.Value
+	startReturned.Store(false)
 	go func() {
 		debouncer.Start()
-		startReturned = true
+		startReturned.Store(true)
 	}()
 	for i := 0; i < 5; i++ {
 		eventChan <- fsnotify.Event{Name: fmt.Sprintf("event#%d", i)}
 	}
 	debouncer.Stop()
 	time.Sleep(10 * time.Millisecond)
-	assert.True(t, startReturned)
-	assert.Equal(t, 0, debounceCalled)
-	assert.Equal(t, "", lastEvent)
+	assert.True(t, startReturned.Load().(bool))
+	assert.Equal(t, 0, debounceCalled.Load())
+	assert.Equal(t, "", lastEvent.Load())
 }
