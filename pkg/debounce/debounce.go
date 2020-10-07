@@ -1,6 +1,9 @@
 // Package debounce provides functionality to "debounce" multiple events in given interval and handle all at once
 // For debounce pattern, see https://drailing.net/2018/01/debounce-function-for-golang/
 // As you can see, we draw some inspiration from that example. :)
+// Currently this is tied to fsnotify.Event as the event type since Go prohibits us to use fully generic chan interface{} type
+// Or rather, we cannot assign chan fsnotify.Event channel type to chan interface{}
+// If this pattern becomes common we'll need to look at something like https://github.com/eapache/channels/
 package debounce
 
 import (
