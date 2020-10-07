@@ -122,8 +122,8 @@ jobs:
       - name: Run smoke test .
         run: make -C inttest check-etcd
 
-  golangci:
-    name: lint
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
