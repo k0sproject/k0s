@@ -3,10 +3,10 @@ package applier
 import (
 	"context"
 	"path/filepath"
-	"sync/atomic"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/debounce"
 	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/Mirantis/mke/pkg/leaderelection"
 	"github.com/Mirantis/mke/pkg/util"
@@ -94,13 +94,9 @@ func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
 		select {
 		case <-events.AcquiredLease:
 			log.Info("acquired leader lease")
-			changesDetected := &atomic.Value{}
-			// to make first tick to sync everything and retry until it succeeds
-			changesDetected.Store(true)
 			m.tickerDone = make(chan struct{})
 			m.watcherDone = make(chan struct{})
-			go m.runFSWatcher(changesDetected)
-			go m.runApplier(changesDetected)
+			go m.runFSWatcher()
 		case <-events.LostLease:
 			log.Info("lost leader lease")
 			close(m.tickerDone)
@@ -109,33 +105,8 @@ func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
 	}
 }
 
-func (m *Manager) runApplier(changesDetected *atomic.Value) {
-	log := m.log
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			changes := changesDetected.Load().(bool)
-			if !changes {
-				continue // Wait for next check
-			}
-			// Do actual apply
-			if err := m.applier.Apply(); err != nil {
-				log.Warnf("failed to apply manifests: %s", err.Error())
-			} else {
-				// Only set if the apply succeeds, will make it retry on every tick in case of failures
-				changesDetected.Store(false)
-			}
-		case <-m.tickerDone:
-			log.Info("manifest ticker done")
-			return
-		}
-	}
-}
-
-func (m *Manager) runFSWatcher(changesDetected *atomic.Value) {
-	log := m.log
+func (m *Manager) runFSWatcher() {
+	log := logrus.WithField("component", "applier-manager")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
@@ -143,14 +114,24 @@ func (m *Manager) runFSWatcher(changesDetected *atomic.Value) {
 	}
 	defer watcher.Close()
 
+	// Apply once after becoming leader, to make everything sync even if there's no FS events
+	log.Debug("Running initial apply after we've become the leader")
+	if err := m.applier.Apply(); err != nil {
+		log.Warnf("failed to apply manifests: %s", err.Error())
+	}
+
+	debouncer := debounce.New(5*time.Second, watcher.Events, func(arg fsnotify.Event) {
+		log.Debug("debouncer triggering, applying...")
+		if err := m.applier.Apply(); err != nil {
+			log.Warnf("failed to apply manifests: %s", err.Error())
+		}
+	})
+	defer debouncer.Stop()
+	go debouncer.Start()
+
 	watcher.Add(m.bundlePath)
 	for {
 		select {
-		// watch for events
-		case event := <-watcher.Events:
-			log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
-			changesDetected.Store(true)
-			// watch for errors
 		case err := <-watcher.Errors:
 			log.Warnf("watch error: %s", err.Error())
 		case <-m.watcherDone:
