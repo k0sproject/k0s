@@ -211,7 +211,7 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get dynamic client for resource %s", fmt.Sprintf)
+		return errors.Wrapf(err, "failed to get dynamic client for resource %s", resource.GetSelfLink())
 	}
 	err = drClient.Delete(ctx, resource.GetName(), metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
