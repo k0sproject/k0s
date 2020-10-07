@@ -38,7 +38,7 @@ done
 
 # if we need to fetch other manifests in the future, we'll want to move
 # the go-bindata generation out to a separate command.
-go-bindata -o static/calico.go -pkg static -prefix static $DIR/...
+go-bindata -o static/gen_calico.go -pkg static -prefix static $DIR/...
 
 # cleanup
 rm calico.yaml
