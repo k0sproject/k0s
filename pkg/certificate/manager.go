@@ -98,8 +98,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.Name))
 
-	gid, err := util.GetGID(constant.Group)
-	uid, err := util.GetUID(ownerName)
+	gid, _ := util.GetGID(constant.Group)
+	uid, _ := util.GetUID(ownerName)
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 		_ = os.Chown(keyFile, uid, gid)
@@ -131,9 +131,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 
 	var key, csrBytes []byte
 	g := &csr.Generator{Validator: genkey.Validator}
-	csrBytes, key, err = g.ProcessRequest(&req)
+	csrBytes, key, err := g.ProcessRequest(&req)
 	if err != nil {
-		key = nil
 		return Certificate{}, err
 	}
 	config := cli.Config{
@@ -155,18 +154,27 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	if err != nil {
 		return Certificate{}, err
 	}
-	if err != nil {
-		return Certificate{}, err
-	}
 	c := Certificate{
 		Key:  string(key),
 		Cert: string(cert),
 	}
 	err = ioutil.WriteFile(keyFile, key, constant.CertRootSecureMode)
+	if err != nil {
+		return Certificate{}, err
+	}
 	err = ioutil.WriteFile(certFile, cert, constant.CertRootSecureMode)
+	if err != nil {
+		return Certificate{}, err
+	}
 
 	err = os.Chown(keyFile, uid, gid)
+	if err != nil {
+		return Certificate{}, err
+	}
 	err = os.Chown(certFile, uid, gid)
+	if err != nil {
+		return Certificate{}, err
+	}
 
-	return c, err
+	return c, nil
 }
