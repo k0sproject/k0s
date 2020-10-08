@@ -27,7 +27,7 @@ check-network: bin/sonobuoy .footloose-alpine.stamp
 check-basic: .footloose-alpine.stamp
 	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/basic
 
-check-etcd:
+check-etcd: .footloose-alpine.stamp
 	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/etcd
 
 .PHONY: clean
