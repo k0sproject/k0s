@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"path"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -9,8 +11,6 @@ import (
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Konnectivity implement the component interface of konnectivity server
@@ -31,7 +31,7 @@ func (k *Konnectivity) Init() error {
 
 	k.gid, _ = util.GetGID(constant.Group)
 
-	return assets.Stage(constant.DataDir, path.Join("bin", "konnectivity-server"), constant.Group)
+	return assets.Stage(constant.BinDir, "konnectivity-server", constant.BinDirMode, constant.Group)
 }
 
 // Run ..
@@ -39,7 +39,7 @@ func (k *Konnectivity) Run() error {
 	logrus.Info("Starting konnectivity")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "konnectivity",
-		BinPath: assets.StagedBinPath(constant.DataDir, "konnectivity-server"),
+		BinPath: assets.BinPath("konnectivity-server"),
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--uds-name=%s", path.Join(constant.RunDir, "konnectivity-server.sock")),

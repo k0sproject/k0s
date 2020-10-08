@@ -109,16 +109,16 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 
 	kubeletCAPath := path.Join(constant.CertRoot, "ca.crt")
 	if !util.FileExists(kubeletCAPath) {
-		if err := util.InitDirectory(constant.CertRoot, 0755); err != nil {
+		if err := util.InitDirectory(constant.CertRoot, constant.CertRootMode); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRoot))
 		}
-		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, 0600)
+		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertRootSecureMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write ca client cert")
 		}
 	}
 
-	err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, 0600)
+	err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, constant.CertRootSecureMode)
 	if err != nil {
 		return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 	}
