@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-
-	"github.com/Mirantis/mke/pkg/constant"
 )
 
 // IsDirectory check the given path exists and is a directory
@@ -34,16 +31,6 @@ func GetAllDirs(base string) ([]string, error) {
 	return dirs, nil
 }
 
-// CheckDirWriteable checks if dir is writable by writing and removing a file
-// to dir. It returns nil if dir is writable.
-func CheckDirWriteable(path string) error {
-	f := filepath.Join(path, ".touch")
-	if err := ioutil.WriteFile(f, []byte(""), constant.CertRootSecureMode); err != nil {
-		return err
-	}
-	return os.Remove(f)
-}
-
 // InitDirectory creates a path if it does not exist, and verifies its permissions, if it does
 func InitDirectory(path string, perm os.FileMode) error {
 	// if directory doesn't exist, this will create it
@@ -55,9 +42,5 @@ func InitDirectory(path string, perm os.FileMode) error {
 		return err
 	}
 
-	// verify deepest directory is writeable
-	if err := CheckDirWriteable(path); err != nil {
-		return err
-	}
 	return nil
 }
