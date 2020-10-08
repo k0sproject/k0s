@@ -50,11 +50,7 @@ func (s *BasicSuite) WaitForCalicoReady(kc *kubernetes.Clientset) error {
 			return false, nil
 		}
 
-		if ds.Status.NumberReady == ds.Status.DesiredNumberScheduled {
-			return true, nil
-		}
-
-		return false, nil
+		return ds.Status.NumberReady == ds.Status.DesiredNumberScheduled, nil
 	})
 }
 
