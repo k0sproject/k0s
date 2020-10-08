@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"strings"
 	"testing"
+	"time"
 )
 
 type EtcdSuite struct {
@@ -35,7 +36,14 @@ func (s *EtcdSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string
 	node := fmt.Sprintf("controller%d", executeOnControllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
-	_, err = sshCon.ExecWithOutput(fmt.Sprintf("mke etcd leave %s", peerAddress))
+	for i := 0; i < 20; i++ {
+		_, err = sshCon.ExecWithOutput(fmt.Sprintf("mke etcd leave %s", peerAddress))
+		if err == nil {
+			break
+		}
+		s.T().Logf("retrying mke etcd leave...")
+		time.Sleep(500 * time.Millisecond)
+	}
 	s.NoError(err)
 }
 
