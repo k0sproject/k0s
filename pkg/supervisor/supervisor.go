@@ -41,7 +41,10 @@ func (s *Supervisor) processWaitQuit() bool {
 	}()
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootMode)
+	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootMode)
+	if err != nil {
+		log.Warnf("Failed to write file %s: %v", s.PidFile, err)
+	}
 	defer os.Remove(s.PidFile)
 
 	select {

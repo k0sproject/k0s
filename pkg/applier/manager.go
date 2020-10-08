@@ -127,7 +127,10 @@ func (m *Manager) runFSWatcher() {
 	defer debouncer.Stop()
 	go debouncer.Start()
 
-	watcher.Add(constant.ManifestsDir)
+	err = watcher.Add(constant.ManifestsDir)
+	if err != nil {
+		log.Warnf("Failed to start watcher: %s", err.Error())
+	}
 	for {
 		select {
 		case err := <-watcher.Errors:
