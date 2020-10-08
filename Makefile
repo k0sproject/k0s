@@ -75,3 +75,7 @@ clean:
 	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata
 	$(MAKE) -C embedded-bins clean
 
+.PHONY: bindata-manifests
+bindata-manifests:
+	go-bindata -o static/gen_calico.go -pkg static -prefix static static/...
+
