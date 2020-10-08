@@ -55,10 +55,10 @@ not the calico originals.
 calico_backend: "{{ .Mode }}"
 veth_mtu: "{{ .MTU }}"
 ```
-
-## Extending to bundle more manifests
-
-If we have a future need to bundle additional manifests, we need to make
-sure to move the `bindata` generation out of `get-calico` into a separate
-step that can bundle all manifests into a single bindata file within the
-`static` package.
+- remove bgp from `CLUSTER_TYPE`
+```helmyaml
+- name: CLUSTER_TYPE
+  value: "k8s"
+```
+- disable BIRD checks on liveness and readiness as we don't support BGP by removing
+`-bird-ready` and `-bird-live` from the readiness and liveness probes respectively
