@@ -86,57 +86,12 @@ func (c *Calico) Run() error {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		var previousConfig = calicoConfig{}
-	WORKER_LOOP:
 		for {
 			select {
 			case <-ticker.C:
-				config, err := c.getConfig()
-				if err != nil {
-					c.log.Errorf("error calculating calico configs: %s. will retry", err.Error())
-					continue
-				}
-				if config == previousConfig {
-					c.log.Infof("current config matches existing, not gonna do anything")
-					continue
-				}
-
-				manifestDirectories, err := static.AssetDir("manifests/calico")
-
-				if err != nil {
-					c.log.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
-					continue
-				}
-
-				for _, dir := range manifestDirectories {
-					// CRDs are handled separately on boot
-					if dir == "CustomResourceDefinition" {
-						continue
-					}
-					manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/calico/%s", dir))
-					if err != nil {
-						c.log.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
-						continue WORKER_LOOP
-					}
-
-					for _, filename := range manifestPaths {
-						contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
-						if err != nil {
-							continue WORKER_LOOP
-						}
-
-						tw := util.TemplateWriter{
-							Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
-							Template: string(contents),
-							Data:     config,
-							Path:     filepath.Join(constant.DataDir, "manifests", fmt.Sprintf("calico-%s-%s", dir, filename)),
-						}
-						err = tw.Write()
-						if err != nil {
-							c.log.Errorf("error writing calico manifest: %s. will retry", err.Error())
-							continue WORKER_LOOP
-						}
-						previousConfig = config
-					}
+				newConfig := c.work(previousConfig)
+				if newConfig != nil {
+					previousConfig = *newConfig
 				}
 			case <-c.tickerDone:
 				c.log.Info("coredns reconciler done")
@@ -146,6 +101,58 @@ func (c *Calico) Run() error {
 	}()
 
 	return nil
+}
+
+func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
+	config, err := c.getConfig()
+	if err != nil {
+		c.log.Errorf("error calculating calico configs: %s. will retry", err.Error())
+		return nil
+	}
+	if config == previousConfig {
+		c.log.Infof("current config matches existing, not gonna do anything")
+		return nil
+	}
+
+	manifestDirectories, err := static.AssetDir("manifests/calico")
+
+	if err != nil {
+		c.log.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
+		return nil
+	}
+
+	for _, dir := range manifestDirectories {
+		// CRDs are handled separately on boot
+		if dir == "CustomResourceDefinition" {
+			continue
+		}
+		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/calico/%s", dir))
+		if err != nil {
+			c.log.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
+			return nil
+		}
+
+		for _, filename := range manifestPaths {
+			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
+			if err != nil {
+				return nil
+			}
+
+			tw := util.TemplateWriter{
+				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
+				Template: string(contents),
+				Data:     config,
+				Path:     filepath.Join(constant.DataDir, "manifests", fmt.Sprintf("calico-%s-%s", dir, filename)),
+			}
+			err = tw.Write()
+			if err != nil {
+				c.log.Errorf("error writing calico manifest: %s. will retry", err.Error())
+				return nil
+			}
+		}
+	}
+
+	return &config
 }
 
 func (c *Calico) getConfig() (calicoConfig, error) {

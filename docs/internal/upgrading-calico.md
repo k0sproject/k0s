@@ -48,6 +48,12 @@ not the calico originals.
 - name: CALICO_IPV4POOL_CIDR
   value: "{{ .ClusterCIDR }}"
 ```
+- custom backend and MTU
+```helmyaml
+# calico-config.yaml
+calico_backend: "{{ .Mode }}"
+veth_mtu: "{{ .MTU }}"
+```
 
 ## Extending to bundle more manifests
 
