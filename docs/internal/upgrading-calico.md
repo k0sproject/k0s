@@ -7,8 +7,9 @@ As fetching and modifying the entire multi-thousand line file is error-prone,
 you may follow these steps to upgrade Calico to the latest version:
 
 1. run `./get-calico.sh`
-2. check the git diff to see if it looks sensible
-3. re-apply our manual adjustments (documented below)
+1. check the git diff to see if it looks sensible
+1. re-apply our manual adjustments (documented below)
+1. run `make bindata-manifests`
 4. compile, pray, and test
 5. commit and create a PR
 
