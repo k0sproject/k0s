@@ -10,12 +10,12 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 
 GOOS ?= linux
 GOARCH ?= amd64
+GOPATH ?= $(shell go env GOPATH)
 
 VERSION ?= dev
 golint := $(shell which golangci-lint)
-
 ifeq ($(golint),)
-golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && golangci-lint
+golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && "${GOPATH}/bin/golangci-lint"
 endif
 
 .PHONY: all
