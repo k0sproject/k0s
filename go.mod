@@ -8,9 +8,11 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/evanphx/json-patch v4.9.0+incompatible
+	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/mikefarah/yq/v3 v3.0.0-20200930232032-e0f5cb3c5958 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.5.0
