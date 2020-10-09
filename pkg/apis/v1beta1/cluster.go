@@ -9,7 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// ClusterConfig ...
+// ClusterConfig cluster manifest
 type ClusterConfig struct {
 	APIVersion string       `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
 	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
@@ -30,6 +30,7 @@ type ClusterSpec struct {
 	Storage           *StorageSpec           `yaml:"storage"`
 	Network           *Network               `yaml:"network"`
 	PodSecurityPolicy *PodSecurityPolicy     `yaml:"podSecurityPolicy"`
+	WorkerProfiles    WorkerProfiles         `yaml:"workerProfiles"`
 }
 
 // APISpec ...
@@ -54,6 +55,7 @@ func (c *ClusterConfig) Validate() []error {
 	var errors []error
 
 	errors = append(errors, c.Spec.Network.Validate()...)
+	errors = append(errors, c.Spec.WorkerProfiles.Validate()...)
 	// TODO We need to validate all other parts too
 
 	return errors
@@ -64,7 +66,7 @@ func (a *APISpec) APIAddress() string {
 	return fmt.Sprintf("https://%s:6443", a.Address)
 }
 
-// ControllerJoinAddress returns the controller join APIs address
+// ControllerJoinAddress ...
 func (a *APISpec) ControllerJoinAddress() string {
 	return fmt.Sprintf("https://%s:9443", a.Address)
 }
@@ -114,7 +116,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// DefaultAPISpec ...
+// DefaultAPISpec default settings
 func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
 	addresses, _ := util.AllAddresses()
@@ -125,7 +127,7 @@ func DefaultAPISpec() *APISpec {
 	}
 }
 
-// DefaultClusterSpec ...
+// DefaultClusterSpec default settings
 func DefaultClusterSpec() *ClusterSpec {
 	return &ClusterSpec{
 		Storage:           DefaultStorageSpec(),
