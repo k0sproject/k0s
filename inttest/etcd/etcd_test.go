@@ -3,11 +3,12 @@ package etcd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Mirantis/mke/inttest/common"
-	"github.com/stretchr/testify/suite"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Mirantis/mke/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type EtcdSuite struct {
@@ -47,11 +48,30 @@ func (s *EtcdSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string
 	s.NoError(err)
 }
 
+func (s *EtcdSuite) getCa(controllerIdx int) string {
+	node := fmt.Sprintf("controller%d", controllerIdx)
+	sshCon, err := s.SSH(node)
+	s.NoError(err)
+	ca, err := sshCon.ExecWithOutput("cat /var/lib/mke/pki/ca.crt")
+	s.NoError(err)
+
+	return ca
+}
+
 func (s *EtcdSuite) TestDeregistration() {
 	s.NoError(s.InitMainController())
 	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
 	s.NoError(s.JoinController(1, token))
+
+	ca0 := s.getCa(0)
+	s.Contains(ca0, "-----BEGIN CERTIFICATE-----")
+
+	ca1 := s.getCa(1)
+	s.Contains(ca1, "-----BEGIN CERTIFICATE-----")
+
+	s.Equal(ca0, ca1)
+
 	membersFromMain := s.getMembers(0)
 	membersFromJoined := s.getMembers(1)
 	s.Equal(membersFromMain, membersFromJoined,
@@ -61,6 +81,7 @@ func (s *EtcdSuite) TestDeregistration() {
 	refreshedMembers := s.getMembers(0)
 	s.Len(refreshedMembers, 1)
 	s.Contains(refreshedMembers, "controller0")
+
 }
 
 func TestEtcdSuite(t *testing.T) {
