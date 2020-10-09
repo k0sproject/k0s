@@ -27,7 +27,7 @@ const (
 	// CertRootDir defines the root location for all pki related artifacts
 	CertRootDir = "/var/lib/mke/pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
-	CertRootDirMode = 0750
+	CertRootDirMode = 0751
 	//EtcdCertDir contains etcd certificates
 	EtcdCertDir = "/var/lib/mke/pki/etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
