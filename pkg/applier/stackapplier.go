@@ -1,6 +1,7 @@
 package applier
 
 import (
+	"k8s.io/client-go/util/retry"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/debounce"
@@ -30,6 +31,7 @@ func NewStackApplier(path string) (*StackApplier, error) {
 	}
 	applier := NewApplier(path)
 	log := logrus.WithField("component", "applier-"+applier.Name)
+	log.WithField("path", path).Debug("created stack applier")
 
 	return &StackApplier{
 		Path:      path,
@@ -51,7 +53,10 @@ func (s *StackApplier) Start() error {
 
 	debouncer := debounce.New(5*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
 		s.log.Debug("debouncer triggering, applying...")
-		if err := s.applier.Apply(); err != nil {
+		err := retry.OnError(retry.DefaultRetry, func(err error) bool {
+			return true
+		}, s.applier.Apply)
+		if err != nil {
 			s.log.Warnf("failed to apply manifests: %s", err.Error())
 		}
 	})

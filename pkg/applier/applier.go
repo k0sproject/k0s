@@ -5,6 +5,7 @@ import (
 	"context"
 	"io/ioutil"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 	"path"
 	"path/filepath"
 
@@ -70,7 +71,13 @@ func (a *Applier) init() error {
 // Apply resources
 func (a *Applier) Apply() error {
 	if a.client == nil {
-		a.init()
+		err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+			return true
+		}, a.init)
+
+		if err != nil {
+			return err
+		}
 	}
 	files, err := filepath.Glob(path.Join(a.Dir, "*.yaml"))
 	if err != nil {
@@ -83,10 +90,16 @@ func (a *Applier) Apply() error {
 		Client:    a.client,
 		Discovery: a.discoveryClient,
 	}
+	//for _, resource := range resources {
+
+	//}
+	a.log.Debug("applying stack")
 	err = stack.Apply(context.Background(), true)
 	if err != nil {
+		a.log.WithError(err).Warn("stack apply failed")
 		a.discoveryClient.Invalidate()
 	}
+	a.log.Debug("successfully applied stack")
 
 	return err
 }

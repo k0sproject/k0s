@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"github.com/Mirantis/mke/static"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -53,6 +55,11 @@ func (c *Calico) Init() error {
 
 // Run runs the calico reconciler
 func (c *Calico) Run() error {
+	calicoDir := path.Join(constant.DataDir, "manifests", "calico")
+	err := os.MkdirAll(calicoDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 	c.tickerDone = make(chan struct{})
 	var emptyStruct struct{}
 
@@ -74,7 +81,7 @@ func (c *Calico) Run() error {
 			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
 			Template: string(contents),
 			Data:     emptyStruct,
-			Path:     filepath.Join(constant.DataDir, "manifests", "calico", fmt.Sprintf("calico-crd-%s", filename)),
+			Path:     filepath.Join(calicoDir, fmt.Sprintf("calico-crd-%s", filename)),
 		}
 		err = tw.Write()
 		if err != nil {
