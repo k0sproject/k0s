@@ -1,5 +1,9 @@
 package component
 
+import (
+	"golang.org/x/sync/errgroup"
+)
+
 // Manager manages components
 type Manager struct {
 	components []Component
@@ -19,12 +23,13 @@ func (m *Manager) Add(component Component) {
 
 // Init initializes all managed components
 func (m *Manager) Init() error {
+	g := new(errgroup.Group)
+
 	for _, comp := range m.components {
-		if err := comp.Init(); err != nil {
-			return err
-		}
+		g.Go(comp.Init)
 	}
-	return nil
+	err := g.Wait()
+	return err
 }
 
 // Start starts all managed components
