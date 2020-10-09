@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Mirantis/mke/pkg/util"
 	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,10 +26,10 @@ const (
 	// Label stack label
 	Label = "mke.mirantis.com/stack"
 
-	// ChecksumAnnotation ...
+	// ChecksumAnnotation defines the annotation key to used for stack checksums
 	ChecksumAnnotation = "mke.mirantis.com/stack-checksum"
 
-	// LastConfigAnnotation ...
+	// LastConfigAnnotation defines the annotation to be used for last applied configs
 	LastConfigAnnotation = "mke.mirantis.com/last-applied-configuration"
 )
 
@@ -39,7 +42,8 @@ type Stack struct {
 	Discovery     discovery.CachedDiscoveryInterface
 }
 
-// Apply applies stack resources
+// Apply applies stack resources by creating or updating the resources. If prune is requested,
+// the previously applied stack resources which are not part of the current stack are removed from k8s api
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
 	sortedResources := []*unstructured.Unstructured{}
@@ -145,28 +149,49 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 	return nil
 }
 
+// ignoredResources defines a list of resources which as ignored in prune phase
+// The reason for ignoring these are:
+// - v1:Endpoints inherit the stack label but do not have owner ref set --> each apply would prune all stack related endpoints
+// Defined is the form of api-group/version:kind. The core group kinds are defined as v1:<kind>
+var ignoredResources = []string{"v1:Endpoints"}
+
 func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
 	pruneableResources := []*unstructured.Unstructured{}
-	apiGroups, apiResourceLists, err := s.Discovery.ServerGroupsAndResources()
+	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
-		return nil, err
+		// Client-Go emits an error when an API service is registered but unimplemented.
+		// We trap that error here but since the discovery client continues
+		// building the API object, it is correctly populated with all valid APIs.
+		// See https://github.com/kubernetes/kubernetes/issues/72051#issuecomment-521157642
+		// Common cause for this is metrics API which often gives 503s during discovery
+		if discovery.IsGroupDiscoveryFailedError(err) {
+			logrus.Debugf("error in api discovery for pruning: %s", err.Error())
+		} else {
+			return nil, errors.Wrapf(err, "failed to list api groups for pruning")
+		}
 	}
+
 	groupVersionKinds := map[string]*schema.GroupVersionKind{}
 	for _, apiResourceList := range apiResourceLists {
 		for _, apiResource := range apiResourceList.APIResources {
 			key := fmt.Sprintf("%s:%s", apiResourceList.GroupVersion, apiResource.Kind)
+			if !util.StringSliceContains(apiResource.Verbs, "delete") {
+				continue
+			}
+			if util.StringSliceContains(ignoredResources, key) {
+				logrus.Debugf("skipping resource %s from prune", key)
+				continue
+			}
 			if groupVersionKinds[key] == nil {
-				apiGroup := findAPIGroupForAPIService(apiGroups, apiResourceList)
-				if apiGroup != nil {
-					groupVersionKinds[key] = &schema.GroupVersionKind{
-						Group:   apiGroup.Name,
-						Kind:    apiResource.Kind,
-						Version: apiGroup.PreferredVersion.Version,
-					}
+				groupVersionKinds[key] = &schema.GroupVersionKind{
+					Group:   apiResource.Group,
+					Kind:    apiResource.Kind,
+					Version: apiResource.Version,
 				}
 			}
 		}
 	}
+
 	wg := sync.WaitGroup{}
 	namespaces := s.getAllAccessibleNamespaces(ctx)
 	for _, groupVersionKind := range groupVersionKinds {
@@ -178,7 +203,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		}(groupVersionKind)
 	}
 	wg.Wait()
-
+	logrus.Debugf("found %d prunable resources", len(pruneableResources))
 	return pruneableResources, nil
 }
 
@@ -186,13 +211,13 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get dynamic client for resource %s", resource.GetSelfLink())
 	}
 	err = drClient.Delete(ctx, resource.GetName(), metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
-		return err
+		return errors.Wrapf(err, "deleting resource failed")
 	}
 	return nil
 }
@@ -202,6 +227,7 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 	if err != nil {
 		return nil, fmt.Errorf("mapping error: %s", err)
 	}
+
 	var drClient dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 		drClient = s.Client.Resource(mapping.Resource).Namespace(resource.GetNamespace())
@@ -247,27 +273,19 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 	return pruneableResources
 }
 
-func findAPIGroupForAPIService(apiGroups []*metav1.APIGroup, apiResource *metav1.APIResourceList) *metav1.APIGroup {
-	for _, apiGroup := range apiGroups {
-		gv := fmt.Sprintf("%s/%s", apiGroup.Name, apiGroup.PreferredVersion.Version)
-		if gv == apiResource.GroupVersion {
-			return apiGroup
-		}
-	}
-
-	return nil
-}
-
 func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []*unstructured.Unstructured {
 	pruneableResources := []*unstructured.Unstructured{}
-	resourceList, err := drClient.List(ctx, metav1.ListOptions{
+	listOpts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", Label, s.Name),
-	})
+	}
+	resourceList, err := drClient.List(ctx, listOpts)
 	if err != nil {
 		return []*unstructured.Unstructured{}
 	}
 	for _, resource := range resourceList.Items {
-		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 {
+		// We need to filter out objects that do not actually have the stack label set
+		// There are some cases where we get "extra" results, e.g.: https://github.com/kubernetes-sigs/metrics-server/issues/604
+		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[Label] == s.Name {
 			pruneableResources = append(pruneableResources, &resource)
 		}
 	}
@@ -313,7 +331,7 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 }
 
 func generateResourceID(resource unstructured.Unstructured) string {
-	return fmt.Sprintf("%s:%s@%s", resource.GetKind(), resource.GetName(), resource.GetNamespace())
+	return fmt.Sprintf("%s/%s:%s@%s", resource.GetObjectKind().GroupVersionKind().Group, resource.GetKind(), resource.GetName(), resource.GetNamespace())
 }
 
 func resourceChecksum(resource *unstructured.Unstructured) string {

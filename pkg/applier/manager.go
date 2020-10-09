@@ -2,21 +2,17 @@ package applier
 
 import (
 	"context"
-	"path/filepath"
-	"sync/atomic"
 	"time"
 
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/debounce"
+	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"github.com/Mirantis/mke/pkg/leaderelection"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/denisbrodbeck/machineid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/leaderelection"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 )
 
 // Manager is the Component interface wrapper for Applier
@@ -27,27 +23,23 @@ type Manager struct {
 	tickerDone           chan struct{}
 	watcherDone          chan struct{}
 	cancelLeaderElection context.CancelFunc
+	log                  *logrus.Entry
 }
 
 // Init initializes the Manager
 func (m *Manager) Init() error {
-	m.bundlePath = filepath.Join(constant.DataDir, "manifests")
-	err := util.InitDirectory(m.bundlePath, 0700)
+	err := util.InitDirectory(constant.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.bundlePath)
+		return errors.Wrapf(err, "failed to create manifest bundle dir %s", constant.ManifestsDir)
 	}
+	m.log = logrus.WithField("component", "applier-manager")
 
-	m.applier, err = NewApplier(m.bundlePath)
+	m.applier, err = NewApplier(constant.ManifestsDir)
 	return err
 }
 
-func (m *Manager) ensureKubeClient() error {
-	cfg, err := clientcmd.BuildConfigFromFlags("", constant.AdminKubeconfigConfigPath)
-	if err != nil {
-		return err
-	}
-
-	client, err := kubernetes.NewForConfig(cfg)
+func (m *Manager) retrieveKubeClient() error {
+	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
@@ -59,131 +51,88 @@ func (m *Manager) ensureKubeClient() error {
 
 // Run runs the Manager
 func (m *Manager) Run() error {
-	log := logrus.WithField("component", "applier-manager")
-
-	// Make the done channels
-	m.tickerDone = make(chan struct{})
-	m.watcherDone = make(chan struct{})
+	log := m.log
 
 	for m.client == nil {
 		log.Debug("retrieving kube client config")
-		_ = m.ensureKubeClient()
+		_ = m.retrieveKubeClient()
 		time.Sleep(time.Second)
 	}
 
-	machineID, err := machineid.ProtectedID("mirantis-mke")
+	leasePool, err := leaderelection.NewLeasePool(m.client, "mke-manifest-applier", leaderelection.WithLogger(log))
 
 	if err != nil {
 		return err
 	}
 
-	go m.electLeader("mke-manifest-applier", "kube-node-lease", machineID)
+	electionEvents := &leaderelection.LeaseEvents{
+		AcquiredLease: make(chan struct{}),
+		LostLease:     make(chan struct{}),
+	}
+
+	go m.watchLeaseEvents(electionEvents)
+	go func() {
+		_, cancel, _ := leasePool.Watch(leaderelection.WithOutputChannels(electionEvents))
+		m.cancelLeaderElection = cancel
+	}()
 
 	return nil
 }
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
-	close(m.tickerDone)
-	close(m.watcherDone)
 	m.cancelLeaderElection()
 	return nil
 }
 
-func (m *Manager) electLeader(name, namespace, id string) error {
-	log := logrus.WithField("component", "applier-manager")
+func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
+	log := m.log
 
-	lock := &resourcelock.LeaseLock{
-		LeaseMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Client: m.client.CoordinationV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: id,
-		},
-	}
-	lec := leaderelection.LeaderElectionConfig{
-		Lock:            lock,
-		ReleaseOnCancel: true,
-		LeaseDuration:   60 * time.Second,
-		RenewDeadline:   15 * time.Second,
-		RetryPeriod:     5 * time.Second,
-		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {
-				log.Info("acquired leader lease")
-				changesDetected := &atomic.Value{}
-				// to make first tick to sync everything and retry until it succeeds
-				changesDetected.Store(true)
-				go m.runFSWatcher(changesDetected)
-				go m.runApplier(changesDetected)
-			},
-			OnStoppedLeading: func() {
-				log.Info("lost leader lease")
-				m.tickerDone <- struct{}{}
-				m.watcherDone <- struct{}{}
-			},
-			OnNewLeader: nil,
-		},
-	}
-	le, err := leaderelection.NewLeaderElector(lec)
-	if err != nil {
-		return err
-	}
-	if lec.WatchDog != nil {
-		lec.WatchDog.SetLeaderElection(le)
-	}
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	m.cancelLeaderElection = cancel
-
-	le.Run(ctx)
-
-	return nil
-}
-
-func (m *Manager) runApplier(changesDetected *atomic.Value) {
-	log := logrus.WithField("component", "applier-manager")
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
 	for {
 		select {
-		case <-ticker.C:
-			changes := changesDetected.Load().(bool)
-			if !changes {
-				continue // Wait for next check
-			}
-			// Do actual apply
-			if err := m.applier.Apply(); err != nil {
-				log.Warnf("failed to apply manifests: %s", err.Error())
-			} else {
-				// Only set if the apply succeeds, will make it retry on every tick in case of failures
-				changesDetected.Store(false)
-			}
-		case <-m.tickerDone:
-			log.Info("manifest ticker done")
-			return
+		case <-events.AcquiredLease:
+			log.Info("acquired leader lease")
+			m.tickerDone = make(chan struct{})
+			m.watcherDone = make(chan struct{})
+			go m.runFSWatcher()
+		case <-events.LostLease:
+			log.Info("lost leader lease")
+			close(m.tickerDone)
+			close(m.watcherDone)
 		}
 	}
 }
 
-func (m *Manager) runFSWatcher(changesDetected *atomic.Value) {
+func (m *Manager) runFSWatcher() {
 	log := logrus.WithField("component", "applier-manager")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Errorf("failed to create fs watcher for %s: %s", m.bundlePath, err.Error())
+		log.Errorf("failed to create fs watcher for %s: %s", constant.ManifestsDir, err.Error())
 		return
 	}
 	defer watcher.Close()
 
-	watcher.Add(m.bundlePath)
+	// Apply once after becoming leader, to make everything sync even if there's no FS events
+	log.Debug("Running initial apply after we've become the leader")
+	if err := m.applier.Apply(); err != nil {
+		log.Warnf("failed to apply manifests: %s", err.Error())
+	}
+
+	debouncer := debounce.New(5*time.Second, watcher.Events, func(arg fsnotify.Event) {
+		log.Debug("debouncer triggering, applying...")
+		if err := m.applier.Apply(); err != nil {
+			log.Warnf("failed to apply manifests: %s", err.Error())
+		}
+	})
+	defer debouncer.Stop()
+	go debouncer.Start()
+
+	err = watcher.Add(constant.ManifestsDir)
+	if err != nil {
+		log.Warnf("Failed to start watcher: %s", err.Error())
+	}
 	for {
 		select {
-		// watch for events
-		case event := <-watcher.Events:
-			log.Debugf("manifest change (%s) %s", event.Op.String(), event.Name)
-			changesDetected.Store(true)
-			// watch for errors
 		case err := <-watcher.Errors:
 			log.Warnf("watch error: %s", err.Error())
 		case <-m.watcherDone:

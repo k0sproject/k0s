@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -31,7 +30,7 @@ func (a *Scheduler) Init() error {
 	}
 	a.gid, _ = util.GetGID(constant.Group)
 
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-scheduler"), constant.Group)
+	return assets.Stage(constant.BinDir, "kube-scheduler", constant.BinDirMode, constant.Group)
 }
 
 // Run runs kube scheduler
@@ -57,7 +56,7 @@ func (a *Scheduler) Run() error {
 	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
-		BinPath: assets.StagedBinPath(constant.DataDir, "kube-scheduler"),
+		BinPath: assets.BinPath("kube-scheduler"),
 		Args:    schedulerArgs,
 		UID:     a.uid,
 		GID:     a.gid,

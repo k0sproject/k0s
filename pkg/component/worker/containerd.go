@@ -2,7 +2,7 @@ package worker
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 
@@ -18,13 +18,13 @@ type ContainerD struct {
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
-	var err error
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v1"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "containerd-shim-runc-v2"), constant.Group)
-	err = assets.Stage(constant.DataDir, path.Join("bin", "runc"), constant.Group)
-	return err
+	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
+		err := assets.Stage(constant.BinDir, bin, constant.BinDirMode, constant.Group)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Run runs containerD
@@ -32,11 +32,11 @@ func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
-		BinPath: assets.StagedBinPath(constant.DataDir, "containerd"),
+		BinPath: assets.BinPath("containerd"),
 		Args: []string{
-			fmt.Sprintf("--root=%s", path.Join(constant.DataDir, "containerd")),
-			fmt.Sprintf("--state=%s", "/run/mke/containerd"),
-			fmt.Sprintf("--address=%s", "/run/mke/containerd.sock"),
+			fmt.Sprintf("--root=%s", filepath.Join(constant.DataDir, "containerd")),
+			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
+			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
 			"--config=/etc/mke/containerd.toml",
 		},
 	}
