@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Mirantis/mke/pkg/performance"
 	"os"
 	"os/signal"
 	"path"
@@ -61,6 +62,7 @@ func configFromCmdFlag(ctx *cli.Context) (*config.ClusterConfig, error) {
 }
 
 func startServer(ctx *cli.Context) error {
+	perfTimer := performance.NewTimer("server-start").Buffer().Start()
 	clusterConfig, err := configFromCmdFlag(ctx)
 	if err != nil {
 		return err
@@ -72,6 +74,7 @@ func startServer(ctx *cli.Context) error {
 	var joinClient *v1beta1.JoinClient
 	token := ctx.Args().First()
 	if token != "" {
+		perfTimer.Checkpoint("token-join-start")
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
@@ -83,6 +86,7 @@ func startServer(ctx *cli.Context) error {
 
 		err = caSyncer.Init()
 		err = caSyncer.Run()
+		perfTimer.Checkpoint("token-join-completed")
 		if err != nil {
 			logrus.Warnf("something failed in CA sync: %s", err.Error())
 		}
@@ -130,31 +134,39 @@ func startServer(ctx *cli.Context) error {
 		ConfigPath: ctx.String("config"),
 	})
 
+	perfTimer.Checkpoint("starting-component-init")
 	// init components
 	if err := componentManager.Init(); err != nil {
 		return err
 	}
+	perfTimer.Checkpoint("finished-component-init")
 
 	certs := server.Certificates{
 		ClusterSpec: clusterConfig.Spec,
 		CertManager: certificateManager,
 	}
+
+	perfTimer.Checkpoint("starting-cert-run")
 	if err := certs.Run(); err != nil {
 		return err
 	}
+	perfTimer.Checkpoint("finished-cert-run")
 
-	// Set up signal handling. Use bufferend channel so we dont miss
+	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	perfTimer.Checkpoint("starting-components")
 	// Start components
 	err = componentManager.Start()
+	perfTimer.Checkpoint("finished-starting-components")
 	if err != nil {
 		logrus.Errorf("failed to start server components: %s", err)
 		c <- syscall.SIGTERM
 	}
 
+	perfTimer.Checkpoint("starting-reconcilers")
 	// in-cluster component reconcilers
 	reconcilers := createClusterReconcilers(clusterConfig.Spec)
 	if err == nil {
@@ -163,15 +175,20 @@ func startServer(ctx *cli.Context) error {
 			reconciler.Run()
 		}
 	}
+	perfTimer.Checkpoint("started-reconcilers")
 
 	if err == nil && ctx.Bool("enable-worker") {
+		perfTimer.Checkpoint("starting-worker")
 		err = enableServerWorker(clusterConfig, componentManager)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			componentManager.Stop()
 			return err
 		}
+		perfTimer.Checkpoint("started-worker")
 	}
+
+	perfTimer.Output()
 
 	// Wait for mke process termination
 	<-c
