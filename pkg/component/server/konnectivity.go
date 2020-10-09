@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"os"
 	"path"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -76,15 +77,21 @@ type konnectivityAgentConfig struct {
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
+	konnectivityDir := path.Join(constant.ManifestsDir, "konnectivity")
+	err := os.MkdirAll(konnectivityDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
+
 	tw := util.TemplateWriter{
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.Address,
 		},
-		Path: path.Join(constant.DataDir, "manifests", "konnectivity-agent.yaml"),
+		Path: path.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}
-	err := tw.Write()
+	err = tw.Write()
 	if err != nil {
 		return errors.Wrap(err, "failed to write konnectivity agent manifest")
 	}

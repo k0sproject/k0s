@@ -31,20 +31,18 @@ type Applier struct {
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string) (Applier, error) {
+func NewApplier(dir string) Applier {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{
 		"component": "applier",
 		"bundle":    name,
 	})
 
-	a := Applier{
+	return Applier{
 		log:  log,
 		Dir:  dir,
 		Name: name,
 	}
-
-	return a, nil
 }
 
 func (a *Applier) init() error {
@@ -90,6 +88,19 @@ func (a *Applier) Apply() error {
 		a.discoveryClient.Invalidate()
 	}
 
+	return err
+}
+
+// Delete deletes the entire stack by applying it with empty set of resources
+func (a *Applier) Delete() error {
+	stack := Stack{
+		Name:      a.Name,
+		Resources: []*unstructured.Unstructured{},
+		Client:    a.client,
+		Discovery: a.discoveryClient,
+	}
+	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
+	err := stack.Apply(context.Background(), true)
 	return err
 }
 

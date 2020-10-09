@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -38,6 +40,12 @@ func (k *KubeProxy) Run() error {
 
 	k.tickerDone = make(chan struct{})
 
+	proxyDir := path.Join(constant.ManifestsDir, "kubeproxy")
+	err := os.MkdirAll(proxyDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -58,7 +66,7 @@ func (k *KubeProxy) Run() error {
 					Name:     "kube-proxy",
 					Template: proxyTemplate,
 					Data:     config,
-					Path:     filepath.Join(constant.DataDir, "manifests", "kube-proxy.yaml"),
+					Path:     filepath.Join(proxyDir, "kube-proxy.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {

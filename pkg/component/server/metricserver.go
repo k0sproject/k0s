@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -203,6 +205,12 @@ func (m *MetricServer) Run() error {
 
 	// TODO calculate replicas, max-surge etc. based on amount of nodes
 
+	msDir := path.Join(constant.ManifestsDir, "metricserver")
+	err := os.MkdirAll(msDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -213,7 +221,7 @@ func (m *MetricServer) Run() error {
 					Name:     "metricServer",
 					Template: metricServerTemplate,
 					Data:     struct{}{},
-					Path:     filepath.Join(constant.DataDir, "manifests", "metric_server.yaml"),
+					Path:     filepath.Join(msDir, "metric_server.yaml"),
 				}
 				err := tw.Write()
 				if err != nil {

@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"path"
 	"path/filepath"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -53,11 +55,16 @@ func (k *KubeletConfig) Run() error {
 		ClusterDomain: "cluster.local",
 	}
 
+	kubeletDir := path.Join(constant.ManifestsDir, "kubeletconfig")
+	err = os.MkdirAll(kubeletDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 	tw := util.TemplateWriter{
 		Name:     "kubelet-config",
 		Template: kubeletConfigTemplate,
 		Data:     config,
-		Path:     filepath.Join(constant.DataDir, "manifests", "kubelet-config.yaml"),
+		Path:     filepath.Join(kubeletDir, "kubelet-config.yaml"),
 	}
 	err = tw.Write()
 	if err != nil {

@@ -74,7 +74,7 @@ func (c *Calico) Run() error {
 			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
 			Template: string(contents),
 			Data:     emptyStruct,
-			Path:     filepath.Join(constant.DataDir, "manifests", fmt.Sprintf("calico-crd-%s", filename)),
+			Path:     filepath.Join(constant.DataDir, "manifests", "calico", fmt.Sprintf("calico-crd-%s", filename)),
 		}
 		err = tw.Write()
 		if err != nil {
@@ -142,7 +142,7 @@ func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
 				Data:     config,
-				Path:     filepath.Join(constant.DataDir, "manifests", fmt.Sprintf("calico-%s-%s", dir, filename)),
+				Path:     filepath.Join(constant.DataDir, "manifests", "calico", fmt.Sprintf("calico-%s-%s", dir, filename)),
 			}
 			err = tw.Write()
 			if err != nil {
