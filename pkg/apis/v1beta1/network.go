@@ -15,7 +15,7 @@ type Network struct {
 	Calico      *Calico `yaml:"calico"`
 }
 
-// DefaultNetwork creates the Network config stcut with sane default values
+// DefaultNetwork creates the Network config struct with sane default values
 func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:     "10.244.0.0/16",
