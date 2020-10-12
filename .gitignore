@@ -4,3 +4,7 @@ mke.code
 bindata
 .*.stamp
 .tmp
+.terraform
+*.tfstate*
+aws_private.pem
+out.json
