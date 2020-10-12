@@ -6,7 +6,7 @@ env:
 
 on:
   push:
-    branches: [ main ]
+    branches: [ fake-branch-to-test-linter ]
   pull_request:
     branches: [ main ]
 
