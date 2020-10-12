@@ -1,12 +1,14 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -57,12 +59,15 @@ type Certificates struct {
 // Run runs the certificate component
 func (c *Certificates) Run() error {
 
+	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
+
+	caCertPath, caCertKey := filepath.Join(constant.CertRoot, "ca.crt"), filepath.Join(constant.CertRoot, "ca.key")
+
 	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
 	}
 
-	caCertPath, caCertKey := filepath.Join(constant.CertRoot, "ca.crt"), filepath.Join(constant.CertRoot, "ca.key")
 	// We need CA cert loaded to generate client configs
 	logrus.Debugf("CA key and cert exists, loading")
 	cert, err := ioutil.ReadFile(caCertPath)
@@ -71,86 +76,91 @@ func (c *Certificates) Run() error {
 	}
 	c.CACert = string(cert)
 
-	// Front proxy CA
-	if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
-		return err
-	}
+	eg.Go(func() error {
+		// Front proxy CA
+		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
+			return err
+		}
 
-	proxyCertPath, proxyCertKey := filepath.Join(constant.CertRoot, "front-proxy-ca.crt"), filepath.Join(constant.CertRoot, "front-proxy-ca.key")
+		proxyCertPath, proxyCertKey := filepath.Join(constant.CertRoot, "front-proxy-ca.crt"), filepath.Join(constant.CertRoot, "front-proxy-ca.key")
 
-	proxyClientReq := certificate.Request{
-		Name:   "front-proxy-client",
-		CN:     "front-proxy-client",
-		O:      "front-proxy-client",
-		CACert: proxyCertPath,
-		CAKey:  proxyCertKey,
-	}
-	if _, err := c.CertManager.EnsureCertificate(proxyClientReq, constant.ApiserverUser); err != nil {
-		return err
-	}
+		proxyClientReq := certificate.Request{
+			Name:   "front-proxy-client",
+			CN:     "front-proxy-client",
+			O:      "front-proxy-client",
+			CACert: proxyCertPath,
+			CAKey:  proxyCertKey,
+		}
+		_, err := c.CertManager.EnsureCertificate(proxyClientReq, constant.ApiserverUser)
 
-	// admin cert & kubeconfig
-	adminReq := certificate.Request{
-		Name:   "admin",
-		CN:     "kubernetes-admin",
-		O:      "system:masters",
-		CACert: caCertPath,
-		CAKey:  caCertKey,
-	}
-	adminCert, err := c.CertManager.EnsureCertificate(adminReq, "root")
-	if err != nil {
 		return err
-	}
-	if err := kubeConfig(constant.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
-		return err
-	}
+	})
 
-	if err := generateKeyPair("sa"); err != nil {
-		return err
-	}
+	eg.Go(func() error {
+		// admin cert & kubeconfig
+		adminReq := certificate.Request{
+			Name:   "admin",
+			CN:     "kubernetes-admin",
+			O:      "system:masters",
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		adminCert, err := c.CertManager.EnsureCertificate(adminReq, "root")
+		if err != nil {
+			return err
+		}
+		if err := kubeConfig(constant.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
+			return err
+		}
 
-	ccmReq := certificate.Request{
-		Name:   "ccm",
-		CN:     "system:kube-controller-manager",
-		O:      "system:kube-controller-manager",
-		CACert: caCertPath,
-		CAKey:  caCertKey,
-	}
-	ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, constant.ControllerManagerUser)
-	if err != nil {
-		return err
-	}
+		return generateKeyPair("sa")
+	})
 
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key); err != nil {
-		return err
-	}
+	eg.Go(func() error {
+		ccmReq := certificate.Request{
+			Name:   "ccm",
+			CN:     "system:kube-controller-manager",
+			O:      "system:kube-controller-manager",
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, constant.ControllerManagerUser)
 
-	schedulerReq := certificate.Request{
-		Name:   "scheduler",
-		CN:     "system:kube-scheduler",
-		O:      "system:kube-scheduler",
-		CACert: caCertPath,
-		CAKey:  caCertKey,
-	}
-	schedulerCert, err := c.CertManager.EnsureCertificate(schedulerReq, constant.SchedulerUser)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if err := kubeConfig(filepath.Join(constant.CertRoot, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key); err != nil {
-		return err
-	}
+		return kubeConfig(filepath.Join(constant.CertRoot, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
+	})
 
-	kubeletClientReq := certificate.Request{
-		Name:   "apiserver-kubelet-client",
-		CN:     "apiserver-kubelet-client",
-		O:      "system:masters",
-		CACert: caCertPath,
-		CAKey:  caCertKey,
-	}
-	if _, err := c.CertManager.EnsureCertificate(kubeletClientReq, constant.ApiserverUser); err != nil {
+	eg.Go(func() error {
+		schedulerReq := certificate.Request{
+			Name:   "scheduler",
+			CN:     "system:kube-scheduler",
+			O:      "system:kube-scheduler",
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		schedulerCert, err := c.CertManager.EnsureCertificate(schedulerReq, constant.SchedulerUser)
+		if err != nil {
+			return err
+		}
+
+		return kubeConfig(filepath.Join(constant.CertRoot, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
+	})
+
+
+	eg.Go(func() error {
+		kubeletClientReq := certificate.Request{
+			Name:   "apiserver-kubelet-client",
+			CN:     "apiserver-kubelet-client",
+			O:      "system:masters",
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		_, err := c.CertManager.EnsureCertificate(kubeletClientReq, constant.ApiserverUser)
 		return err
-	}
+	})
 
 	hostnames := []string{
 		"kubernetes",
@@ -171,32 +181,35 @@ func (c *Certificates) Run() error {
 	}
 	hostnames = append(hostnames, internalAPIAddress)
 
-	serverReq := certificate.Request{
-		Name:      "server",
-		CN:        "kubernetes",
-		O:         "kubernetes",
-		CACert:    caCertPath,
-		CAKey:     caCertKey,
-		Hostnames: hostnames,
-	}
-	if _, err := c.CertManager.EnsureCertificate(serverReq, constant.ApiserverUser); err != nil {
-		return err
-	}
+	eg.Go(func() error {
+		serverReq := certificate.Request{
+			Name:      "server",
+			CN:        "kubernetes",
+			O:         "kubernetes",
+			CACert:    caCertPath,
+			CAKey:     caCertKey,
+			Hostnames: hostnames,
+		}
+		_, err = c.CertManager.EnsureCertificate(serverReq, constant.ApiserverUser)
 
-	mkeAPIReq := certificate.Request{
-		Name:      "mke-api",
-		CN:        "mke-api",
-		O:         "kubernetes",
-		CACert:    caCertPath,
-		CAKey:     caCertKey,
-		Hostnames: hostnames,
-	}
-	// TODO Not sure about the user...
-	if _, err := c.CertManager.EnsureCertificate(mkeAPIReq, constant.ApiserverUser); err != nil {
 		return err
-	}
+	})
 
-	return nil
+	eg.Go(func() error {
+		mkeAPIReq := certificate.Request{
+			Name:      "mke-api",
+			CN:        "mke-api",
+			O:         "kubernetes",
+			CACert:    caCertPath,
+			CAKey:     caCertKey,
+			Hostnames: hostnames,
+		}
+		// TODO Not sure about the user...
+		_, err := c.CertManager.EnsureCertificate(mkeAPIReq, constant.ApiserverUser)
+		return err
+	})
+
+	return eg.Wait()
 }
 
 // Stop does nothing, the cert component is not constantly running
