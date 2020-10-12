@@ -26,7 +26,8 @@ func (m *Manager) Init() error {
 	g := new(errgroup.Group)
 
 	for _, comp := range m.components {
-		g.Go(comp.Init)
+		c := comp
+		g.Go(c.Init)
 	}
 	err := g.Wait()
 	return err
