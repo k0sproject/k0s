@@ -5,6 +5,7 @@ import (
 	"context"
 	"io/ioutil"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 	"path"
 	"path/filepath"
 
@@ -31,20 +32,18 @@ type Applier struct {
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string) (Applier, error) {
+func NewApplier(dir string) Applier {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{
 		"component": "applier",
 		"bundle":    name,
 	})
 
-	a := Applier{
+	return Applier{
 		log:  log,
 		Dir:  dir,
 		Name: name,
 	}
-
-	return a, nil
 }
 
 func (a *Applier) init() error {
@@ -72,7 +71,13 @@ func (a *Applier) init() error {
 // Apply resources
 func (a *Applier) Apply() error {
 	if a.client == nil {
-		a.init()
+		err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+			return true
+		}, a.init)
+
+		if err != nil {
+			return err
+		}
 	}
 	files, err := filepath.Glob(path.Join(a.Dir, "*.yaml"))
 	if err != nil {
@@ -80,16 +85,33 @@ func (a *Applier) Apply() error {
 	}
 	resources, err := a.parseFiles(files)
 	stack := Stack{
-		Name:      "mke-stack",
+		Name:      a.Name,
 		Resources: resources,
 		Client:    a.client,
 		Discovery: a.discoveryClient,
 	}
+	a.log.Debug("applying stack")
 	err = stack.Apply(context.Background(), true)
 	if err != nil {
+		a.log.WithError(err).Warn("stack apply failed")
 		a.discoveryClient.Invalidate()
+	} else {
+		a.log.Debug("successfully applied stack")
 	}
 
+	return err
+}
+
+// Delete deletes the entire stack by applying it with empty set of resources
+func (a *Applier) Delete() error {
+	stack := Stack{
+		Name:      a.Name,
+		Resources: []*unstructured.Unstructured{},
+		Client:    a.client,
+		Discovery: a.discoveryClient,
+	}
+	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
+	err := stack.Apply(context.Background(), true)
 	return err
 }
 

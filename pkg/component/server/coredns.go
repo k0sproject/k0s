@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -240,6 +242,11 @@ func (c *CoreDNS) Init() error {
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
+	corednsDir := path.Join(constant.DataDir, "manifests", "coredns")
+	err := os.MkdirAll(corednsDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 
 	c.tickerDone = make(chan struct{})
 
@@ -265,7 +272,7 @@ func (c *CoreDNS) Run() error {
 					Name:     "coredns",
 					Template: coreDNSTemplate,
 					Data:     config,
-					Path:     filepath.Join(constant.DataDir, "manifests", "coredns.yaml"),
+					Path:     filepath.Join(corednsDir, "coredns.yaml"),
 				}
 				err = tw.Write()
 				if err != nil {

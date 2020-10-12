@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -33,15 +35,20 @@ func (d *DefaultPSP) Init() error {
 
 // Run reconciles the mke default PSP rules
 func (d *DefaultPSP) Run() error {
+	pspDir := path.Join(constant.ManifestsDir, "defaultpsp")
+	err := os.MkdirAll(pspDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 	tw := util.TemplateWriter{
 		Name:     "default-psp",
 		Template: defaultPSPTemplate,
 		Data: struct{ DefaultPSP string }{
 			DefaultPSP: d.clusterSpec.PodSecurityPolicy.DefaultPolicy,
 		},
-		Path: filepath.Join(constant.DataDir, "manifests", "default-psp.yaml"),
+		Path: filepath.Join(pspDir, "default-psp.yaml"),
 	}
-	err := tw.Write()
+	err = tw.Write()
 	if err != nil {
 		return errors.Wrap(err, "error writing default PSP manifests, will NOT retry")
 	}

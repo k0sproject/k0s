@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -26,13 +28,18 @@ func (s *SystemRBAC) Init() error {
 
 // Run reconciles the mke related system RBAC rules
 func (s *SystemRBAC) Run() error {
+	rbacDir := path.Join(constant.ManifestsDir, "bootstraprbac")
+	err := os.MkdirAll(rbacDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 	tw := util.TemplateWriter{
 		Name:     "bootstrap-rbac",
 		Template: bootstrapRBACTemplate,
 		Data:     struct{}{},
-		Path:     filepath.Join(constant.DataDir, "manifests", "bootstrap-rbac.yaml"),
+		Path:     filepath.Join(rbacDir, "bootstrap-rbac.yaml"),
 	}
-	err := tw.Write()
+	err = tw.Write()
 	if err != nil {
 		return errors.Wrap(err, "error writing bootstrap-rbac manifests, will NOT retry")
 

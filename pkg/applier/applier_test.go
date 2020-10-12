@@ -45,7 +45,7 @@ spec:
 	ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400)
 	ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400)
 	assert.Nil(t, err)
-	a, err := NewApplier(dir)
+	a := NewApplier(dir)
 	assert.Nil(t, err)
 
 	a.client = fake.NewSimpleDynamicClient(runtime.NewScheme())
