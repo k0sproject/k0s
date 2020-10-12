@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"html/template"
 	"io/ioutil"
 	"path"
@@ -83,6 +84,9 @@ func CreateCommand() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			// Disable logrus for token commands
+			logrus.SetOutput(ioutil.Discard)
+
 			clusterConfig := ConfigFromYaml(c)
 			expiry, err := time.ParseDuration(c.String("expiry"))
 			if err != nil {

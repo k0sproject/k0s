@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+
+	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 )
 
 // ConfigFromYaml returns given MKE config or default config
