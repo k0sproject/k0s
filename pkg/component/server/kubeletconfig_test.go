@@ -2,7 +2,6 @@ package server
 
 import (
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"strings"
@@ -60,6 +59,7 @@ func Test_KubeletConfig(t *testing.T) {
 			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
+			assert.NoError(t, err)
 
 			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
@@ -125,33 +125,6 @@ func assertRole(t *testing.T, spec string, name string) {
 func assertRoleBinding(t *testing.T, spec string, name string) {
 	dst := map[string]interface{}{}
 	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	assert.Equal(t, dst["kind"], "RoleBinding")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], "system:bootstrappers:"+name)
-}
-
-func assertConfigMapForProfile(t *testing.T, spec string, name string) {
-	dst := map[string]interface{}{}
-	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-
-	assert.Equal(t, dst["kind"], "ConfigMap")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], name)
-	spec, foundSpec := dst["data"].(map[string]interface{})["kubelet"].(string)
-	assert.True(t, foundSpec, "kubelet config map must have embeded kubelet config")
-	assert.True(t, strings.TrimSpace(spec) != "", "kubelet config map must have non-empty embeded kubelet config")
-}
-
-func assertRoleForProfile(t *testing.T, spec string, name string) {
-	dst := map[string]interface{}{}
-	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	spew.Dump(dst)
-	assert.Equal(t, dst["kind"], "Role")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], "system:bootstrappers:"+name)
-}
-
-func assertRoleBindingForProfile(t *testing.T, spec string, name string) {
-	dst := map[string]interface{}{}
-	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	spew.Dump(dst)
 	assert.Equal(t, dst["kind"], "RoleBinding")
 	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], "system:bootstrappers:"+name)
 }

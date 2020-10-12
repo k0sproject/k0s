@@ -19,7 +19,6 @@ import (
 type Manager struct {
 	client               kubernetes.Interface
 	applier              Applier
-	bundlePath           string
 	cancelWatcher        context.CancelFunc
 	cancelLeaderElection context.CancelFunc
 	log                  *logrus.Entry

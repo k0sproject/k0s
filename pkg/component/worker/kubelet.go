@@ -26,7 +26,6 @@ type Kubelet struct {
 	Profile             string
 	supervisor          supervisor.Supervisor
 	dataDir             string
-	volumePluginDir     string
 }
 
 // KubeletConfig defines the kubelet related config options
