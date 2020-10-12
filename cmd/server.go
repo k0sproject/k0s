@@ -40,6 +40,11 @@ func ServerCommand() *cli.Command {
 				Name:  "enable-worker",
 				Value: false,
 			},
+			&cli.StringFlag{
+				Name:  "profile",
+				Value: "default",
+				Usage: "worker profile to use on the node",
+			},
 		},
 		ArgsUsage: "[join-token]",
 	}
@@ -82,6 +87,9 @@ func startServer(ctx *cli.Context) error {
 		}
 
 		err = caSyncer.Init()
+		if err != nil {
+			return err
+		}
 		err = caSyncer.Run()
 		if err != nil {
 			logrus.Warnf("something failed in CA sync: %s", err.Error())
@@ -165,7 +173,7 @@ func startServer(ctx *cli.Context) error {
 	}
 
 	if err == nil && ctx.Bool("enable-worker") {
-		err = enableServerWorker(clusterConfig, componentManager)
+		err = enableServerWorker(clusterConfig, componentManager, ctx.String("profile"))
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			componentManager.Stop()
@@ -247,7 +255,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 	return reconcilers
 }
 
-func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *component.Manager) error {
+func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *component.Manager, profile string) error {
 	if !util.FileExists(path.Join(constant.DataDir, "kubelet.conf")) {
 		// wait for server to start up
 		err := retry.Do(func() error {
@@ -288,6 +296,7 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *c
 	containerd := &worker.ContainerD{}
 	kubelet := &worker.Kubelet{
 		KubeletConfigClient: kubeletConfigClient,
+		Profile:             profile,
 	}
 	containerd.Init()
 	kubelet.Init()

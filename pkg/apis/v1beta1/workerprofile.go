@@ -5,7 +5,7 @@ import (
 )
 
 // WorkerProfiles profiles collection
-type WorkerProfiles map[string]WorkerProfile
+type WorkerProfiles []WorkerProfile
 
 // Validate validates all profiles
 func (wps WorkerProfiles) Validate() []error {
@@ -20,8 +20,8 @@ func (wps WorkerProfiles) Validate() []error {
 
 // WorkerProfile worker profile
 type WorkerProfile struct {
-	Name   string            `yaml:"name"`
-	Values map[string]string `yaml:"values"`
+	Name   string                 `yaml:"name"`
+	Values map[string]interface{} `yaml:"values"`
 }
 
 var lockedFields = map[string]struct{}{
@@ -33,7 +33,7 @@ var lockedFields = map[string]struct{}{
 
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
-	for field, _ := range wp.Values {
+	for field := range wp.Values {
 		if _, found := lockedFields[field]; found {
 			return fmt.Errorf("field `%s` is prohibited to override in worker profile", field)
 		}
