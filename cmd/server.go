@@ -69,8 +69,6 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	componentManager := component.NewManager()
-	// FIXME: Why do we have a const constant.CertRootMode for the perm mode and use different perm in certificate/manager.go:51 !?!?!?
-	// I was trying to use the const here, but everything breaks with it
 	if err := util.InitDirectory(constant.CertRoot, constant.CertRootMode); err != nil {
 		return err
 	}

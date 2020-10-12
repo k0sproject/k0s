@@ -64,8 +64,8 @@ check-basic: mke
 	$(MAKE) -C inttest check-basic
 
 .PHONY: check-basic
-check-etcd: mke
-	$(MAKE) -C inttest check-etcd
+check-hacontrolplane: mke
+	$(MAKE) -C inttest check-hacontrolplane
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
