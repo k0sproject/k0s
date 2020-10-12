@@ -94,11 +94,14 @@ func startServer(ctx *cli.Context) error {
 		}
 
 		err = caSyncer.Init()
+		if err != nil {
+			logrus.Warnf("something failed in CA sync: %s", err.Error())
+		}
 		err = caSyncer.Run()
-		perfTimer.Checkpoint("token-join-completed")
 		if err != nil {
 			return errors.Wrapf(err, "CA sync failed")
 		}
+		perfTimer.Checkpoint("token-join-completed")
 	}
 
 	logrus.Infof("using public address: %s", clusterConfig.Spec.API.Address)
@@ -181,7 +184,9 @@ func startServer(ctx *cli.Context) error {
 	if err == nil {
 		// Start all reconcilers
 		for _, reconciler := range reconcilers {
-			reconciler.Run()
+			if err := reconciler.Run(); err != nil {
+				logrus.Errorf("failed to start reconciler: %s", err.Error())
+			}
 		}
 	}
 	perfTimer.Checkpoint("started-reconcilers")
@@ -191,7 +196,9 @@ func startServer(ctx *cli.Context) error {
 		err = enableServerWorker(clusterConfig, componentManager, ctx.String("profile"))
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
-			componentManager.Stop()
+			if err := componentManager.Stop(); err != nil {
+				logrus.Errorf("componentManager.Stop: %s", err)
+			}
 			return err
 		}
 		perfTimer.Checkpoint("started-worker")
@@ -205,13 +212,13 @@ func startServer(ctx *cli.Context) error {
 
 	// Stop all reconcilers first
 	for _, reconciler := range reconcilers {
-		reconciler.Stop()
+		if err := reconciler.Stop(); err != nil {
+			logrus.Warningf("failed to stop reconciler: %s", err.Error())
+		}
 	}
 
 	// Stop components
-	componentManager.Stop()
-
-	return nil
+	return componentManager.Stop()
 }
 
 func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]component.Component {
@@ -316,10 +323,18 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *c
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
 	}
-	containerd.Init()
-	kubelet.Init()
-	containerd.Run()
-	kubelet.Run()
+	if err := containerd.Init(); err != nil {
+		return err
+	}
+	if err := kubelet.Init(); err != nil {
+		return err
+	}
+	if err := containerd.Run(); err != nil {
+		return err
+	}
+	if err := kubelet.Run(); err != nil {
+		return err
+	}
 
 	componentManager.Add(containerd)
 	componentManager.Add(kubelet)

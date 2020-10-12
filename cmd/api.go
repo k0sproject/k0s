@@ -114,6 +114,10 @@ func etcdHandler() http.Handler {
 
 		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
 		etcdCAKey, err := ioutil.ReadFile(etcdCaCertKey)
 
 		if err != nil {
@@ -126,7 +130,10 @@ func etcdHandler() http.Handler {
 			Cert: etcdCACert,
 		}
 		resp.Header().Set("content-type", "application/json")
-		json.NewEncoder(resp).Encode(etcdResp)
+		if err := json.NewEncoder(resp).Encode(etcdResp); err != nil {
+			sendError(err, resp)
+			return
+		}
 	})
 }
 
@@ -146,7 +153,10 @@ func caHandler() http.Handler {
 		caResp.Cert = crt
 
 		resp.Header().Set("content-type", "application/json")
-		json.NewEncoder(resp).Encode(caResp)
+		if err := json.NewEncoder(resp).Encode(caResp); err != nil {
+			sendError(err, resp)
+			return
+		}
 	})
 }
 
@@ -159,7 +169,10 @@ func sendError(err error, resp http.ResponseWriter, status ...int) {
 	logrus.Error(err)
 	resp.Header().Set("Content-Type", "text/plain")
 	resp.WriteHeader(code)
-	resp.Write([]byte(err.Error()))
+	if _, err := resp.Write([]byte(err.Error())); err != nil {
+		sendError(err, resp)
+		return
+	}
 }
 
 func authMiddleware(next http.Handler) http.Handler {

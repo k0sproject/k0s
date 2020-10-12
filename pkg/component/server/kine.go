@@ -49,7 +49,9 @@ func (k *Kine) Init() error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to chown dir %s", filepath.Dir(dsURL.Path))
 		}
-		os.Chown(dsURL.Path, k.uid, k.gid) // ignore error. file may not exist
+		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil {
+			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
+		}
 	}
 	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode, constant.Group)
 }

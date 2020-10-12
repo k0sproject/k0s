@@ -105,9 +105,12 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		_ = os.Chown(certFile, uid, gid)
 
 		cert, err := ioutil.ReadFile(certFile)
+		if err != nil {
+			return Certificate{}, errors.Wrapf(err, "failed to read ca cert %s for %s", certFile, certReq.Name)
+		}
 		key, err := ioutil.ReadFile(keyFile)
 		if err != nil {
-			return Certificate{}, errors.Wrapf(err, "failed to read ca cert or key for %s", certReq.Name)
+			return Certificate{}, errors.Wrapf(err, "failed to read ca key %s for %s", keyFile, certReq.Name)
 		}
 
 		return Certificate{

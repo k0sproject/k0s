@@ -58,7 +58,8 @@ func (s *Supervisor) processWaitQuit() bool {
 			select {
 			case <-time.After(5 * time.Second):
 				continue
-			case err = <-waitresult:
+			// TODO: what is supposed to be done here?
+			case err = <-waitresult: // nolint: ineffassign,staticcheck
 				return true
 			}
 		}

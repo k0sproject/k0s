@@ -48,9 +48,15 @@ func (e *Etcd) Init() error {
 	e.gid, _ = util.GetGID(constant.Group)
 
 	e.certDir = path.Join(constant.CertRoot, "etcd")
-	os.Chown(path.Join(e.certDir, "ca.crt"), e.uid, e.gid)
-	os.Chown(path.Join(e.certDir, "server.crt"), e.uid, e.gid)
-	os.Chown(path.Join(e.certDir, "server.key"), e.uid, e.gid)
+	for _, f := range []string{
+		"ca.crt",
+		"server.crt",
+		"server.key",
+	} {
+		if err := os.Chown(path.Join(e.certDir, f), e.uid, e.gid); err != nil {
+			return errors.Wrapf(err, "failed to chown %s", f)
+		}
+	}
 
 	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode, constant.Group)
 }

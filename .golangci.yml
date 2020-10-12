@@ -1,0 +1,18 @@
+# This file contains all available configuration options
+# with their default values.
+
+# options for analysis running
+run:
+
+  timeout: 5m
+  skip-dirs-use-default: true
+
+
+  modules-download-mode: readonly
+  allow-parallel-runners: false
+
+linters:
+  disable:
+    - maligned
+    - unused
+  fast: true

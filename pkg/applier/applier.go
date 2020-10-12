@@ -9,10 +9,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
-
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
@@ -26,7 +24,6 @@ type Applier struct {
 	Dir  string
 
 	log             *logrus.Entry
-	watcher         *fsnotify.Watcher
 	client          dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
 }
@@ -84,6 +81,9 @@ func (a *Applier) Apply() error {
 		return err
 	}
 	resources, err := a.parseFiles(files)
+	if err != nil {
+		return err
+	}
 	stack := Stack{
 		Name:      a.Name,
 		Resources: resources,

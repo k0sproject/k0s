@@ -2,16 +2,11 @@ package common
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -125,8 +120,14 @@ func (s *FootlooseSuite) TearDownSuite() {
 			continue
 		}
 		log, err := ssh.ExecWithOutput("cat /tmp/mke-*.log")
+		if err != nil {
+			s.T().Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
+		}
 		logPath := path.Join("/tmp", fmt.Sprintf("%s.log", m.Hostname()))
-		err = ioutil.WriteFile(logPath, []byte(log), 0700)
+		if err := ioutil.WriteFile(logPath, []byte(log), 0700); err != nil {
+			s.T().Logf("failed to save logs from machine %s: %s", m.Hostname(), err)
+		}
+
 		s.T().Logf("wrote log of node %s to %s", m.Hostname(), logPath)
 	}
 
@@ -441,54 +442,4 @@ func getTestTimeout() time.Duration {
 		}
 	}
 	return DefaultTimeout
-}
-
-func generateKeyPair(dir string) error {
-	keyFile := filepath.Join(dir, "id_rsa.key")
-	pubFile := filepath.Join(dir, "id_rsa.pub")
-
-	reader := rand.Reader
-	bitSize := 2048
-
-	key, err := rsa.GenerateKey(reader, bitSize)
-	if err != nil {
-		return err
-	}
-
-	var privateKey = &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	}
-
-	outFile, err := os.Create(keyFile)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	err = pem.Encode(outFile, privateKey)
-
-	// note to the next reader: key.Public() != key.PublicKey
-	pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())
-	if err != nil {
-		return err
-	}
-
-	var pemkey = &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubBytes,
-	}
-
-	pemfile, err := os.Create(pubFile)
-	if err != nil {
-		return err
-	}
-	defer pemfile.Close()
-
-	err = pem.Encode(pemfile, pemkey)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
