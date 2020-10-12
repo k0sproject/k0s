@@ -22,6 +22,7 @@ type Manager struct {
 	cancelWatcher        context.CancelFunc
 	cancelLeaderElection context.CancelFunc
 	log                  *logrus.Entry
+	bundlePath           string
 	stacks               map[string]*StackApplier
 }
 

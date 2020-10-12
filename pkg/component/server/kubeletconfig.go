@@ -3,6 +3,8 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path"
 	"path/filepath"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -84,9 +86,14 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 }
 
 func (k *KubeletConfig) save(data []byte) error {
-	path := filepath.Join(constant.ManifestsDir, "kubelet", "kubelet-config.yaml")
+	kubeletDir := path.Join(constant.ManifestsDir, "kubelet")
+	err := os.MkdirAll(kubeletDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 
-	if err := ioutil.WriteFile(path, data, constant.CertRootMode); err != nil {
+	filePath := filepath.Join(kubeletDir, "kubelet-config.yaml")
+	if err := ioutil.WriteFile(filePath, data, constant.CertRootMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
 	return nil
