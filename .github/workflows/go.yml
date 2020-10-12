@@ -163,7 +163,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: codegen1
+      - name: codegen
         run: make pkg/assets/zz_generated_offsets.go
         env:
           EMBEDDED_BINS_BUILDMODE: none
