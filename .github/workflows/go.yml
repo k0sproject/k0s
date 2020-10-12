@@ -85,6 +85,14 @@ jobs:
       - name: Run test .
         run: make -C inttest check-basic
 
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
+
+
   smoketest-hacontrolplane:
     name: Smoke test for HA controlplane operations
     needs: build
@@ -108,6 +116,13 @@ jobs:
 
       - name: Run hacontrolplane test .
         run: make -C inttest check-hacontrolplane
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
 
   smoketest-network:
     name: Smoke test for network
@@ -133,6 +148,13 @@ jobs:
 
       - name: Run smoke test .
         run: make -C inttest check-etcd
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
 
   lint:
     name: Lint
