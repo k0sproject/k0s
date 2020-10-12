@@ -23,10 +23,10 @@ var (
 // Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
 	KubeletConfigClient *KubeletConfigClient
-
-	supervisor      supervisor.Supervisor
-	dataDir         string
-	volumePluginDir string
+	Profile             string
+	supervisor          supervisor.Supervisor
+	dataDir             string
+	volumePluginDir     string
 }
 
 // KubeletConfig defines the kubelet related config options
@@ -77,7 +77,7 @@ func (k *Kubelet) Run() error {
 	}
 
 	err := retry.Do(func() error {
-		kubeletconfig, err := k.KubeletConfigClient.Get()
+		kubeletconfig, err := k.KubeletConfigClient.Get(k.Profile)
 		if err != nil {
 			return err
 		}
