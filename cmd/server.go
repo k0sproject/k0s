@@ -94,9 +94,6 @@ func startServer(ctx *cli.Context) error {
 		}
 
 		err = caSyncer.Init()
-		if err != nil {
-			return err
-		}
 		err = caSyncer.Run()
 		perfTimer.Checkpoint("token-join-completed")
 		if err != nil {

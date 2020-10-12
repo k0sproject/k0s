@@ -57,11 +57,11 @@ func Test_KubeletConfig(t *testing.T) {
 			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[6]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := k.getDefaultProfile(dnsAddr)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 
-			defaultProfileKubeletConfig = k.getDefaultProfile(dnsAddr)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 

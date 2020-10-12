@@ -66,7 +66,7 @@ func (a *APISpec) APIAddress() string {
 	return fmt.Sprintf("https://%s:6443", a.Address)
 }
 
-// ControllerJoinAddress ...
+// ControllerJoinAddress returns the controller join APIs address
 func (a *APISpec) ControllerJoinAddress() string {
 	return fmt.Sprintf("https://%s:9443", a.Address)
 }

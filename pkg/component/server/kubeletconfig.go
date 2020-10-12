@@ -58,22 +58,22 @@ func (k *KubeletConfig) Run() error {
 
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
-	defaultProfile := k.getDefaultProfile(dnsAddress)
+	defaultProfile := getDefaultProfile(dnsAddress)
 
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
 
 	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := k.getDefaultProfile(dnsAddress)
-		if err := k.mergeProfiles(&profileConfig,
-			profile.Values); err != nil {
+		profileConfig := getDefaultProfile(dnsAddress)
+		merged, err := mergeProfiles(&profileConfig, profile.Values)
+		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
 		}
 
 		if err := k.writeConfigMapWithProfile(manifest,
 			profile.Name,
-			profileConfig); err != nil {
+			merged); err != nil {
 			return nil, fmt.Errorf("can't write manifest for profile config map: %v", err)
 		}
 	}
@@ -83,7 +83,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 func (k *KubeletConfig) save(data []byte) error {
 	path := filepath.Join(constant.ManifestsDir, "kubelet", "kubelet-config.yaml")
 
-	if err := ioutil.WriteFile(path, data, 0700); err != nil {
+	if err := ioutil.WriteFile(path, data, constant.CertRootMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
 	return nil
@@ -110,12 +110,7 @@ func (k *KubeletConfig) writeConfigMapWithProfile(w io.Writer, name string, prof
 	return tw.WriteToBuffer(w)
 }
 
-// mergeProfiles merges b to the a, a is modified inplace
-func (k *KubeletConfig) mergeProfiles(a *unstructuredYamlObject, b unstructuredYamlObject) error {
-	return mergo.Merge(a, b, mergo.WithOverride)
-}
-
-func (l *KubeletConfig) getDefaultProfile(dnsAddess string) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
@@ -142,7 +137,7 @@ func (l *KubeletConfig) getDefaultProfile(dnsAddess string) unstructuredYamlObje
 				"cacheUnauthorizedTTL": "0s",
 			},
 		},
-		"clusterDNS":    []string{dnsAddess},
+		"clusterDNS":    []string{dnsAddress},
 		"clusterDomain": "cluster.local",
 		"tlsCipherSuites": []string{
 			"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
@@ -167,7 +162,7 @@ metadata:
   namespace: kube-system
 data:
   kubelet: | 
-{{ .KubeletConfigYAML |indent 4 }}
+{{ .KubeletConfigYAML | nindent 4 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -197,3 +192,11 @@ subjects:
     kind: Group
     name: system:nodes
 `
+
+// mergeInto merges b to the a, a is modified inplace
+func mergeProfiles(a *unstructuredYamlObject, b unstructuredYamlObject) (unstructuredYamlObject, error) {
+	if err := mergo.Merge(a, b, mergo.WithOverride); err != nil {
+		return nil, err
+	}
+	return *a, nil
+}
