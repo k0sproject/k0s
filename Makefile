@@ -8,8 +8,9 @@ GO_SRCS := $(shell find . -type f -name '*.go')
 
 EMBEDDED_BINS_BUILDMODE ?= docker
 
+# mke runs on linux even if its built on mac or windows
 GOOS ?= linux
-GOARCH ?= amd64
+GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
 VERSION ?= dev
@@ -74,4 +75,8 @@ check-unit: pkg/assets/zz_generated_offsets.go
 clean:
 	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata
 	$(MAKE) -C embedded-bins clean
+
+.PHONY: bindata-manifests
+bindata-manifests:
+	go-bindata -o static/gen_calico.go -pkg static -prefix static static/...
 

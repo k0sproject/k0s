@@ -43,6 +43,7 @@ func (s *NetworkSuite) TestSigNetwork() {
 	sonoArgs := []string{
 		"run",
 		"--wait=1200", // 20mins
+		"--plugin=e2e",
 		"--plugin-env=e2e.E2E_USE_GO_RUNNER=true",
 		`--e2e-focus=\[sig-network\].*\[Conformance\]`,
 		`--e2e-skip=\[Serial\]`,

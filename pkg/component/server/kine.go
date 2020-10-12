@@ -51,7 +51,7 @@ func (k *Kine) Init() error {
 		}
 		os.Chown(dsURL.Path, k.uid, k.gid) // ignore error. file may not exist
 	}
-	return assets.Stage(constant.DataDir, path.Join("bin", "kine"), constant.Group)
+	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode, constant.Group)
 }
 
 // Run runs kine
@@ -61,7 +61,7 @@ func (k *Kine) Run() error {
 
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
-		BinPath: assets.StagedBinPath(constant.DataDir, "kine"),
+		BinPath: assets.BinPath("kine"),
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),

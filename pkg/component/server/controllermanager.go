@@ -47,7 +47,7 @@ func (a *ControllerManager) Init() error {
 	// ca.key so let it own it.
 	os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1)
 
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-controller-manager"), constant.Group)
+	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode, constant.Group)
 }
 
 // Run runs kube ControllerManager
@@ -84,7 +84,7 @@ func (a *ControllerManager) Run() error {
 	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-controller-manager",
-		BinPath: assets.StagedBinPath(constant.DataDir, "kube-controller-manager"),
+		BinPath: assets.BinPath("kube-controller-manager"),
 		Args:    cmArgs,
 		UID:     a.uid,
 		GID:     a.gid,

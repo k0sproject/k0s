@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"path"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -9,8 +11,6 @@ import (
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // APIServer implement the component interface to run kube api
@@ -56,7 +56,7 @@ func (a *APIServer) Init() error {
 	}
 	a.gid, _ = util.GetGID(constant.Group)
 
-	return assets.Stage(constant.DataDir, path.Join("bin", "kube-apiserver"), constant.Group)
+	return assets.Stage(constant.BinDir, "kube-apiserver", constant.BinDirMode, constant.Group)
 }
 
 // Run runs kube api
@@ -107,7 +107,7 @@ func (a *APIServer) Run() error {
 
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-apiserver",
-		BinPath: assets.StagedBinPath(constant.DataDir, "kube-apiserver"),
+		BinPath: assets.BinPath("kube-apiserver"),
 		Args:    apiServerArgs,
 		UID:     a.uid,
 		GID:     a.gid,

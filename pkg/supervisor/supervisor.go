@@ -41,7 +41,10 @@ func (s *Supervisor) processWaitQuit() bool {
 	}()
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	ioutil.WriteFile(s.PidFile, pidbuf, 0644)
+	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootMode)
+	if err != nil {
+		log.Warnf("Failed to write file %s: %v", s.PidFile, err)
+	}
 	defer os.Remove(s.PidFile)
 
 	select {
@@ -71,12 +74,14 @@ func (s *Supervisor) processWaitQuit() bool {
 
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise() {
+	log := logrus.WithField("component", s.Name)
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
 	s.PidFile = path.Join(constant.RunDir, s.Name) + ".pid"
-	util.InitDirectory(constant.RunDir, 0755) // ignore errors in case directory exists
+	if err := util.InitDirectory(constant.RunDir, constant.BinDirMode); err != nil {
+		log.Warnf("failed to initialize dir: %v", err)
+	}
 	go func() {
-		log := logrus.WithField("component", s.Name)
 		log.Info("Starting to supervise")
 		defer func() {
 			s.done <- true

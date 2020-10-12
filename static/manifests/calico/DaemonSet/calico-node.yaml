@@ -150,7 +150,7 @@ spec:
                   key: calico_backend
             # Cluster type to identify the deployment type
             - name: CLUSTER_TYPE
-              value: "k8s,bgp"
+              value: "k8s"
             # Auto-detect the BGP IP address.
             - name: IP
               value: "autodetect"
@@ -220,7 +220,6 @@ spec:
               command:
               - /bin/calico-node
               - -felix-live
-              - -bird-live
             periodSeconds: 10
             initialDelaySeconds: 10
             failureThreshold: 6
@@ -229,7 +228,6 @@ spec:
               command:
               - /bin/calico-node
               - -felix-ready
-              - -bird-ready
             periodSeconds: 10
           volumeMounts:
             - mountPath: /lib/modules
@@ -246,13 +244,6 @@ spec:
               readOnly: false
             - name: policysync
               mountPath: /var/run/nodeagent
-            # For eBPF mode, we need to be able to mount the BPF filesystem at /sys/fs/bpf so we mount in the
-            # parent directory.
-            - name: sysfs
-              mountPath: /sys/fs/
-              # Bidirectional means that, if we mount the BPF filesystem at /sys/fs/bpf it will propagate to the host.
-              # If the host is known to mount that filesystem already then Bidirectional can be omitted.
-              mountPropagation: Bidirectional
       volumes:
         # Used by calico-node.
         - name: lib-modules
@@ -268,10 +259,6 @@ spec:
           hostPath:
             path: /run/xtables.lock
             type: FileOrCreate
-        - name: sysfs
-          hostPath:
-            path: /sys/fs/
-            type: DirectoryOrCreate
         # Used to install CNI.
         - name: cni-bin-dir
           hostPath:

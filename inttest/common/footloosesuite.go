@@ -88,8 +88,15 @@ func (s *FootlooseSuite) SetupSuite() {
 		os.Exit(1)
 	}()
 
-	// SSH through cluster will wait until we actually can get it through
-	err = s.Cluster.SSH("controller0", "root", "hostname")
+	// SSH through cluster should wait until we actually can get it through, but it doesn't
+	for i := 0; i < 10; i++ {
+		err = s.Cluster.SSH("controller0", "root", "hostname")
+		if err == nil {
+			break
+		}
+		s.T().Logf("retrying ssh to controller0")
+		time.Sleep(100 * time.Millisecond)
+	}
 	if err != nil {
 		s.FailNowf("failed to ssh to controller0: %s", err.Error())
 		s.T().FailNow()
@@ -175,7 +182,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("nohup mke server >/tmp/mke-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup mke server >/tmp/mke-server.log 2>&1 &")
 	if err != nil {
 		return err
 	}
@@ -395,7 +402,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			config.MachineReplicas{
 				Count: s.ControllerCount,
 				Spec: config.Machine{
-					Image:        "quay.io/footloose/ubuntu18.04",
+					Image:        "footloose-alpine",
 					Name:         "controller%d",
 					Privileged:   true,
 					Volumes:      volumes,
@@ -405,7 +412,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			config.MachineReplicas{
 				Count: s.WorkerCount,
 				Spec: config.Machine{
-					Image:        "quay.io/footloose/ubuntu18.04",
+					Image:        "footloose-alpine",
 					Name:         "worker%d",
 					Privileged:   true,
 					Volumes:      volumes,
