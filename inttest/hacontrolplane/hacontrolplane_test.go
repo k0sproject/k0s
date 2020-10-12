@@ -1,4 +1,4 @@
-package etcd
+package hacontrolplane
 
 import (
 	"encoding/json"
@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type EtcdSuite struct {
+type HAControlplaneSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *EtcdSuite) getMembers(fromControllerIdx int) map[string]string {
+func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
 	node := fmt.Sprintf("controller%d", fromControllerIdx)
@@ -33,7 +33,7 @@ func (s *EtcdSuite) getMembers(fromControllerIdx int) map[string]string {
 	return members.Members
 }
 
-func (s *EtcdSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
+func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
 	node := fmt.Sprintf("controller%d", executeOnControllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
@@ -48,7 +48,7 @@ func (s *EtcdSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string
 	s.NoError(err)
 }
 
-func (s *EtcdSuite) getCa(controllerIdx int) string {
+func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 	node := fmt.Sprintf("controller%d", controllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
@@ -58,7 +58,7 @@ func (s *EtcdSuite) getCa(controllerIdx int) string {
 	return ca
 }
 
-func (s *EtcdSuite) TestDeregistration() {
+func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitMainController())
 	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
@@ -84,9 +84,9 @@ func (s *EtcdSuite) TestDeregistration() {
 
 }
 
-func TestEtcdSuite(t *testing.T) {
+func TestHAControlplaneSuite(t *testing.T) {
 
-	s := EtcdSuite{
+	s := HAControlplaneSuite{
 		common.FootlooseSuite{
 			ControllerCount: 2,
 		},

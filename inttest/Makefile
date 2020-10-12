@@ -31,8 +31,8 @@ check-network-vm: bin/sonobuoy
 check-basic: .footloose-alpine.stamp
 	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/basic
 
-check-etcd: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/etcd
+check-hacontrolplane: .footloose-alpine.stamp
+	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/hacontrolplane
 
 .PHONY: clean
 clean:

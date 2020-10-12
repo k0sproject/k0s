@@ -85,8 +85,8 @@ jobs:
       - name: Run test .
         run: make -C inttest check-basic
 
-  smoketest-etcd:
-    name: Smoke test for etcd operations
+  smoketest-hacontrolplane:
+    name: Smoke test for HA controlplane operations
     needs: build
     runs-on: ubuntu-latest
 
@@ -106,8 +106,8 @@ jobs:
             mke
           key: build-${{env.cachePrefix}}
 
-      - name: Run etcd test .
-        run: make -C inttest check-etcd
+      - name: Run hacontrolplane test .
+        run: make -C inttest check-hacontrolplane
 
   smoketest-network:
     name: Smoke test for network
