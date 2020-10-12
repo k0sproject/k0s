@@ -3,6 +3,8 @@ module github.com/Mirantis/mke
 go 1.13
 
 require (
+	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
@@ -11,8 +13,11 @@ require (
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/golangci/golangci-lint v1.31.0 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/imdario/mergo v0.3.6
+	github.com/magiconair/properties v1.8.1
 	github.com/mikefarah/yq/v3 v3.0.0-20200930232032-e0f5cb3c5958 // indirect
+	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0

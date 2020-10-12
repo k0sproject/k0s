@@ -22,9 +22,16 @@ import (
 // WorkerCommand ...
 func WorkerCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "worker",
-		Usage:     "Run worker",
-		Action:    startWorker,
+		Name:   "worker",
+		Usage:  "Run worker",
+		Action: startWorker,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "profile",
+				Value: "default",
+				Usage: "worker profile to use on the node",
+			},
+		},
 		ArgsUsage: "[join-token]",
 	}
 }
@@ -53,6 +60,7 @@ func startWorker(ctx *cli.Context) error {
 	componentManager.Add(&worker.ContainerD{})
 	componentManager.Add(&worker.Kubelet{
 		KubeletConfigClient: kubeletConfigClient,
+		Profile:             ctx.String("profile"),
 	})
 
 	// extract needed components
