@@ -8,7 +8,10 @@ var letters = "abcdefghijklmnopqrstuvwxyz0123456789"
 func RandomString(length int) string {
 
 	bytes := make([]byte, length)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		// Not much we can do on broken system
+		panic("random is broken: " + err.Error())
+	}
 
 	for i, b := range bytes {
 		bytes[i] = letters[b%byte(len(letters))]

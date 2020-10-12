@@ -1,6 +1,8 @@
 package component
 
 import (
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -45,8 +47,17 @@ func (m *Manager) Start() error {
 
 // Stop stops all managed components
 func (m *Manager) Stop() error {
+	errors := make([]error, 0, len(m.components))
 	for i := len(m.components) - 1; i >= 0; i-- {
-		m.components[i].Stop()
+		if err := m.components[i].Stop(); err != nil {
+			errors = append(errors, err)
+		}
+	}
+	if len(errors) != 0 {
+		for _, err := range errors {
+			logrus.Errorf("failed to stop component: %s", err.Error())
+		}
+		return fmt.Errorf("failed to stop components")
 	}
 	return nil
 }

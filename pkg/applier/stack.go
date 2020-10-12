@@ -83,6 +83,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			} else {
 				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
+			return fmt.Errorf("unexpected api error: %v", err)
 		}
 		s.keepResource(resource)
 	}
@@ -251,22 +252,16 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 			_, err := drClient.List(ctx, metav1.ListOptions{Limit: 1})
 			if err == nil {
 				// rights to fetch all namespaces at once
-				for _, res := range s.getPruneableResources(ctx, drClient) {
-					pruneableResources = append(pruneableResources, res)
-				}
+				pruneableResources = append(pruneableResources, s.getPruneableResources(ctx, drClient)...)
 			} else {
 				// need to query each namespace separately
 				for _, namespace := range namespaces {
-					for _, res := range s.getPruneableResources(ctx, drClient.Namespace(namespace)) {
-						pruneableResources = append(pruneableResources, res)
-					}
+					pruneableResources = append(pruneableResources, s.getPruneableResources(ctx, drClient.Namespace(namespace))...)
 				}
 			}
 		} else {
 			drClient := s.Client.Resource(mapping.Resource)
-			for _, res := range s.getPruneableResources(ctx, drClient) {
-				pruneableResources = append(pruneableResources, res)
-			}
+			pruneableResources = append(pruneableResources, s.getPruneableResources(ctx, drClient)...)
 		}
 	}
 
@@ -340,6 +335,9 @@ func resourceChecksum(resource *unstructured.Unstructured) string {
 		return ""
 	}
 	hasher := md5.New()
-	hasher.Write(json)
+	if _, err = hasher.Write(json); err != nil {
+		// the best we can do if hash failed is to stop everything
+		panic(err)
+	}
 	return hex.EncodeToString(hasher.Sum(nil))
 }

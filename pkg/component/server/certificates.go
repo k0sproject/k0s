@@ -270,6 +270,9 @@ func generateKeyPair(name string) error {
 	defer outFile.Close()
 
 	err = pem.Encode(outFile, privateKey)
+	if err != nil {
+		return err
+	}
 
 	// note to the next reader: key.Public() != key.PublicKey
 	pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())

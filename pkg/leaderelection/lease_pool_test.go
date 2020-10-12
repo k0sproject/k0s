@@ -13,7 +13,7 @@ import (
 
 func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
+	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Namespace",
 			APIVersion: "v1",
@@ -23,9 +23,10 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 		},
 		Spec: v1.NamespaceSpec{},
 	}, metav1.CreateOptions{})
+	assert.NoError(t, err)
 
 	identity := "test-node"
-	_, err := fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: "coordination.k8s.io/v1",
@@ -38,10 +39,10 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 		},
 	}, metav1.CreateOptions{})
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	output := &LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
@@ -49,7 +50,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 	}
 
 	events, cancel, err := p.Watch(WithOutputChannels(output))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	done := make(chan struct{})
 	failed := make(chan struct{})
@@ -77,7 +78,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 
 func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
+	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Namespace",
 			APIVersion: "v1",
@@ -87,9 +88,10 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 		},
 		Spec: v1.NamespaceSpec{},
 	}, metav1.CreateOptions{})
+	assert.NoError(t, err)
 
 	identity := "test-node"
-	_, err := fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: "coordination.k8s.io/v1",
@@ -102,10 +104,10 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 		},
 	}, metav1.CreateOptions{})
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	output := &LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
@@ -113,7 +115,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 	}
 
 	events, cancel, err := p.Watch(WithOutputChannels(output))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	<-events.AcquiredLease
 	fmt.Println("lease acquired, cancelling leaser")
@@ -124,7 +126,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 
 func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
+	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Namespace",
 			APIVersion: "v1",
@@ -134,10 +136,11 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 		},
 		Spec: v1.NamespaceSpec{},
 	}, metav1.CreateOptions{})
+	assert.NoError(t, err)
 
 	identity := "test-node"
 	leaseDurationSeconds := int32(1)
-	_, err := fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
+	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Lease",
 			APIVersion: "coordination.k8s.io/v1",
@@ -151,26 +154,26 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 		},
 	}, metav1.CreateOptions{})
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	events, cancel, err := p.Watch(WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	identity2 := "test-node-2"
 	p2, err := NewLeasePool(fakeClient, "test", WithIdentity(identity2), WithNamespace("test"))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	events2, cancel2, err := p2.Watch(WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	fmt.Println("started second lease holder")
 	defer cancel2()
 

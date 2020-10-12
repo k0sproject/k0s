@@ -45,7 +45,9 @@ func (a *ControllerManager) Init() error {
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
-	os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1)
+	if err := os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1); err != nil {
+		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
+	}
 
 	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode, constant.Group)
 }
