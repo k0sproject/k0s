@@ -31,6 +31,13 @@ spec:
       vxlanVNI: 4096
   podSecurityPolicy:
     defaultPolicy: 00-mke-privileged
+
+  workerProfiles:
+    - name: custom-role
+      values:
+         key: value
+         mapping:
+             innerKey: innerValue
 ```
 
 ### `spec.storage`
@@ -67,6 +74,22 @@ Configures the default [psp](https://kubernetes.io/docs/concepts/policy/pod-secu
 - `99-mke-restricted`: no host namespaces or root users allowed, no bind mounts from host
 
 As a user you can of course create any supplemental PSPs and bind them to users / access accounts as you need.
+
+### `spec.workerProfiles`
+Array of `spec.workerProfiles.workerProfile`
+Each element has following properties:
+- `name`: string, name, used as profile selector for the worker process
+- `values`: mapping object
+
+For each profile the control plane will create separate ConfigMap with kubelet-config yaml.
+Based on the `--profile` argument given to the `mke worker` the corresponding ConfigMap would be used to extract `kubelet-config.yaml` from.
+`values` are recursively merged with default `kubelet-config.yaml`
+
+There are few fields forbidden to be overrided: 
+- `clusterDNS`
+- `clusterDomain`
+- `apiVersion`
+- `kind`
 
 ## Configuring multi-node controlplane
 

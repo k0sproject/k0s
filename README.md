@@ -54,6 +54,7 @@ See more in [architecture docs](docs/architecture.md)
   - Konnectivity service (default)
 - CoreDNS 1.7
 - Metrics-server 0.3
+- Custom roles\profiles for worker nodes
 
 ## Build
 
