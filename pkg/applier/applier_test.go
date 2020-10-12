@@ -18,6 +18,7 @@ import (
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
 	dir, err := ioutil.TempDir("", "applier-test-*")
+	assert.NoError(t, err)
 	template := `
 kind: ConfigMap
 apiVersion: v1
@@ -42,11 +43,11 @@ spec:
     - name: nginx
       image: nginx:1.15
 `
-	ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400)
-	ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400)
-	assert.Nil(t, err)
+	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
+	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
+
 	a := NewApplier(dir)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	a.client = fake.NewSimpleDynamicClient(runtime.NewScheme())
 	fakeDiscoveryClient := &discoveryfake.FakeDiscovery{Fake: &kubetesting.Fake{}}
@@ -63,14 +64,14 @@ spec:
 	}
 	a.discoveryClient = memory.NewMemCacheClient(fakeDiscoveryClient)
 	err = a.Apply()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")
 	r, err := a.client.Resource(*gv).Namespace("kube-system").Get(context.Background(), "applier-test", metav1.GetOptions{})
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "applier", r.GetLabels()["component"])
 	podgv, _ := schema.ParseResourceArg("pods.v1.")
 	r, err = a.client.Resource(*podgv).Namespace("kube-system").Get(context.Background(), "applier-test", metav1.GetOptions{})
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "Pod", r.GetKind())
 	assert.Equal(t, "applier", r.GetLabels()["component"])
 }
