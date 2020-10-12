@@ -95,8 +95,9 @@ func (a *Applier) Apply() error {
 	if err != nil {
 		a.log.WithError(err).Warn("stack apply failed")
 		a.discoveryClient.Invalidate()
+	} else {
+		a.log.Debug("successfully applied stack")
 	}
-	a.log.Debug("successfully applied stack")
 
 	return err
 }

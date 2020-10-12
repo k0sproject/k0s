@@ -44,13 +44,6 @@ func NewStackApplier(path string) (*StackApplier, error) {
 
 // Start both the initial apply and also the watch for a single stack
 func (s *StackApplier) Start() error {
-	// apply all changes on start
-	err := s.applier.Apply()
-
-	if err != nil {
-		return err
-	}
-
 	debouncer := debounce.New(5*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
 		s.log.Debug("debouncer triggering, applying...")
 		err := retry.OnError(retry.DefaultRetry, func(err error) bool {
@@ -62,6 +55,9 @@ func (s *StackApplier) Start() error {
 	})
 	defer debouncer.Stop()
 	go debouncer.Start()
+
+	// apply all changes on start
+	s.fsWatcher.Events <- fsnotify.Event{}
 
 	<-s.done
 
