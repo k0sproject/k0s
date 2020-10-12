@@ -48,6 +48,9 @@ func (k *KubeletConfig) Run() error {
 	}
 
 	manifest, err := k.run(dnsAddress)
+	if err != nil {
+		return fmt.Errorf("failed to build final manifest: %v", err)
+	}
 
 	if err := k.save(manifest.Bytes()); err != nil {
 		return fmt.Errorf("can't write manifest with config maps: %v", err)
