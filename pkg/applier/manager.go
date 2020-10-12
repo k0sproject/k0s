@@ -20,8 +20,7 @@ type Manager struct {
 	client               kubernetes.Interface
 	applier              Applier
 	bundlePath           string
-	tickerDone           chan struct{}
-	watcherDone          chan struct{}
+	cancelWatcher        context.CancelFunc
 	cancelLeaderElection context.CancelFunc
 	log                  *logrus.Entry
 }
@@ -92,18 +91,19 @@ func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
 		select {
 		case <-events.AcquiredLease:
 			log.Info("acquired leader lease")
-			m.tickerDone = make(chan struct{})
-			m.watcherDone = make(chan struct{})
-			go m.runFSWatcher()
+			ctx, cancel := context.WithCancel(context.Background())
+			m.cancelWatcher = cancel
+			go m.runFSWatcher(ctx)
 		case <-events.LostLease:
 			log.Info("lost leader lease")
-			close(m.tickerDone)
-			close(m.watcherDone)
+			if m.cancelWatcher != nil {
+				m.cancelWatcher()
+			}
 		}
 	}
 }
 
-func (m *Manager) runFSWatcher() {
+func (m *Manager) runFSWatcher(ctx context.Context) {
 	log := logrus.WithField("component", "applier-manager")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -135,7 +135,7 @@ func (m *Manager) runFSWatcher() {
 		select {
 		case err := <-watcher.Errors:
 			log.Warnf("watch error: %s", err.Error())
-		case <-m.watcherDone:
+		case <-ctx.Done():
 			log.Info("manifest watcher done")
 			return
 		}
