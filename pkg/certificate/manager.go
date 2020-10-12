@@ -48,8 +48,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return nil
 	}
 
-	err := util.InitDirectory(filepath.Dir(keyFile), 0750)
-	if err != nil {
+	if err := util.InitDirectory(filepath.Dir(keyFile), constant.CertRootMode); err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
 	}
 
