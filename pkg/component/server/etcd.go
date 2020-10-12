@@ -119,7 +119,7 @@ func (e *Etcd) Run() error {
 	}
 
 	if err := e.setupCerts(); err != nil {
-		return err
+		return errors.Wrap(err, "failed to create etcd certs")
 	}
 
 	logrus.Infof("starting etcd with args: %v", args)
@@ -145,7 +145,7 @@ func (e *Etcd) Stop() error {
 
 func (e *Etcd) setupCerts() error {
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
-		return err
+		return errors.Wrap(err, "failed to create etcd ca")
 	}
 	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
 	// etcd client cert
