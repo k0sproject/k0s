@@ -85,14 +85,11 @@ func (a *Applier) Apply() error {
 	}
 	resources, err := a.parseFiles(files)
 	stack := Stack{
-		Name:      "mke-stack",
+		Name:      a.Name,
 		Resources: resources,
 		Client:    a.client,
 		Discovery: a.discoveryClient,
 	}
-	//for _, resource := range resources {
-
-	//}
 	a.log.Debug("applying stack")
 	err = stack.Apply(context.Background(), true)
 	if err != nil {
