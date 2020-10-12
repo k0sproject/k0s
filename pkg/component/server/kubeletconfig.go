@@ -9,7 +9,6 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	//"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 
@@ -48,32 +47,37 @@ func (k *KubeletConfig) Run() error {
 		return fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
 	}
 
-	manifest := bytes.NewBuffer([]byte{})
-	defaultProfile := k.getDefaultProfile(dnsAddress)
-
-	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
-		return fmt.Errorf("can't write manifest for default profile config map: %v", err)
-	}
-
-	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := k.getDefaultProfile(dnsAddress)
-		if err := k.mergeProfiles(&profileConfig,
-			profile.Values); err != nil {
-			return fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
-		}
-
-		if err := k.writeConfigMapWithProfile(manifest,
-			profile.Name,
-			profileConfig); err != nil {
-			return fmt.Errorf("can't write manifest for profile config map: %v", err)
-		}
-	}
+	manifest, err := k.run(dnsAddress)
 
 	if err := k.save(manifest.Bytes()); err != nil {
 		return fmt.Errorf("can't write manifest with config maps: %v", err)
 	}
 
 	return nil
+}
+
+func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
+	manifest := bytes.NewBuffer([]byte{})
+	defaultProfile := k.getDefaultProfile(dnsAddress)
+
+	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
+		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
+	}
+
+	for _, profile := range k.clusterSpec.WorkerProfiles {
+		profileConfig := k.getDefaultProfile(dnsAddress)
+		if err := k.mergeProfiles(&profileConfig,
+			profile.Values); err != nil {
+			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
+		}
+
+		if err := k.writeConfigMapWithProfile(manifest,
+			profile.Name,
+			profileConfig); err != nil {
+			return nil, fmt.Errorf("can't write manifest for profile config map: %v", err)
+		}
+	}
+	return manifest, nil
 }
 
 func (k *KubeletConfig) save(data []byte) error {
