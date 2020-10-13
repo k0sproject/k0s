@@ -19,8 +19,8 @@ func Test_KubeletConfig(t *testing.T) {
 		t.Run("output_must_have_3_manifests", func(t *testing.T) {
 			assert.Len(t, manifestYamls, 3, "Must have exactly 3 generated manifests per profile")
 			assertConfigMap(t, manifestYamls[0], "kubelet-config-default-1.19")
-			assertRole(t, manifestYamls[1], "kubelet-config-default-1.19")
-			assertRoleBinding(t, manifestYamls[2], "kubelet-config-default-1.19")
+			assertRole(t, manifestYamls[1], []string{formatProfileName("default")})
+			assertRoleBinding(t, manifestYamls[2])
 		})
 	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
@@ -28,19 +28,18 @@ func Test_KubeletConfig(t *testing.T) {
 		buf, err := k.run(dnsAddr)
 		assert.NoError(t, err)
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
-		expectedManifestsCount := 3 * (2 + 1) // 3 manifests per profile, 2 user profiles and 1 default
+		expectedManifestsCount := 3 + 2 // 3 manifests per profile, 2 user profiles and 1 default
 		assert.Len(t, manifestYamls, expectedManifestsCount, "Must have exactly 3 generated manifests per profile")
 
 		t.Run("final_output_must_have_manifests_for_profiles", func(t *testing.T) {
 			// check that each profile has config map, role and role binding
+			resourceNamesForRole := []string{}
 			for idx, profileName := range []string{"default", "profile_XXX", "profile_YYY"} {
-				currentProfileOffset := idx * 3
 				fullName := "kubelet-config-" + profileName + "-1.19"
-				assertConfigMap(t, manifestYamls[currentProfileOffset], fullName)
-				assertRole(t, manifestYamls[currentProfileOffset+1], fullName)
-				assertRoleBinding(t, manifestYamls[currentProfileOffset+2], fullName)
+				resourceNamesForRole = append(resourceNamesForRole, formatProfileName(profileName))
+				assertConfigMap(t, manifestYamls[idx], fullName)
 			}
-
+			assertRole(t, manifestYamls[len(resourceNamesForRole)], resourceNamesForRole)
 		})
 		t.Run("user_profile_X_must_be_merged_with_default_profile", func(t *testing.T) {
 
@@ -52,8 +51,8 @@ func Test_KubeletConfig(t *testing.T) {
 				Data map[string]string `yaml:"data"`
 			}{}
 
-			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[3]), &profileXXX))
-			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[6]), &profileYYY))
+			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[1]), &profileXXX))
+			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[2]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
 			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr)
@@ -108,23 +107,28 @@ func assertConfigMap(t *testing.T, spec string, name string) {
 	dst := map[string]interface{}{}
 	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
 
-	assert.Equal(t, dst["kind"], "ConfigMap")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], name)
+	assert.Equal(t, "ConfigMap", dst["kind"])
+	assert.Equal(t, name, dst["metadata"].(map[string]interface{})["name"])
 	spec, foundSpec := dst["data"].(map[string]interface{})["kubelet"].(string)
 	assert.True(t, foundSpec, "kubelet config map must have embeded kubelet config")
 	assert.True(t, strings.TrimSpace(spec) != "", "kubelet config map must have non-empty embeded kubelet config")
 }
 
-func assertRole(t *testing.T, spec string, name string) {
+func assertRole(t *testing.T, spec string, expectedResourceNames []string) {
 	dst := map[string]interface{}{}
 	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	assert.Equal(t, dst["kind"], "Role")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], "system:bootstrappers:"+name)
+	assert.Equal(t, "Role", dst["kind"])
+	assert.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
+	currentResourceNames := []string{}
+	for _, el := range dst["rules"].([]interface{})[0].(map[string]interface{})["resourceNames"].([]interface{}) {
+		currentResourceNames = append(currentResourceNames, el.(string))
+	}
+	assert.Equal(t, expectedResourceNames, currentResourceNames)
 }
 
-func assertRoleBinding(t *testing.T, spec string, name string) {
+func assertRoleBinding(t *testing.T, spec string) {
 	dst := map[string]interface{}{}
 	assert.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	assert.Equal(t, dst["kind"], "RoleBinding")
-	assert.Equal(t, dst["metadata"].(map[string]interface{})["name"], "system:bootstrappers:"+name)
+	assert.Equal(t, "RoleBinding", dst["kind"])
+	assert.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
 }
