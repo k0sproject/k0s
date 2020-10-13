@@ -25,10 +25,9 @@ type Supervisor struct {
 	PidFile string
 	UID     int
 	GID     int
-
-	cmd  *exec.Cmd
-	quit chan bool
-	done chan bool
+	cmd     *exec.Cmd
+	quit    chan bool
+	done    chan bool
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
@@ -89,7 +88,6 @@ func (s *Supervisor) Supervise() {
 		for {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 			s.cmd.Dir = s.Dir
-
 			s.cmd.Env = getEnv()
 
 			// detach from the process group so children don't

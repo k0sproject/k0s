@@ -10,6 +10,11 @@ import (
 
 	"github.com/Mirantis/mke/pkg/performance"
 
+	"github.com/avast/retry-go"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+
 	"github.com/Mirantis/mke/pkg/applier"
 	"github.com/Mirantis/mke/pkg/certificate"
 	"github.com/Mirantis/mke/pkg/component"
@@ -17,10 +22,6 @@ import (
 	"github.com/Mirantis/mke/pkg/component/worker"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/avast/retry-go"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 
 	"github.com/Mirantis/mke/pkg/apis/v1beta1"
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -128,9 +129,11 @@ func startServer(ctx *cli.Context) error {
 	}
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
 
+	logrus.Info("kube-apiserver: waiting for etcd to become ready")
 	componentManager.Add(&server.APIServer{
 		ClusterConfig: clusterConfig,
 	})
+
 	componentManager.Add(&server.Konnectivity{
 		ClusterConfig: clusterConfig,
 	})
