@@ -85,7 +85,7 @@ For each profile the control plane will create separate ConfigMap with kubelet-c
 Based on the `--profile` argument given to the `mke worker` the corresponding ConfigMap would be used to extract `kubelet-config.yaml` from.
 `values` are recursively merged with default `kubelet-config.yaml`
 
-There are few fields forbidden to be overrided: 
+There are a few fields that cannot be overridden: 
 - `clusterDNS`
 - `clusterDomain`
 - `apiVersion`
