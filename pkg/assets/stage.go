@@ -101,7 +101,7 @@ func Stage(dataDir string, name string, filemode os.FileMode, group string) erro
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return errors.Wrapf(err, "Failed to create gzip reader for %s", name)
+		return errors.Wrapf(err, "Failed to find embedded file position for %s", name)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
