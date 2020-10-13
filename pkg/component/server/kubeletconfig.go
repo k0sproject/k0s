@@ -68,7 +68,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
-
+	configMapNames := []string{formatProfileName("default")}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress)
 		merged, err := mergeProfiles(&profileConfig, profile.Values)
@@ -81,6 +81,10 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 			merged); err != nil {
 			return nil, fmt.Errorf("can't write manifest for profile config map: %v", err)
 		}
+		configMapNames = append(configMapNames, formatProfileName(profile.Name))
+	}
+	if err := k.writeRbacRoleBindings(manifest, configMapNames); err != nil {
+		return nil, fmt.Errorf("can't write manifest for rbac bindings: %v", err)
 	}
 	return manifest, nil
 }
@@ -113,10 +117,28 @@ func (k *KubeletConfig) writeConfigMapWithProfile(w io.Writer, name string, prof
 			Name              string
 			KubeletConfigYAML string
 		}{
-			Name:              fmt.Sprintf("kubelet-config-%s-%s", name, constant.KubernetesMajorMinorVersion),
+			Name:              formatProfileName(name),
 			KubeletConfigYAML: string(profileYaml),
 		},
 	}
+	return tw.WriteToBuffer(w)
+}
+
+func formatProfileName(name string) string {
+	return fmt.Sprintf("kubelet-config-%s-%s", name, constant.KubernetesMajorMinorVersion)
+}
+
+func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []string) error {
+	tw := util.TemplateWriter{
+		Name:     "kubelet-config-rbac",
+		Template: rbacRoleAndBindingsManifestTemplate,
+		Data: struct {
+			ConfigMapNames []string
+		}{
+			ConfigMapNames: configMapNames,
+		},
+	}
+
 	return tw.WriteToBuffer(w)
 }
 
@@ -173,27 +195,32 @@ metadata:
 data:
   kubelet: | 
 {{ .KubeletConfigYAML | nindent 4 }}
----
+`
+
+const rbacRoleAndBindingsManifestTemplate = `---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: system:bootstrappers:{{.Name}}
+  name: system:bootstrappers:kubelet-configmaps
   namespace: kube-system
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
-  resourceNames: ["{{ .Name }}"]
+  resourceNames: 
+{{- range .ConfigMapNames }}
+    - "{{ . -}}"
+{{ end }}
   verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: system:bootstrappers:{{.Name}}
+  name: system:bootstrappers:kubelet-configmaps
   namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: system:bootstrappers:{{.Name}}
+  name: system:bootstrappers:kubelet-configmaps
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: Group
