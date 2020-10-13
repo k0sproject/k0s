@@ -18,6 +18,8 @@ RUN echo "#!/bin/sh" > /etc/local.d/machine-id.start \
        && echo "fi" >> /etc/local.d/machine-id.start \
        && chmod +x /etc/local.d/machine-id.start
 
+RUN adduser -H -S -s /sbin/nologin etcd
+
 # Put kubectl into place to ease up debugging
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.0/bin/linux/amd64/kubectl \
        && chmod +x ./kubectl \
