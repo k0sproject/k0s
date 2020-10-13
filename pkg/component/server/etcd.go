@@ -54,7 +54,8 @@ func (e *Etcd) Init() error {
 		"server.key",
 	} {
 		if err := os.Chown(path.Join(e.certDir, f), e.uid, e.gid); err != nil {
-			return errors.Wrapf(err, "failed to chown %s", f)
+			// TODO: due to init race the only thing here is to log it and wait for retry
+			logrus.Errorf("failed to chown %s: %s", f, err)
 		}
 	}
 
