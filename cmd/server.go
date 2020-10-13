@@ -218,7 +218,10 @@ func startServer(ctx *cli.Context) error {
 	}
 
 	// Stop components
-	return componentManager.Stop()
+	if err :=componentManager.Stop(); err != nil {
+		logrus.Errorf("error while stoping component manager %s", err)
+	}
+	return nil
 }
 
 func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]component.Component {
@@ -323,17 +326,18 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *c
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
 	}
+
 	if err := containerd.Init(); err != nil {
-		return err
+		logrus.Errorf("failed to init containerd: %s", err)
 	}
 	if err := kubelet.Init(); err != nil {
-		return err
+		logrus.Errorf("failed to init kubelet: %s", err)
 	}
 	if err := containerd.Run(); err != nil {
-		return err
+		logrus.Errorf("failed to run containerd: %s", err)
 	}
 	if err := kubelet.Run(); err != nil {
-		return err
+		logrus.Errorf("failed to run kubelet: %s", err)
 	}
 
 	componentManager.Add(containerd)
