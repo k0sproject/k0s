@@ -52,7 +52,7 @@ func writeCerts(caData v1beta1.CaResponse) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(certFile, caData.Cert, 0640)
+	err = ioutil.WriteFile(certFile, caData.Cert, constant.CertMode)
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,11 @@
 package util
 
 import (
+	"html/template"
 	"io"
 	"os"
-	"github.com/Masterminds/sprig"
-	"html/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/pkg/errors"
 )
@@ -20,13 +20,12 @@ type TemplateWriter struct {
 
 // Write writes executes the template and writes the results on disk
 func (p *TemplateWriter) Write() error {
-	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertRootDirMode)
+	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertMode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to open pod file for %s", p.Name)
 	}
 	return p.WriteToBuffer(podFile)
 }
-
 
 // WriteToBuffer writes executed template tot he given writer
 func (p *TemplateWriter) WriteToBuffer(w io.Writer) error {
