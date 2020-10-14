@@ -6,10 +6,5 @@ run:
 
 
   modules-download-mode: readonly
-  allow-parallel-runners: false
+  allow-parallel-runners: true
 
-linters:
-  disable:
-    - maligned
-    - unused
-  fast: true
