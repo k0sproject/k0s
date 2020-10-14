@@ -54,7 +54,7 @@ func (e *Etcd) Init() error {
 		"server.key",
 	} {
 		if err := os.Chown(path.Join(e.certDir, f), e.uid, e.gid); err != nil {
-			// TODO: due to init race the only thing here is to log it and wait for retry
+			// TODO: directory may not yet exist. log it and wait for retry for now
 			logrus.Errorf("failed to chown %s: %s", f, err)
 		}
 	}
