@@ -335,9 +335,8 @@ func resourceChecksum(resource *unstructured.Unstructured) string {
 		return ""
 	}
 	hasher := md5.New()
-	if _, err = hasher.Write(json); err != nil {
-		// the best we can do if hash failed is to stop everything
-		panic(err)
-	}
+	// based on the implementation hasher.Write never returns err
+	hasher.Write(json) // nolint: errcheck
+
 	return hex.EncodeToString(hasher.Sum(nil))
 }
