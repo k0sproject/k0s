@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -284,7 +283,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 }
 
 func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *component.Manager, profile string) error {
-	if !util.FileExists(path.Join(constant.DataDir, "kubelet.conf")) {
+	if !util.FileExists(constant.KubeletAuthConfigPath) {
 		// wait for server to start up
 		err := retry.Do(func() error {
 			if !util.FileExists(constant.AdminKubeconfigConfigPath) {
