@@ -22,6 +22,10 @@ const (
 	BinDirMode = 0755
 	// RunDir defines the location of supervised pid files and sockets
 	RunDir = "/run/mke"
+	// RunDirMode is the expected permissions of RunDir
+	RunDirMode = 0755
+	// PidFileMode is the expected file permissions for pid files
+	PidFileMode = 0644
 	// ManifestsDir defines the location for all stack manifests
 	ManifestsDir = "/var/lib/mke/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
