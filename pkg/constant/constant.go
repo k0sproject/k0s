@@ -13,9 +13,9 @@ const (
 	CertRootDir = "/var/lib/mke/pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertRootDirMode = 0644
-	// CertRootSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
+	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
-	CertRootSecureMode = 0640
+	CertSecureMode = 0640
 	// BinDir defines the location for all pki related binaries
 	BinDir = "/var/lib/mke/bin"
 	// BinDirMode is the expected directory permissions for BinDir
