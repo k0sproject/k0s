@@ -41,7 +41,7 @@ func (s *Supervisor) processWaitQuit() bool {
 	}()
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootMode)
+	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootDirMode)
 	if err != nil {
 		log.Warnf("Failed to write file %s: %v", s.PidFile, err)
 	}

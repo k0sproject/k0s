@@ -97,7 +97,7 @@ func (k *KubeletConfig) save(data []byte) error {
 	}
 
 	filePath := filepath.Join(kubeletDir, "kubelet-config.yaml")
-	if err := ioutil.WriteFile(filePath, data, constant.CertRootMode); err != nil {
+	if err := ioutil.WriteFile(filePath, data, constant.CertRootDirMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
 	return nil
