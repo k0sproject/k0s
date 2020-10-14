@@ -41,6 +41,11 @@ const (
 	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
 	// KubeletAuthConfigPath defines the default kubelet auth config path
 	KubeletAuthConfigPath = "/var/lib/mke/kubelet.conf"
+	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
+	KubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
+	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
+	KubeletVolumePluginDirMode = 0700
+
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
 
