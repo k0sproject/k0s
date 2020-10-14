@@ -83,7 +83,9 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			} else {
 				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
-			return fmt.Errorf("unexpected api error: %v", err)
+			if err != nil {
+				return fmt.Errorf("can't update resource:%v", err)
+			}
 		}
 		s.keepResource(resource)
 	}
