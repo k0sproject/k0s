@@ -40,7 +40,7 @@ func startWorker(ctx *cli.Context) error {
 	worker.KernelSetup()
 
 	token := ctx.Args().First()
-	if token == "" && !util.FileExists(path.Join(constant.DataDir, "kubelet.conf")) {
+	if token == "" && !util.FileExists(constant.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 

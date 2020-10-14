@@ -64,7 +64,7 @@ func (k *Kubelet) Run() error {
 			fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")),
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
 			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
-			fmt.Sprintf("--kubeconfig=%s", filepath.Join(constant.DataDir, "kubelet.conf")),
+			fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
 			"--kube-reserved-cgroup=system.slice",
 			"--runtime-cgroups=/system.slice/containerd.service",
 			"--kubelet-cgroups=/system.slice/containerd.service",
