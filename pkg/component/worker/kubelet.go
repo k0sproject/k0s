@@ -81,7 +81,7 @@ func (k *Kubelet) Run() error {
 			return err
 		}
 
-		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertRootSecureMode)
+		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertSecureMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write kubelet config to disk")
 		}
