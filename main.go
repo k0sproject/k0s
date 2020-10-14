@@ -39,6 +39,7 @@ func main() {
 			cmd.TokenCommand(),
 			cmd.APICommand(),
 			cmd.EtcdCommand(),
+			cmd.ConfigCommand(),
 			versionCommand(),
 		},
 		Flags: []cli.Flag{
