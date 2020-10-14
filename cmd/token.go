@@ -7,6 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"html/template"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"path"
 	"time"
 
@@ -82,10 +84,14 @@ func CreateCommand() *cli.Command {
 				Value:     "mke.yaml",
 				TakesFile: true,
 			},
+			&cli.BoolFlag{
+				Name: "wait",
+				Value: false,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			// Disable logrus for token commands
-			logrus.SetOutput(ioutil.Discard)
+			logrus.SetLevel(logrus.FatalLevel)
 
 			clusterConfig := ConfigFromYaml(c)
 			expiry, err := time.ParseDuration(c.String("expiry"))
@@ -93,7 +99,20 @@ func CreateCommand() *cli.Command {
 				return err
 			}
 
-			bootstrapConfig, err := createKubeletBootstrapConfig(clusterConfig, c.String("role"), expiry)
+			var bootstrapConfig string
+			// we will retry every second for two minutes and then error
+			err = retry.OnError(wait.Backoff{
+				Steps:    120,
+				Duration: 1 * time.Second,
+				Factor:   1.0,
+				Jitter:   0.1,
+			}, func(err error) bool {
+				return c.Bool("wait")
+			}, func() error {
+				bootstrapConfig, err = createKubeletBootstrapConfig(clusterConfig, c.String("role"), expiry)
+
+				return err
+			})
 			if err != nil {
 				return err
 			}
