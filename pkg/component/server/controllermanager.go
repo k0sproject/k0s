@@ -45,7 +45,7 @@ func (a *ControllerManager) Init() error {
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
-	if err := os.Chown(path.Join(constant.CertRoot, "ca.key"), a.uid, -1); err != nil {
+	if err := os.Chown(path.Join(constant.CertRootDir, "ca.key"), a.uid, -1); err != nil {
 		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
 	}
 
@@ -55,18 +55,18 @@ func (a *ControllerManager) Init() error {
 // Run runs kube ControllerManager
 func (a *ControllerManager) Run() error {
 	logrus.Info("Starting kube-controller-manager")
-	ccmAuthConf := filepath.Join(constant.CertRoot, "ccm.conf")
+	ccmAuthConf := filepath.Join(constant.CertRootDir, "ccm.conf")
 	args := map[string]string{
 		"authentication-kubeconfig":        ccmAuthConf,
 		"authorization-kubeconfig":         ccmAuthConf,
 		"kubeconfig":                       ccmAuthConf,
-		"client-ca-file":                   path.Join(constant.CertRoot, "ca.crt"),
+		"client-ca-file":                   path.Join(constant.CertRootDir, "ca.crt"),
 		"cluster-cidr":                     a.ClusterConfig.Spec.Network.PodCIDR,
-		"cluster-signing-cert-file":        path.Join(constant.CertRoot, "ca.crt"),
-		"cluster-signing-key-file":         path.Join(constant.CertRoot, "ca.key"),
-		"requestheader-client-ca-file":     path.Join(constant.CertRoot, "front-proxy-ca.crt"),
-		"root-ca-file":                     path.Join(constant.CertRoot, "ca.crt"),
-		"service-account-private-key-file": path.Join(constant.CertRoot, "sa.key"),
+		"cluster-signing-cert-file":        path.Join(constant.CertRootDir, "ca.crt"),
+		"cluster-signing-key-file":         path.Join(constant.CertRootDir, "ca.key"),
+		"requestheader-client-ca-file":     path.Join(constant.CertRootDir, "front-proxy-ca.crt"),
+		"root-ca-file":                     path.Join(constant.CertRootDir, "ca.crt"),
+		"service-account-private-key-file": path.Join(constant.CertRootDir, "sa.key"),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
 	}
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {

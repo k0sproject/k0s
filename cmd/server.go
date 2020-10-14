@@ -74,7 +74,7 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	componentManager := component.NewManager()
-	if err := util.InitDirectory(constant.CertRoot, constant.CertRootDirMode); err != nil {
+	if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
 		return err
 	}
 	certificateManager := certificate.Manager{}
