@@ -11,8 +11,10 @@ const (
 	EtcdDataDirMode = 0700
 	// CertRootDir defines the root location for all pki related artifacts
 	CertRootDir = "/var/lib/mke/pki"
-	// CertRootDirMode is the expected directory permissions for CertRootDir. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
-	CertRootDirMode = 0644
+	// CertRootDirMode is the expected directory permissions for CertRootDir.
+	CertRootDirMode = 0750
+	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
+	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640

@@ -122,7 +122,7 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRootDir))
 		}
-		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertSecureMode)
+		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write ca client cert")
 		}

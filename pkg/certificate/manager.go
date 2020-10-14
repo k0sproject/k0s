@@ -70,7 +70,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(certFile, cert, 0640)
+	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	if err != nil {
 		return Certificate{}, err
 	}
-	err = ioutil.WriteFile(certFile, cert, constant.CertSecureMode)
+	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
 	if err != nil {
 		return Certificate{}, err
 	}
