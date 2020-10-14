@@ -117,10 +117,10 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
 	}
 
-	kubeletCAPath := path.Join(constant.CertRoot, "ca.crt")
+	kubeletCAPath := path.Join(constant.CertRootDir, "ca.crt")
 	if !util.FileExists(kubeletCAPath) {
-		if err := util.InitDirectory(constant.CertRoot, constant.CertRootDirMode); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRoot))
+		if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRootDir))
 		}
 		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertRootSecureMode)
 		if err != nil {

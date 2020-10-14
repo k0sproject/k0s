@@ -36,7 +36,7 @@ func (a *Scheduler) Init() error {
 // Run runs kube scheduler
 func (a *Scheduler) Run() error {
 	logrus.Info("Starting kube-scheduler")
-	schedulerAuthConf := filepath.Join(constant.CertRoot, "scheduler.conf")
+	schedulerAuthConf := filepath.Join(constant.CertRootDir, "scheduler.conf")
 	args := map[string]string{
 		"authentication-kubeconfig": schedulerAuthConf,
 		"authorization-kubeconfig":  schedulerAuthConf,

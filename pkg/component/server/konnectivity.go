@@ -44,8 +44,8 @@ func (k *Konnectivity) Run() error {
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--uds-name=%s", path.Join(constant.RunDir, "konnectivity-server.sock")),
-			fmt.Sprintf("--cluster-cert=%s", path.Join(constant.CertRoot, "server.crt")),
-			fmt.Sprintf("--cluster-key=%s", path.Join(constant.CertRoot, "server.key")),
+			fmt.Sprintf("--cluster-cert=%s", path.Join(constant.CertRootDir, "server.crt")),
+			fmt.Sprintf("--cluster-key=%s", path.Join(constant.CertRootDir, "server.key")),
 			fmt.Sprintf("--kubeconfig=%s", constant.AdminKubeconfigConfigPath), // FIXME: should have user rights
 			"--mode=grpc",
 			"--server-port=0",

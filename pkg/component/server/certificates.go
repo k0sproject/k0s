@@ -62,7 +62,7 @@ func (c *Certificates) Run() error {
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
 
-	caCertPath, caCertKey := filepath.Join(constant.CertRoot, "ca.crt"), filepath.Join(constant.CertRoot, "ca.key")
+	caCertPath, caCertKey := filepath.Join(constant.CertRootDir, "ca.crt"), filepath.Join(constant.CertRootDir, "ca.key")
 
 	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
@@ -82,7 +82,7 @@ func (c *Certificates) Run() error {
 			return err
 		}
 
-		proxyCertPath, proxyCertKey := filepath.Join(constant.CertRoot, "front-proxy-ca.crt"), filepath.Join(constant.CertRoot, "front-proxy-ca.key")
+		proxyCertPath, proxyCertKey := filepath.Join(constant.CertRootDir, "front-proxy-ca.crt"), filepath.Join(constant.CertRootDir, "front-proxy-ca.key")
 
 		proxyClientReq := certificate.Request{
 			Name:   "front-proxy-client",
@@ -130,7 +130,7 @@ func (c *Certificates) Run() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(constant.CertRoot, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
+		return kubeConfig(filepath.Join(constant.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
 	})
 
 	eg.Go(func() error {
@@ -146,7 +146,7 @@ func (c *Certificates) Run() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(constant.CertRoot, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
+		return kubeConfig(filepath.Join(constant.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
 	})
 
 
@@ -243,8 +243,8 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey string) error {
 }
 
 func generateKeyPair(name string) error {
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", name))
-	pubFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.pub", name))
+	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", name))
+	pubFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.pub", name))
 
 	if util.FileExists(keyFile) && util.FileExists(pubFile) {
 		return nil

@@ -40,8 +40,8 @@ type Manager struct {
 
 // EnsureCA makes sure the given CA certs and key is created.
 func (m *Manager) EnsureCA(name, cn string) error {
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", name))
+	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", name))
+	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", name))
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 
@@ -94,8 +94,8 @@ func (m *Manager) EnsureCA(name, cn string) error {
 // EnsureCertificate creates the specified certificate if it does not already exist
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
 
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.Name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.Name))
+	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
+	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
 	gid, _ := util.GetGID(constant.Group)
 	uid, _ := util.GetUID(ownerName)

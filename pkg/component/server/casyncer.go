@@ -39,8 +39,8 @@ func (c *CASyncer) Stop() error {
 }
 
 func writeCerts(caData v1beta1.CaResponse) error {
-	keyFile := filepath.Join(constant.CertRoot, "ca.key")
-	certFile := filepath.Join(constant.CertRoot, "ca.crt")
+	keyFile := filepath.Join(constant.CertRootDir, "ca.key")
+	certFile := filepath.Join(constant.CertRootDir, "ca.crt")
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 		logrus.Warnf("ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")

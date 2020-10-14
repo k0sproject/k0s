@@ -47,7 +47,7 @@ func (e *Etcd) Init() error {
 
 	e.gid, _ = util.GetGID(constant.Group)
 
-	e.certDir = path.Join(constant.CertRoot, "etcd")
+	e.certDir = path.Join(constant.CertRootDir, "etcd")
 	for _, f := range []string{
 		"ca.crt",
 		"server.crt",
@@ -102,7 +102,7 @@ func (e *Etcd) Run() error {
 		}
 		logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 		// Write etcd ca cert&key
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRootDir, "etcd", "ca.crt"), filepath.Join(constant.CertRootDir, "etcd", "ca.key")
 		if util.FileExists(etcdCaCertPath) && util.FileExists(etcdCaCertKey) {
 			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 		} else {
@@ -154,7 +154,7 @@ func (e *Etcd) setupCerts() error {
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
 		return errors.Wrap(err, "failed to create etcd ca")
 	}
-	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
+	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRootDir, "etcd", "ca.crt"), filepath.Join(constant.CertRootDir, "etcd", "ca.key")
 	// etcd client cert
 	etcdCertReq := certificate.Request{
 		Name:   "apiserver-etcd-client",
