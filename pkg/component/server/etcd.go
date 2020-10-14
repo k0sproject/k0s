@@ -29,7 +29,6 @@ type Etcd struct {
 	supervisor supervisor.Supervisor
 	uid        int
 	gid        int
-	certDir    string
 }
 
 // Init extracts the needed binaries
@@ -47,13 +46,12 @@ func (e *Etcd) Init() error {
 
 	e.gid, _ = util.GetGID(constant.Group)
 
-	e.certDir = path.Join(constant.CertRootDir, "etcd")
 	for _, f := range []string{
 		"ca.crt",
 		"server.crt",
 		"server.key",
 	} {
-		if err := os.Chown(path.Join(e.certDir, f), e.uid, e.gid); err != nil {
+		if err := os.Chown(path.Join(constant.EtcdCertDir, f), e.uid, e.gid); err != nil {
 			// TODO: directory may not yet exist. log it and wait for retry for now
 			logrus.Errorf("failed to chown %s: %s", f, err)
 		}
@@ -80,12 +78,12 @@ func (e *Etcd) Run() error {
 		fmt.Sprintf("--listen-peer-urls=%s", peerURL),
 		fmt.Sprintf("--initial-advertise-peer-urls=%s", peerURL),
 		fmt.Sprintf("--name=%s", name),
-		fmt.Sprintf("--trusted-ca-file=%s", path.Join(e.certDir, "ca.crt")),
-		fmt.Sprintf("--cert-file=%s", path.Join(e.certDir, "server.crt")),
-		fmt.Sprintf("--key-file=%s", path.Join(e.certDir, "server.key")),
-		fmt.Sprintf("--peer-trusted-ca-file=%s", path.Join(e.certDir, "ca.crt")),
-		fmt.Sprintf("--peer-key-file=%s", path.Join(e.certDir, "peer.key")),
-		fmt.Sprintf("--peer-cert-file=%s", path.Join(e.certDir, "peer.crt")),
+		fmt.Sprintf("--trusted-ca-file=%s", path.Join(constant.EtcdCertDir, "ca.crt")),
+		fmt.Sprintf("--cert-file=%s", path.Join(constant.EtcdCertDir, "server.crt")),
+		fmt.Sprintf("--key-file=%s", path.Join(constant.EtcdCertDir, "server.key")),
+		fmt.Sprintf("--peer-trusted-ca-file=%s", path.Join(constant.EtcdCertDir, "ca.crt")),
+		fmt.Sprintf("--peer-key-file=%s", path.Join(constant.EtcdCertDir, "peer.key")),
+		fmt.Sprintf("--peer-cert-file=%s", path.Join(constant.EtcdCertDir, "peer.crt")),
 		"--peer-client-cert-auth=true",
 	}
 
@@ -102,7 +100,7 @@ func (e *Etcd) Run() error {
 		}
 		logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 		// Write etcd ca cert&key
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRootDir, "etcd", "ca.crt"), filepath.Join(constant.CertRootDir, "etcd", "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
 		if util.FileExists(etcdCaCertPath) && util.FileExists(etcdCaCertKey) {
 			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 		} else {
@@ -154,7 +152,7 @@ func (e *Etcd) setupCerts() error {
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
 		return errors.Wrap(err, "failed to create etcd ca")
 	}
-	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRootDir, "etcd", "ca.crt"), filepath.Join(constant.CertRootDir, "etcd", "ca.key")
+	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
 	// etcd client cert
 	etcdCertReq := certificate.Request{
 		Name:   "apiserver-etcd-client",

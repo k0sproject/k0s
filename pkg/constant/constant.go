@@ -13,6 +13,10 @@ const (
 	CertRootDir = "/var/lib/mke/pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
 	CertRootDirMode = 0750
+	//EtcdCertDir contains etcd certificates
+	EtcdCertDir = "/var/lib/mke/pki/etcd"
+	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
+	EtcdCertDirMode = 0700
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/

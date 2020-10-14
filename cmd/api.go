@@ -112,7 +112,7 @@ func etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRootDir, "etcd", "ca.crt"), filepath.Join(constant.CertRootDir, "etcd", "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
