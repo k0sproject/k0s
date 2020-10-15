@@ -337,6 +337,9 @@ func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInte
 }
 
 func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
+	checksum := resourceChecksum(resource)
+	lastAppliedConfig, _ := resource.MarshalJSON()
+
 	labels := resource.GetLabels()
 	if labels == nil {
 		labels = map[string]string{}
@@ -348,9 +351,8 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	annotations[ChecksumAnnotation] = resourceChecksum(resource)
-	config, _ := resource.MarshalJSON()
-	annotations[LastConfigAnnotation] = string(config)
+	annotations[ChecksumAnnotation] = checksum
+	annotations[LastConfigAnnotation] = string(lastAppliedConfig)
 	resource.SetAnnotations(annotations)
 }
 
