@@ -11,6 +11,9 @@ bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 container
 
 buildmode = docker
 
+GOOS ?= linux
+export GOOS
+
 .PHONY: all
 all: $(addprefix $(bindir)/, $(bins))
 
