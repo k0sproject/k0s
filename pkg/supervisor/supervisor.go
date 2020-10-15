@@ -96,11 +96,8 @@ func (s *Supervisor) Supervise() {
 			// get signals sent directly to parent.
 			s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
-			// s.cmd.Stdout = log.Writer()
-			// s.cmd.Stderr = log.Writer()
-
-			s.cmd.Stdout = ioutil.Discard
-			s.cmd.Stderr = ioutil.Discard
+			s.cmd.Stdout = log.Writer()
+			s.cmd.Stderr = log.Writer()
 
 			err := s.cmd.Start()
 			if err != nil {
