@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	// Label stack label
-	Label = "mke.mirantis.com/stack"
+	// NameLabel stack label
+	NameLabel = "mke.mirantis.com/stack"
 
 	// ChecksumAnnotation defines the annotation key to used for stack checksums
 	ChecksumAnnotation = "mke.mirantis.com/stack-checksum"
@@ -45,6 +45,9 @@ type Stack struct {
 // Apply applies stack resources by creating or updating the resources. If prune is requested,
 // the previously applied stack resources which are not part of the current stack are removed from k8s api
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
+	log := logrus.WithField("stack", s.Name)
+
+	log.Debugf("applying with %d resources", len(s.Resources))
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
 	sortedResources := []*unstructured.Unstructured{}
 	for _, resource := range s.Resources {
@@ -78,9 +81,21 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		} else if err != nil {
 			return fmt.Errorf("unknown api error: %s", err)
 		} else {
-			if serverResource.GetLabels()[LastConfigAnnotation] == "" {
+			log.Debugf("server resource labels: %v", serverResource.GetLabels())
+			log.Debugf("server checsum: %s", serverResource.GetAnnotations()[ChecksumAnnotation])
+			localChecksum := resourceChecksum(resource)
+			log.Debugf("local checsum: %s", localChecksum)
+
+			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
+				log.Debug("resource checksums match, no need to update")
+				return nil
+			}
+			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
+				log.Debug("doing plain update as no last-config label present")
+				resource.SetResourceVersion(serverResource.GetResourceVersion())
 				_, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
 			} else {
+				log.Debug("patching resource")
 				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
@@ -273,7 +288,7 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []*unstructured.Unstructured {
 	pruneableResources := []*unstructured.Unstructured{}
 	listOpts := metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", Label, s.Name),
+		LabelSelector: fmt.Sprintf("%s=%s", NameLabel, s.Name),
 	}
 	resourceList, err := drClient.List(ctx, listOpts)
 	if err != nil {
@@ -282,7 +297,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 	for _, resource := range resourceList.Items {
 		// We need to filter out objects that do not actually have the stack label set
 		// There are some cases where we get "extra" results, e.g.: https://github.com/kubernetes-sigs/metrics-server/issues/604
-		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[Label] == s.Name {
+		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[NameLabel] == s.Name {
 			pruneableResources = append(pruneableResources, &resource)
 		}
 	}
@@ -300,18 +315,22 @@ func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 }
 
 func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
-	original := serverResource.GetLabels()[LastConfigAnnotation]
+	log := logrus.WithField("stack", s.Name)
+
+	original := serverResource.GetAnnotations()[LastConfigAnnotation]
 	if original == "" {
 		return fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
 	}
 	modified, _ := localResource.MarshalJSON()
+
 	patch, err := jsonpatch.CreateMergePatch([]byte(original), modified)
+	log.Debugf("******* patch: %s", string(patch))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to create jsonpatch data")
 	}
-	_, err = drClient.Patch(ctx, localResource.GetName(), types.JSONPatchType, patch, metav1.PatchOptions{})
+	_, err = drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to patch resource")
 	}
 
 	return nil
@@ -322,9 +341,17 @@ func (s *Stack) prepareResource(resource *unstructured.Unstructured) {
 	if labels == nil {
 		labels = map[string]string{}
 	}
-	labels[Label] = s.Name
-	labels[ChecksumAnnotation] = resourceChecksum(resource)
+	labels[NameLabel] = s.Name
 	resource.SetLabels(labels)
+
+	annotations := resource.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	annotations[ChecksumAnnotation] = resourceChecksum(resource)
+	config, _ := resource.MarshalJSON()
+	annotations[LastConfigAnnotation] = string(config)
+	resource.SetAnnotations(annotations)
 }
 
 func generateResourceID(resource unstructured.Unstructured) string {
@@ -338,7 +365,7 @@ func resourceChecksum(resource *unstructured.Unstructured) string {
 	}
 	hasher := md5.New()
 	// based on the implementation hasher.Write never returns err
-	_,_ = hasher.Write(json)
+	_, _ = hasher.Write(json)
 
 	return hex.EncodeToString(hasher.Sum(nil))
 }
