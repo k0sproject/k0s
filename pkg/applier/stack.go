@@ -80,15 +80,11 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			}
 		} else if err != nil {
 			return fmt.Errorf("unknown api error: %s", err)
-		} else {
-			log.Debugf("server resource labels: %v", serverResource.GetLabels())
-			log.Debugf("server checsum: %s", serverResource.GetAnnotations()[ChecksumAnnotation])
-			localChecksum := resourceChecksum(resource)
-			log.Debugf("local checsum: %s", localChecksum)
-
+		} else { // The resource already exists, we need to update it
+			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
 				log.Debug("resource checksums match, no need to update")
-				return nil
+				continue
 			}
 			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
 				log.Debug("doing plain update as no last-config label present")
@@ -315,8 +311,6 @@ func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
 }
 
 func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInterface, serverResource *unstructured.Unstructured, localResource *unstructured.Unstructured) error {
-	log := logrus.WithField("stack", s.Name)
-
 	original := serverResource.GetAnnotations()[LastConfigAnnotation]
 	if original == "" {
 		return fmt.Errorf("%s does not have last-applied-configuration", localResource.GetSelfLink())
@@ -324,7 +318,6 @@ func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInte
 	modified, _ := localResource.MarshalJSON()
 
 	patch, err := jsonpatch.CreateMergePatch([]byte(original), modified)
-	log.Debugf("******* patch: %s", string(patch))
 	if err != nil {
 		return errors.Wrapf(err, "failed to create jsonpatch data")
 	}

@@ -18,8 +18,8 @@ RUN echo "#!/bin/sh" > /etc/local.d/machine-id.start \
        && echo "fi" >> /etc/local.d/machine-id.start \
        && chmod +x /etc/local.d/machine-id.start
 
+# Put kubectl into place to ease up debugging
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.0/bin/linux/amd64/kubectl \
        && chmod +x ./kubectl \
        && mv ./kubectl /usr/local/bin/kubectl
-
 ENV KUBECONFIG=/var/lib/mke/pki/admin.conf
