@@ -1,0 +1,69 @@
+# CIS benchmark
+
+This guide uses MKE specific configuration customized to check only what is applicable to MKE cluster deployment.
+
+**Prerequisites** 
+Make sure that mke is running both master and node.
+
+1. Install `kube-bench`
+    The tool needs to be installed on Kubernetes Master and Worker servers.
+    Easiest way to do that is:
+    ```
+    curl -L https://github.com/aquasecurity/kube-bench/releases/download/v0.3.1/kube-bench_0.3.1_linux_amd64.deb -o kube-bench_0.3.1_linux_amd64.deb
+    sudo apt install ./kube-bench_0.3.1_linux_amd64.deb -f
+    ```
+
+2. Run CIS benchmark - Master
+    SSH into master node server. Ensure that the kube-bench is indeed installed on the host in question. 
+    Make copy of benchmark configuration from [cfg](cfg/)
+    run command:
+    ```
+    kube-bench master --config-dir cfg/
+    ```
+3. Run CIS benchmark - Node
+    SSH into master node server. Ensure that the kube-bench is indeed installed on the host in question. 
+    Make copy of benchmark configuration from [cfg](cfg/)
+    run command:
+    ```
+    kube-bench node --config-dir cfg/
+    ```
+Steps 2 and 3 can be skipped if MKE is run with `--enable-worker` but you will have to run both master and node commands separately.
+
+Output should look like:
+
+```
+# kube-bench node --config-dir CIS/cfg/ 
+[INFO] 4 Worker Node Security Configuration
+[INFO] 4.1 Worker Node Configuration Files
+[PASS] 4.1.1 Ensure that the kubelet service file permissions are set to 644 or more restrictive (Automated)
+[PASS] 4.1.2 Ensure that the kubelet service file ownership is set to root:root (Automated)
+[PASS] 4.1.3 If proxy kubeconfig file exists ensure permissions are set to 644 or more restrictive (Manual)
+[PASS] 4.1.4 Ensure that the proxy kubeconfig file ownership is set to root:root (Manual)
+[PASS] 4.1.5 Ensure that the --kubeconfig kubelet.conf file permissions are set to 644 or more restrictive (Automated)
+[PASS] 4.1.6 Ensure that the --kubeconfig kubelet.conf file ownership is set to root:root (Manual)
+[PASS] 4.1.7 Ensure that the certificate authorities file permissions are set to 644 or more restrictive (Manual)
+[PASS] 4.1.8 Ensure that the client certificate authorities file ownership is set to root:root (Manual)
+[PASS] 4.1.9 Ensure that the kubelet --config configuration file has permissions set to 644 or more restrictive (Automated)
+[PASS] 4.1.10 Ensure that the kubelet --config configuration file ownership is set to root:root (Automated)
+[INFO] 4.2 Kubelet
+[PASS] 4.2.1 Ensure that the anonymous-auth argument is set to false (Automated)
+[PASS] 4.2.2 Ensure that the --authorization-mode argument is not set to AlwaysAllow (Automated)
+[PASS] 4.2.3 Ensure that the --client-ca-file argument is set as appropriate (Automated)
+[PASS] 4.2.4 Ensure that the --read-only-port argument is set to 0 (Manual)
+[PASS] 4.2.5 Ensure that the --streaming-connection-idle-timeout argument is not set to 0 (Manual)
+[PASS] 4.2.6 Ensure that the --protect-kernel-defaults argument is set to true (Automated)
+[PASS] 4.2.7 Ensure that the --make-iptables-util-chains argument is set to true (Automated)
+[PASS] 4.2.8 Ensure that the --hostname-override argument is not set (Manual)
+[PASS] 4.2.9 Ensure that the --event-qps argument is set to 0 or a level which ensures appropriate event capture (Manual)
+[PASS] 4.2.10 Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate (Manual)
+[PASS] 4.2.11 Ensure that the --rotate-certificates argument is not set to false (Manual)
+[PASS] 4.2.12 Verify that the RotateKubeletServerCertificate argument is set to true (Manual)
+[PASS] 4.2.13 Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers (Manual)
+
+== Summary ==
+23 checks PASS
+0 checks FAIL
+0 checks WARN
+0 checks INFO
+```
+
