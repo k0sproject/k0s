@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  master:
+    build:
+      context: .
+      dockerfile: ./master/Dockerfile
+    # command: mke server
+    privileged: true
+    volumes:
+      # - ./var/lib/mke:/var/lib/mke
+      - ../mke:/usr/local/bin/mke
+    # restart: unless-stopped
+    ports:
+      - "6443:6443"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    networks:
+      testing:
+        ipv4_address: 10.5.0.5
+  worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    privileged: true
+    volumes:
+      # - ./var/lib/mke:/var/lib/mke
+      - ../mke:/usr/local/bin/mke
+    # restart: unless-stopped
+    # ports:
+    #   - "6443:6443"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    networks:
+      testing:
+        ipv4_address: 10.5.0.6
+networks:
+  testing:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
