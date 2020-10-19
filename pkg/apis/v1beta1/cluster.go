@@ -95,7 +95,8 @@ func FromYaml(filename string) (*ClusterConfig, error) {
 // DefaultClusterConfig ...
 func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
-		Spec: DefaultClusterSpec(),
+		Spec:   DefaultClusterSpec(),
+		Images: DefaultClusterImages(),
 	}
 }
 
