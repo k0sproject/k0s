@@ -2,14 +2,12 @@ version: "3.7"
 
 services:
   master:
-    build:
-      context: .
-      dockerfile: ./master/Dockerfile
-    # command: mke server
+    image: ubuntu:latest
+    command: mke server
     privileged: true
     volumes:
       # - ./var/lib/mke:/var/lib/mke
-      - ../mke:/usr/local/bin/mke
+      - ../../mke:/usr/local/bin/mke
     # restart: unless-stopped
     ports:
       - "6443:6443"
@@ -22,13 +20,12 @@ services:
       testing:
         ipv4_address: 10.5.0.5
   worker:
-    build:
-      context: .
-      dockerfile: ./worker/Dockerfile
+    image: ubuntu:latest
+    command: mke worker $TOKEN
     privileged: true
     volumes:
       # - ./var/lib/mke:/var/lib/mke
-      - ../mke:/usr/local/bin/mke
+      - ../../mke:/usr/local/bin/mke
     # restart: unless-stopped
     # ports:
     #   - "6443:6443"

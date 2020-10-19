@@ -1,11 +1,11 @@
 #!/bin/bash
-docker-compose up -d 
+docker-compose up -d master 
 
 RET=1
 until [ ${RET} -eq 0 ]; do
+    sleep 10
     token=`docker-compose exec master mke token create`
     RET=$?
-    sleep 10
 done
-# docker-compose start worker
-docker-compose exec worker nohup mke worker $token >/tmp/mke-worker.log 2>&1 &
+
+TOKEN=$token docker-compose up -d worker
