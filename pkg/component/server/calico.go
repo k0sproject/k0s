@@ -21,7 +21,7 @@ import (
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
 	client      kubernetes.Interface
-	clusterSpec *config.ClusterSpec
+	clusterConf *config.ClusterConfig
 	tickerDone  chan struct{}
 	log         *logrus.Entry
 }
@@ -32,10 +32,15 @@ type calicoConfig struct {
 	VxlanPort   int
 	VxlanVNI    int
 	ClusterCIDR string
+
+	CalicoCNIImage             string
+	CalicoFlexVolumeImage      string
+	CalicoNodeImage            string
+	CalicoKubeControllersImage string
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(clusterSpec *config.ClusterSpec) (*Calico, error) {
+func NewCalico(clusterConf *config.ClusterConfig) (*Calico, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
@@ -43,7 +48,7 @@ func NewCalico(clusterSpec *config.ClusterSpec) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
 		client:      client,
-		clusterSpec: clusterSpec,
+		clusterConf: clusterConf,
 		log:         log,
 	}, nil
 }
@@ -164,11 +169,15 @@ func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
 
 func (c *Calico) getConfig() (calicoConfig, error) {
 	config := calicoConfig{
-		MTU:         c.clusterSpec.Network.Calico.MTU,
-		Mode:        c.clusterSpec.Network.Calico.Mode,
-		VxlanPort:   c.clusterSpec.Network.Calico.VxlanPort,
-		VxlanVNI:    c.clusterSpec.Network.Calico.VxlanVNI,
-		ClusterCIDR: c.clusterSpec.Network.PodCIDR,
+		MTU:                        c.clusterConf.Spec.Network.Calico.MTU,
+		Mode:                       c.clusterConf.Spec.Network.Calico.Mode,
+		VxlanPort:                  c.clusterConf.Spec.Network.Calico.VxlanPort,
+		VxlanVNI:                   c.clusterConf.Spec.Network.Calico.VxlanVNI,
+		ClusterCIDR:                c.clusterConf.Spec.Network.PodCIDR,
+		CalicoCNIImage:             c.clusterConf.Images.Calico.CNI.URI(),
+		CalicoFlexVolumeImage:      c.clusterConf.Images.Calico.FlexVolume.URI(),
+		CalicoNodeImage:            c.clusterConf.Images.Calico.Node.URI(),
+		CalicoKubeControllersImage: c.clusterConf.Images.Calico.KubeControllers.URI(),
 	}
 
 	return config, nil

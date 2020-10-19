@@ -2,12 +2,8 @@ package v1beta1
 
 import "fmt"
 
-const (
-	ImagePullPolicy = "pull"
-)
-
+// ImageSpec container image settings
 type ImageSpec struct {
-	Policy  string `yaml:"policy"`
 	Image   string `yaml:"image"`
 	Version string `yaml:"version"`
 }
@@ -23,31 +19,54 @@ type ClusterImages struct {
 	MetricsServer ImageSpec
 	KubeProxy     ImageSpec
 	CoreDNS       ImageSpec
+
+	Calico CalicoImageSpec
+}
+
+// CalicoImageSpec config group for calico related image settings
+type CalicoImageSpec struct {
+	CNI             ImageSpec
+	FlexVolume      ImageSpec
+	Node            ImageSpec
+	KubeControllers ImageSpec
 }
 
 // DefaultClusterImages default image settings
 func DefaultClusterImages() *ClusterImages {
-	// TODO: add calico, it's harder because we don't control manifests directly
 	return &ClusterImages{
 		Konnectivity: ImageSpec{
-			Policy:  ImagePullPolicy,
 			Image:   "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent",
 			Version: "v0.0.12",
 		},
 		MetricsServer: ImageSpec{
-			Policy:  ImagePullPolicy,
 			Image:   "gcr.io/k8s-staging-metrics-server/metrics-server",
 			Version: "v0.3.7",
 		},
 		KubeProxy: ImageSpec{
-			Policy:  ImagePullPolicy,
 			Image:   "k8s.gcr.io/kube-proxy",
 			Version: "v1.19.0",
 		},
 		CoreDNS: ImageSpec{
-			Policy:  ImagePullPolicy,
 			Image:   "docker.io/coredns/coredns",
 			Version: "1.7.0",
+		},
+		Calico: CalicoImageSpec{
+			CNI: ImageSpec{
+				Image:   "calico/cni",
+				Version: "v3.16.2",
+			},
+			FlexVolume: ImageSpec{
+				Image:   "calico/pod2daemon-flexvol",
+				Version: "v3.16.2",
+			},
+			Node: ImageSpec{
+				Image:   "calico/node",
+				Version: "v3.16.2",
+			},
+			KubeControllers: ImageSpec{
+				Image:   "calico/kube-controllers",
+				Version: "v3.16.2",
+			},
 		},
 	}
 }

@@ -62,3 +62,19 @@ veth_mtu: "{{ .MTU }}"
 ```
 - disable BIRD checks on liveness and readiness as we don't support BGP by removing
 `-bird-ready` and `-bird-live` from the readiness and liveness probes respectively
+
+### Container image names 
+
+Instead of hardcoded image names and versions use placeholders to support configuration level settings. Following placeholders are used:
+
+- `CalicoCNIImage` for calico/cni
+- `CalicoFlexVolumeImage` for calico/pod2daemon-flexvol
+- `CalicoNodeImage` for calico/node
+- `CalicoKubeControllersImage` for calico/kube-controllers
+
+
+Example: 
+```
+# calico-node.yaml
+image: {{ .CalicoCNIImage }}
+```

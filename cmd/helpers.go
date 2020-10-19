@@ -13,10 +13,7 @@ func ConfigFromYaml(ctx *cli.Context) *config.ClusterConfig {
 	if err != nil {
 		logrus.Errorf("Failed to read cluster config: %s", err.Error())
 		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
-		clusterConfig = &config.ClusterConfig{
-			Spec:   config.DefaultClusterSpec(),
-			Images: config.DefaultClusterImages(),
-		}
+		clusterConfig = config.DefaultClusterConfig()
 	}
 	return clusterConfig
 }
