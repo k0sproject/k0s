@@ -12,7 +12,6 @@ master:
     - scheduler
     - controllermanager
     - etcd
-    - flanneld
     # kubernetes is a component to cover the config file /etc/kubernetes/config that is referred to in the benchmark
     - kubernetes
 
@@ -22,65 +21,21 @@ master:
   apiserver:
     bins:
       - "kube-apiserver"
-      - "hyperkube apiserver"
-      - "hyperkube kube-apiserver"
-      - "apiserver"
-    confs:
-      - /etc/kubernetes/manifests/kube-apiserver.yaml
-      - /etc/kubernetes/manifests/kube-apiserver.yml
-      - /etc/kubernetes/manifests/kube-apiserver.manifest
-      - /var/snap/kube-apiserver/current/args
-      - /var/snap/microk8s/current/args/kube-apiserver
-    defaultconf: /etc/kubernetes/manifests/kube-apiserver.yaml
 
   scheduler:
     bins:
       - "kube-scheduler"
-      - "hyperkube scheduler"
-      - "hyperkube kube-scheduler"
-      - "scheduler"
-    # confs:
-    #   - /etc/kubernetes/manifests/kube-scheduler.yaml
-    #   - /etc/kubernetes/manifests/kube-scheduler.yml
-    #   - /etc/kubernetes/manifests/kube-scheduler.manifest
-    #   - /var/snap/kube-scheduler/current/args
-    #   - /var/snap/microk8s/current/args/kube-scheduler
-    # defaultconf: /etc/kubernetes/manifests/kube-scheduler.yaml
-
+    
   controllermanager:
     bins:
       - "kube-controller-manager"
       - "kube-controller"
-      # - "hyperkube controller-manager"
-      # - "hyperkube kube-controller-manager"
-      # - "controller-manager"
-    # confs:
-    #   - /etc/kubernetes/manifests/kube-controller-manager.yaml
-    #   - /etc/kubernetes/manifests/kube-controller-manager.yml
-    #   - /etc/kubernetes/manifests/kube-controller-manager.manifest
-    #   - /var/snap/kube-controller-manager/current/args
-    #   - /var/snap/microk8s/current/args/kube-controller-manager
-    # defaultconf: /etc/kubernetes/manifests/kube-controller-manager.yaml
 
   etcd:
     optional: true
     bins:
       - "etcd"
-    confs:
-      - /etc/kubernetes/manifests/etcd.yaml
-      - /etc/kubernetes/manifests/etcd.yml
-      - /etc/kubernetes/manifests/etcd.manifest
-      - /etc/etcd/etcd.conf
-      - /var/snap/etcd/common/etcd.conf.yml
-      - /var/snap/etcd/common/etcd.conf.yaml
-      - /var/snap/microk8s/current/args/etcd
-    defaultconf: /etc/kubernetes/manifests/etcd.yaml
-
-  flanneld:
-    optional: true
-    bins:
-      - flanneld
-    defaultconf: /etc/sysconfig/flanneld
+    
 
 node:
   components:
