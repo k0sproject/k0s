@@ -119,7 +119,7 @@ spec:
         beta.kubernetes.io/os: linux
       containers:
       - name: coredns
-        image: docker.io/coredns/coredns:1.7.0
+        image: {{ .Image }}
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -212,17 +212,18 @@ type CoreDNS struct {
 	client        kubernetes.Interface
 	tickerDone    chan struct{}
 	log           *logrus.Entry
-	clusterConfig *config.ClusterSpec
+	clusterConfig *config.ClusterConfig
 }
 
 type coreDNSConfig struct {
 	Replicas      int
 	ClusterDNSIP  string
 	ClusterDomain string
+	Image         string
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *config.ClusterSpec) (*CoreDNS, error) {
+func NewCoreDNS(clusterConfig *config.ClusterConfig) (*CoreDNS, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
@@ -291,7 +292,7 @@ func (c *CoreDNS) Run() error {
 }
 
 func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
-	dns, err := c.clusterConfig.Network.DNSAddress()
+	dns, err := c.clusterConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -300,6 +301,7 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		Replicas:      1,
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
+		Image:         c.clusterConfig.Images.CoreDNS.URI(),
 	}
 
 	return config, nil

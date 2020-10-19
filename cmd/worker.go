@@ -83,7 +83,7 @@ func startWorker(ctx *cli.Context) error {
 	logrus.Info("Shutting down mke worker")
 
 	// Stop components
-	if err :=componentManager.Stop(); err != nil {
+	if err := componentManager.Stop(); err != nil {
 		logrus.Errorf("error while stoping component manager %s", err)
 	}
 	return nil

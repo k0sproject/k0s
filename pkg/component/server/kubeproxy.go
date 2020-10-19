@@ -17,16 +17,16 @@ type KubeProxy struct {
 	//client     *kubernetes.Clientset
 	tickerDone  chan struct{}
 	log         *logrus.Entry
-	clusterSpec *config.ClusterSpec
+	clusterConf *config.ClusterConfig
 }
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(clusterSpec *config.ClusterSpec) (*KubeProxy, error) {
+func NewKubeProxy(clusterSpec *config.ClusterConfig) (*KubeProxy, error) {
 
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
 	return &KubeProxy{
 		log:         log,
-		clusterSpec: clusterSpec,
+		clusterConf: clusterSpec,
 	}, nil
 }
 
@@ -93,8 +93,9 @@ func (k *KubeProxy) Stop() error {
 func (k *KubeProxy) getConfig() (proxyConfig, error) {
 	config := proxyConfig{
 		// FIXME get this from somewhere
-		ControlPlaneEndpoint: k.clusterSpec.API.APIAddress(),
-		ClusterCIDR:          k.clusterSpec.Network.PodCIDR,
+		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddress(),
+		ClusterCIDR:          k.clusterConf.Spec.Network.PodCIDR,
+		Image:                k.clusterConf.Images.KubeProxy.URI(),
 	}
 
 	return config, nil
@@ -103,6 +104,7 @@ func (k *KubeProxy) getConfig() (proxyConfig, error) {
 type proxyConfig struct {
 	ControlPlaneEndpoint string
 	ClusterCIDR          string
+	Image                string
 }
 
 const proxyTemplate = `
@@ -254,7 +256,7 @@ spec:
       priorityClassName: system-node-critical
       containers:
       - name: kube-proxy
-        image: k8s.gcr.io/kube-proxy:v1.19.0
+        image: {{ .Image }}
         imagePullPolicy: IfNotPresent
         command:
         - /usr/local/bin/kube-proxy

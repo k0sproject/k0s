@@ -8,3 +8,12 @@ run:
   modules-download-mode: readonly
   allow-parallel-runners: true
 
+linters:
+  enable:
+    - golint
+    - gofmt
+
+linters-settings:
+  gofmt:
+    # simplify code: gofmt with `-s` option, true by default
+    simplify: false
