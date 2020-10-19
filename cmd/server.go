@@ -35,6 +35,7 @@ func ServerCommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
+				Aliases: []string{"c"},
 				Value: "mke.yaml",
 			},
 			&cli.BoolFlag{
