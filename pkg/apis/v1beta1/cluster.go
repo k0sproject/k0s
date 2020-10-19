@@ -11,10 +11,11 @@ import (
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string       `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
-	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
-	Metadata   *ClusterMeta `yaml:"metadata"`
-	Spec       *ClusterSpec `yaml:"spec"`
+	APIVersion string         `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
+	Kind       string         `yaml:"kind" validate:"eq=Cluster"`
+	Metadata   *ClusterMeta   `yaml:"metadata"`
+	Spec       *ClusterSpec   `yaml:"spec"`
+	Images     *ClusterImages `yaml:"images"`
 }
 
 // ClusterMeta ...

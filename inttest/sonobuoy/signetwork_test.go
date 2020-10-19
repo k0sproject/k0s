@@ -154,7 +154,6 @@ func (s *NetworkSuite) dumpKubeConfig() string {
 	return kubeconfigPath
 }
 
-
 func TestVMNetworkSuite(t *testing.T) {
 	sonoPath := os.Getenv("SONOBUOY_PATH")
 	if sonoPath == "" {

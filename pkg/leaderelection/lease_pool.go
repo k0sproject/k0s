@@ -156,7 +156,7 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 	watchOptions := watchOptions{
 		channels: &LeaseEvents{
 			AcquiredLease: make(chan struct{}),
-			LostLease: make(chan struct{}),
+			LostLease:     make(chan struct{}),
 		},
 	}
 	for _, opt := range opts {

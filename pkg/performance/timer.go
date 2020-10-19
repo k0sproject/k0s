@@ -50,7 +50,7 @@ func (t *Timer) Checkpoint(name string) {
 	if t.startedAt.IsZero() {
 		t.buffer = append(t.buffer, checkpoint{
 			name: name,
-			err: errors.New("failed to record checkpoint, timer not started"),
+			err:  errors.New("failed to record checkpoint, timer not started"),
 		})
 		return
 	}

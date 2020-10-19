@@ -149,7 +149,6 @@ func (c *Certificates) Run() error {
 		return kubeConfig(filepath.Join(constant.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
 	})
 
-
 	eg.Go(func() error {
 		kubeletClientReq := certificate.Request{
 			Name:   "apiserver-kubelet-client",
