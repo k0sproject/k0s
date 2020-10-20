@@ -147,6 +147,19 @@ Following keys are avaiable
 #### `images.calico.flexvolume`
 #### `images.calico.node`
 #### `images.calico.kubecontrollers`
+### `images.repository`
+If `images.repository` is set and not empty, every image name will be prefixed with the value of `images.repository`
+
+Example
+```
+images:
+  repository: "my.own.repo"
+    konnectivity:
+      image: calico/kube-controllers
+      version: v3.16.2
+```
+
+In the runtime the image name will be calculated as `my.own.repo/calico/kube-controllers:v3.16.2`
 
 ## Configuring multi-node controlplane
 
