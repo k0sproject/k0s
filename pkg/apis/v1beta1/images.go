@@ -1,6 +1,8 @@
 package v1beta1
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // ImageSpec container image settings
 type ImageSpec struct {
@@ -21,6 +23,36 @@ type ClusterImages struct {
 	CoreDNS       ImageSpec `yaml:"coredns"`
 
 	Calico CalicoImageSpec `yaml:"calico"`
+
+	Repository string `yaml:"repository"`
+}
+
+func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type wrapper ClusterImages
+	imagesWrapper := (*wrapper)(ci)
+	if err := unmarshal(imagesWrapper); err != nil {
+		return err
+	}
+	ci.overrideImageRepositories()
+
+	return nil
+}
+
+func (ci *ClusterImages) overrideImageRepositories() {
+	if ci.Repository == "" {
+		return
+	}
+	override := func(dst *ImageSpec) {
+		dst.Image = fmt.Sprintf("%s/%s", ci.Repository, dst.Image)
+	}
+	override(&ci.Konnectivity)
+	override(&ci.MetricsServer)
+	override(&ci.KubeProxy)
+	override(&ci.CoreDNS)
+	override(&ci.Calico.CNI)
+	override(&ci.Calico.FlexVolume)
+	override(&ci.Calico.Node)
+	override(&ci.Calico.KubeControllers)
 }
 
 // CalicoImageSpec config group for calico related image settings
