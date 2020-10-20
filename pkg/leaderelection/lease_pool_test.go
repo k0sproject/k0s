@@ -149,7 +149,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 			Name: "test",
 		},
 		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity: &identity,
+			HolderIdentity:       &identity,
 			LeaseDurationSeconds: &leaseDurationSeconds,
 		},
 	}, metav1.CreateOptions{})

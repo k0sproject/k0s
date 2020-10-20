@@ -9,9 +9,9 @@ import (
 
 func ConfigCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "default-config",
-		Usage:     "Output the default MKE configuration yaml to stdout",
-		Action:    buildConfig,
+		Name:   "default-config",
+		Usage:  "Output the default MKE configuration yaml to stdout",
+		Action: buildConfig,
 	}
 }
 

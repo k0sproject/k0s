@@ -74,6 +74,7 @@ func (k *Konnectivity) Stop() error {
 
 type konnectivityAgentConfig struct {
 	APIAddress string
+	Image      string
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
@@ -88,6 +89,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.Address,
+			Image:      k.ClusterConfig.Images.Konnectivity.URI(),
 		},
 		Path: path.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}
@@ -149,7 +151,7 @@ spec:
         - key: "CriticalAddonsOnly"
           operator: "Exists"
       containers:
-        - image: us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.12
+        - image: {{ .Image }}
           name: konnectivity-agent
           command: ["/proxy-agent"]
           args: [

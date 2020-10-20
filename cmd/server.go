@@ -180,7 +180,7 @@ func startServer(ctx *cli.Context) error {
 
 	perfTimer.Checkpoint("starting-reconcilers")
 	// in-cluster component reconcilers
-	reconcilers := createClusterReconcilers(clusterConfig.Spec)
+	reconcilers := createClusterReconcilers(clusterConfig)
 	if err == nil {
 		// Start all reconcilers
 		for _, reconciler := range reconcilers {
@@ -218,14 +218,15 @@ func startServer(ctx *cli.Context) error {
 	}
 
 	// Stop components
-	if err :=componentManager.Stop(); err != nil {
+	if err := componentManager.Stop(); err != nil {
 		logrus.Errorf("error while stoping component manager %s", err)
 	}
 	return nil
 }
 
-func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]component.Component {
+func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
+	clusterSpec := clusterConf.Spec
 
 	defaultPSP, err := server.NewDefaultPSP(clusterSpec)
 	if err != nil {
@@ -234,14 +235,14 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		reconcilers["default-psp"] = defaultPSP
 	}
 
-	proxy, err := server.NewKubeProxy(clusterSpec)
+	proxy, err := server.NewKubeProxy(clusterConf)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())
 	} else {
 		reconcilers["kube-proxy"] = proxy
 	}
 
-	coreDNS, err := server.NewCoreDNS(clusterSpec)
+	coreDNS, err := server.NewCoreDNS(clusterConf)
 	if err != nil {
 		logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
 	} else {
@@ -249,7 +250,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 	}
 
 	if clusterSpec.Network.Provider == "calico" {
-		calico, err := server.NewCalico(clusterSpec)
+		calico, err := server.NewCalico(clusterConf)
 		if err != nil {
 			logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 		} else {
@@ -259,7 +260,7 @@ func createClusterReconcilers(clusterSpec *config.ClusterSpec) map[string]compon
 		logrus.Warnf("network provider set to custom, mke will not manage it")
 	}
 
-	metricServer, err := server.NewMetricServer(clusterSpec)
+	metricServer, err := server.NewMetricServer(clusterConf)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
 	} else {

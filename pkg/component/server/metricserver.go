@@ -133,7 +133,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
       - name: metrics-server
-        image: gcr.io/k8s-staging-metrics-server/metrics-server:v0.3.7
+        image: {{ .Image }}
         imagePullPolicy: IfNotPresent
         args:
           - --cert-dir=/tmp
@@ -181,12 +181,12 @@ spec:
 // MetricServer is the reconciler implementation for metrics server
 type MetricServer struct {
 	log           *logrus.Entry
-	clusterConfig *config.ClusterSpec
+	clusterConfig *config.ClusterConfig
 	tickerDone    chan struct{}
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterSpec) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *config.ClusterConfig) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:           log,
@@ -220,7 +220,7 @@ func (m *MetricServer) Run() error {
 				tw := util.TemplateWriter{
 					Name:     "metricServer",
 					Template: metricServerTemplate,
-					Data:     struct{}{},
+					Data:     struct{ Image string }{Image: m.clusterConfig.Images.MetricsServer.URI()},
 					Path:     filepath.Join(msDir, "metric_server.yaml"),
 				}
 				err := tw.Write()
