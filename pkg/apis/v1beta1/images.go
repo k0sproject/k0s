@@ -15,20 +15,20 @@ func (is ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec
-	MetricsServer ImageSpec
-	KubeProxy     ImageSpec
-	CoreDNS       ImageSpec
+	Konnectivity  ImageSpec `yaml:"konnectivity"`
+	MetricsServer ImageSpec `yaml:"metricsserver"`
+	KubeProxy     ImageSpec `yaml:"kubeproxy"`
+	CoreDNS       ImageSpec `yaml:"coredns"`
 
-	Calico CalicoImageSpec
+	Calico CalicoImageSpec `yaml:"calico"`
 }
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec
-	FlexVolume      ImageSpec
-	Node            ImageSpec
-	KubeControllers ImageSpec
+	CNI             ImageSpec `yaml:"cni"`
+	FlexVolume      ImageSpec `yaml:"flexvolume"`
+	Node            ImageSpec `yaml:"node"`
+	KubeControllers ImageSpec `yaml:"kubecontrollers"`
 }
 
 // DefaultClusterImages default image settings
