@@ -85,7 +85,7 @@ func CreateCommand() *cli.Command {
 				TakesFile: true,
 			},
 			&cli.BoolFlag{
-				Name: "wait",
+				Name:  "wait",
 				Value: false,
 			},
 		},
