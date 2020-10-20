@@ -1,15 +1,18 @@
 
 runc_version = 1.0.0-rc92
 containerd_version = 1.4.0
-kubernetes_version = 1.19.0
-kine_version = 0.4.0
-etcd_version = 3.4.12
+kubernetes_version = 1.19.3
+kine_version = 0.4.1
+etcd_version = 3.4.13
 konnectivity_version = 0.0.12
 
 bindir = staging/linux/bin
 bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
 
 buildmode = docker
+
+GOOS ?= linux
+export GOOS
 
 .PHONY: all
 all: $(addprefix $(bindir)/, $(bins))

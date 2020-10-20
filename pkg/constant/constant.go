@@ -9,19 +9,29 @@ const (
 	EtcdDataDir = "/var/lib/mke/etcd"
 	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	EtcdDataDirMode = 0700
-	// CertRoot defines the root location for all pki related artifacts
-	CertRoot = "/var/lib/mke/pki"
-	// CertRootMode is the expected directory permissions for CertRoot. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
-	CertRootMode = 0644
-	// CertRootSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
+	// CertRootDir defines the root location for all pki related artifacts
+	CertRootDir = "/var/lib/mke/pki"
+	// CertRootDirMode is the expected directory permissions for CertRootDir.
+	CertRootDirMode = 0750
+	//EtcdCertDir contains etcd certificates
+	EtcdCertDir = "/var/lib/mke/pki/etcd"
+	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
+	EtcdCertDirMode = 0700
+	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
+	CertMode = 0644
+	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
-	CertRootSecureMode = 0640
+	CertSecureMode = 0640
 	// BinDir defines the location for all pki related binaries
 	BinDir = "/var/lib/mke/bin"
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
 	// RunDir defines the location of supervised pid files and sockets
 	RunDir = "/run/mke"
+	// RunDirMode is the expected permissions of RunDir
+	RunDirMode = 0755
+	// PidFileMode is the expected file permissions for pid files
+	PidFileMode = 0644
 	// ManifestsDir defines the location for all stack manifests
 	ManifestsDir = "/var/lib/mke/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
@@ -31,6 +41,11 @@ const (
 	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
 	// KubeletAuthConfigPath defines the default kubelet auth config path
 	KubeletAuthConfigPath = "/var/lib/mke/kubelet.conf"
+	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
+	KubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
+	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
+	KubeletVolumePluginDirMode = 0700
+
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
 

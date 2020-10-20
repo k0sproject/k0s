@@ -41,7 +41,7 @@ func (s *Supervisor) processWaitQuit() bool {
 	}()
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.CertRootMode)
+	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.PidFileMode)
 	if err != nil {
 		log.Warnf("Failed to write file %s: %v", s.PidFile, err)
 	}
@@ -78,7 +78,7 @@ func (s *Supervisor) Supervise() {
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
 	s.PidFile = path.Join(constant.RunDir, s.Name) + ".pid"
-	if err := util.InitDirectory(constant.RunDir, constant.BinDirMode); err != nil {
+	if err := util.InitDirectory(constant.RunDir, constant.RunDirMode); err != nil {
 		log.Warnf("failed to initialize dir: %v", err)
 	}
 	go func() {

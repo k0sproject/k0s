@@ -15,11 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	kubeletConfigPath      = filepath.Join(constant.DataDir, "kubelet-config.yaml")
-	kubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
-)
-
 // Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
 	KubeletConfigClient *KubeletConfigClient
@@ -47,9 +42,9 @@ func (k *Kubelet) Init() error {
 		return errors.Wrapf(err, "failed to create %s", k.dataDir)
 	}
 
-	err = util.InitDirectory(kubeletVolumePluginDir, 0700)
+	err = util.InitDirectory(constant.KubeletVolumePluginDir, constant.KubeletVolumePluginDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", kubeletVolumePluginDir)
+		return errors.Wrapf(err, "failed to create %s", constant.KubeletVolumePluginDir)
 	}
 
 	return nil
@@ -58,17 +53,18 @@ func (k *Kubelet) Init() error {
 // Run runs kubelet
 func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
+	kubeletConfigPath := filepath.Join(constant.DataDir, "kubelet-config.yaml")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
 		BinPath: assets.BinPath("kubelet"),
 		Args: []string{
 			fmt.Sprintf("--root-dir=%s", k.dataDir),
-			fmt.Sprintf("--volume-plugin-dir=%s", kubeletVolumePluginDir),
+			fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
 			"--container-runtime=remote",
 			fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")),
 			fmt.Sprintf("--config=%s", kubeletConfigPath),
 			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
-			fmt.Sprintf("--kubeconfig=%s", filepath.Join(constant.DataDir, "kubelet.conf")),
+			fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
 			"--kube-reserved-cgroup=system.slice",
 			"--runtime-cgroups=/system.slice/containerd.service",
 			"--kubelet-cgroups=/system.slice/containerd.service",
@@ -81,7 +77,7 @@ func (k *Kubelet) Run() error {
 			return err
 		}
 
-		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertRootSecureMode)
+		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertSecureMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write kubelet config to disk")
 		}

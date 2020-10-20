@@ -20,9 +20,9 @@ type Client struct {
 func NewClient() (*Client, error) {
 	client := &Client{}
 	tlsInfo := transport.TLSInfo{
-		CertFile:      filepath.Join(constant.CertRoot, "apiserver-etcd-client.crt"),
-		KeyFile:       filepath.Join(constant.CertRoot, "apiserver-etcd-client.key"),
-		TrustedCAFile: filepath.Join(constant.CertRoot, "etcd", "ca.crt"),
+		CertFile:      filepath.Join(constant.CertRootDir, "apiserver-etcd-client.crt"),
+		KeyFile:       filepath.Join(constant.CertRootDir, "apiserver-etcd-client.key"),
+		TrustedCAFile: filepath.Join(constant.CertRootDir, "etcd", "ca.crt"),
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()

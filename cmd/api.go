@@ -73,8 +73,8 @@ func startAPI(ctx *cli.Context) error {
 	}
 
 	log.Fatal(srv.ListenAndServeTLS(
-		filepath.Join(constant.CertRoot, "mke-api.crt"),
-		filepath.Join(constant.CertRoot, "mke-api.key"),
+		filepath.Join(constant.CertRootDir, "mke-api.crt"),
+		filepath.Join(constant.CertRootDir, "mke-api.key"),
 	))
 
 	return nil
@@ -112,7 +112,7 @@ func etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.CertRoot, "etcd", "ca.crt"), filepath.Join(constant.CertRoot, "etcd", "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
@@ -141,12 +141,12 @@ func caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		caResp := v1beta1.CaResponse{}
-		key, err := ioutil.ReadFile(path.Join(constant.CertRoot, "ca.key"))
+		key, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 		}
 		caResp.Key = key
-		crt, err := ioutil.ReadFile(path.Join(constant.CertRoot, "ca.crt"))
+		crt, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 		}

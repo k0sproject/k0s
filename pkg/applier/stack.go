@@ -80,10 +80,11 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			}
 		} else if err != nil {
 			return fmt.Errorf("unknown api error: %s", err)
-		} else { // The resource already exists, we need to update it
+		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
 				log.Debug("resource checksums match, no need to update")
+				s.keepResource(resource)
 				continue
 			}
 			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
@@ -110,7 +111,9 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 }
 
 func (s *Stack) keepResource(resource *unstructured.Unstructured) {
-	s.keepResources = append(s.keepResources, generateResourceID(*resource))
+	resourceID := generateResourceID(*resource)
+	logrus.WithField("stack", s.Name).Debugf("marking resource to be kept: %s", resourceID)
+	s.keepResources = append(s.keepResources, resourceID)
 }
 
 func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
@@ -136,6 +139,7 @@ func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
 }
 
 func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+	log := logrus.WithField("stack", s.Name)
 	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
 		return err
@@ -143,6 +147,7 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 
 	for _, resource := range pruneableResources {
 		if resource.GetNamespace() != "" {
+			log.Debugf("deleting resource %s", resource.GetSelfLink())
 			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
@@ -151,6 +156,7 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 	}
 	for _, resource := range pruneableResources {
 		if resource.GetNamespace() == "" {
+			log.Debugf("deleting resource %s", resource.GetSelfLink())
 			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
@@ -170,6 +176,8 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 var ignoredResources = []string{"v1:Endpoints"}
 
 func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
+	log := logrus.WithField("stack", s.Name)
+
 	pruneableResources := []*unstructured.Unstructured{}
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
@@ -179,7 +187,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		// See https://github.com/kubernetes/kubernetes/issues/72051#issuecomment-521157642
 		// Common cause for this is metrics API which often gives 503s during discovery
 		if discovery.IsGroupDiscoveryFailedError(err) {
-			logrus.Debugf("error in api discovery for pruning: %s", err.Error())
+			log.Debugf("error in api discovery for pruning: %s", err.Error())
 		} else {
 			return nil, errors.Wrapf(err, "failed to list api groups for pruning")
 		}
@@ -193,7 +201,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 				continue
 			}
 			if util.StringSliceContains(ignoredResources, key) {
-				logrus.Debugf("skipping resource %s from prune", key)
+				log.Debugf("skipping resource %s from prune", key)
 				continue
 			}
 			if groupVersionKinds[key] == nil {
@@ -217,7 +225,8 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		}(groupVersionKind)
 	}
 	wg.Wait()
-	logrus.Debugf("found %d prunable resources", len(pruneableResources))
+	log.Debugf("found %d prunable resources", len(pruneableResources))
+
 	return pruneableResources, nil
 }
 
@@ -302,11 +311,13 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 }
 
 func (s *Stack) isInStack(resource unstructured.Unstructured) bool {
+	resourceID := generateResourceID(resource)
 	for _, id := range s.keepResources {
-		if id == generateResourceID(resource) {
+		if id == resourceID {
 			return true
 		}
 	}
+	logrus.WithField("stack", s.Name).Debugf("resource NOT in current stack: %s", resourceID)
 	return false
 }
 

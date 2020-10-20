@@ -40,7 +40,7 @@ func startWorker(ctx *cli.Context) error {
 	worker.KernelSetup()
 
 	token := ctx.Args().First()
-	if token == "" && !util.FileExists(path.Join(constant.DataDir, "kubelet.conf")) {
+	if token == "" && !util.FileExists(constant.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 
@@ -83,7 +83,7 @@ func startWorker(ctx *cli.Context) error {
 	logrus.Info("Shutting down mke worker")
 
 	// Stop components
-	if err :=componentManager.Stop(); err != nil {
+	if err := componentManager.Stop(); err != nil {
 		logrus.Errorf("error while stoping component manager %s", err)
 	}
 	return nil
@@ -117,18 +117,18 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
 	}
 
-	kubeletCAPath := path.Join(constant.CertRoot, "ca.crt")
+	kubeletCAPath := path.Join(constant.CertRootDir, "ca.crt")
 	if !util.FileExists(kubeletCAPath) {
-		if err := util.InitDirectory(constant.CertRoot, constant.CertRootMode); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRoot))
+		if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRootDir))
 		}
-		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertRootSecureMode)
+		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write ca client cert")
 		}
 	}
 
-	err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, constant.CertRootSecureMode)
+	err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
 	if err != nil {
 		return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 	}

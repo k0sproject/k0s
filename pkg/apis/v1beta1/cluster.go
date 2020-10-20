@@ -11,10 +11,11 @@ import (
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string       `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
-	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
-	Metadata   *ClusterMeta `yaml:"metadata"`
-	Spec       *ClusterSpec `yaml:"spec"`
+	APIVersion string         `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
+	Kind       string         `yaml:"kind" validate:"eq=Cluster"`
+	Metadata   *ClusterMeta   `yaml:"metadata"`
+	Spec       *ClusterSpec   `yaml:"spec"`
+	Images     *ClusterImages `yaml:"images"`
 }
 
 // ClusterMeta ...
@@ -94,7 +95,8 @@ func FromYaml(filename string) (*ClusterConfig, error) {
 // DefaultClusterConfig ...
 func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
-		Spec: DefaultClusterSpec(),
+		Spec:   DefaultClusterSpec(),
+		Images: DefaultClusterImages(),
 	}
 }
 
@@ -105,6 +107,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Name: "mke",
 	}
 	c.Spec = DefaultClusterSpec()
+	c.Images = DefaultClusterImages()
 
 	type yclusterconfig ClusterConfig
 	yc := (*yclusterconfig)(c)

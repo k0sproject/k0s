@@ -125,7 +125,7 @@ func CreateCommand() *cli.Command {
 }
 
 func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
-	caCert, err := ioutil.ReadFile(path.Join(constant.CertRoot, "ca.crt"))
+	caCert, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
 	}

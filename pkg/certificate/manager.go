@@ -40,15 +40,15 @@ type Manager struct {
 
 // EnsureCA makes sure the given CA certs and key is created.
 func (m *Manager) EnsureCA(name, cn string) error {
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", name))
+	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", name))
+	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", name))
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 
 		return nil
 	}
 
-	if err := util.InitDirectory(filepath.Dir(keyFile), constant.CertRootMode); err != nil {
+	if err := util.InitDirectory(filepath.Dir(keyFile), constant.CertRootDirMode); err != nil {
 		return errors.Wrapf(err, "failed to create pki dir")
 	}
 
@@ -65,12 +65,12 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(keyFile, key, constant.CertRootSecureMode)
+	err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(certFile, cert, 0640)
+	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
 	if err != nil {
 		return err
 	}
@@ -94,8 +94,8 @@ func (m *Manager) EnsureCA(name, cn string) error {
 // EnsureCertificate creates the specified certificate if it does not already exist
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
 
-	keyFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.key", certReq.Name))
-	certFile := filepath.Join(constant.CertRoot, fmt.Sprintf("%s.crt", certReq.Name))
+	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
+	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
 	gid, _ := util.GetGID(constant.Group)
 	uid, _ := util.GetUID(ownerName)
@@ -160,11 +160,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		Key:  string(key),
 		Cert: string(cert),
 	}
-	err = ioutil.WriteFile(keyFile, key, constant.CertRootSecureMode)
+	err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
 	if err != nil {
 		return Certificate{}, err
 	}
-	err = ioutil.WriteFile(certFile, cert, constant.CertRootSecureMode)
+	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
 	if err != nil {
 		return Certificate{}, err
 	}
