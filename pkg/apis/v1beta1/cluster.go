@@ -107,6 +107,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Name: "mke",
 	}
 	c.Spec = DefaultClusterSpec()
+	c.Images = DefaultClusterImages()
 
 	type yclusterconfig ClusterConfig
 	yc := (*yclusterconfig)(c)
