@@ -1,10 +1,11 @@
 package v1beta1
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
-	"testing"
 )
 
 func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
@@ -21,7 +22,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
 
-			require.Equal(t, "my.repo/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.12", testingConfig.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.13", testingConfig.Images.Konnectivity.URI())
 			require.Equal(t, "my.repo/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
 			require.Equal(t, "my.repo/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
 			require.Equal(t, "my.repo/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
@@ -36,7 +37,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, "my.repo/my-custom-image:v0.0.12", testingConfig.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/my-custom-image:v0.0.13", testingConfig.Images.Konnectivity.URI())
 			require.Equal(t, "my.repo/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
 			require.Equal(t, "my.repo/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
 			require.Equal(t, "my.repo/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
