@@ -19,6 +19,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	etcdCaCert     = filepath.Join(constant.EtcdCertDir, "ca.crt")
+	etcdCaCertKey  = filepath.Join(constant.EtcdCertDir, "ca.key")
+	etcdServerCert = filepath.Join(constant.EtcdCertDir, "server.crt")
+	etcdServerKey  = filepath.Join(constant.EtcdCertDir, "server.key")
+	etcdPeerCert   = filepath.Join(constant.EtcdCertDir, "peer.crt")
+	etcdPeerKey    = filepath.Join(constant.EtcdCertDir, "peer.key")
+)
+
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	Config      *config.EtcdConfig
@@ -78,12 +87,12 @@ func (e *Etcd) Run() error {
 		fmt.Sprintf("--listen-peer-urls=%s", peerURL),
 		fmt.Sprintf("--initial-advertise-peer-urls=%s", peerURL),
 		fmt.Sprintf("--name=%s", name),
-		fmt.Sprintf("--trusted-ca-file=%s", path.Join(constant.EtcdCertDir, "ca.crt")),
-		fmt.Sprintf("--cert-file=%s", path.Join(constant.EtcdCertDir, "server.crt")),
-		fmt.Sprintf("--key-file=%s", path.Join(constant.EtcdCertDir, "server.key")),
-		fmt.Sprintf("--peer-trusted-ca-file=%s", path.Join(constant.EtcdCertDir, "ca.crt")),
-		fmt.Sprintf("--peer-key-file=%s", path.Join(constant.EtcdCertDir, "peer.key")),
-		fmt.Sprintf("--peer-cert-file=%s", path.Join(constant.EtcdCertDir, "peer.crt")),
+		fmt.Sprintf("--trusted-ca-file=%s", etcdCaCert),
+		fmt.Sprintf("--cert-file=%s", etcdServerCert),
+		fmt.Sprintf("--key-file=%s", etcdServerKey),
+		fmt.Sprintf("--peer-trusted-ca-file=%s", etcdCaCert),
+		fmt.Sprintf("--peer-key-file=%s", etcdPeerKey),
+		fmt.Sprintf("--peer-cert-file=%s", etcdPeerCert),
 		"--peer-client-cert-auth=true",
 	}
 
@@ -100,8 +109,7 @@ func (e *Etcd) Run() error {
 		}
 		logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 		// Write etcd ca cert&key
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
-		if util.FileExists(etcdCaCertPath) && util.FileExists(etcdCaCertKey) {
+		if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
 			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 		} else {
 			err := util.InitDirectory(filepath.Dir(etcdCaCertKey), constant.CertSecureMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
@@ -113,7 +121,7 @@ func (e *Etcd) Run() error {
 				return err
 			}
 
-			err = ioutil.WriteFile(etcdCaCertPath, etcdResponse.CA.Cert, constant.CertSecureMode)
+			err = ioutil.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
 			if err != nil {
 				return err
 			}
@@ -152,13 +160,13 @@ func (e *Etcd) setupCerts() error {
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
 		return errors.Wrap(err, "failed to create etcd ca")
 	}
-	etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
+
 	// etcd client cert
 	etcdCertReq := certificate.Request{
 		Name:   "apiserver-etcd-client",
 		CN:     "apiserver-etcd-client",
 		O:      "apiserver-etcd-client",
-		CACert: etcdCaCertPath,
+		CACert: etcdCaCert,
 		CAKey:  etcdCaCertKey,
 		Hostnames: []string{
 			"127.0.0.1",
@@ -173,7 +181,7 @@ func (e *Etcd) setupCerts() error {
 		Name:   filepath.Join("etcd", "server"),
 		CN:     "etcd-server",
 		O:      "etcd-server",
-		CACert: etcdCaCertPath,
+		CACert: etcdCaCert,
 		CAKey:  etcdCaCertKey,
 		Hostnames: []string{
 			"127.0.0.1",
@@ -188,7 +196,7 @@ func (e *Etcd) setupCerts() error {
 		Name:   filepath.Join("etcd", "peer"),
 		CN:     e.Config.PeerAddress,
 		O:      "etcd-peer",
-		CACert: etcdCaCertPath,
+		CACert: etcdCaCert,
 		CAKey:  etcdCaCertKey,
 		Hostnames: []string{
 			e.Config.PeerAddress,
