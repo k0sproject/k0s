@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 	"testing"
@@ -12,7 +13,7 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 	return res
 }
 
-func TestImagesRepoOverride(t *testing.T) {
+func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
 		t.Run("default_config", func(t *testing.T) {
 			cfg := DefaultClusterConfig()
@@ -45,4 +46,29 @@ func TestImagesRepoOverride(t *testing.T) {
 			require.Equal(t, "my.repo/calico/kube-controllers:v3.16.2", testingConfig.Images.Calico.KubeControllers.URI())
 		})
 	})
+}
+
+func TestOverrideFunction(t *testing.T) {
+	repository := "my.registry"
+	testCases := []struct {
+		Input  string
+		Output string
+	}{
+		{
+			Input:  "repo/image",
+			Output: "my.registry/repo/image",
+		},
+		{
+			Input:  "registry.com/repo/image",
+			Output: "my.registry/repo/image",
+		},
+		{
+			Input:  "image",
+			Output: "my.registry/image",
+		},
+	}
+
+	for _, tc := range testCases {
+		assert.Equal(t, tc.Output, overrideRepository(repository, tc.Input))
+	}
 }

@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"strings"
 )
 
 // ImageSpec container image settings
@@ -43,7 +44,7 @@ func (ci *ClusterImages) overrideImageRepositories() {
 		return
 	}
 	override := func(dst *ImageSpec) {
-		dst.Image = fmt.Sprintf("%s/%s", ci.Repository, dst.Image)
+		dst.Image = overrideRepository(ci.Repository, dst.Image)
 	}
 	override(&ci.Konnectivity)
 	override(&ci.MetricsServer)
@@ -101,4 +102,20 @@ func DefaultClusterImages() *ClusterImages {
 			},
 		},
 	}
+}
+
+func getHostName(imageName string) string {
+	i := strings.IndexRune(imageName, '/')
+	if i == -1 || (!strings.ContainsAny(imageName[:i], ".:") && imageName[:i] != "localhost") {
+		// we have no domain in this ref
+		return ""
+	}
+	return imageName[:i]
+}
+
+func overrideRepository(repository string, originalImage string) string {
+	if host := getHostName(originalImage); host != "" {
+		return strings.Replace(originalImage, host, repository, 1)
+	}
+	return fmt.Sprintf("%s/%s", repository, originalImage)
 }
