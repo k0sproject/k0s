@@ -21,10 +21,10 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
 
-			require.Equal(t, "my.repo/us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.12", testingConfig.Images.Konnectivity.URI())
-			require.Equal(t, "my.repo/gcr.io/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
-			require.Equal(t, "my.repo/k8s.gcr.io/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
-			require.Equal(t, "my.repo/docker.io/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.12", testingConfig.Images.Konnectivity.URI())
+			require.Equal(t, "my.repo/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
 			require.Equal(t, "my.repo/calico/cni:v3.16.2", testingConfig.Images.Calico.CNI.URI())
 			require.Equal(t, "my.repo/calico/pod2daemon-flexvol:v3.16.2", testingConfig.Images.Calico.FlexVolume.URI())
 			require.Equal(t, "my.repo/calico/node:v3.16.2", testingConfig.Images.Calico.Node.URI())
@@ -37,9 +37,9 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
 			require.Equal(t, "my.repo/my-custom-image:v0.0.12", testingConfig.Images.Konnectivity.URI())
-			require.Equal(t, "my.repo/gcr.io/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
-			require.Equal(t, "my.repo/k8s.gcr.io/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
-			require.Equal(t, "my.repo/docker.io/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
+			require.Equal(t, "my.repo/k8s-staging-metrics-server/metrics-server:v0.3.7", testingConfig.Images.MetricsServer.URI())
+			require.Equal(t, "my.repo/kube-proxy:v1.19.0", testingConfig.Images.KubeProxy.URI())
+			require.Equal(t, "my.repo/coredns/coredns:1.7.0", testingConfig.Images.CoreDNS.URI())
 			require.Equal(t, "my.repo/calico/cni:v3.16.2", testingConfig.Images.Calico.CNI.URI())
 			require.Equal(t, "my.repo/calico/pod2daemon-flexvol:v3.16.2", testingConfig.Images.Calico.FlexVolume.URI())
 			require.Equal(t, "my.repo/calico/node:v3.16.2", testingConfig.Images.Calico.Node.URI())
