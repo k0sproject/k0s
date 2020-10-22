@@ -69,7 +69,7 @@ func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
 		Konnectivity: ImageSpec{
 			Image:   "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent",
-			Version: "v0.0.12",
+			Version: "v0.0.13",
 		},
 		MetricsServer: ImageSpec{
 			Image:   "gcr.io/k8s-staging-metrics-server/metrics-server",
