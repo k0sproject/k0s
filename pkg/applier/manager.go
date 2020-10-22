@@ -206,3 +206,6 @@ func (m *Manager) removeStack(name string) error {
 
 	return nil
 }
+
+// Health-check interface
+func (m *Manager) Healthy() error { return nil }

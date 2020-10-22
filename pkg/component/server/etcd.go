@@ -1,18 +1,21 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Mirantis/mke/pkg/apis/v1beta1"
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/assets"
 	"github.com/Mirantis/mke/pkg/certificate"
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/etcd"
 	"github.com/Mirantis/mke/pkg/supervisor"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
@@ -207,4 +210,54 @@ func (e *Etcd) setupCerts() error {
 	}
 
 	return nil
+}
+
+// Stop stops etcd
+func (e *Etcd) Healthy() error {
+	if err := waitForHealthy(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// waitForHealthy waits until etcd is healthy and returns true upon success. If a timeout occurs, it returns false
+func waitForHealthy() error {
+	log := logrus.WithField("component", "etcd")
+	ctx := context.Background()
+
+	// run the health check
+	update := func(quit chan bool) {
+		go func() {
+			for {
+				log.Info("checking etcd endpoint for health")
+				err := etcd.CheckEtcdReady()
+				if err != nil {
+					log.Errorf("health-check: etcd might be down: %v", err)
+				} else {
+					close(quit)
+				}
+				select {
+				case <-quit:
+					return
+				default:
+				}
+			}
+		}()
+	}
+
+	quit := make(chan bool)
+	// loop forever, until the context is canceled, a timeout occurs, or until the component is healthy
+	ticker := time.NewTicker(10 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			update(quit)
+		case <-quit:
+			return nil
+		case <-ctx.Done():
+			return fmt.Errorf("etcd health-check cancelled")
+		case <-time.After(2 * time.Minute):
+			return fmt.Errorf("timeout waiting for etcd health-check")
+		}
+	}
 }

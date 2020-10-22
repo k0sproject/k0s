@@ -72,3 +72,6 @@ func (a *Scheduler) Run() error {
 func (a *Scheduler) Stop() error {
 	return a.supervisor.Stop()
 }
+
+// Health-check interface
+func (a *Scheduler) Healthy() error { return nil }

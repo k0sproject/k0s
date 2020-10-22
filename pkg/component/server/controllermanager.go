@@ -101,3 +101,6 @@ func (a *ControllerManager) Run() error {
 func (a *ControllerManager) Stop() error {
 	return a.supervisor.Stop()
 }
+
+// Health-check interface
+func (a *ControllerManager) Healthy() error { return nil }

@@ -213,3 +213,6 @@ subjects:
   kind: Group
   name: system:serviceaccounts
 `
+
+// Health-check interface
+func (d *DefaultPSP) Healthy() error { return nil }

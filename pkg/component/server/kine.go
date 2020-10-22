@@ -82,3 +82,6 @@ func (k *Kine) Run() error {
 func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
 }
+
+// Health-check interface
+func (k *Kine) Healthy() error { return nil }

@@ -1,15 +1,11 @@
 package component
 
 import (
-	"context"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/Mirantis/mke/pkg/etcd"
 )
 
 // Manager manages components
@@ -48,17 +44,8 @@ func (m *Manager) Start() error {
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		logrus.Infof("starting %v", compName)
-		if compName == "APIServer" {
-			if componentIsReady("kube-apiserver", "etcd") {
-				if err := comp.Run(); err != nil {
-					return err
-				}
-			}
-		} else {
-			// start services component without health-check
-			if err := comp.Run(); err != nil {
-				return err
-			}
+		if err := comp.Run(); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -76,61 +63,4 @@ func (m *Manager) Stop() error {
 		}
 	}
 	return ret
-}
-
-// componentIsReady runs a loop to wait for a specific service to become healthy
-func componentIsReady(comp string, dep string) bool {
-	log := logrus.WithField("component", comp)
-	ctx := context.Background()
-
-	log.Infof("waiting for %v health", dep)
-
-	// run the health check
-	update := func(quit chan bool) {
-		go func() {
-			for {
-				log.Infof("checking %v health", dep)
-				err := getHealthCheck(dep)
-				if err != nil {
-					log.Errorf("health-check: %v might be down: %v", dep, err)
-				} else {
-					close(quit)
-				}
-				select {
-				case <-quit:
-					return
-				default:
-				}
-			}
-		}()
-	}
-
-	quit := make(chan bool)
-
-	// loop forever, until the context is canceled, or until the component is healthy
-	ticker := time.NewTicker(10 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			update(quit)
-		case <-quit:
-			return true
-		case <-ctx.Done():
-			return false
-		case <-time.After(2 * time.Minute):
-			log.Errorf("timeout waiting for %v health-check", dep)
-			return false
-		}
-	}
-}
-
-func getHealthCheck(serviceName string) error {
-	var err error
-	switch serviceName {
-	case "etcd":
-		err = etcd.CheckEtcdReady()
-	default:
-		return fmt.Errorf("no corresponding health-check found. leaving %s in unhealthy state", serviceName)
-	}
-	return err
 }

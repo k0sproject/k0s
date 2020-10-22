@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/static"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Mirantis/mke/static"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
@@ -188,3 +189,6 @@ func (c *Calico) Stop() error {
 	close(c.tickerDone)
 	return nil
 }
+
+// Health-check interface
+func (c *Calico) Healthy() error { return nil }
