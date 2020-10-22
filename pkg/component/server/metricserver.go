@@ -243,3 +243,6 @@ func (m *MetricServer) Stop() error {
 	close(m.tickerDone)
 	return nil
 }
+
+// Health-check interface
+func (m *MetricServer) Healthy() error { return nil }

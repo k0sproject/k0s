@@ -312,3 +312,6 @@ func (c *CoreDNS) Stop() error {
 	close(c.tickerDone)
 	return nil
 }
+
+// Health-check interface
+func (c *CoreDNS) Healthy() error { return nil }

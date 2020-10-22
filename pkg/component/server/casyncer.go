@@ -59,3 +59,6 @@ func writeCerts(caData v1beta1.CaResponse) error {
 
 	return nil
 }
+
+// Health-check interface
+func (c *CASyncer) Healthy() error { return nil }

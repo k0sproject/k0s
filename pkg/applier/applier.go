@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/retry"
 	"path"
 	"path/filepath"
+
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/sirupsen/logrus"

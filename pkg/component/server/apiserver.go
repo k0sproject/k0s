@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"path"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/assets"
@@ -148,7 +149,10 @@ func (a *APIServer) writeKonnectivityConfig() error {
 	return nil
 }
 
-// Stop stops kine
+// Stop stops APIServer
 func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
 }
+
+// Health-check interface
+func (a *APIServer) Healthy() error { return nil }

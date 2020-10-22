@@ -97,3 +97,6 @@ func (k *Kubelet) Run() error {
 func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
+
+// Health-check interface
+func (k *Kubelet) Healthy() error { return nil }

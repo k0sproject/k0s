@@ -7,14 +7,15 @@ import (
 	"path"
 	"path/filepath"
 
+	"io"
+	"io/ioutil"
+
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
 )
 
 // KubeletConfig is the reconciler for generic kubelet configs
@@ -237,3 +238,6 @@ func mergeProfiles(a *unstructuredYamlObject, b unstructuredYamlObject) (unstruc
 	}
 	return *a, nil
 }
+
+// Health-check interface
+func (k *KubeletConfig) Healthy() error { return nil }

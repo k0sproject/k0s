@@ -2,10 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/assets"
@@ -181,3 +182,6 @@ spec:
                   path: konnectivity-agent-token
                   audience: system:konnectivity-server
 `
+
+// Health-check interface
+func (k *Konnectivity) Healthy() error { return nil }

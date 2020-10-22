@@ -128,12 +128,9 @@ func startServer(ctx *cli.Context) error {
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
-
-	logrus.Info("kube-apiserver: waiting for etcd to become ready")
 	componentManager.Add(&server.APIServer{
 		ClusterConfig: clusterConfig,
 	})
-
 	componentManager.Add(&server.Konnectivity{
 		ClusterConfig: clusterConfig,
 	})

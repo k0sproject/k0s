@@ -1,8 +1,9 @@
 package applier
 
 import (
-	"k8s.io/client-go/util/retry"
 	"time"
+
+	"k8s.io/client-go/util/retry"
 
 	"github.com/Mirantis/mke/pkg/debounce"
 	"github.com/sirupsen/logrus"
@@ -77,3 +78,6 @@ func (s *StackApplier) Stop() error {
 func (s *StackApplier) DeleteStack() error {
 	return s.applier.Delete()
 }
+
+// Health-check interface
+func (s *StackApplier) Healthy() error { return nil }

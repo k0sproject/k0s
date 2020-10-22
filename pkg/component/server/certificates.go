@@ -8,11 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"golang.org/x/sync/errgroup"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/certificate"
@@ -297,3 +298,6 @@ func generateKeyPair(name string) error {
 
 	return nil
 }
+
+// Health-check interface
+func (c *Certificates) Healthy() error { return nil }

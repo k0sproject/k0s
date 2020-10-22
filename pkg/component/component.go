@@ -5,4 +5,5 @@ type Component interface {
 	Init() error
 	Run() error
 	Stop() error
+	Healthy() error
 }

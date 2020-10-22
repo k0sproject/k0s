@@ -42,3 +42,6 @@ func (m *MkeControlAPI) Run() error {
 func (m *MkeControlAPI) Stop() error {
 	return m.supervisor.Stop()
 }
+
+// Health-check interface
+func (m *MkeControlAPI) Healthy() error { return nil }

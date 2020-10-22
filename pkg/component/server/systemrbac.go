@@ -92,3 +92,6 @@ subjects:
   kind: Group
   name: system:nodes
 `
+
+// Health-check interface
+func (s *SystemRBAC) Healthy() error { return nil }
