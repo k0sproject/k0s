@@ -10,7 +10,6 @@ containerd config default > /etc/mke/containerd.toml
 ```
 This command will dump default values to `/etc/mke/containerd.toml`. 
 
-Before proceeding further make sure that following default values are added to the configuration file:
 `mke` runs containerd with follwoing default values:
 ```
 /var/lib/mke/bin/containerd \
@@ -20,6 +19,7 @@ Before proceeding further make sure that following default values are added to t
     --config=/etc/mke/containerd.toml
 ```
 
+Before proceeding further make sure that following default values are added to the configuration file:
 ```
 version = 2
 root = "/var/lib/mke/containerd"
