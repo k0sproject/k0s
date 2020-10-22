@@ -10,7 +10,15 @@ containerd config default > /etc/mke/containerd.toml
 ```
 This command will dump default values to `/etc/mke/containerd.toml`. 
 
-Before proceeding further make sure that following values are added to the configuration file:
+Before proceeding further make sure that following default values are added to the configuration file:
+`mke` runs containerd with follwoing default values:
+```
+/var/lib/mke/bin/containerd \
+    --root=/var/lib/mke/containerd \
+    --state=/run/mke/containerd \
+    --address=/run/mke/containerd.sock \
+    --config=/etc/mke/containerd.toml
+```
 
 ```
 version = 2
