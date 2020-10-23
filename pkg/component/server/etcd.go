@@ -212,7 +212,7 @@ func (e *Etcd) setupCerts() error {
 	return nil
 }
 
-// Stop stops etcd
+// Health-check interface
 func (e *Etcd) Healthy() error {
 	if err := waitForHealthy(); err != nil {
 		return err
@@ -223,43 +223,26 @@ func (e *Etcd) Healthy() error {
 // waitForHealthy waits until etcd is healthy and returns true upon success. If a timeout occurs, it returns false
 func waitForHealthy() error {
 	log := logrus.WithField("component", "etcd")
-	ctx := context.Background()
+	ctx, cancelFunction := context.WithTimeout(context.Background(), 2*time.Minute)
 
-	// run the health check
-	update := func(quit chan bool) {
-		go func() {
-			for {
-				log.Debug("checking etcd endpoint for health")
-				err := etcd.CheckEtcdReady()
-				if err != nil {
-					log.Errorf("health-check: etcd might be down: %v", err)
-				} else {
-					log.Debug("etcd is healthy. closing check")
-					close(quit)
-				}
-				select {
-				case <-quit:
-					return
-				default:
-				}
-			}
-		}()
-	}
+	// clear up context after timeout
+	defer cancelFunction()
 
-	quit := make(chan bool)
-	// loop forever, until the context is canceled, a timeout occurs, or until the component is healthy
-	ticker := time.NewTicker(10 * time.Second)
+	// loop forever, until the context is canceled or until etcd is healthy
+	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			update(quit)
-		case <-quit:
-			log.Debug("etcd: quitting health-check")
-			return nil
+			log.Debug("checking etcd endpoint for health")
+			err := etcd.CheckEtcdReady()
+			if err != nil {
+				log.Errorf("health-check: etcd might be down: %v", err)
+			} else {
+				log.Debug("etcd is healthy. closing check")
+				return nil
+			}
 		case <-ctx.Done():
-			return fmt.Errorf("etcd health-check cancelled")
-		case <-time.After(2 * time.Minute):
-			return fmt.Errorf("timeout waiting for etcd health-check")
+			return fmt.Errorf("etcd health-check timed out")
 		}
 	}
 }
