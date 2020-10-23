@@ -111,14 +111,15 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
+	var storageBackend component.Component
 
 	switch clusterConfig.Spec.Storage.Type {
 	case v1beta1.KineStorageType, "":
-		componentManager.Add(&server.Kine{
+		storageBackend = component.Storage(&server.Kine{
 			Config: clusterConfig.Spec.Storage.Kine,
 		})
 	case v1beta1.EtcdStorageType:
-		componentManager.Add(&server.Etcd{
+		storageBackend = component.Storage(&server.Etcd{
 			Config:      clusterConfig.Spec.Storage.Etcd,
 			Join:        join,
 			CertManager: certificateManager,
@@ -128,7 +129,10 @@ func startServer(ctx *cli.Context) error {
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
+	componentManager.Add(storageBackend)
+
 	componentManager.Add(&server.APIServer{
+		Storage:       storageBackend,
 		ClusterConfig: clusterConfig,
 	})
 	componentManager.Add(&server.Konnectivity{

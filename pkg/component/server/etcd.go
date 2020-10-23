@@ -229,11 +229,12 @@ func waitForHealthy() error {
 	update := func(quit chan bool) {
 		go func() {
 			for {
-				log.Info("checking etcd endpoint for health")
+				log.Debug("checking etcd endpoint for health")
 				err := etcd.CheckEtcdReady()
 				if err != nil {
 					log.Errorf("health-check: etcd might be down: %v", err)
 				} else {
+					log.Debug("etcd is healthy. closing check")
 					close(quit)
 				}
 				select {
@@ -253,6 +254,7 @@ func waitForHealthy() error {
 		case <-ticker.C:
 			update(quit)
 		case <-quit:
+			log.Debug("etcd: quitting health-check")
 			return nil
 		case <-ctx.Done():
 			return fmt.Errorf("etcd health-check cancelled")
