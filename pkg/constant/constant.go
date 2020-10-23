@@ -70,4 +70,22 @@ const (
 
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-mke-privileged"
+
+	// Image Constants
+	KonnectivityImage          = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
+	KonnectivityImageVersion   = "v0.0.13"
+	MetricsImage               = "gcr.io/k8s-staging-metrics-server/metrics-server"
+	MetricsImageVersion        = "v0.3.7"
+	KubeProxyImage             = "k8s.gcr.io/kube-proxy"
+	KubeProxyImageVersion      = "v1.19.0"
+	CoreDNSImage               = "docker.io/coredns/coredns"
+	CoreDNSImageVersion        = "1.7.0"
+	CalicoImage                = "calico/cni"
+	CalicoImageVersion         = "v3.16.2"
+	FlexVolumeImage            = "calico/pod2daemon-flexvol"
+	FlexVolumeImageVersion     = "v3.16.2"
+	CalicoNodeImage            = "calico/node"
+	CalicoNodeImageVersion     = "v3.16.2"
+	KubeControllerImage        = "calico/kube-controllers"
+	KubeControllerImageVersion = "v3.16.2"
 )

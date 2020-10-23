@@ -3,6 +3,8 @@ package v1beta1
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Mirantis/mke/pkg/constant"
 )
 
 // ImageSpec container image settings
@@ -68,37 +70,37 @@ type CalicoImageSpec struct {
 func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
 		Konnectivity: ImageSpec{
-			Image:   "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent",
-			Version: "v0.0.13",
+			Image:   constant.KonnectivityImage,
+			Version: constant.KonnectivityImageVersion,
 		},
 		MetricsServer: ImageSpec{
-			Image:   "gcr.io/k8s-staging-metrics-server/metrics-server",
-			Version: "v0.3.7",
+			Image:   constant.MetricsImage,
+			Version: constant.MetricsImageVersion,
 		},
 		KubeProxy: ImageSpec{
-			Image:   "k8s.gcr.io/kube-proxy",
-			Version: "v1.19.0",
+			Image:   constant.KubeProxyImage,
+			Version: constant.KubeProxyImageVersion,
 		},
 		CoreDNS: ImageSpec{
-			Image:   "docker.io/coredns/coredns",
-			Version: "1.7.0",
+			Image:   constant.CoreDNSImage,
+			Version: constant.CoreDNSImageVersion,
 		},
 		Calico: CalicoImageSpec{
 			CNI: ImageSpec{
-				Image:   "calico/cni",
-				Version: "v3.16.2",
+				Image:   constant.CalicoImage,
+				Version: constant.CalicoImageVersion,
 			},
 			FlexVolume: ImageSpec{
-				Image:   "calico/pod2daemon-flexvol",
-				Version: "v3.16.2",
+				Image:   constant.FlexVolumeImage,
+				Version: constant.FlexVolumeImageVersion,
 			},
 			Node: ImageSpec{
-				Image:   "calico/node",
-				Version: "v3.16.2",
+				Image:   constant.CalicoNodeImage,
+				Version: constant.CalicoNodeImageVersion,
 			},
 			KubeControllers: ImageSpec{
-				Image:   "calico/kube-controllers",
-				Version: "v3.16.2",
+				Image:   constant.KubeControllerImage,
+				Version: constant.KubeControllerImageVersion,
 			},
 		},
 	}
