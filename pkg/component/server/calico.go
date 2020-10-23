@@ -1,14 +1,15 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/Mirantis/mke/static"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/Mirantis/mke/static"
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
@@ -25,14 +26,21 @@ type Calico struct {
 	clusterConf *config.ClusterConfig
 	tickerDone  chan struct{}
 	log         *logrus.Entry
+
+	saver manifestsSaver
+}
+
+type manifestsSaver interface {
+	Save(dst string, content []byte) error
 }
 
 type calicoConfig struct {
-	MTU         int
-	Mode        string
-	VxlanPort   int
-	VxlanVNI    int
-	ClusterCIDR string
+	MTU             int
+	Mode            string
+	VxlanPort       int
+	VxlanVNI        int
+	ClusterCIDR     string
+	EnableWireguard bool
 
 	CalicoCNIImage             string
 	CalicoFlexVolumeImage      string
@@ -40,8 +48,31 @@ type calicoConfig struct {
 	CalicoKubeControllersImage string
 }
 
+// FsManifestsSaver saves all given manifests under the specified root dir
+type FsManifestsSaver struct {
+	dir string
+}
+
+// Save saves given manifest under the given path
+func (f FsManifestsSaver) Save(dst string, content []byte) error {
+	if err := ioutil.WriteFile(filepath.Join(f.dir, dst), content, constant.ManifestsDirMode); err != nil {
+		return fmt.Errorf("can't write calico manifest configuration config map%s: %v", dst, err)
+	}
+	return nil
+}
+
+// NewManifestsSaver builds new filesystem manifests saver
+func NewManifestsSaver() (*FsManifestsSaver, error) {
+	calicoDir := path.Join(constant.DataDir, "manifests", "calico")
+	err := os.MkdirAll(calicoDir, constant.ManifestsDirMode)
+	if err != nil {
+		return nil, err
+	}
+	return &FsManifestsSaver{dir: calicoDir}, nil
+}
+
 // NewCalico creates new Calico reconciler component
-func NewCalico(clusterConf *config.ClusterConfig) (*Calico, error) {
+func NewCalico(clusterConf *config.ClusterConfig, saver manifestsSaver) (*Calico, error) {
 	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
@@ -51,6 +82,7 @@ func NewCalico(clusterConf *config.ClusterConfig) (*Calico, error) {
 		client:      client,
 		clusterConf: clusterConf,
 		log:         log,
+		saver:       saver,
 	}, nil
 }
 
@@ -61,11 +93,6 @@ func (c *Calico) Init() error {
 
 // Run runs the calico reconciler
 func (c *Calico) Run() error {
-	calicoDir := path.Join(constant.DataDir, "manifests", "calico")
-	err := os.MkdirAll(calicoDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
 	c.tickerDone = make(chan struct{})
 	var emptyStruct struct{}
 
@@ -77,6 +104,9 @@ func (c *Calico) Run() error {
 	}
 
 	for _, filename := range crds {
+		manifestName := fmt.Sprintf("calico-crd-%s", filename)
+		output := bytes.NewBuffer([]byte{})
+
 		contents, err := static.Asset(fmt.Sprintf("manifests/calico/CustomResourceDefinition/%s", filename))
 
 		if err != nil {
@@ -87,11 +117,13 @@ func (c *Calico) Run() error {
 			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
 			Template: string(contents),
 			Data:     emptyStruct,
-			Path:     filepath.Join(calicoDir, fmt.Sprintf("calico-crd-%s", filename)),
 		}
-		err = tw.Write()
-		if err != nil {
-			return errors.Wrap(err, "failed to write calico crd manifests")
+		if err := tw.WriteToBuffer(output); err != nil {
+			return fmt.Errorf("failed to write calico crd manifests %s: %v", manifestName, err)
+		}
+
+		if err := c.saver.Save(manifestName, output.Bytes()); err != nil {
+			return fmt.Errorf("failed to save calico crd manifest %s: %v", manifestName, err)
 		}
 	}
 
@@ -102,12 +134,12 @@ func (c *Calico) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				newConfig := c.work(previousConfig)
+				newConfig := c.processConfigChanges(previousConfig)
 				if newConfig != nil {
 					previousConfig = *newConfig
 				}
 			case <-c.tickerDone:
-				c.log.Info("coredns reconciler done")
+				c.log.Info("calico reconciler done")
 				return
 			}
 		}
@@ -116,7 +148,7 @@ func (c *Calico) Run() error {
 	return nil
 }
 
-func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
+func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig {
 	config, err := c.getConfig()
 	if err != nil {
 		c.log.Errorf("error calculating calico configs: %s. will retry", err.Error())
@@ -145,8 +177,17 @@ func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
 			return nil
 		}
 
+		tryAndLog := func(name string, e error) {
+			if e != nil {
+				c.log.Errorf("failed to write manifest %s: %v, will re-try", name, e)
+			}
+		}
+
 		for _, filename := range manifestPaths {
+			manifestName := fmt.Sprintf("calico-%s-%s", dir, filename)
+			output := bytes.NewBuffer([]byte{})
 			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
+
 			if err != nil {
 				return nil
 			}
@@ -155,13 +196,9 @@ func (c *Calico) work(previousConfig calicoConfig) *calicoConfig {
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
 				Data:     config,
-				Path:     filepath.Join(constant.DataDir, "manifests", "calico", fmt.Sprintf("calico-%s-%s", dir, filename)),
 			}
-			err = tw.Write()
-			if err != nil {
-				c.log.Errorf("error writing calico manifest: %s. will retry", err.Error())
-				return nil
-			}
+			tryAndLog(manifestName, tw.WriteToBuffer(output))
+			tryAndLog(manifestName, c.saver.Save(manifestName, output.Bytes()))
 		}
 	}
 
@@ -174,6 +211,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		Mode:                       c.clusterConf.Spec.Network.Calico.Mode,
 		VxlanPort:                  c.clusterConf.Spec.Network.Calico.VxlanPort,
 		VxlanVNI:                   c.clusterConf.Spec.Network.Calico.VxlanVNI,
+		EnableWireguard:            c.clusterConf.Spec.Network.Calico.EnableWireguard,
 		ClusterCIDR:                c.clusterConf.Spec.Network.PodCIDR,
 		CalicoCNIImage:             c.clusterConf.Images.Calico.CNI.URI(),
 		CalicoFlexVolumeImage:      c.clusterConf.Images.Calico.FlexVolume.URI(),
