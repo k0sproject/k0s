@@ -6,7 +6,7 @@ type Calico struct {
 	VxlanPort       int    `yaml:"vxlanPort"`
 	VxlanVNI        int    `yaml:"vxlanVNI"`
 	MTU             int    `yaml:"mtu"`
-	EnableWireguard bool   `yaml:"wireguardßß"`
+	EnableWireguard bool   `yaml:"wireguard"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -16,7 +16,7 @@ func DefaultCalico() *Calico {
 		VxlanPort:       4789,
 		VxlanVNI:        4096,
 		MTU:             1450,
-		EnableWireguard: true,
+		EnableWireguard: false,
 	}
 }
 
@@ -26,7 +26,7 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
 	c.MTU = 1450
-	c.EnableWireguard = true
+	c.EnableWireguard = false
 
 	type ycalico Calico
 	yc := (*ycalico)(c)
