@@ -13,16 +13,13 @@ import (
 
 	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
-	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/Mirantis/mke/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/kubernetes"
 )
 
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
-	client      kubernetes.Interface
 	clusterConf *config.ClusterConfig
 	tickerDone  chan struct{}
 	log         *logrus.Entry
@@ -73,13 +70,8 @@ func NewManifestsSaver() (*FsManifestsSaver, error) {
 
 // NewCalico creates new Calico reconciler component
 func NewCalico(clusterConf *config.ClusterConfig, saver manifestsSaver) (*Calico, error) {
-	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
-	if err != nil {
-		return nil, err
-	}
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
-		client:      client,
 		clusterConf: clusterConf,
 		log:         log,
 		saver:       saver,
