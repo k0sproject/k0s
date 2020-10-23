@@ -35,6 +35,7 @@ spec:
       vxlanPort: 4789
       vxlanVNI: 4096
       mtu: 1450
+      wireguard: false
   podSecurityPolicy:
     defaultPolicy: 00-mke-privileged
   workerProfiles: []
