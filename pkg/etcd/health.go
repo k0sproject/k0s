@@ -28,6 +28,8 @@ func CheckEtcdReady() error {
 		logrus.Errorf("cannot fetch health endpoint: %v\n", err)
 		return err
 	}
+
+	// the metrics endpoint was selected as a health endpoint in the official etcd docs: https://etcd.io/docs/v3.4.0/op-guide/monitoring/
 	u.Path = "/metrics"
 
 	tr, err := transport.NewTransport(transport.TLSInfo{
