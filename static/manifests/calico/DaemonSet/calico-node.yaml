@@ -173,6 +173,10 @@ spec:
             - name: FELIX_VXLANVNI
               value: "{{ .VxlanVNI }}"
             {{- end }}
+            {{- if .EnableWireguard }}
+            - name: FELIX_WIREGUARDENABLED
+              value: "true"
+            {{- end }}
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
               valueFrom:

@@ -252,16 +252,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]comp
 		reconcilers["coredns"] = coreDNS
 	}
 
-	if clusterSpec.Network.Provider == "calico" {
-		calico, err := server.NewCalico(clusterConf)
-		if err != nil {
-			logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
-		} else {
-			reconcilers["calico"] = calico
-		}
-	} else {
-		logrus.Warnf("network provider set to custom, mke will not manage it")
-	}
+	initNetwork(reconcilers, clusterConf)
 
 	metricServer, err := server.NewMetricServer(clusterConf)
 	if err != nil {
@@ -285,6 +276,29 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]comp
 	}
 
 	return reconcilers
+}
+
+func initNetwork(reconcilers map[string]component.Component, conf *config.ClusterConfig) {
+	if conf.Spec.Network.Provider != "calico" {
+		logrus.Warnf("network provider set to custom, mke will not manage it")
+		return
+	}
+
+	manifestsSaver, err := server.NewManifestsSaver()
+	if err != nil {
+		logrus.Warnf("failed to initialize calico reconciler manifests saver: %s", err.Error())
+		return
+	}
+
+	calico, err := server.NewCalico(conf, manifestsSaver)
+
+	if err != nil {
+		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
+		return
+	}
+
+	reconcilers["calico"] = calico
+
 }
 
 func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *component.Manager, profile string) error {
