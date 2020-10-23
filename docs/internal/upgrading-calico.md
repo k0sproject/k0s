@@ -44,6 +44,14 @@ not the calico originals.
   value: "{{ .VxlanVNI }}"
 {{- end }}
 ```
+
+- variable-based WireGuard support:
+```helmyaml
+{{- if .EnableWireguard }}
+- name: FELIX_WIREGUARDENABLED
+  value: "true"
+{{- end }}
+```
 - variable-based cluster CIDR:  
 ```helmyaml
 - name: CALICO_IPV4POOL_CIDR
