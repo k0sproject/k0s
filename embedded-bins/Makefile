@@ -4,7 +4,7 @@ containerd_version = 1.4.0
 kubernetes_version = 1.19.3
 kine_version = 0.4.1
 etcd_version = 3.4.13
-konnectivity_version = 0.0.12
+konnectivity_version = 0.0.13
 
 bindir = staging/linux/bin
 bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
@@ -30,6 +30,7 @@ clean:
 		fi; \
 	done
 	rm -rf staging
+	rm -rf .tmp/*
 
 $(bindir):
 	mkdir -p $@
