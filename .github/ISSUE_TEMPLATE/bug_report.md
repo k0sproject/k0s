@@ -25,7 +25,7 @@ How can we reproduce this issue? (as minimally and as precisely as possible)
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots & Logs **
+**Screenshots & Logs**
 If applicable, add screenshots to help explain your problem.
 Also add any output from kubectl if applicable:
 ```
