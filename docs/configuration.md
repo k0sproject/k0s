@@ -92,6 +92,7 @@ Using type `etcd` will make mke to create and manage an elastic etcd cluster wit
 - `vxlanPort`: The UDP port to use for VXLAN (default `4789`)
 - `vxlanVNI`: The virtual network ID to use for VXLAN. (default: `4096`)
 - `mtu`: MTU to use for overlay network (default `1450`)
+- `wireguard`: enable wireguard based encryption (default `false`). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.
 
 ### `spec.podSecurityPolicy`
 
