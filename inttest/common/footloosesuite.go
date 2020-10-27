@@ -384,27 +384,27 @@ func (s *FootlooseSuite) createConfig() config.Config {
 	}
 
 	volumes := []config.Volume{
-		config.Volume{
+		{
 			Type:        "bind",
 			Source:      "/lib/modules",
 			Destination: "/lib/modules",
 		},
-		config.Volume{
+		{
 			Type:        "bind",
 			Source:      mkePath,
 			Destination: "/usr/bin/mke",
 		},
-		config.Volume{
+		{
 			Type:        "volume",
 			Destination: "/var/lib/mke",
 		},
 	}
 
 	portMaps := []config.PortMapping{
-		config.PortMapping{
+		{
 			ContainerPort: 22,
 		},
-		config.PortMapping{
+		{
 			ContainerPort: 6443,
 		},
 	}
@@ -415,7 +415,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			PrivateKey: path.Join(s.keyDir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
-			config.MachineReplicas{
+			{
 				Count: s.ControllerCount,
 				Spec: config.Machine{
 					Image:        "footloose-alpine",
@@ -425,7 +425,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 					PortMappings: portMaps,
 				},
 			},
-			config.MachineReplicas{
+			{
 				Count: s.WorkerCount,
 				Spec: config.Machine{
 					Image:        "footloose-alpine",

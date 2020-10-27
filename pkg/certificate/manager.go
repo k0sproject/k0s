@@ -138,7 +138,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		KeyRequest: csr.NewKeyRequest(),
 		CN:         certReq.CN,
 		Names: []csr.Name{
-			csr.Name{O: certReq.O},
+			{O: certReq.O},
 		},
 	}
 
