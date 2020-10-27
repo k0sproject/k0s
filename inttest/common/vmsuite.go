@@ -84,7 +84,7 @@ func (s *VMSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	startControllerCmd := "sudo nohup mke server >/tmp/mke-server.log 2>&1 &"
+	startControllerCmd := "sudo nohup mke --debug server >/tmp/mke-server.log 2>&1 &"
 	_, err = ssh.ExecWithOutput(startControllerCmd)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (s *VMSuite) RunWorkers() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`sudo nohup mke worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`sudo nohup mke --debug worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
 	for i := 0; i < len(s.WorkerIPs); i++ {
 		workerNode := s.WorkerIPs[i]
 		sshWorker, err := s.SSH(workerNode)

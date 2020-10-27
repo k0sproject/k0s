@@ -198,7 +198,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup mke server >/tmp/mke-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup mke --debug server >/tmp/mke-server.log 2>&1 &")
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (s *FootlooseSuite) JoinController(idx int, token string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup mke server %s >/tmp/mke-server.log 2>&1 &", token))
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup mke --debug server %s >/tmp/mke-server.log 2>&1 &", token))
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func (s *FootlooseSuite) RunWorkers() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`nohup mke worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`nohup mke --debug worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := fmt.Sprintf("worker%d", i)
 		sshWorker, err := s.SSH(workerNode)
