@@ -668,7 +668,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"gen_calico.go":                                                                                      gen_calicoGo,
+	"gen_calico.go": gen_calicoGo,
 	"manifests/calico/ClusterRole/calico-kube-controllers.yaml":                                          manifestsCalicoClusterroleCalicoKubeControllersYaml,
 	"manifests/calico/ClusterRole/calico-node.yaml":                                                      manifestsCalicoClusterroleCalicoNodeYaml,
 	"manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml":                                   manifestsCalicoClusterrolebindingCalicoKubeControllersYaml,
