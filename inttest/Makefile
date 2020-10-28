@@ -29,10 +29,10 @@ check-network-vm: bin/sonobuoy
 		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
 check-basic: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/basic
+	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 5m github.com/Mirantis/mke/inttest/basic
 
 check-hacontrolplane: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/hacontrolplane
+	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 3m github.com/Mirantis/mke/inttest/hacontrolplane
 
 .PHONY: clean
 clean:
