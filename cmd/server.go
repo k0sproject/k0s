@@ -50,8 +50,9 @@ func ServerCommand() *cli.Command {
 		Action: startServer,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "config",
-				Value: "mke.yaml",
+				Name:    "config",
+				Aliases: []string{"c"},
+				Value:   "mke.yaml",
 			},
 			&cli.BoolFlag{
 				Name:  "enable-worker",
