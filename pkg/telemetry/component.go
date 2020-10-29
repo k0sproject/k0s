@@ -27,7 +27,7 @@ func (p *Component) Init() error {
 	p.log = logrus.WithField("component", "telemetry")
 
 	if segmentToken == "" {
-		p.log.Info("no token, is telemetry disabled")
+		p.log.Info("no token, telemetry is disabled")
 		return nil
 	}
 
