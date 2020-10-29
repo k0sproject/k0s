@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Mirantis/mke/pkg/telemetry"
 	"os"
 	"os/signal"
 	"strings"
@@ -136,16 +137,16 @@ func startServer(ctx *cli.Context) error {
 
 	switch clusterConfig.Spec.Storage.Type {
 	case v1beta1.KineStorageType, "":
-		storageBackend = component.Storage(&server.Kine{
+		storageBackend = &server.Kine{
 			Config: clusterConfig.Spec.Storage.Kine,
-		})
+		}
 	case v1beta1.EtcdStorageType:
-		storageBackend = component.Storage(&server.Etcd{
+		storageBackend = &server.Etcd{
 			Config:      clusterConfig.Spec.Storage.Etcd,
 			Join:        join,
 			CertManager: certificateManager,
 			JoinClient:  joinClient,
-		})
+		}
 	default:
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
 	}
@@ -169,6 +170,12 @@ func startServer(ctx *cli.Context) error {
 	componentManager.Add(&server.MkeControlAPI{
 		ConfigPath: ctx.String("config"),
 	})
+
+	if clusterConfig.Telemetry.Enabled {
+		componentManager.Add(&telemetry.Component{
+			ClusterConfig: clusterConfig,
+		})
+	}
 
 	perfTimer.Checkpoint("starting-component-init")
 	// init components
