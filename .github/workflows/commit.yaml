@@ -1,0 +1,23 @@
+name: Merge
+
+on:
+  pull_request:
+
+jobs:
+  check_for_merge_commit:
+    name: mergeable
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run git checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR has Merge Commits
+        run: |
+          merge=$(git log ${{github.event.pull_request.base.sha}}..${{github.event.pull_request.head.sha}} --oneline --merges)
+          if [[ ! -z ${merge} ]]; then
+            # PR contains merge commits
+            echo "merge commit detected in pull request!"
+            exit 1
+          fi
