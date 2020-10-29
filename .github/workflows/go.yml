@@ -5,11 +5,16 @@ on:
     branches: [ main ]
     paths-ignore:
       - 'docs/**'
+      - 'examples/**'
+      - '**.md'
+      - LICENSE
   pull_request:
     branches: [ main ]
     paths-ignore:
       - 'docs/**'
-
+      - 'examples/**'
+      - '**.md'
+      - LICENSE
 jobs:
   build:
     name: Build
