@@ -23,8 +23,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/performance"
-
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -36,6 +34,7 @@ import (
 	"github.com/Mirantis/mke/pkg/component/server"
 	"github.com/Mirantis/mke/pkg/component/worker"
 	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/Mirantis/mke/pkg/performance"
 	"github.com/Mirantis/mke/pkg/util"
 
 	"github.com/Mirantis/mke/pkg/apis/v1beta1"
@@ -89,10 +88,16 @@ func startServer(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	componentManager := component.NewManager()
+
+	// create directories early with the proper permissions
+	if err = util.InitDirectory(constant.DataDir, constant.DataDirMode); err != nil {
+		return err
+	}
 	if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
 		return err
 	}
+
+	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{}
 
 	var join = false
