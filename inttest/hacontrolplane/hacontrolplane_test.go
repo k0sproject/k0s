@@ -73,6 +73,16 @@ func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 	return ca
 }
 
+func (s *HAControlplaneSuite) getFile(controllerIdx int, path string) string {
+	node := fmt.Sprintf("controller%d", controllerIdx)
+	sshCon, err := s.SSH(node)
+	s.Require().NoError(err)
+	content, err := sshCon.ExecWithOutput(fmt.Sprintf("cat %s", path))
+	s.Require().NoError(err)
+
+	return content
+}
+
 func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitMainController())
 	token, err := s.GetJoinToken("controller")
@@ -86,6 +96,14 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.Contains(ca1, "-----BEGIN CERTIFICATE-----")
 
 	s.Equal(ca0, ca1)
+
+	sa0Key := s.getFile(0, "/var/lib/mke/pki/sa.key")
+	sa1Key := s.getFile(1, "/var/lib/mke/pki/sa.key")
+	s.Equal(sa0Key, sa1Key)
+
+	sa0Pub := s.getFile(0, "/var/lib/mke/pki/sa.pub")
+	sa1Pub := s.getFile(1, "/var/lib/mke/pki/sa.pub")
+	s.Equal(sa0Pub, sa1Pub)
 
 	membersFromMain := s.getMembers(0)
 	membersFromJoined := s.getMembers(1)

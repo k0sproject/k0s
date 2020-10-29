@@ -19,8 +19,10 @@ import "fmt"
 
 // CaResponse defines the reponse type for /ca control API
 type CaResponse struct {
-	Key  []byte `json:"key"`
-	Cert []byte `json:"cert"`
+	Key   []byte `json:"key"`
+	Cert  []byte `json:"cert"`
+	SAKey []byte `json:"saKey"`
+	SAPub []byte `json:"saPub"`
 }
 
 // EtcdRequest defines the etcd control api request structure
