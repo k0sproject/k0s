@@ -106,13 +106,16 @@ func (a *APIServer) Run() error {
 			"service-account-issuer":           "api",
 			"api-audiences":                    "system:konnectivity-server",
 			"insecure-port":                    "0",
+			"profiling":                        "false",
 		}
+
 		for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
-			if args[name] != "" {
+			if args[name] != "" && name != "profiling" {
 				return fmt.Errorf("cannot override apiserver flag: %s", name)
 			}
 			args[name] = value
 		}
+
 		for name, value := range apiDefaultArgs {
 			if args[name] == "" {
 				args[name] = value
