@@ -72,6 +72,16 @@ func writeCerts(caData v1beta1.CaResponse) error {
 		return err
 	}
 
+	err = ioutil.WriteFile(filepath.Join(constant.CertRootDir, "sa.key"), caData.SAKey, constant.CertSecureMode)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(constant.CertRootDir, "sa.pub"), caData.SAPub, constant.CertMode)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -159,13 +159,29 @@ func caHandler() http.Handler {
 		key, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
+			return
 		}
 		caResp.Key = key
 		crt, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
+			return
 		}
 		caResp.Cert = crt
+
+		saKey, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "sa.key"))
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+		caResp.SAKey = saKey
+
+		saPub, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "sa.pub"))
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+		caResp.SAPub = saPub
 
 		resp.Header().Set("content-type", "application/json")
 		if err := json.NewEncoder(resp).Encode(caResp); err != nil {
