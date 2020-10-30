@@ -26,63 +26,57 @@ func (td telemetryData) asProperties() analytics.Properties {
 	}
 }
 
-func (p Component) collectTelemetry() (telemetryData, error) {
+func (c Component) collectTelemetry() (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
-	data.StorageType = p.getStorageType()
-	data.ClusterID, err = p.getClusterID()
+	data.StorageType = c.getStorageType()
+	data.ClusterID, err = c.getClusterID()
 
 	if err != nil {
 		return data, fmt.Errorf("can't collect cluster ID: %v", err)
 	}
-	data.WorkerNodesCount, err = p.getWorkerNodeCount()
+	data.WorkerNodesCount, err = c.getWorkerNodeCount()
 	if err != nil {
 		return data, fmt.Errorf("can't collect workers count: %v", err)
 	}
-	data.ControlPlaneNodesCount, err = p.getControlPlaneNodeCount()
+	data.ControlPlaneNodesCount, err = c.getControlPlaneNodeCount()
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %v", err)
 	}
 	return data, nil
 }
 
-func (p Component) getStorageType() string {
-	switch p.ClusterConfig.Spec.Storage.Type {
+func (c Component) getStorageType() string {
+	switch c.ClusterConfig.Spec.Storage.Type {
 	case config.EtcdStorageType, config.KineStorageType:
-		return p.ClusterConfig.Spec.Storage.Type
+		return c.ClusterConfig.Spec.Storage.Type
 	}
 	return "unknown"
 }
 
-func (p Component) getClusterID() (string, error) {
-	nss, err := p.kubernetesClient.CoreV1().Namespaces().List(context.Background(),
-		metav1.ListOptions{})
+func (c Component) getClusterID() (string, error) {
+	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(context.Background(),
+		"kube-system",
+		metav1.GetOptions{})
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("can't find kube-system namespace: %v", err)
 	}
 
-	for _, ns := range nss.Items {
-		if ns.Name != "kube-system" {
-			continue
-		}
-		return fmt.Sprintf("kube-system:%s", ns.UID), nil
-	}
-
-	return "", fmt.Errorf("can't find kube-system namespace")
+	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
-func (p Component) getWorkerNodeCount() (int, error) {
-	nodes, err := p.kubernetesClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+func (c Component) getWorkerNodeCount() (int, error) {
+	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return 0, err
 	}
 	return len(nodes.Items), nil
 }
 
-func (p Component) getControlPlaneNodeCount() (int, error) {
-	switch p.ClusterConfig.Spec.Storage.Type {
+func (c Component) getControlPlaneNodeCount() (int, error) {
+	switch c.ClusterConfig.Spec.Storage.Type {
 	case config.EtcdStorageType:
 		cl, err := etcd.NewClient()
 		if err != nil {
@@ -94,24 +88,24 @@ func (p Component) getControlPlaneNodeCount() (int, error) {
 		}
 		return len(data), nil
 	default:
-		p.log.WithField("storageType", p.ClusterConfig.Spec.Storage.Type).Warning("can't get control planes count, unknown storage type")
+		c.log.WithField("storageType", c.ClusterConfig.Spec.Storage.Type).Warning("can't get control planes count, unknown storage type")
 		return -1, nil
 	}
 }
 
-func (p Component) sendTelemetry() {
-	data, err := p.collectTelemetry()
+func (c Component) sendTelemetry() {
+	data, err := c.collectTelemetry()
 	if err != nil {
-		p.log.WithError(err).Warning("can't prepare telemetry data")
+		c.log.WithError(err).Warning("can't prepare telemetry data")
 		return
 	}
-	p.log.WithField("data", data).Info("sending telemetry")
-	if err := p.analyticsClient.Enqueue(analytics.Track{
+	c.log.WithField("data", data).Info("sending telemetry")
+	if err := c.analyticsClient.Enqueue(analytics.Track{
 		AnonymousId: machineID(),
 		Event:       heartbeatEvent,
 		Properties:  data.asProperties(),
 	}); err != nil {
-		p.log.WithError(err).Warning("can't send telemetry data")
+		c.log.WithError(err).Warning("can't send telemetry data")
 	}
 }
 

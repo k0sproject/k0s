@@ -10,7 +10,7 @@ jobs:
     name: Create Release
     runs-on: [self-hosted,linux]
     env:
-      ENV_SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2

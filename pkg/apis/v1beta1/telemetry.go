@@ -11,7 +11,7 @@ type ClusterTelemetry struct {
 // DefaultClusterTelemetry default settings
 func DefaultClusterTelemetry() *ClusterTelemetry {
 	return &ClusterTelemetry{
-		Interval: time.Second * 120,
+		Interval: time.Minute * 10,
 		Enabled:  true,
 	}
 }

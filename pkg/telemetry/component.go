@@ -22,79 +22,79 @@ type Component struct {
 	interval time.Duration
 }
 
-// Init does nothing
-func (p *Component) Init() error {
-	p.log = logrus.WithField("component", "telemetry")
+// Init set up for external service clients (segment, k8s api)
+func (c *Component) Init() error {
+	c.log = logrus.WithField("component", "telemetry")
 
 	if segmentToken == "" {
-		p.log.Info("no token, telemetry is disabled")
+		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
 
-	p.interval = p.ClusterConfig.Telemetry.Interval
-	p.stopCh = make(chan struct{})
+	c.interval = c.ClusterConfig.Telemetry.Interval
+	c.stopCh = make(chan struct{})
 
-	if err := p.initKubeClient(); err != nil {
-		p.log.WithError(err).Error("can't init kube client")
+	if err := c.initKubeClient(); err != nil {
+		c.log.WithError(err).Error("can't init kube client")
 		return err
 	}
 
-	p.log.Info("kube client has been init")
-	p.analyticsClient = newSegmentClient(segmentToken)
-	p.log.Info("segment client has been init")
+	c.log.Info("kube client has been init")
+	c.analyticsClient = newSegmentClient(segmentToken)
+	c.log.Info("segment client has been init")
 	return nil
 }
 
-func (p *Component) initKubeClient() error {
+func (c *Component) initKubeClient() error {
 	return retry.OnError(retry.DefaultRetry, func(err error) bool {
 		return true
-	}, p.retrieveKubeClient)
+	}, c.retrieveKubeClient)
 }
 
-func (p *Component) retrieveKubeClient() error {
+func (c *Component) retrieveKubeClient() error {
 	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
-	p.kubernetesClient = client
+	c.kubernetesClient = client
 	return nil
 }
 
 // Run runs work cycle
-func (p *Component) Run() error {
+func (c *Component) Run() error {
 	if segmentToken == "" {
-		p.log.Info("no token, telemetry is disabled")
+		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
-	go p.run()
+	go c.run()
 	return nil
 }
 
 // Run does nothing
-func (p *Component) Stop() error {
+func (c *Component) Stop() error {
 	if segmentToken == "" {
-		p.log.Info("no token, telemetry is disabled")
+		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
-	close(p.stopCh)
-	if p.analyticsClient != nil {
-		_ = p.analyticsClient.Close()
+	close(c.stopCh)
+	if c.analyticsClient != nil {
+		_ = c.analyticsClient.Close()
 	}
 	return nil
 }
 
 // Healthy checks health
-func (p *Component) Healthy() error {
+func (c *Component) Healthy() error {
 	return nil
 }
 
-func (p Component) run() {
-	ticker := time.NewTicker(p.interval)
+func (c Component) run() {
+	ticker := time.NewTicker(c.interval)
 	for {
 		select {
 		case <-ticker.C:
-			p.sendTelemetry()
-		case <-p.stopCh:
+			c.sendTelemetry()
+		case <-c.stopCh:
 			return
 		}
 	}

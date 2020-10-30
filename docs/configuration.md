@@ -67,7 +67,7 @@ images:
       version: v3.16.2
   repository: ""
 telemetry:
-  interval: 2m0s
+  interval: 10m0s
   enabled: true
 ```
 
@@ -169,7 +169,7 @@ In the runtime the image name will be calculated as `my.own.repo/calico/kube-con
 
 ### Telemetry
 
-For better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as `false`
+To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as `false`
 The default interval is 2 minutes, any valid value for `time.Duration` string representation can be used as a value.
 Example
 ```
