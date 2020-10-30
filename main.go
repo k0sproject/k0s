@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Mirantis/mke/pkg/build"
 	"log"
 	"os"
 
@@ -26,11 +27,6 @@ import (
 )
 
 //go:generate go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/linux/ embedded-bins/staging/linux/bin
-
-// Version gets overridden at build time using -X main.Version=$VERSION
-var (
-	Version = "dev"
-)
 
 func init() {
 
@@ -46,7 +42,7 @@ func init() {
 func main() {
 	app := &cli.App{
 		Name:    "mke",
-		Version: Version,
+		Version: build.Version,
 		Usage:   "Mirantis Kubernetes Engine",
 		Commands: []*cli.Command{
 			cmd.ServerCommand(),
@@ -85,7 +81,7 @@ func versionCommand() *cli.Command {
 		Name:  "version",
 		Usage: "Print version info",
 		Action: func(ctx *cli.Context) error {
-			fmt.Println(Version)
+			fmt.Println(build.Version)
 			return nil
 		},
 	}

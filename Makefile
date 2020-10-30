@@ -36,7 +36,7 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
 endif
 
 mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X main.Version=$(VERSION)" -o mke.code main.go
+	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X github.com/Mirantis/mke/pkg/build.Version=$(VERSION) -X github.com/Mirantis/mke/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" -o mke.code main.go
 	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build

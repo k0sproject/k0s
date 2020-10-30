@@ -17,8 +17,8 @@ package leaderelection
 
 import (
 	"context"
+	"github.com/Mirantis/mke/pkg/util"
 	"github.com/cloudflare/cfssl/log"
-	"github.com/denisbrodbeck/machineid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -126,7 +126,7 @@ func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*
 
 	// we default to the machine ID unless the user explicitly set an identity
 	if leaseConfig.identity == "" {
-		machineID, err := machineid.ProtectedID("mirantis-mke")
+		machineID, err := util.MachineID()
 
 		if err != nil {
 			return nil, err

@@ -22,9 +22,3 @@ type Component interface {
 	Stop() error
 	Healthy() error
 }
-
-// Storage provides an interface so we can swap out the
-// implementation of storage componentAdd between kine & etcd
-type Storage interface {
-	Component
-}
