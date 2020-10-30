@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Mirantis/mke/pkg/build"
 	"github.com/Mirantis/mke/pkg/telemetry"
 	"os"
 	"os/signal"
@@ -174,6 +175,7 @@ func startServer(ctx *cli.Context) error {
 	if clusterConfig.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{
 			ClusterConfig: clusterConfig,
+			Version:       build.Version,
 		})
 	}
 

@@ -13,6 +13,7 @@ import (
 type telemetryData struct {
 	StorageType            string
 	ClusterID              string
+	Version                string
 	WorkerNodesCount       int
 	ControlPlaneNodesCount int
 }
@@ -23,6 +24,7 @@ func (td telemetryData) asProperties() analytics.Properties {
 		"clusterID":              td.ClusterID,
 		"workerNodesCount":       td.WorkerNodesCount,
 		"controlPlaneNodesCount": td.ControlPlaneNodesCount,
+		"version":                td.Version,
 	}
 }
 
@@ -30,6 +32,7 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
+	data.Version = c.Version
 	data.StorageType = c.getStorageType()
 	data.ClusterID, err = c.getClusterID()
 

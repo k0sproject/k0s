@@ -5,14 +5,15 @@ import (
 	"github.com/Mirantis/mke/pkg/constant"
 	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/retry"
 	"time"
 )
 
 // Component is a telemetry component for MKE component manager
 type Component struct {
 	ClusterConfig *config.ClusterConfig
+	Version       string
 
 	kubernetesClient kubernetes.Interface
 	analyticsClient  analyticsClient
@@ -33,31 +34,20 @@ func (c *Component) Init() error {
 
 	c.interval = c.ClusterConfig.Telemetry.Interval
 	c.stopCh = make(chan struct{})
-
-	if err := c.initKubeClient(); err != nil {
-		c.log.WithError(err).Error("can't init kube client")
-		return err
-	}
-
 	c.log.Info("kube client has been init")
 	c.analyticsClient = newSegmentClient(segmentToken)
 	c.log.Info("segment client has been init")
 	return nil
 }
 
-func (c *Component) initKubeClient() error {
-	return retry.OnError(retry.DefaultRetry, func(err error) bool {
-		return true
-	}, c.retrieveKubeClient)
-}
-
-func (c *Component) retrieveKubeClient() error {
+func (c *Component) retrieveKubeClient(ch chan struct{}) {
 	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
 	if err != nil {
-		return err
+		c.log.WithError(err).Warning("can't init kube client")
+		return
 	}
 	c.kubernetesClient = client
-	return nil
+	close(ch)
 }
 
 // Run runs work cycle
@@ -66,6 +56,10 @@ func (c *Component) Run() error {
 		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
+	initedCh := make(chan struct{})
+	wait.Until(func() {
+		c.retrieveKubeClient(initedCh)
+	}, time.Second, initedCh)
 	go c.run()
 	return nil
 }
