@@ -109,9 +109,8 @@ func (a *APIServer) Run() error {
 			"profiling":                        "false",
 		}
 
-		// TODO: allow overriding some args
 		for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
-			if args[name] != "" {
+			if args[name] != "" && name != "profiling" {
 				return fmt.Errorf("cannot override apiserver flag: %s", name)
 			}
 			args[name] = value

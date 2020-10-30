@@ -61,7 +61,7 @@ func (a *Scheduler) Run() error {
 		"profiling":                 "false",
 	}
 	for name, value := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
-		if args[name] != "" {
+		if args[name] != "" && name != "profiling" {
 			return fmt.Errorf("cannot override kube-scheduler flag: %s", name)
 		}
 		args[name] = value
