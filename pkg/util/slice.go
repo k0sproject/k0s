@@ -15,6 +15,11 @@ limitations under the License.
 */
 package util
 
+import (
+	"reflect"
+	"sort"
+)
+
 // StringSliceContains check whether the given string slice contains the other string
 func StringSliceContains(strSlice []string, str string) bool {
 	for _, s := range strSlice {
@@ -23,5 +28,15 @@ func StringSliceContains(strSlice []string, str string) bool {
 		}
 	}
 
+	return false
+}
+
+// IsStringArrayEqual returns true if an array of strings is equal, regardless of order
+func IsStringArrayEqual(a1 []string, a2 []string) bool {
+	sort.Strings(a1)
+	sort.Strings(a2)
+	if len(a1) == len(a2) {
+		return reflect.DeepEqual(a1, a2)
+	}
 	return false
 }
