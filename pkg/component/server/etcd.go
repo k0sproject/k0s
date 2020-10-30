@@ -123,6 +123,7 @@ func (e *Etcd) Run() error {
 		fmt.Sprintf("--peer-key-file=%s", etcdPeerKey),
 		fmt.Sprintf("--peer-cert-file=%s", etcdPeerCert),
 		"--peer-client-cert-auth=true",
+		"--enable-pprof=false",
 	}
 
 	if util.FileExists(filepath.Join(constant.EtcdDataDir, "member", "snap", "db")) {

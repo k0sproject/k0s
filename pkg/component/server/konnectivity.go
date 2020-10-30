@@ -73,6 +73,7 @@ func (k *Konnectivity) Run() error {
 			"--logtostderr=true",
 			"--stderrthreshold=1",
 			"-v=2",
+			"--enable-profiling=false",
 		},
 		UID: k.uid,
 		GID: k.gid,

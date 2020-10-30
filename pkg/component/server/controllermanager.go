@@ -83,6 +83,7 @@ func (a *ControllerManager) Run() error {
 		"root-ca-file":                     path.Join(constant.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": path.Join(constant.CertRootDir, "sa.key"),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"profiling":                        "false",
 	}
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
 		if args[name] != "" {

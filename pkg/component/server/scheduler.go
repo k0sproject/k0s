@@ -58,6 +58,7 @@ func (a *Scheduler) Run() error {
 		"kubeconfig":                schedulerAuthConf,
 		"bind-address":              "127.0.0.1",
 		"leader-elect":              "true",
+		"profiling":                 "false",
 	}
 	for name, value := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
 		if args[name] != "" {
