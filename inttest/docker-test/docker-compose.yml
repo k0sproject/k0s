@@ -2,45 +2,29 @@ version: "3.7"
 
 services:
   master:
-    image: ubuntu:latest
-    command: mke server
-    privileged: true
+    build: .
+    command: ./mke server --enable-worker
+    # privileged: true
     volumes:
-      # - ./var/lib/mke:/var/lib/mke
-      - ../../mke:/usr/local/bin/mke
-    # restart: unless-stopped
+      - ../../mke:/mke
+      - ./script.sh:/script.sh
+      - master:/var/lib/mke
     ports:
       - "6443:6443"
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "5"
-        max-size: "10m"
     networks:
-      testing:
-        ipv4_address: 10.5.0.5
+      proxy:
   worker:
-    image: ubuntu:latest
-    command: mke worker $TOKEN
-    privileged: true
+    build: .
+    command: ./mke worker $TOKEN
+    # privileged: true
     volumes:
-      # - ./var/lib/mke:/var/lib/mke
-      - ../../mke:/usr/local/bin/mke
-    # restart: unless-stopped
-    # ports:
-    #   - "6443:6443"
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "5"
-        max-size: "10m"
+      - ../../mke:/mke
+      - worker:/var/lib/mke
     networks:
-      testing:
-        ipv4_address: 10.5.0.6
+      proxy:
 networks:
-  testing:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.5.0.0/16
-          gateway: 10.5.0.1
+  proxy:
+volumes:
+  master:
+    # - /var/lib/mke
+  worker:
