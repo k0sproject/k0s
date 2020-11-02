@@ -26,6 +26,7 @@ import (
 // Manager manages components
 type Manager struct {
 	components []Component
+	sync       map[string]bool
 }
 
 // NewManager creates a manager
@@ -40,6 +41,16 @@ func (m *Manager) Add(component Component) {
 	m.components = append(m.components, component)
 }
 
+// AddSync adds a component to the manager that should be initialized synchronously
+func (m *Manager) AddSync(component Component) {
+	m.components = append(m.components, component)
+	compName := reflect.TypeOf(component).Elem().Name()
+	if m.sync == nil {
+		m.sync = make(map[string]bool)
+	}
+	m.sync[compName] = true
+}
+
 // Init initializes all managed components
 func (m *Manager) Init() error {
 	g := new(errgroup.Group)
@@ -48,7 +59,14 @@ func (m *Manager) Init() error {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		logrus.Infof("initializing %v\n", compName)
 		c := comp
-		g.Go(c.Init)
+		if m.sync[compName] {
+			if err := c.Init(); err != nil {
+				return err
+			}
+		} else {
+			// init this async
+			g.Go(c.Init)
+		}
 	}
 	err := g.Wait()
 	return err

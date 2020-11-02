@@ -106,26 +106,20 @@ func startServer(ctx *cli.Context) error {
 	var joinClient *v1beta1.JoinClient
 	token := ctx.Args().First()
 	if token != "" {
-		perfTimer.Checkpoint("token-join-start")
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}
-		caSyncer := &server.CASyncer{
-			JoinClient: joinClient,
-		}
 
-		err = caSyncer.Init()
-		if err != nil {
-			logrus.Warnf("something failed in CA sync: %s", err.Error())
-		}
-		err = caSyncer.Run()
-		if err != nil {
-			return errors.Wrapf(err, "CA sync failed")
-		}
-		perfTimer.Checkpoint("token-join-completed")
+		componentManager.AddSync(&server.CASyncer{
+			JoinClient: joinClient,
+		})
 	}
+	componentManager.AddSync(&server.Certificates{
+		ClusterSpec: clusterConfig.Spec,
+		CertManager: certificateManager,
+	})
 
 	logrus.Infof("using public address: %s", clusterConfig.Spec.API.Address)
 	logrus.Infof("using sans: %s", clusterConfig.Spec.API.SANs)
@@ -185,17 +179,6 @@ func startServer(ctx *cli.Context) error {
 		return err
 	}
 	perfTimer.Checkpoint("finished-component-init")
-
-	certs := server.Certificates{
-		ClusterSpec: clusterConfig.Spec,
-		CertManager: certificateManager,
-	}
-
-	perfTimer.Checkpoint("starting-cert-run")
-	if err := certs.Run(); err != nil {
-		return err
-	}
-	perfTimer.Checkpoint("finished-cert-run")
 
 	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
