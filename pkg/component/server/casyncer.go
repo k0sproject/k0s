@@ -33,12 +33,6 @@ type CASyncer struct {
 
 // Init initializes the CASyncer component
 func (c *CASyncer) Init() error {
-
-	return nil
-}
-
-// Run runs the CA sync process
-func (c *CASyncer) Run() error {
 	caData, err := c.JoinClient.GetCA()
 	if err != nil {
 		return errors.Wrapf(err, "failed to sync CA")
@@ -47,9 +41,13 @@ func (c *CASyncer) Run() error {
 	return writeCerts(caData)
 }
 
+// Run does nothing, there's nothing running constantly
+func (c *CASyncer) Run() error {
+	return nil
+}
+
 // Stop does nothing, there's nothing running constantly
 func (c *CASyncer) Stop() error {
-	// Nothing to do
 	return nil
 }
 

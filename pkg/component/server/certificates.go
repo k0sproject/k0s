@@ -72,8 +72,8 @@ type Certificates struct {
 	ClusterSpec *config.ClusterSpec
 }
 
-// Run runs the certificate component
-func (c *Certificates) Run() error {
+// Init initializes the certificate component
+func (c *Certificates) Init() error {
 
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
@@ -225,6 +225,11 @@ func (c *Certificates) Run() error {
 	})
 
 	return eg.Wait()
+}
+
+// Run does nothing, the cert component only needs to be initialized
+func (c *Certificates) Run() error {
+	return nil
 }
 
 // Stop does nothing, the cert component is not constantly running
