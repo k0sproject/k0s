@@ -6,6 +6,9 @@ on:
         description: PR against which to this workflow
         required: true
 
+  schedule:
+    - cron: "0 23 * * *"
+
 jobs:
   terraform:
     env:
