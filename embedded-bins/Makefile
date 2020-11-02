@@ -26,7 +26,7 @@ clean:
 	done
 	for i in .docker-image.*; do \
 		if [ -f $$i ]; then \
-			docker rmi mkebuild$$(basename $$i .stamp) ; rm $$i;\
+			docker rmi k0sbuild$$(basename $$i .stamp) ; rm $$i;\
 		fi; \
 	done
 	rm -rf staging
@@ -54,11 +54,11 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
 .container.%: .docker-image.%.stamp
-	docker create mkebuild$(basename $<) > $@.tmp
+	docker create k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
 .docker-image.%.stamp: %/Dockerfile
-	docker build -t mkebuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
+	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
 	touch $@
 
 else

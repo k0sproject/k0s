@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 	"time"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 

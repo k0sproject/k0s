@@ -58,7 +58,7 @@ func (s *NetworkSuite) TestCalicoDefaults() {
 
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
 	yamlData := `
-apiVersion: mke.mirantis.com/v1beta1
+apiVersion: k0s.k0sproject.io
 kind: Cluster
 metadata:
   name: foobar

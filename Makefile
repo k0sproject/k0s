@@ -8,7 +8,7 @@ GO_SRCS := $(shell find . -type f -name '*.go')
 
 EMBEDDED_BINS_BUILDMODE ?= docker
 
-# mke runs on linux even if its built on mac or windows
+# k0s runs on linux even if its built on mac or windows
 GOOS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
@@ -35,12 +35,12 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
 	go generate
 endif
 
-mke: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X github.com/Mirantis/mke/pkg/build.Version=$(VERSION) -X github.com/Mirantis/mke/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" -o mke.code main.go
-	cat mke.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
+k0s: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
+	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" -o k0s.code main.go
+	cat k0s.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
-build: mke
+build: k0s
 
 .PHONY: bins
 bins: .bins.stamp
@@ -56,15 +56,15 @@ lint: pkg/assets/zz_generated_offsets.go
 	$(golint) run ./...
 
 .PHONY: check-network
-check-network: mke
+check-network: k0s
 	$(MAKE) -C inttest check-network
 
 .PHONY: check-basic
-check-basic: mke
+check-basic: k0s
 	$(MAKE) -C inttest check-basic
 
 .PHONY: check-basic
-check-hacontrolplane: mke
+check-hacontrolplane: k0s
 	$(MAKE) -C inttest check-hacontrolplane
 
 .PHONY: check-unit
@@ -73,7 +73,7 @@ check-unit: pkg/assets/zz_generated_offsets.go
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_offsets.go mke .bins.stamp bindata
+	rm -f pkg/assets/zz_generated_offsets.go k0s .bins.stamp bindata
 	$(MAKE) -C embedded-bins clean
 
 .PHONY: bindata-manifests

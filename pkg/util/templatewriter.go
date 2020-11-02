@@ -21,7 +21,7 @@ import (
 	"os"
 
 	"github.com/Masterminds/sprig"
-	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
 )
 

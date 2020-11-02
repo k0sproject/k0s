@@ -1,6 +1,6 @@
 # Integration tests a.k.a e2e testing
 
-This folder is the root of mke integration tests. These tests are such that run the actual mke clusters, currently using [footloose](https://github.com/weaveworks/footloose) as the target environment.
+This folder is the root of k0s integration tests. These tests are such that run the actual k0s clusters, currently using [footloose](https://github.com/weaveworks/footloose) as the target environment.
 
 ## Running the tests
 
@@ -12,10 +12,10 @@ We're currently building the tests as Golang tests with the help of [testify](ht
 
 ## Keeping the test env after tests
 
-Sometimes, especially when debugging some test failures, it's good to leave the environment running after the tests have ran. To control that behavior there's an env variable called `MKE_KEEP_AFTER_TESTS`. The value given to that has the following logic:
-- no value or `MKE_KEEP_AFTER_TESTS="never"`: The test env is NOT left running regardless of the test results
-- `MKE_KEEP_AFTER_TESTS="always"`: The test env is left running regardless of the test results
-- `MKE_KEEP_AFTER_TESTS="failure"`: The test env is left running only if the tests have failed
+Sometimes, especially when debugging some test failures, it's good to leave the environment running after the tests have ran. To control that behavior there's an env variable called `K0S_KEEP_AFTER_TESTS`. The value given to that has the following logic:
+- no value or `K0S_KEEP_AFTER_TESTS="never"`: The test env is NOT left running regardless of the test results
+- `K0S_KEEP_AFTER_TESTS="always"`: The test env is left running regardless of the test results
+- `K0S_KEEP_AFTER_TESTS="failure"`: The test env is left running only if the tests have failed
 
 The test output show how to run manual cleanup for the environment, something like:
 ```

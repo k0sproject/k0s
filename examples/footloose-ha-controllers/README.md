@@ -1,4 +1,4 @@
-# MKE HA controllers with footloose
+# k0s HA controllers with footloose
 
 > This example is targeted for development use
 
@@ -7,7 +7,7 @@
 * Install [footloose](https://github.com/weaveworks/footloose)
 * Start a cluster: `make create-cluster`
 * Now you can exec into running nodes, for example: `footloose ssh root@controller0`
-* Within a node there is a config file (`/etc/mke/config.yaml`) and systemd service (`mke`) available for easier testing.
+* Within a node there is a config file (`/etc/k0s/config.yaml`) and systemd service (`k0s`) available for easier testing.
 
 
 ## Teardown

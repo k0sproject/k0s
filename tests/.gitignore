@@ -1,6 +1,6 @@
 .test-*
 bin/
 footloose-*.yaml
-id_ed25519_mke*
+id_ed25519_k0s*
 kubeconfig
 *.log

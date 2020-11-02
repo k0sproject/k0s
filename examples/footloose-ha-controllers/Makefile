@@ -1,11 +1,11 @@
 
 .PHONY: build
 build:
-	$(MAKE) -C ../../ build tmpdir=/tmp/mke-build
+	$(MAKE) -C ../../ build tmpdir=/tmp/k0s-build
 
 .PHONY: create-cluster
 create-cluster: build
-	docker build -t mke-footloose .
+	docker build -t k0s-footloose .
 	envsubst < footloose.yaml.tpl > footloose.yaml
 	footloose create
 

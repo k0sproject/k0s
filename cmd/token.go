@@ -19,20 +19,21 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"html/template"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"path"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/token"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
 // TokenCommand creates new token management command
@@ -62,13 +63,13 @@ clusters:
 - cluster:
     server: {{.JoinURL}}
     certificate-authority-data: {{.CACert}}
-  name: mke
+  name: k0s
 contexts:
 - context:
-    cluster: mke
+    cluster: k0s
     user: {{.User}}
-  name: mke
-current-context: mke
+  name: k0s
+current-context: k0s
 kind: Config
 preferences: {}
 users:
@@ -96,7 +97,7 @@ func CreateCommand() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:      "config",
-				Value:     "mke.yaml",
+				Value:     "k0s.yaml",
 				TakesFile: true,
 			},
 			&cli.BoolFlag{

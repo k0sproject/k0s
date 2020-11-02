@@ -16,20 +16,20 @@ limitations under the License.
 package constant
 
 const (
-	// DataDir folder contains all mke state
-	DataDir = "/var/lib/mke"
+	// DataDir folder contains all k0s state
+	DataDir = "/var/lib/k0s"
 	// DataDirMode is the expected directory permissions for DataDir
 	DataDirMode = 0755
 	// EtcdDataDir contains etcd state
-	EtcdDataDir = "/var/lib/mke/etcd"
+	EtcdDataDir = "/var/lib/k0s/etcd"
 	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	EtcdDataDirMode = 0700
 	// CertRootDir defines the root location for all pki related artifacts
-	CertRootDir = "/var/lib/mke/pki"
+	CertRootDir = "/var/lib/k0s/pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
 	CertRootDirMode = 0751
 	//EtcdCertDir contains etcd certificates
-	EtcdCertDir = "/var/lib/mke/pki/etcd"
+	EtcdCertDir = "/var/lib/k0s/pki/etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
 	EtcdCertDirMode = 0700
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
@@ -38,34 +38,34 @@ const (
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
 	// BinDir defines the location for all pki related binaries
-	BinDir = "/var/lib/mke/bin"
+	BinDir = "/var/lib/k0s/bin"
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
 	// RunDir defines the location of supervised pid files and sockets
-	RunDir = "/run/mke"
+	RunDir = "/run/k0s"
 	// RunDirMode is the expected permissions of RunDir
 	RunDirMode = 0755
 	// PidFileMode is the expected file permissions for pid files
 	PidFileMode = 0644
 	// ManifestsDir defines the location for all stack manifests
-	ManifestsDir = "/var/lib/mke/manifests"
+	ManifestsDir = "/var/lib/k0s/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0644
 
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
-	KubeletBootstrapConfigPath = "/var/lib/mke/kubelet-bootstrap.conf"
+	KubeletBootstrapConfigPath = "/var/lib/k0s/kubelet-bootstrap.conf"
 	// KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletAuthConfigPath = "/var/lib/mke/kubelet.conf"
+	KubeletAuthConfigPath = "/var/lib/k0s/kubelet.conf"
 	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
-	KubeletVolumePluginDir = "/usr/libexec/mke/kubelet-plugins/volume/exec"
+	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
 	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
 	KubeletVolumePluginDirMode = 0700
 
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
-	AdminKubeconfigConfigPath = "/var/lib/mke/pki/admin.conf"
+	AdminKubeconfigConfigPath = "/var/lib/k0s/pki/admin.conf"
 
 	// Group defines group name for shared directories
-	Group = "mke"
+	Group = "k0s"
 
 	// User accounts for services
 
@@ -84,7 +84,7 @@ const (
 	KubernetesMajorMinorVersion = "1.19"
 
 	// DefaultPSP defines the system level default PSP to apply
-	DefaultPSP = "00-mke-privileged"
+	DefaultPSP = "00-k0s-privileged"
 
 	// Image Constants
 	KonnectivityImage          = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"

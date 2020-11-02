@@ -14,16 +14,16 @@ _setup() {
   logline "creating footloose config ..."
   CLUSTER_NAME=$name \
     LINUX_IMAGE=quay.io/footloose/ubuntu18.04 \
-    MKE_BINARY=${MKE_BINARY:-$(readlink -f ../mke)} \
+    K0S_BINARY=${MKE_BINARY:-$(readlink -f ../k0s)} \
     envsubst < ${footlooseconfig}.tpl > $footlooseconfig
 
   logline "starting to create footloose nodes ..."
   >/dev/null 2>&1 ./bin/footloose create --config $footlooseconfig
 
-  logline "create mke groups on nodes ..."
-  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node0 "addgroup --system mke"
-  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node1 "addgroup --system mke"
-  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node2 "addgroup --system mke"
+  logline "create k0s groups on nodes ..."
+  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node0 "addgroup --system k0s"
+  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node1 "addgroup --system k0s"
+  >/dev/null 2>&1 ./bin/footloose ssh --config $footlooseconfig root@node2 "addgroup --system k0s"
 }
 
 _cleanup() {
@@ -45,6 +45,6 @@ _collect_logs() {
   nodes=("node0" "node1" "node2")
   for node in "${nodes[@]}";
   do
-    >$node.log ./bin/footloose ssh --config $footlooseconfig root@$node "cat /tmp/mke-*.log"  
+    >$node.log ./bin/footloose ssh --config $footlooseconfig root@$node "cat /tmp/k0s-*.log"  
   done
 }

@@ -20,16 +20,16 @@ import (
 	"path"
 	"path/filepath"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 )
 
 // DefaultPSP implements system RBAC reconciler
 /* It always creates two sets of PSP rules:
-	- 00-mke-privileged: allows "privileged" stuff (host namespaces, privileged etc.) to be running
-	- 99-mke-restricted: more restricted rules, usually suitable for "normal" workloads
+	- 00-k0s-privileged: allows "privileged" stuff (host namespaces, privileged etc.) to be running
+	- 99-k0s-restricted: more restricted rules, usually suitable for "normal" workloads
 Depending on user config, we select either of the above rule sets to be the default
 */
 type DefaultPSP struct {
@@ -48,7 +48,7 @@ func (d *DefaultPSP) Init() error {
 	return nil
 }
 
-// Run reconciles the mke default PSP rules
+// Run reconciles the k0s default PSP rules
 func (d *DefaultPSP) Run() error {
 	pspDir := path.Join(constant.ManifestsDir, "defaultpsp")
 	err := os.MkdirAll(pspDir, constant.ManifestsDirMode)
@@ -79,7 +79,7 @@ const defaultPSPTemplate = `
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: 00-mke-privileged
+  name: 00-k0s-privileged
   annotations:
     kubernetes.io/description: 'privileged allows full unrestricted access to
       pod features, as if the PodSecurityPolicy controller was not enabled.'
@@ -113,7 +113,7 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mke:podsecuritypolicy:privileged
+  name: k0s:podsecuritypolicy:privileged
   labels:
     kubernetes.io/cluster-service: "true"
     addonmanager.kubernetes.io/mode: Reconcile
@@ -121,7 +121,7 @@ rules:
 - apiGroups:
   - policy
   resourceNames:
-  - 00-mke-privileged
+  - 00-k0s-privileged
   resources:
   - podsecuritypolicies
   verbs:
@@ -135,7 +135,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: mke:podsecuritypolicy:privileged
+  name: k0s:podsecuritypolicy:privileged
 subjects:
 # For the kubeadm kube-system nodes
 - apiGroup: rbac.authorization.k8s.io
@@ -154,7 +154,7 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   annotations:
-  name: 99-mke-restricted
+  name: 99-k0s-restricted
 spec:
   allowedCapabilities: []  # default set of capabilities are implicitly allowed
   allowPrivilegeEscalation: false
@@ -199,7 +199,7 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mke:podsecuritypolicy:default
+  name: k0s:podsecuritypolicy:default
 rules:
 - apiGroups:
   - policy
@@ -217,7 +217,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: mke:podsecuritypolicy:default
+  name: k0s:podsecuritypolicy:default
 subjects:
 # For authenticated users
 - apiGroup: rbac.authorization.k8s.io

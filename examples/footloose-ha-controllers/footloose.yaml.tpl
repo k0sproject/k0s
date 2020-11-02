@@ -1,11 +1,11 @@
 cluster:
-  name: mke
+  name: k0s
   privateKey: ~/.ssh/id_rsa
 machines:
 - count: 3
   backend: docker
   spec:
-    image: mke-footloose:latest
+    image: k0s-footloose:latest
     name: controller%d
     privileged: true
     volumes:
@@ -13,13 +13,13 @@ machines:
       source: /lib/modules
       destination: /lib/modules
     - type: bind
-      source: $PWD/../../mke
-      destination: /usr/local/bin/mke
+      source: $PWD/../../k0s
+      destination: /usr/local/bin/k0s
     - type: bind
-      source: $PWD/mke.yaml
-      destination: /etc/mke/config.yaml
+      source: $PWD/k0s.yaml
+      destination: /etc/k0s/config.yaml
     - type: volume
-      destination: /var/lib/mke
+      destination: /var/lib/k0s
     portMappings:
     - containerPort: 22
       hostPort: 9222

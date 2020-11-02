@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"os"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/supervisor"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-// MkeControlAPI implements the mke control API component
-type MkeControlAPI struct {
+// K0SControlAPI implements the k0s control API component
+type K0SControlAPI struct {
 	ConfigPath    string
 	ClusterConfig *config.ClusterConfig
 
@@ -32,16 +32,16 @@ type MkeControlAPI struct {
 }
 
 // Init does currently nothing
-func (m *MkeControlAPI) Init() error {
+func (m *K0SControlAPI) Init() error {
 	// We need to create a serving cert for the api
 	return nil
 }
 
-// Run runs mke control api as separate process
-func (m *MkeControlAPI) Run() error {
+// Run runs k0s control api as separate process
+func (m *K0SControlAPI) Run() error {
 	// TODO: Make the api process to use some other user
 	m.supervisor = supervisor.Supervisor{
-		Name:    "mke-control-api",
+		Name:    "k0s-control-api",
 		BinPath: os.Args[0],
 		Args: []string{
 			"api",
@@ -53,10 +53,10 @@ func (m *MkeControlAPI) Run() error {
 	return nil
 }
 
-// Stop stops mke api
-func (m *MkeControlAPI) Stop() error {
+// Stop stops k0s api
+func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
 }
 
-// Health-check interface
-func (m *MkeControlAPI) Healthy() error { return nil }
+// Healthy for health-check interface
+func (m *K0SControlAPI) Healthy() error { return nil }

@@ -3,9 +3,10 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/etcd"
-	"github.com/Mirantis/mke/pkg/util"
+
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/etcd"
+	"github.com/k0sproject/k0s/pkg/util"
 	"gopkg.in/segmentio/analytics-go.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

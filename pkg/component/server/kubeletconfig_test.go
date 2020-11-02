@@ -16,11 +16,12 @@ limitations under the License.
 package server
 
 import (
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/ghodss/yaml"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/ghodss/yaml"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_KubeletConfig(t *testing.T) {

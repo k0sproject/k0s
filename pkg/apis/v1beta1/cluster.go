@@ -19,14 +19,14 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string            `yaml:"apiVersion" validate:"eq=mke.mirantis.com/v1beta1"`
+	APIVersion string            `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io"`
 	Kind       string            `yaml:"kind" validate:"eq=Cluster"`
 	Metadata   *ClusterMeta      `yaml:"metadata"`
 	Spec       *ClusterSpec      `yaml:"spec"`
@@ -121,7 +121,7 @@ func DefaultClusterConfig() *ClusterConfig {
 func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Kind = "Cluster"
 	c.Metadata = &ClusterMeta{
-		Name: "mke",
+		Name: "k0s",
 	}
 	c.Spec = DefaultClusterSpec()
 	c.Images = DefaultClusterImages()

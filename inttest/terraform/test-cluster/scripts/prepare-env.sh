@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
 export GITHUB_SHA_SHORT=$(git rev-parse --short ${GITHUB_SHA})
-export TF_VAR_cluster_name="mke_pr_${PR_NUMBER}_${GITHUB_SHA_SHORT}"
+export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}_${GITHUB_SHA_SHORT}"
 
 echo $TF_VAR_cluster_name > CLUSTER_NAME
 

@@ -17,11 +17,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/pkg/build"
 	"log"
 	"os"
 
-	"github.com/Mirantis/mke/cmd"
+	"github.com/k0sproject/k0s/pkg/build"
+
+	"github.com/k0sproject/k0s/cmd"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -41,9 +42,9 @@ func init() {
 
 func main() {
 	app := &cli.App{
-		Name:    "mke",
+		Name:    "k0s",
 		Version: build.Version,
-		Usage:   "Mirantis Kubernetes Engine",
+		Usage:   "k0s",
 		Commands: []*cli.Command{
 			cmd.ServerCommand(),
 			cmd.WorkerCommand(),

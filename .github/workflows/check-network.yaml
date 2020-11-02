@@ -1,4 +1,4 @@
-name: MKE Check Network
+name: k0s Check Network
 on:
   workflow_dispatch:
     inputs:
@@ -78,14 +78,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
 
-      - name: Build MKE Binary
+      - name: Build k0s Binary
         run: make build
         working-directory: ./
 
-      - name: Deploy MKE to Hosts
+      - name: Deploy k0s to Hosts
         run: |
           terraform output -json > out.json
-          ./scripts/deploy-mke.sh
+          ./scripts/deploy-k0s.sh
 
       - name: Check Network
         run: make check-network-vm

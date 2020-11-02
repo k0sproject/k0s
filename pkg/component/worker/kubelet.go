@@ -21,11 +21,11 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/Mirantis/mke/pkg/assets"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/supervisor"
-	"github.com/Mirantis/mke/pkg/util"
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

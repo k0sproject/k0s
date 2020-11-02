@@ -20,9 +20,9 @@ import (
 	"path"
 	"path/filepath"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 )
 
@@ -41,7 +41,7 @@ func (s *SystemRBAC) Init() error {
 	return nil
 }
 
-// Run reconciles the mke related system RBAC rules
+// Run reconciles the k0s related system RBAC rules
 func (s *SystemRBAC) Run() error {
 	rbacDir := path.Join(constant.ManifestsDir, "bootstraprbac")
 	err := os.MkdirAll(rbacDir, constant.ManifestsDirMode)

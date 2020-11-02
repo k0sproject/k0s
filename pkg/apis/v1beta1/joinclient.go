@@ -25,13 +25,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Mirantis/mke/pkg/token"
+	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// JoinClient is the client we can use to call mke join APIs
+// JoinClient is the client we can use to call k0s join APIs
 type JoinClient struct {
 	joinAddress string
 	httpClient  http.Client

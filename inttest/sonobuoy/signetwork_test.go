@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/Mirantis/mke/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common"
 )
 
 type NetworkSuite struct {
@@ -151,7 +151,7 @@ func (s *NetworkSuite) dumpKubeConfig() string {
 	s.NoError(err)
 	defer ssh.Disconnect()
 
-	kubeConf, err := ssh.ExecWithOutput("sudo -h 127.0.0.1 cat /var/lib/mke/pki/admin.conf")
+	kubeConf, err := ssh.ExecWithOutput("sudo -h 127.0.0.1 cat /var/lib/k0s/pki/admin.conf")
 	s.NoError(err)
 
 	cfg, err := clientcmd.Load([]byte(kubeConf))

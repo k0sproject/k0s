@@ -18,8 +18,8 @@ package v1beta1
 import (
 	"strings"
 
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 

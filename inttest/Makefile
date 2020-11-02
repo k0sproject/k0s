@@ -21,18 +21,18 @@ bin/sonobuoy: | bin
 	docker build -t footloose-alpine -f $< $(dir $<)
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestFootlooseNetworkSuite$
+	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
+		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestFootlooseNetworkSuite$
 
 check-network-vm: bin/sonobuoy
-	MKE_PATH=$(realpath ../mke) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 20m github.com/Mirantis/mke/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
+	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
+		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
 check-basic: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 5m github.com/Mirantis/mke/inttest/basic
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/basic
 
 check-hacontrolplane: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 3m github.com/Mirantis/mke/inttest/hacontrolplane
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/hacontrolplane
 
 .PHONY: clean
 clean:

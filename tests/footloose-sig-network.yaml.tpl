@@ -1,6 +1,6 @@
 cluster:
   name: $CLUSTER_NAME
-  privateKey: id_ed25519_mke
+  privateKey: id_ed25519_k0s
 machines:
 - count: 3
   backend: docker
@@ -10,13 +10,13 @@ machines:
     privileged: true
     volumes:
     - type: bind
-      source: $MKE_BINARY
-      destination: /usr/bin/mke
+      source: $K0S_BINARY
+      destination: /usr/bin/k0s
     - type: bind
       source: /lib/modules
       destination: /lib/modules
     - type: volume
-      destination: /var/lib/mke
+      destination: /var/lib/k0s
     portMappings:
     - containerPort: 22
       hostPort: 9022

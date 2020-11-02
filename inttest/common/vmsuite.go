@@ -84,7 +84,7 @@ func (s *VMSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	startControllerCmd := "sudo nohup mke --debug server >/tmp/mke-server.log 2>&1 &"
+	startControllerCmd := "sudo nohup k0s --debug server >/tmp/k0s-server.log 2>&1 &"
 	_, err = ssh.ExecWithOutput(startControllerCmd)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (s *VMSuite) RunWorkers() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`sudo nohup mke --debug worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`sudo nohup k0s --debug worker "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	for i := 0; i < len(s.WorkerIPs); i++ {
 		workerNode := s.WorkerIPs[i]
 		sshWorker, err := s.SSH(workerNode)
@@ -166,13 +166,13 @@ func (s *VMSuite) GetJoinToken(role string) (string, error) {
 		return "", err
 	}
 	defer ssh.Disconnect()
-	tokenCmd := fmt.Sprintf("sudo -h 127.0.0.1 mke token create --role=%s", role)
+	tokenCmd := fmt.Sprintf("sudo -h 127.0.0.1 k0s token create --role=%s", role)
 	token, err := ssh.ExecWithOutput(tokenCmd)
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
 	outputParts := strings.Split(token, "\n")
-	// in case of no mke.conf given, there might be warnings on the first few lines
+	// in case of no k0s.conf given, there might be warnings on the first few lines
 	token = outputParts[len(outputParts)-1]
 	return token, nil
 
@@ -205,7 +205,7 @@ func (s *VMSuite) KubeClient(node string) (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	// sudo -h 127.0.0.1 is used to override `unable to resolve host XXX` errors when running sudo
-	kubeConf, err := ssh.ExecWithOutput("sudo -h 127.0.0.1 cat /var/lib/mke/pki/admin.conf")
+	kubeConf, err := ssh.ExecWithOutput("sudo -h 127.0.0.1 cat /var/lib/k0s/pki/admin.conf")
 	if err != nil {
 		return nil, err
 	}

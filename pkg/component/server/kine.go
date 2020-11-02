@@ -22,14 +22,14 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/Mirantis/mke/pkg/assets"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/supervisor"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 // Kine implement the component interface to run kine

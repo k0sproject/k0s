@@ -24,4 +24,4 @@ RUN adduser -H -S -s /sbin/nologin etcd
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.0/bin/linux/amd64/kubectl \
        && chmod +x ./kubectl \
        && mv ./kubectl /usr/local/bin/kubectl
-ENV KUBECONFIG=/var/lib/mke/pki/admin.conf
+ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf

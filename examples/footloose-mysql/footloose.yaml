@@ -1,5 +1,5 @@
 cluster:
-  name: mke
+  name: k0s
   privateKey: ~/.ssh/id_rsa
 machines:
 - count: 2
@@ -13,10 +13,10 @@ machines:
       source: /lib/modules
       destination: /lib/modules
     - type: bind
-      source: /home/jussi/go/src/github.com/Mirantis/mke
-      destination: /root/mke
+      source: /home/jussi/go/src/github.com/k0sproject/k0s
+      destination: /root/k0s
     - type: volume
-      destination: /var/lib/mke
+      destination: /var/lib/k0s
     portMappings:
     - containerPort: 22
       hostPort: 9222

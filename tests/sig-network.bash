@@ -9,10 +9,10 @@ trap _cleanup EXIT
 _setup_worker() {
   node_name=$1
   logline "create a token for ${node_name}"
-  token=$(./bin/footloose ssh --config $footlooseconfig root@node0 "mke token create --role=worker")
+  token=$(./bin/footloose ssh --config $footlooseconfig root@node0 "k0s token create --role=worker")
   ip=$(./bin/footloose ssh --config $footlooseconfig root@node0 "hostname -i")
   logline "join worker ${node_name}"
-  ./bin/footloose ssh --config $footlooseconfig "root@${node_name}" "nohup mke worker ${token} >/tmp/mke-worker.log 2>&1 &"
+  ./bin/footloose ssh --config $footlooseconfig "root@${node_name}" "nohup k0s worker ${token} >/tmp/k0s-worker.log 2>&1 &"
   logline "wait a bit for worker ${node_name} to start properly ..."
   while true; do
     >/dev/null 2>&1  ./bin/footloose ssh -c $footlooseconfig "root@${node_name}" "ps | grep calico-node" && break
@@ -22,7 +22,7 @@ _setup_worker() {
 
 _setup_cluster() {
   logline "start server"
-  ./bin/footloose ssh --config $footlooseconfig root@node0 "nohup mke server >/tmp/mke-server.log 2>&1 &"
+  ./bin/footloose ssh --config $footlooseconfig root@node0 "nohup k0s server >/tmp/k0s-server.log 2>&1 &"
   logline "wait a bit ..."
   ## TODO Maybe we could replace all the sleeps with polling of the healthz endpoint
   while true; do
@@ -32,7 +32,7 @@ _setup_cluster() {
   # API is up, but it needs to do quite a bit of init work still
   sleep 20
 
-  ./bin/footloose ssh --config $footlooseconfig root@node0 "cat /var/lib/mke/pki/admin.conf" > kubeconfig
+  ./bin/footloose ssh --config $footlooseconfig root@node0 "cat /var/lib/k0s/pki/admin.conf" > kubeconfig
 
   _setup_worker "node1"
   _setup_worker "node2"

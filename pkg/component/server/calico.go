@@ -18,7 +18,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"github.com/Mirantis/mke/static"
 	"io/ioutil"
 	"os"
 	"path"
@@ -26,9 +25,11 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/static"
+
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
