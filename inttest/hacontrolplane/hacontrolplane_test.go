@@ -110,6 +110,15 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.Equal(membersFromMain, membersFromJoined,
 		"etcd cluster members list must be the same across all nodes")
 	s.Len(membersFromJoined, 2, "etcd cluster must have exactly 2 members")
+
+	// Restart the second controller with a token to see it comes up
+	// It should just ignore the token as there's CA etc already in place
+	sshC1, err := s.SSH("controller1")
+	s.Require().NoError(err)
+	_, _ = sshC1.ExecWithOutput("kill $(pidof mke)")
+
+	s.NoError(s.JoinController(1, token))
+
 	s.makeNodeLeave(1, membersFromJoined["controller1"])
 	refreshedMembers := s.getMembers(0)
 	s.Len(refreshedMembers, 1)
