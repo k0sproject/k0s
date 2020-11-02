@@ -1,6 +1,0 @@
-.test-*
-bin/
-footloose-*.yaml
-id_ed25519_k0s*
-kubeconfig
-*.log
