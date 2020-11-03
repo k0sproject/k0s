@@ -1,4 +1,4 @@
-module github.com/Mirantis/mke
+module github.com/k0sproject/k0s
 
 go 1.13
 

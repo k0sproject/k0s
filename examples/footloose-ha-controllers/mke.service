@@ -1,8 +1,8 @@
 [Unit]
-Description=Mirantis Kubernetes Engine
+Description=k0s
 
 [Service]
-ExecStart=/usr/local/bin/mke server --config /etc/mke/config.yaml
+ExecStart=/usr/local/bin/k0s server --config /etc/k0s/config.yaml
 
 [Install]
 WantedBy=multi-user.target

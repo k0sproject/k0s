@@ -17,13 +17,14 @@ package basic
 
 import (
 	"context"
-	"github.com/stretchr/testify/suite"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"testing"
 	"time"
 
-	"github.com/Mirantis/mke/inttest/common"
+	"github.com/stretchr/testify/suite"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/k0sproject/k0s/inttest/common"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,7 +32,7 @@ type BasicSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *BasicSuite) TestMkeGetsUp() {
+func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(s.InitMainController())
 	s.NoError(s.RunWorkers())
 

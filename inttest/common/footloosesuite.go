@@ -26,7 +26,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
@@ -40,7 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// FootlooseSuite defines all the common stuff we need to be able to run mke testing on footloose
+// FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose
 type FootlooseSuite struct {
 	suite.Suite
 
@@ -134,7 +134,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 			s.T().Logf("failed to ssh to node %s to get logs", m.Hostname())
 			continue
 		}
-		log, err := ssh.ExecWithOutput("cat /tmp/mke-*.log")
+		log, err := ssh.ExecWithOutput("cat /tmp/k0s-*.log")
 		if err != nil {
 			s.T().Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
 		}
@@ -173,7 +173,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 
 }
 
-const keepAfterTestsEnv = "MKE_KEEP_AFTER_TESTS"
+const keepAfterTestsEnv = "K0S_KEEP_AFTER_TESTS"
 
 func (s *FootlooseSuite) keepEnvironment() bool {
 	keepAfterTests := os.Getenv(keepAfterTestsEnv)
@@ -198,7 +198,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup mke --debug server >/tmp/mke-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server >/tmp/k0s-server.log 2>&1 &")
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (s *FootlooseSuite) JoinController(idx int, token string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup mke --debug server %s >/tmp/mke-server.log 2>&1 &", token))
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s --debug server %s >/tmp/k0s-server.log 2>&1 &", token))
 	if err != nil {
 		return err
 	}
@@ -230,12 +230,12 @@ func (s *FootlooseSuite) GetJoinToken(role string) (string, error) {
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("mke token create --role=%s", role))
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s", role))
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
 	outputParts := strings.Split(token, "\n")
-	// in case of no mke.conf given, there might be warnings on the first few lines
+	// in case of no k0s.conf given, there might be warnings on the first few lines
 	token = outputParts[len(outputParts)-1]
 	return token, nil
 
@@ -255,7 +255,7 @@ func (s *FootlooseSuite) RunWorkers() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`nohup mke --debug worker "%s" >/tmp/mke-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`nohup k0s --debug worker "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := fmt.Sprintf("worker%d", i)
 		sshWorker, err := s.SSH(workerNode)
@@ -323,7 +323,7 @@ func (s *FootlooseSuite) KubeClient(node string) (*kubernetes.Clientset, error) 
 	if err != nil {
 		return nil, err
 	}
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/mke/pki/admin.conf")
+	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/pki/admin.conf")
 	if err != nil {
 		return nil, err
 	}
@@ -378,9 +378,9 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string) error {
 }
 
 func (s *FootlooseSuite) createConfig() config.Config {
-	mkePath := os.Getenv("MKE_PATH")
-	if mkePath == "" {
-		s.FailNow("MKE_PATH env needs to be set to MKE binary")
+	binPath := os.Getenv("K0S_PATH")
+	if binPath == "" {
+		s.FailNow("K0S_PATH env needs to be set to k0s binary")
 	}
 
 	volumes := []config.Volume{
@@ -391,12 +391,12 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		},
 		{
 			Type:        "bind",
-			Source:      mkePath,
-			Destination: "/usr/bin/mke",
+			Source:      binPath,
+			Destination: "/usr/bin/k0s",
 		},
 		{
 			Type:        "volume",
-			Destination: "/var/lib/mke",
+			Destination: "/var/lib/k0s",
 		},
 	}
 
@@ -451,7 +451,7 @@ func getTestTimeout() time.Duration {
 			if err != nil {
 				return DefaultTimeout
 			}
-			// Let's shave 10% off, so mke suite has enough time to run teardown
+			// Let's shave 10% off, so k0s suite has enough time to run teardown
 			testTimeout := time.Duration(float64(timeout.Milliseconds())*0.90) * time.Millisecond
 			return testTimeout
 		}

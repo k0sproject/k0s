@@ -23,11 +23,11 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/Mirantis/mke/pkg/component"
-	"github.com/Mirantis/mke/pkg/component/worker"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/token"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/token"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -93,9 +93,9 @@ func startWorker(ctx *cli.Context) error {
 		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
 		c <- syscall.SIGTERM
 	}
-	// Wait for mke process termination
+	// Wait for k0s process termination
 	<-c
-	logrus.Info("Shutting down mke worker")
+	logrus.Info("Shutting down k0s worker")
 
 	// Stop components
 	if err := componentManager.Stop(); err != nil {
@@ -137,7 +137,7 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRootDir))
 		}
-		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["mke"].CertificateAuthorityData, constant.CertMode)
+		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
 			return errors.Wrap(err, "failed to write ca client cert")
 		}

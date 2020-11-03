@@ -17,7 +17,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/pkg/apis/v1beta1"
+
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 )
@@ -25,7 +26,7 @@ import (
 func ConfigCommand() *cli.Command {
 	return &cli.Command{
 		Name:   "default-config",
-		Usage:  "Output the default MKE configuration yaml to stdout",
+		Usage:  "Output the default k0s configuration yaml to stdout",
 		Action: buildConfig,
 	}
 }

@@ -20,10 +20,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/constant"
-	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
-	"github.com/Mirantis/mke/pkg/leaderelection"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/constant"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
@@ -76,7 +76,7 @@ func (m *Manager) Run() error {
 		time.Sleep(time.Second)
 	}
 
-	leasePool, err := leaderelection.NewLeasePool(m.client, "mke-manifest-applier", leaderelection.WithLogger(log))
+	leasePool, err := leaderelection.NewLeasePool(m.client, "k0s-manifest-applier", leaderelection.WithLogger(log))
 
 	if err != nil {
 		return err

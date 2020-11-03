@@ -1,7 +1,7 @@
-apiVersion: mke.mirantis.com/v1beta1
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
-  name: mke-etcd
+  name: k0s-etcd
 spec:
   storage:
     type: etcd

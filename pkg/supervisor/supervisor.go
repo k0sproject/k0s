@@ -26,8 +26,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -145,7 +145,7 @@ func (s *Supervisor) Stop() error {
 	return nil
 }
 
-// Modifies the current processes env so that we inject mke embedded bins into path
+// Modifies the current processes env so that we inject k0s embedded bins into path
 func getEnv() []string {
 	env := os.Environ()
 	for i, e := range env {

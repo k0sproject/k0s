@@ -30,10 +30,10 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/certificate"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/certificate"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
@@ -64,7 +64,7 @@ users:
 `))
 )
 
-// Certificates is the Component implementation to manage all mke certs
+// Certificates is the Component implementation to manage all k0s certs
 type Certificates struct {
 	CACert string
 
@@ -211,16 +211,16 @@ func (c *Certificates) Init() error {
 	})
 
 	eg.Go(func() error {
-		mkeAPIReq := certificate.Request{
-			Name:      "mke-api",
-			CN:        "mke-api",
+		apiReq := certificate.Request{
+			Name:      "k0s-api",
+			CN:        "k0s-api",
 			O:         "kubernetes",
 			CACert:    caCertPath,
 			CAKey:     caCertKey,
 			Hostnames: hostnames,
 		}
 		// TODO Not sure about the user...
-		_, err := c.CertManager.EnsureCertificate(mkeAPIReq, constant.ApiserverUser)
+		_, err := c.CertManager.EnsureCertificate(apiReq, constant.ApiserverUser)
 		return err
 	})
 

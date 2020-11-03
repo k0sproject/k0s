@@ -21,11 +21,11 @@ import (
 	"path"
 	"path/filepath"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/assets"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/supervisor"
-	"github.com/Mirantis/mke/pkg/util"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -41,7 +41,7 @@ type ControllerManager struct {
 var cmDefaultArgs = map[string]string{
 	"allocate-node-cidrs":             "true",
 	"bind-address":                    "127.0.0.1",
-	"cluster-name":                    "mke",
+	"cluster-name":                    "k0s",
 	"controllers":                     "*,bootstrapsigner,tokencleaner",
 	"enable-hostpath-provisioner":     "true",
 	"leader-elect":                    "true",

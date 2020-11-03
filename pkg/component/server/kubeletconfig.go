@@ -25,10 +25,10 @@ import (
 	"io"
 	"io/ioutil"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/util"
 	"github.com/imdario/mergo"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -175,7 +175,7 @@ func getDefaultProfile(dnsAddress string) unstructuredYamlObject {
 				"enabled":  true,
 			},
 			"x509": map[string]interface{}{
-				"clientCAFile": "/var/lib/mke/pki/ca.crt",
+				"clientCAFile": "/var/lib/k0s/pki/ca.crt",
 			},
 		},
 		"authorization": map[string]interface{}{

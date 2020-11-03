@@ -19,8 +19,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Mirantis/mke/pkg/constant"
-	k8sutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/constant"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

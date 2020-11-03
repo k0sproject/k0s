@@ -15,7 +15,7 @@ limitations under the License.
 */
 package v1beta1
 
-import "github.com/Mirantis/mke/pkg/constant"
+import "github.com/k0sproject/k0s/pkg/constant"
 
 // PodSecurityPolicy defines the config options for setting system level default PSP
 type PodSecurityPolicy struct {

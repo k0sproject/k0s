@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // ImageSpec container image settings

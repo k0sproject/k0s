@@ -9,10 +9,10 @@ assignees: ''
 
 **Version**
 ```
-$ mke version
+$ k0s version
 ```
 **Platform**
-Which platform did you run mke on?
+Which platform did you run k0s on?
 ```
 $ lsb_release -a
 ```
@@ -29,7 +29,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 Also add any output from kubectl if applicable:
 ```
-$ export KUBECONFIG=/var/lib/mke/pki/admin.conf
+$ export KUBECONFIG=/var/lib/k0s/pki/admin.conf
 $ kubectl logs ...
 ```
 

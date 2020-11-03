@@ -17,30 +17,31 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/pkg/build"
-	"github.com/Mirantis/mke/pkg/telemetry"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/telemetry"
+
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
-	"github.com/Mirantis/mke/pkg/applier"
-	"github.com/Mirantis/mke/pkg/certificate"
-	"github.com/Mirantis/mke/pkg/component"
-	"github.com/Mirantis/mke/pkg/component/server"
-	"github.com/Mirantis/mke/pkg/component/worker"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/performance"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/applier"
+	"github.com/k0sproject/k0s/pkg/certificate"
+	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/server"
+	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/performance"
+	"github.com/k0sproject/k0s/pkg/util"
 
-	"github.com/Mirantis/mke/pkg/apis/v1beta1"
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 // ServerCommand ...
@@ -53,7 +54,7 @@ func ServerCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:    "config",
 				Aliases: []string{"c"},
-				Value:   "mke.yaml",
+				Value:   "k0s.yaml",
 			},
 			&cli.BoolFlag{
 				Name:  "enable-worker",
@@ -162,7 +163,7 @@ func startServer(ctx *cli.Context) error {
 		ClusterConfig: clusterConfig,
 	})
 	componentManager.Add(&applier.Manager{})
-	componentManager.Add(&server.MkeControlAPI{
+	componentManager.Add(&server.K0SControlAPI{
 		ConfigPath: ctx.String("config"),
 	})
 
@@ -222,9 +223,9 @@ func startServer(ctx *cli.Context) error {
 
 	perfTimer.Output()
 
-	// Wait for mke process termination
+	// Wait for k0s process termination
 	<-c
-	logrus.Info("Shutting down mke server")
+	logrus.Info("Shutting down k0s server")
 
 	// Stop all reconcilers first
 	for _, reconciler := range reconcilers {
@@ -293,7 +294,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]comp
 
 func initNetwork(reconcilers map[string]component.Component, conf *config.ClusterConfig) {
 	if conf.Spec.Network.Provider != "calico" {
-		logrus.Warnf("network provider set to custom, mke will not manage it")
+		logrus.Warnf("network provider set to custom, k0s will not manage it")
 		return
 	}
 

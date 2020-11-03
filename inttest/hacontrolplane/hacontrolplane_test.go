@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Mirantis/mke/inttest/common"
+	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,7 +36,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 	node := fmt.Sprintf("controller%d", fromControllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
-	output, err := sshCon.ExecWithOutput("mke etcd member-list")
+	output, err := sshCon.ExecWithOutput("k0s etcd member-list")
 	output = lastLine(output)
 	s.NoError(err)
 
@@ -53,11 +53,11 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
 	for i := 0; i < 20; i++ {
-		_, err = sshCon.ExecWithOutput(fmt.Sprintf("mke etcd leave %s", peerAddress))
+		_, err = sshCon.ExecWithOutput(fmt.Sprintf("k0s etcd leave %s", peerAddress))
 		if err == nil {
 			break
 		}
-		s.T().Logf("retrying mke etcd leave...")
+		s.T().Logf("retrying k0s etcd leave...")
 		time.Sleep(500 * time.Millisecond)
 	}
 	s.NoError(err)
@@ -67,7 +67,7 @@ func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 	node := fmt.Sprintf("controller%d", controllerIdx)
 	sshCon, err := s.SSH(node)
 	s.NoError(err)
-	ca, err := sshCon.ExecWithOutput("cat /var/lib/mke/pki/ca.crt")
+	ca, err := sshCon.ExecWithOutput("cat /var/lib/k0s/pki/ca.crt")
 	s.NoError(err)
 
 	return ca
@@ -97,12 +97,12 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 
 	s.Equal(ca0, ca1)
 
-	sa0Key := s.getFile(0, "/var/lib/mke/pki/sa.key")
-	sa1Key := s.getFile(1, "/var/lib/mke/pki/sa.key")
+	sa0Key := s.getFile(0, "/var/lib/k0s/pki/sa.key")
+	sa1Key := s.getFile(1, "/var/lib/k0s/pki/sa.key")
 	s.Equal(sa0Key, sa1Key)
 
-	sa0Pub := s.getFile(0, "/var/lib/mke/pki/sa.pub")
-	sa1Pub := s.getFile(1, "/var/lib/mke/pki/sa.pub")
+	sa0Pub := s.getFile(0, "/var/lib/k0s/pki/sa.pub")
+	sa1Pub := s.getFile(1, "/var/lib/k0s/pki/sa.pub")
 	s.Equal(sa0Pub, sa1Pub)
 
 	membersFromMain := s.getMembers(0)

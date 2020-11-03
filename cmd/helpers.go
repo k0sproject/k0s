@@ -19,10 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
-// ConfigFromYaml returns given MKE config or default config
+// ConfigFromYaml returns given k0s config or default config
 func ConfigFromYaml(ctx *cli.Context) *config.ClusterConfig {
 	clusterConfig, err := config.FromYaml(ctx.String("config"))
 	if err != nil {

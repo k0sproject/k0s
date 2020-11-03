@@ -66,6 +66,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./mke
-          asset_name: mke-${{ steps.branch_name.outputs.TAG_NAME }}-amd64
+          asset_path: ./k0s
+          asset_name: k0s-${{ steps.branch_name.outputs.TAG_NAME }}-amd64
           asset_content_type: application/octet-stream

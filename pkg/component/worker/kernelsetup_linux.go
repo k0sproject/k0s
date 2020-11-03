@@ -24,7 +24,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 

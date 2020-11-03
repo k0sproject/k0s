@@ -1,16 +1,17 @@
 package telemetry
 
 import (
-	config "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"time"
+
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
-// Component is a telemetry component for MKE component manager
+// Component is a telemetry component for k0s component manager
 type Component struct {
 	ClusterConfig *config.ClusterConfig
 	Version       string

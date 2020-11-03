@@ -21,12 +21,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/Mirantis/mke/pkg/assets"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/supervisor"
+	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-// ContainerD implement the component interface to manage containerd as mke component
+// ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
 	supervisor supervisor.Supervisor
 }
@@ -54,10 +54,10 @@ func (c *ContainerD) Run() error {
 			fmt.Sprintf("--root=%s", filepath.Join(constant.DataDir, "containerd")),
 			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
-			"--config=/etc/mke/containerd.toml",
+			"--config=/etc/k0s/containerd.toml",
 		},
 	}
-	// TODO We need to dump the config file suited for mke use
+	// TODO We need to dump the config file suited for k0s use
 
 	c.supervisor.Supervise()
 

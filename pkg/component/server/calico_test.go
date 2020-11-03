@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/Mirantis/mke/pkg/apis/v1beta1"
+	"testing"
+
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	"testing"
 )
 
 type inMemorySaver map[string][]byte

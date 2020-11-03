@@ -27,19 +27,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/kubernetes"
 	"github.com/gorilla/mux"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 
-	"github.com/Mirantis/mke/pkg/etcd"
+	"github.com/k0sproject/k0s/pkg/etcd"
 )
 
-// APICommand creates new command for running the mke join API
+// APICommand creates new command for running the k0s join API
 func APICommand() *cli.Command {
 	return &cli.Command{
 		Name:   "api",
@@ -48,7 +48,7 @@ func APICommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
-				Value: "mke.yaml",
+				Value: "k0s.yaml",
 			},
 		},
 	}
@@ -88,8 +88,8 @@ func startAPI(ctx *cli.Context) error {
 	}
 
 	log.Fatal(srv.ListenAndServeTLS(
-		filepath.Join(constant.CertRootDir, "mke-api.crt"),
-		filepath.Join(constant.CertRootDir, "mke-api.key"),
+		filepath.Join(constant.CertRootDir, "k0s-api.crt"),
+		filepath.Join(constant.CertRootDir, "k0s-api.key"),
 	))
 
 	return nil

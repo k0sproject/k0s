@@ -20,7 +20,7 @@ import (
 
 	"k8s.io/client-go/util/retry"
 
-	"github.com/Mirantis/mke/pkg/debounce"
+	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 )

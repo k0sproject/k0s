@@ -17,8 +17,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/etcd"
+
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -38,7 +39,7 @@ func EtcdCommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
-				Value: "mke.yaml",
+				Value: "k0s.yaml",
 			},
 		},
 		Subcommands: []*cli.Command{
