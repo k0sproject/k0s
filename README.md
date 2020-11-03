@@ -108,3 +108,21 @@ k0s worker "superlongtokenfrompreviousphase"
 ```
 
 For more detailed description see [creating cluster documentation](docs/create-cluster.md) 
+
+### k0s-in-docker
+
+**Note:** Running k0s, or any other Kubernetes distro, like this is not really a production ready setup. :)
+
+To run a single node controller+worker combo, just run it in docker with:
+```
+docker run -d --name k0s-controller --hostname controller --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+```
+
+Replace `<version>` with a released version number, we build the image for all tagged releases.
+
+That's it, in a minute or so there should be controller+worker combo running in the container.
+
+Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into Lens. ;)
+
+
+

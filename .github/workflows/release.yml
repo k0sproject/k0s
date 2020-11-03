@@ -70,6 +70,15 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
+      
+      - name: Build image and push to GitHub image registry
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: k0sproject/k0s/k0s
+          tag_with_ref: true
 
   arm64:
     needs: release
@@ -112,3 +121,5 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
+      
+      
