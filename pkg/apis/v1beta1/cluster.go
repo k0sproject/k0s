@@ -26,7 +26,7 @@ import (
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string            `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io"`
+	APIVersion string            `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
 	Kind       string            `yaml:"kind" validate:"eq=Cluster"`
 	Metadata   *ClusterMeta      `yaml:"metadata"`
 	Spec       *ClusterSpec      `yaml:"spec"`

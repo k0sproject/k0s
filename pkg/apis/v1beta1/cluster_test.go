@@ -24,7 +24,7 @@ import (
 )
 
 func TestClusterDefaults(t *testing.T) {
-	c, err := fromYaml(t, "apiVersion: k0s.k0sproject.io")
+	c, err := fromYaml(t, "apiVersion: k0s.k0sproject.io/v1beta1")
 	assert.NoError(t, err)
 	assert.NotNil(t, c.Metadata)
 	assert.Equal(t, "k0s", c.Metadata.Name)
@@ -33,7 +33,7 @@ func TestClusterDefaults(t *testing.T) {
 
 func TestStorageDefaults(t *testing.T) {
 	yamlData := `
-apiVersion: k0s.k0sproject.io
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
   name: foobar
@@ -49,7 +49,7 @@ metadata:
 
 func TestEtcdDefaults(t *testing.T) {
 	yamlData := `
-apiVersion: k0s.k0sproject.io
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
   name: foobar
@@ -78,7 +78,7 @@ func fromYaml(t *testing.T, yamlData string) (*ClusterConfig, error) {
 
 func TestNetworkValidation_Custom(t *testing.T) {
 	yamlData := `
-apiVersion: k0s.k0sproject.io
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
   name: foobar
@@ -97,7 +97,7 @@ spec:
 
 func TestNetworkValidation_Calico(t *testing.T) {
 	yamlData := `
-apiVersion: k0s.k0sproject.io
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
   name: foobar
@@ -116,7 +116,7 @@ spec:
 
 func TestNetworkValidation_Invalid(t *testing.T) {
 	yamlData := `
-apiVersion: k0s.k0sproject.io
+apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
   name: foobar
