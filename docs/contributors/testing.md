@@ -1,5 +1,5 @@
 ## Testing Your Code
-MKE uses github actions to run automated tests on any PR, before merging.
+k0s uses github actions to run automated tests on any PR, before merging.
 However, a PR will not be reviewed before all tests are green, so to save time and prevent your PR from going stale, it is best to test it before submitting the PR.
 
 ### Run Local Verifications

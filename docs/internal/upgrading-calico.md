@@ -1,6 +1,6 @@
 # Upgrading Calico
 
-MKE bundles Kubernetes manifests for Calico. The manifests are retrieved
+k0s bundles Kubernetes manifests for Calico. The manifests are retrieved
 from the [official Calico docs](https://docs.projectcalico.org/manifests/calico.yaml).
 
 As fetching and modifying the entire multi-thousand line file is error-prone,

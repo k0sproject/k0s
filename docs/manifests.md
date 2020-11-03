@@ -1,11 +1,11 @@
 # Manifest deployer
 
-MKE embeds a manifest deployer on controllers which allows easy way to deploy manifests automatically. By default MKE reads all manifests in `/var/lib/mke/manifests` and ensures their state matches on the cluster. When you remove a manifest file MKE will automatically prune all the resources associated with it.
+k0s embeds a manifest deployer on controllers which allows easy way to deploy manifests automatically. By default k0s reads all manifests in `/var/lib/k0s/manifests` and ensures their state matches on the cluster. When you remove a manifest file k0s will automatically prune all the resources associated with it.
 
-Each directory that is a **direct descendant** of `/var/lib/mke/manifests` is considered
+Each directory that is a **direct descendant** of `/var/lib/k0s/manifests` is considered
 to be its own stack, but nested directories are not considered new stacks.
 
-**Note:** MKE uses this mechanism for some of it's internal in-cluster components and other resources. Make sure you only touch the manifests not managed by MKE.
+**Note:** k0s uses this mechanism for some of it's internal in-cluster components and other resources. Make sure you only touch the manifests not managed by k0s.
 
 ## Future
 

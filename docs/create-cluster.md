@@ -1,10 +1,10 @@
-# Creating cluster with MKE
+# Creating A cluster with k0s
 
-As MKE binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
+As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
 
 ## Pre-requisites
 
-Download MKE binary from [releases](https://github.com/Mirantis/mke/releases/latest) and push it to all the nodes you wish to connect to the cluster.
+Download k0s binary from [releases](https://github.com/k0sproject/k0s/releases/latest) and push it to all the nodes you wish to connect to the cluster.
 
 That's it, really.
 
@@ -13,12 +13,12 @@ That's it, really.
 Create a [configuration](configuration.md) file if you wish to tune some of the settings.
 
 ```
-$ mke server -c mke.yaml
+$ k0s server -c k0s.yaml
 ```
 
-That's it, really. MKE process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.
+That's it, really. k0s process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.
 
-Naturally, to make MKE boot up the control plane when the node itself reboots you should really make the mke process to be supervised by systemd or some other init system.
+Naturally, to make k0s boot up the control plane when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.
 
 ## Create join token
 
@@ -26,25 +26,25 @@ To be able to join workers into the cluster we need a token. The token embeds in
 
 To get a token run the following on one of the existing controller nodes:
 ```sh
-mke token create --role=worker
+k0s token create --role=worker
 ```
 
 This will output a long [token](#tokens) which we will use to join the worker. To enhance security, we can also set an expiration time on the tokens by using:
 ```sh
-mke token create --role=worker --expiry="100h"
+k0s token create --role=worker --expiry="100h"
 ```
 
 
 ## Joining worker(s) to cluster
 
-To join the worker we need to run mke in worker mode with the token from previous step:
+To join the worker we need to run k0s in worker mode with the token from previous step:
 ```sh
-$ mke worker "long-join-token"
+$ k0s worker "long-join-token"
 ```
 
 That's it, really.
 
-Naturally, to make MKE boot up the worker components when the node itself reboots you should really make the mke process to be supervised by systemd or some other init system.
+Naturally, to make k0s boot up the worker components when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.
 
 ## Tokens
 
@@ -64,10 +64,10 @@ To be able to join a new controller node into the cluster you must be using eith
 
 To create a join token for the new controller, run the following on existing controller node:
 ```sh
-mke token create --role=controller --expiry=1h
+k0s token create --role=controller --expiry=1h
 ```
 
 The on the new controller, run:
 ```sh
-mke server "long-join-token"
+k0s server "long-join-token"
 ```

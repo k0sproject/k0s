@@ -6,28 +6,28 @@
 
 In order to make changes to containerd configuration first you need to create default containerd configuration by running:
 ```
-containerd config default > /etc/mke/containerd.toml
+containerd config default > /etc/k0s/containerd.toml
 ```
-This command will dump default values to `/etc/mke/containerd.toml`. 
+This command will dump default values to `/etc/k0s/containerd.toml`. 
 
-`mke` runs containerd with follwoing default values:
+`k0s` runs containerd with follwoing default values:
 ```
-/var/lib/mke/bin/containerd \
-    --root=/var/lib/mke/containerd \
-    --state=/run/mke/containerd \
-    --address=/run/mke/containerd.sock \
-    --config=/etc/mke/containerd.toml
+/var/lib/k0s/bin/containerd \
+    --root=/var/lib/k0s/containerd \
+    --state=/run/k0s/containerd \
+    --address=/run/k0s/containerd.sock \
+    --config=/etc/k0s/containerd.toml
 ```
 
 Before proceeding further make sure that following default values are added to the configuration file:
 ```
 version = 2
-root = "/var/lib/mke/containerd"
-state = "/run/mke/containerd"
+root = "/var/lib/k0s/containerd"
+state = "/run/k0s/containerd"
 ...
 
 [grpc]
-  address = "/run/mke/containerd.sock"
+  address = "/run/k0s/containerd.sock"
 ```
 
 Next if you want to change CRI look into this section
@@ -49,4 +49,4 @@ By default CRI is set tu runC and if you want to configure Nvidia GPU support yo
 **Note** To run `nvidia-container-runtime` on your node please look [here](https://josephb.org/blog/containerd-nvidia/) for detailed instructions.
 
 
-After changes to the configuration, restart `mke` and in this case containerd will be using newly configured runtime.
+After changes to the configuration, restart `k0s` and in this case containerd will be using newly configured runtime.

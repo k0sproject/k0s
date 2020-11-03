@@ -1,6 +1,6 @@
 # Troubleshooting
 
-There are few common cases we've seen where MKE fails to run properly. 
+There are few common cases we've seen where k0s fails to run properly. 
 
 ## CoreDNS in crashloop
 
@@ -36,10 +36,10 @@ The easiest but most crude way to workaround is to disable the systemd-resolved 
 
 Read more at CoreDNS [troubleshooting docs](https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters).
 
-## `mke server` fails on ARM boxes
+## `k0s server` fails on ARM boxes
 
 In the logs you probably see ETCD not starting up properly.
 
-Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `mke server` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
+Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s server` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
 
-As Etcd is not fully supported on ARM architecture it also means that mke controlplane with etcd itself is not fully supported on ARM either.
+As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.
