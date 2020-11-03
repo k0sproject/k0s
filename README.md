@@ -6,7 +6,7 @@
 
 k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
 
-k0s is a single binary all-inclusive kubernetes distribution with all the required bells and whistles preconfigured to make building a kubernetes clusters a matter of just copying an executable to every host and running it.
+k0s is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
 
 ## Motivation
 
@@ -65,12 +65,12 @@ Fetch official binaries (except `kine` and `konnectivity-server`, which are buil
 make EMBEDDED_BINS_BUILDMODE=fetch
 ```
 
-Build kubernetes components from source as static binaries (requires docker):
+Build Kubernetes components from source as static binaries (requires docker):
 ```
 make EMBEDDED_BINS_BUILDMODE=docker
 ```
 
-Build k0s without any embedded binaries (requires that kubernetes
+Build k0s without any embedded binaries (requires that Kubernetes
 binaries are pre-installed on the runtime system):
 ```
 make EMBEDDED_BINS_BUILDMODE=none

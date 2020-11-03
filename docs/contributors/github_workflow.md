@@ -11,10 +11,10 @@
   - [Push Your Final Changes](#push-your-final-changes)
 
 <!-- /TOC -->
-This guide assumes you have already cloned the upstream repo to your system via git clone, or via `go get github.com/Mirantis/mke`.
+This guide assumes you have already cloned the upstream repo to your system via git clone, or via `go get github.com/k0sproject/k0s`.
 
 ## Fork The Project
-1. Go to http://github.com/Mirantis/mke
+1. Go to http://github.com/k0sproject/k0s
 2. On the top, right-hand side, click on "fork" and select your username for the fork destination.
 
 ## Adding the Forked Remote
@@ -22,8 +22,8 @@ This guide assumes you have already cloned the upstream repo to your system via 
 export GITHUB_USER={ your github's username }
 ```
 ```
-cd $WORKDIR/mke
-git remote add $GITHUB_USER git@github.com:${GITHUB_USER}/mke.git
+cd $WORKDIR/k0s
+git remote add $GITHUB_USER git@github.com:${GITHUB_USER}/k0s.git
 
 # Prevent push to Upstream
 git remote set-url --push origin no_push
@@ -35,10 +35,10 @@ git push --set-upstream $GITHUB_USER main
 Your remotes should look something like this:
 ```
 ➜ git remote -v
-origin  https://github.com/Mirantis/mke (fetch)
+origin  https://github.com/k0sproject/k0s (fetch)
 origin  no_push (push)
-my_fork git@github.com:{ github_username }/mke.git (fetch)
-my_fork git@github.com:{ github_username }/mke.git (push)
+my_fork git@github.com:{ github_username }/k0s.git (fetch)
+my_fork git@github.com:{ github_username }/k0s.git (push)
 ```
 
 ## Create & Rebase Your Feature Branch

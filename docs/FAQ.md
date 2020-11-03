@@ -1,7 +1,7 @@
 # Frequently asked questions
 
-### When will MKE be released as open source?
+### When will k0s be released as open source?
 
-MKE will be released as open source as soon as possible.
+k0s will be released as open source as soon as possible.
 
 
