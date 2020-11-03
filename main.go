@@ -20,9 +20,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/build"
-
 	"github.com/k0sproject/k0s/cmd"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -30,7 +29,7 @@ import (
 //go:generate go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/linux/ embedded-bins/staging/linux/bin
 
 func init() {
-
+	fmt.Println("bla bla, this is a test - do not merge!!!")
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.InfoLevel)
 
