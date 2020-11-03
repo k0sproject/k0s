@@ -4,7 +4,7 @@ on:
     inputs:
       prNumber:
         description: PR against which to this workflow
-        required: true
+        required: false
 
   schedule:
     - cron: "0 23 * * *"
@@ -24,15 +24,17 @@ jobs:
         working-directory: ./inttest/terraform/test-cluster
     steps:
       - name: Get PR Reference
+        env:
+          INPUT_PRNUMBER: ${{ github.event.inputs.prNumber }}
         run: |
-          re='^[0-9]+$'
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          ## if it's not a number, then set the PR reference manually
-          if ! [[ $PR_NUMBER =~ $re ]] ; then
-            GIT_REF="refs/pull/${{ github.event.inputs.prNumber }}/merge"
+          # check if a an input to override the reference is set
+          if [[ ${INPUT_PRNUMBER} != "" ]]; then
+            GIT_REF="refs/pull/${INPUT_PRNUMBER}/merge"
             echo "github_ref=$GIT_REF" >> $GITHUB_ENV
+            exit 0
           else
-            # leave unchanged
+            # PR number was not set manually
+            echo "no manual override: leaving Github reference unchanged."
             echo "github_ref=$GITHUB_REF" >> $GITHUB_ENV
           fi
         working-directory: ./
