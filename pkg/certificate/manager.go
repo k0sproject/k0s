@@ -20,17 +20,20 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/cli/genkey"
 	"github.com/cloudflare/cfssl/cli/sign"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // Request defines the certificate request fields
@@ -59,7 +62,6 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", name))
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
-
 		return nil
 	}
 
@@ -112,6 +114,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	uid, _ := util.GetUID(ownerName)
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
+		err := m.EnsureSANHosts(certReq, certFile)
+		if err != nil {
+			return Certificate{}, err
+		}
+
 		_ = os.Chown(keyFile, uid, gid)
 		_ = os.Chown(certFile, uid, gid)
 
@@ -190,4 +197,32 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	}
 
 	return c, nil
+}
+
+// EnsureSANHosts verifies if the certificates contains the correct SANs
+// If not, it removes the certificate and forces generation of a new Cert
+func (m *Manager) EnsureSANHosts(certReq Request, certFile string) (err error) {
+	var cert *certinfo.Certificate
+
+	if cert, err = certinfo.ParseCertificateFile(certFile); err != nil {
+		return fmt.Errorf("unable to parse certificate file: %v", err)
+	}
+
+	// if existing SANs are different than configured, delete the certificate to re-generat it
+	if !util.IsStringArrayEqual(certReq.Hostnames, cert.SANs) {
+		logrus.Debug("found changes in SAN configuration. attempting to re-generate files")
+		// find and remove files to remove
+		filter := fmt.Sprintf("%s.*", strings.TrimSuffix(certFile, filepath.Ext(certFile))) // returns <cert_name>.*
+		files, err := filepath.Glob(filter)
+		if err != nil {
+			logrus.Errorf("unable to find files to clean up: %v", err)
+		}
+		for _, f := range files {
+			logrus.Debugf("deleting file %v for certificate re-generation", f)
+			if err := os.Remove(f); err != nil {
+				logrus.Errorf("failed to delete file: %v", f)
+			}
+		}
+	}
+	return nil
 }
