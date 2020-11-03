@@ -80,7 +80,10 @@ clean:
 	rm -f pkg/assets/zz_generated_offsets.go k0s .bins.stamp bindata
 	$(MAKE) -C embedded-bins clean
 
+manifests:
+	/Users/msakhnov/go/bin/controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition
+
 .PHONY: bindata-manifests
 bindata-manifests:
-	go-bindata -o static/gen_calico.go -pkg static -prefix static static/...
+	go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
