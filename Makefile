@@ -79,6 +79,10 @@ check-addons: k0s
 check-singlenode: k0s
 	$(MAKE) -C inttest check-singlenode
 
+.PHONY: check-kine
+check-kine: k0s
+	$(MAKE) -C inttest check-kine
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
 	go test -race ./pkg/...
