@@ -31,7 +31,7 @@ const (
 	//EtcdCertDir contains etcd certificates
 	EtcdCertDir = "/var/lib/k0s/pki/etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
-	EtcdCertDirMode = 0700
+	EtcdCertDirMode = 0711
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
 	CertMode = 0644
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
@@ -79,6 +79,8 @@ const (
 	ControllerManagerUser = "kube-controller-manager"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
+	// KonnectivityServerUser deinfes the user to use for konnectivity-server
+	KonnectivityServerUser = "konnectivity-server"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.19"

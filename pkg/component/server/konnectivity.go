@@ -41,7 +41,7 @@ type Konnectivity struct {
 // Init ...
 func (k *Konnectivity) Init() error {
 	var err error
-	k.uid, err = util.GetUID(constant.ApiserverUser)
+	k.uid, err = util.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running konnectivity as root"))
 	}
