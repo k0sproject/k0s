@@ -189,6 +189,13 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
+func k0sConfigFlag() string {
+	if os.Getenv("K0S_CONFIG") != "" {
+		return "--config /etc/k0s.conf"
+	}
+	return ""
+}
+
 // InitMainController inits first contorller assuming it's first controller in the cluster
 func (s *FootlooseSuite) InitMainController() error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
@@ -198,7 +205,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server >/tmp/k0s-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server %s >/tmp/k0s-server.log 2>&1 &", k0sConfigFlag()))
 	if err != nil {
 		return err
 	}
@@ -213,7 +220,8 @@ func (s *FootlooseSuite) JoinController(idx int, token string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s --debug server %s >/tmp/k0s-server.log 2>&1 &", token))
+
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server %s %s >/tmp/k0s-server.log 2>&1 &", k0sConfigFlag(), token))
 	if err != nil {
 		return err
 	}
@@ -398,6 +406,15 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			Type:        "volume",
 			Destination: "/var/lib/k0s",
 		},
+	}
+
+	configFile := os.Getenv("K0S_CONFIG")
+	if configFile != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      configFile,
+			Destination: "/etc/k0s.conf",
+		})
 	}
 
 	portMaps := []config.PortMapping{
