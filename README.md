@@ -1,8 +1,6 @@
 ![Go build](https://github.com/k0sproject/k0s/workflows/Go%20build/badge.svg)
 
-# k0s - Mirantis Kubernetes Engine
-
-**Note:** The name of the project will probably change in near future.
+# k0s - Zero Friction Kubernetes
 
 k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
 
@@ -89,8 +87,6 @@ make check-basic
 ```
 
 ## Cluster bootstrapping
-
-Currently k0s makes only very basic default (hardcoded) configs for everything.
 
 Move the built `k0s` binary to each of the nodes.
 
