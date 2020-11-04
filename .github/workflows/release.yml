@@ -6,9 +6,33 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  build:
-    name: Create Release
-    runs-on: [self-hosted,linux]
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
+    steps:
+      # Ugly hack to get the tag name
+      # github.ref gives the full reference like refs.tags.v0.0.1-beta1
+      - name: Branch name
+        id: branch_name
+        run: |
+          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true # So we can manually edit before publishing
+          prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
+  
+  x64:
+    needs: release
+    runs-on: [self-hosted,linux,x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
     steps:
@@ -17,23 +41,12 @@ jobs:
         with:
           go-version: ^1.13
         id: go
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
-
-      # Ugly hack to get the tag name
-      # github.ref gives the full reference like refs.tags.v0.0.1-beta1
-      - name: Branch name
-        id: branch_name
-        run: |
-          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
-
       - name: Build
         run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
         env:
-          VERSION: ${{ steps.branch_name.outputs.TAG_NAME }}
-
-
+          VERSION: ${{ needs.release.outputs.tag_name }}
       - name: Clean Docker
         run: |
           docker system prune --all --volumes --force
@@ -47,25 +60,55 @@ jobs:
         with:
           name: logs
           path: tests/*.log
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true # So we can manually edit before publishing
-          prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
-
       - name: Upload Release Assets
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
-          asset_name: k0s-${{ steps.branch_name.outputs.TAG_NAME }}-amd64
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
+          asset_content_type: application/octet-stream
+
+  arm64:
+    needs: release
+    runs-on: [self-hosted,linux,arm64]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Build
+        run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+      - name: Clean Docker
+        run: |
+          docker system prune --all --volumes --force
+
+      - name: Run basic smoke test
+        run: make check-basic
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
+      - name: Upload Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
