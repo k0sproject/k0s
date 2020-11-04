@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -85,6 +86,16 @@ func configFromCmdFlag(ctx *cli.Context) (*config.ClusterConfig, error) {
 	return clusterConfig, nil
 }
 
+// If we've got CA in place we assume the node has already joined previously
+func needToJoin() bool {
+	if util.FileExists(filepath.Join(constant.CertRootDir, "ca.key")) &&
+		util.FileExists(filepath.Join(constant.CertRootDir, "ca.crt")) {
+		return false
+	}
+
+	return true
+}
+
 func startServer(ctx *cli.Context) error {
 	perfTimer := performance.NewTimer("server-start").Buffer().Start()
 	clusterConfig, err := configFromCmdFlag(ctx)
@@ -106,7 +117,7 @@ func startServer(ctx *cli.Context) error {
 	var join = false
 	var joinClient *v1beta1.JoinClient
 	token := ctx.Args().First()
-	if token != "" {
+	if token != "" && needToJoin() {
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
