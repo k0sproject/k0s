@@ -48,8 +48,8 @@ type FootlooseSuite struct {
 
 	ControllerCount int
 	WorkerCount     int
-
-	tearDownTimer *time.Timer
+	ExtraVolumes    []config.Volume
+	tearDownTimer   *time.Timer
 
 	footlooseConfig config.Config
 
@@ -399,6 +399,8 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			Destination: "/var/lib/k0s",
 		},
 	}
+
+	volumes = append(volumes, s.ExtraVolumes...)
 
 	portMaps := []config.PortMapping{
 		{

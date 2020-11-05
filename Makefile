@@ -63,6 +63,10 @@ check-network: k0s
 check-basic: k0s
 	$(MAKE) -C inttest check-basic
 
+.PHONY: check-byocri
+check-byocri: k0s
+	$(MAKE) -C inttest check-byocri
+
 .PHONY: check-basic
 check-hacontrolplane: k0s
 	$(MAKE) -C inttest check-hacontrolplane

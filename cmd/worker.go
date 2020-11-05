@@ -46,6 +46,10 @@ func WorkerCommand() *cli.Command {
 				Value: "default",
 				Usage: "worker profile to use on the node",
 			},
+			&cli.StringFlag{
+				Name:  "cri-socket",
+				Usage: "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]",
+			},
 		},
 		ArgsUsage: "[join-token]",
 	}
@@ -72,10 +76,14 @@ func startWorker(ctx *cli.Context) error {
 	}
 
 	componentManager := component.NewManager()
-	componentManager.Add(&worker.ContainerD{})
+	criSock := ctx.String("cri-socket")
+	if criSock == "" {
+		componentManager.Add(&worker.ContainerD{})
+	}
 	componentManager.Add(&worker.Kubelet{
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             ctx.String("profile"),
+		CRISocket:           ctx.String("cri-socket"),
 	})
 
 	// extract needed components

@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -34,6 +35,7 @@ import (
 type Kubelet struct {
 	KubeletConfigClient *KubeletConfigClient
 	Profile             string
+	CRISocket           string
 	supervisor          supervisor.Supervisor
 	dataDir             string
 }
@@ -69,21 +71,41 @@ func (k *Kubelet) Init() error {
 func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(constant.DataDir, "kubelet-config.yaml")
+	args := []string{
+		fmt.Sprintf("--root-dir=%s", k.dataDir),
+		fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
+
+		fmt.Sprintf("--config=%s", kubeletConfigPath),
+		fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
+		fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
+		"--kube-reserved-cgroup=system.slice",
+		"--runtime-cgroups=/system.slice/containerd.service",
+		"--kubelet-cgroups=/system.slice/containerd.service",
+	}
+
+	if k.CRISocket != "" {
+		rtType, rtSock, err := splitRuntimeConfig(k.CRISocket)
+		if err != nil {
+			return err
+		}
+		args = append(args, fmt.Sprintf("--container-runtime=%s", rtType))
+
+		if rtType == "docker" {
+			args = append(args, fmt.Sprintf("--docker-endpoint=%s", rtSock))
+			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
+			args = append(args, "--container-runtime-endpoint=unix:///var/run/dockershim.sock")
+		} else {
+			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", rtSock))
+		}
+	} else {
+		args = append(args, "--container-runtime=remote")
+		args = append(args, fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")))
+	}
+
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
 		BinPath: assets.BinPath("kubelet"),
-		Args: []string{
-			fmt.Sprintf("--root-dir=%s", k.dataDir),
-			fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
-			"--container-runtime=remote",
-			fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")),
-			fmt.Sprintf("--config=%s", kubeletConfigPath),
-			fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
-			fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
-			"--kube-reserved-cgroup=system.slice",
-			"--runtime-cgroups=/system.slice/containerd.service",
-			"--kubelet-cgroups=/system.slice/containerd.service",
-		},
+		Args:    args,
 	}
 
 	err := retry.Do(func() error {
@@ -115,3 +137,17 @@ func (k *Kubelet) Stop() error {
 
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
+
+func splitRuntimeConfig(rtConfig string) (string, string, error) {
+	runtimeConfig := strings.SplitN(rtConfig, ":", 2)
+	if len(runtimeConfig) != 2 {
+		return "", "", fmt.Errorf("cannot parse CRI socket path")
+	}
+	runtimeType := runtimeConfig[0]
+	runtimeSocket := runtimeConfig[1]
+	if runtimeType != "docker" && runtimeType != "remote" {
+		return "", "", fmt.Errorf("unknown runtime type %s, must be either of remote or docker", runtimeType)
+	}
+
+	return runtimeType, runtimeSocket, nil
+}
