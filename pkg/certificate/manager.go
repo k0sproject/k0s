@@ -21,16 +21,19 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
+	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/cli/genkey"
 	"github.com/cloudflare/cfssl/cli/sign"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/initca"
 	"github.com/cloudflare/cfssl/signer"
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Request defines the certificate request fields
@@ -59,7 +62,6 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", name))
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
-
 		return nil
 	}
 
@@ -111,83 +113,120 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	gid, _ := util.GetGID(constant.Group)
 	uid, _ := util.GetUID(ownerName)
 
-	if util.FileExists(keyFile) && util.FileExists(certFile) {
-		_ = os.Chown(keyFile, uid, gid)
-		_ = os.Chown(certFile, uid, gid)
-
-		cert, err := ioutil.ReadFile(certFile)
-		if err != nil {
-			return Certificate{}, errors.Wrapf(err, "failed to read ca cert %s for %s", certFile, certReq.Name)
-		}
-		key, err := ioutil.ReadFile(keyFile)
-		if err != nil {
-			return Certificate{}, errors.Wrapf(err, "failed to read ca key %s for %s", keyFile, certReq.Name)
+	// if regenerateCert returns true, it means we need to create the certs
+	if m.regenerateCert(certReq, keyFile, certFile) {
+		logrus.Debug("creating certificates")
+		req := csr.CertificateRequest{
+			KeyRequest: csr.NewKeyRequest(),
+			CN:         certReq.CN,
+			Names: []csr.Name{
+				{O: certReq.O},
+			},
 		}
 
-		return Certificate{
+		req.KeyRequest.A = "rsa"
+		req.KeyRequest.S = 2048
+		req.Hosts = certReq.Hostnames
+
+		var key, csrBytes []byte
+		g := &csr.Generator{Validator: genkey.Validator}
+		csrBytes, key, err := g.ProcessRequest(&req)
+		if err != nil {
+			return Certificate{}, err
+		}
+		config := cli.Config{
+			CAFile:    certReq.CACert,
+			CAKeyFile: certReq.CAKey,
+		}
+		s, err := sign.SignerFromConfig(config)
+		if err != nil {
+			return Certificate{}, err
+		}
+
+		var cert []byte
+		signReq := signer.SignRequest{
+			Request: string(csrBytes),
+			Profile: "kubernetes",
+		}
+
+		cert, err = s.Sign(signReq)
+		if err != nil {
+			return Certificate{}, err
+		}
+		c := Certificate{
 			Key:  string(key),
 			Cert: string(cert),
-		}, nil
+		}
+		err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
+		if err != nil {
+			return Certificate{}, err
+		}
+		err = ioutil.WriteFile(certFile, cert, constant.CertMode)
+		if err != nil {
+			return Certificate{}, err
+		}
+
+		err = os.Chown(keyFile, uid, gid)
+		if err != nil {
+			return Certificate{}, err
+		}
+		err = os.Chown(certFile, uid, gid)
+		if err != nil {
+			return Certificate{}, err
+		}
+
+		return c, nil
 	}
 
-	req := csr.CertificateRequest{
-		KeyRequest: csr.NewKeyRequest(),
-		CN:         certReq.CN,
-		Names: []csr.Name{
-			{O: certReq.O},
-		},
-	}
+	// certs exist, let's just verify their permissions
+	_ = os.Chown(keyFile, uid, gid)
+	_ = os.Chown(certFile, uid, gid)
 
-	req.KeyRequest.A = "rsa"
-	req.KeyRequest.S = 2048
-	req.Hosts = certReq.Hostnames
-
-	var key, csrBytes []byte
-	g := &csr.Generator{Validator: genkey.Validator}
-	csrBytes, key, err := g.ProcessRequest(&req)
+	cert, err := ioutil.ReadFile(certFile)
 	if err != nil {
-		return Certificate{}, err
+		return Certificate{}, errors.Wrapf(err, "failed to read ca cert %s for %s", certFile, certReq.Name)
 	}
-	config := cli.Config{
-		CAFile:    certReq.CACert,
-		CAKeyFile: certReq.CAKey,
-	}
-	s, err := sign.SignerFromConfig(config)
+	key, err := ioutil.ReadFile(keyFile)
 	if err != nil {
-		return Certificate{}, err
+		return Certificate{}, errors.Wrapf(err, "failed to read ca key %s for %s", keyFile, certReq.Name)
 	}
 
-	var cert []byte
-	signReq := signer.SignRequest{
-		Request: string(csrBytes),
-		Profile: "kubernetes",
-	}
-
-	cert, err = s.Sign(signReq)
-	if err != nil {
-		return Certificate{}, err
-	}
-	c := Certificate{
+	return Certificate{
 		Key:  string(key),
 		Cert: string(cert),
-	}
-	err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
-	if err != nil {
-		return Certificate{}, err
-	}
-	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
-	if err != nil {
-		return Certificate{}, err
+	}, nil
+
+}
+
+// if regenerateCert does not need to do any changes, it will return false
+// if a change in SAN hosts is detected, if will return true, to re-generate certs
+func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile string) bool {
+	var cert *certinfo.Certificate
+	var err error
+
+	// if certificate & key don't exist, return true, in order to generate certificates
+	if !util.FileExists(keyFile) && !util.FileExists(certFile) {
+		return true
 	}
 
-	err = os.Chown(keyFile, uid, gid)
-	if err != nil {
-		return Certificate{}, err
-	}
-	err = os.Chown(certFile, uid, gid)
-	if err != nil {
-		return Certificate{}, err
+	if cert, err = certinfo.ParseCertificateFile(certFile); err != nil {
+		logrus.Debugf("unable to parse certificate file: %v", err)
+		return true
 	}
 
-	return c, nil
+	// if existing SANs are different than configured, delete the certificate to re-generate it
+	if !util.IsStringArrayEqual(certReq.Hostnames, cert.SANs) {
+		logrus.Debug("found changes in SAN configuration. attempting to re-generate files")
+
+		files := []string{certFile, keyFile}
+		for _, f := range files {
+			logrus.Debugf("deleting file %v for certificate re-generation", f)
+			if err := os.Remove(f); err != nil {
+				logrus.Errorf("failed to delete file: %v", f)
+			}
+		}
+		return true
+	}
+	// no changes are detected. continue
+	return false
 }

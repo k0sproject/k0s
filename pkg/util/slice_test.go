@@ -52,3 +52,39 @@ func TestStringSliceContains(t *testing.T) {
 		})
 	}
 }
+
+func TestArrayIsEqual(t *testing.T) {
+	type args struct {
+		arrayString     []string
+		arrayStringComp []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "unordered equal",
+			args: args{
+				arrayString:     []string{"a", "b", "c"},
+				arrayStringComp: []string{"b", "a", "c"},
+			},
+			want: true,
+		},
+		{
+			name: "ordered unequal",
+			args: args{
+				arrayString:     []string{"a", "b", "c"},
+				arrayStringComp: []string{"a", "b", "d"},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsStringArrayEqual(tt.args.arrayString, tt.args.arrayStringComp); got != tt.want {
+				t.Errorf("IsStringArrayEqual() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
