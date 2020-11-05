@@ -124,5 +124,5 @@ That's it, in a minute or so there should be controller+worker combo running in 
 
 Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into Lens. ;)
 
-
+Read more details at [running k0s in Docker](docs/k0s-in-docker.md)
 
