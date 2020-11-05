@@ -27,37 +27,37 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gorilla/mux"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/pkg/etcd"
 )
 
-// APICommand creates new command for running the k0s join API
-func APICommand() *cli.Command {
-	return &cli.Command{
-		Name:   "api",
-		Usage:  "Run the controller api",
-		Action: startAPI,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "config",
-				Value: "k0s.yaml",
-			},
+var (
+	kubeClient k8s.Interface
+
+	APICmd = &cobra.Command{
+		Use:   "api",
+		Short: "Run the controller api",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := startAPI()
+			if err != nil {
+				return err
+			}
+			return nil
 		},
 	}
-}
+)
 
-var kubeClient k8s.Interface
-
-func startAPI(ctx *cli.Context) error {
-	clusterConfig, err := configFromCmdFlag(ctx)
+func startAPI() error {
+	clusterConfig, err := ConfigFromYaml(cfgFile)
 	if err != nil {
 		return err
 	}

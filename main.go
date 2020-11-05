@@ -16,15 +16,10 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
-
-	"github.com/k0sproject/k0s/pkg/build"
 
 	"github.com/k0sproject/k0s/cmd"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 )
 
 //go:generate go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/linux/ embedded-bins/staging/linux/bin
@@ -41,49 +36,5 @@ func init() {
 }
 
 func main() {
-	app := &cli.App{
-		Name:    "k0s",
-		Version: build.Version,
-		Usage:   "k0s",
-		Commands: []*cli.Command{
-			cmd.ServerCommand(),
-			cmd.WorkerCommand(),
-			cmd.TokenCommand(),
-			cmd.APICommand(),
-			cmd.EtcdCommand(),
-			cmd.ConfigCommand(),
-			versionCommand(),
-		},
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "debug",
-				Usage:   "Debug logging",
-				Aliases: []string{"d"},
-				EnvVars: []string{"DEBUG"},
-			},
-		},
-		Before: func(ctx *cli.Context) error {
-			if ctx.Bool("debug") {
-				logrus.SetLevel(logrus.DebugLevel)
-			}
-
-			return nil
-		},
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func versionCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "version",
-		Usage: "Print version info",
-		Action: func(ctx *cli.Context) error {
-			fmt.Println(build.Version)
-			return nil
-		},
-	}
+	cmd.Execute()
 }

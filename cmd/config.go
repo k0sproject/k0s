@@ -19,19 +19,22 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/urfave/cli/v2"
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
-func ConfigCommand() *cli.Command {
-	return &cli.Command{
-		Name:   "default-config",
-		Usage:  "Output the default k0s configuration yaml to stdout",
-		Action: buildConfig,
-	}
+var configCmd = &cobra.Command{
+	Use:   "default-config",
+	Short: "Output the default k0s configuration yaml to stdout",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := buildConfig(); err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
-func buildConfig(ctx *cli.Context) error {
+func buildConfig() error {
 	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig())
 	fmt.Print(string(conf))
 	return nil

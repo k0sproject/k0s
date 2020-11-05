@@ -16,74 +16,73 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 )
 
-// EtcdCommand manages etcd cluster
-func EtcdCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "etcd",
-		Usage: "Manage etcd cluster",
-		Before: func(c *cli.Context) error {
-			clusterConfig := ConfigFromYaml(c)
+func init() {
+	etcdLeaveCmd.Flags().StringVar(&etcdPeerAddress, "peer-address", "", "etcd peer address")
+
+	etcdCmd.AddCommand(etcdLeaveCmd)
+	etcdCmd.AddCommand(etcdListCmd)
+}
+
+var (
+	etcdCmd = &cobra.Command{
+		Use:   "etcd",
+		Short: "Manage etcd cluster",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			clusterConfig, err := ConfigFromYaml(cfgFile)
+			if err != nil {
+				return fmt.Errorf("can't read cluster config file")
+			}
 			if clusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
 				return fmt.Errorf("wrong storage type: %s", clusterConfig.Spec.Storage.Type)
 			}
 			return nil
 		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "config",
-				Value: "k0s.yaml",
-			},
-		},
-		Subcommands: []*cli.Command{
-			LeaveCommand(),
-			ListCommand(),
-		},
 	}
-}
+)
 
-// LeaveCommand force node to leave etcd cluster
-func LeaveCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "leave",
-		Usage: "Sign off a given etc node from etcd cluster",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name: "peer-address",
-			},
-		},
-		Action: func(c *cli.Context) error {
-			peerAddress := c.String("peer-address")
-			if peerAddress == "" {
-				clusterConfig := ConfigFromYaml(c)
-				peerAddress = clusterConfig.Spec.Storage.Etcd.PeerAddress
+var (
+	etcdPeerAddress string
+
+	// etcdLeaveCmd force node to leave etcd cluster
+	etcdLeaveCmd = &cobra.Command{
+		Use:   "leave",
+		Short: "Sign off a given etc node from etcd cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			if etcdPeerAddress == "" {
+				clusterConfig, err := ConfigFromYaml(cfgFile)
+				if err != nil {
+					return fmt.Errorf("can't read cluster config file")
+				}
+				etcdPeerAddress = clusterConfig.Spec.Storage.Etcd.PeerAddress
 			}
-			if peerAddress == "" {
+			if etcdPeerAddress == "" {
 				return fmt.Errorf("can't leave etcd cluster: peer address is empty, check the config file or use cli argument")
 			}
 
-			peerURL := fmt.Sprintf("https://%s:2380", peerAddress)
-
+			peerURL := fmt.Sprintf("https://%s:2380", etcdPeerAddress)
 			etcdClient, err := etcd.NewClient()
-
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %v", err)
 			}
 
-			peerID, err := etcdClient.GetPeerIDByAddress(c.Context, peerURL)
+			peerID, err := etcdClient.GetPeerIDByAddress(ctx, peerURL)
 			if err != nil {
 				logrus.WithField("peerURL", peerURL).Errorf("Failed to get peer name")
 				return err
 			}
 
-			if err := etcdClient.DeleteMember(c.Context, peerID); err != nil {
+			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
 				logrus.
 					WithField("peerURL", peerURL).
 					WithField("peerID", peerID).
@@ -97,19 +96,20 @@ func LeaveCommand() *cli.Command {
 			return nil
 		},
 	}
-}
+)
 
-// ListCommand returns members of the etcd cluster
-func ListCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "member-list",
-		Usage: "returns etcd cluster members list",
-		Action: func(c *cli.Context) error {
+var (
+	// etcdListCmd returns members of the etcd cluster
+	etcdListCmd = &cobra.Command{
+		Use:   "member-list",
+		Short: "Returns etcd cluster members list",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
 			etcdClient, err := etcd.NewClient()
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
-			members, err := etcdClient.ListMembers(c.Context)
+			members, err := etcdClient.ListMembers(ctx)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
@@ -121,5 +121,4 @@ func ListCommand() *cli.Command {
 			return nil
 		},
 	}
-
-}
+)

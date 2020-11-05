@@ -24,39 +24,36 @@ import (
 	"path"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
-
-	"github.com/pkg/errors"
-	"github.com/urfave/cli/v2"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
-// TokenCommand creates new token management command
-func TokenCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "token",
-		Usage: "Manage join tokens",
-		Subcommands: []*cli.Command{
-			CreateCommand(),
-		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:      "kubeconfig",
-				Usage:     "path to kubeconfig",
-				Value:     constant.AdminKubeconfigConfigPath,
-				EnvVars:   []string{"KUBECONFIG"},
-				TakesFile: true,
-			},
-		},
+func init() {
+	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "/var/lib/k0s/pki/admin.conf", "path to kubeconfig file [$KUBECONFIG]")
+	if kubeConfig == "" {
+		kubeConfig = viper.GetString("KUBECONFIG")
 	}
+	tokenCreateCmd.Flags().StringVar(&tokenExpiry, "expiry", "0", "set duration time for token")
+	tokenCreateCmd.Flags().StringVar(&workerRole, "role", "worker", "Either worker or controller")
+	tokenCreateCmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
+
+	tokenCmd.AddCommand(tokenCreateCmd)
 }
 
 var (
+	kubeConfig  string
+	tokenExpiry string
+	workerRole  string
+	waitCreate  bool
+
 	kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
 apiVersion: v1
 clusters:
@@ -77,40 +74,28 @@ users:
   user:
     token: {{.Token}}
 `))
-)
 
-// CreateCommand creates new command to create join tokens
-func CreateCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "create",
-		Usage: "Create join token",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "expiry",
-				Usage: "set duration time for token",
-				Value: "0",
-			},
-			&cli.StringFlag{
-				Name:  "role",
-				Usage: "Either worker or controller",
-				Value: "worker",
-			},
-			&cli.StringFlag{
-				Name:      "config",
-				Value:     "k0s.yaml",
-				TakesFile: true,
-			},
-			&cli.BoolFlag{
-				Name:  "wait",
-				Value: false,
-			},
+	// tokenCmd creates new token management command
+	tokenCmd = &cobra.Command{
+		Use:   "token",
+		Short: "Manage join tokens",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return nil
 		},
-		Action: func(c *cli.Context) error {
+	}
+
+	tokenCreateCmd = &cobra.Command{
+		Use:   "create",
+		Short: "Create join token",
+		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
 
-			clusterConfig := ConfigFromYaml(c)
-			expiry, err := time.ParseDuration(c.String("expiry"))
+			clusterConfig, err := ConfigFromYaml(cfgFile)
+			if err != nil {
+				return err
+			}
+			expiry, err := time.ParseDuration(tokenExpiry)
 			if err != nil {
 				return err
 			}
@@ -123,9 +108,9 @@ func CreateCommand() *cli.Command {
 				Factor:   1.0,
 				Jitter:   0.1,
 			}, func(err error) bool {
-				return c.Bool("wait")
+				return waitCreate
 			}, func() error {
-				bootstrapConfig, err = createKubeletBootstrapConfig(clusterConfig, c.String("role"), expiry)
+				bootstrapConfig, err = createKubeletBootstrapConfig(clusterConfig, workerRole, expiry)
 
 				return err
 			})
@@ -138,7 +123,7 @@ func CreateCommand() *cli.Command {
 			return nil
 		},
 	}
-}
+)
 
 func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
 	caCert, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))

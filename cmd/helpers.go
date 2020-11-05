@@ -16,19 +16,30 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 // ConfigFromYaml returns given k0s config or default config
-func ConfigFromYaml(ctx *cli.Context) *config.ClusterConfig {
-	clusterConfig, err := config.FromYaml(ctx.String("config"))
+func ConfigFromYaml(cfgPath string) (*config.ClusterConfig, error) {
+	clusterConfig, err := config.FromYaml(cfgPath)
 	if err != nil {
 		logrus.Errorf("Failed to read cluster config: %s", err.Error())
 		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
 		clusterConfig = config.DefaultClusterConfig()
 	}
-	return clusterConfig
+	// validate
+	errors := clusterConfig.Validate()
+	if len(errors) > 0 {
+		messages := make([]string, len(errors))
+		for _, e := range errors {
+			messages = append(messages, e.Error())
+		}
+		return nil, fmt.Errorf(strings.Join(messages, "\n"))
+	}
+	return clusterConfig, nil
 }
