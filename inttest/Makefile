@@ -31,6 +31,9 @@ check-network-vm: bin/sonobuoy
 check-basic: .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/basic
 
+check-byocri: .footloose-alpine.stamp
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/byocri
+
 check-hacontrolplane: .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/hacontrolplane
 
