@@ -81,7 +81,7 @@ clean:
 	$(MAKE) -C embedded-bins clean
 
 manifests:
-	/Users/msakhnov/go/bin/controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition
+	/Users/msakhnov/go/bin/controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
 
 .PHONY: bindata-manifests
 bindata-manifests:

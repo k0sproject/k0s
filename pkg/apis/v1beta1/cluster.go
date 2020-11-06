@@ -30,6 +30,7 @@ type ClusterConfig struct {
 	Kind       string            `yaml:"kind" validate:"eq=Cluster"`
 	Metadata   *ClusterMeta      `yaml:"metadata"`
 	Spec       *ClusterSpec      `yaml:"spec"`
+	HelmAddons *ClusterHelmAddons `yaml:"helm"`
 	Images     *ClusterImages    `yaml:"images"`
 	Telemetry  *ClusterTelemetry `yaml:"telemetry"`
 }

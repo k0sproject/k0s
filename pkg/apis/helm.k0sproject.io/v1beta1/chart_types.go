@@ -22,15 +22,19 @@ import (
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
-	Foo string `json:"foo,omitempty"`
+	ChartName string `json:"chartName,omitempty"`
+	Values    string `json:"values,omitmepty"`
+	Version   string `json:"version,omitempty"`
 }
 
 // ChartStatus defines the observed state of Chart
 type ChartStatus struct {
+	HelmReleaseName string `json:"releaseName,omitempty"`
+	LastStatus      string `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // Chart is the Schema for the charts API
 type Chart struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -41,7 +45,7 @@ type Chart struct {
 }
 
 // +kubebuilder:object:root=true
-
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // ChartList contains a list of Chart
 type ChartList struct {
 	metav1.TypeMeta `json:",inline"`

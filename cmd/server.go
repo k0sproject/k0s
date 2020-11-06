@@ -206,10 +206,11 @@ func startServer(ctx *cli.Context) error {
 		c <- syscall.SIGTERM
 	}
 
-	perfTimer.Checkpoint("starting-reconcilers")
 	// in-cluster component reconcilers
 	reconcilers := createClusterReconcilers(clusterConfig)
 	if err == nil {
+		perfTimer.Checkpoint("starting-reconcilers")
+
 		// Start all reconcilers
 		for _, reconciler := range reconcilers {
 			if err := reconciler.Run(); err != nil {
@@ -279,6 +280,13 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]comp
 
 	initNetwork(reconcilers, clusterConf)
 
+	manifestsSaver, err := server.NewManifestsSaver("helm")
+	if err != nil {
+		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
+	}
+	reconcilers["crd"] = server.NewCRD(manifestsSaver)
+	reconcilers["helmAddons"] = server.NewHelmAddons(clusterConf, manifestsSaver)
+
 	metricServer, err := server.NewMetricServer(clusterConf)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
@@ -304,18 +312,16 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig) map[string]comp
 }
 
 func initNetwork(reconcilers map[string]component.Component, conf *config.ClusterConfig) {
+
 	if conf.Spec.Network.Provider != "calico" {
 		logrus.Warnf("network provider set to custom, k0s will not manage it")
 		return
 	}
-
-	manifestsSaver, err := server.NewManifestsSaver()
+	saver, err := server.NewManifestsSaver("calico")
 	if err != nil {
-		logrus.Warnf("failed to initialize calico reconciler manifests saver: %s", err.Error())
-		return
+		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
-
-	calico, err := server.NewCalico(conf, manifestsSaver)
+	calico, err := server.NewCalico(conf, saver)
 
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())

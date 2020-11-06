@@ -61,29 +61,6 @@ type calicoConfig struct {
 	CalicoKubeControllersImage string
 }
 
-// FsManifestsSaver saves all given manifests under the specified root dir
-type FsManifestsSaver struct {
-	dir string
-}
-
-// Save saves given manifest under the given path
-func (f FsManifestsSaver) Save(dst string, content []byte) error {
-	if err := ioutil.WriteFile(filepath.Join(f.dir, dst), content, constant.ManifestsDirMode); err != nil {
-		return fmt.Errorf("can't write calico manifest configuration config map%s: %v", dst, err)
-	}
-	return nil
-}
-
-// NewManifestsSaver builds new filesystem manifests saver
-func NewManifestsSaver() (*FsManifestsSaver, error) {
-	calicoDir := path.Join(constant.DataDir, "manifests", "calico")
-	err := os.MkdirAll(calicoDir, constant.ManifestsDirMode)
-	if err != nil {
-		return nil, err
-	}
-	return &FsManifestsSaver{dir: calicoDir}, nil
-}
-
 // NewCalico creates new Calico reconciler component
 func NewCalico(clusterConf *config.ClusterConfig, saver manifestsSaver) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})

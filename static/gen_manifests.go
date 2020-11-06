@@ -1,21 +1,6 @@
-/*
-Copyright 2020 Mirantis, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 // Code generated for package static by go-bindata DO NOT EDIT. (@generated)
 // sources:
-// static/gen_calico.go
+// static/gen_manifests.go
 // static/manifests/calico/ClusterRole/calico-kube-controllers.yaml
 // static/manifests/calico/ClusterRole/calico-node.yaml
 // static/manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml
@@ -40,6 +25,7 @@ limitations under the License.
 // static/manifests/calico/Deployment/calico-kube-controllers.yaml
 // static/manifests/calico/ServiceAccount/calico-kube-controllers.yaml
 // static/manifests/calico/ServiceAccount/calico-node.yaml
+// static/manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml
 package static
 
 import (
@@ -116,22 +102,22 @@ func (fi bindataFileInfo) Sys() interface{} {
 	return nil
 }
 
-var _gen_calicoGo = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x01\x00\x00\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00")
+var _gen_manifestsGo = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x01\x00\x00\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00")
 
-func gen_calicoGoBytes() ([]byte, error) {
+func gen_manifestsGoBytes() ([]byte, error) {
 	return bindataRead(
-		_gen_calicoGo,
-		"gen_calico.go",
+		_gen_manifestsGo,
+		"gen_manifests.go",
 	)
 }
 
-func gen_calicoGo() (*asset, error) {
-	bytes, err := gen_calicoGoBytes()
+func gen_manifestsGo() (*asset, error) {
+	bytes, err := gen_manifestsGoBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "gen_calico.go", size: 0, mode: os.FileMode(420), modTime: time.Unix(1603451570, 0)}
+	info := bindataFileInfo{name: "gen_manifests.go", size: 0, mode: os.FileMode(420), modTime: time.Unix(1604405760, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -151,7 +137,7 @@ func manifestsCalicoClusterroleCalicoKubeControllersYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ClusterRole/calico-kube-controllers.yaml", size: 1639, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ClusterRole/calico-kube-controllers.yaml", size: 1639, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -171,7 +157,7 @@ func manifestsCalicoClusterroleCalicoNodeYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ClusterRole/calico-node.yaml", size: 3545, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ClusterRole/calico-node.yaml", size: 3545, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -191,7 +177,7 @@ func manifestsCalicoClusterrolebindingCalicoKubeControllersYaml() (*asset, error
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml", size: 301, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml", size: 301, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -211,7 +197,7 @@ func manifestsCalicoClusterrolebindingCalicoNodeYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ClusterRoleBinding/calico-node.yaml", size: 266, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ClusterRoleBinding/calico-node.yaml", size: 266, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -231,7 +217,7 @@ func manifestsCalicoConfigmapCalicoConfigYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ConfigMap/calico-config.yaml", size: 1667, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ConfigMap/calico-config.yaml", size: 1667, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -251,7 +237,7 @@ func manifestsCalicoCustomresourcedefinitionBgpconfigurationsCrdProjectcalicoOrg
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/bgpconfigurations.crd.projectcalico.org.yaml", size: 5977, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/bgpconfigurations.crd.projectcalico.org.yaml", size: 5977, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -271,7 +257,7 @@ func manifestsCalicoCustomresourcedefinitionBgppeersCrdProjectcalicoOrgYaml() (*
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/bgppeers.crd.projectcalico.org.yaml", size: 4924, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/bgppeers.crd.projectcalico.org.yaml", size: 4924, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -291,7 +277,7 @@ func manifestsCalicoCustomresourcedefinitionBlockaffinitiesCrdProjectcalicoOrgYa
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/blockaffinities.crd.projectcalico.org.yaml", size: 2160, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/blockaffinities.crd.projectcalico.org.yaml", size: 2160, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -311,7 +297,7 @@ func manifestsCalicoCustomresourcedefinitionClusterinformationsCrdProjectcalicoO
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/clusterinformations.crd.projectcalico.org.yaml", size: 2571, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/clusterinformations.crd.projectcalico.org.yaml", size: 2571, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -331,7 +317,7 @@ func manifestsCalicoCustomresourcedefinitionFelixconfigurationsCrdProjectcalicoO
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/felixconfigurations.crd.projectcalico.org.yaml", size: 29889, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/felixconfigurations.crd.projectcalico.org.yaml", size: 29889, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -351,7 +337,7 @@ func manifestsCalicoCustomresourcedefinitionGlobalnetworkpoliciesCrdProjectcalic
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/globalnetworkpolicies.crd.projectcalico.org.yaml", size: 46352, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/globalnetworkpolicies.crd.projectcalico.org.yaml", size: 46352, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -371,7 +357,7 @@ func manifestsCalicoCustomresourcedefinitionGlobalnetworksetsCrdProjectcalicoOrg
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/globalnetworksets.crd.projectcalico.org.yaml", size: 2043, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/globalnetworksets.crd.projectcalico.org.yaml", size: 2043, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -391,7 +377,7 @@ func manifestsCalicoCustomresourcedefinitionHostendpointsCrdProjectcalicoOrgYaml
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/hostendpoints.crd.projectcalico.org.yaml", size: 5099, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/hostendpoints.crd.projectcalico.org.yaml", size: 5099, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -411,7 +397,7 @@ func manifestsCalicoCustomresourcedefinitionIpamblocksCrdProjectcalicoOrgYaml() 
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamblocks.crd.projectcalico.org.yaml", size: 2732, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamblocks.crd.projectcalico.org.yaml", size: 2732, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -431,7 +417,7 @@ func manifestsCalicoCustomresourcedefinitionIpamconfigsCrdProjectcalicoOrgYaml()
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamconfigs.crd.projectcalico.org.yaml", size: 1811, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamconfigs.crd.projectcalico.org.yaml", size: 1811, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -451,7 +437,7 @@ func manifestsCalicoCustomresourcedefinitionIpamhandlesCrdProjectcalicoOrgYaml()
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamhandles.crd.projectcalico.org.yaml", size: 1841, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ipamhandles.crd.projectcalico.org.yaml", size: 1841, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -471,7 +457,7 @@ func manifestsCalicoCustomresourcedefinitionIppoolsCrdProjectcalicoOrgYaml() (*a
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ippools.crd.projectcalico.org.yaml", size: 4370, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/ippools.crd.projectcalico.org.yaml", size: 4370, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -491,7 +477,7 @@ func manifestsCalicoCustomresourcedefinitionKubecontrollersconfigurationsCrdProj
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/kubecontrollersconfigurations.crd.projectcalico.org.yaml", size: 11294, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/kubecontrollersconfigurations.crd.projectcalico.org.yaml", size: 11294, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -511,7 +497,7 @@ func manifestsCalicoCustomresourcedefinitionNetworkpoliciesCrdProjectcalicoOrgYa
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/networkpolicies.crd.projectcalico.org.yaml", size: 45287, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/networkpolicies.crd.projectcalico.org.yaml", size: 45287, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -531,7 +517,7 @@ func manifestsCalicoCustomresourcedefinitionNetworksetsCrdProjectcalicoOrgYaml()
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/networksets.crd.projectcalico.org.yaml", size: 1871, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/CustomResourceDefinition/networksets.crd.projectcalico.org.yaml", size: 1871, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -551,7 +537,7 @@ func manifestsCalicoDaemonsetCalicoNodeYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/DaemonSet/calico-node.yaml", size: 10416, mode: os.FileMode(420), modTime: time.Unix(1603451568, 0)}
+	info := bindataFileInfo{name: "manifests/calico/DaemonSet/calico-node.yaml", size: 10416, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -571,7 +557,7 @@ func manifestsCalicoDeploymentCalicoKubeControllersYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/Deployment/calico-kube-controllers.yaml", size: 1399, mode: os.FileMode(420), modTime: time.Unix(1603191028, 0)}
+	info := bindataFileInfo{name: "manifests/calico/Deployment/calico-kube-controllers.yaml", size: 1399, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -591,7 +577,7 @@ func manifestsCalicoServiceaccountCalicoKubeControllersYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ServiceAccount/calico-kube-controllers.yaml", size: 109, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ServiceAccount/calico-kube-controllers.yaml", size: 109, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -611,7 +597,27 @@ func manifestsCalicoServiceaccountCalicoNodeYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "manifests/calico/ServiceAccount/calico-node.yaml", size: 97, mode: os.FileMode(420), modTime: time.Unix(1602744875, 0)}
+	info := bindataFileInfo{name: "manifests/calico/ServiceAccount/calico-node.yaml", size: 97, mode: os.FileMode(420), modTime: time.Unix(1604395018, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYaml = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xb4\x55\xc1\x8e\xdc\x36\x0c\xbd\xfb\x2b\x88\xf4\x90\x4b\xc7\x93\xb4\x28\x50\xf8\x16\x6c\x7b\x58\xb4\x0d\x82\x6c\xb0\x97\xa2\x07\x8d\xc4\xb1\xd9\x95\x25\x95\xa4\x06\xdd\x7e\x7d\x21\xc9\x1e\xcf\x2c\x76\x9a\x53\x75\xd3\x33\xc5\xf7\xf4\x48\xd1\xdd\x6e\xb7\xeb\x4c\xa2\x47\x64\xa1\x18\x06\x30\x89\xf0\x6f\xc5\x50\x76\xd2\x3f\xfd\x28\x3d\xc5\xfd\xe9\xfd\x01\xd5\xbc\xef\x9e\x28\xb8\x01\xee\xb2\x68\x9c\x3f\xa3\xc4\xcc\x16\x7f\xc2\x23\x05\x52\x8a\xa1\x9b\x51\x8d\x33\x6a\x86\x0e\xc0\x84\x10\xd5\x14\x58\xca\x16\xc0\xc6\xa0\x1c\xbd\x47\xde\x8d\x18\xfa\xa7\x7c\xc0\x43\x26\xef\x90\x2b\xc3\xca\x7f\x7a\xd7\x7f\xd7\xff\xd0\x01\x58\xc6\x7a\xfc\x0b\xcd\x28\x6a\xe6\x34\x40\xc8\xde\x77\x00\xc1\xcc\x38\x80\x9d\x0c\xab\xf4\x13\xfa\xb9\x7f\x7a\x27\x89\xe3\x9f\x68\xb5\xa7\xd8\x49\x42\x5b\x38\x47\x8e\x39\x0d\xf0\x4a\x44\xcb\xb1\x08\x5b\x2e\x55\xd2\xd5\xbd\x27\xd1\x5f\x36\xec\x57\x92\x86\x27\x9f\xd9\xf8\x95\xb8\x42\x42\x61\xcc\xde\xf0\x02\x76\x00\x62\x63\xc2\x01\x3e\x96\xf4\xc9\x58\x74\x1d\xc0\xc9\x78\x72\xf5\x2e\x8d\x30\x26\x0c\x1f\x3e\xdd\x3f\x7e\xff\x60\x27\x9c\x4d\x03\x01\x1c\x8a\x65\x4a\x35\xae\x51\x03\x09\xe8\x84\xd0\xe2\xe0\x18\xb9\x6e\x9b\x00\xf8\xf0\xe9\x7e\x39\x99\x38\x26\x64\xa5\xf5\x46\x65\x5d\xd4\xf4\x8c\xbd\xe0\x78\x5b\x44\xb4\x18\x70\xa5\x8a\xd8\xe8\x96\x5a\xa0\x03\x69\xc4\xf1\x08\x3a\x91\x00\x63\x62\x14\x0c\xad\xae\x17\x69\xa1\x84\x98\x00\xf1\x50\x1d\x86\x07\xe4\x92\x04\x64\x8a\xd9\xbb\x52\xfa\x13\xb2\x02\xa3\x8d\x63\xa0\x7f\xce\x99\x05\x34\x56\x4a\x6f\x14\x17\x9b\xd7\x45\x41\x91\x83\xf1\xc5\xbe\x8c\xdf\x82\x09\x0e\x66\xf3\x0c\x8c\x85\x03\x72\xb8\xc8\x56\x43\xa4\x87\xdf\x22\x23\x50\x38\xc6\x01\x26\xd5\x24\xc3\x7e\x3f\x92\xae\x5d\x6c\xe3\x3c\xe7\x40\xfa\xbc\xaf\xbd\x48\x87\xac\x91\x65\xef\xf0\x84\x7e\x2f\x34\xee\x0c\xdb\x89\x14\xad\x66\xc6\xbd\x49\xb4\xab\xc2\x43\x6d\xe2\x7e\x76\xdf\xf0\xd2\xf2\xf2\xf6\x42\xa9\x3e\x97\x82\x8b\x32\x85\xf1\x0c\xd7\x9e\xba\xe9\x7b\xe9\xae\x52\x5b\xb3\x1c\x6b\xfa\x37\x7b\x0b\x54\x5c\xf9\xfc\xf3\xc3\x17\x58\x49\x6b\x09\xae\x3d\xaf\x6e\x6f\xc7\x64\x33\xbe\x18\x45\xe1\x88\xdc\x0a\x77\xe4\x38\xd7\x8c\x18\x5c\x8a\x14\xb4\xf5\x91\x27\x0c\xd7\xa6\x4b\x3e\xcc\xa4\xa5\xd2\x7f\x65\x14\x2d\xf5\xe9\xe1\xae\xbe\x65\x38\x20\xe4\xe4\x8c\xa2\xeb\xe1\x3e\xc0\x9d\x99\xd1\xdf\x19\xc1\xff\xdd\xf6\xe2\xb0\xec\x8a\xa5\x5f\x37\xfe\x72\x04\x5d\x07\x36\xb7\xce\xf0\x3a\x24\x5e\xad\x50\x7d\x7d\x0f\x09\xed\xd5\xbb\x70\x28\xc4\xa5\x77\xd5\x28\x96\x8e\xdf\x66\xc6\xed\x77\x58\xd6\x31\xc6\x6b\xe0\x86\xf8\x5b\x52\xd5\x68\x96\xaf\x88\xad\x31\x57\x72\xe3\x41\x4a\x37\xfc\x87\xde\x57\xd8\x5e\x40\xdb\x58\x5e\xfe\x00\x67\xa8\xea\xd9\x2d\xb3\x78\xfb\x0a\xd0\x48\x07\x50\xce\xd8\x00\x8d\x6c\x46\x5c\x90\xed\x32\xc6\x5a\x4c\x8a\xee\xe3\xcb\x51\xfc\xe6\xcd\xd5\xbc\xad\x5b\x1b\x83\xa3\xf6\x37\x81\xdf\xff\xe8\x5a\x56\x74\x8f\xab\x98\x02\xfe\x1b\x00\x00\xff\xff\xce\xfc\x73\x0a\xcc\x06\x00\x00")
+
+func manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYamlBytes() ([]byte, error) {
+	return bindataRead(
+		_manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYaml,
+		"manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml",
+	)
+}
+
+func manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYaml() (*asset, error) {
+	bytes, err := manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml", size: 1740, mode: os.FileMode(420), modTime: time.Unix(1604402146, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -668,7 +674,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"gen_calico.go": gen_calicoGo,
+	"gen_manifests.go":                                                                                   gen_manifestsGo,
 	"manifests/calico/ClusterRole/calico-kube-controllers.yaml":                                          manifestsCalicoClusterroleCalicoKubeControllersYaml,
 	"manifests/calico/ClusterRole/calico-node.yaml":                                                      manifestsCalicoClusterroleCalicoNodeYaml,
 	"manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml":                                   manifestsCalicoClusterrolebindingCalicoKubeControllersYaml,
@@ -693,6 +699,7 @@ var _bindata = map[string]func() (*asset, error){
 	"manifests/calico/Deployment/calico-kube-controllers.yaml":                                           manifestsCalicoDeploymentCalicoKubeControllersYaml,
 	"manifests/calico/ServiceAccount/calico-kube-controllers.yaml":                                       manifestsCalicoServiceaccountCalicoKubeControllersYaml,
 	"manifests/calico/ServiceAccount/calico-node.yaml":                                                   manifestsCalicoServiceaccountCalicoNodeYaml,
+	"manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml":                             manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYaml,
 }
 
 // AssetDir returns the file names below a certain
@@ -736,7 +743,7 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"gen_calico.go": &bintree{gen_calicoGo, map[string]*bintree{}},
+	"gen_manifests.go": &bintree{gen_manifestsGo, map[string]*bintree{}},
 	"manifests": &bintree{nil, map[string]*bintree{
 		"calico": &bintree{nil, map[string]*bintree{
 			"ClusterRole": &bintree{nil, map[string]*bintree{
@@ -776,6 +783,11 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"ServiceAccount": &bintree{nil, map[string]*bintree{
 				"calico-kube-controllers.yaml": &bintree{manifestsCalicoServiceaccountCalicoKubeControllersYaml, map[string]*bintree{}},
 				"calico-node.yaml":             &bintree{manifestsCalicoServiceaccountCalicoNodeYaml, map[string]*bintree{}},
+			}},
+		}},
+		"helm": &bintree{nil, map[string]*bintree{
+			"CustomResourceDefinition": &bintree{nil, map[string]*bintree{
+				"helm.k0sproject.io_charts.yaml": &bintree{manifestsHelmCustomresourcedefinitionHelmK0sprojectIo_chartsYaml, map[string]*bintree{}},
 			}},
 		}},
 	}},
