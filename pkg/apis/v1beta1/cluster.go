@@ -111,6 +111,11 @@ func FromYaml(filename string) (*ClusterConfig, error) {
 // DefaultClusterConfig ...
 func DefaultClusterConfig() *ClusterConfig {
 	return &ClusterConfig{
+		APIVersion: "k0s.k0sproject.io/v1beta1",
+		Kind:       "Cluster",
+		Metadata: &ClusterMeta{
+			Name: "k0s",
+		},
 		Spec:      DefaultClusterSpec(),
 		Images:    DefaultClusterImages(),
 		Telemetry: DefaultClusterTelemetry(),
