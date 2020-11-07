@@ -103,7 +103,9 @@ func NewForConfig(cfgPath string) (*ChartV1Beta1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	v1beta1.AddToScheme(scheme.Scheme)
+	if err := v1beta1.AddToScheme(scheme.Scheme); err != nil {
+		return nil, err
+	}
 	crdConfig := *config
 	crdConfig.GroupVersion = &v1beta1.GroupVersion
 	crdConfig.APIPath = "/apis"

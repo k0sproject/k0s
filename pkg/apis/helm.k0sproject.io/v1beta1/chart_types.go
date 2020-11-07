@@ -18,19 +18,23 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
 	ChartName string `json:"chartName,omitempty"`
-	Values    string `json:"values,omitmepty"`
+	Values    string `json:"values,omitempty"`
 	Version   string `json:"version,omitempty"`
 }
 
 // ChartStatus defines the observed state of Chart
 type ChartStatus struct {
-	HelmReleaseName string `json:"releaseName,omitempty"`
-	LastStatus      string `json:"status,omitempty"`
+	ReleaseName string    `json:"releaseName,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	AppVersion  string    `json:"appVersion,omitempty"`
+	Updated     time.Time `json:"updated,omitempty"`
+	Revision    int       `json:"revision,omitempty"`
 }
 
 // +kubebuilder:object:root=true
