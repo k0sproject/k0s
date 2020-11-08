@@ -45,7 +45,7 @@ See more in [architecture docs](docs/architecture.md)
   - mysql (external)
   - postgresql (external)
 - CNI providers
-  - Calico 3.15 (default)
+  - Calico 3.16 (default)
   - Custom (bring-your-own)
 - Control plane isolation:
   - fully isolated (default)
@@ -109,7 +109,7 @@ Join a new worker node to the cluster by running:
 k0s worker "superlongtokenfrompreviousphase"
 ```
 
-For more detailed description see [creating cluster documentation](docs/create-cluster.md) 
+For more detailed description see [creating cluster documentation](docs/create-cluster.md).
 
 ### k0s-in-docker
 
@@ -124,7 +124,7 @@ Replace `<version>` with a released version number, we build the image for all t
 
 That's it, in a minute or so there should be controller+worker combo running in the container.
 
-Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into Lens. ;)
+Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://k8slens.dev/). ;)
 
-Read more details at [running k0s in Docker](docs/k0s-in-docker.md)
+Read more details at [running k0s in Docker](docs/k0s-in-docker.md).
 
