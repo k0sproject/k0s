@@ -51,7 +51,10 @@ func (c ChartV1Beta1Client) Charts(namespace string) ChartInterface {
 type ChartInterface interface {
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 	List(ctx context.Context) (*v1beta1.ChartList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1beta1.Chart, error)
 	Create(ctx context.Context, chart *v1beta1.Chart) (*v1beta1.Chart, error)
+
+	UpdateStatus(ctx context.Context, chart *v1beta1.Chart, opts metav1.UpdateOptions) (*v1beta1.Chart, error)
 }
 
 type chartClient struct {
@@ -82,6 +85,36 @@ func (c chartClient) List(ctx context.Context) (*v1beta1.ChartList, error) {
 		Into(&result)
 
 	return &result, err
+}
+
+// Get gets chart
+func (c chartClient) Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1beta1.Chart, error) {
+	result := v1beta1.Chart{}
+	err := c.restClient.
+		Get().
+		Namespace(c.ns).
+		Resource(resourceName).
+		Name(name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(ctx).
+		Into(&result)
+
+	return &result, err
+}
+
+
+func (c chartClient) UpdateStatus(ctx context.Context, chart *v1beta1.Chart, opts metav1.UpdateOptions) (*v1beta1.Chart, error) {
+	result := &v1beta1.Chart{}
+	err := c.restClient.Put().
+		Namespace(c.ns).
+		Resource(resourceName).
+		Name(chart.Name).
+		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(chart).
+		Do(ctx).
+		Into(result)
+	return result, err
 }
 
 // Create creates chart

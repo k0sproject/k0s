@@ -206,7 +206,7 @@ const kubeletConfigsManifestTemplate = `---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.ChartName}}
+  name: {{.Name}}
   namespace: kube-system
 data:
   kubelet: | 

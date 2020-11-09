@@ -17,8 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 // ChartSpec defines the desired state of Chart
@@ -26,19 +27,32 @@ type ChartSpec struct {
 	ChartName string `json:"chartName,omitempty"`
 	Values    string `json:"values,omitempty"`
 	Version   string `json:"version,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// YamlValues returns values as map
+func (cs ChartSpec) YamlValues() map[string]interface{} {
+	res := map[string]interface{}{}
+	if err := yaml.Unmarshal([]byte(cs.Values), &res); err != nil {
+		logrus.WithField("values", cs.Values).Warn("broken yaml values")
+	}
+	return res
 }
 
 // ChartStatus defines the observed state of Chart
 type ChartStatus struct {
-	ReleaseName string    `json:"releaseName,omitempty"`
-	Status      string    `json:"status,omitempty"`
-	AppVersion  string    `json:"appVersion,omitempty"`
-	Updated     time.Time `json:"updated,omitempty"`
-	Revision    int       `json:"revision,omitempty"`
+	ReleaseName string `json:"releaseName,omitempty"`
+	Status      string `json:"status,omitempty"`
+	AppVersion  string `json:"appVersion,omitempty"`
+	Updated     string `json:"updated,omitempty"`
+	Revision    int    `json:"revision,omitempty"`
+
+	LastChartName string `json:"lastChartName,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
 // Chart is the Schema for the charts API
 type Chart struct {
 	metav1.TypeMeta   `json:",inline"`

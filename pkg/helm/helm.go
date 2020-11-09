@@ -19,8 +19,8 @@ import (
 	"strings"
 )
 
-// HelmCommands run different helm command in the same way as CLI tool
-type HelmCommands struct {
+// Commands run different helm command in the same way as CLI tool
+type Commands struct {
 	repoFile     string
 	helmCacheDir string
 }
@@ -32,34 +32,24 @@ var getters = getter.Providers{
 	},
 }
 
-// NewHelmCommands builds new HelmCommands instance with default values
-func NewHelmCommands() *HelmCommands {
-	return &HelmCommands{
+// NewCommands builds new Commands instance with default values
+func NewCommands() *Commands {
+	return &Commands{
 		repoFile:     constant.HelmRepositoryConfig,
 		helmCacheDir: constant.HelmRepositoryCache,
 	}
 }
 
-func (hc *HelmCommands) getActionCfg(namespace string) *action.Configuration {
+func (hc *Commands) getActionCfg(namespace string) *action.Configuration {
 	insecure := false
 	impersonateGroup := []string{}
 	cfg := &genericclioptions.ConfigFlags{
 		Insecure:   &insecure,
 		Timeout:    stringptr("0"),
-		KubeConfig: stringptr(""),
+		KubeConfig: stringptr(constant.AdminKubeconfigConfigPath),
 
 		CacheDir:         stringptr(hc.helmCacheDir),
-		ClusterName:      stringptr(""),
-		AuthInfoName:     stringptr(""),
-		Context:          stringptr(""),
 		Namespace:        stringptr(namespace),
-		APIServer:        stringptr(""),
-		TLSServerName:    stringptr(""),
-		CertFile:         stringptr(""),
-		KeyFile:          stringptr(""),
-		CAFile:           stringptr(""),
-		BearerToken:      stringptr(""),
-		Impersonate:      stringptr(""),
 		ImpersonateGroup: &impersonateGroup,
 	}
 	actionConfig := &action.Configuration{}
@@ -69,21 +59,21 @@ func (hc *HelmCommands) getActionCfg(namespace string) *action.Configuration {
 	return actionConfig
 }
 
-func (hc *HelmCommands) AddRepository(repoCfg mkev1beta1.Repository) error {
+func (hc *Commands) AddRepository(repoCfg mkev1beta1.Repository) error {
 	err := os.MkdirAll(filepath.Dir(hc.repoFile), os.ModePerm)
 
 	if err != nil && !os.IsExist(err) {
-		return fmt.Errorf("can't add repository: %v", err)
+		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
 	b, err := ioutil.ReadFile(hc.repoFile)
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("can't add repository: %v", err)
+		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
 	var f repo.File
 	if err := yaml.Unmarshal(b, &f); err != nil {
-		return fmt.Errorf("can't add repository: %v", err)
+		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
 	c := repo.Entry{
@@ -101,7 +91,7 @@ func (hc *HelmCommands) AddRepository(repoCfg mkev1beta1.Repository) error {
 	r.CachePath = hc.helmCacheDir
 
 	if err != nil {
-		return fmt.Errorf("can't add repository: %v", err)
+		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
 	if _, err := r.DownloadIndexFile(); err != nil {
@@ -109,13 +99,13 @@ func (hc *HelmCommands) AddRepository(repoCfg mkev1beta1.Repository) error {
 	}
 	f.Update(&c)
 	if err := f.WriteFile(hc.repoFile, 0644); err != nil {
-		return fmt.Errorf("can't add repository: %v", err)
+		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
 	return nil
 }
 
-func (hc *HelmCommands) downloadDependencies(chart *chart.Chart, chartPath string) error {
+func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) error {
 	if chart.Metadata.Dependencies == nil {
 		return nil
 	}
@@ -136,7 +126,7 @@ func (hc *HelmCommands) downloadDependencies(chart *chart.Chart, chartPath strin
 	return nil
 }
 
-func (hc *HelmCommands) locateChart(name string, version string) (string, error) {
+func (hc *Commands) locateChart(name string, version string) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if _, err := os.Stat(name); err == nil {
@@ -196,14 +186,14 @@ func (hc *HelmCommands) locateChart(name string, version string) (string, error)
 	return filename, fmt.Errorf("failed to download %q%s (hint: running `helm repo update` may help)", name, atVersion)
 }
 
-func (hc *HelmCommands) isInstallable(chart *chart.Chart) bool {
+func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 	if chart.Metadata.Type != "" && chart.Metadata.Type != "application" {
 		return false
 	}
 	return true
 }
 
-func (hc *HelmCommands) InstallChart(chartName string, version string, namespace string, values map[string]interface{}) (string, error) {
+func (hc *Commands) InstallChart(chartName string, version string, namespace string, values map[string]interface{}) (string, error) {
 	cfg := hc.getActionCfg(namespace)
 	install := action.NewInstall(cfg)
 	chartDir, err := hc.locateChart(chartName, version)
@@ -242,7 +232,7 @@ func (hc *HelmCommands) InstallChart(chartName string, version string, namespace
 	return release.Name, nil
 }
 
-func (hc *HelmCommands) UpgradeChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}) (string, error) {
+func (hc *Commands) UpgradeChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}) (string, error) {
 	upgrade := action.NewUpgrade(hc.getActionCfg(namespace))
 	upgrade.Namespace = namespace
 	chartDir, err := hc.locateChart(chartName, version)
