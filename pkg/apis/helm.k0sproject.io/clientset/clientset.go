@@ -102,7 +102,6 @@ func (c chartClient) Get(ctx context.Context, name string, opts metav1.GetOption
 	return &result, err
 }
 
-
 func (c chartClient) UpdateStatus(ctx context.Context, chart *v1beta1.Chart, opts metav1.UpdateOptions) (*v1beta1.Chart, error) {
 	result := &v1beta1.Chart{}
 	err := c.restClient.Put().
@@ -130,12 +129,17 @@ func (c chartClient) Create(ctx context.Context, chart *v1beta1.Chart) (*v1beta1
 	return resBody, err
 }
 
-// NewForConfig build new chart client
+// NewForConfig builds new chart client
 func NewForConfig(cfgPath string) (*ChartV1Beta1Client, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", cfgPath)
 	if err != nil {
 		return nil, err
 	}
+	return New(config)
+}
+
+// New builds new chart client
+func New(config *rest.Config) (*ChartV1Beta1Client, error) {
 	if err := v1beta1.AddToScheme(scheme.Scheme); err != nil {
 		return nil, err
 	}

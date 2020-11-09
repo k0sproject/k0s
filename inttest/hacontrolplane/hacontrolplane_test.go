@@ -73,18 +73,8 @@ func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 	return ca
 }
 
-func (s *HAControlplaneSuite) getFile(controllerIdx int, path string) string {
-	node := fmt.Sprintf("controller%d", controllerIdx)
-	sshCon, err := s.SSH(node)
-	s.Require().NoError(err)
-	content, err := sshCon.ExecWithOutput(fmt.Sprintf("cat %s", path))
-	s.Require().NoError(err)
-
-	return content
-}
-
 func (s *HAControlplaneSuite) TestDeregistration() {
-	s.NoError(s.InitMainController())
+	s.NoError(s.InitMainController("/tmp/mke.yaml"))
 	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
 	s.NoError(s.JoinController(1, token))
@@ -97,12 +87,12 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 
 	s.Equal(ca0, ca1)
 
-	sa0Key := s.getFile(0, "/var/lib/k0s/pki/sa.key")
-	sa1Key := s.getFile(1, "/var/lib/k0s/pki/sa.key")
+	sa0Key := s.GetFileFromController(0, "/var/lib/k0s/pki/sa.key")
+	sa1Key := s.GetFileFromController(1, "/var/lib/k0s/pki/sa.key")
 	s.Equal(sa0Key, sa1Key)
 
-	sa0Pub := s.getFile(0, "/var/lib/k0s/pki/sa.pub")
-	sa1Pub := s.getFile(1, "/var/lib/k0s/pki/sa.pub")
+	sa0Pub := s.GetFileFromController(0, "/var/lib/k0s/pki/sa.pub")
+	sa1Pub := s.GetFileFromController(1, "/var/lib/k0s/pki/sa.pub")
 	s.Equal(sa0Pub, sa1Pub)
 
 	membersFromMain := s.getMembers(0)

@@ -30,7 +30,7 @@ type BasicSuite struct {
 }
 
 func (s *BasicSuite) TestK0sGetsUp() {
-	s.NoError(s.InitMainController())
+	s.NoError(s.InitMainController("/tmp/mke.yaml"))
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0")

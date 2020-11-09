@@ -11,6 +11,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	"io/ioutil"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -267,4 +268,13 @@ func (hc *Commands) UpgradeChart(chartName string, version string, releaseName s
 
 func stringptr(s string) *string {
 	return &s
+}
+
+func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
+	action := action.NewList(hc.getActionCfg(namespace))
+	return action.Run()
+}
+
+func (hc *Commands) UninstallRelease(releaseName string) error {
+	return nil
 }

@@ -255,23 +255,6 @@ func (h HelmAddons) reconcile(objectId string) error {
 	return nil
 }
 
-//func (h HelmAddons) processItem(k string) error {
-//	h.L.Infof("Processing change to chart %s", k)
-//
-//	obj, exists, err := h.informer.GetIndexer().GetByKey(k)
-//	if err != nil {
-//		panic(err)
-//		return fmt.Errorf("Error fetching object with key %s from store: %v", k, err)
-//	}
-//
-//	if !exists {
-//		fmt.Println("HELM Deleting object", k)
-//		return nil
-//	}
-//
-//	return nil
-//}
-
 func (h HelmAddons) addRepo(repo mkev1beta1.Repository) error {
 	return h.helm.AddRepository(repo)
 }
@@ -285,11 +268,9 @@ metadata:
 spec:
   chartName: {{ .ChartName }}
   values: |
-  {{ .Values }}
+{{ .Values | nindent 4 }}
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
-status:
-  status: created
 `
 
 // Run

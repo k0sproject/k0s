@@ -71,6 +71,10 @@ check-byocri: k0s
 check-hacontrolplane: k0s
 	$(MAKE) -C inttest check-hacontrolplane
 
+.PHONY:
+check-addons: mke
+	$(MAKE) -C inttest check-addons
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
 	go test -race ./pkg/...
