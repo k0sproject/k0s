@@ -47,7 +47,7 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
-	golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f // indirect
+	golang.org/x/sys v0.0.0-20201109165425-215b40eba54c // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
