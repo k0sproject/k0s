@@ -46,14 +46,14 @@ import (
 )
 
 func init() {
-	serverCmd.Flags().StringVar(&serverProfile, "profile", "default", "worker profile to use on the node")
+	serverCmd.Flags().StringVar(&serverWorkerProfile, "profile", "default", "worker profile to use on the node")
 	serverCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
 }
 
 var (
-	serverProfile string
-	enableWorker  bool
-	serverToken   string
+	serverWorkerProfile string
+	enableWorker        bool
+	serverToken         string
 
 	serverCmd = &cobra.Command{
 		Use:   "server [join-token]",
@@ -62,11 +62,7 @@ var (
 			if len(args) > 0 {
 				serverToken = args[0]
 			}
-			err := startServer(serverToken)
-			if err != nil {
-				return err
-			}
-			return nil
+			return startServer(serverToken)
 		},
 	}
 )
@@ -212,7 +208,7 @@ func startServer(token string) error {
 
 	if err == nil && enableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		err = enableServerWorker(clusterConfig, componentManager, serverProfile)
+		err = enableServerWorker(clusterConfig, componentManager, serverWorkerProfile)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			if err := componentManager.Stop(); err != nil {

@@ -37,12 +37,12 @@ import (
 )
 
 func init() {
-	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "/var/lib/k0s/pki/admin.conf", "path to kubeconfig file [$KUBECONFIG]")
+	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", constant.AdminKubeconfigConfigPath, "path to kubeconfig file [$KUBECONFIG]")
 	if kubeConfig == "" {
 		kubeConfig = viper.GetString("KUBECONFIG")
 	}
 	tokenCreateCmd.Flags().StringVar(&tokenExpiry, "expiry", "0", "set duration time for token")
-	tokenCreateCmd.Flags().StringVar(&workerRole, "role", "worker", "Either worker or controller")
+	tokenCreateCmd.Flags().StringVar(&tokenRole, "role", "worker", "Either worker or controller")
 	tokenCreateCmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
 	tokenCmd.AddCommand(tokenCreateCmd)
@@ -51,7 +51,7 @@ func init() {
 var (
 	kubeConfig  string
 	tokenExpiry string
-	workerRole  string
+	tokenRole   string
 	waitCreate  bool
 
 	kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
@@ -110,7 +110,7 @@ users:
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				bootstrapConfig, err = createKubeletBootstrapConfig(clusterConfig, workerRole, expiry)
+				bootstrapConfig, err = createKubeletBootstrapConfig(clusterConfig, tokenRole, expiry)
 
 				return err
 			})

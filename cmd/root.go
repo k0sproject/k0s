@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra/doc"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,8 +32,8 @@ var defaultLogLevels = map[string]string{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/k0s.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default is false)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
 	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 
 	logging = setLogging(cmdLogLevels)
@@ -49,6 +51,7 @@ func init() {
 	rootCmd.AddCommand(workerCmd)
 	rootCmd.AddCommand(APICmd)
 	rootCmd.AddCommand(etcdCmd)
+	rootCmd.AddCommand(docs)
 }
 
 var (
@@ -74,23 +77,46 @@ building a Kubernetes clusters a matter of just copying an executable to every h
 			fmt.Println(build.Version)
 		},
 	}
+
+	docs = &cobra.Command{
+		Use:   "docs",
+		Short: "Generate Markdown docs for the k0s binary",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := generateDocs()
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
 )
 
 func initConfig() error {
+	// look for k0s.yaml in the current running executable's path
 	if cfgFile == "" {
-		home, err := util.HomeDir()
+		ex, err := os.Executable()
 		if err != nil {
 			return err
 		}
-		cfgFile = filepath.Join(home, "k0s.yaml")
+		execFolderPath := filepath.Dir(ex)
+		cfgFile = filepath.Join(execFolderPath, "k0s.yaml")
 	}
+
 	// check if config file exists
 	if util.FileExists(cfgFile) {
 		viper.SetConfigFile(cfgFile)
 		logrus.Debugf("Using config file: %v", cfgFile)
 	}
+
 	// Add env vars to Config
 	viper.AutomaticEnv()
+	return nil
+}
+
+func generateDocs() error {
+	if err := doc.GenMarkdownTree(rootCmd, "./docs/cli"); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -99,8 +125,6 @@ func setLogging(inputLogs map[string]string) map[string]string {
 	for k := range inputLogs {
 		defaultLogLevels[k] = inputLogs[k]
 	}
-
-	fmt.Printf("returned logs: %+v\n", defaultLogLevels)
 	return defaultLogLevels
 }
 

@@ -47,11 +47,7 @@ var (
 		Use:   "api",
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := startAPI()
-			if err != nil {
-				return err
-			}
-			return nil
+			return startAPI()
 		},
 	}
 )
