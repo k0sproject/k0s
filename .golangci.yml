@@ -5,7 +5,6 @@ run:
   skip-dirs-use-default: false
   skip-dirs:
     - pkg/helm
-    - github.com/docker/docker/pkg/term
 
   modules-download-mode: readonly
   allow-parallel-runners: true
