@@ -61,7 +61,7 @@ const (
 // Init
 func (h *HelmAddons) Run() error {
 	h.L.Info("run begin")
-	if h.ClusterConfig.HelmAddons == nil {
+	if h.ClusterConfig.Extensions == nil || h.ClusterConfig.Extensions.Helm == nil {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
 		return nil
 	}
@@ -127,13 +127,13 @@ func (h *HelmAddons) leaseLoop() error {
 }
 
 func (h *HelmAddons) initHelm() error {
-	for _, repo := range h.ClusterConfig.HelmAddons.Repositories {
+	for _, repo := range h.ClusterConfig.Extensions.Helm.Repositories {
 		if err := h.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
 		}
 	}
 
-	for _, addon := range h.ClusterConfig.HelmAddons.Addons {
+	for _, addon := range h.ClusterConfig.Extensions.Helm.Charts {
 		tw := util.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,

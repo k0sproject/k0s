@@ -1,13 +1,18 @@
 package v1beta1
 
-// ClusterHelmAddons specifies settings for cluster helm based addons
-type ClusterHelmAddons struct {
-	Repositories []Repository `yaml:"repositories"`
-	Addons       []Addon      `yaml:"charts"`
+// ClusterExtensions specifies cluster extensions
+type ClusterExtensions struct {
+	Helm *HelmExtensions `yaml:"helm"`
 }
 
-// Addon single helm addon
-type Addon struct {
+// HelmExtensions specifies settings for cluster helm based extensions
+type HelmExtensions struct {
+	Repositories []Repository `yaml:"repositories"`
+	Charts       []Chart      `yaml:"charts"`
+}
+
+// Chart single helm addon
+type Chart struct {
 	Name      string `yaml:"name"`
 	ChartName string `yaml:"chartname"`
 	Version   string `yaml:"version"`
