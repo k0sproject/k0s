@@ -9,9 +9,11 @@ import (
 	mkev1beta1 "github.com/Mirantis/mke/pkg/apis/v1beta1"
 	"github.com/Mirantis/mke/pkg/constant"
 	"github.com/Mirantis/mke/pkg/helm"
+	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
+	"github.com/Mirantis/mke/pkg/leaderelection"
 	"github.com/Mirantis/mke/pkg/util"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -19,6 +21,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -31,7 +34,9 @@ type HelmAddons struct {
 	stopCh        chan struct{}
 	informer      cache.SharedIndexInformer
 	helm          *helm.Commands
-	queue         workqueue.RateLimitingInterface
+
+	dryRun     bool
+	dryRunLock sync.Mutex
 }
 
 // NewHelmAddons builds new HelmAddons
@@ -53,10 +58,8 @@ const (
 	namespaceToWatch = "kube-system"
 )
 
-var chartResyncPeriod = time.Second * 30
-
 // Init
-func (h HelmAddons) Run() error {
+func (h *HelmAddons) Run() error {
 	h.L.Info("run begin")
 	if h.ClusterConfig.HelmAddons == nil {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
@@ -78,12 +81,52 @@ func (h HelmAddons) Run() error {
 		panic("Can't sync cache")
 	}
 	h.L.Info("Successfully synced controller cache")
+
+	if err := h.leaseLoop(); err != nil {
+		return fmt.Errorf("can't init lease pool: %v", err)
+	}
 	go h.CrdControlLoop()
 	return nil
 }
 
-func (h HelmAddons) initHelm() error {
-	spew.Dump(h.ClusterConfig.HelmAddons)
+func (h *HelmAddons) leaseLoop() error {
+	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
+	if err != nil {
+		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
+	}
+	leasePool, err := leaderelection.NewLeasePool(client, "mke-helm-addons", leaderelection.WithLogger(h.L))
+
+	if err != nil {
+		return err
+	}
+	events, _, err := leasePool.Watch()
+
+	if err != nil {
+		return err
+	}
+
+	go func() {
+
+		for {
+			select {
+			case <-events.AcquiredLease:
+				h.L.Info("acquired leader lease")
+				h.dryRunLock.Lock()
+				h.dryRun = false
+				h.dryRunLock.Unlock()
+
+			case <-events.LostLease:
+				h.L.Info("lost leader lease")
+				h.dryRunLock.Lock()
+				h.dryRun = true
+				h.dryRunLock.Unlock()
+			}
+		}
+	}()
+	return nil
+}
+
+func (h *HelmAddons) initHelm() error {
 	for _, repo := range h.ClusterConfig.HelmAddons.Repositories {
 		if err := h.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
@@ -113,7 +156,7 @@ type queueJob struct {
 	operation string
 }
 
-func (h HelmAddons) CrdControlLoop() {
+func (h *HelmAddons) CrdControlLoop() {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	defer queue.ShutDown()
 	h.informer = cache.NewSharedIndexInformer(
@@ -160,12 +203,8 @@ func (h HelmAddons) CrdControlLoop() {
 		},
 
 		DeleteFunc: func(obj interface{}) {
-			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-			if err != nil {
-				h.L.WithError(err).Warning("can't build cache key for queue object")
-				return
-			}
-			queue.Add(queueJob{key: key, operation: operationDelete})
+			chart := obj.(*v1beta1.Chart)
+			queue.Add(queueJob{key: chart.Status.Namespace + "/" + chart.Status.ReleaseName, operation: operationDelete})
 		},
 	})
 	go h.informer.Run(h.stopCh)
@@ -178,7 +217,7 @@ func (h HelmAddons) CrdControlLoop() {
 
 const maxRetries = 5
 
-func (h HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
+func (h *HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
 	jobI, quit := q.Get()
 	job := jobI.(queueJob)
 
@@ -202,60 +241,95 @@ func (h HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
 			q.AddRateLimited(job)
 			return
 		}
+		h.saveError(err, job.key)
 		h.L.WithError(err).Errorf("Error processing %s (giving up)", job.key)
+
 	}
 
 	q.Forget(job)
 
 }
 
-func (h HelmAddons) uninstall(objectId string) error {
+func (h *HelmAddons) saveError(origErr error, objectID string) {
+	name := strings.Split(objectID, "/")[1]
+	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
+		return
+	}
+	if chart == nil {
+		return
+	}
+	chart.Status.Error = origErr.Error()
+	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(context.Background(), chart, metav1.UpdateOptions{})
+	if err != nil {
+		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
+	}
+}
+
+func (h *HelmAddons) uninstall(id string) error {
+	parts := strings.Split(id, "/")
+	namespace, releaseName := parts[0], parts[1]
+	if h.dryRun {
+		h.L.Info("dry run, doesn't uninstall")
+		return nil
+	}
+	if err := h.helm.UninstallRelease(releaseName, namespace); err != nil {
+		return fmt.Errorf("can't uninstall release `%s`: %v", releaseName, err)
+	}
 	return nil
 }
 
-func (h HelmAddons) reconcile(objectId string) error {
-	// - if no release name, install and update with metadata
-	// - if release name, update and update status
-	name := strings.Split(objectId, "/")[1]
-	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("can't reconcile chart `%s`: %v", objectId, err)
+func (h *HelmAddons) reconcile(objectID string) error {
+
+	if h.dryRun {
+		h.L.Info("dry run, doesn't reconcile")
+		return nil
 	}
-	var releaseName string
+	name := strings.Split(objectID, "/")[1]
+	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
+
+	if err != nil {
+		return fmt.Errorf("can't reconcile chart `%s`: %v", objectID, err)
+	}
+	var release *release.Release
 	if chart.Status.ReleaseName == "" {
 		// new release
-		releaseName, err = h.helm.InstallChart(chart.Spec.ChartName,
+		release, err = h.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues())
 		if err != nil {
-			return fmt.Errorf("can't reconcile installation for `%s`: %v", objectId, err)
+			return fmt.Errorf("can't reconcile installation for `%s`: %v", objectID, err)
 		}
 	} else {
 		// update
-		// Probably, it could be better to compare values here and decide do we want do actual update, or just leave it
-		// to the helm machinery?
-		releaseName, err = h.helm.UpgradeChart(chart.Spec.ChartName,
-			chart.Spec.Version,
+		release, err = h.helm.UpgradeChart(chart.Spec.ChartName,
+			chart.Status.Version,
 			chart.Status.ReleaseName,
-			chart.Spec.Namespace,
+			chart.Status.Namespace,
 			chart.Spec.YamlValues(),
 		)
 		if err != nil {
-			return fmt.Errorf("can't reconcile upgrade for `%s`: %v", objectId, err)
+			return fmt.Errorf("can't reconcile upgrade for `%s`: %v", objectID, err)
 		}
 	}
 
-	chart.Status.ReleaseName = releaseName
+	chart.Status.ReleaseName = release.Name
+	chart.Status.Version = release.Chart.Metadata.Version
+	chart.Status.AppVersion = release.Chart.AppVersion()
 	chart.Status.Updated = time.Now().String()
+	chart.Status.Revision = int64(release.Version)
+	chart.Status.Namespace = release.Namespace
+	chart.Status.Error = ""
 	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(context.Background(), chart, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("can't update status for `%s`: %v", objectId, err)
+		return fmt.Errorf("can't update status for `%s`: %v", objectID, err)
 	}
 	return nil
 }
 
-func (h HelmAddons) addRepo(repo mkev1beta1.Repository) error {
+func (h *HelmAddons) addRepo(repo mkev1beta1.Repository) error {
 	return h.helm.AddRepository(repo)
 }
 
@@ -274,17 +348,17 @@ spec:
 `
 
 // Run
-func (h HelmAddons) Init() error {
+func (h *HelmAddons) Init() error {
 	return nil
 }
 
 // Stop
-func (h HelmAddons) Stop() error {
+func (h *HelmAddons) Stop() error {
 	close(h.stopCh)
 	return nil
 }
 
 // Healthy
-func (h HelmAddons) Healthy() error {
+func (h *HelmAddons) Healthy() error {
 	return nil
 }

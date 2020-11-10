@@ -50,7 +50,9 @@ spec:
           properties:
             appVersion:
               type: string
-            lastChartName:
+            error:
+              type: string
+            namespace:
               type: string
             releaseName:
               type: string
@@ -59,6 +61,8 @@ spec:
             status:
               type: string
             updated:
+              type: string
+            version:
               type: string
           type: object
       type: object

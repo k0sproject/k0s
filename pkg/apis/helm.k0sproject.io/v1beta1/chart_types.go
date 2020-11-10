@@ -44,10 +44,11 @@ type ChartStatus struct {
 	ReleaseName string `json:"releaseName,omitempty"`
 	Status      string `json:"status,omitempty"`
 	AppVersion  string `json:"appVersion,omitempty"`
+	Version     string `json:"version,omitempty"`
 	Updated     string `json:"updated,omitempty"`
-	Revision    int    `json:"revision,omitempty"`
-
-	LastChartName string `json:"lastChartName,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	Revision    int64  `json:"revision,omitempty"`
+	Error       string `json:"error,omitempty"`
 }
 
 // +kubebuilder:object:root=true

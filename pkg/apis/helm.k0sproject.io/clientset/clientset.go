@@ -53,13 +53,24 @@ type ChartInterface interface {
 	List(ctx context.Context) (*v1beta1.ChartList, error)
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1beta1.Chart, error)
 	Create(ctx context.Context, chart *v1beta1.Chart) (*v1beta1.Chart, error)
-
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	UpdateStatus(ctx context.Context, chart *v1beta1.Chart, opts metav1.UpdateOptions) (*v1beta1.Chart, error)
 }
 
 type chartClient struct {
 	restClient rest.Interface
 	ns         string
+}
+
+// Delete takes name of the chart and deletes it. Returns an error if one occurs.
+func (c chartClient) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	return c.restClient.Delete().
+		Namespace(c.ns).
+		Resource(resourceName).
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
 }
 
 // Watch watches for changes in charts
