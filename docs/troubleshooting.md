@@ -30,7 +30,7 @@ $ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
 plugin/loop: Loop (127.0.0.1:55953 -> :1053) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 4547991504243258144.3688648895315093531."
 ```
 
-This is most often cause by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.
+This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.
 
 The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts `/etc/resolv.conf` to original
 
@@ -43,3 +43,10 @@ In the logs you probably see ETCD not starting up properly.
 Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s server` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
 
 As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.
+
+
+## Pods pending when using cloud providers
+
+Once we enable [cloud provider support](cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node untill the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not schedulable untill the cloud provider controller is actually succesfully running on the cluster.
+
+For troubleshooting your specific cloud provider see its documentation.

@@ -36,6 +36,7 @@ type Kubelet struct {
 	KubeletConfigClient *KubeletConfigClient
 	Profile             string
 	CRISocket           string
+	EnableCloudProvider bool
 	supervisor          supervisor.Supervisor
 	dataDir             string
 }
@@ -100,6 +101,11 @@ func (k *Kubelet) Run() error {
 	} else {
 		args = append(args, "--container-runtime=remote")
 		args = append(args, fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")))
+	}
+
+	// We only support external providers
+	if k.EnableCloudProvider {
+		args = append(args, "--cloud-provider=external")
 	}
 
 	k.supervisor = supervisor.Supervisor{
