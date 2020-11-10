@@ -57,6 +57,7 @@ spec:
             releaseName:
               type: string
             revision:
+              format: int64
               type: integer
             status:
               type: string

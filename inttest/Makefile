@@ -38,7 +38,7 @@ check-hacontrolplane: .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/hacontrolplane
 
 check-addons: .footloose-alpine.stamp
-	MKE_PATH=$(realpath ../mke) go test -count=1 -v -timeout 3m github.com/Mirantis/mke/inttest/addons
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/addons
 
 
 .PHONY: clean

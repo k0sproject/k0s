@@ -18,7 +18,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"io/ioutil"
 	"os"
 	"path"

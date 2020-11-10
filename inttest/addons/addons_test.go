@@ -20,10 +20,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Mirantis/mke/inttest/common"
-	"github.com/Mirantis/mke/pkg/apis/helm.k0sproject.io/clientset"
-	"github.com/Mirantis/mke/pkg/apis/helm.k0sproject.io/v1beta1"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +43,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
 	as.prepareConfigWithAddons(addonName)
 
-	as.Require().NoError(as.InitMainController("/tmp/mke.yaml"))
+	as.Require().NoError(as.InitMainController("/tmp/k0s.yaml"))
 	as.waitForPrometheusRelease(addonName, 1)
 
 	as.doPrometheusUpdate(addonName, map[string]interface{}{"key": "value"})
@@ -88,7 +88,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) str
 		found := false
 		var testAddonItem v1beta1.Chart
 		for _, item := range charts.Items {
-			if item.Name == fmt.Sprintf("mke-addon-chart-%s", addonName) {
+			if item.Name == fmt.Sprintf("k0s-addon-chart-%s", addonName) {
 				if item.Status.ReleaseName == "" {
 					return false, nil
 				}
@@ -119,7 +119,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) str
 }
 
 func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]interface{}) {
-	path := fmt.Sprintf("/var/lib/mke/manifests/helm/addon_crd_manifest_%s.yaml", addonName)
+	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/addon_crd_manifest_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)
 	tw := util.TemplateWriter{
@@ -150,7 +150,7 @@ func (as *AddonsSuite) getKubeConfig(node string) *restclient.Config {
 	as.Require().NoError(err)
 	ssh, err := as.SSH(node)
 	as.Require().NoError(err)
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/mke/pki/admin.conf")
+	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/pki/admin.conf")
 	as.Require().NoError(err)
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
 	as.Require().NoError(err)
@@ -173,7 +173,7 @@ func TestAddonsSuite(t *testing.T) {
 }
 
 func (as *AddonsSuite) prepareConfigWithAddons(addonName string) {
-	as.putFile("/tmp/mke.yaml", fmt.Sprintf(mkeConfigWithAddon, addonName))
+	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 }
 
 func (as *AddonsSuite) putFile(path string, content string) {
@@ -186,14 +186,14 @@ func (as *AddonsSuite) putFile(path string, content string) {
 	as.Require().NoError(err)
 }
 
-const mkeConfigWithAddon = `
+const k0sConfigWithAddon = `
 helm:
   repositories:
   - name: stable
     url: https://charts.helm.sh/stable
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
-  addons:
+  charts:
   - name: %s
     chartname: prometheus-community/prometheus
     version: "11.16.8"
@@ -205,7 +205,7 @@ const chartCrdTemplate = `
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
-  name: mke-addon-chart-{{ .Name }}
+  name: k0s-addon-chart-{{ .Name }}
   namespace: "kube-system"
 spec:
   chartName: {{ .ChartName }}

@@ -72,7 +72,7 @@ check-hacontrolplane: k0s
 	$(MAKE) -C inttest check-hacontrolplane
 
 .PHONY:
-check-addons: mke
+check-addons: k0s
 	$(MAKE) -C inttest check-addons
 
 .PHONY: check-unit
@@ -85,7 +85,7 @@ clean:
 	$(MAKE) -C embedded-bins clean
 
 manifests:
-	/Users/msakhnov/go/bin/controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
+	controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
 
 .PHONY: bindata-manifests
 bindata-manifests:

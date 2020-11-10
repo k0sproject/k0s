@@ -3,7 +3,7 @@ package v1beta1
 // ClusterHelmAddons specifies settings for cluster helm based addons
 type ClusterHelmAddons struct {
 	Repositories []Repository `yaml:"repositories"`
-	Addons       []Addon      `yaml:"addons"`
+	Addons       []Addon      `yaml:"charts"`
 }
 
 // Addon single helm addon

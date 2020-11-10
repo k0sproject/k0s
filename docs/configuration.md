@@ -69,6 +69,19 @@ images:
 telemetry:
   interval: 10m0s
   enabled: true
+helm:
+  repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  charts:
+  - name: prometheus-stack
+    chartname: prometheus-community/prometheus
+    version: "11.16.8"
+    values: |2
+        values: "for overriding"
+    namespace: default
 ```
 
 ### `spec.storage`
@@ -178,10 +191,31 @@ telemetry:
   enabled: true
 ```
 
+### Addons
+
+It is possible to bundle 3rd party helm charts with your cluster. 
+
+```
+helm:
+  repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  charts:
+  - name: prometheus-stack
+    chartname: prometheus-community/prometheus
+    version: "11.16.8"
+    values: |2
+        values: "for overriding"
+    namespace: default
+```
+
 ## Configuring multi-node controlplane
 
 When configuring an elastic/HA controlplane one must use same configuration options on each node for the cluster level options. Following options need to match on each node, otherwise the control plane component will end up in very unknown states:
 - `network`
 - `storage`: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.
 
+ 
  

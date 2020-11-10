@@ -107,7 +107,7 @@ const (
 	KubeControllerImageVersion = "v3.16.2"
 
 	// Helm constants
-	HelmHome             = "/var/lib/mke/helmhome"
-	HelmRepositoryConfig = "/var/lib/mke/helmhome/repositories.yaml"
-	HelmRepositoryCache  = "/var/lib/mke/helmhome/cache"
+	HelmHome             = "/var/lib/k0s/helmhome"
+	HelmRepositoryConfig = "/var/lib/k0s/helmhome/repositories.yaml"
+	HelmRepositoryCache  = "/var/lib/k0s/helmhome/cache"
 )

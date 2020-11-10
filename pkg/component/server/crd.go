@@ -18,7 +18,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/Mirantis/mke/static"
+	"github.com/k0sproject/k0s/static"
 )
 
 // CRD unpacks bundled CRD definitions to the filesystem

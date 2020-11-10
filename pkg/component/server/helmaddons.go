@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Mirantis/mke/pkg/apis/helm.k0sproject.io/clientset"
-	"github.com/Mirantis/mke/pkg/apis/helm.k0sproject.io/v1beta1"
-	mkev1beta1 "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/Mirantis/mke/pkg/helm"
-	kubeutil "github.com/Mirantis/mke/pkg/kubernetes"
-	"github.com/Mirantis/mke/pkg/leaderelection"
-	"github.com/Mirantis/mke/pkg/util"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/helm"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
+	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +28,7 @@ import (
 // Helm watch for Chart crd
 type HelmAddons struct {
 	Client        clientset.ChartV1Beta1Interface
-	ClusterConfig *mkev1beta1.ClusterConfig
+	ClusterConfig *k0sv1beta1.ClusterConfig
 	saver         manifestsSaver
 	L             *logrus.Entry
 	stopCh        chan struct{}
@@ -40,7 +40,7 @@ type HelmAddons struct {
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *mkev1beta1.ClusterConfig, s manifestsSaver) *HelmAddons {
+func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver) *HelmAddons {
 	return &HelmAddons{
 		ClusterConfig: c,
 		saver:         s,
@@ -94,7 +94,7 @@ func (h *HelmAddons) leaseLoop() error {
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(client, "mke-helm-addons", leaderelection.WithLogger(h.L))
+	leasePool, err := leaderelection.NewLeasePool(client, "k0s-helm-addons", leaderelection.WithLogger(h.L))
 
 	if err != nil {
 		return err
@@ -329,7 +329,7 @@ func (h *HelmAddons) reconcile(objectID string) error {
 	return nil
 }
 
-func (h *HelmAddons) addRepo(repo mkev1beta1.Repository) error {
+func (h *HelmAddons) addRepo(repo k0sv1beta1.Repository) error {
 	return h.helm.AddRepository(repo)
 }
 
@@ -337,7 +337,7 @@ const chartCrdTemplate = `
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
-  name: mke-addon-chart-{{ .Name }}
+  name: k0s-addon-chart-{{ .Name }}
   namespace: "kube-system"
 spec:
   chartName: {{ .ChartName }}

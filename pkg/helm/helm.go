@@ -2,9 +2,8 @@ package helm
 
 import (
 	"fmt"
-	mkev1beta1 "github.com/Mirantis/mke/pkg/apis/v1beta1"
-	"github.com/Mirantis/mke/pkg/constant"
-	"github.com/davecgh/go-spew/spew"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -59,7 +58,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	return actionConfig, nil
 }
 
-func (hc *Commands) AddRepository(repoCfg mkev1beta1.Repository) error {
+func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
 	err := os.MkdirAll(filepath.Dir(hc.repoFile), os.ModePerm)
 
 	if err != nil && !os.IsExist(err) {
@@ -168,7 +167,6 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	}
 
 	filename, _, err := dl.DownloadTo(name, version, constant.HelmRepositoryCache)
-	spew.Dump(err)
 	if err == nil {
 		lname, err := filepath.Abs(filename)
 		if err != nil {

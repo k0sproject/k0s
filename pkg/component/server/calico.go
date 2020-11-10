@@ -18,9 +18,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -28,7 +25,6 @@ import (
 	"github.com/k0sproject/k0s/static"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

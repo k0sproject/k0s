@@ -18,7 +18,6 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -64,7 +63,6 @@ func (s *FootlooseSuite) SetupSuite() {
 		s.T().Logf("ERROR: failed to load footloose config: %s", err.Error())
 		s.T().FailNow()
 	}
-	spew.Dump(dir)
 	s.keyDir = dir
 	s.footlooseConfig = s.createConfig()
 	cluster, err := cluster.New(s.footlooseConfig)
