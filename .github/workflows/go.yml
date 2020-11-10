@@ -163,7 +163,7 @@ jobs:
           path: |
             /tmp/*.log
 
-  smoketest-addongs:
+  smoketest-addons:
     name: Smoke test for helm based addons
     needs: build
     runs-on: ubuntu-latest
@@ -184,7 +184,7 @@ jobs:
             k0s
           key: build-${{env.cachePrefix}}
 
-      - name: Run BYO CRI test .
+      - name: Run Helm addon test
         run: make -C inttest check-addons
 
       - name: Collect test logs

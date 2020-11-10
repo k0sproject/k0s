@@ -189,7 +189,7 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
-// InitMainController inits first con	torller assuming it's first controller in the cluster
+// InitMainController inits first controller assuming it's first controller in the cluster
 func (s *FootlooseSuite) InitMainController(cfgPath string) error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
