@@ -14,6 +14,7 @@ resource "aws_key_pair" "cluster-key" {
 
 // Save the private key to filesystem
 resource "local_file" "aws_private_pem" {
+  file_permission = "700"
   filename = format("%s/%s", path.module, "aws_private.pem")
   content = tls_private_key.k8s-conformance-key.private_key_pem
 }
