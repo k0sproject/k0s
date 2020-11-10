@@ -50,6 +50,11 @@ func WorkerCommand() *cli.Command {
 				Name:  "cri-socket",
 				Usage: "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]",
 			},
+			&cli.BoolFlag{
+				Name:  "enable-cloud-provider",
+				Usage: "Whether or not to enable cloud provider support in kubelet",
+				Value: false,
+			},
 		},
 		ArgsUsage: "[join-token]",
 	}
@@ -84,6 +89,7 @@ func startWorker(ctx *cli.Context) error {
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             ctx.String("profile"),
 		CRISocket:           ctx.String("cri-socket"),
+		EnableCloudProvider: ctx.Bool("enable-cloud-provider"),
 	})
 
 	// extract needed components
