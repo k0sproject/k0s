@@ -36,6 +36,7 @@ type Konnectivity struct {
 	supervisor    supervisor.Supervisor
 	uid           int
 	gid           int
+	LogLevel      string
 }
 
 // Init ...
@@ -73,6 +74,7 @@ func (k *Konnectivity) Run() error {
 			"--logtostderr=true",
 			"--stderrthreshold=1",
 			"-v=2",
+			fmt.Sprintf("--v=%s", k.LogLevel),
 			"--enable-profiling=false",
 		},
 		UID: k.uid,

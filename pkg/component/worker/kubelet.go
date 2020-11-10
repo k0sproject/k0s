@@ -39,6 +39,7 @@ type Kubelet struct {
 	EnableCloudProvider bool
 	supervisor          supervisor.Supervisor
 	dataDir             string
+	LogLevel            string
 }
 
 // KubeletConfig defines the kubelet related config options
@@ -79,6 +80,7 @@ func (k *Kubelet) Run() error {
 		fmt.Sprintf("--config=%s", kubeletConfigPath),
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 		fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
+		fmt.Sprintf("--v=%s", k.LogLevel),
 		"--kube-reserved-cgroup=system.slice",
 		"--runtime-cgroups=/system.slice/containerd.service",
 		"--kubelet-cgroups=/system.slice/containerd.service",

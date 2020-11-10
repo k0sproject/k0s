@@ -36,6 +36,7 @@ type ControllerManager struct {
 	supervisor    supervisor.Supervisor
 	uid           int
 	gid           int
+	LogLevel      string
 }
 
 var cmDefaultArgs = map[string]string{
@@ -84,6 +85,7 @@ func (a *ControllerManager) Run() error {
 		"service-account-private-key-file": path.Join(constant.CertRootDir, "sa.key"),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
 		"profiling":                        "false",
+		"v":                                a.LogLevel,
 	}
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
 		if args[name] != "" && name != "profiling" {

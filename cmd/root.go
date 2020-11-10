@@ -16,10 +16,25 @@ import (
 
 var cfgFile string
 var debug bool
+var cmdLogLevels map[string]string
+var logging map[string]string
+
+var defaultLogLevels = map[string]string{
+	"etcd":                    "info",
+	"containerd":              "info",
+	"konnectivity-server":     "1",
+	"kube-apiserver":          "1",
+	"kube-controller-manager": "1",
+	"kube-scheduler":          "1",
+	"kubelet":                 "1",
+}
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/k0s.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default is false)")
+	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
+
+	logging = setLogging(cmdLogLevels)
 
 	// initialize configuration
 	err := initConfig()
@@ -77,6 +92,16 @@ func initConfig() error {
 	// Add env vars to Config
 	viper.AutomaticEnv()
 	return nil
+}
+
+// setLogging merges the input from the command flag with the default log levels, so that a user can override just one single component
+func setLogging(inputLogs map[string]string) map[string]string {
+	for k := range inputLogs {
+		defaultLogLevels[k] = inputLogs[k]
+	}
+
+	fmt.Printf("returned logs: %+v\n", defaultLogLevels)
+	return defaultLogLevels
 }
 
 func Execute() {

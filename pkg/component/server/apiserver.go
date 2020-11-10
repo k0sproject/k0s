@@ -37,6 +37,7 @@ type APIServer struct {
 	supervisor    supervisor.Supervisor
 	uid           int
 	gid           int
+	LogLevel      string
 }
 
 var apiDefaultArgs = map[string]string{
@@ -107,6 +108,7 @@ func (a *APIServer) Run() error {
 			"api-audiences":                    "system:konnectivity-server",
 			"insecure-port":                    "0",
 			"profiling":                        "false",
+			"v":                                a.LogLevel,
 		}
 
 		for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {

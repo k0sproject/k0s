@@ -138,6 +138,7 @@ func startServer(token string) error {
 			Join:        join,
 			CertManager: certificateManager,
 			JoinClient:  joinClient,
+			LogLevel:    logging["etcd"],
 		}
 	default:
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
@@ -148,15 +149,19 @@ func startServer(token string) error {
 	componentManager.Add(&server.APIServer{
 		Storage:       storageBackend,
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-apiserver"],
 	})
 	componentManager.Add(&server.Konnectivity{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["konnectivity-server"],
 	})
 	componentManager.Add(&server.Scheduler{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-scheduler"],
 	})
 	componentManager.Add(&server.ControllerManager{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-controller-manager"],
 	})
 	componentManager.Add(&applier.Manager{})
 	componentManager.Add(&server.K0SControlAPI{

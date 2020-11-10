@@ -29,6 +29,7 @@ import (
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
 	supervisor supervisor.Supervisor
+	LogLevel   string
 }
 
 // Init extracts the needed binaries
@@ -54,6 +55,7 @@ func (c *ContainerD) Run() error {
 			fmt.Sprintf("--root=%s", filepath.Join(constant.DataDir, "containerd")),
 			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
+			fmt.Sprintf("--log-level=%s", c.LogLevel),
 			"--config=/etc/k0s/containerd.toml",
 		},
 	}
