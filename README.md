@@ -56,6 +56,20 @@ See more in [architecture docs](docs/architecture.md)
 - Metrics-server 0.3
 - Custom roles\profiles for worker nodes
 
+## Status
+
+We're still on the 0.x.y release versions, so things are not yet 100% stable. That includes both stability of different APIs and config structures as well as the stability of k0s itself. While we do have some basic smoke testing happening we're still lacking more longer running stability testing for k0s based clusters. And of course we only test some known configuration combinations.
+
+With the help of community we're hoping to push for 1.0.0 release out in early 2021.
+
+## Scope
+
+While some Kubernetes distros package everything and the kitchen sink in, k0s tries to minimize the amount of "add-ons" to bundle in. Instead, we aim to provide robust and versatile "base" for running Kubernetes in various setups. Of course we will provide some ways to easily control and setup various "add-ons" but we will likely not bundle many of those into k0s itself. There's couple reasons why we think this is the correct way:
+- Many of the addons such as ingresses, service meshes, storage etc. are VERY opinionated. We try to build this base with less opinions. :D
+- Keeping up with the upstream releases with many external addons is very maintenance heavy. Shipping with old versions does not make much sense either.
+
+With strong enough arguments we might take in new addons but in general those should be something that are essential for the "core" of k0s.
+
 ## Build
 
 `k0s` can be built in 3 different ways:
