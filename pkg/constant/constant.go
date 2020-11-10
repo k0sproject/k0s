@@ -51,6 +51,8 @@ const (
 	ManifestsDir = "/var/lib/k0s/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0644
+	// KineSocket is the unix socket path for kine
+	KineSocketPath = "/run/k0s/kine/kine.sock:2379"
 
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletBootstrapConfigPath = "/var/lib/k0s/kubelet-bootstrap.conf"
@@ -72,7 +74,7 @@ const (
 	// EtcdUser defines the user to use for running etcd process
 	EtcdUser = "etcd"
 	// KineUser defines the user to use for running kine process
-	KineUser = "kine"
+	KineUser = "kube-apiserver" // apiserver needs to be able to read the kine unix socket
 	// ApiserverUser defines the user to use for running k8s api-server process
 	ApiserverUser = "kube-apiserver"
 	// ControllerManagerUser defines the user to use for running k8s controller manager process
