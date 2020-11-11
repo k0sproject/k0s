@@ -177,7 +177,7 @@ package {{ .Pkg }}
 var (
 	BinData = map[string]struct{ offset, size int64 }{
 	{{ range .BinData }}
-		"{{ .ChartName }}": { {{ .Offset }}, {{ .Size }}}, {{ end }}
+		"{{ .Name }}": { {{ .Offset }}, {{ .Size }}}, {{ end }}
 	}
 
 	BinDataSize int64 = {{ .BinDataSize }}
