@@ -189,8 +189,8 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
-// InitMainController inits first contorller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController() error {
+// InitMainController inits first controller assuming it's first controller in the cluster
+func (s *FootlooseSuite) InitMainController(cfgPath string) error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -198,7 +198,7 @@ func (s *FootlooseSuite) InitMainController() error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server >/tmp/k0s-server.log 2>&1 &")
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --config=%s >/tmp/k0s-server.log 2>&1 &", cfgPath))
 	if err != nil {
 		return err
 	}

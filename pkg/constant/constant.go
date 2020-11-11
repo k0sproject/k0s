@@ -105,4 +105,9 @@ const (
 	CalicoNodeImageVersion     = "v3.16.2"
 	KubeControllerImage        = "calico/kube-controllers"
 	KubeControllerImageVersion = "v3.16.2"
+
+	// Helm constants
+	HelmHome             = "/var/lib/k0s/helmhome"
+	HelmRepositoryConfig = "/var/lib/k0s/helmhome/repositories.yaml"
+	HelmRepositoryCache  = "/var/lib/k0s/helmhome/cache"
 )

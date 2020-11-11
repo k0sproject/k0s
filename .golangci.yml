@@ -2,8 +2,9 @@
 run:
 
   timeout: 5m
-  skip-dirs-use-default: true
-
+  skip-dirs-use-default: false
+  skip-dirs:
+    - pkg/helm
 
   modules-download-mode: readonly
   allow-parallel-runners: true

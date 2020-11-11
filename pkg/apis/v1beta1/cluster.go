@@ -26,12 +26,13 @@ import (
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string            `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
-	Kind       string            `yaml:"kind" validate:"eq=Cluster"`
-	Metadata   *ClusterMeta      `yaml:"metadata"`
-	Spec       *ClusterSpec      `yaml:"spec"`
-	Images     *ClusterImages    `yaml:"images"`
-	Telemetry  *ClusterTelemetry `yaml:"telemetry"`
+	APIVersion string             `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
+	Kind       string             `yaml:"kind" validate:"eq=Cluster"`
+	Metadata   *ClusterMeta       `yaml:"metadata"`
+	Spec       *ClusterSpec       `yaml:"spec"`
+	Extensions *ClusterExtensions `yaml:"extensions"`
+	Images     *ClusterImages     `yaml:"images"`
+	Telemetry  *ClusterTelemetry  `yaml:"telemetry"`
 }
 
 // ClusterMeta ...

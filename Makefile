@@ -71,6 +71,10 @@ check-byocri: k0s
 check-hacontrolplane: k0s
 	$(MAKE) -C inttest check-hacontrolplane
 
+.PHONY:
+check-addons: k0s
+	$(MAKE) -C inttest check-addons
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
 	go test -race ./pkg/...
@@ -80,7 +84,10 @@ clean:
 	rm -f pkg/assets/zz_generated_offsets.go k0s .bins.stamp bindata
 	$(MAKE) -C embedded-bins clean
 
+manifests:
+	controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
+
 .PHONY: bindata-manifests
 bindata-manifests:
-	go-bindata -o static/gen_calico.go -pkg static -prefix static static/...
+	go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
