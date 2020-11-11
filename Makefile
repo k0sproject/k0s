@@ -75,6 +75,10 @@ check-hacontrolplane: k0s
 check-addons: k0s
 	$(MAKE) -C inttest check-addons
 
+.PHONY:
+check-singlenode: k0s
+	$(MAKE) -C inttest check-singlenode
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
 	go test -race ./pkg/...
