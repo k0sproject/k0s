@@ -20,9 +20,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -30,7 +31,6 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -45,46 +45,27 @@ import (
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
-// ServerCommand ...
-func ServerCommand() *cli.Command {
-	return &cli.Command{
-		Name:   "server",
-		Usage:  "Run server",
-		Action: startServer,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "config",
-				Aliases: []string{"c"},
-				Value:   "k0s.yaml",
-			},
-			&cli.BoolFlag{
-				Name:  "enable-worker",
-				Value: false,
-			},
-			&cli.StringFlag{
-				Name:  "profile",
-				Value: "default",
-				Usage: "worker profile to use on the node",
-			},
+func init() {
+	serverCmd.Flags().StringVar(&serverWorkerProfile, "profile", "default", "worker profile to use on the node")
+	serverCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
+}
+
+var (
+	serverWorkerProfile string
+	enableWorker        bool
+	serverToken         string
+
+	serverCmd = &cobra.Command{
+		Use:   "server [join-token]",
+		Short: "Run server",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				serverToken = args[0]
+			}
+			return startServer(serverToken)
 		},
-		ArgsUsage: "[join-token]",
 	}
-}
-
-func configFromCmdFlag(ctx *cli.Context) (*config.ClusterConfig, error) {
-	clusterConfig := ConfigFromYaml(ctx)
-
-	errors := clusterConfig.Validate()
-	if len(errors) > 0 {
-		messages := make([]string, len(errors))
-		for _, e := range errors {
-			messages = append(messages, e.Error())
-		}
-		return nil, fmt.Errorf("config yaml does not pass validation, following errors found:%s", strings.Join(messages, "\n"))
-	}
-
-	return clusterConfig, nil
-}
+)
 
 // If we've got CA in place we assume the node has already joined previously
 func needToJoin() bool {
@@ -96,9 +77,9 @@ func needToJoin() bool {
 	return true
 }
 
-func startServer(ctx *cli.Context) error {
+func startServer(token string) error {
 	perfTimer := performance.NewTimer("server-start").Buffer().Start()
-	clusterConfig, err := configFromCmdFlag(ctx)
+	clusterConfig, err := ConfigFromYaml(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -115,8 +96,8 @@ func startServer(ctx *cli.Context) error {
 	certificateManager := certificate.Manager{}
 
 	var join = false
+
 	var joinClient *v1beta1.JoinClient
-	token := ctx.Args().First()
 	if token != "" && needToJoin() {
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
@@ -153,6 +134,7 @@ func startServer(ctx *cli.Context) error {
 			Join:        join,
 			CertManager: certificateManager,
 			JoinClient:  joinClient,
+			LogLevel:    logging["etcd"],
 		}
 	default:
 		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
@@ -163,19 +145,23 @@ func startServer(ctx *cli.Context) error {
 	componentManager.Add(&server.APIServer{
 		Storage:       storageBackend,
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-apiserver"],
 	})
 	componentManager.Add(&server.Konnectivity{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["konnectivity-server"],
 	})
 	componentManager.Add(&server.Scheduler{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-scheduler"],
 	})
 	componentManager.Add(&server.ControllerManager{
 		ClusterConfig: clusterConfig,
+		LogLevel:      logging["kube-controller-manager"],
 	})
 	componentManager.Add(&applier.Manager{})
 	componentManager.Add(&server.K0SControlAPI{
-		ConfigPath: ctx.String("config"),
+		ConfigPath: cfgFile,
 	})
 
 	if clusterConfig.Telemetry.Enabled {
@@ -220,9 +206,9 @@ func startServer(ctx *cli.Context) error {
 	}
 	perfTimer.Checkpoint("started-reconcilers")
 
-	if err == nil && ctx.Bool("enable-worker") {
+	if err == nil && enableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		err = enableServerWorker(clusterConfig, componentManager, ctx.String("profile"))
+		err = enableServerWorker(clusterConfig, componentManager, serverWorkerProfile)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			if err := componentManager.Stop(); err != nil {

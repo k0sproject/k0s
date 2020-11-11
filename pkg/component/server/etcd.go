@@ -52,6 +52,7 @@ type Etcd struct {
 	Join        bool
 	JoinClient  *v1beta1.JoinClient
 	CertManager certificate.Manager
+	LogLevel    string
 
 	supervisor supervisor.Supervisor
 	uid        int
@@ -122,6 +123,7 @@ func (e *Etcd) Run() error {
 		fmt.Sprintf("--peer-trusted-ca-file=%s", etcdCaCert),
 		fmt.Sprintf("--peer-key-file=%s", etcdPeerKey),
 		fmt.Sprintf("--peer-cert-file=%s", etcdPeerCert),
+		fmt.Sprintf("--log-level=%s", e.LogLevel),
 		"--peer-client-cert-auth=true",
 		"--enable-pprof=false",
 	}

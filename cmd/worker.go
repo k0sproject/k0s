@@ -23,6 +23,8 @@ import (
 	"path"
 	"syscall"
 
+	"github.com/spf13/cobra"
+
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -30,40 +32,39 @@ import (
 	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// WorkerCommand ...
-func WorkerCommand() *cli.Command {
-	return &cli.Command{
-		Name:   "worker",
-		Usage:  "Run worker",
-		Action: startWorker,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "profile",
-				Value: "default",
-				Usage: "worker profile to use on the node",
-			},
-			&cli.StringFlag{
-				Name:  "cri-socket",
-				Usage: "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]",
-			},
-			&cli.BoolFlag{
-				Name:  "enable-cloud-provider",
-				Usage: "Whether or not to enable cloud provider support in kubelet",
-				Value: false,
-			},
-		},
-		ArgsUsage: "[join-token]",
-	}
+func init() {
+	workerCmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
+	workerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 }
 
-func startWorker(ctx *cli.Context) error {
-	worker.KernelSetup()
+var (
+	workerProfile string
+	tokenArg      string
+	criSocket     string
+	cloudProvider bool
 
-	token := ctx.Args().First()
+	workerCmd = &cobra.Command{
+		Use:   "worker [join-token]",
+		Short: "Run worker",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				tokenArg = args[0]
+			}
+			err := startWorker(tokenArg)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+)
+
+func startWorker(token string) error {
+	worker.KernelSetup()
 	if token == "" && !util.FileExists(constant.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
@@ -81,15 +82,18 @@ func startWorker(ctx *cli.Context) error {
 	}
 
 	componentManager := component.NewManager()
-	criSock := ctx.String("cri-socket")
-	if criSock == "" {
-		componentManager.Add(&worker.ContainerD{})
+	if criSocket == "" {
+		componentManager.Add(&worker.ContainerD{
+			LogLevel: logging["containerd"],
+		})
 	}
+
 	componentManager.Add(&worker.Kubelet{
 		KubeletConfigClient: kubeletConfigClient,
-		Profile:             ctx.String("profile"),
-		CRISocket:           ctx.String("cri-socket"),
-		EnableCloudProvider: ctx.Bool("enable-cloud-provider"),
+		Profile:             workerProfile,
+		CRISocket:           criSocket,
+		LogLevel:            logging["kubelet"],
+		EnableCloudProvider: cloudProvider,
 	})
 
 	// extract needed components
@@ -129,7 +133,7 @@ func loadKubeletConfigClient() (*worker.KubeletConfigClient, error) {
 
 	kubeletConfigClient, err := worker.NewKubeletConfigClient(clientConfigPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to start kubelet config client: %v", err)
 	}
 	return kubeletConfigClient, nil
 }

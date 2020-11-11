@@ -34,6 +34,7 @@ type Scheduler struct {
 	supervisor    supervisor.Supervisor
 	uid           int
 	gid           int
+	LogLevel      string
 }
 
 // Init extracts the needed binaries
@@ -59,6 +60,7 @@ func (a *Scheduler) Run() error {
 		"bind-address":              "127.0.0.1",
 		"leader-elect":              "true",
 		"profiling":                 "false",
+		"v":                         a.LogLevel,
 	}
 	for name, value := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
 		if args[name] != "" && name != "profiling" {
