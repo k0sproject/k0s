@@ -356,10 +356,13 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, componentManager *c
 		return err
 	}
 
-	containerd := &worker.ContainerD{}
+	containerd := &worker.ContainerD{
+		LogLevel: logging["containerd"],
+	}
 	kubelet := &worker.Kubelet{
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
+		LogLevel:            logging["kubelet"],
 	}
 
 	if err := containerd.Init(); err != nil {
