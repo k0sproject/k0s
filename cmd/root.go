@@ -92,13 +92,12 @@ building a Kubernetes clusters a matter of just copying an executable to every h
 )
 
 func initConfig() error {
-	// look for k0s.yaml in the current running executable's path
+	// look for k0s.yaml in PWD
 	if cfgFile == "" {
-		ex, err := os.Executable()
+		execFolderPath, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		execFolderPath := filepath.Dir(ex)
 		cfgFile = filepath.Join(execFolderPath, "k0s.yaml")
 	}
 
