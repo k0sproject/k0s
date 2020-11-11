@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/avast/retry-go"
@@ -73,6 +74,8 @@ func (k *Kubelet) Init() error {
 func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(constant.DataDir, "kubelet-config.yaml")
+	logLevel, _ := strconv.Atoi(k.LogLevel) // change string type to int for the logging level
+
 	args := []string{
 		fmt.Sprintf("--root-dir=%s", k.dataDir),
 		fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
@@ -80,7 +83,7 @@ func (k *Kubelet) Run() error {
 		fmt.Sprintf("--config=%s", kubeletConfigPath),
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 		fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
-		fmt.Sprintf("--v=%s", k.LogLevel),
+		fmt.Sprintf("--v=%d", logLevel),
 		"--kube-reserved-cgroup=system.slice",
 		"--runtime-cgroups=/system.slice/containerd.service",
 		"--kubelet-cgroups=/system.slice/containerd.service",
