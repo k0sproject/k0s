@@ -40,6 +40,9 @@ check-hacontrolplane: .footloose-alpine.stamp
 check-addons: .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/addons
 
+check-singlenode: .footloose-alpine.stamp
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/singlenode
+
 
 .PHONY: clean
 clean:
