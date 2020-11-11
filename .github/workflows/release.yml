@@ -89,6 +89,18 @@ jobs:
           repository: k0sproject/k0s
           tag_with_ref: true
 
+      # Need to remove this from maintenance branches
+      # Done as separate step for better control when we push latest
+      - name: Build image and push to Docker hub
+        if: "!contains(github.ref, '-')"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: docker.io
+          repository: k0sproject/k0s
+          tags: latest
+
   arm64:
     needs: release
     runs-on: [self-hosted,linux,arm64]
