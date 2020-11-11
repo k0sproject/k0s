@@ -31,7 +31,7 @@ pkg/assets/zz_generated_offsets.go:
 		"var BinDataSize int64 = 0" \
 		> $@
 else
-pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin
+pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin gen_bindata.go
 	go generate
 endif
 
