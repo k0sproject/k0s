@@ -4,6 +4,8 @@
 
 # k0s - Zero Friction Kubernetes
 
+![k0s logo](k0s-logo-full-color.svg)
+
 k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
 
 k0s is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
