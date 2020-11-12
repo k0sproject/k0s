@@ -28,23 +28,10 @@ check-network-vm: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
 		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
-check-basic: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/basic
-
-check-byocri: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/byocri
-
-check-hacontrolplane: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/hacontrolplane
-
-check-addons: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/addons
-
-check-singlenode: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/singlenode
-
-check-kine: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/kine
+smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-singlenode
+.PHONY: $(smoketests)
+$(smoketests): .footloose-alpine.stamp
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean
 clean:
