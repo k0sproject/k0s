@@ -10,6 +10,8 @@ k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty d
 
 k0s is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
 
+![k0s demo](k0s_demo.gif)
+
 ## Motivation
 
 **Note:** Some of these goals are not 100% fulfilled yet.
