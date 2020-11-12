@@ -8,6 +8,7 @@ on:
       - 'examples/**'
       - '**.md'
       - LICENSE
+      - '**.svg'
   pull_request:
     branches: [ main ]
     paths-ignore:
@@ -15,6 +16,7 @@ on:
       - 'examples/**'
       - '**.md'
       - LICENSE
+      - '**.svg'
 jobs:
   build:
     name: Build
