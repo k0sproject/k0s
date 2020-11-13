@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -31,6 +30,8 @@ import (
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
+
+var kineSocketDir = filepath.Dir(constant.KineSocketPath)
 
 // Kine implement the component interface to run kine
 type Kine struct {
@@ -49,6 +50,14 @@ func (k *Kine) Init() error {
 	}
 
 	k.gid, _ = util.GetGID(constant.Group)
+
+	err = util.InitDirectory(kineSocketDir, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s", kineSocketDir)
+	}
+	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil {
+		logrus.Warningf("failed to chown %s", kineSocketDir)
+	}
 
 	dsURL, err := url.Parse(k.Config.DataSource)
 	if err != nil {
@@ -82,7 +91,7 @@ func (k *Kine) Run() error {
 		Dir:     constant.DataDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
-			fmt.Sprintf("--listen-address=unix://%s", path.Join(constant.RunDir, "kine.sock:2379")),
+			fmt.Sprintf("--listen-address=unix://%s", constant.KineSocketPath),
 		},
 		UID: k.uid,
 		GID: k.gid,

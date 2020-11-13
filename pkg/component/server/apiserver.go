@@ -138,7 +138,7 @@ func (a *APIServer) Run() error {
 		switch a.ClusterConfig.Spec.Storage.Type {
 		case config.KineStorageType:
 			a.supervisor.Args = append(a.supervisor.Args,
-				fmt.Sprintf("--etcd-servers=unix://%s", path.Join(constant.RunDir, "kine.sock:2379"))) // kine endpoint
+				fmt.Sprintf("--etcd-servers=unix://%s", constant.KineSocketPath)) // kine endpoint
 		case config.EtcdStorageType:
 			a.supervisor.Args = append(a.supervisor.Args,
 				"--etcd-servers=https://127.0.0.1:2379",
