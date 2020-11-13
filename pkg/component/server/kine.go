@@ -55,7 +55,7 @@ func (k *Kine) Init() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", kineSocketDir)
 	}
-	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil {
+	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
 		logrus.Warningf("failed to chown %s", kineSocketDir)
 	}
 
@@ -70,10 +70,10 @@ func (k *Kine) Init() error {
 			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(dsURL.Path))
 		}
 		err = os.Chown(filepath.Dir(dsURL.Path), k.uid, k.gid)
-		if err != nil {
+		if err != nil && os.Geteuid() == 0 {
 			return errors.Wrapf(err, "failed to chown dir %s", filepath.Dir(dsURL.Path))
 		}
-		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil {
+		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}

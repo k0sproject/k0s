@@ -61,7 +61,7 @@ func (a *ControllerManager) Init() error {
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
-	if err := os.Chown(path.Join(constant.CertRootDir, "ca.key"), a.uid, -1); err != nil {
+	if err := os.Chown(path.Join(constant.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
 	}
 
