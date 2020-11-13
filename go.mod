@@ -9,6 +9,7 @@ require (
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.4.1 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -16,6 +17,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
+	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
@@ -57,4 +59,5 @@ replace go.etcd.io/etcd => github.com/etcd-io/etcd v0.5.0-alpha.5.0.202008241911
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
+	github.com/docker/libnetwork => github.com/moby/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 )

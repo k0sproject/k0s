@@ -23,12 +23,14 @@ import (
 	"strings"
 
 	"github.com/avast/retry-go"
+	"github.com/docker/libnetwork/resolvconf"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Kubelet is the component implementation to manage kubelet
@@ -73,6 +75,10 @@ func (k *Kubelet) Init() error {
 func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(constant.DataDir, "kubelet-config.yaml")
+	// get the "real" resolv.conf file (in systemd-resolvd bases system,
+	// this will return /run/systemd/resolve/resolv.conf
+	resolvConfPath := resolvconf.Path()
+
 	args := []string{
 		fmt.Sprintf("--root-dir=%s", k.dataDir),
 		fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
@@ -81,6 +87,7 @@ func (k *Kubelet) Run() error {
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
 		fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
 		fmt.Sprintf("--v=%s", k.LogLevel),
+		fmt.Sprintf("--resolv-conf=%s", resolvConfPath),
 		"--kube-reserved-cgroup=system.slice",
 		"--runtime-cgroups=/system.slice/containerd.service",
 		"--kubelet-cgroups=/system.slice/containerd.service",

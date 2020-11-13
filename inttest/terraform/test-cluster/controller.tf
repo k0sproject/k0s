@@ -26,16 +26,6 @@ resource "aws_instance" "cluster-controller" {
     inline = [<<EOF
       sudo hostnamectl set-hostname controller-${count.index}
       sudo sh -c 'echo 127.0.0.1 controller-${count.index} >> /etc/hosts'
-
-      echo "checking systemd resolv.conf..."
-      if grep -q "127.0.0.53" /etc/resolv.conf; then
-        echo "resolv.conf still points to localhost. Attempting to fix..."
-        sudo rm /etc/resolv.conf
-        sudo systemctl disable systemd-resolved.service
-        sudo systemctl stop systemd-resolved
-        sudo sh -c 'echo nameserver 10.0.0.2 >> /etc/resolv.conf'
-        sudo sh -c 'echo search eu-west-1.compute.internal >> /etc/resolv.conf'
-      fi
     EOF
     ]
   }
