@@ -31,14 +31,21 @@ pkg/assets/zz_generated_offsets.go:
 		"var BinDataSize int64 = 0" \
 		> $@
 else
-pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin gen_bindata.go
+pkg/assets/zz_generated_offsets.go: embedded-bins/staging/${TARGET_OS}/bin gen_bindata.go
 	go generate
 endif
+
 
 k0s: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
 	@echo Compiling k0s.code ...
 	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.code main.go
 	cat k0s.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
+
+k0s.exe: export TARGET_OS := windows
+k0s.exe: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
+	@echo Compiling k0s.code ...
+	@CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.exe.code main.go
+	cat k0s.exe.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
 build: k0s
@@ -46,11 +53,17 @@ build: k0s
 .PHONY: bins
 bins: .bins.stamp
 
-embedded-bins/staging/linux/bin: .bins.stamp
+embedded-bins/staging/linux/bin: .bins.linux.stamp
+embedded-bins/staging/windows/bin: .bins.windows.stamp
 
-.bins.stamp:
-	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE)
+.bins.windows.stamp:
+	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=windows
 	touch $@
+
+.bins.linux.stamp:
+	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=linux
+	touch $@
+
 
 .PHONY: lint
 lint: pkg/assets/zz_generated_offsets.go
@@ -77,3 +90,6 @@ manifests:
 bindata-manifests:
 	go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
+.PHONY: generate-bindata
+generate-bindata:
+	GOOS=${GOHOSTOS} TARGET_OS=${GOOS} go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${GOOS}/ embedded-bins/staging/${GOOS}/bin

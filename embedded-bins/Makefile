@@ -6,13 +6,24 @@ kine_version = 0.6.0
 etcd_version = 3.4.14
 konnectivity_version = 0.0.14
 
-bindir = staging/linux/bin
-bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
-
-buildmode = docker
-
 GOOS ?= linux
 export GOOS
+
+TARGET_OS ?= linux
+export TARGET_OS
+
+bindir = staging/${TARGET_OS}/bin
+posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
+windows_bins = kubelet.exe
+buildmode = docker
+
+
+
+ifeq ($(TARGET_OS),windows)
+bins = ${windows_bins}
+else
+bins = ${posix_bins}
+endif
 
 .PHONY: all
 all: $(addprefix $(bindir)/, $(bins))
@@ -50,6 +61,8 @@ $(bindir)/kine: .container.kine
 $(bindir)/konnectivity-server: .container.konnectivity
 $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
 
+$(bindir)/kubelet.exe: .container.kubernetes.windows
+
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
@@ -57,8 +70,16 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker create k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
+.container.%.windows: .docker-image.%.windows.stamp
+	docker create k0sbuild$(basename $<) > $@.tmp
+	mv $@.tmp $@
+
 .docker-image.%.stamp: %/Dockerfile Makefile
 	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
+	touch $@
+
+.docker-image.%.windows.stamp: %/Dockerfile.windows
+	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile.windows,%,$<)_version) -f $< .
 	touch $@
 
 else

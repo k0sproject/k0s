@@ -1,5 +1,3 @@
-// +build windows
-
 /*
 Copyright 2020 Mirantis, Inc.
 
@@ -20,6 +18,8 @@ package supervisor
 
 import "syscall"
 
-func DetachAttr() *syscall.SysProcAttr {
+// DetachAttr creates the proper syscall attributes to run the managed processes
+// on windows it doesn't use any arguments but just to keep signature similar
+func DetachAttr(int, int) *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{}
 }
