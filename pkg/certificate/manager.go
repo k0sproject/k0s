@@ -93,7 +93,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		paths := []string{filepath.Dir(keyFile), keyFile, certFile}
 		for _, path := range paths {
 			err = os.Chown(path, -1, gid)
-			if err != nil {
+			if err != nil && os.Geteuid() == 0 {
 				logrus.Warning(err)
 			}
 		}
@@ -167,11 +167,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		}
 
 		err = os.Chown(keyFile, uid, gid)
-		if err != nil {
+		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
 		err = os.Chown(certFile, uid, gid)
-		if err != nil {
+		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
 

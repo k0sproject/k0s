@@ -50,7 +50,7 @@ const (
 	// ManifestsDir defines the location for all stack manifests
 	ManifestsDir = "/var/lib/k0s/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
-	ManifestsDirMode = 0644
+	ManifestsDirMode = 0755
 	// KineSocket is the unix socket path for kine
 	KineSocketPath = "/run/k0s/kine/kine.sock:2379"
 

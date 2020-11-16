@@ -83,7 +83,7 @@ func Stage(dataDir string, name string, filemode os.FileMode, group string) erro
 		for _, path := range []string{dataDir, filepath.Dir(p)} {
 			logrus.Debugf("setting group ownership for %s to %d", path, gid)
 			err := os.Chown(path, -1, gid)
-			if err != nil {
+			if err != nil && os.Geteuid() == 0 {
 				return err
 			}
 		}

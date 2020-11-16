@@ -80,7 +80,7 @@ func (e *Etcd) Init() error {
 
 	for _, f := range []string{constant.EtcdDataDir, constant.EtcdCertDir} {
 		err = os.Chown(f, e.uid, e.gid)
-		if err != nil {
+		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
 	}
@@ -90,7 +90,7 @@ func (e *Etcd) Init() error {
 		"server.crt",
 		"server.key",
 	} {
-		if err := os.Chown(path.Join(constant.EtcdCertDir, f), e.uid, e.gid); err != nil {
+		if err := os.Chown(path.Join(constant.EtcdCertDir, f), e.uid, e.gid); err != nil && os.Geteuid() == 0 {
 			// TODO: directory may not yet exist. log it and wait for retry for now
 			logrus.Errorf("failed to chown %s: %s", f, err)
 		}
@@ -154,7 +154,7 @@ func (e *Etcd) Run() error {
 				return err
 			}
 			for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-				if err := os.Chown(f, e.uid, e.gid); err != nil {
+				if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
 					return err
 				}
 			}
