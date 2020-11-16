@@ -77,38 +77,6 @@ While some Kubernetes distros package everything and the kitchen sink in, k0s tr
 
 With strong enough arguments we might take in new addons but in general those should be something that are essential for the "core" of k0s.
 
-## Build
-
-`k0s` can be built in 3 different ways:
-
-Fetch official binaries (except `kine` and `konnectivity-server`, which are built from source):
-```
-make EMBEDDED_BINS_BUILDMODE=fetch
-```
-
-Build Kubernetes components from source as static binaries (requires docker):
-```
-make EMBEDDED_BINS_BUILDMODE=docker
-```
-
-Build k0s without any embedded binaries (requires that Kubernetes
-binaries are pre-installed on the runtime system):
-```
-make EMBEDDED_BINS_BUILDMODE=none
-```
-
-Builds can be done in parallel:
-```
-make -j$(nproc)
-```
-
-## Smoke test
-
-To run a smoke test after build:
-```
-make check-basic
-```
-
 ## Cluster bootstrapping
 
 Move the built `k0s` binary to each of the nodes.
@@ -148,4 +116,36 @@ That's it, in a minute or so there should be controller+worker combo running in 
 Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://k8slens.dev/). ;)
 
 Read more details at [running k0s in Docker](docs/k0s-in-docker.md).
+
+## Build
+
+`k0s` can be built in 3 different ways:
+
+Fetch official binaries (except `kine` and `konnectivity-server`, which are built from source):
+```
+make EMBEDDED_BINS_BUILDMODE=fetch
+```
+
+Build Kubernetes components from source as static binaries (requires docker):
+```
+make EMBEDDED_BINS_BUILDMODE=docker
+```
+
+Build k0s without any embedded binaries (requires that Kubernetes
+binaries are pre-installed on the runtime system):
+```
+make EMBEDDED_BINS_BUILDMODE=none
+```
+
+Builds can be done in parallel:
+```
+make -j$(nproc)
+```
+
+## Smoke test
+
+To run a smoke test after build:
+```
+make check-basic
+```
 
