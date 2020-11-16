@@ -1,7 +1,20 @@
 # Frequently asked questions
 
-### When will k0s be released as open source?
+### How is k0s promounced?
 
-k0s will be released as open source as soon as possible.
+kay-zero-ess
 
+### How do I run a single node cluster?
+
+`k0s server --enable-worker`
+
+### How do I connect to the cluster?
+
+You find the config in `/var/lib/k0s/pki/admin.conf`. Copy this and
+change the `localhost` to the public ip of the controller. Use the
+modified config to connect with kubectl:
+```
+export KUBECONFIG=/path/to/admin.conf
+kubectl ...
+```
 
