@@ -98,6 +98,8 @@ Join a new worker node to the cluster by running:
 k0s worker "superlongtokenfrompreviousphase"
 ```
 
+The client config (for kubectl or lens) can be found in `/var/lib/k0s/pki/admin.conf` on the controller. Replace `localhost` with the public IP address for the control plane.
+
 For more detailed description see [creating cluster documentation](docs/create-cluster.md).
 
 ### k0s-in-docker
