@@ -7,9 +7,18 @@
 
 ![k0s logo](k0s-logo-full-color.svg)
 
-k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
+k0s is an all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
 
-k0s is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
+## Key Features
+
+- Packaged as a single static binary
+- Self-hosted, isolated control plane
+- Variety of storage backends: etcd, SQLite, MySQL (or any compatible), PostgreSQL
+- Elastic control-plane
+- Vanilla upstream Kubernetes
+- Supports custom container runtimes (containerd is the default)
+- Supports custom Container Network Interface (CNI) plugins (calico is the default)
+- Supports x86_64 and arm64
 
 ![k0s demo](k0s_demo.gif)
 
@@ -30,18 +39,9 @@ _We have seen Kubernetes with cumbersome lifecycle management, high minimum syst
 **&rarr;** k0s Kubernetes is designed to be lightweight at its core. It comes with a tool to automate cluster lifecycle management. It works on any host OS and infrastructure, and may be extended to work with any use cases such as edge, IoT, telco, public clouds, private data centers, and hybrid & hyper converged cloud applications without sacrificing the pure Kubernetes compliance or amazing developer experience.
 
 
-Some of the high level goals of the project:
-- Packaged as a single binary
-- Self-hosted, isolated control plane
-- Variety of storage backends: etcd, SQLite, MySQL (or any compatible), PostgreSQL
-- Elastic control-plane
-- Vanilla upstream Kubernetes
 
-See more in [architecture docs](docs/architecture.md)
+## Other Features
 
-## Features
-
-- One static binary
 - Kubernetes 1.19
 - Containerd 1.4
 - Control plane storage options:
@@ -60,6 +60,8 @@ See more in [architecture docs](docs/architecture.md)
 - CoreDNS 1.7
 - Metrics-server 0.3
 - Custom roles\profiles for worker nodes
+
+See more in [architecture docs](docs/architecture.md)
 
 ## Status
 
