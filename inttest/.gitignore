@@ -1,2 +1,3 @@
 **/*.tar.gz
 bin/
+.*.stamp

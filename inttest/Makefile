@@ -19,6 +19,7 @@ bin/sonobuoy: | bin
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
 	docker build -t footloose-alpine -f $< $(dir $<)
+	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
