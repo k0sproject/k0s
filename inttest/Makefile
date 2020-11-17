@@ -28,10 +28,14 @@ check-network-vm: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
 		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
+TIMEOUT ?= 3m
 smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-singlenode
+
+check-byocri: TIMEOUT=5m
+
 .PHONY: $(smoketests)
 $(smoketests): .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean
 clean:
