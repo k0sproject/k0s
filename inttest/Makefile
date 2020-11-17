@@ -19,6 +19,7 @@ bin/sonobuoy: | bin
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
 	docker build -t footloose-alpine -f $< $(dir $<)
+	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
@@ -28,23 +29,14 @@ check-network-vm: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
 		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
-check-basic: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/basic
+TIMEOUT ?= 3m
+smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-singlenode
 
-check-byocri: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 5m github.com/k0sproject/k0s/inttest/byocri
+check-byocri: TIMEOUT=5m
 
-check-hacontrolplane: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/hacontrolplane
-
-check-addons: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/addons
-
-check-singlenode: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/singlenode
-
-check-kine: .footloose-alpine.stamp
-	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout 3m github.com/k0sproject/k0s/inttest/kine
+.PHONY: $(smoketests)
+$(smoketests): .footloose-alpine.stamp
+	K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean
 clean:

@@ -55,33 +55,10 @@ embedded-bins/staging/linux/bin: .bins.stamp
 lint: pkg/assets/zz_generated_offsets.go
 	$(golint) run ./...
 
-.PHONY: check-network
-check-network: k0s
-	$(MAKE) -C inttest check-network
-
-.PHONY: check-basic
-check-basic: k0s
-	$(MAKE) -C inttest check-basic
-
-.PHONY: check-byocri
-check-byocri: k0s
-	$(MAKE) -C inttest check-byocri
-
-.PHONY: check-basic
-check-hacontrolplane: k0s
-	$(MAKE) -C inttest check-hacontrolplane
-
-.PHONY:
-check-addons: k0s
-	$(MAKE) -C inttest check-addons
-
-.PHONY:
-check-singlenode: k0s
-	$(MAKE) -C inttest check-singlenode
-
-.PHONY: check-kine
-check-kine: k0s
-	$(MAKE) -C inttest check-kine
+smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-network check-singlenode
+.PHONY: $(smoketests)
+$(smoketests): k0s
+	$(MAKE) -C inttest $@
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets.go
