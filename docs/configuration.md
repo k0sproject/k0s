@@ -69,19 +69,20 @@ images:
 telemetry:
   interval: 10m0s
   enabled: true
-helm:
-  repositories:
-  - name: stable
-    url: https://charts.helm.sh/stable
-  - name: prometheus-community
-    url: https://prometheus-community.github.io/helm-charts
-  charts:
-  - name: prometheus-stack
-    chartname: prometheus-community/prometheus
-    version: "11.16.8"
-    values: |2
-        values: "for overriding"
-    namespace: default
+extensions:
+  helm:
+    repositories:
+    - name: stable
+      url: https://charts.helm.sh/stable
+    - name: prometheus-community
+      url: https://prometheus-community.github.io/helm-charts
+    charts:
+    - name: prometheus-stack
+      chartname: prometheus-community/prometheus
+      version: "11.16.8"
+      values: |2
+          values: "for overriding"
+      namespace: default
 ```
 
 ### `spec.storage`
@@ -183,7 +184,7 @@ In the runtime the image name will be calculated as `my.own.repo/calico/kube-con
 ### Telemetry
 
 To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as `false`
-The default interval is 2 minutes, any valid value for `time.Duration` string representation can be used as a value.
+The default interval is 10 minutes, any valid value for `time.Duration` string representation can be used as a value.
 Example
 ```
 telemetry:
@@ -191,31 +192,42 @@ telemetry:
   enabled: true
 ```
 
-### Addons
+### Extensions
 
-It is possible to bundle 3rd party helm charts with your cluster. 
+As stated in the [project scope](../README.md#scope) we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
+
+To run k0s easily with your preferred extensions you have two options.
+
+1. Dump all needed extension manifest under `/var/lib/k0s/manifests/my-extension`. Read more on this approach [here](manifests.md).
+2. Define your extensions as [Helm charts](https://helm.sh/):
 
 ```
-helm:
-  repositories:
-  - name: stable
-    url: https://charts.helm.sh/stable
-  - name: prometheus-community
-    url: https://prometheus-community.github.io/helm-charts
-  charts:
-  - name: prometheus-stack
-    chartname: prometheus-community/prometheus
-    version: "11.16.8"
-    values: |2
-        values: "for overriding"
-    namespace: default
+extensions:
+  helm:
+    repositories:
+    - name: stable
+      url: https://charts.helm.sh/stable
+    - name: prometheus-community
+      url: https://prometheus-community.github.io/helm-charts
+    charts:
+    - name: prometheus-stack
+      chartname: prometheus-community/prometheus
+      version: "11.16.8"
+      values: |2
+          values: "for overriding"
+      namespace: default
 ```
+
+This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
+
+Some examples what you could use as extension charts:
+- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart), 
+- Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
+- Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
+
 
 ## Configuring multi-node controlplane
 
-When configuring an elastic/HA controlplane one must use same configuration options on each node for the cluster level options. Following options need to match on each node, otherwise the control plane component will end up in very unknown states:
+When configuring an elastic/HA controlplane one must use same configuration options on each node for the cluster level options. Following options need to match on each node, otherwise the control plane components will end up in very unknown states:
 - `network`
 - `storage`: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.
-
- 
- 
