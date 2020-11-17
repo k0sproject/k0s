@@ -20,6 +20,14 @@ k0s is an all-inclusive Kubernetes distribution with all the required bells and 
 - Supports custom Container Network Interface (CNI) plugins (calico is the default)
 - Supports x86_64 and arm64
 
+## Quick start
+
+```
+curl -sSLf get.k0s.sh | sh
+k0s server --enable-worker
+```
+
+
 ![k0s demo](k0s_demo.gif)
 
 ## Motivation
