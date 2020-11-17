@@ -77,7 +77,7 @@ func (k *Kine) Init() error {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}
-	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode)
 }
 
 // Run runs kine

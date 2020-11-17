@@ -74,7 +74,7 @@ func (a *APIServer) Init() error {
 	}
 	a.gid, _ = util.GetGID(constant.Group)
 
-	return assets.Stage(constant.BinDir, "kube-apiserver", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kube-apiserver", constant.BinDirMode)
 }
 
 // Run runs kube api

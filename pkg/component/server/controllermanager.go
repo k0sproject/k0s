@@ -65,7 +65,7 @@ func (a *ControllerManager) Init() error {
 		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
 	}
 
-	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode)
 }
 
 // Run runs kube ControllerManager

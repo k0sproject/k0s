@@ -46,7 +46,7 @@ func (a *Scheduler) Init() error {
 	}
 	a.gid, _ = util.GetGID(constant.Group)
 
-	return assets.Stage(constant.BinDir, "kube-scheduler", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kube-scheduler", constant.BinDirMode)
 }
 
 // Run runs kube scheduler

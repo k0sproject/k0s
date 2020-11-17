@@ -96,7 +96,7 @@ func (e *Etcd) Init() error {
 		}
 	}
 
-	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode)
 }
 
 // Run runs etcd
