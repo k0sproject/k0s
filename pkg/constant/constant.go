@@ -42,7 +42,7 @@ const (
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
 	// RunDir defines the location of supervised pid files and sockets
-	RunDir = "/run/k0s"
+	RunDir = "/var/lib/k0s/run"
 	// RunDirMode is the expected permissions of RunDir
 	RunDirMode = 0755
 	// PidFileMode is the expected file permissions for pid files
@@ -52,8 +52,7 @@ const (
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0755
 	// KineSocket is the unix socket path for kine
-	KineSocketPath = "/run/k0s/kine/kine.sock:2379"
-
+	KineSocketPath = "/var/lib/k0s/run/kine/kine.sock:2379"
 	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletBootstrapConfigPath = "/var/lib/k0s/kubelet-bootstrap.conf"
 	// KubeletAuthConfigPath defines the default kubelet auth config path
