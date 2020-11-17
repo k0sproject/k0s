@@ -108,7 +108,7 @@ For more detailed description see [creating cluster documentation](docs/create-c
 
 To run a single node controller+worker combo, just run it in docker with:
 ```
-docker run -d --name k0s-controller --hostname controller --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+docker run -d --name k0s-controller --hostname controller --privileged -v /var/lib/k0s -p 6443:6443 k0sproject/k0s
 ```
 
 Replace `<version>` with a released version number, we build the image for all tagged releases.
