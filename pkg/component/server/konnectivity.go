@@ -48,7 +48,6 @@ func (k *Konnectivity) Init() error {
 		logrus.Warning(fmt.Errorf("Running konnectivity as root: %v", err))
 	}
 
-	k.gid, _ = util.GetGID(constant.Group)
 	err = util.InitDirectory(konnectivitySocketDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to initialize directory %s: %v", konnectivitySocketDir, err)

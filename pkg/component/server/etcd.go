@@ -66,7 +66,6 @@ func (e *Etcd) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
-	e.gid, _ = util.GetGID(constant.Group)
 
 	err = util.InitDirectory(constant.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {

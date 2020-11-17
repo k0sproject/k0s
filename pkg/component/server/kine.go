@@ -49,8 +49,6 @@ func (k *Kine) Init() error {
 		logrus.Warning(errors.Wrap(err, "Running kine as root"))
 	}
 
-	k.gid, _ = util.GetGID(constant.Group)
-
 	err = util.InitDirectory(kineSocketDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", kineSocketDir)

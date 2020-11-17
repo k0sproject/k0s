@@ -57,7 +57,6 @@ func (a *ControllerManager) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
 	}
-	a.gid, _ = util.GetGID(constant.Group)
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.

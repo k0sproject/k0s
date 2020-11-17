@@ -44,7 +44,6 @@ func (a *Scheduler) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-scheduler as root"))
 	}
-	a.gid, _ = util.GetGID(constant.Group)
 
 	return assets.Stage(constant.BinDir, "kube-scheduler", constant.BinDirMode)
 }

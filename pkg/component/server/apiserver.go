@@ -72,7 +72,6 @@ func (a *APIServer) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-apiserver as root"))
 	}
-	a.gid, _ = util.GetGID(constant.Group)
 
 	return assets.Stage(constant.BinDir, "kube-apiserver", constant.BinDirMode)
 }
