@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -81,17 +80,6 @@ func (e *Etcd) Init() error {
 		err = os.Chown(f, e.uid, e.gid)
 		if err != nil && os.Geteuid() == 0 {
 			return err
-		}
-	}
-
-	for _, f := range []string{
-		"ca.crt",
-		"server.crt",
-		"server.key",
-	} {
-		if err := os.Chown(path.Join(constant.EtcdCertDir, f), e.uid, e.gid); err != nil && os.Geteuid() == 0 {
-			// TODO: directory may not yet exist. log it and wait for retry for now
-			logrus.Errorf("failed to chown %s: %s", f, err)
 		}
 	}
 
