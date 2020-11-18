@@ -18,7 +18,7 @@ RUN echo "#!/bin/sh" > /etc/local.d/machine-id.start \
        && echo "fi" >> /etc/local.d/machine-id.start \
        && chmod +x /etc/local.d/machine-id.start
 
-RUN for i in etcd kube-apiserver; do \
+RUN for i in etcd kube-apiserver kube-controller-manager kube-scheduler konnectivity-server; do \
         adduser -H -S -s /sbin/nologin $i; \
     done
 

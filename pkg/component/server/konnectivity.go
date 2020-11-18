@@ -18,9 +18,8 @@ package server
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -39,15 +38,27 @@ type Konnectivity struct {
 	LogLevel      string
 }
 
+var konnectivitySocketDir = filepath.Join(constant.RunDir, "konnectivity-server")
+
 // Init ...
 func (k *Konnectivity) Init() error {
 	var err error
 	k.uid, err = util.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running konnectivity as root"))
+		logrus.Warning(fmt.Errorf("Running konnectivity as root: %v", err))
 	}
 
 	k.gid, _ = util.GetGID(constant.Group)
+
+	err = util.InitDirectory(konnectivitySocketDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to initialize directory %s: %v", konnectivitySocketDir, err)
+	}
+
+	err = os.Chown(konnectivitySocketDir, k.uid, k.gid)
+	if err != nil && os.Geteuid() == 0 {
+		return fmt.Errorf("failed to chown %s: %v", konnectivitySocketDir, err)
+	}
 
 	return assets.Stage(constant.BinDir, "konnectivity-server", constant.BinDirMode, constant.Group)
 }
@@ -60,9 +71,9 @@ func (k *Konnectivity) Run() error {
 		BinPath: assets.BinPath("konnectivity-server"),
 		Dir:     constant.DataDir,
 		Args: []string{
-			fmt.Sprintf("--uds-name=%s", path.Join(constant.RunDir, "konnectivity-server.sock")),
-			fmt.Sprintf("--cluster-cert=%s", path.Join(constant.CertRootDir, "server.crt")),
-			fmt.Sprintf("--cluster-key=%s", path.Join(constant.CertRootDir, "server.key")),
+			fmt.Sprintf("--uds-name=%s", filepath.Join(konnectivitySocketDir, "konnectivity-server.sock")),
+			fmt.Sprintf("--cluster-cert=%s", filepath.Join(constant.CertRootDir, "server.crt")),
+			fmt.Sprintf("--cluster-key=%s", filepath.Join(constant.CertRootDir, "server.key")),
 			fmt.Sprintf("--kubeconfig=%s", constant.AdminKubeconfigConfigPath), // FIXME: should have user rights
 			"--mode=grpc",
 			"--server-port=0",
@@ -97,7 +108,7 @@ type konnectivityAgentConfig struct {
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
-	konnectivityDir := path.Join(constant.ManifestsDir, "konnectivity")
+	konnectivityDir := filepath.Join(constant.ManifestsDir, "konnectivity")
 	err := os.MkdirAll(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
@@ -110,11 +121,11 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 			APIAddress: k.ClusterConfig.Spec.API.Address,
 			Image:      k.ClusterConfig.Images.Konnectivity.URI(),
 		},
-		Path: path.Join(konnectivityDir, "konnectivity-agent.yaml"),
+		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}
 	err = tw.Write()
 	if err != nil {
-		return errors.Wrap(err, "failed to write konnectivity agent manifest")
+		return fmt.Errorf("failed to write konnectivity agent manifest: %v", err)
 	}
 
 	return nil
