@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -48,6 +49,7 @@ import (
 func init() {
 	serverCmd.Flags().StringVar(&serverWorkerProfile, "profile", "default", "worker profile to use on the node")
 	serverCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
+	serverCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 }
 
 var (
@@ -58,10 +60,30 @@ var (
 	serverCmd = &cobra.Command{
 		Use:   "server [join-token]",
 		Short: "Run server",
+		Example: `	Command to associate master nodes:
+	CLI agument:
+	$ k0s server [join-token]
+
+	or CLI flag:
+	$ k0s server --token-file [path_to_file]
+	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				serverToken = args[0]
 			}
+
+			if len(serverToken) > 0 && len(tokenFile) > 0 {
+				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s server [join-token]' or as a flag 'k0s server --token-file [path]'")
+			}
+
+			if len(tokenFile) > 0 {
+				bytes, err := ioutil.ReadFile(tokenFile)
+				if err != nil {
+					return err
+				}
+				serverToken = string(bytes)
+			}
+
 			return startServer(serverToken)
 		},
 	}

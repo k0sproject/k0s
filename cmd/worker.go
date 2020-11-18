@@ -52,6 +52,13 @@ var (
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",
 		Short: "Run worker",
+		Example: `	Command to add worker node to the master node:
+	CLI agument:
+	$ k0s worker [token]
+
+	or CLI flag:
+	$ k0s worker --token-file [path_to_file]
+	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				tokenArg = args[0]
@@ -68,12 +75,7 @@ var (
 				}
 				tokenArg = string(bytes)
 			}
-
-			err := startWorker(tokenArg)
-			if err != nil {
-				return err
-			}
-			return nil
+			return startWorker(tokenArg)
 		},
 	}
 )
