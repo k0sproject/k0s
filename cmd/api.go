@@ -27,17 +27,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
-
 	"github.com/gorilla/mux"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 var (
@@ -58,7 +56,7 @@ func startAPI() error {
 		return err
 	}
 
-	kubeClient, err = kubernetes.Client(constant.AdminKubeconfigConfigPath)
+	kubeClient, err = kubernetes.Client(k0sVars.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
@@ -84,8 +82,8 @@ func startAPI() error {
 	}
 
 	log.Fatal(srv.ListenAndServeTLS(
-		filepath.Join(constant.CertRootDir, "k0s-api.crt"),
-		filepath.Join(constant.CertRootDir, "k0s-api.key"),
+		filepath.Join(k0sVars.CertRootDir, "k0s-api.crt"),
+		filepath.Join(k0sVars.CertRootDir, "k0s-api.key"),
 	))
 
 	return nil
@@ -107,7 +105,7 @@ func etcdHandler() http.Handler {
 			return
 		}
 
-		etcdClient, err := etcd.NewClient()
+		etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -123,7 +121,7 @@ func etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(constant.EtcdCertDir, "ca.crt"), filepath.Join(constant.EtcdCertDir, "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(k0sVars.EtcdCertDir, "ca.crt"), filepath.Join(k0sVars.EtcdCertDir, "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
@@ -152,27 +150,27 @@ func caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		caResp := v1beta1.CaResponse{}
-		key, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.key"))
+		key, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))
+		crt, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "sa.key"))
+		saKey, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "sa.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "sa.pub"))
+		saPub, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "sa.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return

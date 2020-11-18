@@ -22,10 +22,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // ExecutableIsOlder return true if currently running executable is older than given filepath
@@ -49,9 +49,9 @@ func ExecutableIsOlder(filepath string) bool {
 // - in the BinDir folder,
 // - in the PATH.
 // The first to be found is the one returned.
-func BinPath(name string) string {
+func BinPath(name string, binDir string) string {
 	// Look into the BinDir folder.
-	path := filepath.Join(constant.BinDir, name)
+	path := filepath.Join(binDir, name)
 	if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
 		return path
 	}

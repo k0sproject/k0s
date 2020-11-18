@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -36,21 +37,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	etcdCaCert     = filepath.Join(constant.EtcdCertDir, "ca.crt")
-	etcdCaCertKey  = filepath.Join(constant.EtcdCertDir, "ca.key")
-	etcdServerCert = filepath.Join(constant.EtcdCertDir, "server.crt")
-	etcdServerKey  = filepath.Join(constant.EtcdCertDir, "server.key")
-	etcdPeerCert   = filepath.Join(constant.EtcdCertDir, "peer.crt")
-	etcdPeerKey    = filepath.Join(constant.EtcdCertDir, "peer.key")
-)
-
 // Etcd implement the component interface to run etcd
 type Etcd struct {
+	CertManager certificate.Manager
 	Config      *config.EtcdConfig
 	Join        bool
 	JoinClient  *v1beta1.JoinClient
-	CertManager certificate.Manager
+	K0sVars     constant.CfgVars
 	LogLevel    string
 
 	supervisor supervisor.Supervisor
@@ -66,28 +59,45 @@ func (e *Etcd) Init() error {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
 
-	err = util.InitDirectory(constant.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
+	err = util.InitDirectory(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", constant.EtcdDataDir)
+		return errors.Wrapf(err, "failed to create %s", e.K0sVars.EtcdDataDir)
 	}
 
-	err = util.InitDirectory(constant.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
+	err = util.InitDirectory(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 	if err != nil {
 		return errors.Wrapf(err, "failed to create etcd cert dir")
 	}
 
-	for _, f := range []string{constant.EtcdDataDir, constant.EtcdCertDir} {
+	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
 		err = os.Chown(f, e.uid, e.gid)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
 	}
 
-	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode)
+	for _, f := range []string{
+		"ca.crt",
+		"server.crt",
+		"server.key",
+	} {
+		if err := os.Chown(path.Join(e.K0sVars.EtcdCertDir, f), e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+			// TODO: directory may not yet exist. log it and wait for retry for now
+			logrus.Errorf("failed to chown %s: %s", f, err)
+		}
+	}
+	return assets.Stage(e.K0sVars.BinDir, "etcd", constant.BinDirMode)
 }
 
 // Run runs etcd
 func (e *Etcd) Run() error {
+	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
+	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
+	etcdServerCert := filepath.Join(e.K0sVars.EtcdCertDir, "server.crt")
+	etcdServerKey := filepath.Join(e.K0sVars.EtcdCertDir, "server.key")
+	etcdPeerCert := filepath.Join(e.K0sVars.EtcdCertDir, "peer.crt")
+	etcdPeerKey := filepath.Join(e.K0sVars.EtcdCertDir, "peer.key")
+
 	logrus.Info("Starting etcd")
 
 	name, err := os.Hostname()
@@ -97,7 +107,7 @@ func (e *Etcd) Run() error {
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
 	args := []string{
-		fmt.Sprintf("--data-dir=%s", constant.EtcdDataDir),
+		fmt.Sprintf("--data-dir=%s", e.K0sVars.EtcdDataDir),
 		"--listen-client-urls=https://127.0.0.1:2379",
 		"--advertise-client-urls=https://127.0.0.1:2379",
 		"--client-cert-auth=true",
@@ -115,7 +125,7 @@ func (e *Etcd) Run() error {
 		"--enable-pprof=false",
 	}
 
-	if util.FileExists(filepath.Join(constant.EtcdDataDir, "member", "snap", "db")) {
+	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 		e.Join = false
 	}
@@ -159,8 +169,9 @@ func (e *Etcd) Run() error {
 
 	e.supervisor = supervisor.Supervisor{
 		Name:    "etcd",
-		BinPath: assets.BinPath("etcd"),
-		Dir:     constant.DataDir,
+		BinPath: assets.BinPath("etcd", e.K0sVars.BinDir),
+		RunDir:  e.K0sVars.RunDir,
+		DataDir: e.K0sVars.DataDir,
 		Args:    args,
 		UID:     e.uid,
 		GID:     e.gid,
@@ -177,6 +188,9 @@ func (e *Etcd) Stop() error {
 }
 
 func (e *Etcd) setupCerts() error {
+	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
+	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
+
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
 		return errors.Wrap(err, "failed to create etcd ca")
 	}
@@ -231,14 +245,14 @@ func (e *Etcd) setupCerts() error {
 
 // Health-check interface
 func (e *Etcd) Healthy() error {
-	if err := waitForHealthy(); err != nil {
+	if err := waitForHealthy(e.K0sVars); err != nil {
 		return err
 	}
 	return nil
 }
 
 // waitForHealthy waits until etcd is healthy and returns true upon success. If a timeout occurs, it returns false
-func waitForHealthy() error {
+func waitForHealthy(k0sVars constant.CfgVars) error {
 	log := logrus.WithField("component", "etcd")
 	ctx, cancelFunction := context.WithTimeout(context.Background(), 2*time.Minute)
 
@@ -251,7 +265,7 @@ func waitForHealthy() error {
 		select {
 		case <-ticker.C:
 			log.Debug("checking etcd endpoint for health")
-			err := etcd.CheckEtcdReady()
+			err := etcd.CheckEtcdReady(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
 			if err != nil {
 				log.Errorf("health-check: etcd might be down: %v", err)
 			} else {

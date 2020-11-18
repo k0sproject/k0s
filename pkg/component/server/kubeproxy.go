@@ -33,15 +33,17 @@ type KubeProxy struct {
 	tickerDone  chan struct{}
 	log         *logrus.Entry
 	clusterConf *config.ClusterConfig
+	K0sVars     constant.CfgVars
 }
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(clusterSpec *config.ClusterConfig) (*KubeProxy, error) {
+func NewKubeProxy(clusterSpec *config.ClusterConfig, k0sVars constant.CfgVars) (*KubeProxy, error) {
 
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
 	return &KubeProxy{
 		log:         log,
 		clusterConf: clusterSpec,
+		K0sVars:     k0sVars,
 	}, nil
 }
 
@@ -55,7 +57,7 @@ func (k *KubeProxy) Run() error {
 
 	k.tickerDone = make(chan struct{})
 
-	proxyDir := path.Join(constant.ManifestsDir, "kubeproxy")
+	proxyDir := path.Join(k.K0sVars.ManifestsDir, "kubeproxy")
 	err := os.MkdirAll(proxyDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

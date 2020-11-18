@@ -18,7 +18,6 @@ package server
 import (
 	"fmt"
 	"path"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -34,11 +33,12 @@ import (
 // APIServer implement the component interface to run kube api
 type APIServer struct {
 	ClusterConfig *config.ClusterConfig
+	K0sVars       constant.CfgVars
+	LogLevel      string
 	Storage       component.Component
+	gid           int
 	supervisor    supervisor.Supervisor
 	uid           int
-	gid           int
-	LogLevel      string
 }
 
 var apiDefaultArgs = map[string]string{
@@ -73,8 +73,7 @@ func (a *APIServer) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-apiserver as root"))
 	}
-
-	return assets.Stage(constant.BinDir, "kube-apiserver", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, "kube-apiserver", constant.BinDirMode)
 }
 
 // Run runs kube api
@@ -89,21 +88,21 @@ func (a *APIServer) Run() error {
 		args := map[string]string{
 			"advertise-address":                a.ClusterConfig.Spec.API.Address,
 			"authorization-mode":               "Node,RBAC",
-			"client-ca-file":                   path.Join(constant.CertRootDir, "ca.crt"),
+			"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 			"enable-bootstrap-token-auth":      "true",
-			"kubelet-client-certificate":       path.Join(constant.CertRootDir, "apiserver-kubelet-client.crt"),
-			"kubelet-client-key":               path.Join(constant.CertRootDir, "apiserver-kubelet-client.key"),
+			"kubelet-client-certificate":       path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.crt"),
+			"kubelet-client-key":               path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.key"),
 			"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
-			"proxy-client-cert-file":           path.Join(constant.CertRootDir, "front-proxy-client.crt"),
-			"proxy-client-key-file":            path.Join(constant.CertRootDir, "front-proxy-client.key"),
+			"proxy-client-cert-file":           path.Join(a.K0sVars.CertRootDir, "front-proxy-client.crt"),
+			"proxy-client-key-file":            path.Join(a.K0sVars.CertRootDir, "front-proxy-client.key"),
 			"requestheader-allowed-names":      "front-proxy-client",
-			"requestheader-client-ca-file":     path.Join(constant.CertRootDir, "front-proxy-ca.crt"),
-			"service-account-key-file":         path.Join(constant.CertRootDir, "sa.pub"),
+			"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
+			"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
 			"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
-			"tls-cert-file":                    path.Join(constant.CertRootDir, "server.crt"),
-			"tls-private-key-file":             path.Join(constant.CertRootDir, "server.key"),
-			"egress-selector-config-file":      path.Join(constant.DataDir, "konnectivity.conf"),
-			"service-account-signing-key-file": path.Join(constant.CertRootDir, "sa.key"),
+			"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
+			"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
+			"egress-selector-config-file":      path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
+			"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
 			"service-account-issuer":           "api",
 			"api-audiences":                    "system:konnectivity-server",
 			"insecure-port":                    "0",
@@ -130,7 +129,9 @@ func (a *APIServer) Run() error {
 
 		a.supervisor = supervisor.Supervisor{
 			Name:    "kube-apiserver",
-			BinPath: assets.BinPath("kube-apiserver"),
+			BinPath: assets.BinPath("kube-apiserver", a.K0sVars.BinDir),
+			RunDir:  a.K0sVars.RunDir,
+			DataDir: a.K0sVars.DataDir,
 			Args:    apiServerArgs,
 			UID:     a.uid,
 			GID:     a.gid,
@@ -138,13 +139,13 @@ func (a *APIServer) Run() error {
 		switch a.ClusterConfig.Spec.Storage.Type {
 		case config.KineStorageType:
 			a.supervisor.Args = append(a.supervisor.Args,
-				fmt.Sprintf("--etcd-servers=unix://%s", constant.KineSocketPath)) // kine endpoint
+				fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
 		case config.EtcdStorageType:
 			a.supervisor.Args = append(a.supervisor.Args,
 				"--etcd-servers=https://127.0.0.1:2379",
-				fmt.Sprintf("--etcd-cafile=%s", path.Join(constant.CertRootDir, "etcd/ca.crt")),
-				fmt.Sprintf("--etcd-certfile=%s", path.Join(constant.CertRootDir, "apiserver-etcd-client.crt")),
-				fmt.Sprintf("--etcd-keyfile=%s", path.Join(constant.CertRootDir, "apiserver-etcd-client.key")))
+				fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
+				fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
+				fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
 		default:
 			return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
 		}
@@ -159,9 +160,9 @@ func (a *APIServer) writeKonnectivityConfig() error {
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
 		Data: egressSelectorConfig{
-			UDSName: filepath.Join(konnectivitySocketDir, "konnectivity-server.sock"),
+			UDSName: path.Join(a.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		},
-		Path: path.Join(constant.DataDir, "konnectivity.conf"),
+		Path: path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
 	}
 	err := tw.Write()
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,8 +12,8 @@ import (
 )
 
 // CheckEtcdReady returns true if etcd responds to the metrics endpoint with a status code of 200
-func CheckEtcdReady() error {
-	c, err := NewClient()
+func CheckEtcdReady(certDir string, etcdCertDir string) error {
+	c, err := NewClient(certDir, etcdCertDir)
 	if err != nil {
 		logrus.Errorf("failed to initialize etcd client: %v", err)
 		return err
@@ -33,9 +34,9 @@ func CheckEtcdReady() error {
 	u.Path = "/metrics"
 
 	tr, err := transport.NewTransport(transport.TLSInfo{
-		CertFile:      etcdClientCertFile,
-		KeyFile:       etcdClientKeyFile,
-		TrustedCAFile: etcdTrustedCAFile,
+		CertFile:      filepath.Join(certDir, "apiserver-etcd-client.crt"),
+		KeyFile:       filepath.Join(certDir, "apiserver-etcd-client.key"),
+		TrustedCAFile: filepath.Join(etcdCertDir, "ca.crt"),
 	}, 5*time.Second)
 	if err != nil {
 		logrus.Errorf("error encountered setting up healthcheck TLS config: %v\n", err)

@@ -13,13 +13,18 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
 )
 
-var cfgFile string
-var debug bool
-var cmdLogLevels map[string]string
-var logging map[string]string
+var (
+	cfgFile      string
+	dataDir      string
+	debug        bool
+	cmdLogLevels map[string]string
+	logging      map[string]string
+	k0sVars      constant.CfgVars
+)
 
 var defaultLogLevels = map[string]string{
 	"etcd":                    "info",
@@ -33,6 +38,7 @@ var defaultLogLevels = map[string]string{
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
+	rootCmd.PersistentFlags().StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s)")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
 	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 
@@ -109,6 +115,10 @@ func initConfig() error {
 
 	// Add env vars to Config
 	viper.AutomaticEnv()
+
+	// Get relevant Vars from constant package
+	k0sVars = constant.GetConfig(dataDir)
+
 	return nil
 }
 

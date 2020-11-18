@@ -32,31 +32,32 @@ import (
 
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
-	client               kubernetes.Interface
 	applier              Applier
-	cancelWatcher        context.CancelFunc
-	cancelLeaderElection context.CancelFunc
-	log                  *logrus.Entry
 	bundlePath           string
+	cancelLeaderElection context.CancelFunc
+	cancelWatcher        context.CancelFunc
+	client               kubernetes.Interface
+	K0sVars              constant.CfgVars
+	log                  *logrus.Entry
 	stacks               map[string]*StackApplier
 }
 
 // Init initializes the Manager
 func (m *Manager) Init() error {
-	err := util.InitDirectory(constant.ManifestsDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create manifest bundle dir %s", constant.ManifestsDir)
+		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.K0sVars.ManifestsDir)
 	}
 	m.log = logrus.WithField("component", "applier-manager")
 	m.stacks = make(map[string]*StackApplier)
-	m.bundlePath = constant.ManifestsDir
+	m.bundlePath = m.K0sVars.ManifestsDir
 
-	m.applier = NewApplier(constant.ManifestsDir)
+	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.K0sVars.AdminKubeconfigConfigPath)
 	return err
 }
 
 func (m *Manager) retrieveKubeClient() error {
-	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(m.K0sVars.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}
@@ -184,7 +185,7 @@ func (m *Manager) createStack(name string) error {
 		return nil
 	}
 	m.log.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name)
+	sa, err := NewStackApplier(name, m.K0sVars.AdminKubeconfigConfigPath)
 	if err != nil {
 		return err
 	}

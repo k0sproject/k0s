@@ -20,6 +20,7 @@ import (
 	"os"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -27,8 +28,8 @@ import (
 type K0SControlAPI struct {
 	ConfigPath    string
 	ClusterConfig *config.ClusterConfig
-
-	supervisor supervisor.Supervisor
+	K0sVars       constant.CfgVars
+	supervisor    supervisor.Supervisor
 }
 
 // Init does currently nothing
@@ -43,6 +44,8 @@ func (m *K0SControlAPI) Run() error {
 	m.supervisor = supervisor.Supervisor{
 		Name:    "k0s-control-api",
 		BinPath: os.Args[0],
+		RunDir:  m.K0sVars.RunDir,
+		DataDir: m.K0sVars.DataDir,
 		Args: []string{
 			"api",
 			fmt.Sprintf("--config=%s", m.ConfigPath),

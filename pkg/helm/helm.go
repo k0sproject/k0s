@@ -2,8 +2,15 @@ package helm
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
+
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -12,17 +19,14 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
-	"io/ioutil"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 // Commands run different helm command in the same way as CLI tool
 type Commands struct {
 	repoFile     string
 	helmCacheDir string
+	kubeConfig   string
 }
 
 var getters = getter.Providers{
@@ -33,10 +37,11 @@ var getters = getter.Providers{
 }
 
 // NewCommands builds new Commands instance with default values
-func NewCommands() *Commands {
+func NewCommands(k0sVars constant.CfgVars) *Commands {
 	return &Commands{
-		repoFile:     constant.HelmRepositoryConfig,
-		helmCacheDir: constant.HelmRepositoryCache,
+		repoFile:     k0sVars.HelmRepositoryConfig,
+		helmCacheDir: k0sVars.HelmRepositoryCache,
+		kubeConfig:   k0sVars.AdminKubeconfigConfigPath,
 	}
 }
 
@@ -46,7 +51,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	cfg := &genericclioptions.ConfigFlags{
 		Insecure:         &insecure,
 		Timeout:          stringptr("0"),
-		KubeConfig:       stringptr(constant.AdminKubeconfigConfigPath),
+		KubeConfig:       stringptr(hc.kubeConfig),
 		CacheDir:         stringptr(hc.helmCacheDir),
 		Namespace:        stringptr(namespace),
 		ImpersonateGroup: &impersonateGroup,
@@ -59,8 +64,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 }
 
 func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
-	err := os.MkdirAll(filepath.Dir(hc.repoFile), os.ModePerm)
-
+	err := util.InitDirectory(filepath.Dir(hc.repoFile), constant.DataDirMode)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
@@ -114,8 +118,8 @@ func (hc *Commands) downloadDependencies(chart *chart.Chart, chartPath string) e
 			ChartPath:        chartPath,
 			SkipUpdate:       false,
 			Getters:          getters,
-			RepositoryConfig: constant.HelmRepositoryConfig,
-			RepositoryCache:  constant.HelmRepositoryCache,
+			RepositoryConfig: hc.repoFile,
+			RepositoryCache:  hc.helmCacheDir,
 			Debug:            false,
 		}
 		if err := man.Update(); err != nil {
@@ -147,8 +151,8 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 			//getter.WithTLSClientConfig(c.CertFile, c.KeyFile, c.CaFile),
 			//getter.WithInsecureSkipVerifyTLS(c.InsecureSkipTLSverify),
 		},
-		RepositoryConfig: constant.HelmRepositoryConfig,
-		RepositoryCache:  constant.HelmRepositoryCache,
+		RepositoryConfig: hc.repoFile,
+		RepositoryCache:  hc.helmCacheDir,
 	}
 	//if c.Verify {
 	//	dl.Verify = downloader.VerifyAlways
@@ -162,11 +166,11 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	//	name = chartURL
 	//}
 
-	if err := os.MkdirAll(constant.HelmRepositoryCache, 0755); err != nil {
+	if err := util.InitDirectory(hc.helmCacheDir, constant.DataDirMode); err != nil {
 		return "", fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
 	}
 
-	filename, _, err := dl.DownloadTo(name, version, constant.HelmRepositoryCache)
+	filename, _, err := dl.DownloadTo(name, version, hc.helmCacheDir)
 	if err == nil {
 		lname, err := filepath.Abs(filename)
 		if err != nil {

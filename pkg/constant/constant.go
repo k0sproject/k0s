@@ -15,21 +15,39 @@ limitations under the License.
 */
 package constant
 
+import "fmt"
+
+// CfgVars is a struct that holds all the config variables requried for K0s
+type CfgVars struct {
+	AdminKubeconfigConfigPath  string // The cluster admin kubeconfig location
+	BinDir                     string // location for all pki related binaries
+	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
+	DataDir                    string // Data directory containing k0s state
+	EtcdCertDir                string // EtcdCertDir contains etcd certificates
+	EtcdDataDir                string // EtcdDataDir contains etcd state
+	KineSocketPath             string // The unix socket path for kine
+	KonnectivitySocketDir      string // location of konnectivity's socket path
+	KubeletAuthConfigPath      string // KubeletAuthConfigPath defines the default kubelet auth config path
+	KubeletBootstrapConfigPath string // KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
+	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
+	ManifestsDir               string // location for all stack manifests
+	RunDir                     string // location of supervised pid files and sockets
+
+	// Helm config
+	HelmHome             string
+	HelmRepositoryCache  string
+	HelmRepositoryConfig string
+}
+
 const (
-	// DataDir folder contains all k0s state
-	DataDir = "/var/lib/k0s"
+	// DataDirDefault is the default data directory containing k0s state
+	DataDirDefault = "/var/lib/k0s"
 	// DataDirMode is the expected directory permissions for DataDir
 	DataDirMode = 0755
-	// EtcdDataDir contains etcd state
-	EtcdDataDir = "/var/lib/k0s/etcd"
 	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	EtcdDataDirMode = 0700
-	// CertRootDir defines the root location for all pki related artifacts
-	CertRootDir = "/var/lib/k0s/pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
 	CertRootDirMode = 0751
-	//EtcdCertDir contains etcd certificates
-	EtcdCertDir = "/var/lib/k0s/pki/etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
 	EtcdCertDirMode = 0711
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
@@ -37,33 +55,16 @@ const (
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
-	// BinDir defines the location for all pki related binaries
-	BinDir = "/var/lib/k0s/bin"
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
-	// RunDir defines the location of supervised pid files and sockets
-	RunDir = "/var/lib/k0s/run"
 	// RunDirMode is the expected permissions of RunDir
 	RunDirMode = 0755
 	// PidFileMode is the expected file permissions for pid files
 	PidFileMode = 0644
-	// ManifestsDir defines the location for all stack manifests
-	ManifestsDir = "/var/lib/k0s/manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0755
-	// KineSocket is the unix socket path for kine
-	KineSocketPath = "/var/lib/k0s/run/kine/kine.sock:2379"
-	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
-	KubeletBootstrapConfigPath = "/var/lib/k0s/kubelet-bootstrap.conf"
-	// KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletAuthConfigPath = "/var/lib/k0s/kubelet.conf"
-	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
-	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
 	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
 	KubeletVolumePluginDirMode = 0700
-
-	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
-	AdminKubeconfigConfigPath = "/var/lib/k0s/pki/admin.conf"
 
 	// User accounts for services
 
@@ -79,10 +80,8 @@ const (
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
-
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.19"
-
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
 
@@ -103,9 +102,36 @@ const (
 	CalicoNodeImageVersion     = "v3.16.2"
 	KubeControllerImage        = "calico/kube-controllers"
 	KubeControllerImageVersion = "v3.16.2"
-
-	// Helm constants
-	HelmHome             = "/var/lib/k0s/helmhome"
-	HelmRepositoryConfig = "/var/lib/k0s/helmhome/repositories.yaml"
-	HelmRepositoryCache  = "/var/lib/k0s/helmhome/cache"
 )
+
+// GetConfig returns the pointer to a Config struct
+func GetConfig(dataDir string) CfgVars {
+	if dataDir == "" {
+		dataDir = DataDirDefault
+	}
+
+	runDir := fmt.Sprintf("%s/run", dataDir)
+	certDir := fmt.Sprintf("%s/pki", dataDir)
+	helmHome := fmt.Sprintf("%s/helmhome", dataDir)
+
+	return CfgVars{
+		AdminKubeconfigConfigPath:  fmt.Sprintf("%s/admin.conf", certDir),
+		BinDir:                     fmt.Sprintf("%s/bin", dataDir),
+		CertRootDir:                certDir,
+		DataDir:                    dataDir,
+		EtcdCertDir:                fmt.Sprintf("%s/etcd", certDir),
+		EtcdDataDir:                fmt.Sprintf("%s/etcd", dataDir),
+		KineSocketPath:             fmt.Sprintf("%s/kine/kine.sock:2379", runDir),
+		KonnectivitySocketDir:      fmt.Sprintf("%s/konnectivity-server", runDir),
+		KubeletAuthConfigPath:      fmt.Sprintf("%s/kubelet.conf", dataDir),
+		KubeletBootstrapConfigPath: fmt.Sprintf("%s/kubelet-bootstrap.conf", dataDir),
+		KubeletVolumePluginDir:     "/usr/libexec/k0s/kubelet-plugins/volume/exec",
+		ManifestsDir:               fmt.Sprintf("%s/manifests", dataDir),
+		RunDir:                     runDir,
+
+		// Helm Config
+		HelmHome:             helmHome,
+		HelmRepositoryCache:  fmt.Sprintf("%s/cache", helmHome),
+		HelmRepositoryConfig: fmt.Sprintf("%s/repositories.yaml", helmHome),
+	}
+}

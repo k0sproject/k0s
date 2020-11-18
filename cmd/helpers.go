@@ -41,5 +41,9 @@ func ConfigFromYaml(cfgPath string) (*config.ClusterConfig, error) {
 		}
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
 	}
+	if clusterConfig.Spec.Storage.Type == config.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
+		clusterConfig.Spec.Storage.Kine = config.DefaultKineConfig(k0sVars.DataDir)
+	}
+
 	return clusterConfig, nil
 }

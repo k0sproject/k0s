@@ -31,10 +31,11 @@ import (
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
 	ClusterConfig *config.ClusterConfig
+	gid           int
+	K0sVars       constant.CfgVars
+	LogLevel      string
 	supervisor    supervisor.Supervisor
 	uid           int
-	gid           int
-	LogLevel      string
 }
 
 // Init extracts the needed binaries
@@ -44,14 +45,13 @@ func (a *Scheduler) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-scheduler as root"))
 	}
-
-	return assets.Stage(constant.BinDir, "kube-scheduler", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, "kube-scheduler", constant.BinDirMode)
 }
 
 // Run runs kube scheduler
 func (a *Scheduler) Run() error {
 	logrus.Info("Starting kube-scheduler")
-	schedulerAuthConf := filepath.Join(constant.CertRootDir, "scheduler.conf")
+	schedulerAuthConf := filepath.Join(a.K0sVars.CertRootDir, "scheduler.conf")
 	args := map[string]string{
 		"authentication-kubeconfig": schedulerAuthConf,
 		"authorization-kubeconfig":  schedulerAuthConf,
@@ -73,7 +73,9 @@ func (a *Scheduler) Run() error {
 	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
-		BinPath: assets.BinPath("kube-scheduler"),
+		BinPath: assets.BinPath("kube-scheduler", a.K0sVars.BinDir),
+		RunDir:  a.K0sVars.RunDir,
+		DataDir: a.K0sVars.DataDir,
 		Args:    schedulerArgs,
 		UID:     a.uid,
 		GID:     a.gid,

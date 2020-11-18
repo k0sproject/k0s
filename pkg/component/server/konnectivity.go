@@ -32,13 +32,11 @@ import (
 // Konnectivity implement the component interface of konnectivity server
 type Konnectivity struct {
 	ClusterConfig *config.ClusterConfig
+	K0sVars       constant.CfgVars
+	LogLevel      string
 	supervisor    supervisor.Supervisor
 	uid           int
-	gid           int
-	LogLevel      string
 }
-
-var konnectivitySocketDir = filepath.Join(constant.RunDir, "konnectivity-server")
 
 // Init ...
 func (k *Konnectivity) Init() error {
@@ -47,18 +45,16 @@ func (k *Konnectivity) Init() error {
 	if err != nil {
 		logrus.Warning(fmt.Errorf("Running konnectivity as root: %v", err))
 	}
-
-	err = util.InitDirectory(konnectivitySocketDir, 0755)
+	err = util.InitDirectory(k.K0sVars.KonnectivitySocketDir, 0755)
 	if err != nil {
-		return fmt.Errorf("failed to initialize directory %s: %v", konnectivitySocketDir, err)
+		return fmt.Errorf("failed to initialize directory %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
 
-	err = os.Chown(konnectivitySocketDir, k.uid, k.gid)
+	err = os.Chown(k.K0sVars.KonnectivitySocketDir, k.uid, -1)
 	if err != nil && os.Geteuid() == 0 {
-		return fmt.Errorf("failed to chown %s: %v", konnectivitySocketDir, err)
+		return fmt.Errorf("failed to chown %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
-
-	return assets.Stage(constant.BinDir, "konnectivity-server", constant.BinDirMode)
+	return assets.Stage(k.K0sVars.BinDir, "konnectivity-server", constant.BinDirMode)
 }
 
 // Run ..
@@ -66,13 +62,14 @@ func (k *Konnectivity) Run() error {
 	logrus.Info("Starting konnectivity")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "konnectivity",
-		BinPath: assets.BinPath("konnectivity-server"),
-		Dir:     constant.DataDir,
+		BinPath: assets.BinPath("konnectivity-server", k.K0sVars.BinDir),
+		DataDir: k.K0sVars.DataDir,
+		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
-			fmt.Sprintf("--uds-name=%s", filepath.Join(konnectivitySocketDir, "konnectivity-server.sock")),
-			fmt.Sprintf("--cluster-cert=%s", filepath.Join(constant.CertRootDir, "server.crt")),
-			fmt.Sprintf("--cluster-key=%s", filepath.Join(constant.CertRootDir, "server.key")),
-			fmt.Sprintf("--kubeconfig=%s", constant.AdminKubeconfigConfigPath), // FIXME: should have user rights
+			fmt.Sprintf("--uds-name=%s", filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock")),
+			fmt.Sprintf("--cluster-cert=%s", filepath.Join(k.K0sVars.CertRootDir, "server.crt")),
+			fmt.Sprintf("--cluster-key=%s", filepath.Join(k.K0sVars.CertRootDir, "server.key")),
+			fmt.Sprintf("--kubeconfig=%s", k.K0sVars.AdminKubeconfigConfigPath), // FIXME: should have user rights
 			"--mode=grpc",
 			"--server-port=0",
 			"--agent-port=8132",
@@ -87,7 +84,6 @@ func (k *Konnectivity) Run() error {
 			"--enable-profiling=false",
 		},
 		UID: k.uid,
-		GID: k.gid,
 	}
 
 	k.supervisor.Supervise()
@@ -106,7 +102,7 @@ type konnectivityAgentConfig struct {
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
-	konnectivityDir := filepath.Join(constant.ManifestsDir, "konnectivity")
+	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := os.MkdirAll(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
