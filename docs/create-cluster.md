@@ -67,7 +67,7 @@ To create a join token for the new controller, run the following on existing con
 k0s token create --role=controller --expiry=1h
 ```
 
-The on the new controller, run:
+Then on the new controller, run:
 ```sh
 k0s server "long-join-token"
 ```
