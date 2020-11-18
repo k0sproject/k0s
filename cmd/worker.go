@@ -39,11 +39,13 @@ func init() {
 	workerCmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
 	workerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
+	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 }
 
 var (
 	workerProfile string
 	tokenArg      string
+	tokenFile     string
 	criSocket     string
 	cloudProvider bool
 
@@ -54,6 +56,19 @@ var (
 			if len(args) > 0 {
 				tokenArg = args[0]
 			}
+
+			if len(tokenArg) > 0 && len(tokenFile) > 0 {
+				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+			}
+
+			if len(tokenFile) > 0 {
+				bytes, err := ioutil.ReadFile(tokenFile)
+				if err != nil {
+					return err
+				}
+				tokenArg = string(bytes)
+			}
+
 			err := startWorker(tokenArg)
 			if err != nil {
 				return err
