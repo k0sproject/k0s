@@ -88,19 +88,6 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	gid, err := util.GetGID(constant.Group)
-	if err == nil {
-		paths := []string{filepath.Dir(keyFile), keyFile, certFile}
-		for _, path := range paths {
-			err = os.Chown(path, -1, gid)
-			if err != nil && os.Geteuid() == 0 {
-				logrus.Warning(err)
-			}
-		}
-	} else {
-		logrus.Warning(err)
-	}
-
 	return nil
 }
 
@@ -110,7 +97,6 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
-	gid, _ := util.GetGID(constant.Group)
 	uid, _ := util.GetUID(ownerName)
 
 	// if regenerateCert returns true, it means we need to create the certs
@@ -166,11 +152,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 			return Certificate{}, err
 		}
 
-		err = os.Chown(keyFile, uid, gid)
+		err = os.Chown(keyFile, uid, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
-		err = os.Chown(certFile, uid, gid)
+		err = os.Chown(certFile, uid, -1)
 		if err != nil && os.Geteuid() == 0 {
 			return Certificate{}, err
 		}
@@ -179,8 +165,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	}
 
 	// certs exist, let's just verify their permissions
-	_ = os.Chown(keyFile, uid, gid)
-	_ = os.Chown(certFile, uid, gid)
+	_ = os.Chown(keyFile, uid, -1)
+	_ = os.Chown(certFile, uid, -1)
 
 	cert, err := ioutil.ReadFile(certFile)
 	if err != nil {

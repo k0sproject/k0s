@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -66,7 +65,6 @@ func (e *Etcd) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
 	}
-	e.gid, _ = util.GetGID(constant.Group)
 
 	err = util.InitDirectory(constant.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
@@ -85,18 +83,7 @@ func (e *Etcd) Init() error {
 		}
 	}
 
-	for _, f := range []string{
-		"ca.crt",
-		"server.crt",
-		"server.key",
-	} {
-		if err := os.Chown(path.Join(constant.EtcdCertDir, f), e.uid, e.gid); err != nil && os.Geteuid() == 0 {
-			// TODO: directory may not yet exist. log it and wait for retry for now
-			logrus.Errorf("failed to chown %s: %s", f, err)
-		}
-	}
-
-	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "etcd", constant.BinDirMode)
 }
 
 // Run runs etcd

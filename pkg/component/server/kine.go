@@ -49,8 +49,6 @@ func (k *Kine) Init() error {
 		logrus.Warning(errors.Wrap(err, "Running kine as root"))
 	}
 
-	k.gid, _ = util.GetGID(constant.Group)
-
 	err = util.InitDirectory(kineSocketDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", kineSocketDir)
@@ -77,7 +75,7 @@ func (k *Kine) Init() error {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}
-	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode)
 }
 
 // Run runs kine

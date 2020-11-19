@@ -57,7 +57,6 @@ func (a *ControllerManager) Init() error {
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
 	}
-	a.gid, _ = util.GetGID(constant.Group)
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
@@ -65,7 +64,7 @@ func (a *ControllerManager) Init() error {
 		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
 	}
 
-	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode)
 }
 
 // Run runs kube ControllerManager

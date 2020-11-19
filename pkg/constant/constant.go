@@ -66,9 +66,6 @@ const (
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "/var/lib/k0s/pki/admin.conf"
 
-	// Group defines group name for shared directories
-	Group = "k0s"
-
 	// User accounts for services
 
 	// EtcdUser defines the user to use for running etcd process

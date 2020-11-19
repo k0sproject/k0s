@@ -65,28 +65,13 @@ func BinPath(name string) string {
 }
 
 // Stage ...
-func Stage(dataDir string, name string, filemode os.FileMode, group string) error {
+func Stage(dataDir string, name string, filemode os.FileMode) error {
 	p := filepath.Join(dataDir, name)
 	logrus.Infof("Staging %s", p)
 
 	err := util.InitDirectory(filepath.Dir(p), filemode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
-	}
-
-	/* set group owner of the directories */
-	gid, err := util.GetGID(group)
-	if err != nil {
-		logrus.Error(err)
-	}
-	if gid != 0 {
-		for _, path := range []string{dataDir, filepath.Dir(p)} {
-			logrus.Debugf("setting group ownership for %s to %d", path, gid)
-			err := os.Chown(path, -1, gid)
-			if err != nil && os.Geteuid() == 0 {
-				return err
-			}
-		}
 	}
 
 	if ExecutableIsOlder(p) {

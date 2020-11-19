@@ -48,8 +48,6 @@ func (k *Konnectivity) Init() error {
 		logrus.Warning(fmt.Errorf("Running konnectivity as root: %v", err))
 	}
 
-	k.gid, _ = util.GetGID(constant.Group)
-
 	err = util.InitDirectory(konnectivitySocketDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to initialize directory %s: %v", konnectivitySocketDir, err)
@@ -60,7 +58,7 @@ func (k *Konnectivity) Init() error {
 		return fmt.Errorf("failed to chown %s: %v", konnectivitySocketDir, err)
 	}
 
-	return assets.Stage(constant.BinDir, "konnectivity-server", constant.BinDirMode, constant.Group)
+	return assets.Stage(constant.BinDir, "konnectivity-server", constant.BinDirMode)
 }
 
 // Run ..

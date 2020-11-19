@@ -36,7 +36,7 @@ type ContainerD struct {
 func (c *ContainerD) Init() error {
 	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
 		// unfortunately, this cannot be parallelized – it will result in a fork/exec error
-		err := assets.Stage(constant.BinDir, bin, constant.BinDirMode, constant.Group)
+		err := assets.Stage(constant.BinDir, bin, constant.BinDirMode)
 		if err != nil {
 			return err
 		}

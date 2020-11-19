@@ -52,7 +52,7 @@ type KubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	err := assets.Stage(constant.BinDir, "kubelet", constant.BinDirMode, constant.Group)
+	err := assets.Stage(constant.BinDir, "kubelet", constant.BinDirMode)
 	if err != nil {
 		return err
 	}
