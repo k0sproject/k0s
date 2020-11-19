@@ -1,5 +1,4 @@
-// +build !windows
-
+// +build windows
 /*
 Copyright 2020 Mirantis, Inc.
 
@@ -15,43 +14,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package constant
 
-import "fmt"
-
-// CfgVars is a struct that holds all the config variables requried for K0s
-type CfgVars struct {
-	AdminKubeConfigPath        string // The cluster admin kubeconfig location
-	BinDir                     string // location for all pki related binaries
-	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
-	DataDir                    string // Data directory containing k0s state
-	EtcdCertDir                string // EtcdCertDir contains etcd certificates
-	EtcdDataDir                string // EtcdDataDir contains etcd state
-	KineSocketPath             string // The unix socket path for kine
-	KonnectivitySocketDir      string // location of konnectivity's socket path
-	KubeletAuthConfigPath      string // KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletBootstrapConfigPath string // KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
-	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
-	ManifestsDir               string // location for all stack manifests
-	RunDir                     string // location of supervised pid files and sockets
-	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
-
-	// Helm config
-	HelmHome             string
-	HelmRepositoryCache  string
-	HelmRepositoryConfig string
-}
-
 const (
-	// DataDirDefault is the default data directory containing k0s state
-	DataDirDefault = "/var/lib/k0s"
+	// DataDir folder contains all k0s state
+	DataDir = "C:\\var\\lib\\k0s"
 	// DataDirMode is the expected directory permissions for DataDir
 	DataDirMode = 0755
+	// EtcdDataDir contains etcd state
+	EtcdDataDir = "C:\\var\\lib\\k0s\\etcd"
 	// EtcdDataDirMode is the expected directory permissions for EtcdDataDir. see https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	EtcdDataDirMode = 0700
+	// CertRootDir defines the root location for all pki related artifacts
+	CertRootDir = "C:\\var\\lib\\k0s\\pki"
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
 	CertRootDirMode = 0751
+	//EtcdCertDir contains etcd certificates
+	EtcdCertDir = "C:\\var\\lib\\k0s\\pki/etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
 	EtcdCertDirMode = 0711
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
@@ -59,31 +38,54 @@ const (
 	// CertSecureMode is the expected file permissions for secure files. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.13/
 	// this relates to files like: admin.conf, kube-apiserver.yaml, certificate files, and more
 	CertSecureMode = 0640
+	// BinDir defines the location for all pki related binaries
+	BinDir = "C:\\var\\lib\\k0s\\bin"
 	// BinDirMode is the expected directory permissions for BinDir
 	BinDirMode = 0755
+	// RunDir defines the location of supervised pid files and sockets
+	RunDir = "C:\\run\\k0s"
 	// RunDirMode is the expected permissions of RunDir
 	RunDirMode = 0755
 	// PidFileMode is the expected file permissions for pid files
 	PidFileMode = 0644
+	// ManifestsDir defines the location for all stack manifests
+	ManifestsDir = "C:\\var\\lib\\k0s\\manifests"
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
-	ManifestsDirMode = 0755
+	ManifestsDirMode = 0644
+
+	// KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
+	KubeletBootstrapConfigPath = "C:\\var\\lib\\k0s\\kubelet-bootstrap.conf"
+	// KubeletAuthConfigPath defines the default kubelet auth config path
+	KubeletAuthConfigPath = "C:\\var\\lib\\k0s\\kubelet.conf"
+	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
+	KubeletVolumePluginDir = "C:\\usr\\libexec\\k0s\\kubelet-plugins\\volume\\exec"
 	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
 	KubeletVolumePluginDirMode = 0700
+
+	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
+	AdminKubeconfigConfigPath = "C:\\var\\lib\\k0s\\pki\\admin.conf"
+
+	// Group defines group name for shared directories
+	Group = "k0s"
 
 	// User accounts for services
 
 	// EtcdUser defines the user to use for running etcd process
 	EtcdUser = "etcd"
 	// KineUser defines the user to use for running kine process
-	KineUser = "kube-apiserver" // apiserver needs to be able to read the kine unix socket
+	KineUser = "kine"
 	// ApiserverUser defines the user to use for running k8s api-server process
 	ApiserverUser = "kube-apiserver"
+	// ControllerManagerUser defines the user to use for running k8s controller manager process
+	ControllerManagerUser = "kube-controller-manager"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
+
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.20"
+	KubernetesMajorMinorVersion = "1.19"
+
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
 
@@ -93,7 +95,7 @@ const (
 	MetricsImage               = "gcr.io/k8s-staging-metrics-server/metrics-server"
 	MetricsImageVersion        = "v0.3.7"
 	KubeProxyImage             = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion      = "v1.20.0"
+	KubeProxyImageVersion      = "v1.19.0"
 	CoreDNSImage               = "docker.io/coredns/coredns"
 	CoreDNSImageVersion        = "1.7.0"
 	CalicoImage                = "calico/cni"
@@ -104,37 +106,9 @@ const (
 	CalicoNodeImageVersion     = "v3.16.2"
 	KubeControllerImage        = "calico/kube-controllers"
 	KubeControllerImageVersion = "v3.16.2"
+
+	// Helm constants
+	HelmHome             = "C:\\var\\lib\\k0s\\helmhome"
+	HelmRepositoryConfig = "C:\\var\\lib\\k0s\\helmhome/repositories.yaml"
+	HelmRepositoryCache  = "C:\\var\\lib\\k0s\\helmhome/cache"
 )
-
-// GetConfig returns the pointer to a Config struct
-func GetConfig(dataDir string) CfgVars {
-	if dataDir == "" {
-		dataDir = DataDirDefault
-	}
-
-	runDir := fmt.Sprintf("%s/run", dataDir)
-	certDir := fmt.Sprintf("%s/pki", dataDir)
-	helmHome := fmt.Sprintf("%s/helmhome", dataDir)
-
-	return CfgVars{
-		AdminKubeConfigPath:        fmt.Sprintf("%s/admin.conf", certDir),
-		BinDir:                     fmt.Sprintf("%s/bin", dataDir),
-		CertRootDir:                certDir,
-		DataDir:                    dataDir,
-		EtcdCertDir:                fmt.Sprintf("%s/etcd", certDir),
-		EtcdDataDir:                fmt.Sprintf("%s/etcd", dataDir),
-		KineSocketPath:             fmt.Sprintf("%s/kine/kine.sock:2379", runDir),
-		KonnectivitySocketDir:      fmt.Sprintf("%s/konnectivity-server", runDir),
-		KubeletAuthConfigPath:      fmt.Sprintf("%s/kubelet.conf", dataDir),
-		KubeletBootstrapConfigPath: fmt.Sprintf("%s/kubelet-bootstrap.conf", dataDir),
-		KubeletVolumePluginDir:     "/usr/libexec/k0s/kubelet-plugins/volume/exec",
-		ManifestsDir:               fmt.Sprintf("%s/manifests", dataDir),
-		RunDir:                     runDir,
-		KonnectivityKubeConfigPath: fmt.Sprintf("%s/konnectivity.conf", certDir),
-
-		// Helm Config
-		HelmHome:             helmHome,
-		HelmRepositoryCache:  fmt.Sprintf("%s/cache", helmHome),
-		HelmRepositoryConfig: fmt.Sprintf("%s/repositories.yaml", helmHome),
-	}
-}

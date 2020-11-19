@@ -8,6 +8,7 @@ require (
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.4.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.9.0+incompatible

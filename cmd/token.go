@@ -161,6 +161,5 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 	if err != nil {
 		return "", err
 	}
-
 	return token.JoinEncode(&buf)
 }

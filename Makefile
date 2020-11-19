@@ -10,6 +10,7 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 
 # k0s runs on linux even if its built on mac or windows
 GOOS ?= linux
+TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
@@ -36,15 +37,14 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/${TARGET_OS}/bin gen_b
 endif
 
 
-k0s: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	@echo Compiling k0s.code ...
-	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.code main.go
+k0s: export TARGET_OS := linux
+k0s: pkg/assets/zz_generated_offsets.go embedded-bins/staging/linux/bin $(GO_SRCS)
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.code main.go
 	cat k0s.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 k0s.exe: export TARGET_OS := windows
-k0s.exe: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	@echo Compiling k0s.code ...
-	@CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.exe.code main.go
+k0s.exe: pkg/assets/zz_generated_offsets.go embedded-bins/staging/windows/bin $(GO_SRCS)
+	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.exe.code main.go
 	cat k0s.exe.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
@@ -92,4 +92,4 @@ bindata-manifests:
 
 .PHONY: generate-bindata
 generate-bindata:
-	GOOS=${GOHOSTOS} TARGET_OS=${GOOS} go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${GOOS}/ embedded-bins/staging/${GOOS}/bin
+	GOOS=${GOHOSTOS} go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${TARGET_OS}/ embedded-bins/staging/${TARGET_OS}/bin

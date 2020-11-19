@@ -110,6 +110,10 @@ func startWorker(token string) error {
 		})
 	}
 
+	if workerProfile == "default" && runtime.GOOS == "windows" {
+		workerProfile = "default-windows"
+	}
+
 	componentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
 		EnableCloudProvider: cloudProvider,

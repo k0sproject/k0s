@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/avast/retry-go"
@@ -45,15 +46,13 @@ type Kubelet struct {
 	supervisor          supervisor.Supervisor
 }
 
-// KubeletConfig defines the kubelet related config options
-type KubeletConfig struct {
-	ClusterDNS    string
-	ClusterDomain string
-}
-
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	err := assets.Stage(k.K0sVars.BinDir, "kubelet", constant.BinDirMode)
+	cmd := "kubelet"
+	if runtime.GOOS == "windows" {
+		cmd = "kubelet.exe"
+	}
+	err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
 	if err != nil {
 		return err
 	}
@@ -69,6 +68,12 @@ func (k *Kubelet) Init() error {
 
 // Run runs kubelet
 func (k *Kubelet) Run() error {
+	cmd := "kubelet"
+
+	if runtime.GOOS == "windows" {
+		cmd = "kubelet.exe"
+	}
+
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
 	// get the "real" resolv.conf file (in systemd-resolvd bases system,
@@ -88,17 +93,26 @@ func (k *Kubelet) Run() error {
 		"--kubelet-cgroups=/system.slice/containerd.service",
 	}
 
+	if runtime.GOOS == "windows" {
+		args = append(args, "--cgroups-per-qos=false")
+		args = append(args, "--enforce-node-allocatable=")
+		args = append(args, "--pod-infra-container-image=mcr.microsoft.com/k8s/core/pause:1.2.0")
+	}
+
 	if k.CRISocket != "" {
 		rtType, rtSock, err := splitRuntimeConfig(k.CRISocket)
 		if err != nil {
 			return err
 		}
 		args = append(args, fmt.Sprintf("--container-runtime=%s", rtType))
-
+		shimPath := "unix:///var/run/dockershim.sock"
+		if runtime.GOOS == "windows" {
+			shimPath = "npipe:////./pipe/dockershim"
+		}
 		if rtType == "docker" {
 			args = append(args, fmt.Sprintf("--docker-endpoint=%s", rtSock))
 			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
-			args = append(args, "--container-runtime-endpoint=unix:///var/run/dockershim.sock")
+			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", shimPath))
 		} else {
 			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", rtSock))
 		}
@@ -111,10 +125,10 @@ func (k *Kubelet) Run() error {
 	if k.EnableCloudProvider {
 		args = append(args, "--cloud-provider=external")
 	}
-
+	logrus.Infof("starting etcd with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
-		Name:    "kubelet",
-		BinPath: assets.BinPath("kubelet", k.K0sVars.BinDir),
+		Name:    cmd,
+		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
 		Args:    args,
