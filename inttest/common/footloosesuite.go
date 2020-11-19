@@ -190,7 +190,7 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 }
 
 // InitMainController inits first controller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController(cfgPath string) error {
+func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -198,7 +198,13 @@ func (s *FootlooseSuite) InitMainController(cfgPath string) error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --config=%s >/tmp/k0s-server.log 2>&1 &", cfgPath))
+	var startCmd string
+	if dataDir != "" {
+		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --data-dir=%s --config=%s >/tmp/k0s-server.log 2>&1 &", dataDir, cfgPath)
+	} else {
+		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --config=%s >/tmp/k0s-server.log 2>&1 &", cfgPath)
+	}
+	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		return err
 	}
@@ -242,7 +248,7 @@ func (s *FootlooseSuite) GetJoinToken(role string) (string, error) {
 }
 
 // RunWorkers joins all the workers to the cluster
-func (s *FootlooseSuite) RunWorkers() error {
+func (s *FootlooseSuite) RunWorkers(dataDir string) error {
 	ssh, err := s.SSH("controller0")
 	if err != nil {
 		return err
@@ -255,7 +261,14 @@ func (s *FootlooseSuite) RunWorkers() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`nohup k0s --debug worker "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+
+	var workerCommand string
+	if dataDir != "" {
+		workerCommand = fmt.Sprintf(`nohup k0s --debug --data-dir=%s worker "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
+	} else {
+		workerCommand = fmt.Sprintf(`nohup k0s --debug worker "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+	}
+
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := fmt.Sprintf("worker%d", i)
 		sshWorker, err := s.SSH(workerNode)

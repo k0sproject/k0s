@@ -82,7 +82,7 @@ var (
 				}
 				serverToken = string(bytes)
 			}
-			return startServer(serverToken, dataDir)
+			return startServer(serverToken)
 		},
 	}
 )
@@ -96,7 +96,7 @@ func needToJoin(k0sVars constant.CfgVars) bool {
 	return true
 }
 
-func startServer(token string, dataDir string) error {
+func startServer(token string) error {
 	perfTimer := performance.NewTimer("server-start").Buffer().Start()
 	clusterConfig, err := ConfigFromYaml(cfgFile)
 	if err != nil {

@@ -20,6 +20,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
@@ -31,8 +34,6 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"testing"
-	"time"
 )
 
 type AddonsSuite struct {
@@ -43,7 +44,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
 	as.prepareConfigWithAddons(addonName)
 
-	as.Require().NoError(as.InitMainController("/tmp/k0s.yaml"))
+	as.Require().NoError(as.InitMainController("/tmp/k0s.yaml", ""))
 	as.waitForPrometheusRelease(addonName, 1)
 
 	as.doPrometheusUpdate(addonName, map[string]interface{}{"key": "value"})

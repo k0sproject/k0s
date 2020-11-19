@@ -49,6 +49,7 @@ func (m *K0SControlAPI) Run() error {
 		Args: []string{
 			"api",
 			fmt.Sprintf("--config=%s", m.ConfigPath),
+			fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
 		},
 	}
 
