@@ -6,7 +6,7 @@ You can run your own k0s-in-docker easily with:
 ```sh
 docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:<version>
 ```
-Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://github.com/lensapp/lens/).
+Just grab the kubeconfig with `docker exec k0s cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://github.com/lensapp/lens/).
 
 ## Running workers
 
