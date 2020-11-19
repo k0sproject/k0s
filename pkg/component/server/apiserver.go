@@ -18,6 +18,7 @@ package server
 import (
 	"fmt"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -158,7 +159,7 @@ func (a *APIServer) writeKonnectivityConfig() error {
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
 		Data: egressSelectorConfig{
-			UDSName: path.Join(constant.RunDir, "konnectivity-server.sock"),
+			UDSName: filepath.Join(konnectivitySocketDir, "konnectivity-server.sock"),
 		},
 		Path: path.Join(constant.DataDir, "konnectivity.conf"),
 	}
