@@ -27,7 +27,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
-// KubeProxy is the compoennt implementation to manage kube-proxy
+// KubeProxy is the component implementation to manage kube-proxy
 type KubeProxy struct {
 	//client     *kubernetes.Clientset
 	tickerDone  chan struct{}

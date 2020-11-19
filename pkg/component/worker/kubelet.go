@@ -97,6 +97,11 @@ func (k *Kubelet) Run() error {
 		args = append(args, "--cgroups-per-qos=false")
 		args = append(args, "--enforce-node-allocatable=")
 		args = append(args, "--pod-infra-container-image=mcr.microsoft.com/k8s/core/pause:1.2.0")
+		args = append(args, "--network-plugin=cni")
+		args = append(args, "--cni-bin-dir=C:\\cnibin")
+		args = append(args, "--cni-conf-dir=C:\\cniconf")
+	} else {
+		args = append(args, "--cgroups-per-qos=false")
 	}
 
 	if k.CRISocket != "" {

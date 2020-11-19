@@ -14,7 +14,7 @@ export TARGET_OS
 
 bindir = staging/${TARGET_OS}/bin
 posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
-windows_bins = kubelet.exe
+windows_bins = kubelet.exe kube-proxy.exe
 buildmode = docker
 
 
@@ -61,7 +61,7 @@ $(bindir)/kine: .container.kine
 $(bindir)/konnectivity-server: .container.konnectivity
 $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
 
-$(bindir)/kubelet.exe: .container.kubernetes.windows
+$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@

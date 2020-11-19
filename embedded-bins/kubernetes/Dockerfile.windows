@@ -2,7 +2,7 @@ FROM golang:1.15-alpine AS build
 
 ARG VERSION
 ENV GOPATH=/go
-ENV COMMANDS="kubelet"
+ENV COMMANDS="kubelet kube-proxy"
 ENV KUBE_BUILD_PLATFORMS=windows/amd64
 
 RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
@@ -18,5 +18,6 @@ RUN \
 FROM scratch
 COPY --from=build \
 	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/windows/*/kubelet.exe \
+	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/windows/*/kube-proxy.exe \
 	/bin/
 CMD ["/bin/kubelet.exe"]
