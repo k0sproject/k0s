@@ -22,15 +22,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/pkg/transport"
-)
-
-var (
-	etcdClientCertFile = filepath.Join(constant.CertRootDir, "apiserver-etcd-client.crt")
-	etcdClientKeyFile  = filepath.Join(constant.CertRootDir, "apiserver-etcd-client.key")
-	etcdTrustedCAFile  = filepath.Join(constant.EtcdCertDir, "ca.crt")
 )
 
 // Client is our internal helper to access some of the etcd APIs
@@ -39,12 +32,12 @@ type Client struct {
 }
 
 // NewClient creates new Client
-func NewClient() (*Client, error) {
+func NewClient(certDir string, etcdCertDir string) (*Client, error) {
 	client := &Client{}
 	tlsInfo := transport.TLSInfo{
-		CertFile:      etcdClientCertFile,
-		KeyFile:       etcdClientKeyFile,
-		TrustedCAFile: etcdTrustedCAFile,
+		CertFile:      filepath.Join(certDir, "apiserver-etcd-client.crt"),
+		KeyFile:       filepath.Join(certDir, "apiserver-etcd-client.key"),
+		TrustedCAFile: filepath.Join(etcdCertDir, "ca.crt"),
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()

@@ -29,6 +29,7 @@ import (
 // CASyncer is the Component implementation to sync CAs between multiple controllers
 type CASyncer struct {
 	JoinClient *v1beta1.JoinClient
+	K0sVars    constant.CfgVars
 }
 
 // Init initializes the CASyncer component
@@ -38,7 +39,7 @@ func (c *CASyncer) Init() error {
 		return errors.Wrapf(err, "failed to sync CA")
 	}
 	// Dump certs into files
-	return writeCerts(caData)
+	return writeCerts(caData, c.K0sVars)
 }
 
 // Run does nothing, there's nothing running constantly
@@ -51,9 +52,9 @@ func (c *CASyncer) Stop() error {
 	return nil
 }
 
-func writeCerts(caData v1beta1.CaResponse) error {
-	keyFile := filepath.Join(constant.CertRootDir, "ca.key")
-	certFile := filepath.Join(constant.CertRootDir, "ca.crt")
+func writeCerts(caData v1beta1.CaResponse, k0sVars constant.CfgVars) error {
+	keyFile := filepath.Join(k0sVars.CertRootDir, "ca.key")
+	certFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 
 	if util.FileExists(keyFile) && util.FileExists(certFile) {
 		logrus.Warnf("ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
@@ -70,12 +71,12 @@ func writeCerts(caData v1beta1.CaResponse) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(constant.CertRootDir, "sa.key"), caData.SAKey, constant.CertSecureMode)
+	err = ioutil.WriteFile(filepath.Join(k0sVars.CertRootDir, "sa.key"), caData.SAKey, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(constant.CertRootDir, "sa.pub"), caData.SAPub, constant.CertMode)
+	err = ioutil.WriteFile(filepath.Join(k0sVars.CertRootDir, "sa.pub"), caData.SAPub, constant.CertMode)
 	if err != nil {
 		return err
 	}

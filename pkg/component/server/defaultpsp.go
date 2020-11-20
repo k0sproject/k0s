@@ -34,12 +34,14 @@ Depending on user config, we select either of the above rule sets to be the defa
 */
 type DefaultPSP struct {
 	clusterSpec *config.ClusterSpec
+	k0sVars     constant.CfgVars
 }
 
 // NewDefaultPSP creates new system level RBAC reconciler
-func NewDefaultPSP(clusterSpec *config.ClusterSpec) (*DefaultPSP, error) {
+func NewDefaultPSP(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*DefaultPSP, error) {
 	return &DefaultPSP{
 		clusterSpec: clusterSpec,
+		k0sVars:     k0sVars,
 	}, nil
 }
 
@@ -50,7 +52,7 @@ func (d *DefaultPSP) Init() error {
 
 // Run reconciles the k0s default PSP rules
 func (d *DefaultPSP) Run() error {
-	pspDir := path.Join(constant.ManifestsDir, "defaultpsp")
+	pspDir := path.Join(d.k0sVars.ManifestsDir, "defaultpsp")
 	err := os.MkdirAll(pspDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

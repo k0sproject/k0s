@@ -74,7 +74,7 @@ func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 }
 
 func (s *HAControlplaneSuite) TestDeregistration() {
-	s.NoError(s.InitMainController("/tmp/k0s.yaml"))
+	s.NoError(s.InitMainController("/tmp/k0s.yaml", ""))
 	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
 	s.NoError(s.JoinController(1, token))

@@ -16,15 +16,15 @@ limitations under the License.
 package server
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/sirupsen/logrus"
 )
 
 const metricServerTemplate = `
@@ -198,14 +198,16 @@ type MetricServer struct {
 	log           *logrus.Entry
 	clusterConfig *config.ClusterConfig
 	tickerDone    chan struct{}
+	manifestDir   string
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterConfig) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *config.ClusterConfig, manifestDir string) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:           log,
 		clusterConfig: clusterConfig,
+		manifestDir:   manifestDir,
 	}, nil
 }
 
@@ -220,8 +222,8 @@ func (m *MetricServer) Run() error {
 
 	// TODO calculate replicas, max-surge etc. based on amount of nodes
 
-	msDir := path.Join(constant.ManifestsDir, "metricserver")
-	err := os.MkdirAll(msDir, constant.ManifestsDirMode)
+	msDir := path.Join(m.manifestDir, "metricserver")
+	err := util.InitDirectory(msDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -20,9 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"strings"
-	"sync"
-	"time"
 )
 
 // Helm watch for Chart crd
@@ -34,19 +35,21 @@ type HelmAddons struct {
 	stopCh        chan struct{}
 	informer      cache.SharedIndexInformer
 	helm          *helm.Commands
+	kubeConfig    string
 
 	dryRun     bool
 	dryRunLock sync.Mutex
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver) *HelmAddons {
+func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars) *HelmAddons {
 	return &HelmAddons{
 		ClusterConfig: c,
 		saver:         s,
 		L:             logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:        make(chan struct{}),
-		helm:          helm.NewCommands(),
+		helm:          helm.NewCommands(k0sVars),
+		kubeConfig:    k0sVars.AdminKubeconfigConfigPath,
 	}
 }
 
@@ -65,7 +68,7 @@ func (h *HelmAddons) Run() error {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
 		return nil
 	}
-	client, err := clientset.NewForConfig(constant.AdminKubeconfigConfigPath)
+	client, err := clientset.NewForConfig(h.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed Client for helm charts: %v", err)
 	}
@@ -90,7 +93,7 @@ func (h *HelmAddons) Run() error {
 }
 
 func (h *HelmAddons) leaseLoop() error {
-	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(h.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}

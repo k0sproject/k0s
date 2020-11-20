@@ -33,10 +33,11 @@ import (
 // ControllerManager implement the component interface to run kube scheduler
 type ControllerManager struct {
 	ClusterConfig *config.ClusterConfig
+	gid           int
+	K0sVars       constant.CfgVars
+	LogLevel      string
 	supervisor    supervisor.Supervisor
 	uid           int
-	gid           int
-	LogLevel      string
 }
 
 var cmDefaultArgs = map[string]string{
@@ -60,28 +61,27 @@ func (a *ControllerManager) Init() error {
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
-	if err := os.Chown(path.Join(constant.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
+	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
 	}
-
-	return assets.Stage(constant.BinDir, "kube-controller-manager", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, "kube-controller-manager", constant.BinDirMode)
 }
 
 // Run runs kube ControllerManager
 func (a *ControllerManager) Run() error {
 	logrus.Info("Starting kube-controller-manager")
-	ccmAuthConf := filepath.Join(constant.CertRootDir, "ccm.conf")
+	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
 	args := map[string]string{
 		"authentication-kubeconfig":        ccmAuthConf,
 		"authorization-kubeconfig":         ccmAuthConf,
 		"kubeconfig":                       ccmAuthConf,
-		"client-ca-file":                   path.Join(constant.CertRootDir, "ca.crt"),
+		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"cluster-cidr":                     a.ClusterConfig.Spec.Network.PodCIDR,
-		"cluster-signing-cert-file":        path.Join(constant.CertRootDir, "ca.crt"),
-		"cluster-signing-key-file":         path.Join(constant.CertRootDir, "ca.key"),
-		"requestheader-client-ca-file":     path.Join(constant.CertRootDir, "front-proxy-ca.crt"),
-		"root-ca-file":                     path.Join(constant.CertRootDir, "ca.crt"),
-		"service-account-private-key-file": path.Join(constant.CertRootDir, "sa.key"),
+		"cluster-signing-cert-file":        path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"cluster-signing-key-file":         path.Join(a.K0sVars.CertRootDir, "ca.key"),
+		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
+		"root-ca-file":                     path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"service-account-private-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
@@ -103,7 +103,9 @@ func (a *ControllerManager) Run() error {
 	}
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-controller-manager",
-		BinPath: assets.BinPath("kube-controller-manager"),
+		BinPath: assets.BinPath("kube-controller-manager", a.K0sVars.BinDir),
+		RunDir:  a.K0sVars.RunDir,
+		DataDir: a.K0sVars.DataDir,
 		Args:    cmArgs,
 		UID:     a.uid,
 		GID:     a.gid,

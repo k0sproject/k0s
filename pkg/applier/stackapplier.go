@@ -36,7 +36,7 @@ type StackApplier struct {
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string) (*StackApplier, error) {
+func NewStackApplier(path string, kubeConfig string) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func NewStackApplier(path string) (*StackApplier, error) {
 	if err != nil {
 		return nil, err
 	}
-	applier := NewApplier(path)
+	applier := NewApplier(path, kubeConfig)
 	log := logrus.WithField("component", "applier-"+applier.Name)
 	log.WithField("path", path).Debug("created stack applier")
 

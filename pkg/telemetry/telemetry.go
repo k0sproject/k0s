@@ -82,7 +82,7 @@ func (c Component) getWorkerNodeCount() (int, error) {
 func (c Component) getControlPlaneNodeCount() (int, error) {
 	switch c.ClusterConfig.Spec.Storage.Type {
 	case config.EtcdStorageType:
-		cl, err := etcd.NewClient()
+		cl, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 		if err != nil {
 			return 0, fmt.Errorf("can't get etcd client: %v", err)
 		}

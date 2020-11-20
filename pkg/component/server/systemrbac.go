@@ -16,24 +16,25 @@ limitations under the License.
 package server
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/pkg/errors"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/pkg/errors"
 )
 
 // SystemRBAC implements system RBAC reconciler
 type SystemRBAC struct {
+	manifestDir string
 }
 
 // NewSystemRBAC creates new system level RBAC reconciler
-func NewSystemRBAC(clusterSpec *config.ClusterSpec) (*SystemRBAC, error) {
-
-	return &SystemRBAC{}, nil
+func NewSystemRBAC(manifestDir string) (*SystemRBAC, error) {
+	return &SystemRBAC{
+		manifestDir: manifestDir,
+	}, nil
 }
 
 // Init does nothing
@@ -43,8 +44,8 @@ func (s *SystemRBAC) Init() error {
 
 // Run reconciles the k0s related system RBAC rules
 func (s *SystemRBAC) Run() error {
-	rbacDir := path.Join(constant.ManifestsDir, "bootstraprbac")
-	err := os.MkdirAll(rbacDir, constant.ManifestsDirMode)
+	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
+	err := util.InitDirectory(rbacDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}

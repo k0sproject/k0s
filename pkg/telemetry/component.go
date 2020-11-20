@@ -14,6 +14,7 @@ import (
 // Component is a telemetry component for k0s component manager
 type Component struct {
 	ClusterConfig *config.ClusterConfig
+	K0sVars       constant.CfgVars
 	Version       string
 
 	kubernetesClient kubernetes.Interface
@@ -42,7 +43,7 @@ func (c *Component) Init() error {
 }
 
 func (c *Component) retrieveKubeClient(ch chan struct{}) {
-	client, err := kubeutil.Client(constant.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(c.K0sVars.AdminKubeconfigConfigPath)
 	if err != nil {
 		c.log.WithError(err).Warning("can't init kube client")
 		return

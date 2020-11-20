@@ -32,12 +32,11 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
 func init() {
-	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", constant.AdminKubeconfigConfigPath, "path to kubeconfig file [$KUBECONFIG]")
+	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", k0sVars.AdminKubeconfigConfigPath, "path to kubeconfig file [$KUBECONFIG]")
 	if kubeConfig == "" {
 		kubeConfig = viper.GetString("KUBECONFIG")
 	}
@@ -126,11 +125,11 @@ users:
 )
 
 func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
-	caCert, err := ioutil.ReadFile(path.Join(constant.CertRootDir, "ca.crt"))
+	caCert, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.crt"))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
 	}
-	manager, err := token.NewManager(path.Join(constant.AdminKubeconfigConfigPath))
+	manager, err := token.NewManager(path.Join(k0sVars.AdminKubeconfigConfigPath))
 	if err != nil {
 		return "", err
 	}

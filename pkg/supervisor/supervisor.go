@@ -35,8 +35,9 @@ import (
 type Supervisor struct {
 	Name    string
 	BinPath string
+	RunDir  string
+	DataDir string
 	Args    []string
-	Dir     string
 	PidFile string
 	UID     int
 	GID     int
@@ -91,8 +92,8 @@ func (s *Supervisor) Supervise() {
 	log := logrus.WithField("component", s.Name)
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
-	s.PidFile = path.Join(constant.RunDir, s.Name) + ".pid"
-	if err := util.InitDirectory(constant.RunDir, constant.RunDirMode); err != nil {
+	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
+	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
 		log.Warnf("failed to initialize dir: %v", err)
 	}
 	go func() {
@@ -102,8 +103,8 @@ func (s *Supervisor) Supervise() {
 		}()
 		for {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
-			s.cmd.Dir = s.Dir
-			s.cmd.Env = getEnv()
+			s.cmd.Dir = s.DataDir
+			s.cmd.Env = getEnv(s.DataDir)
 
 			// detach from the process group so children don't
 			// get signals sent directly to parent.
@@ -146,11 +147,11 @@ func (s *Supervisor) Stop() error {
 }
 
 // Modifies the current processes env so that we inject k0s embedded bins into path
-func getEnv() []string {
+func getEnv(dataDir string) []string {
 	env := os.Environ()
 	for i, e := range env {
 		if strings.HasPrefix(e, "PATH=") {
-			env[i] = fmt.Sprintf("PATH=%s:%s", os.Getenv("PATH"), path.Join(constant.DataDir, "bin"))
+			env[i] = fmt.Sprintf("PATH=%s:%s", os.Getenv("PATH"), path.Join(dataDir, "bin"))
 		}
 	}
 	return env

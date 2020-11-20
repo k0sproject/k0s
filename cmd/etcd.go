@@ -71,7 +71,7 @@ var (
 			}
 
 			peerURL := fmt.Sprintf("https://%s:2380", etcdPeerAddress)
-			etcdClient, err := etcd.NewClient()
+			etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %v", err)
 			}
@@ -105,7 +105,7 @@ var (
 		Short: "Returns etcd cluster members list",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
-			etcdClient, err := etcd.NewClient()
+			etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}

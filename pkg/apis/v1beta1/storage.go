@@ -18,9 +18,9 @@ package v1beta1
 import (
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // supported storage types
@@ -40,9 +40,6 @@ type StorageSpec struct {
 type KineConfig struct {
 	DataSource string `yaml:"dataSource"`
 }
-
-// DefaultKineDataSource sets the default kine datasource URL
-const DefaultKineDataSource = "sqlite://" + constant.DataDir + "/db/state.db?more=rwc&_journal=WAL&cache=shared"
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
 func DefaultStorageSpec() *StorageSpec {
@@ -84,11 +81,6 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(yc); err != nil {
 		return err
 	}
-
-	if s.Type == KineStorageType && s.Kine == nil {
-		s.Kine = DefaultKineConfig()
-	}
-
 	return nil
 }
 
@@ -110,8 +102,8 @@ func DefaultEtcdConfig() *EtcdConfig {
 }
 
 // DefaultKineConfig creates KineConfig with sane defaults
-func DefaultKineConfig() *KineConfig {
+func DefaultKineConfig(dataDir string) *KineConfig {
 	return &KineConfig{
-		DataSource: DefaultKineDataSource,
+		DataSource: "sqlite://" + dataDir + "/db/state.db?more=rwc&_journal=WAL&cache=shared",
 	}
 }

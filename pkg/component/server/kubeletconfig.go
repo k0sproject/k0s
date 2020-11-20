@@ -37,14 +37,16 @@ import (
 type KubeletConfig struct {
 	clusterSpec *config.ClusterSpec
 	log         *logrus.Entry
+	manifestDir string
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(clusterSpec *config.ClusterSpec) (*KubeletConfig, error) {
+func NewKubeletConfig(clusterSpec *config.ClusterSpec, manifestDir string) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
 	return &KubeletConfig{
 		log:         log,
 		clusterSpec: clusterSpec,
+		manifestDir: manifestDir,
 	}, nil
 }
 
@@ -106,7 +108,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 }
 
 func (k *KubeletConfig) save(data []byte) error {
-	kubeletDir := path.Join(constant.ManifestsDir, "kubelet")
+	kubeletDir := path.Join(k.manifestDir, "kubelet")
 	err := os.MkdirAll(kubeletDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

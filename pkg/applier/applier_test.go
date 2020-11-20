@@ -18,8 +18,10 @@ package applier
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +30,6 @@ import (
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic/fake"
 	kubetesting "k8s.io/client-go/testing"
-	"testing"
 )
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
@@ -61,7 +62,7 @@ spec:
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
 
-	a := NewApplier(dir)
+	a := NewApplier(dir, "fakekpath")
 	assert.NoError(t, err)
 
 	a.client = fake.NewSimpleDynamicClient(runtime.NewScheme())

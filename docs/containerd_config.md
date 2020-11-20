@@ -14,8 +14,8 @@ This command will dump default values to `/etc/k0s/containerd.toml`.
 ```
 /var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
-    --state=/run/k0s/containerd \
-    --address=/run/k0s/containerd.sock \
+    --state=/var/lib/k0s/run/containerd \
+    --address=/var/lib/k0s/run/containerd.sock \
     --config=/etc/k0s/containerd.toml
 ```
 
@@ -23,11 +23,11 @@ Before proceeding further make sure that following default values are added to t
 ```
 version = 2
 root = "/var/lib/k0s/containerd"
-state = "/run/k0s/containerd"
+state = "/var/lib/k0s/run/containerd"
 ...
 
 [grpc]
-  address = "/run/k0s/containerd.sock"
+  address = "/var/lib/k0s/run/containerd.sock"
 ```
 
 Next if you want to change CRI look into this section

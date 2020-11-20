@@ -32,8 +32,8 @@ type KineSuite struct {
 
 func (s *KineSuite) TestK0sGetsUp() {
 	s.putFile("controller0", "/tmp/k0s.yaml", k0sConfigWithKine)
-	s.NoError(s.InitMainController("/tmp/k0s.yaml"))
-	s.NoError(s.RunWorkers())
+	s.NoError(s.InitMainController("/tmp/k0s.yaml", ""))
+	s.NoError(s.RunWorkers(""))
 
 	kc, err := s.KubeClient("controller0")
 	s.NoError(err)

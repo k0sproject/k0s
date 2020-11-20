@@ -228,6 +228,7 @@ type CoreDNS struct {
 	tickerDone    chan struct{}
 	log           *logrus.Entry
 	clusterConfig *config.ClusterConfig
+	K0sVars       constant.CfgVars
 }
 
 type coreDNSConfig struct {
@@ -238,8 +239,8 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *config.ClusterConfig) (*CoreDNS, error) {
-	client, err := k8sutil.Client(constant.AdminKubeconfigConfigPath)
+func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars) (*CoreDNS, error) {
+	client, err := k8sutil.Client(k0sVars.AdminKubeconfigConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +249,7 @@ func NewCoreDNS(clusterConfig *config.ClusterConfig) (*CoreDNS, error) {
 		client:        client,
 		log:           log,
 		clusterConfig: clusterConfig,
+		K0sVars:       k0sVars,
 	}, nil
 }
 
@@ -258,7 +260,7 @@ func (c *CoreDNS) Init() error {
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
-	corednsDir := path.Join(constant.DataDir, "manifests", "coredns")
+	corednsDir := path.Join(c.K0sVars.ManifestsDir, "coredns")
 	err := os.MkdirAll(corednsDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

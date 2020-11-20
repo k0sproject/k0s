@@ -35,13 +35,14 @@ import (
 
 // Kubelet is the component implementation to manage kubelet
 type Kubelet struct {
-	KubeletConfigClient *KubeletConfigClient
-	Profile             string
 	CRISocket           string
 	EnableCloudProvider bool
-	supervisor          supervisor.Supervisor
-	dataDir             string
+	K0sVars             constant.CfgVars
+	KubeletConfigClient *KubeletConfigClient
 	LogLevel            string
+	Profile             string
+	dataDir             string
+	supervisor          supervisor.Supervisor
 }
 
 // KubeletConfig defines the kubelet related config options
@@ -52,20 +53,20 @@ type KubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	err := assets.Stage(constant.BinDir, "kubelet", constant.BinDirMode)
+	err := assets.Stage(k.K0sVars.BinDir, "kubelet", constant.BinDirMode)
 	if err != nil {
 		return err
 	}
 
-	k.dataDir = filepath.Join(constant.DataDir, "kubelet")
+	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
 	err = util.InitDirectory(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", k.dataDir)
 	}
 
-	err = util.InitDirectory(constant.KubeletVolumePluginDir, constant.KubeletVolumePluginDirMode)
+	err = util.InitDirectory(k.K0sVars.KubeletVolumePluginDir, constant.KubeletVolumePluginDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", constant.KubeletVolumePluginDir)
+		return errors.Wrapf(err, "failed to create %s", k.K0sVars.KubeletVolumePluginDir)
 	}
 
 	return nil
@@ -74,18 +75,18 @@ func (k *Kubelet) Init() error {
 // Run runs kubelet
 func (k *Kubelet) Run() error {
 	logrus.Info("Starting kubelet")
-	kubeletConfigPath := filepath.Join(constant.DataDir, "kubelet-config.yaml")
+	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
 	// get the "real" resolv.conf file (in systemd-resolvd bases system,
 	// this will return /run/systemd/resolve/resolv.conf
 	resolvConfPath := resolvconf.Path()
 
 	args := []string{
 		fmt.Sprintf("--root-dir=%s", k.dataDir),
-		fmt.Sprintf("--volume-plugin-dir=%s", constant.KubeletVolumePluginDir),
+		fmt.Sprintf("--volume-plugin-dir=%s", k.K0sVars.KubeletVolumePluginDir),
 
 		fmt.Sprintf("--config=%s", kubeletConfigPath),
-		fmt.Sprintf("--bootstrap-kubeconfig=%s", constant.KubeletBootstrapConfigPath),
-		fmt.Sprintf("--kubeconfig=%s", constant.KubeletAuthConfigPath),
+		fmt.Sprintf("--bootstrap-kubeconfig=%s", k.K0sVars.KubeletBootstrapConfigPath),
+		fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KubeletAuthConfigPath),
 		fmt.Sprintf("--v=%s", k.LogLevel),
 		fmt.Sprintf("--resolv-conf=%s", resolvConfPath),
 		"--kube-reserved-cgroup=system.slice",
@@ -109,7 +110,7 @@ func (k *Kubelet) Run() error {
 		}
 	} else {
 		args = append(args, "--container-runtime=remote")
-		args = append(args, fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(constant.RunDir, "containerd.sock")))
+		args = append(args, fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(k.K0sVars.RunDir, "containerd.sock")))
 	}
 
 	// We only support external providers
@@ -119,7 +120,9 @@ func (k *Kubelet) Run() error {
 
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kubelet",
-		BinPath: assets.BinPath("kubelet"),
+		BinPath: assets.BinPath("kubelet", k.K0sVars.BinDir),
+		RunDir:  k.K0sVars.RunDir,
+		DataDir: k.K0sVars.DataDir,
 		Args:    args,
 	}
 

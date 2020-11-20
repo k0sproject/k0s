@@ -31,14 +31,13 @@ import (
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
-var kineSocketDir = filepath.Dir(constant.KineSocketPath)
-
 // Kine implement the component interface to run kine
 type Kine struct {
 	Config     *config.KineConfig
+	gid        int
+	K0sVars    constant.CfgVars
 	supervisor supervisor.Supervisor
 	uid        int
-	gid        int
 }
 
 // Init extracts the needed binaries
@@ -49,6 +48,7 @@ func (k *Kine) Init() error {
 		logrus.Warning(errors.Wrap(err, "Running kine as root"))
 	}
 
+	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)
 	err = util.InitDirectory(kineSocketDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", kineSocketDir)
@@ -75,7 +75,7 @@ func (k *Kine) Init() error {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}
-	return assets.Stage(constant.BinDir, "kine", constant.BinDirMode)
+	return assets.Stage(k.K0sVars.BinDir, "kine", constant.BinDirMode)
 }
 
 // Run runs kine
@@ -85,11 +85,12 @@ func (k *Kine) Run() error {
 
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
-		BinPath: assets.BinPath("kine"),
-		Dir:     constant.DataDir,
+		BinPath: assets.BinPath("kine", k.K0sVars.BinDir),
+		DataDir: k.K0sVars.DataDir,
+		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
-			fmt.Sprintf("--listen-address=unix://%s", constant.KineSocketPath),
+			fmt.Sprintf("--listen-address=unix://%s", k.K0sVars.KineSocketPath),
 		},
 		UID: k.uid,
 		GID: k.gid,

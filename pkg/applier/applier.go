@@ -25,7 +25,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -36,8 +35,9 @@ import (
 
 // Applier manages all the "static" manifests and applies them on the k8s API
 type Applier struct {
-	Name string
-	Dir  string
+	Name       string
+	Dir        string
+	KubeConfig string
 
 	log             *logrus.Entry
 	client          dynamic.Interface
@@ -45,7 +45,7 @@ type Applier struct {
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string) Applier {
+func NewApplier(dir string, kubeconfig string) Applier {
 	name := filepath.Base(dir)
 	log := logrus.WithFields(logrus.Fields{
 		"component": "applier",
@@ -53,14 +53,15 @@ func NewApplier(dir string) Applier {
 	})
 
 	return Applier{
-		log:  log,
-		Dir:  dir,
-		Name: name,
+		log:        log,
+		Dir:        dir,
+		Name:       name,
+		KubeConfig: kubeconfig,
 	}
 }
 
 func (a *Applier) init() error {
-	cfg, err := clientcmd.BuildConfigFromFlags("", constant.AdminKubeconfigConfigPath)
+	cfg, err := clientcmd.BuildConfigFromFlags("", a.KubeConfig)
 	if err != nil {
 		return err
 	}

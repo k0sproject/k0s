@@ -26,8 +26,9 @@ import (
 
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
+	manifestDir := "./"
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec)
+		k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, manifestDir)
 		assert.NoError(t, err)
 		buf, err := k.run(dnsAddr)
 		assert.NoError(t, err)
@@ -88,7 +89,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec)
+	k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, "./")
 	assert.NoError(t, err)
 
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,

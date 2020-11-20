@@ -53,7 +53,7 @@ var (
 		Use:   "worker [join-token]",
 		Short: "Run worker",
 		Example: `	Command to add worker node to the master node:
-	CLI agument:
+	CLI argument:
 	$ k0s worker [token]
 
 	or CLI flag:
@@ -82,18 +82,19 @@ var (
 
 func startWorker(token string) error {
 	worker.KernelSetup()
-	if token == "" && !util.FileExists(constant.KubeletAuthConfigPath) {
+
+	if token == "" && !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 
 	// Dump join token into kubelet-bootstrap kubeconfig if it does not already exist
-	if token != "" && !util.FileExists(constant.KubeletBootstrapConfigPath) {
-		if err := handleKubeletBootstrapToken(token); err != nil {
+	if token != "" && !util.FileExists(k0sVars.KubeletBootstrapConfigPath) {
+		if err := handleKubeletBootstrapToken(token, k0sVars); err != nil {
 			return err
 		}
 	}
 
-	kubeletConfigClient, err := loadKubeletConfigClient()
+	kubeletConfigClient, err := loadKubeletConfigClient(k0sVars)
 	if err != nil {
 		return err
 	}
@@ -102,15 +103,17 @@ func startWorker(token string) error {
 	if criSocket == "" {
 		componentManager.Add(&worker.ContainerD{
 			LogLevel: logging["containerd"],
+			K0sVars:  k0sVars,
 		})
 	}
 
 	componentManager.Add(&worker.Kubelet{
-		KubeletConfigClient: kubeletConfigClient,
-		Profile:             workerProfile,
 		CRISocket:           criSocket,
-		LogLevel:            logging["kubelet"],
 		EnableCloudProvider: cloudProvider,
+		K0sVars:             k0sVars,
+		KubeletConfigClient: kubeletConfigClient,
+		LogLevel:            logging["kubelet"],
+		Profile:             workerProfile,
 	})
 
 	// extract needed components
@@ -140,12 +143,12 @@ func startWorker(token string) error {
 
 }
 
-func loadKubeletConfigClient() (*worker.KubeletConfigClient, error) {
+func loadKubeletConfigClient(k0svars constant.CfgVars) (*worker.KubeletConfigClient, error) {
 	var kubeletConfigClient *worker.KubeletConfigClient
 	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
-	clientConfigPath := constant.KubeletBootstrapConfigPath
-	if util.FileExists(constant.KubeletAuthConfigPath) {
-		clientConfigPath = constant.KubeletAuthConfigPath
+	clientConfigPath := k0svars.KubeletBootstrapConfigPath
+	if util.FileExists(k0svars.KubeletAuthConfigPath) {
+		clientConfigPath = k0svars.KubeletAuthConfigPath
 	}
 
 	kubeletConfigClient, err := worker.NewKubeletConfigClient(clientConfigPath)
@@ -155,7 +158,7 @@ func loadKubeletConfigClient() (*worker.KubeletConfigClient, error) {
 	return kubeletConfigClient, nil
 }
 
-func handleKubeletBootstrapToken(encodedToken string) error {
+func handleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {
 	kubeconfig, err := token.JoinDecode(encodedToken)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode token")
@@ -167,10 +170,10 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
 	}
 
-	kubeletCAPath := path.Join(constant.CertRootDir, "ca.crt")
+	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
 	if !util.FileExists(kubeletCAPath) {
-		if err := util.InitDirectory(constant.CertRootDir, constant.CertRootDirMode); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", constant.CertRootDir))
+		if err := util.InitDirectory(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", k0sVars.CertRootDir))
 		}
 		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
@@ -178,7 +181,7 @@ func handleKubeletBootstrapToken(encodedToken string) error {
 		}
 	}
 
-	err = ioutil.WriteFile(constant.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
+	err = ioutil.WriteFile(k0sVars.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
 	if err != nil {
 		return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
 	}

@@ -66,10 +66,10 @@ users:
 
 // Certificates is the Component implementation to manage all k0s certs
 type Certificates struct {
-	CACert string
-
+	CACert      string
 	CertManager certificate.Manager
 	ClusterSpec *config.ClusterSpec
+	K0sVars     constant.CfgVars
 }
 
 // Init initializes the certificate component
@@ -78,7 +78,7 @@ func (c *Certificates) Init() error {
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
 
-	caCertPath, caCertKey := filepath.Join(constant.CertRootDir, "ca.crt"), filepath.Join(constant.CertRootDir, "ca.key")
+	caCertPath, caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.crt"), filepath.Join(c.K0sVars.CertRootDir, "ca.key")
 
 	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
@@ -98,7 +98,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		proxyCertPath, proxyCertKey := filepath.Join(constant.CertRootDir, "front-proxy-ca.crt"), filepath.Join(constant.CertRootDir, "front-proxy-ca.key")
+		proxyCertPath, proxyCertKey := filepath.Join(c.K0sVars.CertRootDir, "front-proxy-ca.crt"), filepath.Join(c.K0sVars.CertRootDir, "front-proxy-ca.key")
 
 		proxyClientReq := certificate.Request{
 			Name:   "front-proxy-client",
@@ -125,11 +125,11 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(constant.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
+		if err := kubeConfig(c.K0sVars.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
 			return err
 		}
 
-		return generateKeyPair("sa")
+		return generateKeyPair("sa", c.K0sVars)
 	})
 
 	eg.Go(func() error {
@@ -146,7 +146,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(constant.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
 	})
 
 	eg.Go(func() error {
@@ -162,7 +162,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(constant.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
 	})
 
 	eg.Go(func() error {
@@ -262,9 +262,9 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey string) error {
 	return kubeconfigTemplate.Execute(output, &data)
 }
 
-func generateKeyPair(name string) error {
-	keyFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.key", name))
-	pubFile := filepath.Join(constant.CertRootDir, fmt.Sprintf("%s.pub", name))
+func generateKeyPair(name string, k0sVars constant.CfgVars) error {
+	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
+	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
 
 	if util.FileExists(keyFile) && util.FileExists(pubFile) {
 		return nil

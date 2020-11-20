@@ -30,13 +30,15 @@ import (
 type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
+	K0sVars    constant.CfgVars
 }
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
 	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
 		// unfortunately, this cannot be parallelized – it will result in a fork/exec error
-		err := assets.Stage(constant.BinDir, bin, constant.BinDirMode)
+
+		err := assets.Stage(c.K0sVars.BinDir, bin, constant.BinDirMode)
 		if err != nil {
 			return err
 		}
@@ -50,11 +52,13 @@ func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
-		BinPath: assets.BinPath("containerd"),
+		BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
+		RunDir:  c.K0sVars.RunDir,
+		DataDir: c.K0sVars.DataDir,
 		Args: []string{
-			fmt.Sprintf("--root=%s", filepath.Join(constant.DataDir, "containerd")),
-			fmt.Sprintf("--state=%s", filepath.Join(constant.RunDir, "containerd")),
-			fmt.Sprintf("--address=%s", filepath.Join(constant.RunDir, "containerd.sock")),
+			fmt.Sprintf("--root=%s", filepath.Join(c.K0sVars.DataDir, "containerd")),
+			fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
+			fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
 			fmt.Sprintf("--log-level=%s", c.LogLevel),
 			"--config=/etc/k0s/containerd.toml",
 		},
