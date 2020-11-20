@@ -13,7 +13,7 @@ GOOS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
-VERSION ?= dev
+VERSION ?= $(shell git describe --tags)
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
 golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && "${GOPATH}/bin/golangci-lint"
