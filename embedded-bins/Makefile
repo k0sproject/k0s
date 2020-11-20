@@ -1,7 +1,7 @@
 
 runc_version = 1.0.0-rc92
 containerd_version = 1.4.1
-kubernetes_version = 1.19.3
+kubernetes_version = 1.19.4
 kine_version = 0.5.1
 etcd_version = 3.4.13
 konnectivity_version = 0.0.13
@@ -57,7 +57,7 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker create k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
-.docker-image.%.stamp: %/Dockerfile
+.docker-image.%.stamp: %/Dockerfile Makefile
 	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
 	touch $@
 
