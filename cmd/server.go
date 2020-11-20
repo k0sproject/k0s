@@ -61,7 +61,7 @@ var (
 		Use:   "server [join-token]",
 		Short: "Run server",
 		Example: `	Command to associate master nodes:
-	CLI agument:
+	CLI argument:
 	$ k0s server [join-token]
 
 	or CLI flag:

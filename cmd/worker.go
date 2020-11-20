@@ -53,7 +53,7 @@ var (
 		Use:   "worker [join-token]",
 		Short: "Run worker",
 		Example: `	Command to add worker node to the master node:
-	CLI agument:
+	CLI argument:
 	$ k0s worker [token]
 
 	or CLI flag:
