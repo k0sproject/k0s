@@ -96,10 +96,10 @@ func (k *Kubelet) Run() error {
 	if runtime.GOOS == "windows" {
 		args = append(args, "--cgroups-per-qos=false")
 		args = append(args, "--enforce-node-allocatable=")
-		args = append(args, "--pod-infra-container-image=mcr.microsoft.com/k8s/core/pause:1.2.0")
+		args = append(args, "--pod-infra-container-image=kubeletwin/pause")
 		args = append(args, "--network-plugin=cni")
-		args = append(args, "--cni-bin-dir=C:\\cnibin")
-		args = append(args, "--cni-conf-dir=C:\\cniconf")
+		args = append(args, "--cni-bin-dir=C:\\k\\cni")
+		args = append(args, "--cni-conf-dir=C:\\k\\cni\\config")
 	} else {
 		args = append(args, "--cgroups-per-qos=false")
 	}
@@ -130,7 +130,7 @@ func (k *Kubelet) Run() error {
 	if k.EnableCloudProvider {
 		args = append(args, "--cloud-provider=external")
 	}
-	logrus.Infof("starting etcd with args: %v", args)
+	logrus.Infof("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,
 		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
