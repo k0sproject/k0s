@@ -26,7 +26,7 @@ This outlines a quick method to running local k0s master and worker in one node.
       ```
       3. Start k0s
       ```sh
-       sudo k0s server -c ${HOME}/k0s.yaml --enable-worker &
+       sudo k0s server -c ${HOME}/.k0s/k0s.yaml --enable-worker &
       ```
 
   3) Monitor Startup k0s
