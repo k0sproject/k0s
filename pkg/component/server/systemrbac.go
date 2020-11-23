@@ -21,8 +21,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // SystemRBAC implements system RBAC reconciler

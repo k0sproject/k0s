@@ -21,12 +21,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
-	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )

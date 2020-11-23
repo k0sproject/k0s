@@ -23,7 +23,6 @@ import (
 	"sync"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +34,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 const (

@@ -19,11 +19,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // CASyncer is the Component implementation to sync CAs between multiple controllers

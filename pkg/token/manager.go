@@ -20,12 +20,13 @@ import (
 	"fmt"
 	"time"
 
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/k0sproject/k0s/internal/util"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 // NewManager creates a new token manager using given kubeconfig

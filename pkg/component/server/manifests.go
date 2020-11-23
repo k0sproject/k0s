@@ -22,8 +22,8 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // FsManifestsSaver saves all given manifests under the specified root dir

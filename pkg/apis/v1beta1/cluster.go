@@ -19,9 +19,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
+
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 // ClusterConfig cluster manifest

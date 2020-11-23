@@ -18,9 +18,10 @@ package v1beta1
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
+
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 func TestClusterDefaults(t *testing.T) {
