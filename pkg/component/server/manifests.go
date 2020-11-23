@@ -19,11 +19,11 @@ package server
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/util"
 )
 
 // FsManifestsSaver saves all given manifests under the specified root dir
@@ -42,7 +42,7 @@ func (f FsManifestsSaver) Save(dst string, content []byte) error {
 // NewManifestsSaver builds new filesystem manifests saver
 func NewManifestsSaver(dir string, dataDir string) (*FsManifestsSaver, error) {
 	calicoDir := path.Join(dataDir, "manifests", dir)
-	err := os.MkdirAll(calicoDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(calicoDir, constant.ManifestsDirMode)
 	if err != nil {
 		return nil, err
 	}

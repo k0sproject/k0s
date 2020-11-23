@@ -16,15 +16,15 @@ limitations under the License.
 package server
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/sirupsen/logrus"
 )
 
 // KubeProxy is the compoennt implementation to manage kube-proxy
@@ -58,7 +58,7 @@ func (k *KubeProxy) Run() error {
 	k.tickerDone = make(chan struct{})
 
 	proxyDir := path.Join(k.K0sVars.ManifestsDir, "kubeproxy")
-	err := os.MkdirAll(proxyDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(proxyDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}

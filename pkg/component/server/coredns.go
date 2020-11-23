@@ -16,17 +16,17 @@ limitations under the License.
 package server
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/kubernetes"
 )
 
 const coreDNSTemplate = `
@@ -261,7 +261,7 @@ func (c *CoreDNS) Init() error {
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
 	corednsDir := path.Join(c.K0sVars.ManifestsDir, "coredns")
-	err := os.MkdirAll(corednsDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(corednsDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}

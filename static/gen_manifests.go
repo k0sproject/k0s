@@ -38,6 +38,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/k0sproject/k0s/pkg/util"
 )
 
 func bindataRead(data []byte, name string) ([]byte, error) {
@@ -674,7 +676,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"gen_manifests.go":                                                                                   gen_manifestsGo,
+	"gen_manifests.go": gen_manifestsGo,
 	"manifests/calico/ClusterRole/calico-kube-controllers.yaml":                                          manifestsCalicoClusterroleCalicoKubeControllersYaml,
 	"manifests/calico/ClusterRole/calico-node.yaml":                                                      manifestsCalicoClusterroleCalicoNodeYaml,
 	"manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml":                                   manifestsCalicoClusterrolebindingCalicoKubeControllersYaml,
@@ -803,7 +805,7 @@ func RestoreAsset(dir, name string) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
+	err = util.InitDirectory(_filePath(dir, filepath.Dir(name)), os.FileMode(0755))
 	if err != nil {
 		return err
 	}
