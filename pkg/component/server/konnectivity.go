@@ -103,7 +103,7 @@ type konnectivityAgentConfig struct {
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
-	err := os.MkdirAll(konnectivityDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}

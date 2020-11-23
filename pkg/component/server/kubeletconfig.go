@@ -18,7 +18,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -26,11 +25,12 @@ import (
 	"io/ioutil"
 
 	"github.com/imdario/mergo"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 // KubeletConfig is the reconciler for generic kubelet configs
@@ -109,7 +109,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 
 func (k *KubeletConfig) save(data []byte) error {
 	kubeletDir := path.Join(k.manifestDir, "kubelet")
-	err := os.MkdirAll(kubeletDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(kubeletDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
