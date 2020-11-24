@@ -1,6 +1,6 @@
 # Frequently asked questions
 
-### How is k0s promounced?
+### How is k0s pronounced?
 
 kay-zero-ess
 
