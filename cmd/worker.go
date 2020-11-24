@@ -25,14 +25,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
-	"github.com/k0sproject/k0s/pkg/util"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 func init() {

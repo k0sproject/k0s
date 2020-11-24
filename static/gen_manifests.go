@@ -39,7 +39,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/util"
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 func bindataRead(data []byte, name string) ([]byte, error) {

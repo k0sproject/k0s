@@ -33,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -40,7 +41,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/performance"
-	"github.com/k0sproject/k0s/pkg/util"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"

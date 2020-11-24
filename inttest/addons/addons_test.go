@@ -23,10 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +30,11 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 )
 
 type AddonsSuite struct {

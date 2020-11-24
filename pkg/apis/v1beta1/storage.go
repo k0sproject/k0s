@@ -20,7 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/pkg/util"
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 // supported storage types

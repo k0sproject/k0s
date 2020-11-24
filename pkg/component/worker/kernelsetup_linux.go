@@ -24,8 +24,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/util"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 // check if kernel has overlay fs
