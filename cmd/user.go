@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/base64"
+
 	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -18,7 +19,6 @@ import (
 
 func init() {
 	userCreateCmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
-
 	userCmd.AddCommand(userCreateCmd)
 }
 
@@ -119,7 +119,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
 				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
 				User:       username,
-				JoinURL:    clusterConfig.Spec.API.ControllerJoinAddress(),
+				JoinURL:    clusterConfig.Spec.API.APIAddress(),
 			}
 
 			var buf bytes.Buffer
