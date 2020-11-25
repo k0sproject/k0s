@@ -78,6 +78,9 @@ var (
 			if viper.GetString("debug") != "" || debug {
 				logrus.SetLevel(logrus.DebugLevel)
 			}
+
+			// Get relevant Vars from constant package
+			k0sVars = constant.GetConfig(dataDir)
 		},
 	}
 
@@ -121,9 +124,6 @@ func initConfig() error {
 
 	// Add env vars to Config
 	viper.AutomaticEnv()
-
-	// Get relevant Vars from constant package
-	k0sVars = constant.GetConfig(dataDir)
 
 	return nil
 }

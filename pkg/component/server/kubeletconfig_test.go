@@ -16,19 +16,25 @@ limitations under the License.
 package server
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/ghodss/yaml"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+
 	"github.com/stretchr/testify/assert"
 )
 
+var k0sVars = constant.GetConfig("")
+
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
-	manifestDir := "./"
+	clientCAFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
+
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, manifestDir)
+		k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, k0sVars)
 		assert.NoError(t, err)
 		buf, err := k.run(dnsAddr)
 		assert.NoError(t, err)
@@ -72,12 +78,12 @@ func Test_KubeletConfig(t *testing.T) {
 			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[2]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			assert.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 
@@ -89,7 +95,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, "./")
+	k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, k0sVars)
 	assert.NoError(t, err)
 
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,

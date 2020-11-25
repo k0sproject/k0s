@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -125,11 +125,12 @@ users:
 )
 
 func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
-	caCert, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.crt"))
+	caCert, err := ioutil.ReadFile(filepath.Join(k0sVars.CertRootDir, "ca.crt"))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
+		msg := fmt.Sprintf("failed to read cluster ca certificate from %s. is the control plane initialized on this node?", filepath.Join(k0sVars.CertRootDir, "ca.crt"))
+		return "", errors.Wrapf(err, msg)
 	}
-	manager, err := token.NewManager(path.Join(k0sVars.AdminKubeconfigConfigPath))
+	manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeconfigConfigPath))
 	if err != nil {
 		return "", err
 	}

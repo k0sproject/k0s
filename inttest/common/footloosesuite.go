@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
@@ -209,11 +211,11 @@ func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) erro
 	if err != nil {
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode)
+	return s.WaitForKubeAPI(controllerNode, dataDir)
 }
 
 // JoinController joins the cluster with a given token
-func (s *FootlooseSuite) JoinController(idx int, token string) error {
+func (s *FootlooseSuite) JoinController(idx int, token string, dataDir string) error {
 	controllerNode := fmt.Sprintf("controller%d", idx)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -224,11 +226,11 @@ func (s *FootlooseSuite) JoinController(idx int, token string) error {
 	if err != nil {
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode)
+	return s.WaitForKubeAPI(controllerNode, dataDir)
 }
 
 // GetJoinToken generates join token for the asked role
-func (s *FootlooseSuite) GetJoinToken(role string) (string, error) {
+func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, error) {
 	// assume we have main on 1 node always
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
@@ -237,7 +239,7 @@ func (s *FootlooseSuite) GetJoinToken(role string) (string, error) {
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s", role))
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s --data-dir=%s", role, dataDir))
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
@@ -255,7 +257,7 @@ func (s *FootlooseSuite) RunWorkers(dataDir string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	token, err := s.GetJoinToken("worker")
+	token, err := s.GetJoinToken("worker", dataDir)
 	if err != nil {
 		return err
 	}
@@ -327,8 +329,11 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	return nil, fmt.Errorf("no machine found with name %s", name)
 }
 
-// KubeClient return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) KubeClient(node string) (*kubernetes.Clientset, error) {
+// WaitForKubeAPI return kube client by loading the admin access config from given node
+func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Clientset, error) {
+	if dataDir == "" {
+		dataDir = constant.DataDirDefault
+	}
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -337,7 +342,8 @@ func (s *FootlooseSuite) KubeClient(node string) (*kubernetes.Clientset, error) 
 	if err != nil {
 		return nil, err
 	}
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/pki/admin.conf")
+	kubeConfigCmd := fmt.Sprintf("cat %s", filepath.Join(dataDir, "pki/admin.conf"))
+	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -375,10 +381,10 @@ func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset)
 
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
-func (s *FootlooseSuite) WaitForKubeAPI(node string) error {
+func (s *FootlooseSuite) WaitForKubeAPI(node string, dataDir string) error {
 	s.T().Log("starting to poll kube api")
 	return wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
-		kc, err := s.KubeClient(node)
+		kc, err := s.KubeClient(node, dataDir)
 		if err != nil {
 			return false, nil
 		}

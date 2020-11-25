@@ -30,10 +30,11 @@ type BasicSuite struct {
 }
 
 func (s *BasicSuite) TestK0sGetsUp() {
-	s.NoError(s.InitMainController("/tmp/k0s.yaml", "/k0s"))
-	s.NoError(s.RunWorkers("/k0s"))
+	customDataDir := "/var/lib/k0s/custom-data-dir"
+	s.NoError(s.InitMainController("/tmp/k0s.yaml", customDataDir))
+	s.NoError(s.RunWorkers(customDataDir))
 
-	kc, err := s.KubeClient("controller0")
+	kc, err := s.KubeClient("controller0", customDataDir)
 	s.NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
