@@ -41,9 +41,14 @@ func (m *K0SControlAPI) Init() error {
 // Run runs k0s control api as separate process
 func (m *K0SControlAPI) Run() error {
 	// TODO: Make the api process to use some other user
+
+	selfExe, err := os.Executable()
+	if err != nil {
+		return err
+	}
 	m.supervisor = supervisor.Supervisor{
 		Name:    "k0s-control-api",
-		BinPath: os.Args[0],
+		BinPath: selfExe,
 		RunDir:  m.K0sVars.RunDir,
 		DataDir: m.K0sVars.DataDir,
 		Args: []string{
