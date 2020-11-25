@@ -58,15 +58,21 @@ func init() {
 	rootCmd.AddCommand(APICmd)
 	rootCmd.AddCommand(etcdCmd)
 	rootCmd.AddCommand(docs)
+
+	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
+	if build.EulaNotice != "" {
+		longDesc = longDesc + "\n" + build.EulaNotice
+	}
+
+	rootCmd.Long = longDesc
 }
 
 var (
+	longDesc string
+
 	rootCmd = &cobra.Command{
 		Use:   "k0s",
 		Short: "k0s - Zero Friction Kubernetes",
-		Long: `k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
-It is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make 
-building a Kubernetes clusters a matter of just copying an executable to every host and running it.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// set DEBUG from env, or from command flag
 			if viper.GetString("debug") != "" || debug {
