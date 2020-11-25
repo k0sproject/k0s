@@ -36,7 +36,7 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 	s.NoError(s.InitMainController("/tmp/k0s.yaml", ""))
 	s.Require().NoError(s.runDockerWorker())
 
-	kc, err := s.KubeClient("controller0")
+	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
@@ -57,7 +57,7 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {
-	token, err := s.GetJoinToken("worker")
+	token, err := s.GetJoinToken("worker", "")
 	if err != nil {
 		return err
 	}

@@ -36,10 +36,10 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 
 	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --enable-worker >/tmp/k0s-server.log 2>&1 &")
 	s.Require().NoError(err)
-	err = s.WaitForKubeAPI("controller0")
+	err = s.WaitForKubeAPI("controller0", "")
 	s.Require().NoError(err)
 
-	kc, err := s.KubeClient("controller0")
+	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)
 
 	err = s.WaitForNodeReady("controller0", kc)

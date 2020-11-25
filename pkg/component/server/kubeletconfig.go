@@ -37,16 +37,16 @@ import (
 type KubeletConfig struct {
 	clusterSpec *config.ClusterSpec
 	log         *logrus.Entry
-	manifestDir string
+	k0sVars     constant.CfgVars
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(clusterSpec *config.ClusterSpec, manifestDir string) (*KubeletConfig, error) {
+func NewKubeletConfig(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
 	return &KubeletConfig{
 		log:         log,
 		clusterSpec: clusterSpec,
-		manifestDir: manifestDir,
+		k0sVars:     k0sVars,
 	}, nil
 }
 
@@ -81,14 +81,15 @@ func (k *KubeletConfig) Run() error {
 
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
-	defaultProfile := getDefaultProfile(dnsAddress)
+	clientCAFile := filepath.Join(k.k0sVars.CertRootDir, "ca.crt")
+	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile)
 
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
 	configMapNames := []string{formatProfileName("default")}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress)
+		profileConfig := getDefaultProfile(dnsAddress, clientCAFile)
 		merged, err := mergeProfiles(&profileConfig, profile.Values)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
@@ -108,7 +109,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 }
 
 func (k *KubeletConfig) save(data []byte) error {
-	kubeletDir := path.Join(k.manifestDir, "kubelet")
+	kubeletDir := path.Join(k.k0sVars.ManifestsDir, "kubelet")
 	err := util.InitDirectory(kubeletDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
@@ -160,7 +161,7 @@ func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []stri
 	return tw.WriteToBuffer(w)
 }
 
-func getDefaultProfile(dnsAddress string) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string, clientCAFile string) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
@@ -177,7 +178,7 @@ func getDefaultProfile(dnsAddress string) unstructuredYamlObject {
 				"enabled":  true,
 			},
 			"x509": map[string]interface{}{
-				"clientCAFile": "/var/lib/k0s/pki/ca.crt",
+				"clientCAFile": clientCAFile,
 			},
 		},
 		"authorization": map[string]interface{}{
