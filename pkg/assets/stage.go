@@ -61,7 +61,7 @@ func BinPath(name string, binDir string) string {
 		path, _ := filepath.Abs(path)
 		return path
 	}
-	return ""
+	return name
 }
 
 // Stage ...
