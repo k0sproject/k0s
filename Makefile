@@ -36,7 +36,7 @@ pkg/assets/zz_generated_offsets.go: embedded-bins/staging/linux/bin gen_bindata.
 endif
 
 k0s: pkg/assets/zz_generated_offsets.go $(GO_SRCS)
-	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" -o k0s.code main.go
+	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.code main.go
 	cat k0s.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build

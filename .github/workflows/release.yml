@@ -35,6 +35,7 @@ jobs:
     runs-on: [self-hosted,linux,x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
@@ -106,6 +107,7 @@ jobs:
     runs-on: [self-hosted,linux,arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
