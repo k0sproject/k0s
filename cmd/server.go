@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/build"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 
 	"github.com/avast/retry-go"
@@ -198,6 +199,23 @@ func startServer(token string) error {
 			Version:       build.Version,
 			K0sVars:       k0sVars,
 		})
+	}
+
+	// common factory to get the admin kube client that's needed in many components
+	// TODO: Refactor all needed components to use this factory
+	adminClientFactory := kubernetes.NewAdminClientFactory(k0sVars)
+
+	// One leader elector per controller
+	// TODO: Make all other needed components use this "global" leader elector
+	leaderElector := server.NewLeaderElector(clusterConfig, adminClientFactory)
+	componentManager.Add(leaderElector)
+
+	if clusterConfig.Spec.API.ExternalAddress != "" {
+		componentManager.Add(server.NewEndpointReconciler(
+			clusterConfig,
+			leaderElector,
+			adminClientFactory,
+		))
 	}
 
 	perfTimer.Checkpoint("starting-component-init")

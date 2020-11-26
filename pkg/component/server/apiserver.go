@@ -122,6 +122,9 @@ func (a *APIServer) Run() error {
 				args[name] = value
 			}
 		}
+		if a.ClusterConfig.Spec.API.ExternalAddress != "" {
+			args["endpoint-reconciler-type"] = "none"
+		}
 		apiServerArgs := []string{}
 		for name, value := range args {
 			apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))

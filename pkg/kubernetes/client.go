@@ -16,10 +16,51 @@ limitations under the License.
 package kubernetes
 
 import (
+	"sync"
+
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+// ClientFactory defines a factory interface to load a kube client
+type ClientFactory interface {
+	Create() (kubernetes.Interface, error)
+}
+
+// NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
+func NewAdminClientFactory(k0sVars constant.CfgVars) ClientFactory {
+	return &clientFactory{
+		configPath: k0sVars.AdminKubeConfigPath,
+	}
+}
+
+type clientFactory struct {
+	configPath string
+
+	client kubernetes.Interface
+	mutex  sync.Mutex
+}
+
+func (c *clientFactory) Create() (kubernetes.Interface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.client != nil {
+		return c.client, nil
+	}
+
+	client, err := Client(c.configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	c.client = client
+
+	return c.client, nil
+
+}
 
 // Client creates new k8s client based of the given kubeconfig
 func Client(kubeconfig string) (kubernetes.Interface, error) {
