@@ -69,7 +69,7 @@ _We have seen Kubernetes with cumbersome lifecycle management, high minimum syst
 - Metrics-server 0.3
 - Custom roles\profiles for worker nodes
 
-See more in [architecture docs](docs/architecture.md)
+See more in [architecture docs](https://github.com/k0sproject/k0s/blob/v0.7.0/docs/architecture.md)
 
 ## Status
 
@@ -108,7 +108,7 @@ k0s worker "superlongtokenfrompreviousphase"
 
 The client config (for kubectl or lens) can be found in `/var/lib/k0s/pki/admin.conf` on the controller. Replace `localhost` with the public IP address for the control plane.
 
-For more detailed description see [creating cluster documentation](docs/create-cluster.md).
+For more detailed description see [creating cluster documentation](https://github.com/k0sproject/k0s/blob/v0.7.0/docs/create-cluster.md).
 
 ### k0s-in-docker
 
@@ -125,7 +125,7 @@ That's it, in a minute or so there should be controller+worker combo running in 
 
 Just grab the kubeconfig with `docker exec k0s-controller cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://k8slens.dev/). ;)
 
-Read more details at [running k0s in Docker](docs/k0s-in-docker.md).
+Read more details at [running k0s in Docker](https://github.com/k0sproject/k0s/blob/v0.7.0/docs/k0s-in-docker.md).
 
 ## Build
 
