@@ -42,8 +42,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
 	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 
-	logging = setLogging(cmdLogLevels)
-
 	// initialize configuration
 	err := initConfig()
 	if err != nil {
@@ -79,6 +77,9 @@ var (
 			if viper.GetString("debug") != "" || debug {
 				logrus.SetLevel(logrus.DebugLevel)
 			}
+
+			// Set logging
+			logging = setLogging(cmdLogLevels)
 
 			// Get relevant Vars from constant package
 			k0sVars = constant.GetConfig(dataDir)
