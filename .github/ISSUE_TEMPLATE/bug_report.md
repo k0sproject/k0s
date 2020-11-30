@@ -2,10 +2,22 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: bug
 assignees: ''
 
 ---
+
+<!--
+Please use this template while reporting a bug and provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner. Thanks!
+
+Before creating an issue, make sure you've checked the following:
+- You are running the latest released version of k0s
+- Make sure you've searched for existing issues, both open and closed
+- Make sure you've searched for PRs too, a fix might've been merged already
+- You're looking at docs for the released version, `main` branch docs are usually ahead of released versions.
+    - Docs for exact released version can be found at https://github.com/k0sproject/k0s/tree/<version>/docs
+
+-->
 
 **Version**
 ```
