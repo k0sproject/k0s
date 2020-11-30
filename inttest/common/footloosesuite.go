@@ -362,7 +362,7 @@ func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Cl
 // WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API
 func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset) error {
 	s.T().Logf("waiting to see %s ready in kube API", node)
-	return wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 		if err != nil {
 			return false, nil
@@ -383,7 +383,7 @@ func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset)
 // Timeouts with error return in 5 mins
 func (s *FootlooseSuite) WaitForKubeAPI(node string, dataDir string) error {
 	s.T().Log("starting to poll kube api")
-	return wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		kc, err := s.KubeClient(node, dataDir)
 		if err != nil {
 			return false, nil
