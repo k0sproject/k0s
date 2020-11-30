@@ -256,7 +256,7 @@ func waitForHealthy(k0sVars constant.CfgVars) error {
 	defer cancelFunction()
 
 	// loop forever, until the context is canceled or until etcd is healthy
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {
 		case <-ticker.C:
