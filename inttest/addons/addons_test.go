@@ -48,8 +48,19 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Require().NoError(as.InitMainController("/tmp/k0s.yaml", ""))
 	as.waitForPrometheusRelease(addonName, 1)
 
-	as.doPrometheusUpdate(addonName, map[string]interface{}{"key": "value"})
-	chartName := as.waitForPrometheusRelease(addonName, 2)
+	values := map[string]interface{}{
+		"server": map[string]interface{}{
+			"env": []interface{}{
+				map[string]interface{}{
+					"name":  "FOO",
+					"value": "foobar",
+				},
+			},
+		},
+	}
+	as.doPrometheusUpdate(addonName, values)
+	chartName, releaseName := as.waitForPrometheusRelease(addonName, 2)
+	as.Require().NoError(as.waitForPrometheusServerEnvs(releaseName))
 	as.doPrometheusDelete(chartName)
 }
 
@@ -73,12 +84,13 @@ func (as *AddonsSuite) doPrometheusDelete(chartName string) {
 	}))
 }
 
-func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) string {
+func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (string, string) {
 	as.T().Logf("waiting to see prometheus release ready in kube API, generation %d", rev)
 	cfg := as.getKubeConfig("controller0")
 	chartClient, err := clientset.New(cfg)
 	as.Require().NoError(err)
 	var chartName string
+	var releaseName string
 	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		charts, err := chartClient.Charts("kube-system").List(context.Background())
 		if err != nil {
@@ -110,6 +122,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) str
 		as.Require().Equal("2.21.0", testAddonItem.Status.AppVersion)
 		as.Require().Equal("default", testAddonItem.Status.Namespace)
 		as.Require().NotEmpty(testAddonItem.Status.ReleaseName)
+		releaseName = testAddonItem.Status.ReleaseName
 		as.Require().Empty(testAddonItem.Status.Error)
 		as.Require().Equal(rev, testAddonItem.Status.Revision)
 		as.T().Logf("found test addon release: %s\n", testAddonItem.Name)
@@ -117,7 +130,36 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) str
 		chartName = testAddonItem.Name
 		return true, nil
 	}))
-	return chartName
+	return chartName, releaseName
+}
+
+func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
+	as.T().Logf("waiting to see prometheus release to have envs set from values yaml")
+	kc, err := as.KubeClient("controller0", "")
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
+		serverDeployment := fmt.Sprintf("%s-server", releaseName)
+		d, err := kc.AppsV1().Deployments("default").Get(context.TODO(), serverDeployment, v1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		for _, c := range d.Spec.Template.Spec.Containers {
+			if c.Name == "prometheus-server" {
+				for _, e := range c.Env {
+					if e.Name == "FOO" && e.Value == "foobar" {
+						return true, nil
+					}
+				}
+			} else {
+				continue
+			}
+		}
+		return false, nil
+	})
 }
 
 func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]interface{}) {

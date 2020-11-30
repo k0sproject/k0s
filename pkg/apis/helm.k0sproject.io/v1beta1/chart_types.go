@@ -36,7 +36,9 @@ func (cs ChartSpec) YamlValues() map[string]interface{} {
 	if err := yaml.Unmarshal([]byte(cs.Values), &res); err != nil {
 		logrus.WithField("values", cs.Values).Warn("broken yaml values")
 	}
-	return res
+	// We need to clean the map to have nested maps as map[string]interface{} types
+	// otherwise Helm will fail to merge default values and create the release object
+	return CleanUpGenericMap(res)
 }
 
 // ChartStatus defines the observed state of Chart
