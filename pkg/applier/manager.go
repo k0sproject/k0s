@@ -75,7 +75,7 @@ func (m *Manager) Run() error {
 	for m.client == nil {
 		log.Debug("retrieving kube client config")
 		_ = m.retrieveKubeClient()
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	leasePool, err := leaderelection.NewLeasePool(m.client, "k0s-manifest-applier", leaderelection.WithLogger(log))
