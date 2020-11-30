@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -74,13 +75,17 @@ func (m *Manager) Init() error {
 
 // Start starts all managed components
 func (m *Manager) Start() error {
+	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
+		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
 		if err := comp.Run(); err != nil {
 			return err
 		}
+		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
 	}
+	perfTimer.Output()
 	return nil
 }
 
