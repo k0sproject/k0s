@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -35,16 +36,15 @@ type ContainerD struct {
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
+	g := new(errgroup.Group)
 	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
-		// unfortunately, this cannot be parallelized – it will result in a fork/exec error
-
-		err := assets.Stage(c.K0sVars.BinDir, bin, constant.BinDirMode)
-		if err != nil {
-			return err
-		}
+		b := bin
+		g.Go(func() error {
+			return assets.Stage(c.K0sVars.BinDir, b, constant.BinDirMode)
+		})
 	}
 
-	return nil
+	return g.Wait()
 }
 
 // Run runs containerD
