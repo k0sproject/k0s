@@ -133,8 +133,10 @@ extensions:
     - name: prometheus-stack
       chartname: prometheus-community/prometheus
       version: "11.16.8"
-      values: |2
-          values: "for overriding"
+      values: |
+        server:
+          podDisruptionBudget:
+            enabled: false
       namespace: default
 ```
 
@@ -267,8 +269,10 @@ extensions:
     - name: prometheus-stack
       chartname: prometheus-community/prometheus
       version: "11.16.8"
-      values: |2
-          values: "for overriding"
+      values: |
+        storageSpec:
+          emptyDir:
+            medium: Memory
       namespace: default
 ```
 
