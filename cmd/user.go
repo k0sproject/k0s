@@ -49,10 +49,11 @@ users:
 
 	// userCmd creates new certs and kubeConfig for a user
 	userCmd = &cobra.Command{
-		Use:   "user",
+		Use:   "user [command]",
 		Short: "Manage user access",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			// user command does nothing
+			return userCreateCmd.Usage()
 		},
 	}
 
