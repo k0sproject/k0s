@@ -202,11 +202,20 @@ func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) erro
 	defer ssh.Disconnect()
 
 	var startCmd string
+	var installCmd string
+
 	if dataDir != "" {
+		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --data-dir=%s --config=%s", dataDir, cfgPath)
 		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --data-dir=%s --config=%s >/tmp/k0s-server.log 2>&1 &", dataDir, cfgPath)
 	} else {
+		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --config=%s", cfgPath)
 		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --config=%s >/tmp/k0s-server.log 2>&1 &", cfgPath)
 	}
+	_, err = ssh.ExecWithOutput(installCmd)
+	if err != nil {
+		return err
+	}
+
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		return err
