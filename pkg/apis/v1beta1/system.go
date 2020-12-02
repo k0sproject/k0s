@@ -15,12 +15,11 @@ type SystemUser struct {
 // DefaultSystemUsers returns the default system users to be used for the different components
 func DefaultSystemUsers() *SystemUser {
 	return &SystemUser{
-		ControllerManager: constant.ControllerManagerUser,
-		Etcd:              constant.EtcdUser,
-		Kine:              constant.KineUser,
-		Konnectivity:      constant.KonnectivityServerUser,
-		KubeAPIServer:     constant.ApiserverUser,
-		KubeScheduler:     constant.SchedulerUser,
+		Etcd:          constant.EtcdUser,
+		Kine:          constant.KineUser,
+		Konnectivity:  constant.KonnectivityServerUser,
+		KubeAPIServer: constant.ApiserverUser,
+		KubeScheduler: constant.SchedulerUser,
 	}
 }
 
