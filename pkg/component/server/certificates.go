@@ -126,11 +126,31 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key); err != nil {
+		if err := kubeConfig(c.K0sVars.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key, "root"); err != nil {
 			return err
 		}
 
 		return generateKeyPair("sa", c.K0sVars)
+	})
+
+	eg.Go(func() error {
+		// konnectivity kubeconfig
+		konnectivityReq := certificate.Request{
+			Name:   "konnectivity",
+			CN:     "kubernetes-konnectivity",
+			O:      "system:masters", // TODO: We need to figure out if konnectivity really needs superpowers
+			CACert: caCertPath,
+			CAKey:  caCertKey,
+		}
+		konnectivityCert, err := c.CertManager.EnsureCertificate(konnectivityReq, constant.KonnectivityServerUser)
+		if err != nil {
+			return err
+		}
+		if err := kubeConfig(c.K0sVars.KonnectivityKubeconfigConfigPath, "https://localhost:6443", c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
+			return err
+		}
+
+		return nil
 	})
 
 	eg.Go(func() error {
@@ -147,7 +167,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key, constant.ControllerManagerUser)
 	})
 
 	eg.Go(func() error {
@@ -163,7 +183,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key, constant.SchedulerUser)
 	})
 
 	eg.Go(func() error {
@@ -238,7 +258,7 @@ func (c *Certificates) Stop() error {
 	return nil
 }
 
-func kubeConfig(dest, url, caCert, clientCert, clientKey string) error {
+func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 	if util.FileExists(dest) {
 		return nil
 	}
@@ -254,13 +274,24 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey string) error {
 		ClientKey:  base64.StdEncoding.EncodeToString([]byte(clientKey)),
 	}
 
-	output, err := os.Create(dest)
+	output, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}
 	defer output.Close()
 
-	return kubeconfigTemplate.Execute(output, &data)
+	if err = kubeconfigTemplate.Execute(output, &data); err != nil {
+		return err
+	}
+
+	// Chown the file properly for the owner
+	uid, _ := util.GetUID(owner)
+	err = os.Chown(output.Name(), uid, -1)
+	if err != nil && os.Geteuid() == 0 {
+		return err
+	}
+
+	return nil
 }
 
 func generateKeyPair(name string, k0sVars constant.CfgVars) error {
