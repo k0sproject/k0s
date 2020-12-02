@@ -37,3 +37,26 @@ func GetGID(name string) (int, error) {
 	}
 	return strconv.Atoi(entry.Gid)
 }
+
+func CheckIfUserExists(name string) (bool, error) {
+	_, err := user.Lookup(name)
+	if _, ok := err.(user.UnknownUserError); ok {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+/*
+func GetLinuxDist() (string, error) {
+	if runtime.GOOS == "windows" {
+		return "", fmt.Errorf("unsupported OS")
+	}
+	cfg, err := ini.Load("/etc/os-release")
+	if err != nil {
+		fmt.Printf("failed to read file: %v", err)
+	}
+	return cfg.Section("").Key("ID").String(), nil
+}*/

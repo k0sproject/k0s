@@ -28,11 +28,12 @@ import (
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
 	APIVersion string             `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
+	Extensions *ClusterExtensions `yaml:"extensions,omitempty"`
+	Images     *ClusterImages     `yaml:"images"`
+	Install    *InstallSpec       `yaml:"installConfig,omitempty"`
 	Kind       string             `yaml:"kind" validate:"eq=Cluster"`
 	Metadata   *ClusterMeta       `yaml:"metadata"`
 	Spec       *ClusterSpec       `yaml:"spec"`
-	Extensions *ClusterExtensions `yaml:"extensions"`
-	Images     *ClusterImages     `yaml:"images"`
 	Telemetry  *ClusterTelemetry  `yaml:"telemetry"`
 }
 
@@ -67,6 +68,11 @@ type ControllerManagerSpec struct {
 // SchedulerSpec ...
 type SchedulerSpec struct {
 	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+// InstallSpec defines the required fields for the `k0s install` command
+type InstallSpec struct {
+	SystemUsers *SystemUser `yaml:"users,omitempty"`
 }
 
 // Validate validates cluster config
@@ -118,6 +124,7 @@ func DefaultClusterConfig() *ClusterConfig {
 		Metadata: &ClusterMeta{
 			Name: "k0s",
 		},
+		Install:   DefaultInstallSpec(),
 		Spec:      DefaultClusterSpec(),
 		Images:    DefaultClusterImages(),
 		Telemetry: DefaultClusterTelemetry(),

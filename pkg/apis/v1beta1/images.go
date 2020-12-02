@@ -42,7 +42,7 @@ type ClusterImages struct {
 
 	Calico CalicoImageSpec `yaml:"calico"`
 
-	Repository string `yaml:"repository"`
+	Repository string `yaml:"repository,omitempty"`
 }
 
 func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {

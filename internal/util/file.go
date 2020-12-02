@@ -18,12 +18,13 @@ package util
 import (
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 // FileExists checks if a file exists and is not a directory before we
 // try using it to prevent further errors.
-func FileExists(filename string) bool {
-	info, err := os.Stat(filename)
+func FileExists(fileName string) bool {
+	info, err := os.Stat(fileName)
 	if os.IsNotExist(err) {
 		return false
 	}
@@ -41,4 +42,14 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 		return fmt.Errorf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
 	}
 	return nil
+}
+
+// Find the path for a given file (similar to `which`)
+func GetExecPath(fileName string) (*string, error) {
+	path, err := exec.LookPath(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &path, nil
 }

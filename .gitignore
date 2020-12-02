@@ -5,6 +5,7 @@ bindata
 .*.stamp
 .tmp
 .terraform
+.idea
 *.tfstate*
 aws_private.pem
 out.json

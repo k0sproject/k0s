@@ -79,7 +79,7 @@ users:
 		Use:   "token",
 		Short: "Manage join tokens",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return tokenCreateCmd.Usage()
 		},
 	}
 

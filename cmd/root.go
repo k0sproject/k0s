@@ -57,6 +57,7 @@ func init() {
 	rootCmd.AddCommand(etcdCmd)
 	rootCmd.AddCommand(docs)
 	rootCmd.AddCommand(userCmd)
+	rootCmd.AddCommand(installCmd)
 
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
 	if build.EulaNotice != "" {
