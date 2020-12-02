@@ -1,6 +1,6 @@
 FROM alpine:3.12
 
-RUN apk add bash coreutils findutils iptables curl
+RUN apk add --no-cache bash coreutils findutils iptables curl
 
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.19.0/bin/linux/amd64/kubectl \
        && chmod +x ./kubectl \
