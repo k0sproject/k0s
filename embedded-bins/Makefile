@@ -2,9 +2,9 @@
 runc_version = 1.0.0-rc92
 containerd_version = 1.4.3
 kubernetes_version = 1.19.4
-kine_version = 0.5.1
-etcd_version = 3.4.13
-konnectivity_version = 0.0.13
+kine_version = 0.6.0
+etcd_version = 3.4.14
+konnectivity_version = 0.0.14
 
 bindir = staging/linux/bin
 bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
