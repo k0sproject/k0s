@@ -55,7 +55,8 @@ var cmDefaultArgs = map[string]string{
 // Init extracts the needed binaries
 func (a *ControllerManager) Init() error {
 	var err error
-	a.uid, err = util.GetUID(constant.ControllerManagerUser)
+	// controller manager running as api-server user as they both need access to same sa.key
+	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
 	}

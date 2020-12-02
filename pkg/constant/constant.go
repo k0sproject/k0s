@@ -75,8 +75,6 @@ const (
 	KineUser = "kube-apiserver" // apiserver needs to be able to read the kine unix socket
 	// ApiserverUser defines the user to use for running k8s api-server process
 	ApiserverUser = "kube-apiserver"
-	// ControllerManagerUser defines the user to use for running k8s controller manager process
-	ControllerManagerUser = "kube-controller-manager"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
