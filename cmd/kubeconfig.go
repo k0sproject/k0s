@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 
 	"github.com/cloudflare/cfssl/log"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
@@ -18,8 +19,9 @@ import (
 )
 
 func init() {
-	userCreateCmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
-	userCmd.AddCommand(userCreateCmd)
+	kubeconfigCreateCmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
+	kubeconfigCmd.AddCommand(kubeconfigCreateCmd)
+	kubeconfigCmd.AddCommand(kubeConfigAdminCmd)
 }
 
 var (
@@ -47,27 +49,26 @@ users:
     client-key-data: {{.ClientKey}}
 `))
 
-	// userCmd creates new certs and kubeConfig for a user
-	userCmd = &cobra.Command{
-		Use:   "user [command]",
-		Short: "Manage user access",
+	// kubeconfigCmd creates new certs and kubeConfig for a user
+	kubeconfigCmd = &cobra.Command{
+		Use:   "kubeconfig [command]",
+		Short: "Create a kubeconfig for a user",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// user command does nothing
-			return userCreateCmd.Usage()
+			return kubeconfigCreateCmd.Usage()
 		},
 	}
 
-	userCreateCmd = &cobra.Command{
+	kubeconfigCreateCmd = &cobra.Command{
 		Use:   "create [username]",
 		Short: "Create a kubeconfig for a user",
 		Long: `Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
 Note: A certificate once signed cannot be revoked for a particular user`,
 		Example: `	Command to create a kubeconfig for a user:
 	CLI argument:
-	$ k0s user create [username]
+	$ k0s kubeconfig create [username]
 
 	optionally add groups:
-	$ k0s user create [username] --groups [groups]`,
+	$ k0s kubeconfig create [username] --groups [groups]`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus and cfssl logging for user commands to avoid printing debug info to stdout
 			logrus.SetLevel(logrus.FatalLevel)
@@ -130,6 +131,27 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return err
 			}
 			os.Stdout.Write(buf.Bytes())
+			return nil
+		},
+	}
+
+	kubeConfigAdminCmd = &cobra.Command{
+		Use:   "admin [command]",
+		Short: "Manage user access",
+		Long:  "Command dumps admin kubeconfig.",
+		Example: `	$ k0s kubeconfig admin > kubeconfig
+	$ export KUBECONFIG=kubeconfig
+	$ kubectl get nodes`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if util.FileExists(k0sVars.AdminKubeConfigPath) {
+				content, err := ioutil.ReadFile(k0sVars.AdminKubeConfigPath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				os.Stdout.Write(content)
+			} else {
+				return errors.Errorf("failed to read admin config, is the control plane initialized on this node?")
+			}
 			return nil
 		},
 	}

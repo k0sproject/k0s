@@ -1,11 +1,15 @@
-## k0s etcd
+## k0s kubeconfig
 
-Manage etcd cluster
+Create a kubeconfig for a user
+
+```
+k0s kubeconfig [command] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for etcd
+  -h, --help   help for kubeconfig
 ```
 
 ### Options inherited from parent commands
@@ -20,6 +24,6 @@ Manage etcd cluster
 ### SEE ALSO
 
 * [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-* [k0s etcd leave](k0s_etcd_leave.md)	 - Sign off a given etc node from etcd cluster
-* [k0s etcd member-list](k0s_etcd_member-list.md)	 - Returns etcd cluster members list
+* [k0s kubeconfig admin](k0s_kubeconfig_admin.md)	 - Manage user access
+* [k0s kubeconfig create](k0s_kubeconfig_create.md)	 - Create a kubeconfig for a user
 
