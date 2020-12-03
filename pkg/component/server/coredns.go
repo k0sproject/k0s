@@ -240,7 +240,7 @@ type coreDNSConfig struct {
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars) (*CoreDNS, error) {
-	client, err := k8sutil.Client(k0sVars.AdminKubeconfigConfigPath)
+	client, err := k8sutil.Client(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return nil, err
 	}

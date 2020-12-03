@@ -41,7 +41,7 @@ func NewCommands(k0sVars constant.CfgVars) *Commands {
 	return &Commands{
 		repoFile:     k0sVars.HelmRepositoryConfig,
 		helmCacheDir: k0sVars.HelmRepositoryCache,
-		kubeConfig:   k0sVars.AdminKubeconfigConfigPath,
+		kubeConfig:   k0sVars.AdminKubeConfigPath,
 	}
 }
 

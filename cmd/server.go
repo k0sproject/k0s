@@ -351,8 +351,8 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, k0sVars constant.Cf
 	if !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		// wait for server to start up
 		err := retry.Do(func() error {
-			if !util.FileExists(k0sVars.AdminKubeconfigConfigPath) {
-				return fmt.Errorf("file does not exist: %s", k0sVars.AdminKubeconfigConfigPath)
+			if !util.FileExists(k0sVars.AdminKubeConfigPath) {
+				return fmt.Errorf("file does not exist: %s", k0sVars.AdminKubeConfigPath)
 			}
 			return nil
 		})

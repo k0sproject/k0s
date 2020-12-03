@@ -43,7 +43,7 @@ func (c *Component) Init() error {
 }
 
 func (c *Component) retrieveKubeClient(ch chan struct{}) {
-	client, err := kubeutil.Client(c.K0sVars.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(c.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		c.log.WithError(err).Warning("can't init kube client")
 		return

@@ -53,12 +53,12 @@ func (m *Manager) Init() error {
 	m.stacks = make(map[string]*StackApplier)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
-	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.K0sVars.AdminKubeconfigConfigPath)
+	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.K0sVars.AdminKubeConfigPath)
 	return err
 }
 
 func (m *Manager) retrieveKubeClient() error {
-	client, err := kubeutil.Client(m.K0sVars.AdminKubeconfigConfigPath)
+	client, err := kubeutil.Client(m.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (m *Manager) createStack(name string) error {
 		return nil
 	}
 	m.log.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name, m.K0sVars.AdminKubeconfigConfigPath)
+	sa, err := NewStackApplier(name, m.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}

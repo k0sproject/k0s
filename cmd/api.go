@@ -56,7 +56,7 @@ func startAPI() error {
 		return err
 	}
 
-	kubeClient, err = kubernetes.Client(k0sVars.AdminKubeconfigConfigPath)
+	kubeClient, err = kubernetes.Client(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}

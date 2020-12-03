@@ -126,7 +126,7 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.AdminKubeconfigConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key, "root"); err != nil {
+		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key, "root"); err != nil {
 			return err
 		}
 
@@ -146,7 +146,7 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.KonnectivityKubeconfigConfigPath, "https://localhost:6443", c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
+		if err := kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, "https://localhost:6443", c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
 			return err
 		}
 
