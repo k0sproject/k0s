@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -184,52 +185,58 @@ func (e *Etcd) setupCerts() error {
 		return errors.Wrap(err, "failed to create etcd ca")
 	}
 
-	// etcd client cert
-	etcdCertReq := certificate.Request{
-		Name:   "apiserver-etcd-client",
-		CN:     "apiserver-etcd-client",
-		O:      "apiserver-etcd-client",
-		CACert: etcdCaCert,
-		CAKey:  etcdCaCertKey,
-		Hostnames: []string{
-			"127.0.0.1",
-			"localhost",
-		},
-	}
-	if _, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.ApiserverUser); err != nil {
-		return err
-	}
-	// etcd server cert
-	etcdCertReq = certificate.Request{
-		Name:   filepath.Join("etcd", "server"),
-		CN:     "etcd-server",
-		O:      "etcd-server",
-		CACert: etcdCaCert,
-		CAKey:  etcdCaCertKey,
-		Hostnames: []string{
-			"127.0.0.1",
-			"localhost",
-		},
-	}
-	if _, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.EtcdUser); err != nil {
-		return err
-	}
+	eg, _ := errgroup.WithContext(context.Background())
 
-	etcdPeerCertReq := certificate.Request{
-		Name:   filepath.Join("etcd", "peer"),
-		CN:     e.Config.PeerAddress,
-		O:      "etcd-peer",
-		CACert: etcdCaCert,
-		CAKey:  etcdCaCertKey,
-		Hostnames: []string{
-			e.Config.PeerAddress,
-		},
-	}
-	if _, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, constant.EtcdUser); err != nil {
+	eg.Go(func() error {
+		// etcd client cert
+		etcdCertReq := certificate.Request{
+			Name:   "apiserver-etcd-client",
+			CN:     "apiserver-etcd-client",
+			O:      "apiserver-etcd-client",
+			CACert: etcdCaCert,
+			CAKey:  etcdCaCertKey,
+			Hostnames: []string{
+				"127.0.0.1",
+				"localhost",
+			},
+		}
+		_, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.ApiserverUser)
 		return err
-	}
+	})
 
-	return nil
+	eg.Go(func() error {
+		// etcd server cert
+		etcdCertReq := certificate.Request{
+			Name:   filepath.Join("etcd", "server"),
+			CN:     "etcd-server",
+			O:      "etcd-server",
+			CACert: etcdCaCert,
+			CAKey:  etcdCaCertKey,
+			Hostnames: []string{
+				"127.0.0.1",
+				"localhost",
+			},
+		}
+		_, err := e.CertManager.EnsureCertificate(etcdCertReq, constant.EtcdUser)
+		return err
+	})
+
+	eg.Go(func() error {
+		etcdPeerCertReq := certificate.Request{
+			Name:   filepath.Join("etcd", "peer"),
+			CN:     e.Config.PeerAddress,
+			O:      "etcd-peer",
+			CACert: etcdCaCert,
+			CAKey:  etcdCaCertKey,
+			Hostnames: []string{
+				e.Config.PeerAddress,
+			},
+		}
+		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, constant.EtcdUser)
+		return err
+	})
+
+	return eg.Wait()
 }
 
 // Health-check interface
@@ -249,7 +256,7 @@ func waitForHealthy(k0sVars constant.CfgVars) error {
 	defer cancelFunction()
 
 	// loop forever, until the context is canceled or until etcd is healthy
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {
 		case <-ticker.C:
