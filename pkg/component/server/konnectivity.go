@@ -69,7 +69,7 @@ func (k *Konnectivity) Run() error {
 			fmt.Sprintf("--uds-name=%s", filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock")),
 			fmt.Sprintf("--cluster-cert=%s", filepath.Join(k.K0sVars.CertRootDir, "server.crt")),
 			fmt.Sprintf("--cluster-key=%s", filepath.Join(k.K0sVars.CertRootDir, "server.key")),
-			fmt.Sprintf("--kubeconfig=%s", k.K0sVars.AdminKubeconfigConfigPath), // FIXME: should have user rights
+			fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KonnectivityKubeconfigConfigPath),
 			"--mode=grpc",
 			"--server-port=0",
 			"--agent-port=8132",
