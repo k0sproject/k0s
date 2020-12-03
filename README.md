@@ -131,7 +131,7 @@ Read more details at [running k0s in Docker](docs/k0s-in-docker.md).
 
 `k0s` can be built in 3 different ways:
 
-Fetch official binaries (except `kine` and `konnectivity-server`, which are built from source):
+Fetch official binaries (except `konnectivity-server`, which are built from source):
 ```
 make EMBEDDED_BINS_BUILDMODE=fetch
 ```
