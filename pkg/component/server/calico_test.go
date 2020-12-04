@@ -97,6 +97,53 @@ func TestCalicoManifests(t *testing.T) {
 		}
 		require.False(t, found, "Must not have FELIX_WIREGUARDENABLED env setting if config spec has no wireguard enabled")
 	})
+
+	t.Run("flex_volume_driver_path_set_from_config", func(t *testing.T) {
+		cfg := v1beta1.DefaultClusterConfig()
+		cfg.Spec.Network.Calico.FlexVolumeDriverPath = "/etc/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds"
+		saver := inMemorySaver{}
+		calico, err := NewCalico(cfg, saver)
+		require.NoError(t, err)
+
+		_ = calico.processConfigChanges(calicoConfig{})
+
+		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
+		require.True(t, foundRaw, "must have daemon set for calico")
+		spec := daemonSetContainersEnv{}
+		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+		found := false
+		for _, volume := range spec.Spec.Template.Spec.Volumes {
+			if volume.Name != "flexvol-driver-host" {
+				continue
+			}
+			found = true
+			require.Equal(t, "/etc/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds", volume.HostPath.Path)
+		}
+		require.True(t, found, "Must have flexvol-driver-host volume")
+	})
+
+	t.Run("flex_volume_driver_path_set_from_default", func(t *testing.T) {
+		cfg := v1beta1.DefaultClusterConfig()
+		saver := inMemorySaver{}
+		calico, err := NewCalico(cfg, saver)
+		require.NoError(t, err)
+
+		_ = calico.processConfigChanges(calicoConfig{})
+
+		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
+		require.True(t, foundRaw, "must have daemon set for calico")
+		spec := daemonSetContainersEnv{}
+		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+		found := false
+		for _, volume := range spec.Spec.Template.Spec.Volumes {
+			if volume.Name != "flexvol-driver-host" {
+				continue
+			}
+			found = true
+			require.Equal(t, "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds", volume.HostPath.Path)
+		}
+		require.True(t, found, "Must have flexvol-driver-host volume")
+	})
 }
 
 // this structure is needed only for unit tests and basocally it describes some fields that are needed to be parsed out of the daemon set manifest
@@ -112,6 +159,13 @@ type daemonSetContainersEnv struct {
 						ValueFrom interface{} `yaml:"valueFrom"`
 					} `yaml:"env"`
 				} `yaml:"containers"`
+				Volumes []struct {
+					Name     string `yaml:"name"`
+					HostPath struct {
+						Type string `yaml:"type"`
+						Path string `yaml:"path"`
+					} `yaml:"hostPath"`
+				} `yaml:"volumes"`
 			} `yaml:"spec"`
 		} `yaml:"template"`
 	} `yaml:"spec"`

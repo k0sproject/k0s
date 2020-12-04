@@ -45,12 +45,13 @@ type manifestsSaver interface {
 }
 
 type calicoConfig struct {
-	MTU             int
-	Mode            string
-	VxlanPort       int
-	VxlanVNI        int
-	ClusterCIDR     string
-	EnableWireguard bool
+	MTU                  int
+	Mode                 string
+	VxlanPort            int
+	VxlanVNI             int
+	ClusterCIDR          string
+	EnableWireguard      bool
+	FlexVolumeDriverPath string
 
 	CalicoCNIImage             string
 	CalicoFlexVolumeImage      string
@@ -189,12 +190,15 @@ func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig
 
 func (c *Calico) getConfig() (calicoConfig, error) {
 	config := calicoConfig{
-		MTU:                        c.clusterConf.Spec.Network.Calico.MTU,
-		Mode:                       c.clusterConf.Spec.Network.Calico.Mode,
-		VxlanPort:                  c.clusterConf.Spec.Network.Calico.VxlanPort,
-		VxlanVNI:                   c.clusterConf.Spec.Network.Calico.VxlanVNI,
-		EnableWireguard:            c.clusterConf.Spec.Network.Calico.EnableWireguard,
-		ClusterCIDR:                c.clusterConf.Spec.Network.PodCIDR,
+		MTU:                  c.clusterConf.Spec.Network.Calico.MTU,
+		Mode:                 c.clusterConf.Spec.Network.Calico.Mode,
+		VxlanPort:            c.clusterConf.Spec.Network.Calico.VxlanPort,
+		VxlanVNI:             c.clusterConf.Spec.Network.Calico.VxlanVNI,
+		EnableWireguard:      c.clusterConf.Spec.Network.Calico.EnableWireguard,
+		FlexVolumeDriverPath: c.clusterConf.Spec.Network.Calico.FlexVolumeDriverPath,
+
+		ClusterCIDR: c.clusterConf.Spec.Network.PodCIDR,
+
 		CalicoCNIImage:             c.clusterConf.Images.Calico.CNI.URI(),
 		CalicoFlexVolumeImage:      c.clusterConf.Images.Calico.FlexVolume.URI(),
 		CalicoNodeImage:            c.clusterConf.Images.Calico.Node.URI(),
