@@ -64,11 +64,6 @@ func (k *Kubelet) Init() error {
 		return errors.Wrapf(err, "failed to create %s", k.dataDir)
 	}
 
-	err = util.InitDirectory(k.K0sVars.KubeletVolumePluginDir, constant.KubeletVolumePluginDirMode)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", k.K0sVars.KubeletVolumePluginDir)
-	}
-
 	return nil
 }
 
@@ -82,7 +77,6 @@ func (k *Kubelet) Run() error {
 
 	args := []string{
 		fmt.Sprintf("--root-dir=%s", k.dataDir),
-		fmt.Sprintf("--volume-plugin-dir=%s", k.K0sVars.KubeletVolumePluginDir),
 
 		fmt.Sprintf("--config=%s", kubeletConfigPath),
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", k.K0sVars.KubeletBootstrapConfigPath),

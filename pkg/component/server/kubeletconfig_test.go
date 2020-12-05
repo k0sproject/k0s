@@ -31,6 +31,7 @@ var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
+	volumePluginDir := k0sVars.KubeletVolumePluginDir
 	clientCAFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 
 	t.Run("default_profile_only", func(t *testing.T) {
@@ -78,12 +79,12 @@ func Test_KubeletConfig(t *testing.T) {
 			assert.NoError(t, yaml.Unmarshal([]byte(manifestYamls[2]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			assert.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 
