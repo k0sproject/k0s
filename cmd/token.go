@@ -143,6 +143,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		Token   string
 		User    string
 		JoinURL string
+		APIUrl  string
 	}{
 		CACert: base64.StdEncoding.EncodeToString(caCert),
 		Token:  tokenString,
@@ -152,7 +153,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		data.JoinURL = clusterConfig.Spec.API.APIAddress()
 	} else {
 		data.User = "controller-bootstrap"
-		data.JoinURL = clusterConfig.Spec.API.ControllerJoinAddress()
+		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneApiAddress()
 	}
 
 	var buf bytes.Buffer

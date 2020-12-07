@@ -17,9 +17,12 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/util"
 	"io/ioutil"
+	v12 "k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"path"
@@ -39,7 +42,8 @@ import (
 )
 
 var (
-	kubeClient k8s.Interface
+	kubeClient    k8s.Interface
+	clusterConfig *v1beta1.ClusterConfig
 
 	APICmd = &cobra.Command{
 		Use:   "api",
@@ -51,7 +55,8 @@ var (
 )
 
 func startAPI() error {
-	clusterConfig, err := ConfigFromYaml(cfgFile)
+	var err error
+	clusterConfig, err = ConfigFromYaml(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -62,7 +67,7 @@ func startAPI() error {
 	}
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
-	router.Use(authMiddleware)
+	//router.Use(authMiddleware)
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
@@ -72,7 +77,9 @@ func startAPI() error {
 
 	if clusterConfig.Spec.Storage.IsJoinable() {
 		router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
+
 	}
+	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(kubeConfigHandler())
 
 	srv := &http.Server{
 		Handler:      router,
@@ -144,6 +151,70 @@ func etcdHandler() http.Handler {
 			return
 		}
 	})
+}
+
+func kubeConfigHandler() http.Handler {
+	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		tpl := `apiVersion: v1
+kind: Config
+clusters:
+- name: kubernetes
+  cluster:
+    certificate-authority-data: {{ .Ca }}
+    server: {{ .Server }}
+contexts:
+- name: calico-windows@kubernetes
+  context:
+    cluster: kubernetes
+    namespace: kube-system
+    user: calico-windows
+current-context: calico-windows@kubernetes
+users:
+- name: calico-windows
+  user:
+    token: {{ .Token }}
+`
+		l, err := kubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+		found := false
+		var secretWithToken v12.Secret
+		for _, secret := range l.Items {
+			if !strings.HasPrefix(secret.Name, "calico-node-token") {
+				continue
+			}
+			found = true
+			secretWithToken = secret
+			break
+		}
+		if !found {
+			sendError(fmt.Errorf("no calico-node-token secret found"), resp)
+			return
+		}
+
+		tw := util.TemplateWriter{
+			Name:     "kube-config",
+			Template: tpl,
+			Data: struct {
+				Server    string
+				Ca        string
+				Token     string
+				Namespace string
+			}{
+				Server:    clusterConfig.Spec.API.APIAddress(),
+				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
+				Token:     string(secretWithToken.Data["token"]),
+				Namespace: string(secretWithToken.Data["namespace"]),
+			},
+		}
+		if err := tw.WriteToBuffer(resp); err != nil {
+			sendError(err, resp)
+			return
+		}
+	})
+
 }
 
 func caHandler() http.Handler {

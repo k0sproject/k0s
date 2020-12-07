@@ -17,7 +17,10 @@ package worker
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -44,6 +47,7 @@ type Kubelet struct {
 	Profile             string
 	dataDir             string
 	supervisor          supervisor.Supervisor
+	ClusterDNS          string
 }
 
 // Init extracts the needed binaries
@@ -54,6 +58,7 @@ func (k *Kubelet) Init() error {
 	}
 	err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
 	if err != nil {
+		panic(err)
 		return err
 	}
 
@@ -94,14 +99,25 @@ func (k *Kubelet) Run() error {
 	}
 
 	if runtime.GOOS == "windows" {
+		node, err := getNodeName()
+		if err != nil {
+			return err
+		}
+		spew.Dump(node, k.ClusterDNS)
 		args = append(args, "--cgroups-per-qos=false")
 		args = append(args, "--enforce-node-allocatable=")
 		args = append(args, "--pod-infra-container-image=kubeletwin/pause")
 		args = append(args, "--network-plugin=cni")
 		args = append(args, "--cni-bin-dir=C:\\k\\cni")
 		args = append(args, "--cni-conf-dir=C:\\k\\cni\\config")
+		args = append(args, "--hostname-override="+node)
+		args = append(args, `--resolv-conf=`)
+		args = append(args, "--cluster-dns="+k.ClusterDNS)
+		args = append(args, "--cluster-domain=cluster.local")
+		args = append(args, "--hairpin-mode=promiscuous-bridge")
+		args = append(args, "--cert-dir=C:\\var\\lib\\k0s\\kubelet_certs")
 	} else {
-		args = append(args, "--cgroups-per-qos=false")
+		args = append(args, "--cgroups-per-qos=true")
 	}
 
 	if k.CRISocket != "" {
@@ -182,4 +198,21 @@ func splitRuntimeConfig(rtConfig string) (string, string, error) {
 	}
 
 	return runtimeType, runtimeSocket, nil
+}
+
+func getNodeName() (string, error) {
+	req, err := http.NewRequest("GET", "http://169.254.169.254/latest/meta-data/local-hostname", nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return os.Hostname()
+	}
+	defer resp.Body.Close()
+	h, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("can't read aws hostname: %v", err)
+	}
+	return string(h), nil
 }

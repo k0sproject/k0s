@@ -40,6 +40,7 @@ import (
 func init() {
 	workerCmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
 	workerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	workerCmd.Flags().StringVar(&apiServer, "api-server", "", "HACK: api-server for the windows worker node")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 }
@@ -49,6 +50,7 @@ var (
 	tokenArg      string
 	tokenFile     string
 	criSocket     string
+	apiServer     string
 	cloudProvider bool
 
 	workerCmd = &cobra.Command{
@@ -83,6 +85,12 @@ var (
 )
 
 func startWorker(token string) error {
+	clusterConfig, err := ConfigFromYaml(cfgFile)
+	if err != nil {
+		return err
+	}
+
+	worker.KernelSetup()
 	if token == "" && !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
@@ -114,6 +122,16 @@ func startWorker(token string) error {
 		workerProfile = "default-windows"
 	}
 
+	if runtime.GOOS == "windows" {
+		if token == "" {
+			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
+		}
+		componentManager.Add(worker.NewCalicoInstaller(token, apiServer))
+	}
+	dnsAddr, err := clusterConfig.Spec.Network.DNSAddress()
+	if err != nil {
+		return fmt.Errorf("can't calculate DNS addr: %v", err)
+	}
 	componentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
 		EnableCloudProvider: cloudProvider,

@@ -45,6 +45,7 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 			return fmt.Errorf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
 		}
 		logrus.Warnf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
+		return nil
 	}
 	return nil
 }

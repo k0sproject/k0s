@@ -91,8 +91,8 @@ func (a *APISpec) APIAddress() string {
 	return fmt.Sprintf("https://%s:6443", a.Address)
 }
 
-// ControllerJoinAddress returns the controller join APIs address
-func (a *APISpec) ControllerJoinAddress() string {
+// K0sControlPlaneApiAddress returns the controller join APIs address
+func (a *APISpec) K0sControlPlaneApiAddress() string {
 	return fmt.Sprintf("https://%s:9443", a.Address)
 }
 
