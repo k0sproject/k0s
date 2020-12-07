@@ -17,6 +17,7 @@ package basic
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -55,6 +56,27 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
+
+	s.Require().NoError(s.checkCertPerms("controller0"))
+}
+
+func (s *BasicSuite) checkCertPerms(node string) error {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(`find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
+	if err != nil {
+		return err
+	}
+
+	if output != "" {
+		return fmt.Errorf("some private files having non 640 permissions: %s", output)
+	}
+
+	return nil
 }
 
 func TestBasicSuite(t *testing.T) {

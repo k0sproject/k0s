@@ -50,7 +50,7 @@ func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars consta
 		L:             logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:        make(chan struct{}),
 		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeconfigConfigPath,
+		kubeConfig:    k0sVars.AdminKubeConfigPath,
 	}
 }
 

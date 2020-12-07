@@ -19,7 +19,7 @@ import "fmt"
 
 // CfgVars is a struct that holds all the config variables requried for K0s
 type CfgVars struct {
-	AdminKubeconfigConfigPath  string // The cluster admin kubeconfig location
+	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
 	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
 	DataDir                    string // Data directory containing k0s state
@@ -32,6 +32,7 @@ type CfgVars struct {
 	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
 	ManifestsDir               string // location for all stack manifests
 	RunDir                     string // location of supervised pid files and sockets
+	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
 
 	// Helm config
 	HelmHome             string
@@ -74,8 +75,6 @@ const (
 	KineUser = "kube-apiserver" // apiserver needs to be able to read the kine unix socket
 	// ApiserverUser defines the user to use for running k8s api-server process
 	ApiserverUser = "kube-apiserver"
-	// ControllerManagerUser defines the user to use for running k8s controller manager process
-	ControllerManagerUser = "kube-controller-manager"
 	// SchedulerUser defines the user to use for running k8s scheduler
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
@@ -115,7 +114,7 @@ func GetConfig(dataDir string) CfgVars {
 	helmHome := fmt.Sprintf("%s/helmhome", dataDir)
 
 	return CfgVars{
-		AdminKubeconfigConfigPath:  fmt.Sprintf("%s/admin.conf", certDir),
+		AdminKubeConfigPath:        fmt.Sprintf("%s/admin.conf", certDir),
 		BinDir:                     fmt.Sprintf("%s/bin", dataDir),
 		CertRootDir:                certDir,
 		DataDir:                    dataDir,
@@ -128,6 +127,7 @@ func GetConfig(dataDir string) CfgVars {
 		KubeletVolumePluginDir:     "/usr/libexec/k0s/kubelet-plugins/volume/exec",
 		ManifestsDir:               fmt.Sprintf("%s/manifests", dataDir),
 		RunDir:                     runDir,
+		KonnectivityKubeConfigPath: fmt.Sprintf("%s/konnectivity.conf", certDir),
 
 		// Helm Config
 		HelmHome:             helmHome,

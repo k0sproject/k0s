@@ -36,7 +36,7 @@ import (
 )
 
 func init() {
-	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", k0sVars.AdminKubeconfigConfigPath, "path to kubeconfig file [$KUBECONFIG]")
+	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", k0sVars.AdminKubeConfigPath, "path to kubeconfig file [$KUBECONFIG]")
 	if kubeConfig == "" {
 		kubeConfig = viper.GetString("KUBECONFIG")
 	}
@@ -130,7 +130,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		msg := fmt.Sprintf("failed to read cluster ca certificate from %s. is the control plane initialized on this node?", filepath.Join(k0sVars.CertRootDir, "ca.crt"))
 		return "", errors.Wrapf(err, msg)
 	}
-	manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeconfigConfigPath))
+	manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
 	if err != nil {
 		return "", err
 	}
