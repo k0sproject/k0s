@@ -3,7 +3,7 @@ GO_SRCS := $(shell find . -type f -name '*.go')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
-#   fetch	fetch precompiled binaries from internet (except kine)
+#   fetch	fetch precompiled binaries from internet
 #   none	does not embed any binaries
 
 EMBEDDED_BINS_BUILDMODE ?= docker

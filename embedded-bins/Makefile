@@ -71,6 +71,7 @@ kubelet_url = https://storage.googleapis.com/kubernetes-release/release/v$(kuber
 kube-apiserver_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-apiserver
 kube-scheduler_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-scheduler
 kube-controller-manager_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-controller-manager
+kine_url = https://github.com/k3s-io/kine/releases/download/v$(kine_version)/kine-amd64
 
 containerd_url = https://github.com/containerd/containerd/releases/download/v$(containerd_version)/containerd-$(containerd_version)-linux-$(arch).tar.gz
 etcd_url = https://github.com/etcd-io/etcd/releases/download/v$(etcd_version)/etcd-v$(etcd_version)-linux-$(arch).tar.gz
@@ -82,20 +83,11 @@ tmpdir ?= .tmp
 arch = amd64
 
 
-$(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager): | $(bindir)
+$(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager kine): | $(bindir)
 	$(curl) -o $@ $($(notdir $@)_url)
 
 $(addprefix $(bindir)/, containerd etcd): | $(bindir)
 	$(curl) $($(notdir $@)_url) | tar -C $(bindir)/ -zxv --strip-components=1 $($(notdir $@)_extract)
-
-# kine does not ship precompiled binaries so lets build it from source
-$(bindir)/kine: | $(bindir)
-	if ! [ -d $(tmpdir)/kine ]; then \
-		mkdir -p $(tmpdir) \
-			&& cd $(tmpdir) \
-			&& git clone -b v$(kine_version) --depth=1 https://github.com/rancher/kine.git; \
-	fi
-	cd $(tmpdir)/kine && go build -o $(CURDIR)/$@
 
 # konnectivity does not ship precompiled binaries so lets build it from source
 $(bindir)/konnectivity-server: | $(bindir)
