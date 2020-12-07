@@ -20,7 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/util"
+	"github.com/k0sproject/k0s/internal/util"
 	"io/ioutil"
 	v12 "k8s.io/api/core/v1"
 	"log"

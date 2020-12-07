@@ -139,6 +139,7 @@ func startWorker(token string) error {
 		KubeletConfigClient: kubeletConfigClient,
 		LogLevel:            logging["kubelet"],
 		Profile:             workerProfile,
+		ClusterDNS:          dnsAddr,
 	})
 
 	// extract needed components

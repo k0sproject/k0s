@@ -6,13 +6,12 @@ import (
 )
 
 type KubeProxy struct {
-	
+	K0sVars constant.CfgVars
 }
 
 func (k KubeProxy) Init() error {
-	err := assets.Stage(constant.BinDir, "kube-proxy.exe", constant.BinDirMode, constant.Group)
+	err := assets.Stage(k.K0sVars.BinDir, "kube-proxy.exe", constant.BinDirMode)
 
-	panic(1)
 	if err != nil {
 		panic(err)
 		return err

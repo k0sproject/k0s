@@ -17,9 +17,9 @@ limitations under the License.
 package constant
 
 const (
-	// DataDir folder contains all k0s state
-	DataDir = "C:\\var\\lib\\k0s"
-	// DataDirMode is the expected directory permissions for DataDir
+	// DataDirDefault folder contains all k0s state
+	DataDirDefault = "C:\\var\\lib\\k0s"
+	// DataDirMode is the expected directory permissions for DataDirDefault
 	DataDirMode = 0755
 	// EtcdDataDir contains etcd state
 	EtcdDataDir = "C:\\var\\lib\\k0s\\etcd"
