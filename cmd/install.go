@@ -48,7 +48,12 @@ func setup() error {
 			logrus.Errorf("failed to create server users: %v", err)
 		}
 	}
-
+	// set-up service and logging
+	serviceArgs := getCmdArgs(role)
+	err := install.EnsureService(serviceArgs)
+	if err != nil {
+		logrus.Errorf("failed to install k0s service: %v", err)
+	}
 	return nil
 }
 
@@ -80,4 +85,22 @@ func getUserList(sysUsers v1beta1.SystemUser) []string {
 		values[i] = v.Field(i).String()
 	}
 	return values
+}
+
+func getCmdArgs(role string) []string {
+	var args []string
+
+	if role == "server" {
+		args = append(args, "server")
+		if cfgFile != "" {
+			args = append(args, "--config", cfgFile)
+		}
+	} else {
+		args = append(args, "worker", "--token-file", "REPLACEME")
+	}
+
+	if debug {
+		args = append(args, "--debug")
+	}
+	return args
 }
