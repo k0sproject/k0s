@@ -3,7 +3,7 @@ package install
 import (
 	"fmt"
 
-	service "github.com/k0sproject/kardianos-service"
+	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
 )
 

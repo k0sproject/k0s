@@ -19,6 +19,8 @@ nav:
       - Containerd: containerd_config.md
       - Using Custom CRI: custom-cri-runtime.md
       - Using Cloud Providers: cloud-providers.md
+      - Running k0s as a service: install.md
+      - k0s CLI Help Pages: cli/k0s.md
   - Deploying Manifests: manifests.md
   - FAQ: FAQ.md
   - Troubleshooting: troubleshooting.md

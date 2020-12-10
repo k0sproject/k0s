@@ -1,15 +1,16 @@
-## k0s version
+## k0s install
 
-Print the k0s version
+Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)
 
 ```
-k0s version [flags]
+k0s install [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help          help for install
+      --role string   node role (possible values: server or worker. In a single-node setup, a worker role should be used) (default "server")
 ```
 
 ### Options inherited from parent commands

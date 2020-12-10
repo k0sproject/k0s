@@ -19,7 +19,7 @@ require (
 	github.com/imdario/mergo v0.3.8
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
-	github.com/k0sproject/kardianos-service v1.2.1-0.20201210130727-fd641b530ae7
+	github.com/kardianos/service v1.2.1-0.20201211143537-ef35c563203c
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.4 // indirect
@@ -62,5 +62,5 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/libnetwork => github.com/moby/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
-// github.com/k0sproject/kardianos-service => /home/ubuntu/go/src/github.com/k0sproject/kardianos-service
+
 )
