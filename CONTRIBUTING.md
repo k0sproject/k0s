@@ -24,3 +24,10 @@ By contributing, you agree that your contributions will be licensed as followed:
 
 * All content residing under the "docs/" directory of this repository is licensed under "Creative Commons Attribution Share Alike 4.0 International" (CC-BY-SA-4.0). See docs/LICENCE for details.
 * Content outside of the above mentioned directories or restrictions above is available under the "Apache License 2.0".
+
+## Community
+Some of you might have noticed we have official community blog hosted on [Medium](https://medium.com/k0sproject). If you are not yet following us, we'd like to invite you to do so now! 
+Make sure to [follow us on Twitter](https://twitter.com/k0sproject) as well 😊
+We have also agreed to share Slack with Lens IDE team. They are close friends of the k0s crew, and many of the Kubernetes users are using Lens anyway, so it felt very natural for us to share their Slack. 
+
+You’ll find us on dedicated k0s channel. Please [join the k0s Slack channel](https://join.slack.com/t/k8slens/shared_invite/enQtOTc5NjAyNjYyOTk4LWU1NDQ0ZGFkOWJkNTRhYTc2YjVmZDdkM2FkNGM5MjhiYTRhMDU2NDQ1MzIyMDA4ZGZlNmExOTc0N2JmY2M3ZGI) to hear the latest news, discussions and provide your feedback!
