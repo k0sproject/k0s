@@ -129,6 +129,7 @@ func (k *Kubelet) Run() error {
 	err := retry.Do(func() error {
 		kubeletconfig, err := k.KubeletConfigClient.Get(k.Profile)
 		if err != nil {
+			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
 		}
 
