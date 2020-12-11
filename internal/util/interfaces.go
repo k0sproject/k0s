@@ -45,21 +45,32 @@ func AllAddresses() ([]string, error) {
 	return addresses, nil
 }
 
-// FirstPublicAddress return the first found non-local address
+// FirstPublicAddress return the first found non-local address that's not part of pod network
 func FirstPublicAddress() (string, error) {
-	addrs, err := net.InterfaceAddrs()
+	ifs, err := net.Interfaces()
 	if err != nil {
 		return "127.0.0.1", errors.Wrap(err, "failed to list network interfaces")
 	}
-
-	for _, a := range addrs {
-		// check the address type and skip if loopback
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil && !ipnet.IP.IsLoopback() {
-				return ipnet.IP.String(), nil
+	for _, i := range ifs {
+		if i.Name == "vxlan.calico" {
+			// Skip calico interface
+			continue
+		}
+		addresses, err := i.Addrs()
+		if err != nil {
+			logrus.Warnf("failed to get addresses for interface %s: %s", i.Name, err.Error())
+			continue
+		}
+		for _, a := range addresses {
+			// check the address type and skip if loopback
+			if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil && !ipnet.IP.IsLoopback() {
+					return ipnet.IP.String(), nil
+				}
 			}
 		}
 	}
 
+	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
 	return "127.0.0.1", nil
 }
