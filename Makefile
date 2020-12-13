@@ -92,4 +92,5 @@ bindata-manifests:
 
 .PHONY: generate-bindata
 generate-bindata:
+	# TODO: TARGET_OS here is not passed so call from go generate doesn't work
 	GOOS=${GOHOSTOS} go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${TARGET_OS}/ embedded-bins/staging/${TARGET_OS}/bin

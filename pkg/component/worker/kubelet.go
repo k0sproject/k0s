@@ -17,7 +17,6 @@ package worker
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -92,7 +91,6 @@ func (k *Kubelet) Run() error {
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", k.K0sVars.KubeletBootstrapConfigPath),
 		fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KubeletAuthConfigPath),
 		fmt.Sprintf("--v=%s", k.LogLevel),
-		fmt.Sprintf("--resolv-conf=%s", resolvConfPath),
 		"--kube-reserved-cgroup=system.slice",
 		"--runtime-cgroups=/system.slice/containerd.service",
 		"--kubelet-cgroups=/system.slice/containerd.service",
@@ -101,9 +99,8 @@ func (k *Kubelet) Run() error {
 	if runtime.GOOS == "windows" {
 		node, err := getNodeName()
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get hostname: %v", err)
 		}
-		spew.Dump(node, k.ClusterDNS)
 		args = append(args, "--cgroups-per-qos=false")
 		args = append(args, "--enforce-node-allocatable=")
 		args = append(args, "--pod-infra-container-image=kubeletwin/pause")
@@ -112,12 +109,12 @@ func (k *Kubelet) Run() error {
 		args = append(args, "--cni-conf-dir=C:\\k\\cni\\config")
 		args = append(args, "--hostname-override="+node)
 		args = append(args, `--resolv-conf=`)
-		args = append(args, "--cluster-dns="+k.ClusterDNS)
 		args = append(args, "--cluster-domain=cluster.local")
 		args = append(args, "--hairpin-mode=promiscuous-bridge")
 		args = append(args, "--cert-dir=C:\\var\\lib\\k0s\\kubelet_certs")
 	} else {
 		args = append(args, "--cgroups-per-qos=true")
+		args = append(args, fmt.Sprintf("--resolv-conf=%s", resolvConfPath))
 	}
 
 	if k.CRISocket != "" {

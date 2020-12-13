@@ -4,7 +4,7 @@ apiVersion: crd.projectcalico.org/v1
   metadata:
     name: default
   spec:
-    { { - if .WithWindowsNodes } }
+    {{- if .WithWindowsNodes }}
     autoAllocateBlocks: true
     strictAffinity: true
-    { { - end } }
+    {{- end }}

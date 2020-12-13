@@ -1,9 +1,107 @@
 package worker
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"github.com/Microsoft/hcsshim"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
+	"time"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/k0sproject/k0s/pkg/token"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
+
+type CalicoInstaller struct {
+	Token      string
+	ApiAddress string
+}
+
+func (c CalicoInstaller) Init() error {
+	path := "C:\\bootstrap.ps1"
+
+	if err := os.Mkdir("C:\\CalicoWindows", 777); err != nil {
+		if os.IsExist(err) {
+			logrus.Warn("CalicoWindows already set up")
+			return nil
+		}
+		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
+	}
+
+	if err := ioutil.WriteFile(path, []byte(installCalicoPowershell), 777); err != nil {
+		return fmt.Errorf("can't unpack calico installer: %v", err)
+	}
+
+	if err := c.SaveKubeConfig("C:\\calico-kube-config"); err != nil {
+		return fmt.Errorf("can't get calico-kube-config: %v", err)
+	}
+
+	return nil
+}
+
+func (c CalicoInstaller) SaveKubeConfig(path string) error {
+	tokenBytes, err := token.JoinDecode(c.Token)
+	if err != nil {
+		return fmt.Errorf("failed to decode token: %v", err)
+	}
+	spew.Dump(string(tokenBytes))
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)
+	if err != nil {
+		return fmt.Errorf("failed to create api client config: %v", err)
+	}
+	config, err := clientConfig.ClientConfig()
+	if err != nil {
+		return fmt.Errorf("failed to create api client config: %v", err)
+	}
+
+	ca := x509.NewCertPool()
+	ca.AppendCertsFromPEM(config.CAData)
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: false,
+		RootCAs:            ca,
+	}
+	tr := &http.Transport{TLSClientConfig: tlsConfig}
+	client := http.Client{Transport: tr}
+	req, err := http.NewRequest(http.MethodGet, c.ApiAddress+"/v1beta1/calico/kubeconfig", nil)
+	if err != nil {
+		return fmt.Errorf("can't create http request: %v", err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("can't download kubelet config for calico: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response status: %s", resp.Status)
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("can't read response body: %v", err)
+	}
+	if err := ioutil.WriteFile(path, b, 0700); err != nil {
+		return fmt.Errorf("can't save kubeconfig for calico: %v", err)
+	}
+	posh := NewPowershell()
+	return posh.execute("C:\\bootstrap.ps1")
+}
+
+func (c CalicoInstaller) Run() error {
+
+	return nil
+}
+
+func (c CalicoInstaller) Stop() error {
+	return nil
+}
+
+func (c CalicoInstaller) Healthy() error {
+	return nil
+}
 
 // PowerShell struct
 type PowerShell struct {
@@ -11,7 +109,7 @@ type PowerShell struct {
 }
 
 // New create new session
-func New() *PowerShell {
+func NewPowershell() *PowerShell {
 	ps, _ := exec.LookPath("powershell.exe")
 	return &PowerShell{
 		powerShell: ps,
@@ -26,6 +124,18 @@ func (p *PowerShell) execute(args ...string) error {
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
+}
+
+func getSourceVip() (string, error) {
+	for {
+		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
+		if err != nil {
+			time.Sleep(time.Second * 5)
+			logrus.WithError(err).Warning("can't get Calico_ep endpoint")
+			continue
+		}
+		return ep.IPAddress.String(), nil
+	}
 }
 
 const installCalicoPowershell = `
@@ -46,17 +156,9 @@ const installCalicoPowershell = `
 Param(
     [parameter(Mandatory = $false)] $ReleaseBaseURL="https://github.com/projectcalico/calico/releases/download/v3.17.0/",
     [parameter(Mandatory = $false)] $ReleaseFile="calico-windows-v3.17.0.zip",
-    [parameter(Mandatory = $false)] $KubeVersion="",
-    [parameter(Mandatory = $false)] $DownloadOnly="no",
     [parameter(Mandatory = $false)] $Datastore="kubernetes",
-    [parameter(Mandatory = $false)] $EtcdEndpoints="",
-    [parameter(Mandatory = $false)] $EtcdTlsSecretName="",
-    [parameter(Mandatory = $false)] $EtcdKey="",
-    [parameter(Mandatory = $false)] $EtcdCert="",
-    [parameter(Mandatory = $false)] $EtcdCaCert="",
     [parameter(Mandatory = $false)] $ServiceCidr="10.96.0.0/12",
-    [parameter(Mandatory = $false)] $DNSServerIPs="10.96.0.10",
-    [parameter(Mandatory = $false)] $CalicoBackend=""
+    [parameter(Mandatory = $false)] $DNSServerIPs="10.96.0.10"
 )
 
 function DownloadFiles()
@@ -94,34 +196,11 @@ function PrepareKubernetes()
 
     # Prepare POD infra Images
     c:\k\InstallImages.ps1
-
-    InstallK8sBinaries
-}
-
-function InstallK8sBinaries()
-{
-    Install-7Zip
-    $Source = "" | Select Release
-    $Source.Release=$KubeVersion
-    InstallKubernetesBinaries -Destination $BaseDir -Source $Source
-    cp c:\k\kubernetes\node\bin\*.exe c:\k
 }
 
 function GetPlatformType()
 {
-    # AKS
-    $hnsNetwork = Get-HnsNetwork | ? Name -EQ azure
-    if ($hnsNetwork.name -EQ "azure") {
-        return ("aks")
-    }
-
-    # EKS
-    $hnsNetwork = Get-HnsNetwork | ? Name -like "vpcbr*"
-    if ($hnsNetwork.name -like "vpcbr*") {
-        return ("eks")
-    }
-
-    # EC2
+ 	# EC2
     $restError = $null
     Try {
         $awsNodeName=Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
@@ -137,34 +216,7 @@ function GetPlatformType()
 
 function GetBackendType()
 {
-    param(
-        [parameter(Mandatory=$true)] $CalicoNamespace,
-        [parameter(Mandatory=$false)] $KubeConfigPath = "$RootDir\calico-kube-config"
-    )
-
-    if (-Not [string]::IsNullOrEmpty($CalicoBackend)) {
-        return $CalicoBackend
-    }
-
-    # Auto detect backend type
-    if ($Datastore -EQ "kubernetes") {
-        $encap=c:\k\kubectl.exe --kubeconfig="$RootDir\calico-kube-config" get felixconfigurations.crd.projectcalico.org default -o jsonpath='{.spec.ipipEnabled}' -n $CalicoNamespace
-        if ($encap -EQ "true") {
-            throw "Calico on Linux has IPIP enabled. IPIP is not supported on Windows nodes."
-        }
-
-        $encap=c:\k\kubectl.exe --kubeconfig="$RootDir\calico-kube-config" get felixconfigurations.crd.projectcalico.org default -o jsonpath='{.spec.vxlanEnabled}' -n $CalicoNamespace
-        if ($encap -EQ "true") {
-            return ("vxlan")
-        }
-        return ("bgp")
-    } else {
-        $CalicoBackend=c:\k\kubectl.exe --kubeconfig="$RootDir\calico-kube-config" get configmap calico-config -n $CalicoNamespace -o jsonpath='{.data.calico_backend}'
-        if ($CalicoBackend -EQ "vxlan") {
-            return ("vxlan")
-        }
-        return ("bgp")
-    }
+	return ("vxlan")
 }
 
 function GetCalicoNamespace() {
@@ -225,9 +277,8 @@ ipmo -force $helperv2
 
 $platform=GetPlatformType
 
-if (-Not [string]::IsNullOrEmpty($KubeVersion) -and $platform -NE "eks") {
-    PrepareKubernetes
-}
+PrepareKubernetes
+
 Write-Host "Download Calico for Windows release..."
 DownloadFile -Url $ReleaseBaseURL/$ReleaseFile -Destination c:\calico-windows.zip
 
@@ -242,39 +293,12 @@ Expand-Archive $CalicoZip c:\
 
 Write-Host "Setup Calico for Windows..."
 SetConfigParameters -OldString '<your datastore type>' -NewString $Datastore
-SetConfigParameters -OldString '<your etcd endpoints>' -NewString "$EtcdEndpoints"
 
-if (-Not [string]::IsNullOrEmpty($EtcdTlsSecretName)) {
-    $calicoNs = GetCalicoNamespace
-    SetupEtcdTlsFiles -SecretName "$EtcdTlsSecretName" -CalicoNamespace $calicoNs
-}
-SetConfigParameters -OldString '<your etcd key>' -NewString "$EtcdKey"
-SetConfigParameters -OldString '<your etcd cert>' -NewString "$EtcdCert"
-SetConfigParameters -OldString '<your etcd ca cert>' -NewString "$EtcdCaCert"
+
 SetConfigParameters -OldString '<your service cidr>' -NewString $ServiceCidr
 SetConfigParameters -OldString '<your dns server ips>' -NewString $DNSServerIPs
 
-if ($platform -EQ "aks") {
-    Write-Host "Setup Calico for Windows for AKS..."
-    $Backend="none"
-    SetConfigParameters -OldString 'CALICO_NETWORKING_BACKEND="vxlan"' -NewString 'CALICO_NETWORKING_BACKEND="none"'
-    SetConfigParameters -OldString 'KUBE_NETWORK = "Calico.*"' -NewString 'KUBE_NETWORK = "azure.*"'
 
-    $calicoNs = GetCalicoNamespace
-    GetCalicoKubeConfig -CalicoNamespace $calicoNs -SecretName 'calico-windows'
-}
-if ($platform -EQ "eks") {
-    $awsNodeName = Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
-    Write-Host "Setup Calico for Windows for EKS, node name $awsNodeName ..."
-    $Backend = "none"
-    $awsNodeNameQuote = """$awsNodeName"""
-    SetConfigParameters -OldString '$(hostname).ToLower()' -NewString "$awsNodeNameQuote"
-    SetConfigParameters -OldString 'CALICO_NETWORKING_BACKEND="vxlan"' -NewString 'CALICO_NETWORKING_BACKEND="none"'
-    SetConfigParameters -OldString 'KUBE_NETWORK = "Calico.*"' -NewString 'KUBE_NETWORK = "vpc.*"'
-
-    $calicoNs = GetCalicoNamespace 
-    GetCalicoKubeConfig -CalicoNamespace $calicoNs -KubeConfigPath C:\ProgramData\kubernetes\kubeconfig
-}
 if ($platform -EQ "ec2") {
     $awsNodeName = Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
     Write-Host "Setup Calico for Windows for AWS, node name $awsNodeName ..."
@@ -283,7 +307,7 @@ if ($platform -EQ "ec2") {
 
     $calicoNs = GetCalicoNamespace
     GetCalicoKubeConfig -CalicoNamespace $calicoNs
-    $Backend = GetBackendType -CalicoNamespace $calicoNs
+    $Backend = GetBackendType 
 
     Write-Host "Backend networking is $Backend"
     if ($Backend -EQ "bgp") {
@@ -293,7 +317,7 @@ if ($platform -EQ "ec2") {
 if ($platform -EQ "bare-metal") {
     $calicoNs = GetCalicoNamespace
     GetCalicoKubeConfig -CalicoNamespace $calicoNs
-    $Backend = GetBackendType -CalicoNamespace $calicoNs
+    $Backend = GetBackendType
 
     Write-Host "Backend networking is $Backend"
     if ($Backend -EQ "bgp") {
@@ -301,14 +325,7 @@ if ($platform -EQ "bare-metal") {
     }
 }
 
-if ($DownloadOnly -EQ "yes") {
-    Write-Host "Dowloaded Calico for Windows. Update c:\CalicoWindows\config.ps1 and run c:\CalicoWindows\install-calico.ps1"
-    Exit
-}
-
 StartCalico
 
-if ($Backend -NE "none") {
-    New-NetFirewallRule -Name KubectlExec10250 -Description "Enable kubectl exec and log" -Action Allow -LocalPort 10250 -Enabled True -DisplayName "kubectl exec 10250" -Protocol TCP -ErrorAction SilentlyContinue
-}
+New-NetFirewallRule -Name KubectlExec10250 -Description "Enable kubectl exec and log" -Action Allow -LocalPort 10250 -Enabled True -DisplayName "kubectl exec 10250" -Protocol TCP -ErrorAction SilentlyContinue
 `

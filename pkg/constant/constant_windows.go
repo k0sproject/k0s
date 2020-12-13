@@ -16,6 +16,8 @@ limitations under the License.
 */
 package constant
 
+import "fmt"
+
 const (
 	// DataDirDefault folder contains all k0s state
 	DataDirDefault = "C:\\var\\lib\\k0s"
@@ -30,7 +32,7 @@ const (
 	// CertRootDirMode is the expected directory permissions for CertRootDir.
 	CertRootDirMode = 0751
 	//EtcdCertDir contains etcd certificates
-	EtcdCertDir = "C:\\var\\lib\\k0s\\pki/etcd"
+	EtcdCertDir = "C:\\var\\lib\\k0s\\pki\\etcd"
 	// EtcdCertDirMode is the expected directory permissions for EtcdCertDir
 	EtcdCertDirMode = 0711
 	// CertMode is the expected permissions for certificates. see: https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.20/
@@ -64,7 +66,7 @@ const (
 
 	// AdminKubeconfigConfigPath defines the cluster admin kubeconfig location
 	AdminKubeconfigConfigPath = "C:\\var\\lib\\k0s\\pki\\admin.conf"
-
+	KineSocket = "kine\\kine.sock:2379"
 	// Group defines group name for shared directories
 	Group = "k0s"
 
@@ -112,3 +114,7 @@ const (
 	HelmRepositoryConfig = "C:\\var\\lib\\k0s\\helmhome/repositories.yaml"
 	HelmRepositoryCache  = "C:\\var\\lib\\k0s\\helmhome/cache"
 )
+
+func formatPath(dir string, file string) string {
+	return fmt.Sprintf("%s\\%s", dir, file)
+}

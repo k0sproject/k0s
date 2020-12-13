@@ -18,7 +18,7 @@ limitations under the License.
 
 package constant
 
-
+import "fmt"
 
 const (
 	// DataDirDefault is the default data directory containing k0s state
@@ -47,6 +47,8 @@ const (
 	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
 	KubeletVolumePluginDirMode = 0700
 
+	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
+
 	// User accounts for services
 
 	// EtcdUser defines the user to use for running etcd process
@@ -63,7 +65,7 @@ const (
 	KubernetesMajorMinorVersion = "1.20"
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
-
+	KineSocket = "kine/kine.sock:2379"
 	// Image Constants
 	KonnectivityImage          = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
 	KonnectivityImageVersion   = "v0.0.13"
@@ -82,3 +84,7 @@ const (
 	KubeControllerImage        = "calico/kube-controllers"
 	KubeControllerImageVersion = "v3.16.2"
 )
+
+func formatPath(dir string, file string) string {
+	return fmt.Sprintf("%s/%s", dir, file)
+}

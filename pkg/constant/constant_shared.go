@@ -1,16 +1,20 @@
 package constant
 
-import "fmt"
+import (
+	"runtime"
+)
 
 // WinCertCA defines the CA.crt location.
 // this one is defined here because it is used not only on windows worker but also during the control plane bootstrap
 const WinCertCA = "C:\\var\\lib\\k0s\\pki\\ca.crt"
+const WinDataDirDefault = "C:\\var\\lib\\k0s"
 
 // CfgVars is a struct that holds all the config variables requried for K0s
 type CfgVars struct {
 	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
 	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
+	WindowsCertRootDir         string // WindowsCertRootDir defines the root location for all pki related artifacts
 	DataDir                    string // Data directory containing k0s state
 	EtcdCertDir                string // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string // EtcdDataDir contains etcd state
@@ -32,32 +36,39 @@ type CfgVars struct {
 // GetConfig returns the pointer to a Config struct
 func GetConfig(dataDir string) CfgVars {
 	if dataDir == "" {
-		dataDir = DataDirDefault
+		switch runtime.GOOS {
+		case "windows":
+			dataDir = WinDataDirDefault
+		default:
+			dataDir = DataDirDefault
+		}
 	}
 
-	runDir := fmt.Sprintf("%s/run", dataDir)
-	certDir := fmt.Sprintf("%s/pki", dataDir)
-	helmHome := fmt.Sprintf("%s/helmhome", dataDir)
+	runDir := formatPath(dataDir, "run")
+	certDir := formatPath(dataDir, "pki")
+	winCertDir := WinDataDirDefault + "\\pki" // hacky but we need it to be windows style even on linux machine
+	helmHome := formatPath(dataDir, "helmhome")
 
 	return CfgVars{
-		AdminKubeConfigPath:        fmt.Sprintf("%s/admin.conf", certDir),
-		BinDir:                     fmt.Sprintf("%s/bin", dataDir),
+		AdminKubeConfigPath:        formatPath(certDir, "admin.conf"),
+		BinDir:                     formatPath(dataDir, "bin"),
 		CertRootDir:                certDir,
+		WindowsCertRootDir:         winCertDir,
 		DataDir:                    dataDir,
-		EtcdCertDir:                fmt.Sprintf("%s/etcd", certDir),
-		EtcdDataDir:                fmt.Sprintf("%s/etcd", dataDir),
-		KineSocketPath:             fmt.Sprintf("%s/kine/kine.sock:2379", runDir),
-		KonnectivitySocketDir:      fmt.Sprintf("%s/konnectivity-server", runDir),
-		KubeletAuthConfigPath:      fmt.Sprintf("%s/kubelet.conf", dataDir),
-		KubeletBootstrapConfigPath: fmt.Sprintf("%s/kubelet-bootstrap.conf", dataDir),
-		KubeletVolumePluginDir:     "/usr/libexec/k0s/kubelet-plugins/volume/exec",
-		ManifestsDir:               fmt.Sprintf("%s/manifests", dataDir),
+		EtcdCertDir:                formatPath(certDir, "etcd"),
+		EtcdDataDir:                formatPath(dataDir, "etcd"),
+		KineSocketPath:             formatPath(runDir, KineSocket),
+		KonnectivitySocketDir:      formatPath(runDir, "konnectivity-server"),
+		KubeletAuthConfigPath:      formatPath(dataDir, "kubelet.conf"),
+		KubeletBootstrapConfigPath: formatPath(dataDir, "kubelet-bootstrap.conf"),
+		KubeletVolumePluginDir:     KubeletVolumePluginDir,
+		ManifestsDir:               formatPath(dataDir, "manifests"),
 		RunDir:                     runDir,
-		KonnectivityKubeConfigPath: fmt.Sprintf("%s/konnectivity.conf", certDir),
+		KonnectivityKubeConfigPath: formatPath(certDir, "konnectivity.conf"),
 
 		// Helm Config
 		HelmHome:             helmHome,
-		HelmRepositoryCache:  fmt.Sprintf("%s/cache", helmHome),
-		HelmRepositoryConfig: fmt.Sprintf("%s/repositories.yaml", helmHome),
+		HelmRepositoryCache:  formatPath(helmHome, "cache"),
+		HelmRepositoryConfig: formatPath(helmHome, "repositories.yaml"),
 	}
 }

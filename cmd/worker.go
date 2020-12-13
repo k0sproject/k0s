@@ -85,10 +85,7 @@ var (
 )
 
 func startWorker(token string) error {
-	clusterConfig, err := ConfigFromYaml(cfgFile)
-	if err != nil {
-		return err
-	}
+
 
 	worker.KernelSetup()
 	if token == "" && !util.FileExists(k0sVars.KubeletAuthConfigPath) {
@@ -121,17 +118,7 @@ func startWorker(token string) error {
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"
 	}
-
-	if runtime.GOOS == "windows" {
-		if token == "" {
-			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
-		}
-		componentManager.Add(worker.NewCalicoInstaller(token, apiServer))
-	}
-	dnsAddr, err := clusterConfig.Spec.Network.DNSAddress()
-	if err != nil {
-		return fmt.Errorf("can't calculate DNS addr: %v", err)
-	}
+	
 	componentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
 		EnableCloudProvider: cloudProvider,
@@ -139,8 +126,21 @@ func startWorker(token string) error {
 		KubeletConfigClient: kubeletConfigClient,
 		LogLevel:            logging["kubelet"],
 		Profile:             workerProfile,
-		ClusterDNS:          dnsAddr,
 	})
+
+	if runtime.GOOS == "windows" {
+		if token == "" {
+			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
+		}
+		componentManager.Add(&worker.KubeProxy{
+			K0sVars:  k0sVars,
+			LogLevel: logging["kube-proxy"],
+		})
+		componentManager.Add(&worker.CalicoInstaller{
+			Token:      token,
+			ApiAddress: apiServer,
+		})
+	}
 
 	// extract needed components
 	if err := componentManager.Init(); err != nil {

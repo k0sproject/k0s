@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/Microsoft/hcsshim v0.8.7
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.4.1 // indirect

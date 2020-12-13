@@ -45,12 +45,13 @@ type manifestsSaver interface {
 }
 
 type calicoConfig struct {
-	MTU                  int
-	Mode                 string
-	VxlanPort            int
-	VxlanVNI             int
-	ClusterCIDR          string
-	EnableWireguard      bool
+	MTU              int
+	Mode             string
+	VxlanPort        int
+	VxlanVNI         int
+	ClusterCIDR      string
+	EnableWireguard  bool
+	WithWindowsNodes bool
 	FlexVolumeDriverPath string
 
 	CalicoCNIImage             string
@@ -203,6 +204,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		CalicoFlexVolumeImage:      c.clusterConf.Images.Calico.FlexVolume.URI(),
 		CalicoNodeImage:            c.clusterConf.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: c.clusterConf.Images.Calico.KubeControllers.URI(),
+		WithWindowsNodes:           c.clusterConf.Spec.Network.Calico.WithWindowsNodes,
 	}
 
 	return config, nil

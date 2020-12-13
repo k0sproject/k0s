@@ -34,6 +34,7 @@ var defaultLogLevels = map[string]string{
 	"kube-controller-manager": "1",
 	"kube-scheduler":          "1",
 	"kubelet":                 "1",
+	"kube-proxy":              "1",
 }
 
 func init() {
