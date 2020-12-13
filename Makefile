@@ -32,7 +32,10 @@ pkg/assets/zz_generated_offsets.go:
 		"var BinDataSize int64 = 0" \
 		> $@
 else
-pkg/assets/zz_generated_offsets.go: embedded-bins/staging/${TARGET_OS}/bin gen_bindata.go
+pkg/assets/zz_generated_offsets.go: # embedded-bins/staging/${TARGET_OS}/bin gen_bindata.go
+	# TODO: this dependencies moved here instead of being listed under the actual dependencies because it seems
+	# like variable interpolation doesn't work there
+	make embedded-bins/staging/${TARGET_OS}/bin gen_bindata.go
 	go generate
 endif
 
@@ -40,12 +43,12 @@ endif
 k0s: export TARGET_OS := linux
 k0s: pkg/assets/zz_generated_offsets.go embedded-bins/staging/linux/bin $(GO_SRCS)
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.code main.go
-	cat k0s.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
+	cat k0s.code bindata_${TARGET_OS} > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 k0s.exe: export TARGET_OS := windows
 k0s.exe: pkg/assets/zz_generated_offsets.go embedded-bins/staging/windows/bin $(GO_SRCS)
 	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' -o k0s.exe.code main.go
-	cat k0s.exe.code bindata > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
+	cat k0s.exe.code bindata_${TARGET_OS} > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .PHONY: build
 build: k0s
@@ -64,7 +67,6 @@ embedded-bins/staging/windows/bin: .bins.windows.stamp
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=linux
 	touch $@
 
-
 .PHONY: lint
 lint: pkg/assets/zz_generated_offsets.go
 	$(golint) run ./...
@@ -80,9 +82,10 @@ check-unit: pkg/assets/zz_generated_offsets.go
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_offsets.go k0s .bins.stamp bindata
+	rm -f pkg/assets/zz_generated_offsets.go k0s .bins.*stamp bindata*
 	$(MAKE) -C embedded-bins clean
 
+.PHONY: manifests
 manifests:
 	controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
 
@@ -92,5 +95,4 @@ bindata-manifests:
 
 .PHONY: generate-bindata
 generate-bindata:
-	# TODO: TARGET_OS here is not passed so call from go generate doesn't work
-	GOOS=${GOHOSTOS} go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${TARGET_OS}/ embedded-bins/staging/${TARGET_OS}/bin
+	GOOS=${GOHOSTOS} go run gen_bindata.go -o bindata_${TARGET_OS} -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/${TARGET_OS}/ embedded-bins/staging/${TARGET_OS}/bin

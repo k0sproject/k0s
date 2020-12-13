@@ -5,16 +5,15 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/Microsoft/hcsshim"
+	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/token"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
+	"k8s.io/client-go/tools/clientcmd"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/k0sproject/k0s/pkg/token"
-	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type CalicoInstaller struct {
@@ -49,7 +48,6 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode token: %v", err)
 	}
-	spew.Dump(string(tokenBytes))
 	clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)
 	if err != nil {
 		return fmt.Errorf("failed to create api client config: %v", err)
@@ -127,15 +125,21 @@ func (p *PowerShell) execute(args ...string) error {
 }
 
 func getSourceVip() (string, error) {
-	for {
+	var vip string
+
+	err := retry.Do(func() error {
 		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
 		if err != nil {
-			time.Sleep(time.Second * 5)
 			logrus.WithError(err).Warning("can't get Calico_ep endpoint")
-			continue
+			return err
 		}
-		return ep.IPAddress.String(), nil
+		vip = ep.IPAddress.String()
+		return nil
+	}, retry.Delay(time.Second * 5))
+	if err != nil {
+		return "", err
 	}
+	return vip, nil
 }
 
 const installCalicoPowershell = `
