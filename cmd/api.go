@@ -320,7 +320,7 @@ func isValidToken(token string) bool {
 		return false
 	}
 
-	if string(secret.Data["usage-controller-join"]) != "true" {
+	if string(secret.Data["usage-bootstrap-api-auth"]) != "true" {
 		return false
 	}
 	return true

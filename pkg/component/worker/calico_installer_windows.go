@@ -65,10 +65,12 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	}
 	tr := &http.Transport{TLSClientConfig: tlsConfig}
 	client := http.Client{Transport: tr}
+
 	req, err := http.NewRequest(http.MethodGet, c.APIAddress+"/v1beta1/calico/kubeconfig", nil)
 	if err != nil {
 		return fmt.Errorf("can't create http request: %v", err)
 	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.BearerToken))
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("can't download kubelet config for calico: %v", err)
@@ -135,7 +137,7 @@ func getSourceVip() (string, error) {
 		}
 		vip = ep.IPAddress.String()
 		return nil
-	}, retry.Delay(time.Second * 5))
+	}, retry.Delay(time.Second*5))
 	if err != nil {
 		return "", err
 	}
