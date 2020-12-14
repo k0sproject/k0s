@@ -86,7 +86,6 @@ var (
 
 func startWorker(token string) error {
 
-
 	worker.KernelSetup()
 	if token == "" && !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
@@ -118,7 +117,7 @@ func startWorker(token string) error {
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"
 	}
-	
+
 	componentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
 		EnableCloudProvider: cloudProvider,
@@ -138,7 +137,7 @@ func startWorker(token string) error {
 		})
 		componentManager.Add(&worker.CalicoInstaller{
 			Token:      token,
-			ApiAddress: apiServer,
+			APIAddress: apiServer,
 		})
 	}
 

@@ -6,7 +6,7 @@ import "github.com/k0sproject/k0s/pkg/constant"
 
 type CalicoInstaller struct {
 	Token      string
-	ApiAddress string
+	APIAddress string
 }
 
 func (c CalicoInstaller) Init() error {

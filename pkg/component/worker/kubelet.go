@@ -57,7 +57,6 @@ func (k *Kubelet) Init() error {
 	}
 	err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
 	if err != nil {
-		panic(err)
 		return err
 	}
 
@@ -197,10 +196,12 @@ func splitRuntimeConfig(rtConfig string) (string, string, error) {
 	return runtimeType, runtimeSocket, nil
 }
 
+const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
+
 func getNodeName() (string, error) {
-	req, err := http.NewRequest("GET", "http://169.254.169.254/latest/meta-data/local-hostname", nil)
+	req, err := http.NewRequest("GET", awsMetaInformationURI, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

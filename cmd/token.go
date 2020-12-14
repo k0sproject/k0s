@@ -153,7 +153,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 		data.JoinURL = clusterConfig.Spec.API.APIAddress()
 	} else {
 		data.User = "controller-bootstrap"
-		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneApiAddress()
+		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()
 	}
 
 	var buf bytes.Buffer

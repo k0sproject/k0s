@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
-	"runtime"
 	"os/exec"
+	"runtime"
 )
 
 // FileExists checks if a file exists and is not a directory before we

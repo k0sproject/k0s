@@ -18,7 +18,7 @@ import (
 
 type CalicoInstaller struct {
 	Token      string
-	ApiAddress string
+	APIAddress string
 }
 
 func (c CalicoInstaller) Init() error {
@@ -65,7 +65,7 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	}
 	tr := &http.Transport{TLSClientConfig: tlsConfig}
 	client := http.Client{Transport: tr}
-	req, err := http.NewRequest(http.MethodGet, c.ApiAddress+"/v1beta1/calico/kubeconfig", nil)
+	req, err := http.NewRequest(http.MethodGet, c.APIAddress+"/v1beta1/calico/kubeconfig", nil)
 	if err != nil {
 		return fmt.Errorf("can't create http request: %v", err)
 	}
@@ -142,8 +142,13 @@ func getSourceVip() (string, error) {
 	return vip, nil
 }
 
+// installCalicoPowershell is port of the original calico installer
+// with droped customization and no need to download kubernetes components
+// since we have staged them
+// the original script is done by Tigera, Inc
+// and can be accessed over the web on https://docs.projectcalico.org/scripts/install-calico-windows.ps1
 const installCalicoPowershell = `
-# Copyright (c) 2020 Tigera, Inc. All rights reserved.
+# Copyright 2020 Mirantis, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

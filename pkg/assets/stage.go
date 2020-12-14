@@ -110,7 +110,6 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 
 	logrus.Debug("Writing static file: ", p)
 
-
 	if err := copyTo(p, gz); err != nil {
 		return err
 	}
@@ -120,10 +119,12 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 	return nil
 }
 
-
 func copyTo(p string, gz io.Reader) error {
-	os.Remove(p)
+	_ = os.Remove(p)
 	f, err := os.Create(p)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s", p)
+	}
 	defer f.Close()
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", p)

@@ -67,7 +67,7 @@ func startAPI() error {
 	}
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
-	//router.Use(authMiddleware)
+	router.Use(authMiddleware)
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
