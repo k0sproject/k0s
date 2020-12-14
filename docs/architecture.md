@@ -10,13 +10,13 @@ k0s is packaged as single, self-extracting binary which embeds Kubernetes binari
 - No RPMs, dep's, snaps or any other OS specific packaging needed. Single "package" for all OSes
 - We can fully control the versions of each and every dependency
 
-![k0s packaging as a single binary](k0s_packaging.png)
+![k0s packaging as a single binary](img/k0s_packaging.png)
 
 ## Control plane
 
 k0s as a single binary acts as the process supervisor for all other control plane components. This means there's no container engine or kubelet running on controllers (by default). Which means there is no way for a cluster user to schedule workloads onto controller nodes.
 
-![k0s Controller processes](k0s_controller_processes.png)
+![k0s Controller processes](img/k0s_controller_processes.png)
 
 k0s creates, manages and configures each of the components. k0s runs all control plane components as "naked" processes. So on the controller node there's no container engine running.
 
@@ -30,6 +30,6 @@ In case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster.
 
 ## Worker plane
 
-![k0s worker processes](k0s_worker_processes.png)
+![k0s worker processes](img/k0s_worker_processes.png)
 
-Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. Currently we support only [containerd](containerd.io) as the container engine.
+Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. Currently we support only [containerd](https://containerd.io) as the container engine.
