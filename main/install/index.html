@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/internal/host-dependencies/">
+        <link rel="canonical" href="https://docs.k0sproject.io/install/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,14 +19,14 @@
     
     
       
-        <title>Host Dependencies - k0s Documentation</title>
+        <title>Running k0s as a service - k0s Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.406af9ae.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.406af9ae.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ec60dfa4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ec60dfa4.min.css">
         
       
     
@@ -41,7 +41,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#host-dependencies" class="md-skip">
+        <a href="#service-and-logging" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
   <nav class="md-header-nav md-grid" aria-label="Header">
     <a href="https://docs.k0sproject.io" title="k0s Documentation" class="md-header-nav__button md-logo" aria-label="k0s Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header-nav__button md-icon" for="__drawer">
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Host Dependencies
+              Running k0s as a service
             
           </span>
         </div>
@@ -198,7 +198,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="https://docs.k0sproject.io" title="k0s Documentation" class="md-nav__button md-logo" aria-label="k0s Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     k0s Documentation
@@ -225,7 +225,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Overview
     </a>
   </li>
@@ -258,7 +258,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../create-cluster/" class="md-nav__link">
+    <a href="../create-cluster/" class="md-nav__link">
       Quick Start Guide
     </a>
   </li>
@@ -270,7 +270,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
+    <a href="../k0s-in-docker/" class="md-nav__link">
       Run in Docker
     </a>
   </li>
@@ -282,7 +282,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-single-node/" class="md-nav__link">
+    <a href="../k0s-single-node/" class="md-nav__link">
       Single-node set up
     </a>
   </li>
@@ -297,10 +297,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       Configuration Reference
@@ -320,7 +322,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration/" class="md-nav__link">
+    <a href="../configuration/" class="md-nav__link">
       k0s Configuration Options
     </a>
   </li>
@@ -332,7 +334,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../containerd_config/" class="md-nav__link">
+    <a href="../containerd_config/" class="md-nav__link">
       Containerd
     </a>
   </li>
@@ -344,7 +346,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../custom-cri-runtime/" class="md-nav__link">
+    <a href="../custom-cri-runtime/" class="md-nav__link">
       Using Custom CRI
     </a>
   </li>
@@ -356,7 +358,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cloud-providers/" class="md-nav__link">
+    <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
   </li>
@@ -366,11 +368,76 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../install/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Running k0s as a service
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Running k0s as a service
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#caveats" class="md-nav__link">
+    Caveats
+  </a>
+  
+    <nav class="md-nav" aria-label="Caveats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-setup" class="md-nav__link">
+    Server setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-setup" class="md-nav__link">
+    Worker Setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-documentation" class="md-nav__link">
+    Additional Documentation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -380,7 +447,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s/" class="md-nav__link">
+    <a href="../cli/k0s/" class="md-nav__link">
       k0s CLI Help Pages
     </a>
   </li>
@@ -397,7 +464,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../manifests/" class="md-nav__link">
+    <a href="../manifests/" class="md-nav__link">
       Deploying Manifests
     </a>
   </li>
@@ -409,7 +476,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../FAQ/" class="md-nav__link">
+    <a href="../FAQ/" class="md-nav__link">
       FAQ
     </a>
   </li>
@@ -421,7 +488,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../troubleshooting/" class="md-nav__link">
+    <a href="../troubleshooting/" class="md-nav__link">
       Troubleshooting
     </a>
   </li>
@@ -454,7 +521,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/overview/" class="md-nav__link">
+    <a href="../contributors/overview/" class="md-nav__link">
       Overview
     </a>
   </li>
@@ -466,7 +533,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/github_workflow/" class="md-nav__link">
+    <a href="../contributors/github_workflow/" class="md-nav__link">
       Workflow
     </a>
   </li>
@@ -478,7 +545,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/testing/" class="md-nav__link">
+    <a href="../contributors/testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -518,9 +585,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#list-of-hard-dependencies" class="md-nav__link">
-    List of hard dependencies
+  <a href="#caveats" class="md-nav__link">
+    Caveats
   </a>
+  
+    <nav class="md-nav" aria-label="Caveats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-setup" class="md-nav__link">
+    Server setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker-setup" class="md-nav__link">
+    Worker Setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#additional-documentation" class="md-nav__link">
+    Additional Documentation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -538,21 +632,29 @@
               
                 
                 
-                <h1 id="host-dependencies">Host Dependencies<a class="headerlink" href="#host-dependencies" title="Permanent link">#</a></h1>
-<p>The goal of k0s is to only depend on kernel functionality. However, the kubelet
-currently has several host dependencies. Some of these may need to be bundled,
-but we should prefer upstream contributions to remove these dependencies.</p>
-<h2 id="list-of-hard-dependencies">List of hard dependencies<a class="headerlink" href="#list-of-hard-dependencies" title="Permanent link">#</a></h2>
+                <h1 id="service-and-logging">Service and Logging<a class="headerlink" href="#service-and-logging" title="Permanent link">#</a></h1>
+<p>We've created the subcommand <code>k0s install</code> to allow users to easily install k0s as a service, and define its logging.</p>
+<p>This is an <strong>alpha state</strong> feature.</p>
+<h2 id="caveats">Caveats<a class="headerlink" href="#caveats" title="Permanent link">#</a></h2>
 <ul>
-<li><code>find</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95189</li>
-<li><code>du</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95178
--- note that <code>du</code> dependency remains, but using POSIX-compliant argument </li>
-<li><code>nice</code></li>
-<li><code>iptables</code>
--- as documented in https://github.com/k0sproject/k0s/issues/176 it is unclear whether <code>iptables</code> is needed. It appears to come from the <code>portmap</code> plugin, but the most robust solution may be to simply bundle <code>iptables</code> with k0s.</li>
+<li>This command is strictly a helper command. It is not meant to provide a fully-automated solution, since you can run k0s in multiple, very different ways.</li>
+<li>It configures your service set-up as either a worker or a server, and will have different tasks, depending on the role you pick.</li>
+<li>Supported services: OpenRC &amp; Systemd</li>
 </ul>
+<h3 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">#</a></h3>
+<p>This is the default mode of operation. When a server role is picked, the installer will do the following:
+* Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)
+* Create a service file (OpenRC/Systemd) and redirects logging to <code>/var/log/k0s.log</code>.
+* If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.
+* <code>enable-worker</code> (single-node) setup is not supported. If you would like to run your service in that way, a possible solution would be to run <code>cmd install</code> as worker, and edit the startup command by hand.</p>
+<h3 id="worker-setup">Worker Setup<a class="headerlink" href="#worker-setup" title="Permanent link">#</a></h3>
+<ul>
+<li>A worker cannot run with any other user, other than <code>root</code>, so no special users will be created.</li>
+<li>The service file will include the <code>--token-file</code> flag, with a value that needs to be manually changed.</li>
+<li>If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.</li>
+</ul>
+<h3 id="additional-documentation">Additional Documentation<a class="headerlink" href="#additional-documentation" title="Permanent link">#</a></h3>
+<p>see: <a href="../cli/k0s_install/">k0s install</a></p>
                 
               
               
@@ -567,6 +669,41 @@ but we should prefer upstream contributions to remove these dependencies.</p>
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Using Cloud Providers
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../cli/k0s/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                k0s CLI Help Pages
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -613,15 +750,15 @@ but we should prefer upstream contributions to remove these dependencies.</p>
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.4d7724a9.min.js"></script>
-      <script src="../../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.4d7724a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "..",
           features: ['toc.autohide', 'search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.0f64ce30.min.js"
+            worker: "../assets/javascripts/worker/search.0f64ce30.min.js"
           }, typeof search !== "undefined" && search),
           version: {'method': 'mike'}
         })

@@ -339,6 +339,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -440,6 +447,30 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../install/" class="md-nav__link">
+      Running k0s as a service
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../cli/k0s/" class="md-nav__link">
+      k0s CLI Help Pages
     </a>
   </li>
 
@@ -624,6 +655,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -675,7 +713,7 @@
 <p>To create a join token for the new controller, run the following on existing controller node:
 <div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h
 </code></pre></div></p>
-<p>The on the new controller, run:
+<p>On the new controller, run:
 <div class="highlight"><pre><span></span><code>k0s server <span class="s2">&quot;long-join-token&quot;</span>
 </code></pre></div></p>
 <h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
@@ -694,6 +732,9 @@ k0s user create --groups &quot;system:masters&quot; $clusterUser &gt; ~/clusterU
 Create the proper roleBinding, to allow the user access to the resources:</code>shell script
 kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
 ```</p>
+<h2 id="service-and-log-setup">Service and Log Setup<a class="headerlink" href="#service-and-log-setup" title="Permanent link">#</a></h2>
+<p><a href="../cli/k0s_install/">k0s install</a> sub-command was created as a helper command to allow users to easily install k0s as a service.
+For more information, read <a href="../install/">here</a>.</p>
                 
               
               

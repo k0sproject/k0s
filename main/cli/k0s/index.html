@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s - k0s Documentation</title>
+        <title>k0s CLI Help Pages - k0s Documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s
+              k0s CLI Help Pages
             
           </span>
         </div>
@@ -297,10 +297,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       Configuration Reference
@@ -359,6 +361,91 @@
     <a href="../../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../install/" class="md-nav__link">
+      Running k0s as a service
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        k0s CLI Help Pages
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      k0s CLI Help Pages
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#k0s" class="md-nav__link">
+    k0s
+  </a>
+  
+    <nav class="md-nav" aria-label="k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    Options
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    SEE ALSO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -537,20 +624,18 @@
               
                 
                 
-                  <h1>K0s</h1>
+                  <h1>k0s CLI Help Pages</h1>
                 
                 <h2 id="k0s">k0s<a class="headerlink" href="#k0s" title="Permanent link">#</a></h2>
 <p>k0s - Zero Friction Kubernetes</p>
 <h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
-<p>k0s is yet another Kubernetes distro. Yes. But we do some of the things pretty different from other distros out there.
-It is a single binary all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make 
-building a Kubernetes clusters a matter of just copying an executable to every host and running it.</p>
+<p>k0s - The zero friction Kubernetes - https://k0sproject.io</p>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
   -h, --help                     help for k0s
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1])
+  -l, --logging stringToString   Logging Levels for the different components (default [etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
@@ -558,13 +643,14 @@ building a Kubernetes clusters a matter of just copying an executable to every h
 <li><a href="../k0s_default-config/">k0s default-config</a>    - Output the default k0s configuration yaml to stdout</li>
 <li><a href="../k0s_docs/">k0s docs</a>    - Generate Markdown docs for the k0s binary</li>
 <li><a href="../k0s_etcd/">k0s etcd</a>    - Manage etcd cluster</li>
+<li><a href="../k0s_install/">k0s install</a>  - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
 <li><a href="../k0s_server/">k0s server</a>    - Run server</li>
 <li><a href="../k0s_token/">k0s token</a>  - Manage join tokens</li>
 <li><a href="../k0s_user/">k0s user</a>    - Manage user access</li>
 <li><a href="../k0s_version/">k0s version</a>  - Print the k0s version</li>
 <li><a href="../k0s_worker/">k0s worker</a>    - Run worker</li>
 </ul>
-<h6>Auto generated by spf13/cobra on 24-Nov-2020</h6>
+<h6>Auto generated by spf13/cobra on 10-Dec-2020</h6>
                 
               
               
@@ -579,6 +665,41 @@ building a Kubernetes clusters a matter of just copying an executable to every h
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../../install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Running k0s as a service
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../../manifests/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Deploying Manifests
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

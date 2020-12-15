@@ -32,6 +32,14 @@
      <lastmod>2020-12-15</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
+     <loc>https://docs.k0sproject.io/install/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
      <loc>https://docs.k0sproject.io/manifests/</loc>
      <lastmod>2020-12-15</lastmod>
      <changefreq>daily</changefreq>

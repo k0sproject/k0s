@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/internal/host-dependencies/">
+        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_install/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Host Dependencies - k0s Documentation</title>
+        <title>K0s install - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#host-dependencies" class="md-skip">
+        <a href="#k0s-install" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Host Dependencies
+              K0s install
             
           </span>
         </div>
@@ -380,7 +380,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s/" class="md-nav__link">
+    <a href="../k0s/" class="md-nav__link">
       k0s CLI Help Pages
     </a>
   </li>
@@ -498,8 +498,6 @@
             
               
               
-                
-              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -507,8 +505,6 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
-  
-    
   
   
     <label class="md-nav__title" for="__toc">
@@ -518,9 +514,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#list-of-hard-dependencies" class="md-nav__link">
-    List of hard dependencies
+  <a href="#k0s-install" class="md-nav__link">
+    k0s install
   </a>
+  
+    <nav class="md-nav" aria-label="k0s install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    Options
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
+    Options inherited from parent commands
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    SEE ALSO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -538,21 +561,27 @@
               
                 
                 
-                <h1 id="host-dependencies">Host Dependencies<a class="headerlink" href="#host-dependencies" title="Permanent link">#</a></h1>
-<p>The goal of k0s is to only depend on kernel functionality. However, the kubelet
-currently has several host dependencies. Some of these may need to be bundled,
-but we should prefer upstream contributions to remove these dependencies.</p>
-<h2 id="list-of-hard-dependencies">List of hard dependencies<a class="headerlink" href="#list-of-hard-dependencies" title="Permanent link">#</a></h2>
+                  <h1>K0s install</h1>
+                
+                <h2 id="k0s-install">k0s install<a class="headerlink" href="#k0s-install" title="Permanent link">#</a></h2>
+<p>Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</p>
+<div class="highlight"><pre><span></span><code>k0s install [flags]
+</code></pre></div>
+<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>  -h, --help          help for install
+      --role string   node role (possible values: server or worker. In a single-node setup, a worker role should be used) (default &quot;server&quot;)
+</code></pre></div>
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
+      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+  -d, --debug                    Debug logging (default: false)
+  -l, --logging stringToString   Logging Levels for the different components (default [etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
+</code></pre></div>
+<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><code>find</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95189</li>
-<li><code>du</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95178
--- note that <code>du</code> dependency remains, but using POSIX-compliant argument </li>
-<li><code>nice</code></li>
-<li><code>iptables</code>
--- as documented in https://github.com/k0sproject/k0s/issues/176 it is unclear whether <code>iptables</code> is needed. It appears to come from the <code>portmap</code> plugin, but the most robust solution may be to simply bundle <code>iptables</code> with k0s.</li>
+<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
 </ul>
+<h6>Auto generated by spf13/cobra on 10-Dec-2020</h6>
                 
               
               
