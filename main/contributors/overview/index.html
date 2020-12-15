@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_user/">
+        <link rel="canonical" href="https://docs.k0sproject.io/contributors/overview/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s user - k0s Documentation</title>
+        <title>Overview - k0s Documentation</title>
       
     
     
@@ -77,7 +77,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-user" class="md-skip">
+        <a href="#contributing-to-k0s" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s user
+              Overview
             
           </span>
         </div>
@@ -409,10 +409,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" checked>
     
     <label class="md-nav__link" for="nav-7">
       Contributing
@@ -430,11 +432,77 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../contributors/overview/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Overview
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Overview
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-of-conduct" class="md-nav__link">
+    Code of Conduct
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-workflow" class="md-nav__link">
+    Github Workflow
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-testing" class="md-nav__link">
+    Code Testing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    License
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community" class="md-nav__link">
+    Community
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -444,7 +512,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/github_workflow/" class="md-nav__link">
+    <a href="../github_workflow/" class="md-nav__link">
       Workflow
     </a>
   </li>
@@ -456,7 +524,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/testing/" class="md-nav__link">
+    <a href="../testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -476,6 +544,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -483,6 +553,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -492,36 +564,37 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-user" class="md-nav__link">
-    k0s user
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s user">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
+  <a href="#code-of-conduct" class="md-nav__link">
+    Code of Conduct
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
+      
+        <li class="md-nav__item">
+  <a href="#github-workflow" class="md-nav__link">
+    Github Workflow
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
+      
+        <li class="md-nav__item">
+  <a href="#code-testing" class="md-nav__link">
+    Code Testing
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    License
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community" class="md-nav__link">
+    Community
+  </a>
   
 </li>
       
@@ -539,27 +612,32 @@
               
                 
                 
-                  <h1>K0s user</h1>
-                
-                <h2 id="k0s-user">k0s user<a class="headerlink" href="#k0s-user" title="Permanent link">#</a></h2>
-<p>Manage user access</p>
-<div class="highlight"><pre><span></span><code>k0s user [flags]
-</code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -h, --help   help for user
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
-      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                    Debug logging (default: false)
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1])
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+                <h1 id="contributing-to-k0s">Contributing to k0s<a class="headerlink" href="#contributing-to-k0s" title="Permanent link">#</a></h1>
+<p>Thank you for taking the time to make a contribution to k0s. The following document is a set of guidelines and instructions for contributing to k0s.</p>
+<p>When contributing to this repository, please consider first discussing the change you wish to make by opening an issue.</p>
+<h2 id="code-of-conduct">Code of Conduct<a class="headerlink" href="#code-of-conduct" title="Permanent link">#</a></h2>
+<p>Our code of conduct can be found in the link below. Please follow it in all your interactions with the project.
+* <a href="../CODE_OF_CONDUCT/">Code Of Conduct</a> </p>
+<h2 id="github-workflow">Github Workflow<a class="headerlink" href="#github-workflow" title="Permanent link">#</a></h2>
+<p>We Use <a href="https://guides.github.com/introduction/flow/index.html">Github Flow</a>, so all code changes are tracked via Pull Requests.
+A detailed guide on the recommended workflow can be found below:
+ * <a href="../github_workflow/">Github Workflow</a></p>
+<h2 id="code-testing">Code Testing<a class="headerlink" href="#code-testing" title="Permanent link">#</a></h2>
+<p>All submitted PRs go through a set of tests and reviews. You can run most of these tests <em>before</em> a PR is submitted.
+In fact, we recommend it, because it will save on many possible review iterations and automated tests.
+The testing guidelines can be found here:
+* <a href="../testing/">Contributor's Guide to Testing</a></p>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">#</a></h2>
+<p>By contributing, you agree that your contributions will be licensed as followed:</p>
 <ul>
-<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
-<li><a href="../k0s_user_create/">k0s user create</a>  - Create a kubeconfig for a user</li>
+<li>All content residing under the "docs/" directory of this repository is licensed under "Creative Commons Attribution Share Alike 4.0 International" (CC-BY-SA-4.0). See docs/LICENCE for details.</li>
+<li>Content outside of the above mentioned directories or restrictions above is available under the "Apache License 2.0".</li>
 </ul>
-<h6>Auto generated by spf13/cobra on 24-Nov-2020</h6>
+<h2 id="community">Community<a class="headerlink" href="#community" title="Permanent link">#</a></h2>
+<p>Some of you might have noticed we have official community blog hosted on <a href="https://medium.com/k0sproject">Medium</a>. If you are not yet following us, we'd like to invite you to do so now! 
+Make sure to <a href="https://twitter.com/k0sproject">follow us on Twitter</a> as well 😊
+We have also agreed to share Slack with Lens IDE team. They are close friends of the k0s crew, and many of the Kubernetes users are using Lens anyway, so it felt very natural for us to share their Slack. </p>
+<p>You’ll find us on dedicated k0s channel. Please <a href="https://join.slack.com/t/k8slens/shared_invite/enQtOTc5NjAyNjYyOTk4LWU1NDQ0ZGFkOWJkNTRhYTc2YjVmZDdkM2FkNGM5MjhiYTRhMDU2NDQ1MzIyMDA4ZGZlNmExOTc0N2JmY2M3ZGI">join the k0s Slack channel</a> to hear the latest news, discussions and provide your feedback!</p>
                 
               
               
@@ -574,6 +652,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../../troubleshooting/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Troubleshooting
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../github_workflow/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Workflow
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

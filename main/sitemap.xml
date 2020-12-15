@@ -20,7 +20,27 @@
      <lastmod>2020-12-15</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
-     <loc>https://docs.k0sproject.io/CONTRIBUTING/</loc>
+     <loc>https://docs.k0sproject.io/containerd_config/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/custom-cri-runtime/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cloud-providers/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/FAQ/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/troubleshooting/</loc>
+     <lastmod>2020-12-15</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/contributors/overview/</loc>
      <lastmod>2020-12-15</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
