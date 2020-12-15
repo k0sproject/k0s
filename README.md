@@ -8,7 +8,7 @@
 
 # k0s - Zero Friction Kubernetes
 
-![k0s logo](k0s-logo-full-color.svg)
+![k0s logo](docs/img/k0s-logo-full-color.svg)
 
 k0s is an all-inclusive Kubernetes distribution with all the required bells and whistles preconfigured to make building a Kubernetes clusters a matter of just copying an executable to every host and running it.
 
@@ -34,7 +34,7 @@ k0s server --enable-worker
 ```
 
 
-![k0s demo](k0s_demo.gif)
+![k0s demo](docs/img/k0s_demo.gif)
 
 ## Motivation
 

@@ -248,7 +248,7 @@ This only affects the location where images are getting pulled, omitting an imag
 
 ### Extensions
 
-As stated in the [project scope](../README.md#scope) we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
+As stated in the [project scope](https://github.com/k0sproject/k0s#scope) we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
 
 To run k0s easily with your preferred extensions you have two options.
 
