@@ -48,15 +48,3 @@ func CheckIfUserExists(name string) (bool, error) {
 	}
 	return true, nil
 }
-
-/*
-func GetLinuxDist() (string, error) {
-	if runtime.GOOS == "windows" {
-		return "", fmt.Errorf("unsupported OS")
-	}
-	cfg, err := ini.Load("/etc/os-release")
-	if err != nil {
-		fmt.Printf("failed to read file: %v", err)
-	}
-	return cfg.Section("").Key("ID").String(), nil
-}*/

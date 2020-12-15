@@ -67,7 +67,7 @@ To create a join token for the new controller, run the following on existing con
 k0s token create --role=controller --expiry=1h
 ```
 
-The on the new controller, run:
+On the new controller, run:
 ```sh
 k0s server "long-join-token"
 ```
@@ -92,3 +92,7 @@ Create the proper roleBinding, to allow the user access to the resources:
 ```shell script
 kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
 ```
+
+## Service and Log Setup
+[k0s install](cli/k0s_install.md) sub-command was created as a helper command to allow users to easily install k0s as a service.
+For more information, read [here](install.md).
