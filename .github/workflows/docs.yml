@@ -48,7 +48,6 @@ jobs:
       - name: mkdocs deploy main
         #if: contains(github.ref, 'refs/heads/main')
         run: |
-          mike install-extras
           mike deploy --push main
       - name: Get the release version
         if: contains(github.ref, 'refs/tags/v') # && !github.event.release.prerelease (generate pre-release docs until Lens 4.0.0 is GA, see #1408)
