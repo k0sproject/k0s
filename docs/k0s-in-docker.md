@@ -24,6 +24,24 @@ docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib
 
 Repeat for as many workers you need, and have resources for. :)
 
+## Docker Compose
+
+You can also run k0s with Docker Compose:
+```yaml
+version: "3.9"
+services:
+  k0s:
+    container_name: k0s
+    image: docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+    hostname: k0s
+    privileged: true
+    volumes:
+      - "/var/lib/k0s"
+    ports:
+      - "6443:6443"
+    network_mode: "bridge"
+```
+
 ## Known limitations
 
 ### No custom Docker networks
