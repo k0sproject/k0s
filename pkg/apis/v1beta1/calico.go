@@ -46,8 +46,8 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.VxlanVNI = 4096
 	c.MTU = 1450
 	c.EnableWireguard = false
-	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.WithWindowsNodes = false
+	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 
 	type ycalico Calico
 	yc := (*ycalico)(c)
