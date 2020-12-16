@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: mkdocs deploy main
-        #if: contains(github.ref, 'refs/heads/main')
+        if: contains(github.ref, 'refs/heads/main')
         run: |
           mike deploy --push main
       - name: Get the release version
