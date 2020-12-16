@@ -11,6 +11,7 @@ This is an **alpha state** feature.
 
 ### Server setup
 This is the default mode of operation. When a server role is picked, the installer will do the following:
+
 * Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)
 * Create a service file (OpenRC/Systemd) and redirects logging to `/var/log/k0s.log`.
 * If the `--debug` flag is used, it will also pass this flag along to the service file.

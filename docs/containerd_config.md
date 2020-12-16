@@ -1,16 +1,16 @@
 # containerd configuration
 
-[containerd](https://github.com/containerd/containerd) is industry-standard container runtime.
+[containerd](https://github.com/containerd/containerd) is an industry-standard container runtime.
 
 **NOTE:** In most use cases changes to the containerd configuration will not be required. 
 
-In order to make changes to containerd configuration first you need to create default containerd configuration by running:
+In order to make changes to containerd configuration first you need to generate a default containerd configuration by running:
 ```
 containerd config default > /etc/k0s/containerd.toml
 ```
-This command will dump default values to `/etc/k0s/containerd.toml`. 
+This command will set the default values to `/etc/k0s/containerd.toml`. 
 
-`k0s` runs containerd with follwoing default values:
+`k0s` runs containerd with the follwoing default values:
 ```
 /var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
@@ -19,7 +19,7 @@ This command will dump default values to `/etc/k0s/containerd.toml`.
     --config=/etc/k0s/containerd.toml
 ```
 
-Before proceeding further make sure that following default values are added to the configuration file:
+Before proceeding further, add the following default values to the configuration file:
 ```
 version = 2
 root = "/var/lib/k0s/containerd"
