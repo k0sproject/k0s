@@ -11,6 +11,7 @@ RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.gi
 WORKDIR /go/src/github.com/kubernetes/kubernetes
 RUN \
 	for cmd in $COMMANDS; do \
+		export KUBE_GIT_VERSION="v$VERSION-k0s1"; \
 		make GOFLAGS="-v -tags=providerless" GOLDFLAGS="-extldflags=-static -w -s" WHAT=cmd/$cmd || break;\
 	done
 
