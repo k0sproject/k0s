@@ -310,6 +310,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#docker-compose" class="md-nav__link">
+    Docker Compose
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
@@ -621,6 +628,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#docker-compose" class="md-nav__link">
+    Docker Compose
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
@@ -669,6 +683,21 @@ Just grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/ad
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.pkg.github.com/k0sproject/k0s/k0s:&lt;version&gt; k0s worker $token
 </code></pre></div></p>
 <p>Repeat for as many workers you need, and have resources for. :)</p>
+<h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">#</a></h2>
+<p>You can also run k0s with Docker Compose:
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span> <span class="s">&quot;3.9&quot;</span>
+<span class="nt">services</span><span class="p">:</span>
+  <span class="nt">k0s</span><span class="p">:</span>
+    <span class="nt">container_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
+    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.pkg.github.com/k0sproject/k0s/k0s:&lt;version&gt;</span>
+    <span class="nt">hostname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
+    <span class="nt">privileged</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+    <span class="nt">volumes</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="s">&quot;/var/lib/k0s&quot;</span>
+    <span class="nt">ports</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="s">&quot;6443:6443&quot;</span>
+    <span class="nt">network_mode</span><span class="p">:</span> <span class="s">&quot;bridge&quot;</span>
+</code></pre></div></p>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
 <p>Currently, we cannot run k0s nodes if the containers are configured to use custom networks e.g. with <code>--net my-net</code>. This is caused by the fact that Docker sets up a custom DNS service within the network and that messes up CoreDNS. We know that there are some workarounds possible, but they are bit hackish. And on the other hand, running k0s cluster(s) in bridge network should not cause issues.</p>
