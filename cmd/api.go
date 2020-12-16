@@ -67,19 +67,24 @@ func startAPI() error {
 	}
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
-	router.Use(authMiddleware)
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
 		// by default the mux will return 404 back which the caller should handle
-		router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
+		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
+			controllerHandler(etcdHandler()),
+		)
 	}
 
 	if clusterConfig.Spec.Storage.IsJoinable() {
-		router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
+		router.Path(prefix + "/ca").Methods("GET").Handler(
+			controllerHandler(caHandler()),
+		)
 
 	}
-	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(kubeConfigHandler())
+	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
+		workerHandler(kubeConfigHandler()),
+	)
 
 	srv := &http.Server{
 		Handler:      router,
@@ -271,7 +276,7 @@ func sendError(err error, resp http.ResponseWriter, status ...int) {
 	}
 }
 
-func authMiddleware(next http.Handler) http.Handler {
+func authMiddleware(next http.Handler, role string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
@@ -282,7 +287,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) == 2 {
 			token := parts[1]
-			if !isValidToken(token) {
+			if !isValidToken(token, role) {
 				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
 				return
 			}
@@ -295,6 +300,22 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func controllerHandler(next http.Handler) http.Handler {
+	return authMiddleware(next, controllerRole)
+}
+
+func workerHandler(next http.Handler) http.Handler {
+	return authMiddleware(next, workerRole)
+}
+
+const workerRole = "worker"
+const controllerRole = "controller"
+
+var allowedUsageByRole = map[string]string{
+	workerRole:     "usage-bootstrap-api-worker-calls",
+	controllerRole: "usage-controller-join",
+}
+
 /** The token is in form of xyz.foobar where:
 - xyz: the token "ID" in kube api
 - foobar: the token itself
@@ -302,7 +323,7 @@ We need to validate:
 - that we find a secret with the ID
 - that the token matches whats inside the secret
 */
-func isValidToken(token string) bool {
+func isValidToken(token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -320,8 +341,10 @@ func isValidToken(token string) bool {
 		return false
 	}
 
-	if string(secret.Data["usage-bootstrap-api-auth"]) != "true" {
+	usageValue, ok := secret.Data[allowedUsageByRole[role]]
+	if !ok || string(usageValue) != "true" {
 		return false
 	}
+
 	return true
 }
