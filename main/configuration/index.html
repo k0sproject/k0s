@@ -937,6 +937,7 @@
       <span class="nt">vxlanVNI</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4096</span>
       <span class="nt">mtu</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
       <span class="nt">wireguard</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+      <span class="nt">flexVolumeDriverPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
   <span class="nt">podSecurityPolicy</span><span class="p">:</span>
     <span class="nt">defaultPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span>
   <span class="nt">workerProfiles</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
@@ -1019,6 +1020,7 @@
 <li><code>vxlanVNI</code>: The virtual network ID to use for VXLAN. (default: <code>4096</code>)</li>
 <li><code>mtu</code>: MTU to use for overlay network (default <code>1450</code>)</li>
 <li><code>wireguard</code>: enable wireguard based encryption (default <code>false</code>). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.</li>
+<li><code>flexVolumeDriverPath</code>: The host path to use for Calicos flex-volume-driver (default: <code>/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</code>). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.</li>
 </ul>
 <h3 id="specpodsecuritypolicy"><code>spec.podSecurityPolicy</code><a class="headerlink" href="#specpodsecuritypolicy" title="Permanent link">#</a></h3>
 <p>Configures the default <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">psp</a> to be set. k0s creates two PSPs out of box:</p>
@@ -1047,6 +1049,12 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
          key: value
          mapping:
              innerKey: innerValue
+</code></pre></div>
+<p>Custom volumePluginDir:</p>
+<div class="highlight"><pre><span></span><code>  workerProfiles:
+    - name: custom-role
+      values:
+         volumePluginDir: /var/libexec/k0s/kubelet-plugins/volume/exec
 </code></pre></div>
 <h3 id="images"><code>images</code><a class="headerlink" href="#images" title="Permanent link">#</a></h3>
 <p>Each node under the <code>images</code> key has the same structure
