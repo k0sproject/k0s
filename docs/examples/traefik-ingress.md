@@ -125,7 +125,7 @@ ingressroute.traefik.containo.us/dashboard created
 Once deployed, you should be able to access the dashboard using the `EXTERNAL-IP` 
 that you noted above by visiting `http://192.168.0.5` in your browser:
 
-![Traefik Dashboard](./traefik-dashboard.png)
+![Traefik Dashboard](../img/traefik-dashboard.png)
 
 Now, create a simple `whoami` Deployment, Service, 
 and [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) manifest:

@@ -13,12 +13,15 @@ nav:
   - Creating A Cluster:
       - Quick Start Guide: create-cluster.md
       - Run in Docker: k0s-in-docker.md
-      - Single-node set up: k0s-single-node.md
+      - Single node set-up: k0s-single-node.md
   - Configuration Reference:
-      - k0s Configuration Options: configuration.md
-      - Containerd: containerd_config.md
-      - Using Custom CRI: custom-cri-runtime.md
+      - Architecture: architecture.md
+      - Networking: networking.md
+      - Configuration Options: configuration.md
+      - Configuring Containerd: containerd_config.md
+      - Using A Custom CRI: custom-cri-runtime.md
       - Using Cloud Providers: cloud-providers.md
+      - Running k0s with Traefik: examples/traefik-ingress.md
       - Running k0s as a service: install.md
       - k0s CLI Help Pages: cli/k0s.md
   - Deploying Manifests: manifests.md
