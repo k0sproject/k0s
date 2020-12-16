@@ -198,16 +198,16 @@ type MetricServer struct {
 	log           *logrus.Entry
 	clusterConfig *config.ClusterConfig
 	tickerDone    chan struct{}
-	manifestDir   string
+	K0sVars       constant.CfgVars
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterConfig, manifestDir string) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:           log,
 		clusterConfig: clusterConfig,
-		manifestDir:   manifestDir,
+		K0sVars:       k0sVars,
 	}, nil
 }
 
@@ -222,7 +222,7 @@ func (m *MetricServer) Run() error {
 
 	// TODO calculate replicas, max-surge etc. based on amount of nodes
 
-	msDir := path.Join(m.manifestDir, "metricserver")
+	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
 	err := util.InitDirectory(msDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
@@ -261,5 +261,5 @@ func (m *MetricServer) Stop() error {
 	return nil
 }
 
-// Health-check interface
+// Healthy is the health-check interface
 func (m *MetricServer) Healthy() error { return nil }

@@ -302,7 +302,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 	reconcilers["crd"] = server.NewCRD(manifestsSaver)
 	reconcilers["helmAddons"] = server.NewHelmAddons(clusterConf, manifestsSaver, k0sVars)
 
-	metricServer, err := server.NewMetricServer(clusterConf, k0sVars.DataDir)
+	metricServer, err := server.NewMetricServer(clusterConf, k0sVars)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
 	} else {
