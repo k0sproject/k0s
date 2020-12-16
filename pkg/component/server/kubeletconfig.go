@@ -82,14 +82,15 @@ func (k *KubeletConfig) Run() error {
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
 	clientCAFile := filepath.Join(k.k0sVars.CertRootDir, "ca.crt")
-	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile)
+	volumePluginDir := k.k0sVars.KubeletVolumePluginDir
+	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
 
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
 	configMapNames := []string{formatProfileName("default")}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress, clientCAFile)
+		profileConfig := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
 		merged, err := mergeProfiles(&profileConfig, profile.Values)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
@@ -161,7 +162,7 @@ func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []stri
 	return tw.WriteToBuffer(w)
 }
 
-func getDefaultProfile(dnsAddress string, clientCAFile string) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string, clientCAFile string, volumePluginDir string) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
@@ -201,6 +202,7 @@ func getDefaultProfile(dnsAddress string, clientCAFile string) unstructuredYamlO
 			"TLS_RSA_WITH_AES_128_GCM_SHA256",
 		},
 		"volumeStatsAggPeriod": "0s",
+		"volumePluginDir":      volumePluginDir,
 		"failSwapOn":           false,
 	}
 }

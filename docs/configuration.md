@@ -89,6 +89,7 @@ spec:
       vxlanVNI: 4096
       mtu: 1450
       wireguard: false
+      flexVolumeDriverPath: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds
   podSecurityPolicy:
     defaultPolicy: 00-k0s-privileged
   workerProfiles: []
@@ -173,6 +174,7 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 - `vxlanVNI`: The virtual network ID to use for VXLAN. (default: `4096`)
 - `mtu`: MTU to use for overlay network (default `1450`)
 - `wireguard`: enable wireguard based encryption (default `false`). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.
+- `flexVolumeDriverPath`: The host path to use for Calicos flex-volume-driver (default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.
 
 ### `spec.podSecurityPolicy`
 
@@ -209,6 +211,16 @@ Example:
          key: value
          mapping:
              innerKey: innerValue
+```
+
+
+Custom volumePluginDir:
+
+```
+  workerProfiles:
+    - name: custom-role
+      values:
+         volumePluginDir: /var/libexec/k0s/kubelet-plugins/volume/exec
 ```
 
 ### `images`
