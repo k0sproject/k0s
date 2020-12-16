@@ -343,7 +343,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single-node set up
+      Single node set-up
     </a>
   </li>
 
@@ -380,8 +380,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -393,7 +417,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Containerd
+      Configuring Containerd
     </a>
   </li>
 
@@ -405,7 +429,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
   </li>
 
@@ -418,6 +442,18 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Running k0s with Traefik
     </a>
   </li>
 
@@ -619,13 +655,13 @@
                 
                 
                 <h1 id="k0s-in-docker">k0s in Docker<a class="headerlink" href="#k0s-in-docker" title="Permanent link">#</a></h1>
-<p>We publish k0s container image for every release. By default we run both controller and worker in the same container to allow easy local test "cluster".</p>
+<p>We publish a k0s container image with every release. By default, we run both controller and worker in the same container to provide an easy local testing "cluster".</p>
 <p>You can run your own k0s-in-docker easily with:
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.pkg.github.com/k0sproject/k0s/k0s:&lt;version&gt;
 </code></pre></div>
-Just grab the kubeconfig with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste e.g. into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
+Just grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste e.g. into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
 <h2 id="running-workers">Running workers<a class="headerlink" href="#running-workers" title="Permanent link">#</a></h2>
-<p>If you want to attach multiple workers nodes into the cluster you can run separate containers for workers.</p>
+<p>If you want to attach multiple workers nodes into the cluster you can run separate containers for each worker.</p>
 <p>First, we need a join token for the worker:
 <div class="highlight"><pre><span></span><code><span class="nv">token</span><span class="o">=</span><span class="k">$(</span>docker <span class="nb">exec</span> -t -i k0s k0s token create --role<span class="o">=</span>worker<span class="k">)</span>
 </code></pre></div></p>
@@ -635,7 +671,7 @@ Just grab the kubeconfig with <code>docker exec k0s cat /var/lib/k0s/pki/admin.c
 <p>Repeat for as many workers you need, and have resources for. :)</p>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
-<p>Currently we cannot run k0s nodes if the containers are configured to use custom networks e.g. with <code>--net my-net</code>. This is caused by the fact that Docker sets up a custom DNS service within the network and that messes up CoreDNS. We know that there are some workarounds possible, but they are bit hackish. And on the other hand, running k0s cluster(s) in bridge network should not cause issues.</p>
+<p>Currently, we cannot run k0s nodes if the containers are configured to use custom networks e.g. with <code>--net my-net</code>. This is caused by the fact that Docker sets up a custom DNS service within the network and that messes up CoreDNS. We know that there are some workarounds possible, but they are bit hackish. And on the other hand, running k0s cluster(s) in bridge network should not cause issues.</p>
                 
               
               
@@ -675,7 +711,7 @@ Just grab the kubeconfig with <code>docker exec k0s cat /var/lib/k0s/pki/admin.c
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Single-node set up
+                Single node set-up
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

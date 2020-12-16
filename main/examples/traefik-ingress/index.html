@@ -19,7 +19,7 @@
     
     
       
-        <title>Installing the Traefik Ingress Controller on k0s - k0s Documentation</title>
+        <title>Running k0s with Traefik - k0s Documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Installing the Traefik Ingress Controller on k0s
+              Running k0s with Traefik
             
           </span>
         </div>
@@ -283,7 +283,7 @@
 
   <li class="md-nav__item">
     <a href="../../k0s-single-node/" class="md-nav__link">
-      Single-node set up
+      Single node set-up
     </a>
   </li>
 
@@ -297,10 +297,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       Configuration Reference
@@ -320,8 +322,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -333,7 +359,7 @@
 
   <li class="md-nav__item">
     <a href="../../containerd_config/" class="md-nav__link">
-      Containerd
+      Configuring Containerd
     </a>
   </li>
 
@@ -345,7 +371,7 @@
 
   <li class="md-nav__item">
     <a href="../../custom-cri-runtime/" class="md-nav__link">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
   </li>
 
@@ -359,6 +385,77 @@
     <a href="../../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Running k0s with Traefik
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      Running k0s with Traefik
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-k0syaml" class="md-nav__link">
+    Configuring k0s.yaml
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-the-load-balancer-ip" class="md-nav__link">
+    Retrieving the Load Balancer IP
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+    Deploy and access the Traefik Dashboard
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    Summary
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -663,7 +760,7 @@ ingressroute.traefik.containo.us/dashboard created
 </code></pre></div>
 <p>Once deployed, you should be able to access the dashboard using the <code>EXTERNAL-IP</code> 
 that you noted above by visiting <code>http://192.168.0.5</code> in your browser:</p>
-<p><img alt="Traefik Dashboard" src="../traefik-dashboard.png" /></p>
+<p><img alt="Traefik Dashboard" src="../../img/traefik-dashboard.png" /></p>
 <p>Now, create a simple <code>whoami</code> Deployment, Service, 
 and <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a> manifest:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
@@ -760,6 +857,41 @@ and exposing your applications and services quickly.</p>
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Using Cloud Providers
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../../install/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Running k0s as a service
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

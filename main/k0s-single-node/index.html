@@ -19,7 +19,7 @@
     
     
       
-        <title>Single-node set up - k0s Documentation</title>
+        <title>Single node set-up - k0s Documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Single-node set up
+              Single node set-up
             
           </span>
         </div>
@@ -292,9 +292,52 @@
       
     
     
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Single node set-up
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
     <a href="./" class="md-nav__link md-nav__link--active">
-      Single-node set up
+      Single node set-up
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prepare-dependencies" class="md-nav__link">
+    Prepare Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-k0s" class="md-nav__link">
+    Start k0s
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-kubectl-to-access-k0s" class="md-nav__link">
+    Use kubectl to access k0s
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -331,8 +374,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -344,7 +411,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Containerd
+      Configuring Containerd
     </a>
   </li>
 
@@ -356,7 +423,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
   </li>
 
@@ -369,6 +436,18 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Running k0s with Traefik
     </a>
   </li>
 
@@ -512,6 +591,50 @@
                 
               
               
+                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                  <div class="md-sidebar__scrollwrap">
+                    <div class="md-sidebar__inner">
+                      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prepare-dependencies" class="md-nav__link">
+    Prepare Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-k0s" class="md-nav__link">
+    Start k0s
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-kubectl-to-access-k0s" class="md-nav__link">
+    Use kubectl to access k0s
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                    </div>
+                  </div>
+                </div>
+              
             
           
           <div class="md-content">
@@ -520,37 +643,40 @@
                 
                 
                 <h1 id="k0s-single-node-quick-start">k0s Single Node Quick Start<a class="headerlink" href="#k0s-single-node-quick-start" title="Permanent link">#</a></h1>
-<p>This outlines a quick method to running local k0s master and worker in one node. </p>
-<p>1) Prepare Dependencies
-      1. Download the k0s binary
-      <div class="highlight"><pre><span></span><code> sudo curl --output /usr/local/sbin/k0s -L https://github.com/k0sproject/k0s/releases/download/v0.7.0/k0s-v0.7.0-amd64
+<p>These instructions outline a quick method for running a local k0s master and worker in a single node.</p>
+<blockquote>
+<p><strong><em>NOTE:</em></strong>  This method of running k0s is only recommended for dev, test or POC environments.</p>
+</blockquote>
+<h2 id="prepare-dependencies">Prepare Dependencies<a class="headerlink" href="#prepare-dependencies" title="Permanent link">#</a></h2>
+<h4>1. Download the k0s binary</h4>
+<div class="highlight"><pre><span></span><code>curl -sSLf get.k0s.sh <span class="p">|</span> sh
 </code></pre></div>
-      2. Download the kubectl binary
-      <div class="highlight"><pre><span></span><code> sudo curl --output /usr/local/sbin/kubectl -L <span class="s2">&quot;https://storage.googleapis.com/kubernetes-release/release/</span><span class="k">$(</span>curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt<span class="k">)</span><span class="s2">/bin/linux/amd64/kubectl&quot;</span>
+<h4>2. Download the kubectl binary</h4>
+<div class="highlight"><pre><span></span><code>sudo curl --output /usr/local/sbin/kubectl -L <span class="s2">&quot;https://storage.googleapis.com/kubernetes-release/release/</span><span class="k">$(</span>curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt<span class="k">)</span><span class="s2">/bin/linux/amd64/kubectl&quot;</span>
 </code></pre></div>
-      3. Make both binaries executeable
-      <div class="highlight"><pre><span></span><code> sudo chmod +x /usr/local/sbin/<span class="o">{</span>kubectl,k0s<span class="o">}</span>
-</code></pre></div></p>
-<p>2) Start k0s
-      1. Create ~/.k0s directory
-      <div class="highlight"><pre><span></span><code> mkdir -p <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s
+<h4>3. Make both binaries executable</h4>
+<div class="highlight"><pre><span></span><code>sudo chmod +x /usr/local/sbin/<span class="o">{</span>kubectl,k0s<span class="o">}</span>
 </code></pre></div>
-      2. Generate default k0s.yaml cluster configuration
-      <div class="highlight"><pre><span></span><code> k0s default-config <span class="p">|</span> tee <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s/k0s.yaml
+<h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
+<h4>1. Create the k0s config directory</h4>
+<div class="highlight"><pre><span></span><code>mkdir -p <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s
 </code></pre></div>
-      3. Start k0s
-      <div class="highlight"><pre><span></span><code> sudo k0s server -c <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s/k0s.yaml --enable-worker <span class="p">&amp;</span>
-</code></pre></div></p>
-<p>3) Monitor Startup k0s
-      1. Save kubeconfig for user
-      <div class="highlight"><pre><span></span><code> sudo cat /var/lib/k0s/pki/admin.conf <span class="p">|</span> tee ~/.k0s/kubeconfig
+<h4>2. Generate a default cluster configuration</h4>
+<div class="highlight"><pre><span></span><code>k0s default-config <span class="p">|</span> tee <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s/k0s.yaml
 </code></pre></div>
-      2. Set the KUBECONFIG environment variable
-      <div class="highlight"><pre><span></span><code> <span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.k0s/kubeconfig&quot;</span>
+<h4>3. Start k0s</h4>
+<div class="highlight"><pre><span></span><code>sudo k0s server -c <span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/.k0s/k0s.yaml --enable-worker <span class="p">&amp;</span>
 </code></pre></div>
-      3. Monitor cluster startup
-      <div class="highlight"><pre><span></span><code> kubectl get pods --all-namespaces
-</code></pre></div></p>
+<h2 id="use-kubectl-to-access-k0s">Use kubectl to access k0s<a class="headerlink" href="#use-kubectl-to-access-k0s" title="Permanent link">#</a></h2>
+<h4>1. Save kubeconfig for user</h4>
+<div class="highlight"><pre><span></span><code>sudo cat /var/lib/k0s/pki/admin.conf <span class="p">|</span> tee ~/.k0s/kubeconfig
+</code></pre></div>
+<h4>2. Set the KUBECONFIG environment variable</h4>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.k0s/kubeconfig&quot;</span>
+</code></pre></div>
+<h4>3. Monitor cluster startup</h4>
+<div class="highlight"><pre><span></span><code>kubectl get pods --all-namespaces
+</code></pre></div>
                 
               
               
@@ -584,13 +710,13 @@
           </a>
         
         
-          <a href="../configuration/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                k0s Configuration Options
+                Architecture
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

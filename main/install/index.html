@@ -283,7 +283,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single-node set up
+      Single node set-up
     </a>
   </li>
 
@@ -322,8 +322,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -335,7 +359,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Containerd
+      Configuring Containerd
     </a>
   </li>
 
@@ -347,7 +371,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
   </li>
 
@@ -360,6 +384,18 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Running k0s with Traefik
     </a>
   </li>
 
@@ -642,11 +678,13 @@
 <li>Supported services: OpenRC &amp; Systemd</li>
 </ul>
 <h3 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">#</a></h3>
-<p>This is the default mode of operation. When a server role is picked, the installer will do the following:
-* Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)
-* Create a service file (OpenRC/Systemd) and redirects logging to <code>/var/log/k0s.log</code>.
-* If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.
-* <code>enable-worker</code> (single-node) setup is not supported. If you would like to run your service in that way, a possible solution would be to run <code>cmd install</code> as worker, and edit the startup command by hand.</p>
+<p>This is the default mode of operation. When a server role is picked, the installer will do the following:</p>
+<ul>
+<li>Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)</li>
+<li>Create a service file (OpenRC/Systemd) and redirects logging to <code>/var/log/k0s.log</code>.</li>
+<li>If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.</li>
+<li><code>enable-worker</code> (single-node) setup is not supported. If you would like to run your service in that way, a possible solution would be to run <code>cmd install</code> as worker, and edit the startup command by hand.</li>
+</ul>
 <h3 id="worker-setup">Worker Setup<a class="headerlink" href="#worker-setup" title="Permanent link">#</a></h3>
 <ul>
 <li>A worker cannot run with any other user, other than <code>root</code>, so no special users will be created.</li>
@@ -673,7 +711,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../examples/traefik-ingress/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -682,7 +720,7 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Using Cloud Providers
+                Running k0s with Traefik
               </div>
             </div>
           </a>

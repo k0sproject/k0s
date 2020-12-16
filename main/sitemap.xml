@@ -16,6 +16,10 @@
      <lastmod>2020-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
+     <loc>https://docs.k0sproject.io/architecture/</loc>
+     <lastmod>2020-12-16</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
      <loc>https://docs.k0sproject.io/configuration/</loc>
      <lastmod>2020-12-16</lastmod>
      <changefreq>daily</changefreq>
@@ -29,6 +33,10 @@
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/cloud-providers/</loc>
+     <lastmod>2020-12-16</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/examples/traefik-ingress/</loc>
      <lastmod>2020-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url><url>

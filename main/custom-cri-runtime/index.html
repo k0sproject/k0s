@@ -19,7 +19,7 @@
     
     
       
-        <title>Using Custom CRI - k0s Documentation</title>
+        <title>Using A Custom CRI - k0s Documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Using Custom CRI
+              Using A Custom CRI
             
           </span>
         </div>
@@ -283,7 +283,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single-node set up
+      Single node set-up
     </a>
   </li>
 
@@ -322,8 +322,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -335,7 +359,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Containerd
+      Configuring Containerd
     </a>
   </li>
 
@@ -355,7 +379,7 @@
     
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
     
   </li>
@@ -369,6 +393,18 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Running k0s with Traefik
     </a>
   </li>
 
@@ -520,12 +556,15 @@
                 
                 
                 <h1 id="custom-cri-runtime">Custom CRI runtime<a class="headerlink" href="#custom-cri-runtime" title="Permanent link">#</a></h1>
-<p>k0s supports users bringing their own CRI runtime such as Docker. In this case k0s will not start nor manage the runtime, it's fully up to the user to configure it properly.</p>
-<p>To run k0s worker with a custom CRI runtime use the option <code>--cri-socket</code>. It takes input in the form of <code>&lt;type&gt;:&lt;socket&gt;</code> where:
-- <code>type</code>: Either <code>remote</code> or <code>docker</code>. Use <code>docker</code> for pure docker setup, remote for everything else.
-- <code>socket</code>: Path to the socket, examples: <code>unix:///var/run/docker.sock</code></p>
+<p>k0s supports users bringing their own CRI runtime (for example, docker). In which case, k0s will not start nor manage the runtime, and it is fully up to the user to configure it properly.</p>
+<p>To run a k0s worker with a custom CRI runtime use the option <code>--cri-socket</code>. 
+It takes input in the form of <code>&lt;type&gt;:&lt;socket&gt;</code> where:</p>
+<ul>
+<li><code>type</code>: Either <code>remote</code> or <code>docker</code>. Use <code>docker</code> for pure docker setup, <code>remote</code> for anything else.</li>
+<li><code>socket</code>: Path to the socket, examples: <code>unix:///var/run/docker.sock</code></li>
+</ul>
 <p>To run k0s with pre-existing docker setup run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/docker.sock &lt;token&gt;</code>.</p>
-<p>In case docker is used k0s will configure kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
+<p>When <code>docker</code> is used as a runtime, k0s will configure kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
                 
               
               
@@ -553,7 +592,7 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Containerd
+                Configuring Containerd
               </div>
             </div>
           </a>

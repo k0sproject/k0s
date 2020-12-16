@@ -19,7 +19,7 @@
     
     
       
-        <title>Containerd - k0s Documentation</title>
+        <title>Configuring Containerd - k0s Documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Containerd
+              Configuring Containerd
             
           </span>
         </div>
@@ -283,7 +283,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single-node set up
+      Single node set-up
     </a>
   </li>
 
@@ -322,8 +322,32 @@
 
 
   <li class="md-nav__item">
+    <a href="../architecture/" class="md-nav__link">
+      Architecture
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking.md" class="md-nav__link">
+      Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../configuration/" class="md-nav__link">
-      k0s Configuration Options
+      Configuration Options
     </a>
   </li>
 
@@ -343,12 +367,12 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        Containerd
+        Configuring Containerd
         <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      Containerd
+      Configuring Containerd
     </a>
     
       
@@ -392,7 +416,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using Custom CRI
+      Using A Custom CRI
     </a>
   </li>
 
@@ -405,6 +429,18 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Running k0s with Traefik
     </a>
   </li>
 
@@ -593,20 +629,20 @@
                 
                 
                 <h1 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h1>
-<p><a href="https://github.com/containerd/containerd">containerd</a> is industry-standard container runtime.</p>
+<p><a href="https://github.com/containerd/containerd">containerd</a> is an industry-standard container runtime.</p>
 <p><strong>NOTE:</strong> In most use cases changes to the containerd configuration will not be required. </p>
-<p>In order to make changes to containerd configuration first you need to create default containerd configuration by running:
+<p>In order to make changes to containerd configuration first you need to generate a default containerd configuration by running:
 <div class="highlight"><pre><span></span><code>containerd config default &gt; /etc/k0s/containerd.toml
 </code></pre></div>
-This command will dump default values to <code>/etc/k0s/containerd.toml</code>. </p>
-<p><code>k0s</code> runs containerd with follwoing default values:
+This command will set the default values to <code>/etc/k0s/containerd.toml</code>. </p>
+<p><code>k0s</code> runs containerd with the follwoing default values:
 <div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
     --state=/var/lib/k0s/run/containerd \
     --address=/var/lib/k0s/run/containerd.sock \
     --config=/etc/k0s/containerd.toml
 </code></pre></div></p>
-<p>Before proceeding further make sure that following default values are added to the configuration file:
+<p>Before proceeding further, add the following default values to the configuration file:
 <div class="highlight"><pre><span></span><code>version = 2
 root = &quot;/var/lib/k0s/containerd&quot;
 state = &quot;/var/lib/k0s/run/containerd&quot;
@@ -710,7 +746,7 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                k0s Configuration Options
+                Configuration Options
               </div>
             </div>
           </a>
@@ -722,7 +758,7 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Using Custom CRI
+                Using A Custom CRI
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
