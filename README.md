@@ -56,7 +56,7 @@ _We have seen Kubernetes with cumbersome lifecycle management, high minimum syst
 
 ## Other Features
 
-- Kubernetes 1.19
+- Kubernetes 1.20
 - Containerd 1.4
 - Control plane storage options:
   - sqlite (in-cluster)

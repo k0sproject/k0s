@@ -9,7 +9,12 @@ variable "k0s_version" {
 
 variable "sonobuoy_version" {
   type    = string
-  default = "0.19.0"
+  default = "0.20.0"
+}
+
+variable "k8s_version" {
+  // format: v1.20.0
+  type = string
 }
 
 output "controller_ip" {
@@ -119,7 +124,7 @@ resource "null_resource" "sonobuoy" {
       "tar -xvf sonobuoy_${var.sonobuoy_version}_linux_amd64.tar.gz",
       "sudo mv sonobuoy /usr/local/bin",
       "sudo chmod +x /usr/local/bin/sonobuoy",
-      "KUBECONFIG=/var/lib/k0s/pki/admin.conf sonobuoy run --mode=certified-conformance"
+      "KUBECONFIG=/var/lib/k0s/pki/admin.conf sonobuoy run --mode=certified-conformance --kube-conformance-image-version=${var.k8s_version}"
     ]
   }
 }
