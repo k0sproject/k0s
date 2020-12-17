@@ -79,14 +79,14 @@ This will output a kubeconfig for the user, which can be used for authentication
 
 On the controller, run the following to generate a kubeconfig for a user :
 ```shell script
-k0s user create [username]
+k0s kubeconfig create [username]
 ```
 ### Enabling Access to Cluster Resources
 To allow the user access to the cluster, the user needs to be created with the `system:masters` group:
 
 ```shell script
 clusterUser="testUser"
-k0s user create --groups "system:masters" $clusterUser > ~/clusterUser.kubeconfig
+k0s kubeconfig create --groups "system:masters" $clusterUser > ~/clusterUser.kubeconfig
 ```
 Create the proper roleBinding, to allow the user access to the resources:
 ```shell script

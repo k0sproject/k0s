@@ -1,16 +1,15 @@
-## k0s etcd leave
+## k0s kubeconfig
 
-Sign off a given etc node from etcd cluster
+Create a kubeconfig file for a specified user
 
 ```
-k0s etcd leave [flags]
+k0s kubeconfig [command] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                  help for leave
-      --peer-address string   etcd peer address
+  -h, --help   help for kubeconfig
 ```
 
 ### Options inherited from parent commands
@@ -24,5 +23,7 @@ k0s etcd leave [flags]
 
 ### SEE ALSO
 
-* [k0s etcd](k0s_etcd.md)	 - Manage etcd cluster
+* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
+* [k0s kubeconfig admin](k0s_kubeconfig_admin.md)	 - Display Admin's Kubeconfig file
+* [k0s kubeconfig create](k0s_kubeconfig_create.md)	 - Create a kubeconfig for a user
 

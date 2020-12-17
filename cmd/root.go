@@ -56,8 +56,9 @@ func init() {
 	rootCmd.AddCommand(APICmd)
 	rootCmd.AddCommand(etcdCmd)
 	rootCmd.AddCommand(docs)
-	rootCmd.AddCommand(userCmd)
+	rootCmd.AddCommand(kubeconfigCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.DisableAutoGenTag = true
 
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
 	if build.EulaNotice != "" {
