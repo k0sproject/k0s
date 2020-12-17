@@ -80,7 +80,7 @@ const (
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.19"
+	KubernetesMajorMinorVersion = "1.20"
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
 
@@ -90,7 +90,7 @@ const (
 	MetricsImage               = "gcr.io/k8s-staging-metrics-server/metrics-server"
 	MetricsImageVersion        = "v0.3.7"
 	KubeProxyImage             = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion      = "v1.19.4"
+	KubeProxyImageVersion      = "v1.20.0"
 	CoreDNSImage               = "docker.io/coredns/coredns"
 	CoreDNSImageVersion        = "1.7.0"
 	CalicoImage                = "calico/cni"
