@@ -74,7 +74,7 @@ k0s server "long-join-token"
 
 ## Adding a Cluster User
 
-To add a user to cluster, use the [user create](cli/k0s_user_create.md) command.
+To add a user to cluster, use the [kubeconfig create](cli/k0s_kubeconfig_create.md) command.
 This will output a kubeconfig for the user, which can be used for authentication.
 
 On the controller, run the following to generate a kubeconfig for a user :
@@ -86,7 +86,7 @@ To allow the user access to the cluster, the user needs to be created with the `
 
 ```shell script
 clusterUser="testUser"
-k0s kubeconfig create --groups "system:masters" $clusterUser > ~/clusterUser.kubeconfig
+k0s kubeconfig create --groups "system:masters" $clusterUser > ~/.kube/config
 ```
 Create the proper roleBinding, to allow the user access to the resources:
 ```shell script
