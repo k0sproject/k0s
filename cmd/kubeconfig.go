@@ -52,7 +52,7 @@ users:
 	// kubeconfigCmd creates new certs and kubeConfig for a user
 	kubeconfigCmd = &cobra.Command{
 		Use:   "kubeconfig [command]",
-		Short: "Create a kubeconfig for a user",
+		Short: "Create a kubeconfig file for a specified user",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return kubeconfigCreateCmd.Usage()
 		},
@@ -137,10 +137,10 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 
 	kubeConfigAdminCmd = &cobra.Command{
 		Use:   "admin [command]",
-		Short: "Manage user access",
-		Long:  "Command dumps admin kubeconfig.",
-		Example: `	$ k0s kubeconfig admin > kubeconfig
-	$ export KUBECONFIG=kubeconfig
+		Short: "Display Admin's Kubeconfig file",
+		Long:  "Print kubeconfig for the Admin user to stdout",
+		Example: `	$ k0s kubeconfig admin > ~/.kube/config
+	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if util.FileExists(k0sVars.AdminKubeConfigPath) {

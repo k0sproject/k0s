@@ -1,10 +1,10 @@
 ## k0s kubeconfig admin
 
-Manage user access
+Display Admin's Kubeconfig file
 
 ### Synopsis
 
-Command dumps admin kubeconfig.
+Print kubeconfig for the Admin user to stdout
 
 ```
 k0s kubeconfig admin [command] [flags]
@@ -13,8 +13,8 @@ k0s kubeconfig admin [command] [flags]
 ### Examples
 
 ```
-	$ k0s kubeconfig admin > kubeconfig
-	$ export KUBECONFIG=kubeconfig
+	$ k0s kubeconfig admin > ~/.kube/config
+	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes
 ```
 
@@ -30,10 +30,10 @@ k0s kubeconfig admin [command] [flags]
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1])
+  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
 ```
 
 ### SEE ALSO
 
-* [k0s kubeconfig](k0s_kubeconfig.md)	 - Create a kubeconfig for a user
+* [k0s kubeconfig](k0s_kubeconfig.md)	 - Create a kubeconfig file for a specified user
 
