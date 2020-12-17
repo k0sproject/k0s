@@ -753,7 +753,7 @@
 <div class="highlight"><pre><span></span><code>k0s server <span class="s2">&quot;long-join-token&quot;</span>
 </code></pre></div></p>
 <h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
-<p>To add a user to cluster, use the <a href="cli/k0s_user_create.md">user create</a> command.
+<p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.
 This will output a kubeconfig for the user, which can be used for authentication.</p>
 <p>On the controller, run the following to generate a kubeconfig for a user :
 <code>shell script
@@ -763,7 +763,7 @@ To allow the user access to the cluster, the user needs to be created with the `
 
 ```shell script
 clusterUser=&quot;testUser&quot;
-k0s kubeconfig create --groups &quot;system:masters&quot; $clusterUser &gt; ~/clusterUser.kubeconfig
+k0s kubeconfig create --groups &quot;system:masters&quot; $clusterUser &gt; ~/.kube/config
 </code></pre></div>
 Create the proper roleBinding, to allow the user access to the resources:</code>shell script
 kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
