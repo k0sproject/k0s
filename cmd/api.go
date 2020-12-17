@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/k0sproject/k0s/internal/util"
 	"io/ioutil"
-	v12 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"path"
@@ -185,7 +185,7 @@ users:
 			return
 		}
 		found := false
-		var secretWithToken v12.Secret
+		var secretWithToken corev1.Secret
 		for _, secret := range l.Items {
 			if !strings.HasPrefix(secret.Name, "calico-node-token") {
 				continue

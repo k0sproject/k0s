@@ -19,6 +19,8 @@ import (
 type CalicoInstaller struct {
 	Token      string
 	APIAddress string
+	CIDRRange  string
+	ClusterDNS string
 }
 
 func (c CalicoInstaller) Init() error {
@@ -87,7 +89,7 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 		return fmt.Errorf("can't save kubeconfig for calico: %v", err)
 	}
 	posh := NewPowershell()
-	return posh.execute("C:\\bootstrap.ps1")
+	return posh.execute(fmt.Sprintf("C:\\bootstrap.ps1 -ServiceCidr=%s -DNSServerIPs=%s", c.CIDRRange, c.ClusterDNS))
 }
 
 func (c CalicoInstaller) Run() error {

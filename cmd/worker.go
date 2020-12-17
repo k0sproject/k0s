@@ -41,6 +41,8 @@ func init() {
 	workerCmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
 	workerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	workerCmd.Flags().StringVar(&apiServer, "api-server", "", "HACK: api-server for the windows worker node")
+	workerCmd.Flags().StringVar(&cidrRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
+	workerCmd.Flags().StringVar(&clusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 }
@@ -51,6 +53,9 @@ var (
 	tokenFile     string
 	criSocket     string
 	apiServer     string
+	cidrRange     string
+	clusterDNS    string
+
 	cloudProvider bool
 
 	workerCmd = &cobra.Command{
@@ -138,6 +143,8 @@ func startWorker(token string) error {
 		componentManager.Add(&worker.CalicoInstaller{
 			Token:      token,
 			APIAddress: apiServer,
+			CIDRRange:  cidrRange,
+			ClusterDNS: clusterDNS,
 		})
 	}
 
