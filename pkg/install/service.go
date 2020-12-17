@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kardianos/service"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -42,9 +41,10 @@ func EnsureService(args []string) error {
 
 	// initial svc config
 	svcConfig := &service.Config{
-		Name:        k0sServiceName,
-		DisplayName: k0sDisplayName,
-		Description: k0sDescription,
+		Name:             k0sServiceName,
+		DisplayName:      k0sDisplayName,
+		Description:      k0sDescription,
+		WorkingDirectory: "/root/go/src/github.com/k0sproject/k0s",
 	}
 
 	s, err := service.New(prg, svcConfig)
@@ -65,7 +65,10 @@ func EnsureService(args []string) error {
 	svcConfig.Dependencies = deps
 	svcConfig.Arguments = args
 
-	logrus.Info("Installing k0s service")
+	fmt.Println("Installing k0s service")
+	fmt.Println("Service information:", s.Platform())
+	// fmt.Println("Installing k0s startup file in", s.ConfigPath())
+
 	err = s.Install()
 	if err != nil {
 		return fmt.Errorf("failed to install service: %v", err)
