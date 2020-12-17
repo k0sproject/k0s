@@ -86,7 +86,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
 
 	winClientCAFile := k.k0sVars.WindowsCertRootDir + "\\ca.crt"
-	winDefaultProfile := getDefaultProfile(dnsAddress, winClientCAFile)
+	winDefaultProfile := getDefaultProfile(dnsAddress, winClientCAFile, volumePluginDir)
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}

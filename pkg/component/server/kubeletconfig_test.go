@@ -16,7 +16,6 @@ limitations under the License.
 package server
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"path/filepath"
 	"strings"
 	"testing"

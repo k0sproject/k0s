@@ -45,13 +45,13 @@ type manifestsSaver interface {
 }
 
 type calicoConfig struct {
-	MTU              int
-	Mode             string
-	VxlanPort        int
-	VxlanVNI         int
-	ClusterCIDR      string
-	EnableWireguard  bool
-	WithWindowsNodes bool
+	MTU                  int
+	Mode                 string
+	VxlanPort            int
+	VxlanVNI             int
+	ClusterCIDR          string
+	EnableWireguard      bool
+	WithWindowsNodes     bool
 	FlexVolumeDriverPath string
 
 	CalicoCNIImage             string

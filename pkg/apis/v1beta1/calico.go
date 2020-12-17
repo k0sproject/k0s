@@ -23,7 +23,7 @@ type Calico struct {
 	MTU                  int    `yaml:"mtu"`
 	EnableWireguard      bool   `yaml:"wireguard"`
 	FlexVolumeDriverPath string `yaml:"flexVolumeDriverPath"`
-	WithWindowsNodes bool   `yaml:"withWindowsNodes"`
+	WithWindowsNodes     bool   `yaml:"withWindowsNodes"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -35,7 +35,7 @@ func DefaultCalico() *Calico {
 		MTU:                  1450,
 		EnableWireguard:      false,
 		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		WithWindowsNodes: false,
+		WithWindowsNodes:     false,
 	}
 }
 
