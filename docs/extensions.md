@@ -21,8 +21,10 @@ helm:
   - name: prometheus-stack
     chartname: prometheus-community/prometheus
     version: "11.16.8"
-    values: |2
-        <embed yaml>
+    values: |
+      storageSpec:
+        emptyDir:
+          medium: Memory
     namespace: default
 ```
 
@@ -58,8 +60,10 @@ metadata:
 spec:
   chartName: prometheus-community/prometheus
   namespace: default
-  values: |2
-    key: value
+  values: |
+    storageSpec:
+      emptyDir:
+        medium: Memory
   version: 11.16.8
 status:
   appVersion: 2.21.0
