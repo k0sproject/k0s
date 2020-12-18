@@ -339,13 +339,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#service-and-log-setup" class="md-nav__link">
-    Service and Log Setup
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -691,13 +684,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#service-and-log-setup" class="md-nav__link">
-    Service and Log Setup
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -755,8 +741,8 @@
 <h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
 <p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.
 This will output a kubeconfig for the user, which can be used for authentication.</p>
-<p>On the controller, run the following to generate a kubeconfig for a user :
-<code>shell script
+<p>On the controller, run the following to generate a kubeconfig for a user:</p>
+<p>```shell script
 k0s kubeconfig create [username]
 <div class="highlight"><pre><span></span><code>### Enabling Access to Cluster Resources
 To allow the user access to the cluster, the user needs to be created with the `system:masters` group:
@@ -764,13 +750,43 @@ To allow the user access to the cluster, the user needs to be created with the `
 ```shell script
 clusterUser=&quot;testUser&quot;
 k0s kubeconfig create --groups &quot;system:masters&quot; $clusterUser &gt; ~/.kube/config
-</code></pre></div>
-Create the proper roleBinding, to allow the user access to the resources:</code>shell script
+</code></pre></div></p>
+<p>Create the proper roleBinding, to allow the user access to the resources:</p>
+<p>```shell script
 kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
+<div class="highlight"><pre><span></span><code>## Service and Log Setup
+[k0s install](cli/k0s_install.md) sub-command was created as a helper command to allow users to easily install k0s as a service.
+For more information, read [here](install.md).
+
+## Enabling Shell Completion
+The k0s completion script for Bash, zsh, fish and powershell can be generated with the command `k0s completion &lt; shell &gt;`. Sourcing the completion script in your shell enables k0s autocompletion.
+### Bash
+</code></pre></div>
+echo 'source &lt;(k0s completion bash)' &gt;&gt;~/.bashrc
+<div class="highlight"><pre><span></span><code>
+</code></pre></div></p>
+<h1 id="to-load-completions-for-each-session-execute-once">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once" title="Permanent link">#</a></h1>
+<p>$ k0s completion bash &gt; /etc/bash_completion.d/k0s
+<div class="highlight"><pre><span></span><code>### Zsh
+
+If shell completion is not already enabled in your environment you will need
+to enable it.  You can execute the following once:
+</code></pre></div>
+$ echo "autoload -U compinit; compinit" &gt;&gt; ~/.zshrc
+<div class="highlight"><pre><span></span><code>
+</code></pre></div></p>
+<h1 id="to-load-completions-for-each-session-execute-once_1">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_1" title="Permanent link">#</a></h1>
+<p>$ k0s completion zsh &gt; "${fpath[1]}/_k0s"
+<div class="highlight"><pre><span></span><code>You will need to start a new shell for this setup to take effect.
+
+### Fish
+</code></pre></div>
+$ k0s completion fish | source
+<div class="highlight"><pre><span></span><code>
+</code></pre></div></p>
+<h1 id="to-load-completions-for-each-session-execute-once_2">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_2" title="Permanent link">#</a></h1>
+<p>$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
 ```</p>
-<h2 id="service-and-log-setup">Service and Log Setup<a class="headerlink" href="#service-and-log-setup" title="Permanent link">#</a></h2>
-<p><a href="../cli/k0s_install/">k0s install</a> sub-command was created as a helper command to allow users to easily install k0s as a service.
-For more information, read <a href="../install/">here</a>.</p>
                 
               
               

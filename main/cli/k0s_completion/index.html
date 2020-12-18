@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s/">
+        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_completion/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>k0s CLI Help Pages - k0s Documentation</title>
+        <title>K0s completion - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s" class="md-skip">
+        <a href="#k0s-completion" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              k0s CLI Help Pages
+              K0s completion
             
           </span>
         </div>
@@ -297,12 +297,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
       Configuration Reference
@@ -416,72 +414,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        k0s CLI Help Pages
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../k0s/" class="md-nav__link">
       k0s CLI Help Pages
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#k0s" class="md-nav__link">
-    k0s
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#synopsis" class="md-nav__link">
-    Synopsis
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -597,6 +534,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -604,6 +543,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -613,36 +554,9 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s" class="md-nav__link">
-    k0s
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#synopsis" class="md-nav__link">
     Synopsis
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -660,32 +574,39 @@
               
                 
                 
-                  <h1>k0s CLI Help Pages</h1>
-                
-                <h2 id="k0s">k0s<a class="headerlink" href="#k0s" title="Permanent link">#</a></h2>
-<p>k0s - Zero Friction Kubernetes</p>
+                <h2 id="k0s-completion">k0s completion<a class="headerlink" href="#k0s-completion" title="Permanent link">#</a></h2>
+<p>Generate completion script</p>
 <h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
-<p>k0s - The zero friction Kubernetes - https://k0sproject.io</p>
+<p>To load completions:</p>
+<p>Bash:</p>
+<p>$ source &lt;(k0s completion bash)</p>
+<h1 id="to-load-completions-for-each-session-execute-once">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once" title="Permanent link">#</a></h1>
+<p>$ k0s completion bash &gt; /etc/bash_completion.d/k0s</p>
+<p>Zsh:</p>
+<h1 id="if-shell-completion-is-not-already-enabled-in-your-environment-you-will-need">If shell completion is not already enabled in your environment you will need<a class="headerlink" href="#if-shell-completion-is-not-already-enabled-in-your-environment-you-will-need" title="Permanent link">#</a></h1>
+<h1 id="to-enable-it-you-can-execute-the-following-once">to enable it.  You can execute the following once:<a class="headerlink" href="#to-enable-it-you-can-execute-the-following-once" title="Permanent link">#</a></h1>
+<p>$ echo "autoload -U compinit; compinit" &gt;&gt; ~/.zshrc</p>
+<h1 id="to-load-completions-for-each-session-execute-once_1">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_1" title="Permanent link">#</a></h1>
+<p>$ k0s completion zsh &gt; "${fpath[1]}/_k0s"</p>
+<h1 id="you-will-need-to-start-a-new-shell-for-this-setup-to-take-effect">You will need to start a new shell for this setup to take effect.<a class="headerlink" href="#you-will-need-to-start-a-new-shell-for-this-setup-to-take-effect" title="Permanent link">#</a></h1>
+<p>Fish:</p>
+<p>$ k0s completion fish | source</p>
+<h1 id="to-load-completions-for-each-session-execute-once_2">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_2" title="Permanent link">#</a></h1>
+<p>$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish</p>
+<div class="highlight"><pre><span></span><code>k0s completion [bash|zsh|fish|powershell]
+</code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>  -h, --help   help for completion
+</code></pre></div>
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
-  -h, --help                     help for k0s
   -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s_api/">k0s api</a>  - Run the controller api</li>
-<li><a href="../k0s_completion/">k0s completion</a>    - Generate completion script</li>
-<li><a href="../k0s_default-config/">k0s default-config</a>    - Output the default k0s configuration yaml to stdout</li>
-<li><a href="../k0s_docs/">k0s docs</a>    - Generate Markdown docs for the k0s binary</li>
-<li><a href="../k0s_etcd/">k0s etcd</a>    - Manage etcd cluster</li>
-<li><a href="../k0s_install/">k0s install</a>  - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
-<li><a href="../k0s_kubeconfig/">k0s kubeconfig</a>    - Create a kubeconfig file for a specified user</li>
-<li><a href="../k0s_server/">k0s server</a>    - Run server</li>
-<li><a href="../k0s_token/">k0s token</a>  - Manage join tokens</li>
-<li><a href="../k0s_version/">k0s version</a>  - Print the k0s version</li>
-<li><a href="../k0s_worker/">k0s worker</a>    - Run worker</li>
+<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
 </ul>
                 
               
@@ -701,41 +622,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href="../../install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Running k0s as a service
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../../manifests/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Deploying Manifests
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
