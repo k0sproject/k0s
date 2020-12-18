@@ -89,7 +89,7 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 		return fmt.Errorf("can't save kubeconfig for calico: %v", err)
 	}
 	posh := NewPowershell()
-	return posh.execute(fmt.Sprintf("C:\\bootstrap.ps1 -ServiceCidr=%s -DNSServerIPs=%s", c.CIDRRange, c.ClusterDNS))
+	return posh.execute(fmt.Sprintf("C:\\bootstrap.ps1 -ServiceCidr \"%s\" -DNSServerIPs \"%s\"", c.CIDRRange, c.ClusterDNS))
 }
 
 func (c CalicoInstaller) Run() error {
