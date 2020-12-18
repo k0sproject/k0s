@@ -982,8 +982,10 @@
     <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
       <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
       <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
-      <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|2</span>
-          <span class="no">values: &quot;for overriding&quot;</span>
+      <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+        <span class="no">server:</span>
+          <span class="no">podDisruptionBudget:</span>
+            <span class="no">enabled: false</span>
       <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
 <h3 id="specapi_1"><code>spec.api</code><a class="headerlink" href="#specapi_1" title="Permanent link">#</a></h3>
@@ -1101,8 +1103,10 @@ Following keys are avaiable</p>
     - name: prometheus-stack
       chartname: prometheus-community/prometheus
       version: &quot;11.16.8&quot;
-      values: |2
-          values: &quot;for overriding&quot;
+      values: |
+        storageSpec:
+          emptyDir:
+            medium: Memory
       namespace: default
 </code></pre></div>
 <p>This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.</p>
