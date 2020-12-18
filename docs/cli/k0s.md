@@ -19,6 +19,7 @@ k0s - The zero friction Kubernetes - https://k0sproject.io
 ### SEE ALSO
 
 * [k0s api](k0s_api.md)	 - Run the controller api
+* [k0s completion](k0s_completion.md)	 - Generate completion script
 * [k0s default-config](k0s_default-config.md)	 - Output the default k0s configuration yaml to stdout
 * [k0s docs](k0s_docs.md)	 - Generate Markdown docs for the k0s binary
 * [k0s etcd](k0s_etcd.md)	 - Manage etcd cluster
