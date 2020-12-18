@@ -337,6 +337,60 @@
     Adding a Cluster User
   </a>
   
+    <nav class="md-nav" aria-label="Adding a Cluster User">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-shell-completion" class="md-nav__link">
+    Enabling Shell Completion
+  </a>
+  
+    <nav class="md-nav" aria-label="Enabling Shell Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -682,6 +736,60 @@
     Adding a Cluster User
   </a>
   
+    <nav class="md-nav" aria-label="Adding a Cluster User">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-shell-completion" class="md-nav__link">
+    Enabling Shell Completion
+  </a>
+  
+    <nav class="md-nav" aria-label="Enabling Shell Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -742,51 +850,42 @@
 <p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.
 This will output a kubeconfig for the user, which can be used for authentication.</p>
 <p>On the controller, run the following to generate a kubeconfig for a user:</p>
-<p>```shell script
-k0s kubeconfig create [username]
-<div class="highlight"><pre><span></span><code>### Enabling Access to Cluster Resources
-To allow the user access to the cluster, the user needs to be created with the `system:masters` group:
-
-```shell script
-clusterUser=&quot;testUser&quot;
-k0s kubeconfig create --groups &quot;system:masters&quot; $clusterUser &gt; ~/.kube/config
-</code></pre></div></p>
-<p>Create the proper roleBinding, to allow the user access to the resources:</p>
-<p>```shell script
-kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
-<div class="highlight"><pre><span></span><code>## Service and Log Setup
-[k0s install](cli/k0s_install.md) sub-command was created as a helper command to allow users to easily install k0s as a service.
-For more information, read [here](install.md).
-
-## Enabling Shell Completion
-The k0s completion script for Bash, zsh, fish and powershell can be generated with the command `k0s completion &lt; shell &gt;`. Sourcing the completion script in your shell enables k0s autocompletion.
-### Bash
+<div class="highlight"><pre><span></span><code>k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span>
 </code></pre></div>
-echo 'source &lt;(k0s completion bash)' &gt;&gt;~/.bashrc
-<div class="highlight"><pre><span></span><code>
+<h3 id="enabling-access-to-cluster-resources">Enabling Access to Cluster Resources<a class="headerlink" href="#enabling-access-to-cluster-resources" title="Permanent link">#</a></h3>
+<p>To allow the user access to the cluster, the user needs to be created with the <code>system:masters</code> group:
+<div class="highlight"><pre><span></span><code><span class="nv">clusterUser</span><span class="o">=</span><span class="s2">&quot;testUser&quot;</span>
+k0s kubeconfig create --groups <span class="s2">&quot;system:masters&quot;</span> <span class="nv">$clusterUser</span> &gt; ~/.kube/config
 </code></pre></div></p>
-<h1 id="to-load-completions-for-each-session-execute-once">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once" title="Permanent link">#</a></h1>
-<p>$ k0s completion bash &gt; /etc/bash_completion.d/k0s
-<div class="highlight"><pre><span></span><code>### Zsh
-
-If shell completion is not already enabled in your environment you will need
+<p>Create the proper roleBinding, to allow the user access to the resources:
+<div class="highlight"><pre><span></span><code>kubectl create clusterrolebinding <span class="nv">$clusterUser</span>-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span><span class="nv">$clusterUser</span>
+</code></pre></div></p>
+<h2 id="service-and-log-setup">Service and Log Setup<a class="headerlink" href="#service-and-log-setup" title="Permanent link">#</a></h2>
+<p><a href="../cli/k0s_install/">k0s install</a> sub-command was created as a helper command to allow users to easily install k0s as a service.
+For more information, read <a href="../install/">here</a>.</p>
+<h2 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h2>
+<p>The k0s completion script for Bash, zsh, fish and powershell can be generated with the command <code>k0s completion &lt; shell &gt;</code>. Sourcing the completion script in your shell enables k0s autocompletion.</p>
+<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span> &gt;&gt;~/.bashrc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion bash &gt; /etc/bash_completion.d/k0s
+</code></pre></div>
+<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
+<p>If shell completion is not already enabled in your environment you will need
 to enable it.  You can execute the following once:
+<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
 </code></pre></div>
-$ echo "autoload -U compinit; compinit" &gt;&gt; ~/.zshrc
-<div class="highlight"><pre><span></span><code>
-</code></pre></div></p>
-<h1 id="to-load-completions-for-each-session-execute-once_1">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_1" title="Permanent link">#</a></h1>
-<p>$ k0s completion zsh &gt; "${fpath[1]}/_k0s"
-<div class="highlight"><pre><span></span><code>You will need to start a new shell for this setup to take effect.
-
-### Fish
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
 </code></pre></div>
-$ k0s completion fish | source
-<div class="highlight"><pre><span></span><code>
+You will need to start a new shell for this setup to take effect.</p>
+<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
+<p><div class="highlight"><pre><span></span><code>$ k0s completion fish <span class="p">|</span> <span class="nb">source</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
 </code></pre></div></p>
-<h1 id="to-load-completions-for-each-session-execute-once_2">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_2" title="Permanent link">#</a></h1>
-<p>$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
-```</p>
                 
               
               
