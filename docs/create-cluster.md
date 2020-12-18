@@ -79,21 +79,19 @@ This will output a kubeconfig for the user, which can be used for authentication
 
 On the controller, run the following to generate a kubeconfig for a user:
 
-```shell script
+```sh
 k0s kubeconfig create [username]
 ```
 
 ### Enabling Access to Cluster Resources
 To allow the user access to the cluster, the user needs to be created with the `system:masters` group:
-
-```shell script
+```sh
 clusterUser="testUser"
 k0s kubeconfig create --groups "system:masters" $clusterUser > ~/.kube/config
 ```
 
 Create the proper roleBinding, to allow the user access to the resources:
-
-```shell script
+```sh
 kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
 ```
 
@@ -104,11 +102,11 @@ For more information, read [here](install.md).
 ## Enabling Shell Completion
 The k0s completion script for Bash, zsh, fish and powershell can be generated with the command `k0s completion < shell >`. Sourcing the completion script in your shell enables k0s autocompletion.
 ### Bash
-```
+```sh
 echo 'source <(k0s completion bash)' >>~/.bashrc
 ```
 
-```
+```sh
 # To load completions for each session, execute once:
 $ k0s completion bash > /etc/bash_completion.d/k0s
 ```
@@ -116,21 +114,20 @@ $ k0s completion bash > /etc/bash_completion.d/k0s
 
 If shell completion is not already enabled in your environment you will need
 to enable it.  You can execute the following once:
-
-```
+```sh
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 ```
-```
+```sh
 # To load completions for each session, execute once:
 $ k0s completion zsh > "${fpath[1]}/_k0s"
 ```
 You will need to start a new shell for this setup to take effect.
 
 ### Fish
-```
+```sh
 $ k0s completion fish | source
 ```
-```
+```sh
 # To load completions for each session, execute once:
 $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 ```
