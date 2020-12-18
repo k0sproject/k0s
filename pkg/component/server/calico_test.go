@@ -19,19 +19,22 @@ func TestCalicoManifests(t *testing.T) {
 
 	t.Run("must_write_crd_during_bootstrap", func(t *testing.T) {
 		saver := inMemorySaver{}
-		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), crdSaver, saver)
 		require.NoError(t, err)
 		require.NoError(t, calico.Run())
 		require.NoError(t, calico.Stop())
 
-		for k := range saver {
+		for k := range crdSaver {
 			require.Contains(t, k, "calico-crd")
 		}
+		require.Len(t, saver, 0)
 	})
 
 	t.Run("must_write_only_non_crd_on_change", func(t *testing.T) {
 		saver := inMemorySaver{}
-		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(v1beta1.DefaultClusterConfig(), crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})
@@ -39,13 +42,15 @@ func TestCalicoManifests(t *testing.T) {
 		for k := range saver {
 			require.NotContains(t, k, "calico-crd")
 		}
+		require.Len(t, crdSaver, 0)
 	})
 
 	t.Run("must_have_wireguard_enabled_if_config_has", func(t *testing.T) {
 		cfg := v1beta1.DefaultClusterConfig()
 		cfg.Spec.Network.Calico.EnableWireguard = true
 		saver := inMemorySaver{}
-		calico, err := NewCalico(cfg, saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(cfg, crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})
@@ -74,7 +79,8 @@ func TestCalicoManifests(t *testing.T) {
 		cfg := v1beta1.DefaultClusterConfig()
 		cfg.Spec.Network.Calico.EnableWireguard = false
 		saver := inMemorySaver{}
-		calico, err := NewCalico(cfg, saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(cfg, crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})
@@ -102,7 +108,8 @@ func TestCalicoManifests(t *testing.T) {
 		cfg := v1beta1.DefaultClusterConfig()
 		cfg.Spec.Network.Calico.FlexVolumeDriverPath = "/etc/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds"
 		saver := inMemorySaver{}
-		calico, err := NewCalico(cfg, saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(cfg, crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})
@@ -125,7 +132,8 @@ func TestCalicoManifests(t *testing.T) {
 	t.Run("flex_volume_driver_path_set_from_default", func(t *testing.T) {
 		cfg := v1beta1.DefaultClusterConfig()
 		saver := inMemorySaver{}
-		calico, err := NewCalico(cfg, saver)
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(cfg, crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})

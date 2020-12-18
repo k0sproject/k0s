@@ -6,4 +6,5 @@ metadata:
   name: default
 spec:
   strictAffinity: true
-  {{- end }}
+  autoAllocateBlocks: false
+{{- end }}

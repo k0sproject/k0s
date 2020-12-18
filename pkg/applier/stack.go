@@ -76,6 +76,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 			sortedResources = append(sortedResources, resource)
 		}
 	}
+
 	for _, resource := range sortedResources {
 		s.prepareResource(resource)
 		mapping, err := mapper.RESTMapping(resource.GroupVersionKind().GroupKind(), resource.GroupVersionKind().Version)
