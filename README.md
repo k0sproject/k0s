@@ -29,7 +29,7 @@ If you'd like to help build k0s, please check out our guide to [Contributing](ht
 ## Quick start
 
 ```
-curl -sSLf get.k0s.sh | sh
+curl -sSLf https://get.k0s.sh | sh
 k0s server --enable-worker
 ```
 
