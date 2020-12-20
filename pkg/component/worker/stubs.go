@@ -28,8 +28,9 @@ func (c CalicoInstaller) Healthy() error {
 }
 
 type KubeProxy struct {
-	K0sVars  constant.CfgVars
-	LogLevel string
+	K0sVars   constant.CfgVars
+	CIDRRange string
+	LogLevel  string
 }
 
 func (k KubeProxy) Init() error {

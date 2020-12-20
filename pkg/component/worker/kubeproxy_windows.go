@@ -11,6 +11,7 @@ import (
 
 type KubeProxy struct {
 	K0sVars    constant.CfgVars
+	CIDRRange  string
 	LogLevel   string
 	supervisor supervisor.Supervisor
 }
@@ -35,6 +36,7 @@ func (k KubeProxy) Run() error {
 		"--hostname-override=" + node,
 		"--v=4",
 		"--proxy-mode=kernelspace",
+		fmt.Sprintf("--cluster-cidr=%s", k.CIDRRange),
 		"--network-name=Calico", // TODO: this is the default name
 		fmt.Sprintf("--kubeconfig=%s", "c:\\CalicoWindows\\calico-kube-config"),
 		fmt.Sprintf("--v=%s", k.LogLevel),

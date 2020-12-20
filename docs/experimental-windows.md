@@ -26,6 +26,10 @@ It is expected to have docker EE installed on the windows node (we need it durin
 C:\>k0s.exe worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
 ```
 
+Cluster MUST have at least one linux worker node.
+
+Cluster control plane must be inited with proper config (see section below)
+
 ## Configuration
 
 ### Strict-affinity
@@ -48,6 +52,11 @@ Another way is to use calicoctl manually:
 ```
 calicoctl ipam configure --strictaffinity=true
 ```
+
+### Network connectivity in AWS
+The network interface attached to your EC2 instance MUST have disabled “Change Source/Dest. Check” option.
+In AWS console option can be found on the Actions menu for a selected network interface.
+
 ### Hacks
 
 We need to figure out proper way to pass cluster settings from controller plane to worker.
@@ -56,3 +65,24 @@ While we don't have it, there are CLI arguments:
 - cidr-range
 - cluster-dns
 - api-server 
+
+
+## Some useful commands
+
+Run pod with cmd.exe shell
+```
+kubectl run win --image=hello-world:nanoserver --command=true -i --attach=true -- cmd.exe
+```
+
+Manifest for pod with IIS web-server
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: iis
+spec:
+  containers:
+  - name: iis
+    image: mcr.microsoft.com/windows/servercore/iis
+    imagePullPolicy: IfNotPresent
+```

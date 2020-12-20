@@ -137,8 +137,9 @@ func startWorker(token string) error {
 			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
 		}
 		componentManager.Add(&worker.KubeProxy{
-			K0sVars:  k0sVars,
-			LogLevel: logging["kube-proxy"],
+			K0sVars:   k0sVars,
+			LogLevel:  logging["kube-proxy"],
+			CIDRRange: cidrRange,
 		})
 		componentManager.Add(&worker.CalicoInstaller{
 			Token:      token,
