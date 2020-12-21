@@ -1,5 +1,5 @@
 
-GO_SRCS := $(shell find . -type f -name '*.go')
+GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
@@ -30,17 +30,16 @@ endif
 .PHONY: all
 all: k0s k0s.exe
 
+zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
-	rm -f bindata && touch bindata
+	rm -f bindata_$(zz_os) && touch bindata_$(zz_os)
 	printf "%s\n\n%s\n%s\n" \
 		"package assets" \
 		"var BinData = map[string]struct{ offset, size int64 }{}" \
 		"var BinDataSize int64 = 0" \
 		> $@
 else
-zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
-
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: gen_bindata.go
@@ -50,10 +49,10 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 endif
 
 k0s: TARGET_OS = linux
-k0s: pkg/assets/zz_generated_offsets_linux.go .bins.linux.stamp
+k0s: pkg/assets/zz_generated_offsets_linux.go
 
 k0s.exe: TARGET_OS = windows
-k0s.exe: pkg/assets/zz_generated_offsets_windows.go .bins.windows.stamp
+k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
 k0s.exe k0s: $(GO_SRCS)
 	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' \
