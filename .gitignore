@@ -1,9 +1,9 @@
-pkg/assets/zz_generated_offsets.go
+pkg/assets/zz_generated_offsets*.go
 k0s
 k0s.code
 k0s.exe
 k0s.exe.code
-bindata
+bindata*
 .*.stamp
 .tmp
 .terraform
