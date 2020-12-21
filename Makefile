@@ -73,6 +73,9 @@ smoketests := check-addons check-basic check-byocri check-hacontrolplane check-k
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
 
+.PHONY: smoketests
+smoketests: $(smoketests)
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	go test -race ./pkg/...
