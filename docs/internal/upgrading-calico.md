@@ -44,7 +44,12 @@ not the calico originals.
   value: "{{ .VxlanVNI }}"
 {{- end }}
 ```
-
+- iptables auto detect:
+```helmyaml
+# Auto detect the iptables backend
+- name: FELIX_IPTABLESBACKEND
+  value: "auto"
+```
 - variable-based WireGuard support:
 ```helmyaml
 {{- if .EnableWireguard }}
