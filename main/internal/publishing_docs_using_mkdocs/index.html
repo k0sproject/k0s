@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_kubeconfig_create/">
+        <link rel="canonical" href="https://docs.k0sproject.io/internal/publishing_docs_using_mkdocs/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s kubeconfig create - k0s Documentation</title>
+        <title>Publishing Docs - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-kubeconfig-create" class="md-skip">
+        <a href="#publishing-docs" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s kubeconfig create
+              Publishing Docs
             
           </span>
         </div>
@@ -428,7 +428,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../k0s/" class="md-nav__link">
+    <a href="../../cli/k0s/" class="md-nav__link">
       k0s CLI Help Pages
     </a>
   </li>
@@ -546,6 +546,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -553,6 +555,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -562,50 +566,16 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-kubeconfig-create" class="md-nav__link">
-    k0s kubeconfig create
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s kubeconfig create">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#synopsis" class="md-nav__link">
-    Synopsis
+  <a href="#requirements" class="md-nav__link">
+    Requirements
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    Examples
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-link-to-the-navigation" class="md-nav__link">
+    Adding A New link to the Navigation
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -623,36 +593,63 @@
               
                 
                 
-                  <h1>K0s kubeconfig create</h1>
-                
-                <h2 id="k0s-kubeconfig-create">k0s kubeconfig create<a class="headerlink" href="#k0s-kubeconfig-create" title="Permanent link">#</a></h2>
-<p>Create a kubeconfig for a user</p>
-<h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
-<p>Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
-Note: A certificate once signed cannot be revoked for a particular user</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig create [username] [flags]
-</code></pre></div>
-<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>    Command to create a kubeconfig for a user:
-    CLI argument:
-    $ k0s kubeconfig create [username]
-
-    optionally add groups:
-    $ k0s kubeconfig create [username] --groups [groups]
-</code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --groups string   Specify groups
-  -h, --help            help for create
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
-      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                    Debug logging (default: false)
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+                <h1 id="publishing-docs">Publishing Docs<a class="headerlink" href="#publishing-docs" title="Permanent link">#</a></h1>
+<p>We use <a href="https://www.mkdocs.org">mkdocs</a> and <a href="https://github.com/jimporter/mike">mike</a> for publishing docs to <a href="https://docs.k0sproject.io">docs.k0sproject.io</a>.
+This guide will provide a simple how-to on how to configure and deploy newly added docs to our website.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
+<p>Install mike: https://github.com/jimporter/mike#installation</p>
+<h2 id="adding-a-new-link-to-the-navigation">Adding A New link to the Navigation<a class="headerlink" href="#adding-a-new-link-to-the-navigation" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../k0s_kubeconfig/">k0s kubeconfig</a>    - Create a kubeconfig file for a specified user</li>
+<li>All docs must live under the <code>docs</code> directory (I.E., changes to the main <code>README.md</code> are not reflected in the website).</li>
+<li>Add a new link under <code>nav</code> in the main <a href="https://github.com/k0sproject/k0s/blob/main/mkdocs.yml">mkdocs.yml</a> file:
+    ```
+  nav:<ul>
+<li>Overview: README.md</li>
+<li>Creating A Cluster:<ul>
+<li>Quick Start Guide: create-cluster.md</li>
+<li>Run in Docker: k0s-in-docker.md</li>
+<li>Single node set-up: k0s-single-node.md</li>
+</ul>
+</li>
+<li>Configuration Reference:<ul>
+<li>Architecture: architecture.md</li>
+<li>Networking: networking.md</li>
+<li>Configuration Options: configuration.md</li>
+<li>Configuring Containerd: containerd_config.md</li>
+<li>Using A Custom CRI: custom-cri-runtime.md</li>
+<li>Using Cloud Providers: cloud-providers.md</li>
+<li>Running k0s with Traefik: examples/traefik-ingress.md</li>
+<li>Running k0s as a service: install.md</li>
+<li>k0s CLI Help Pages: cli/k0s.md</li>
+</ul>
+</li>
+<li>Deploying Manifests: manifests.md</li>
+<li>FAQ: FAQ.md</li>
+<li>Troubleshooting: troubleshooting.md</li>
+<li>Contributing:<ul>
+<li>Overview: contributors/overview.md</li>
+<li>Workflow: contributors/github_workflow.md</li>
+<li>Testing: contributors/testing.md
+```</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Test your deployment locally, using <code>mike</code>:
+    <div class="highlight"><pre><span></span><code>version=&quot;v0.9.0&quot; # example
+mike deploy ${version}
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code>mike set-default ${version}
+</code></pre></div>
+<p><div class="highlight"><pre><span></span><code>mike serve
+</code></pre></div>
+Your local version should be served under: http://localhost:8000.</p>
+</li>
+<li>
+<p>Once your changes are pushed to <code>main</code>, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22</p>
+</li>
+<li>You should see the deployment outcome in the <code>gh-pages</code> deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages    </li>
 </ul>
                 
               
