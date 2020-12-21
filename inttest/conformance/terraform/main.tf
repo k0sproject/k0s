@@ -13,7 +13,7 @@ variable "sonobuoy_version" {
 }
 
 variable "k8s_version" {
-  // format: v1.20.0
+  // format: v1.20.1
   type = string
 }
 

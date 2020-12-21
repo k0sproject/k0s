@@ -102,7 +102,7 @@ images:
     version: v0.3.7
   kubeproxy:
     image: k8s.gcr.io/kube-proxy
-    version: v1.20.0
+    version: v1.20.1
   coredns:
     image: docker.io/coredns/coredns
     version: 1.7.0
