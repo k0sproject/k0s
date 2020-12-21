@@ -619,8 +619,7 @@ we still have those changes applied. The code blocks in this section are <strong
 not the calico originals.</p>
 <p><code>static/manifests/calico/DaemonSet/calico-node.yaml</code>:</p>
 <ul>
-<li>
-<p>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):<br />
+<li>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):<br />
 <div class="highlight"><pre><span></span><code>{{- if eq .Mode &quot;ipip&quot; }}
 # Enable IPIP
 - name: CALICO_IPV4POOL_IPIP
@@ -640,16 +639,18 @@ not the calico originals.</p>
 - name: FELIX_VXLANVNI
   value: &quot;{{ .VxlanVNI }}&quot;
 {{- end }}
-</code></pre></div></p>
-</li>
-<li>
-<p>variable-based WireGuard support:
+</code></pre></div></li>
+<li>iptables auto detect:
+<div class="highlight"><pre><span></span><code># Auto detect the iptables backend
+- name: FELIX_IPTABLESBACKEND
+  value: &quot;auto&quot;
+</code></pre></div></li>
+<li>variable-based WireGuard support:
 <div class="highlight"><pre><span></span><code>{{- if .EnableWireguard }}
 - name: FELIX_WIREGUARDENABLED
   value: &quot;true&quot;
 {{- end }}
-</code></pre></div></p>
-</li>
+</code></pre></div></li>
 <li>variable-based cluster CIDR:<br />
 <div class="highlight"><pre><span></span><code>- name: CALICO_IPV4POOL_CIDR
   value: &quot;{{ .ClusterCIDR }}&quot;
