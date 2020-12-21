@@ -24,6 +24,9 @@ on:
       - '**.md'
       - LICENSE
       - '**.svg'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/mkdocs-set-default-version.yml'
+      - 'mkdocs.yml'
 jobs:
   build:
     name: Build
