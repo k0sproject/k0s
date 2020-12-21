@@ -6,7 +6,7 @@ These instructions outline a quick method for running a local k0s master and wor
 ## Prepare Dependencies
 #### 1. Download the k0s binary
 ```sh
-curl -sSLf get.k0s.sh | sh
+curl -sSLf https://get.k0s.sh | sh
 ```
 
 #### 2. Download the kubectl binary
