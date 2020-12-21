@@ -14,6 +14,7 @@ nav:
       - Quick Start Guide: create-cluster.md
       - Run in Docker: k0s-in-docker.md
       - Single node set-up: k0s-single-node.md
+      - K0s in Windows (experimental): experimental-windows.md
   - Configuration Reference:
       - Architecture: architecture.md
       - Networking: networking.md
