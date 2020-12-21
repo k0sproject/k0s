@@ -45,7 +45,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
       - name: Build
-        run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
+        run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
       - name: Clean Docker
@@ -118,7 +118,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
       - name: Build
-        run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker k0s.exe
+        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
 
@@ -162,7 +162,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
       - name: Build
-        run: make -j$(nproc) EMBEDDED_BINS_BUILDMODE=docker
+        run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
       - name: Clean Docker
