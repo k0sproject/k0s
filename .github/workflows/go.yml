@@ -61,7 +61,7 @@ jobs:
             .bins.stamp
             embedded-bins/staging/linux/bin/
             bindata_linux
-            pkg/assets/zz_generated_offsets.go
+            pkg/assets/zz_generated_offsets_linux.go
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
           restore-keys: |
@@ -309,7 +309,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: codegen
-        run: make pkg/assets/zz_generated_offsets.go
+        run: make pkg/assets/zz_generated_offsets_linux.go
         env:
           EMBEDDED_BINS_BUILDMODE: none
 
