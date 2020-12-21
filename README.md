@@ -27,15 +27,15 @@ k0s is an all-inclusive Kubernetes distribution with all the required bells and 
 
 If you'd like to try k0s, please jump to our:
 
-- [Super QuickStart](https://docs.k0sproject.io/main/k0s-single-node/) - Create a k0s control plane and worker, and access it locally with kubectl.
-- [NanoDemo](https://docs.k0sproject.io/main/#demo) - Watch a .gif recording of how to create a k0s instance.
-- [Create a k0s cluster](https://docs.k0sproject.io/main/create-cluster/) - For when you're ready to build a multi-node cluster.
-- [Run k0s in Docker](https://docs.k0sproject.io/main/k0s-in-docker/) - Run k0s controllers and workers in containers.
-- [Run in Windows](https://docs.k0sproject.io/main/experimental-windows/) - For running k0s on a windows host (experimental!).
+- [Super QuickStart](https://docs.k0sproject.io/latest/k0s-single-node/) - Create a k0s control plane and worker, and access it locally with kubectl.
+- [NanoDemo](https://docs.k0sproject.io/latest/#demo) - Watch a .gif recording of how to create a k0s instance.
+- [Create a k0s cluster](https://docs.k0sproject.io/latest/create-cluster/) - For when you're ready to build a multi-node cluster.
+- [Run k0s in Docker](https://docs.k0sproject.io/latest/k0s-in-docker/) - Run k0s controllers and workers in containers.
+- [Run in Windows](https://docs.k0sproject.io/latest/experimental-windows/) - For running k0s on a windows host (experimental!).
 - You may also be interested in current version specifications. For docs, tutorials, and other k0s resources, see our Docs and Resources [main page](https://docs.k0sproject.io).
 
 ## Join the Community
-If you'd like to help build k0s, please check out our guide to [Contributing](https://docs.k0sproject.io/main/contributors/overview/) and our [Code of Conduct](https://docs.k0sproject.io/main/contributors/CODE_OF_CONDUCT/).
+If you'd like to help build k0s, please check out our guide to [Contributing](https://docs.k0sproject.io/latest/contributors/overview/) and our [Code of Conduct](https://docs.k0sproject.io/latest/contributors/CODE_OF_CONDUCT/).
 
 ## Motivation
 
