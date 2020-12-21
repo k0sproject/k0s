@@ -16,7 +16,8 @@ sudo curl --output /usr/local/sbin/kubectl -L "https://storage.googleapis.com/ku
 
 #### 3. Make both binaries executable
 ```sh
-sudo chmod +x /usr/local/sbin/{kubectl,k0s}
+sudo chmod +x /usr/local/sbin/kubectl
+sudo chmod +x /usr/bin/k0s
 ```
 
 ## Start k0s
