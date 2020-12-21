@@ -154,6 +154,9 @@ spec:
             # Auto-detect the BGP IP address.
             - name: IP
               value: "autodetect"
+            # Auto detect the iptables backend
+            - name: FELIX_IPTABLESBACKEND
+              value: "auto"
             {{- if eq .Mode "ipip" }}
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
