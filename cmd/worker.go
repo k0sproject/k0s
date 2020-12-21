@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"runtime"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -39,6 +40,9 @@ import (
 func init() {
 	workerCmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
 	workerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	workerCmd.Flags().StringVar(&apiServer, "api-server", "", "HACK: api-server for the windows worker node")
+	workerCmd.Flags().StringVar(&cidrRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
+	workerCmd.Flags().StringVar(&clusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 }
@@ -48,6 +52,10 @@ var (
 	tokenArg      string
 	tokenFile     string
 	criSocket     string
+	apiServer     string
+	cidrRange     string
+	clusterDNS    string
+
 	cloudProvider bool
 
 	workerCmd = &cobra.Command{
@@ -82,6 +90,8 @@ var (
 )
 
 func startWorker(token string) error {
+
+	worker.KernelSetup()
 	if token == "" && !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
@@ -99,11 +109,18 @@ func startWorker(token string) error {
 	}
 
 	componentManager := component.NewManager()
+	if runtime.GOOS == "windows" && criSocket == "" {
+		return fmt.Errorf("windows worker needs to have external CRI")
+	}
 	if criSocket == "" {
 		componentManager.Add(&worker.ContainerD{
 			LogLevel: logging["containerd"],
 			K0sVars:  k0sVars,
 		})
+	}
+
+	if workerProfile == "default" && runtime.GOOS == "windows" {
+		workerProfile = "default-windows"
 	}
 
 	componentManager.Add(&worker.Kubelet{
@@ -114,6 +131,23 @@ func startWorker(token string) error {
 		LogLevel:            logging["kubelet"],
 		Profile:             workerProfile,
 	})
+
+	if runtime.GOOS == "windows" {
+		if token == "" {
+			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
+		}
+		componentManager.Add(&worker.KubeProxy{
+			K0sVars:   k0sVars,
+			LogLevel:  logging["kube-proxy"],
+			CIDRRange: cidrRange,
+		})
+		componentManager.Add(&worker.CalicoInstaller{
+			Token:      token,
+			APIAddress: apiServer,
+			CIDRRange:  cidrRange,
+			ClusterDNS: clusterDNS,
+		})
+	}
 
 	// extract needed components
 	if err := componentManager.Init(); err != nil {

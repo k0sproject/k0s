@@ -17,9 +17,12 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/k0sproject/k0s/internal/util"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"path"
@@ -39,7 +42,8 @@ import (
 )
 
 var (
-	kubeClient k8s.Interface
+	kubeClient    k8s.Interface
+	clusterConfig *v1beta1.ClusterConfig
 
 	APICmd = &cobra.Command{
 		Use:   "api",
@@ -51,7 +55,8 @@ var (
 )
 
 func startAPI() error {
-	clusterConfig, err := ConfigFromYaml(cfgFile)
+	var err error
+	clusterConfig, err = ConfigFromYaml(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -62,17 +67,24 @@ func startAPI() error {
 	}
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
-	router.Use(authMiddleware)
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
 		// by default the mux will return 404 back which the caller should handle
-		router.Path(prefix + "/etcd/members").Methods("POST").Handler(etcdHandler())
+		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
+			controllerHandler(etcdHandler()),
+		)
 	}
 
 	if clusterConfig.Spec.Storage.IsJoinable() {
-		router.Path(prefix + "/ca").Methods("GET").Handler(caHandler())
+		router.Path(prefix + "/ca").Methods("GET").Handler(
+			controllerHandler(caHandler()),
+		)
+
 	}
+	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
+		workerHandler(kubeConfigHandler()),
+	)
 
 	srv := &http.Server{
 		Handler:      router,
@@ -146,6 +158,70 @@ func etcdHandler() http.Handler {
 	})
 }
 
+func kubeConfigHandler() http.Handler {
+	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		tpl := `apiVersion: v1
+kind: Config
+clusters:
+- name: kubernetes
+  cluster:
+    certificate-authority-data: {{ .Ca }}
+    server: {{ .Server }}
+contexts:
+- name: calico-windows@kubernetes
+  context:
+    cluster: kubernetes
+    namespace: kube-system
+    user: calico-windows
+current-context: calico-windows@kubernetes
+users:
+- name: calico-windows
+  user:
+    token: {{ .Token }}
+`
+		l, err := kubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
+		if err != nil {
+			sendError(err, resp)
+			return
+		}
+		found := false
+		var secretWithToken corev1.Secret
+		for _, secret := range l.Items {
+			if !strings.HasPrefix(secret.Name, "calico-node-token") {
+				continue
+			}
+			found = true
+			secretWithToken = secret
+			break
+		}
+		if !found {
+			sendError(fmt.Errorf("no calico-node-token secret found"), resp)
+			return
+		}
+
+		tw := util.TemplateWriter{
+			Name:     "kube-config",
+			Template: tpl,
+			Data: struct {
+				Server    string
+				Ca        string
+				Token     string
+				Namespace string
+			}{
+				Server:    clusterConfig.Spec.API.APIAddress(),
+				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
+				Token:     string(secretWithToken.Data["token"]),
+				Namespace: string(secretWithToken.Data["namespace"]),
+			},
+		}
+		if err := tw.WriteToBuffer(resp); err != nil {
+			sendError(err, resp)
+			return
+		}
+	})
+
+}
+
 func caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
@@ -200,7 +276,7 @@ func sendError(err error, resp http.ResponseWriter, status ...int) {
 	}
 }
 
-func authMiddleware(next http.Handler) http.Handler {
+func authMiddleware(next http.Handler, role string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
@@ -211,7 +287,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) == 2 {
 			token := parts[1]
-			if !isValidToken(token) {
+			if !isValidToken(token, role) {
 				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
 				return
 			}
@@ -224,6 +300,22 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func controllerHandler(next http.Handler) http.Handler {
+	return authMiddleware(next, controllerRole)
+}
+
+func workerHandler(next http.Handler) http.Handler {
+	return authMiddleware(next, workerRole)
+}
+
+const workerRole = "worker"
+const controllerRole = "controller"
+
+var allowedUsageByRole = map[string]string{
+	workerRole:     "usage-bootstrap-api-worker-calls",
+	controllerRole: "usage-controller-join",
+}
+
 /** The token is in form of xyz.foobar where:
 - xyz: the token "ID" in kube api
 - foobar: the token itself
@@ -231,7 +323,7 @@ We need to validate:
 - that we find a secret with the ID
 - that the token matches whats inside the secret
 */
-func isValidToken(token string) bool {
+func isValidToken(token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -249,8 +341,10 @@ func isValidToken(token string) bool {
 		return false
 	}
 
-	if string(secret.Data["usage-controller-join"]) != "true" {
+	usageValue, ok := secret.Data[allowedUsageByRole[role]]
+	if !ok || string(usageValue) != "true" {
 		return false
 	}
+
 	return true
 }

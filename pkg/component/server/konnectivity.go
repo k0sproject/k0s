@@ -170,6 +170,8 @@ spec:
       labels:
         k8s-app: konnectivity-agent
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
       priorityClassName: system-cluster-critical
       tolerations:
         - key: "CriticalAddonsOnly"

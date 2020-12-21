@@ -57,7 +57,7 @@ jobs:
           path: |
             .bins.stamp
             embedded-bins/staging/linux/bin/
-            bindata
+            bindata_linux
             pkg/assets/zz_generated_offsets.go
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}

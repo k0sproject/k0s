@@ -18,8 +18,11 @@ package worker
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/avast/retry-go"
@@ -43,17 +46,16 @@ type Kubelet struct {
 	Profile             string
 	dataDir             string
 	supervisor          supervisor.Supervisor
-}
-
-// KubeletConfig defines the kubelet related config options
-type KubeletConfig struct {
-	ClusterDNS    string
-	ClusterDomain string
+	ClusterDNS          string
 }
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	err := assets.Stage(k.K0sVars.BinDir, "kubelet", constant.BinDirMode)
+	cmd := "kubelet"
+	if runtime.GOOS == "windows" {
+		cmd = "kubelet.exe"
+	}
+	err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
 	if err != nil {
 		return err
 	}
@@ -69,6 +71,12 @@ func (k *Kubelet) Init() error {
 
 // Run runs kubelet
 func (k *Kubelet) Run() error {
+	cmd := "kubelet"
+
+	if runtime.GOOS == "windows" {
+		cmd = "kubelet.exe"
+	}
+
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
 	// get the "real" resolv.conf file (in systemd-resolvd bases system,
@@ -82,10 +90,30 @@ func (k *Kubelet) Run() error {
 		fmt.Sprintf("--bootstrap-kubeconfig=%s", k.K0sVars.KubeletBootstrapConfigPath),
 		fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KubeletAuthConfigPath),
 		fmt.Sprintf("--v=%s", k.LogLevel),
-		fmt.Sprintf("--resolv-conf=%s", resolvConfPath),
 		"--kube-reserved-cgroup=system.slice",
 		"--runtime-cgroups=/system.slice/containerd.service",
 		"--kubelet-cgroups=/system.slice/containerd.service",
+	}
+
+	if runtime.GOOS == "windows" {
+		node, err := getNodeName()
+		if err != nil {
+			return fmt.Errorf("can't get hostname: %v", err)
+		}
+		args = append(args, "--cgroups-per-qos=false")
+		args = append(args, "--enforce-node-allocatable=")
+		args = append(args, "--pod-infra-container-image=kubeletwin/pause")
+		args = append(args, "--network-plugin=cni")
+		args = append(args, "--cni-bin-dir=C:\\k\\cni")
+		args = append(args, "--cni-conf-dir=C:\\k\\cni\\config")
+		args = append(args, "--hostname-override="+node)
+		args = append(args, `--resolv-conf=`)
+		args = append(args, "--cluster-domain=cluster.local")
+		args = append(args, "--hairpin-mode=promiscuous-bridge")
+		args = append(args, "--cert-dir=C:\\var\\lib\\k0s\\kubelet_certs")
+	} else {
+		args = append(args, "--cgroups-per-qos=true")
+		args = append(args, fmt.Sprintf("--resolv-conf=%s", resolvConfPath))
 	}
 
 	if k.CRISocket != "" {
@@ -94,11 +122,14 @@ func (k *Kubelet) Run() error {
 			return err
 		}
 		args = append(args, fmt.Sprintf("--container-runtime=%s", rtType))
-
+		shimPath := "unix:///var/run/dockershim.sock"
+		if runtime.GOOS == "windows" {
+			shimPath = "npipe:////./pipe/dockershim"
+		}
 		if rtType == "docker" {
 			args = append(args, fmt.Sprintf("--docker-endpoint=%s", rtSock))
 			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
-			args = append(args, "--container-runtime-endpoint=unix:///var/run/dockershim.sock")
+			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", shimPath))
 		} else {
 			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", rtSock))
 		}
@@ -111,10 +142,10 @@ func (k *Kubelet) Run() error {
 	if k.EnableCloudProvider {
 		args = append(args, "--cloud-provider=external")
 	}
-
+	logrus.Infof("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
-		Name:    "kubelet",
-		BinPath: assets.BinPath("kubelet", k.K0sVars.BinDir),
+		Name:    cmd,
+		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
 		Args:    args,
@@ -163,4 +194,23 @@ func splitRuntimeConfig(rtConfig string) (string, string, error) {
 	}
 
 	return runtimeType, runtimeSocket, nil
+}
+
+const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
+
+func getNodeName() (string, error) {
+	req, err := http.NewRequest("GET", awsMetaInformationURI, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return os.Hostname()
+	}
+	defer resp.Body.Close()
+	h, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("can't read aws hostname: %v", err)
+	}
+	return string(h), nil
 }

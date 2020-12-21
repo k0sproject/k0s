@@ -332,11 +332,15 @@ func initNetwork(reconcilers map[string]component.Component, conf *config.Cluste
 		logrus.Warnf("network provider set to custom, k0s will not manage it")
 		return
 	}
-	saver, err := server.NewManifestsSaver("calico", dataDir)
+	calicoSaver, err := server.NewManifestsSaver("calico", dataDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
-	calico, err := server.NewCalico(conf, saver)
+	calicoInitSaver, err := server.NewManifestsSaver("calico_init", dataDir)
+	if err != nil {
+		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
+	}
+	calico, err := server.NewCalico(conf, calicoInitSaver, calicoSaver)
 
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())

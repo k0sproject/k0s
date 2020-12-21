@@ -37,7 +37,8 @@ type Calico struct {
 	tickerDone  chan struct{}
 	log         *logrus.Entry
 
-	saver manifestsSaver
+	crdSaver manifestsSaver
+	saver    manifestsSaver
 }
 
 type manifestsSaver interface {
@@ -51,6 +52,7 @@ type calicoConfig struct {
 	VxlanVNI             int
 	ClusterCIDR          string
 	EnableWireguard      bool
+	WithWindowsNodes     bool
 	FlexVolumeDriverPath string
 
 	CalicoCNIImage             string
@@ -60,12 +62,13 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(clusterConf *config.ClusterConfig, saver manifestsSaver) (*Calico, error) {
+func NewCalico(clusterConf *config.ClusterConfig, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
 		clusterConf: clusterConf,
 		log:         log,
-		saver:       saver,
+		crdSaver:    crdSaver,
+		saver:       manifestsSaver,
 	}, nil
 }
 
@@ -88,6 +91,7 @@ func (c *Calico) Run() error {
 
 	for _, filename := range crds {
 		manifestName := fmt.Sprintf("calico-crd-%s", filename)
+
 		output := bytes.NewBuffer([]byte{})
 
 		contents, err := static.Asset(fmt.Sprintf("manifests/calico/CustomResourceDefinition/%s", filename))
@@ -105,7 +109,7 @@ func (c *Calico) Run() error {
 			return fmt.Errorf("failed to write calico crd manifests %s: %v", manifestName, err)
 		}
 
-		if err := c.saver.Save(manifestName, output.Bytes()); err != nil {
+		if err := c.crdSaver.Save(manifestName, output.Bytes()); err != nil {
 			return fmt.Errorf("failed to save calico crd manifest %s: %v", manifestName, err)
 		}
 	}
@@ -203,6 +207,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		CalicoFlexVolumeImage:      c.clusterConf.Images.Calico.FlexVolume.URI(),
 		CalicoNodeImage:            c.clusterConf.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: c.clusterConf.Images.Calico.KubeControllers.URI(),
+		WithWindowsNodes:           c.clusterConf.Spec.Network.Calico.WithWindowsNodes,
 	}
 
 	return config, nil

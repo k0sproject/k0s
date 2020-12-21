@@ -1,0 +1,10 @@
+{{- if .WithWindowsNodes }}
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPAMConfig
+metadata:
+  name: default
+spec:
+  strictAffinity: true
+  autoAllocateBlocks: true
+{{- end }}

@@ -23,6 +23,7 @@ type Calico struct {
 	MTU                  int    `yaml:"mtu"`
 	EnableWireguard      bool   `yaml:"wireguard"`
 	FlexVolumeDriverPath string `yaml:"flexVolumeDriverPath"`
+	WithWindowsNodes     bool   `yaml:"withWindowsNodes"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -34,6 +35,7 @@ func DefaultCalico() *Calico {
 		MTU:                  1450,
 		EnableWireguard:      false,
 		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
+		WithWindowsNodes:     false,
 	}
 }
 
@@ -44,6 +46,7 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.VxlanVNI = 4096
 	c.MTU = 1450
 	c.EnableWireguard = false
+	c.WithWindowsNodes = false
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 
 	type ycalico Calico

@@ -22,7 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:generate go run gen_bindata.go -pkg assets -gofile pkg/assets/zz_generated_offsets.go -prefix embedded-bins/staging/linux/ embedded-bins/staging/linux/bin
+//go:generate make generate-bindata
 
 func init() {
 

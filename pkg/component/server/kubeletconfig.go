@@ -85,10 +85,18 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	volumePluginDir := k.k0sVars.KubeletVolumePluginDir
 	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
 
+	winClientCAFile := k.k0sVars.WindowsCertRootDir + "\\ca.crt"
+	winDefaultProfile := getDefaultProfile(dnsAddress, winClientCAFile, volumePluginDir)
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
-	configMapNames := []string{formatProfileName("default")}
+	if err := k.writeConfigMapWithProfile(manifest, "default-windows", winDefaultProfile); err != nil {
+		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
+	}
+	configMapNames := []string{
+		formatProfileName("default"),
+		formatProfileName("default-windows"),
+	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
 		merged, err := mergeProfiles(&profileConfig, profile.Values)

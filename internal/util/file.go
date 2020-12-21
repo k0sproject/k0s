@@ -17,8 +17,10 @@ package util
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
+	"runtime"
 )
 
 // FileExists checks if a file exists and is not a directory before we
@@ -39,7 +41,11 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 	}
 	dirMode := dirInfo.Mode().Perm()
 	if dirMode != perm {
-		return fmt.Errorf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
+		if runtime.GOOS != "windows" {
+			return fmt.Errorf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
+		}
+		logrus.Warnf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
+		return nil
 	}
 	return nil
 }

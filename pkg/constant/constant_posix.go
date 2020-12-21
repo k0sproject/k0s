@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2020 Mirantis, Inc.
 
@@ -14,12 +16,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package supervisor
+package constant
 
-import "syscall"
+import "fmt"
 
-// DetachAttr creates the proper syscall attributes to run the managed processes
-// on windows it doesn't use any arguments but just to keep signature similar
-func DetachAttr(int, int) *syscall.SysProcAttr {
-	return &syscall.SysProcAttr{}
+const (
+	// DataDirDefault is the default data directory containing k0s state
+	DataDirDefault         = "/var/lib/k0s"
+	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
+	KineSocket             = "kine/kine.sock:2379"
+)
+
+func formatPath(dir string, file string) string {
+	return fmt.Sprintf("%s/%s", dir, file)
 }

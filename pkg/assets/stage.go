@@ -110,22 +110,28 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 
 	logrus.Debug("Writing static file: ", p)
 
-	os.Remove(p)
+	if err := copyTo(p, gz); err != nil {
+		return err
+	}
+	if err := os.Chmod(p, 0550); err != nil {
+		return errors.Wrapf(err, "Failed to chmod %s", name)
+	}
+	return nil
+}
+
+func copyTo(p string, gz io.Reader) error {
+	_ = os.Remove(p)
 	f, err := os.Create(p)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s", p)
 	}
 	defer f.Close()
-
-	err = f.Chmod(0550)
 	if err != nil {
-		return errors.Wrapf(err, "failed to chmod %s", p)
+		return errors.Wrapf(err, "failed to create %s", p)
 	}
-
 	_, err = io.Copy(f, gz)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write to %s", name)
+		return errors.Wrapf(err, "failed to write to %s", p)
 	}
-
 	return nil
 }
