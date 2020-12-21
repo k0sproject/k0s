@@ -667,7 +667,8 @@
 <div class="highlight"><pre><span></span><code>sudo curl --output /usr/local/sbin/kubectl -L <span class="s2">&quot;https://storage.googleapis.com/kubernetes-release/release/</span><span class="k">$(</span>curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt<span class="k">)</span><span class="s2">/bin/linux/amd64/kubectl&quot;</span>
 </code></pre></div>
 <h4>3. Make both binaries executable</h4>
-<div class="highlight"><pre><span></span><code>sudo chmod +x /usr/local/sbin/<span class="o">{</span>kubectl,k0s<span class="o">}</span>
+<div class="highlight"><pre><span></span><code>sudo chmod +x /usr/local/sbin/kubectl
+sudo chmod +x /usr/bin/k0s
 </code></pre></div>
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <h4>1. Create the k0s config directory</h4>
