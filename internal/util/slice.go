@@ -40,3 +40,16 @@ func IsStringArrayEqual(a1 []string, a2 []string) bool {
 	}
 	return false
 }
+
+// Unique returns only the unique items from given input slice
+func Unique(input []string) []string {
+	m := make(map[string]bool)
+	result := make([]string, 0, len(input))
+	for _, s := range input {
+		if _, ok := m[s]; !ok {
+			m[s] = true
+			result = append(result, s)
+		}
+	}
+	return result
+}

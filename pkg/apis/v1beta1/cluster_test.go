@@ -150,7 +150,7 @@ spec:
 	c, err := fromYaml(t, yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddress())
-	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.ControllerJoinAddress())
+	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }
 
 func TestApiNoExternalAddress(t *testing.T) {
@@ -167,5 +167,5 @@ spec:
 	c, err := fromYaml(t, yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddress())
-	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.ControllerJoinAddress())
+	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }

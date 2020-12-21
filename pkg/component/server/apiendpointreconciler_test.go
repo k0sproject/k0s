@@ -22,6 +22,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -39,6 +40,18 @@ func (f *fakeAlwaysLeaderElector) IsLeader() bool {
 	return true
 }
 
+type fakeNeverLeaderElector struct {
+}
+
+func (f *fakeNeverLeaderElector) Run() error     { return nil }
+func (f *fakeNeverLeaderElector) Init() error    { return nil }
+func (f *fakeNeverLeaderElector) Stop() error    { return nil }
+func (f *fakeNeverLeaderElector) Healthy() error { return nil }
+
+func (f *fakeNeverLeaderElector) IsLeader() bool {
+	return false
+}
+
 var expectedAddresses = []string{
 	"185.199.108.153",
 	"185.199.109.153",
@@ -52,6 +65,33 @@ type fakeClientFactory struct {
 
 func (f *fakeClientFactory) Create() (kubernetes.Interface, error) {
 	return f.fakeClient, nil
+}
+
+func TestBasicReconcilerWithNoLeader(t *testing.T) {
+	var fakeFactory = &fakeClientFactory{
+		fakeClient: fake.NewSimpleClientset(),
+	}
+	config := &v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			API: &v1beta1.APISpec{
+				Address:         "1.2.3.4",
+				ExternalAddress: "get.k0s.sh",
+			},
+		},
+	}
+
+	r := NewEndpointReconciler(config, &fakeNeverLeaderElector{}, fakeFactory)
+
+	assert.NoError(t, r.Init())
+
+	assert.NoError(t, r.reconcileEndpoints())
+	client, err := fakeFactory.Create()
+	assert.NoError(t, err)
+	_, err = client.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
+	assert.Error(t, err)
+	assert.True(t, errors.IsNotFound(err))
+	//verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {

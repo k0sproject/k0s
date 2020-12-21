@@ -102,11 +102,13 @@ func (a *APIEndpointReconciler) Healthy() error { return nil }
 func (a *APIEndpointReconciler) reconcileEndpoints() error {
 	if !a.leaderElector.IsLeader() {
 		a.L.Debug("we're not the leader, not reconciling api endpoints")
+		return nil
 	}
 
 	ips, err := net.LookupIP(a.ClusterConfig.Spec.API.ExternalAddress)
 	if err != nil {
 		a.L.Errorf("cannot resolve api.externalAddress: %s", err.Error())
+		return err
 	}
 	// Sort the addresses so we can more easily tell if we need to update the endpoints or not
 	ipStrings := make([]string, len(ips))

@@ -103,6 +103,18 @@ func (a *APISpec) K0sControlPlaneAPIAddress() string {
 	return fmt.Sprintf("https://%s:9443", a.Address)
 }
 
+// Sans return the given SANS plus all local adresses and externalAddress if given
+func (a *APISpec) Sans() []string {
+	sans, _ := util.AllAddresses()
+	sans = append(sans, a.Address)
+	sans = append(sans, a.SANs...)
+	if a.ExternalAddress != "" {
+		sans = append(sans, a.ExternalAddress)
+	}
+
+	return util.Unique(sans)
+}
+
 // FromYaml ...
 func FromYaml(filename string) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
