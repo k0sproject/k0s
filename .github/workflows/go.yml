@@ -58,7 +58,7 @@ jobs:
         id: generated-bindata
         with:
           path: |
-            .bins.stamp
+            .bins.linux.stamp
             embedded-bins/staging/linux/bin/
             bindata_linux
             pkg/assets/zz_generated_offsets_linux.go
