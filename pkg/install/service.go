@@ -58,7 +58,7 @@ func EnsureService(args []string) error {
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
 	case "linux-systemd":
-		deps = []string{"After=network.target"}
+		deps = []string{"After=network.target", "KillMode=process"}
 	default:
 	}
 
