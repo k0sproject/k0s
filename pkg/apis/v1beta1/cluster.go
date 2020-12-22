@@ -55,9 +55,10 @@ type ClusterSpec struct {
 
 // APISpec ...
 type APISpec struct {
-	Address   string            `yaml:"address"`
-	SANs      []string          `yaml:"sans"`
-	ExtraArgs map[string]string `yaml:"extraArgs"`
+	Address         string            `yaml:"address"`
+	ExternalAddress string            `yaml:"externalAddress"`
+	SANs            []string          `yaml:"sans"`
+	ExtraArgs       map[string]string `yaml:"extraArgs"`
 }
 
 // ControllerManagerSpec ...
@@ -88,12 +89,30 @@ func (c *ClusterConfig) Validate() []error {
 
 // APIAddress ...
 func (a *APISpec) APIAddress() string {
+	if a.ExternalAddress != "" {
+		return fmt.Sprintf("https://%s:6443", a.ExternalAddress)
+	}
 	return fmt.Sprintf("https://%s:6443", a.Address)
 }
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
+	if a.ExternalAddress != "" {
+		return fmt.Sprintf("https://%s:9443", a.ExternalAddress)
+	}
 	return fmt.Sprintf("https://%s:9443", a.Address)
+}
+
+// Sans return the given SANS plus all local adresses and externalAddress if given
+func (a *APISpec) Sans() []string {
+	sans, _ := util.AllAddresses()
+	sans = append(sans, a.Address)
+	sans = append(sans, a.SANs...)
+	if a.ExternalAddress != "" {
+		sans = append(sans, a.ExternalAddress)
+	}
+
+	return util.Unique(sans)
 }
 
 // FromYaml ...

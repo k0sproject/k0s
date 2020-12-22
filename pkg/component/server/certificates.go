@@ -208,8 +208,7 @@ func (c *Certificates) Init() error {
 		"localhost",
 	}
 
-	hostnames = append(hostnames, c.ClusterSpec.API.Address)
-	hostnames = append(hostnames, c.ClusterSpec.API.SANs...)
+	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
 	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddress()
 	if err != nil {

@@ -66,9 +66,9 @@ metadata:
   name: k0s
 spec:
   api:
+    externalAddress: my-lb-address.example.com
     address: 192.168.68.106
     sans:
-    - 192.168.68.106
     - 192.168.68.106
     extraArgs: {}
   controllerManager:
@@ -143,6 +143,7 @@ extensions:
 
 ### `spec.api`
 
+- `externalAddress`: If k0s controllers are running behind a loadbalancer provide the loadbalancer address here. This will configure all cluster components to connect to this address and also configures this address to be used when joining new nodes into the cluster.
 - `address`: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.
 - `sans`: List of additional addresses to push to API servers serving certificate
 - `extraArgs`: Map of key-values (strings) for any extra arguments you wish to pass down to Kubernetes api-server process
