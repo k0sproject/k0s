@@ -2,7 +2,7 @@ FROM alpine:3.12
 
 RUN apk add --no-cache bash coreutils findutils iptables curl
 
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.0/bin/linux/amd64/kubectl \
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.1/bin/linux/amd64/kubectl \
        && chmod +x ./kubectl \
        && mv ./kubectl /usr/local/bin/kubectl
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
