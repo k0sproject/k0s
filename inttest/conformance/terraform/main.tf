@@ -124,7 +124,7 @@ resource "null_resource" "sonobuoy" {
       "tar -xvf sonobuoy_${var.sonobuoy_version}_linux_amd64.tar.gz",
       "sudo mv sonobuoy /usr/local/bin",
       "sudo chmod +x /usr/local/bin/sonobuoy",
-      "KUBECONFIG=/var/lib/k0s/pki/admin.conf sonobuoy run --mode=certified-conformance --kube-conformance-image-version=${var.k8s_version}"
+      "sudo KUBECONFIG=/var/lib/k0s/pki/admin.conf sonobuoy run --mode=certified-conformance --kube-conformance-image-version=${var.k8s_version}"
     ]
   }
 }
