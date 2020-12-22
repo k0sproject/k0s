@@ -926,9 +926,9 @@
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="nt">spec</span><span class="p">:</span>
   <span class="nt">api</span><span class="p">:</span>
+    <span class="nt">externalAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-lb-address.example.com</span>
     <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
     <span class="nt">sans</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
     <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
     <span class="nt">extraArgs</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
   <span class="nt">controllerManager</span><span class="p">:</span>
@@ -1002,6 +1002,7 @@
 </code></pre></div>
 <h3 id="specapi_1"><code>spec.api</code><a class="headerlink" href="#specapi_1" title="Permanent link">#</a></h3>
 <ul>
+<li><code>externalAddress</code>: If k0s controllers are running behind a loadbalancer provide the loadbalancer address here. This will configure all cluster components to connect to this address and also configures this address to be used when joining new nodes into the cluster.</li>
 <li><code>address</code>: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</li>
 <li><code>sans</code>: List of additional addresses to push to API servers serving certificate</li>
 <li><code>extraArgs</code>: Map of key-values (strings) for any extra arguments you wish to pass down to Kubernetes api-server process</li>
