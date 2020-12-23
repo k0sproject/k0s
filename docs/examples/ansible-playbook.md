@@ -25,7 +25,7 @@ $ cd k0s-ansible
 
 ## Create virtual machines
 
-_For this tutorial, multipass was used. However, there is no interdependence. This playbook should also work with VMs or Raspberry Pis created in alternative ways._
+_For this tutorial, multipass was used. However, there is no interdependence. This playbook should also work with VMs created in alternative ways or Raspberry Pis._
 
 Next, create a couple of virtual machines. For the automation to work, each instance must have passwordless SSH access. To achieve this, we provision each instance with a cloud-init manifest that imports your current users' public SSH key and into a user `k0s`. For your convenience, a bash script is included that does just that:
 
@@ -68,9 +68,9 @@ $ cp -rfp inventory/sample inventory/multipass
 
 Now we need to create our inventory. The before built virtual machines need to be assigned to the different host groups required by the playbook's logic.
 
-- `initial_controller` = must contain a single cluster that creates the worker and server tokens needed by the other nodes.
+- `initial_controller` = must contain a single node that creates the worker and server tokens needed by the other nodes.
 - `controller` = can contain nodes that, together with the host from `initial_controller` form a highly available isolated control plane.
-- `worker` = must contain at least one host so that we can deploy Kubernetes objects.
+- `worker` = must contain at least one node so that we can deploy Kubernetes objects.
 
 We could fill `inventory/multipass/inventory.yml` by hand with the metadata provided by `multipass list,` but since we are lazy and want to automate as much as possible, we can use the included Python script `multipass_generate_inventory.py`:
 
