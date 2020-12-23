@@ -12,7 +12,7 @@ Even when all components are built with "providerless" mode, we need to be able 
 
 ## Deploying the actual cloud provider
 
-From Kubernetes point of view, it does not realy matter how and where the cloud providers controller(s) are running. Of course the easiest way is to deploy them on the cluster itself. 
+From Kubernetes point of view, it does not really matter how and where the cloud providers controller(s) are running. Of course the easiest way is to deploy them on the cluster itself. 
 
 To deploy your cloud provider as k0s managed stack you can use the built-in [manifest deployer](manifests.md). Simply drop all the needed manifests under e.g. `/var/lib/k0s/manifests/aws/` directory and k0s will deploy everything.
 

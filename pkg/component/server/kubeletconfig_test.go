@@ -139,8 +139,8 @@ func requireConfigMap(t *testing.T, spec string, name string) {
 	require.Equal(t, "ConfigMap", dst["kind"])
 	require.Equal(t, name, dst["metadata"].(map[string]interface{})["name"])
 	spec, foundSpec := dst["data"].(map[string]interface{})["kubelet"].(string)
-	require.True(t, foundSpec, "kubelet config map must have embeded kubelet config")
-	require.True(t, strings.TrimSpace(spec) != "", "kubelet config map must have non-empty embeded kubelet config")
+	require.True(t, foundSpec, "kubelet config map must have embedded kubelet config")
+	require.True(t, strings.TrimSpace(spec) != "", "kubelet config map must have non-empty embedded kubelet config")
 }
 
 func requireRole(t *testing.T, spec string, expectedResourceNames []string) {

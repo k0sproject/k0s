@@ -47,7 +47,7 @@ As Etcd is not fully supported on ARM architecture it also means that k0s contro
 
 ## Pods pending when using cloud providers
 
-Once we enable [cloud provider support](cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node untill the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not schedulable untill the cloud provider controller is actually succesfully running on the cluster.
+Once we enable [cloud provider support](cloud-providers.md) on kubelet on worker nodes, kubelet will automatically add a taint `node.cloudprovider.kubernetes.io/uninitialized` for the node. This tain will prevent normal workloads to be scheduled on the node until the cloud provider controller actually runs second initialization on the node and removes the taint. This means that these nodes are not available for scheduling until the cloud provider controller is actually successfully running on the cluster.
 
 For troubleshooting your specific cloud provider see its documentation.
 

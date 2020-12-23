@@ -234,20 +234,21 @@ images:
       image: calico/kube-controllers
       version: v3.16.2
 ```
-Following keys are avaiable
+Following keys are available:
 
-#### `images.konnectivity`
-#### `images.metricsserver`
-#### `images.kubeproxy`
-#### `images.coredns`
-#### `images.calico.cni`
-#### `images.calico.flexvolume`
-#### `images.calico.node`
-#### `images.calico.kubecontrollers`
-### `images.repository`
+- `images.konnectivity`
+- `images.metricsserver`
+- `images.kubeproxy`
+- `images.coredns`
+- `images.calico.cni`
+- `images.calico.flexvolume`
+- `images.calico.node`
+- `images.calico.kubecontrollers`
+- `images.repository`
+
 If `images.repository` is set and not empty, every image name will be prefixed with the value of `images.repository`
 
-Example
+Example:
 ```
 images:
   repository: "my.own.repo"

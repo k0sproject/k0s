@@ -74,7 +74,7 @@ func (s *VMSuite) GetConfig() {
 	s.WorkerIPs = tfMachineData.Workers.IP
 }
 
-// InitMainController inits first contorller assuming it's first controller in the cluster
+// InitMainController inits first controller assuming it's first controller in the cluster
 func (s *VMSuite) InitMainController() error {
 	s.GetConfig()
 	controllerNode := s.ControllerIP
