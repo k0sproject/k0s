@@ -118,7 +118,7 @@ func (s *Supervisor) Supervise() {
 			if err != nil {
 				log.Warnf("Failed to start: %s", err)
 			} else {
-				log.Info("Started succesfully, go nuts")
+				log.Info("Started successfully, go nuts")
 				if s.processWaitQuit() {
 					return
 				}

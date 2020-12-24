@@ -85,7 +85,7 @@ In this example, `192.168.0.5` has been assigned and can be used to access servi
 ```bash
 NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
 service/traefik-1607085579   LoadBalancer   10.105.119.102   192.168.0.5      80:32153/TCP,443:30791/TCP   84s
-# Recieving a 404 response here is normal, as you've not configured any Ingress resources to respond yet
+# Receiving a 404 response here is normal, as you've not configured any Ingress resources to respond yet
 root@k0s-host ➜ curl http://192.168.0.5
 404 page not found
 ```

@@ -66,7 +66,7 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 		bearerToken: config.BearerToken,
 	}
 	c.joinAddress = config.Host
-	logrus.Info("initialized join client succesfully")
+	logrus.Info("initialized join client successfully")
 	return c, nil
 }
 
