@@ -10,7 +10,7 @@ containerd config default > /etc/k0s/containerd.toml
 ```
 This command will set the default values to `/etc/k0s/containerd.toml`. 
 
-`k0s` runs containerd with the follwoing default values:
+`k0s` runs containerd with the following default values:
 ```
 /var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \

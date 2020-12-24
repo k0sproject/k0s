@@ -90,7 +90,7 @@ func (s *NetworkSuite) TestSigNetwork() {
 	}
 	s.NoError(err)
 
-	s.T().Log("sonobuoy has been ran succesfully, collecting results")
+	s.T().Log("sonobuoy has been ran successfully, collecting results")
 	results, err := s.retrieveResults()
 	s.NoError(err)
 	s.T().Logf("sonobuoy results:%+v", results)

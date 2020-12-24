@@ -70,7 +70,7 @@ const (
 	KubeControllerImageVersion = "v3.16.2"
 )
 
-// CfgVars is a struct that holds all the config variables requried for K0s
+// CfgVars is a struct that holds all the config variables required for K0s
 type CfgVars struct {
 	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
