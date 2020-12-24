@@ -494,13 +494,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#imagesrepository" class="md-nav__link">
-    images.repository
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#extensions" class="md-nav__link">
     Extensions
   </a>
@@ -847,13 +840,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#imagesrepository" class="md-nav__link">
-    images.repository
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#extensions" class="md-nav__link">
     Extensions
   </a>
@@ -1090,18 +1076,20 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
       image: calico/kube-controllers
       version: v3.16.2
 </code></pre></div>
-Following keys are avaiable</p>
-<h4><code>images.konnectivity</code></h4>
-<h4><code>images.metricsserver</code></h4>
-<h4><code>images.kubeproxy</code></h4>
-<h4><code>images.coredns</code></h4>
-<h4><code>images.calico.cni</code></h4>
-<h4><code>images.calico.flexvolume</code></h4>
-<h4><code>images.calico.node</code></h4>
-<h4><code>images.calico.kubecontrollers</code></h4>
-<h3 id="imagesrepository"><code>images.repository</code><a class="headerlink" href="#imagesrepository" title="Permanent link">#</a></h3>
+Following keys are available:</p>
+<ul>
+<li><code>images.konnectivity</code></li>
+<li><code>images.metricsserver</code></li>
+<li><code>images.kubeproxy</code></li>
+<li><code>images.coredns</code></li>
+<li><code>images.calico.cni</code></li>
+<li><code>images.calico.flexvolume</code></li>
+<li><code>images.calico.node</code></li>
+<li><code>images.calico.kubecontrollers</code></li>
+<li><code>images.repository</code></li>
+</ul>
 <p>If <code>images.repository</code> is set and not empty, every image name will be prefixed with the value of <code>images.repository</code></p>
-<p>Example
+<p>Example:
 <div class="highlight"><pre><span></span><code>images:
   repository: &quot;my.own.repo&quot;
     konnectivity:

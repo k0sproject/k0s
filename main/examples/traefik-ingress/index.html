@@ -754,7 +754,7 @@ replicaset.apps/traefik-1607085579-77bbc57699              <span class="m">1</sp
 In this example, <code>192.168.0.5</code> has been assigned and can be used to access services via the Ingress proxy:</p>
 <div class="highlight"><pre><span></span><code>NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                      AGE
 service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.102   <span class="m">192</span>.168.0.5      <span class="m">80</span>:32153/TCP,443:30791/TCP   84s
-<span class="c1"># Recieving a 404 response here is normal, as you&#39;ve not configured any Ingress resources to respond yet</span>
+<span class="c1"># Receiving a 404 response here is normal, as you&#39;ve not configured any Ingress resources to respond yet</span>
 root@k0s-host ➜ curl http://192.168.0.5
 <span class="m">404</span> page not found
 </code></pre></div>
