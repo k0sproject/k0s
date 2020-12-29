@@ -58,7 +58,10 @@ func EnsureService(args []string) error {
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
 	case "linux-systemd":
-		deps = []string{"After=network.target", "KillMode=process"}
+		deps = []string{"After=network.target"}
+		svcConfig.Option = map[string]interface{}{
+			"SystemdScript": systemdScript,
+		}
 	default:
 	}
 
@@ -72,3 +75,34 @@ func EnsureService(args []string) error {
 	}
 	return nil
 }
+
+// Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template
+// Currently mostly for KillMode=process so we get systemd to only send the sigterm to the main process
+const systemdScript = `[Unit]
+Description={{.Description}}
+ConditionFileIsExecutable={{.Path|cmdEscape}}
+{{range $i, $dep := .Dependencies}}
+{{$dep}} {{end}}
+
+[Service]
+StartLimitInterval=5
+StartLimitBurst=10
+ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
+{{if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{end}}
+{{if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{end}}
+{{if .UserName}}User={{.UserName}}{{end}}
+{{if .ReloadSignal}}ExecReload=/bin/kill -{{.ReloadSignal}} "$MAINPID"{{end}}
+{{if .PIDFile}}PIDFile={{.PIDFile|cmd}}{{end}}
+{{if and .LogOutput .HasOutputFileSupport -}}
+StandardOutput=file:/var/log/{{.Name}}.out
+StandardError=file:/var/log/{{.Name}}.err
+{{- end}}
+{{if gt .LimitNOFILE -1 }}LimitNOFILE={{.LimitNOFILE}}{{end}}
+{{if .Restart}}Restart={{.Restart}}{{end}}
+{{if .SuccessExitStatus}}SuccessExitStatus={{.SuccessExitStatus}}{{end}}
+RestartSec=120
+EnvironmentFile=-/etc/sysconfig/{{.Name}}
+KillMode=process
+[Install]
+WantedBy=multi-user.target
+`
