@@ -420,22 +420,24 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, k0sVars constant.Cf
 		K0sVars:             k0sVars,
 	}
 
-	if err := containerd.Init(); err != nil {
-		logrus.Errorf("failed to init containerd: %s", err)
+	if criSocket == "" {
+		if err := containerd.Init(); err != nil {
+			logrus.Errorf("failed to init containerd: %s", err)
+		}
+		if err := containerd.Run(); err != nil {
+			logrus.Errorf("failed to run containerd: %s", err)
+		}
+		componentManager.Add(containerd)
 	}
+	
 	if err := kubelet.Init(); err != nil {
 		logrus.Errorf("failed to init kubelet: %s", err)
 	}
-	if err := containerd.Run(); err != nil {
-		logrus.Errorf("failed to run containerd: %s", err)
-	}
+
 	if err := kubelet.Run(); err != nil {
 		logrus.Errorf("failed to run kubelet: %s", err)
 	}
 
-	if criSocket == "" {
-		componentManager.Add(containerd)
-	}
 	componentManager.Add(kubelet)
 
 	return nil
