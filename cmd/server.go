@@ -429,7 +429,7 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, k0sVars constant.Cf
 		}
 		componentManager.Add(containerd)
 	}
-	
+
 	if err := kubelet.Init(); err != nil {
 		logrus.Errorf("failed to init kubelet: %s", err)
 	}
