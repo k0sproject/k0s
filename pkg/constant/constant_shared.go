@@ -1,6 +1,7 @@
 package constant
 
 import (
+	"os"
 	"runtime"
 )
 
@@ -105,7 +106,12 @@ func GetConfig(dataDir string) CfgVars {
 		}
 	}
 
-	runDir := formatPath(dataDir, "run")
+	var runDir string
+	if os.Geteuid() == 0 {
+		runDir = "/run/k0s"
+	} else {
+		runDir = formatPath(dataDir, "run")
+	}
 	certDir := formatPath(dataDir, "pki")
 	winCertDir := WinDataDirDefault + "\\pki" // hacky but we need it to be windows style even on linux machine
 	helmHome := formatPath(dataDir, "helmhome")
