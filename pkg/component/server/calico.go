@@ -59,6 +59,7 @@ type calicoConfig struct {
 	CalicoFlexVolumeImage      string
 	CalicoNodeImage            string
 	CalicoKubeControllersImage string
+	Overlay                    string
 }
 
 // NewCalico creates new Calico reconciler component
@@ -208,6 +209,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		CalicoNodeImage:            c.clusterConf.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: c.clusterConf.Images.Calico.KubeControllers.URI(),
 		WithWindowsNodes:           c.clusterConf.Spec.Network.Calico.WithWindowsNodes,
+		Overlay:                    c.clusterConf.Spec.Network.Calico.Overlay,
 	}
 
 	return config, nil
