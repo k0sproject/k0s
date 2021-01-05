@@ -199,7 +199,7 @@ For each profile the control plane will create separate ConfigMap with kubelet-c
 Based on the `--profile` argument given to the `k0s worker` the corresponding ConfigMap would be used to extract `kubelet-config.yaml` from.
 `values` are recursively merged with default `kubelet-config.yaml`
 
-There are a few fields that cannot be overridden: 
+There are a few fields that cannot be overridden:
 - `clusterDNS`
 - `clusterDomain`
 - `apiVersion`
@@ -246,18 +246,21 @@ Following keys are available:
 - `images.calico.kubecontrollers`
 - `images.repository`
 
-If `images.repository` is set and not empty, every image name will be prefixed with the value of `images.repository`
+If `images.repository` is set and not empty, every image will be pulled from `images.repository`
 
 Example:
 ```
 images:
   repository: "my.own.repo"
-    konnectivity:
-      image: calico/kube-controllers
-      version: v3.16.2
+  konnectivity:
+    image: calico/kube-controllers
+    version: v3.16.2
+  metricsserver:
+    image: gcr.io/k8s-staging-metrics-server/metrics-server
+    version: v0.3.7
 ```
 
-In the runtime the image name will be calculated as `my.own.repo/calico/kube-controllers:v3.16.2`.
+In the runtime the image names will be calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/k8s-staging-metrics-server/metrics-server`.
 
 This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.
 
@@ -293,7 +296,7 @@ extensions:
 This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
 
 Some examples what you could use as extension charts:
-- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) ([tutorial](examples/traefik-ingress.md)), 
+- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) ([tutorial](examples/traefik-ingress.md)),
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
 
@@ -308,4 +311,3 @@ telemetry:
   interval: 2m0s
   enabled: true
 ```
-
