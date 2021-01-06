@@ -58,9 +58,10 @@ func EnsureService(args []string) error {
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
 	case "linux-systemd":
-		deps = []string{"After=network.target"}
+		deps = []string{"After=network-online.target", "Wants=network-online.target"}
 		svcConfig.Option = map[string]interface{}{
 			"SystemdScript": systemdScript,
+			"LimitNOFILE":   999999,
 		}
 	default:
 	}
@@ -80,6 +81,7 @@ func EnsureService(args []string) error {
 // Currently mostly for KillMode=process so we get systemd to only send the sigterm to the main process
 const systemdScript = `[Unit]
 Description={{.Description}}
+Documentation=https://docs.k0sproject.io
 ConditionFileIsExecutable={{.Path|cmdEscape}}
 {{range $i, $dep := .Dependencies}}
 {{$dep}} {{end}}
@@ -87,22 +89,30 @@ ConditionFileIsExecutable={{.Path|cmdEscape}}
 [Service]
 StartLimitInterval=5
 StartLimitBurst=10
-ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
-{{if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{end}}
-{{if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{end}}
-{{if .UserName}}User={{.UserName}}{{end}}
-{{if .ReloadSignal}}ExecReload=/bin/kill -{{.ReloadSignal}} "$MAINPID"{{end}}
-{{if .PIDFile}}PIDFile={{.PIDFile|cmd}}{{end}}
-{{if and .LogOutput .HasOutputFileSupport -}}
+ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
+
+RestartSec=120
+Delegate=yes
+KillMode=process
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+
+{{- if .ChRoot}}RootDirectory={{.ChRoot|cmd}}{{- end}}
+
+{{- if .WorkingDirectory}}WorkingDirectory={{.WorkingDirectory|cmdEscape}}{{- end}}
+{{- if .UserName}}User={{.UserName}}{{end}}
+{{- if .ReloadSignal}}ExecReload=/bin/kill -{{.ReloadSignal}} "$MAINPID"{{- end}}
+{{- if .PIDFile}}PIDFile={{.PIDFile|cmd}}{{- end}}
+{{- if and .LogOutput .HasOutputFileSupport -}}
 StandardOutput=file:/var/log/{{.Name}}.out
 StandardError=file:/var/log/{{.Name}}.err
 {{- end}}
-{{if gt .LimitNOFILE -1 }}LimitNOFILE={{.LimitNOFILE}}{{end}}
-{{if .Restart}}Restart={{.Restart}}{{end}}
-{{if .SuccessExitStatus}}SuccessExitStatus={{.SuccessExitStatus}}{{end}}
-RestartSec=120
-EnvironmentFile=-/etc/sysconfig/{{.Name}}
-KillMode=process
+
+{{- if .SuccessExitStatus}}SuccessExitStatus={{.SuccessExitStatus}}{{- end}}
+{{ if gt .LimitNOFILE -1 }}LimitNOFILE={{.LimitNOFILE}}{{- end}}
+{{ if .Restart}}Restart={{.Restart}}{{- end}}
+
 [Install]
 WantedBy=multi-user.target
 `
