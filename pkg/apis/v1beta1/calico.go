@@ -24,7 +24,7 @@ type Calico struct {
 	EnableWireguard      bool   `yaml:"wireguard"`
 	FlexVolumeDriverPath string `yaml:"flexVolumeDriverPath"`
 	WithWindowsNodes     bool   `yaml:"withWindowsNodes"`
-	Overlay              string `yaml:"overlay"`
+	Overlay              string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
 }
 
 // DefaultCalico returns sane defaults for calico
