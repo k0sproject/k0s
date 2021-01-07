@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	_ "net/http/pprof"
 	"os"
 
 	"github.com/k0sproject/k0s/cmd"
