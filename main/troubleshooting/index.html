@@ -539,6 +539,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#profiling" class="md-nav__link">
+    Profiling
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -664,6 +671,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#profiling" class="md-nav__link">
+    Profiling
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -730,6 +744,19 @@ plugin/loop: Loop (127.0.0.1:55953 -&gt; :1053) detected for zone &quot;.&quot;,
 </code></pre></div>
 <p>With this config you can start your server as usual. Any workers will need to be started with</p>
 <p><code>k0s worker --profile coreos [TOKEN]</code></p>
+<h2 id="profiling">Profiling<a class="headerlink" href="#profiling" title="Permanent link">#</a></h2>
+<p>We drop any debug related information and symbols from the compiled binary by utilzing <code>-w -s</code> linker flags.</p>
+<p>To keep those symbols use <code>DEBUG</code> env variable:</p>
+<div class="highlight"><pre><span></span><code>$ DEBUG=true make k0s
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=&quot; -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \&quot;github.com/k0sproject/k0s/pkg/build.EulaNotice=\&quot; -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=&quot; \
+            -o k0s.code main.go
+</code></pre></div>
+<p>Any value not equal to the "false" would work.</p>
+<p>To add custom linker flags use <code>LDFLAGS</code> variable.</p>
+<div class="highlight"><pre><span></span><code>$ LD_FLAGS=&quot;--custom-flag=value&quot; make k0s
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=&quot;--custom-flag=value -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \&quot;github.com/k0sproject/k0s/pkg/build.EulaNotice=\&quot; -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=&quot; \
+        -o k0s.code main.go
+</code></pre></div>
                 
               
               
