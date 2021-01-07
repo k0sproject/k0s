@@ -291,33 +291,34 @@ func AssetNames() []string {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() ([]byte, error){
 	"gen_manifests.go": gen_manifests_go,
-	"manifests/calico/ClusterRole/calico-kube-controllers.yaml": manifests_calico_clusterrole_calico_kube_controllers_yaml,
-	"manifests/calico/ClusterRole/calico-node.yaml": manifests_calico_clusterrole_calico_node_yaml,
-	"manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml": manifests_calico_clusterrolebinding_calico_kube_controllers_yaml,
-	"manifests/calico/ClusterRoleBinding/calico-node.yaml": manifests_calico_clusterrolebinding_calico_node_yaml,
-	"manifests/calico/ConfigMap/calico-config.yaml": manifests_calico_configmap_calico_config_yaml,
-	"manifests/calico/CustomResourceDefinition/bgpconfigurations.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_bgpconfigurations_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/bgppeers.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_bgppeers_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/blockaffinities.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_blockaffinities_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/clusterinformations.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_clusterinformations_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/felixconfigurations.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_felixconfigurations_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/globalnetworkpolicies.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_globalnetworkpolicies_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/globalnetworksets.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_globalnetworksets_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/hostendpoints.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_hostendpoints_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/ipamblocks.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_ipamblocks_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/ipamconfigs.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_ipamconfigs_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/ipamhandles.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_ipamhandles_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/ippools.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_ippools_crd_projectcalico_org_yaml,
+	"manifests/calico/ClusterRole/calico-kube-controllers.yaml":                                          manifests_calico_clusterrole_calico_kube_controllers_yaml,
+	"manifests/calico/ClusterRole/calico-node.yaml":                                                      manifests_calico_clusterrole_calico_node_yaml,
+	"manifests/calico/ClusterRoleBinding/calico-kube-controllers.yaml":                                   manifests_calico_clusterrolebinding_calico_kube_controllers_yaml,
+	"manifests/calico/ClusterRoleBinding/calico-node.yaml":                                               manifests_calico_clusterrolebinding_calico_node_yaml,
+	"manifests/calico/ConfigMap/calico-config.yaml":                                                      manifests_calico_configmap_calico_config_yaml,
+	"manifests/calico/CustomResourceDefinition/bgpconfigurations.crd.projectcalico.org.yaml":             manifests_calico_customresourcedefinition_bgpconfigurations_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/bgppeers.crd.projectcalico.org.yaml":                      manifests_calico_customresourcedefinition_bgppeers_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/blockaffinities.crd.projectcalico.org.yaml":               manifests_calico_customresourcedefinition_blockaffinities_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/clusterinformations.crd.projectcalico.org.yaml":           manifests_calico_customresourcedefinition_clusterinformations_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/felixconfigurations.crd.projectcalico.org.yaml":           manifests_calico_customresourcedefinition_felixconfigurations_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/globalnetworkpolicies.crd.projectcalico.org.yaml":         manifests_calico_customresourcedefinition_globalnetworkpolicies_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/globalnetworksets.crd.projectcalico.org.yaml":             manifests_calico_customresourcedefinition_globalnetworksets_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/hostendpoints.crd.projectcalico.org.yaml":                 manifests_calico_customresourcedefinition_hostendpoints_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/ipamblocks.crd.projectcalico.org.yaml":                    manifests_calico_customresourcedefinition_ipamblocks_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/ipamconfigs.crd.projectcalico.org.yaml":                   manifests_calico_customresourcedefinition_ipamconfigs_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/ipamhandles.crd.projectcalico.org.yaml":                   manifests_calico_customresourcedefinition_ipamhandles_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/ippools.crd.projectcalico.org.yaml":                       manifests_calico_customresourcedefinition_ippools_crd_projectcalico_org_yaml,
 	"manifests/calico/CustomResourceDefinition/kubecontrollersconfigurations.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_kubecontrollersconfigurations_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/networkpolicies.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_networkpolicies_crd_projectcalico_org_yaml,
-	"manifests/calico/CustomResourceDefinition/networksets.crd.projectcalico.org.yaml": manifests_calico_customresourcedefinition_networksets_crd_projectcalico_org_yaml,
-	"manifests/calico/DaemonSet/calico-node.yaml": manifests_calico_daemonset_calico_node_yaml,
-	"manifests/calico/Deployment/calico-kube-controllers.yaml": manifests_calico_deployment_calico_kube_controllers_yaml,
-	"manifests/calico/IPAMConfig/ipamconfig.yaml": manifests_calico_ipamconfig_ipamconfig_yaml,
-	"manifests/calico/ServiceAccount/calico-kube-controllers.yaml": manifests_calico_serviceaccount_calico_kube_controllers_yaml,
-	"manifests/calico/ServiceAccount/calico-node.yaml": manifests_calico_serviceaccount_calico_node_yaml,
-	"manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml": manifests_helm_customresourcedefinition_helm_k0sproject_io_charts_yaml,
+	"manifests/calico/CustomResourceDefinition/networkpolicies.crd.projectcalico.org.yaml":               manifests_calico_customresourcedefinition_networkpolicies_crd_projectcalico_org_yaml,
+	"manifests/calico/CustomResourceDefinition/networksets.crd.projectcalico.org.yaml":                   manifests_calico_customresourcedefinition_networksets_crd_projectcalico_org_yaml,
+	"manifests/calico/DaemonSet/calico-node.yaml":                                                        manifests_calico_daemonset_calico_node_yaml,
+	"manifests/calico/Deployment/calico-kube-controllers.yaml":                                           manifests_calico_deployment_calico_kube_controllers_yaml,
+	"manifests/calico/IPAMConfig/ipamconfig.yaml":                                                        manifests_calico_ipamconfig_ipamconfig_yaml,
+	"manifests/calico/ServiceAccount/calico-kube-controllers.yaml":                                       manifests_calico_serviceaccount_calico_kube_controllers_yaml,
+	"manifests/calico/ServiceAccount/calico-node.yaml":                                                   manifests_calico_serviceaccount_calico_node_yaml,
+	"manifests/helm/CustomResourceDefinition/helm.k0sproject.io_charts.yaml":                             manifests_helm_customresourcedefinition_helm_k0sproject_io_charts_yaml,
 }
+
 // AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
@@ -354,85 +355,59 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type _bintree_t struct {
-	Func func() ([]byte, error)
+	Func     func() ([]byte, error)
 	Children map[string]*_bintree_t
 }
+
 var _bintree = &_bintree_t{nil, map[string]*_bintree_t{
-	"gen_manifests.go": &_bintree_t{gen_manifests_go, map[string]*_bintree_t{
-	}},
+	"gen_manifests.go": &_bintree_t{gen_manifests_go, map[string]*_bintree_t{}},
 	"manifests": &_bintree_t{nil, map[string]*_bintree_t{
 		"calico": &_bintree_t{nil, map[string]*_bintree_t{
 			"ClusterRole": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_clusterrole_calico_kube_controllers_yaml, map[string]*_bintree_t{
-				}},
-				"calico-node.yaml": &_bintree_t{manifests_calico_clusterrole_calico_node_yaml, map[string]*_bintree_t{
-				}},
+				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_clusterrole_calico_kube_controllers_yaml, map[string]*_bintree_t{}},
+				"calico-node.yaml":             &_bintree_t{manifests_calico_clusterrole_calico_node_yaml, map[string]*_bintree_t{}},
 			}},
 			"ClusterRoleBinding": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_clusterrolebinding_calico_kube_controllers_yaml, map[string]*_bintree_t{
-				}},
-				"calico-node.yaml": &_bintree_t{manifests_calico_clusterrolebinding_calico_node_yaml, map[string]*_bintree_t{
-				}},
+				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_clusterrolebinding_calico_kube_controllers_yaml, map[string]*_bintree_t{}},
+				"calico-node.yaml":             &_bintree_t{manifests_calico_clusterrolebinding_calico_node_yaml, map[string]*_bintree_t{}},
 			}},
 			"ConfigMap": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-config.yaml": &_bintree_t{manifests_calico_configmap_calico_config_yaml, map[string]*_bintree_t{
-				}},
+				"calico-config.yaml": &_bintree_t{manifests_calico_configmap_calico_config_yaml, map[string]*_bintree_t{}},
 			}},
 			"CustomResourceDefinition": &_bintree_t{nil, map[string]*_bintree_t{
-				"bgpconfigurations.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_bgpconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"bgppeers.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_bgppeers_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"blockaffinities.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_blockaffinities_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"clusterinformations.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_clusterinformations_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"felixconfigurations.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_felixconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"globalnetworkpolicies.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_globalnetworkpolicies_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"globalnetworksets.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_globalnetworksets_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"hostendpoints.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_hostendpoints_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"ipamblocks.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_ipamblocks_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"ipamconfigs.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_ipamconfigs_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"ipamhandles.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_ipamhandles_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"ippools.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_ippools_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"kubecontrollersconfigurations.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_kubecontrollersconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"networkpolicies.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_networkpolicies_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
-				"networksets.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_networksets_crd_projectcalico_org_yaml, map[string]*_bintree_t{
-				}},
+				"bgpconfigurations.crd.projectcalico.org.yaml":             &_bintree_t{manifests_calico_customresourcedefinition_bgpconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"bgppeers.crd.projectcalico.org.yaml":                      &_bintree_t{manifests_calico_customresourcedefinition_bgppeers_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"blockaffinities.crd.projectcalico.org.yaml":               &_bintree_t{manifests_calico_customresourcedefinition_blockaffinities_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"clusterinformations.crd.projectcalico.org.yaml":           &_bintree_t{manifests_calico_customresourcedefinition_clusterinformations_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"felixconfigurations.crd.projectcalico.org.yaml":           &_bintree_t{manifests_calico_customresourcedefinition_felixconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"globalnetworkpolicies.crd.projectcalico.org.yaml":         &_bintree_t{manifests_calico_customresourcedefinition_globalnetworkpolicies_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"globalnetworksets.crd.projectcalico.org.yaml":             &_bintree_t{manifests_calico_customresourcedefinition_globalnetworksets_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"hostendpoints.crd.projectcalico.org.yaml":                 &_bintree_t{manifests_calico_customresourcedefinition_hostendpoints_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"ipamblocks.crd.projectcalico.org.yaml":                    &_bintree_t{manifests_calico_customresourcedefinition_ipamblocks_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"ipamconfigs.crd.projectcalico.org.yaml":                   &_bintree_t{manifests_calico_customresourcedefinition_ipamconfigs_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"ipamhandles.crd.projectcalico.org.yaml":                   &_bintree_t{manifests_calico_customresourcedefinition_ipamhandles_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"ippools.crd.projectcalico.org.yaml":                       &_bintree_t{manifests_calico_customresourcedefinition_ippools_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"kubecontrollersconfigurations.crd.projectcalico.org.yaml": &_bintree_t{manifests_calico_customresourcedefinition_kubecontrollersconfigurations_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"networkpolicies.crd.projectcalico.org.yaml":               &_bintree_t{manifests_calico_customresourcedefinition_networkpolicies_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
+				"networksets.crd.projectcalico.org.yaml":                   &_bintree_t{manifests_calico_customresourcedefinition_networksets_crd_projectcalico_org_yaml, map[string]*_bintree_t{}},
 			}},
 			"DaemonSet": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-node.yaml": &_bintree_t{manifests_calico_daemonset_calico_node_yaml, map[string]*_bintree_t{
-				}},
+				"calico-node.yaml": &_bintree_t{manifests_calico_daemonset_calico_node_yaml, map[string]*_bintree_t{}},
 			}},
 			"Deployment": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_deployment_calico_kube_controllers_yaml, map[string]*_bintree_t{
-				}},
+				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_deployment_calico_kube_controllers_yaml, map[string]*_bintree_t{}},
 			}},
 			"IPAMConfig": &_bintree_t{nil, map[string]*_bintree_t{
-				"ipamconfig.yaml": &_bintree_t{manifests_calico_ipamconfig_ipamconfig_yaml, map[string]*_bintree_t{
-				}},
+				"ipamconfig.yaml": &_bintree_t{manifests_calico_ipamconfig_ipamconfig_yaml, map[string]*_bintree_t{}},
 			}},
 			"ServiceAccount": &_bintree_t{nil, map[string]*_bintree_t{
-				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_serviceaccount_calico_kube_controllers_yaml, map[string]*_bintree_t{
-				}},
-				"calico-node.yaml": &_bintree_t{manifests_calico_serviceaccount_calico_node_yaml, map[string]*_bintree_t{
-				}},
+				"calico-kube-controllers.yaml": &_bintree_t{manifests_calico_serviceaccount_calico_kube_controllers_yaml, map[string]*_bintree_t{}},
+				"calico-node.yaml":             &_bintree_t{manifests_calico_serviceaccount_calico_node_yaml, map[string]*_bintree_t{}},
 			}},
 		}},
 		"helm": &_bintree_t{nil, map[string]*_bintree_t{
 			"CustomResourceDefinition": &_bintree_t{nil, map[string]*_bintree_t{
-				"helm.k0sproject.io_charts.yaml": &_bintree_t{manifests_helm_customresourcedefinition_helm_k0sproject_io_charts_yaml, map[string]*_bintree_t{
-				}},
+				"helm.k0sproject.io_charts.yaml": &_bintree_t{manifests_helm_customresourcedefinition_helm_k0sproject_io_charts_yaml, map[string]*_bintree_t{}},
 			}},
 		}},
 	}},
