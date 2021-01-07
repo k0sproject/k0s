@@ -241,7 +241,7 @@ func startServer(token string) error {
 	}
 
 	// in-cluster component reconcilers
-	reconcilers := createClusterReconcilers(clusterConfig, k0sVars)
+	reconcilers := createClusterReconcilers(clusterConfig, k0sVars, adminClientFactory)
 	if err == nil {
 		perfTimer.Checkpoint("starting-reconcilers")
 
@@ -287,7 +287,7 @@ func startServer(token string) error {
 	return nil
 }
 
-func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars) map[string]component.Component {
+func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory kubernetes.ClientFactory) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
 	clusterSpec := clusterConf.Spec
 
@@ -321,7 +321,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 	reconcilers["crd"] = server.NewCRD(manifestsSaver)
 	reconcilers["helmAddons"] = server.NewHelmAddons(clusterConf, manifestsSaver, k0sVars)
 
-	metricServer, err := server.NewMetricServer(clusterConf, k0sVars)
+	metricServer, err := server.NewMetricServer(clusterConf, k0sVars, kubeClientFactory)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
 	} else {
