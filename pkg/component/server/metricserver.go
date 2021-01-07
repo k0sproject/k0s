@@ -16,15 +16,20 @@ limitations under the License.
 package server
 
 import (
+	"context"
+	"fmt"
+	"math"
 	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 const metricServerTemplate = `
@@ -160,6 +165,10 @@ spec:
         - name: https
           containerPort: 4443
           protocol: TCP
+        resources:
+          requests:
+            memory: {{ .MEMRequest }}
+            cpu: {{ .CPURequest }}
         readinessProbe:
           httpGet:
             path: /healthz
@@ -195,19 +204,27 @@ spec:
 
 // MetricServer is the reconciler implementation for metrics server
 type MetricServer struct {
-	log           *logrus.Entry
-	clusterConfig *config.ClusterConfig
-	tickerDone    chan struct{}
-	K0sVars       constant.CfgVars
+	log               *logrus.Entry
+	clusterConfig     *config.ClusterConfig
+	tickerDone        chan struct{}
+	K0sVars           constant.CfgVars
+	kubeClientFactory k8sutil.ClientFactory
+}
+
+type metricsConfig struct {
+	Image      string
+	CPURequest string
+	MEMRequest string
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactory) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
-		log:           log,
-		clusterConfig: clusterConfig,
-		K0sVars:       k0sVars,
+		log:               log,
+		clusterConfig:     clusterConfig,
+		K0sVars:           k0sVars,
+		kubeClientFactory: kubeClientFactory,
 	}, nil
 }
 
@@ -220,8 +237,6 @@ func (m *MetricServer) Init() error {
 func (m *MetricServer) Run() error {
 	m.tickerDone = make(chan struct{})
 
-	// TODO calculate replicas, max-surge etc. based on amount of nodes
-
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
 	err := util.InitDirectory(msDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -231,20 +246,29 @@ func (m *MetricServer) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
+		var previousConfig = metricsConfig{}
 		for {
 			select {
 			case <-ticker.C:
+				newConfig, err := m.getConfig()
+				if err != nil {
+					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
+				}
+				if previousConfig == newConfig {
+					continue
+				}
 				tw := util.TemplateWriter{
 					Name:     "metricServer",
 					Template: metricServerTemplate,
-					Data:     struct{ Image string }{Image: m.clusterConfig.Images.MetricsServer.URI()},
+					Data:     newConfig,
 					Path:     filepath.Join(msDir, "metric_server.yaml"),
 				}
-				err := tw.Write()
+				err = tw.Write()
 				if err != nil {
 					m.log.Errorf("error writing metric server manifests: %s. will retry", err.Error())
 					continue
 				}
+				previousConfig = newConfig
 			case <-m.tickerDone:
 				m.log.Info("metric server reconciler done")
 				return
@@ -263,3 +287,36 @@ func (m *MetricServer) Stop() error {
 
 // Healthy is the health-check interface
 func (m *MetricServer) Healthy() error { return nil }
+
+// Mostly for calculating the resource needs based on node numbers. From https://github.com/kubernetes-sigs/metrics-server#scaling :
+// Starting from v0.5.0 Metrics Server comes with default resource requests that should guarantee good performance for most cluster configurations up to 100 nodes:
+// - 100m core of CPU
+// - 300MiB of memory
+// So that's 10m CPU and 30MiB mem per 10 nodes
+func (m *MetricServer) getConfig() (metricsConfig, error) {
+	cfg := metricsConfig{
+		Image: m.clusterConfig.Images.MetricsServer.URI(),
+	}
+
+	kubeClient, err := m.kubeClientFactory.Create()
+	if err != nil {
+		return cfg, err
+	}
+
+	nodeList, err := kubeClient.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		return cfg, err
+	}
+
+	scale := math.Ceil(float64(len(nodeList.Items)) / 10.0)
+	if scale < 1 {
+		scale = 1
+	}
+	memRequest := int(30 * scale)
+	cpuRequest := int(10 * scale)
+
+	cfg.MEMRequest = fmt.Sprintf("%dM", memRequest)
+	cfg.CPURequest = fmt.Sprintf("%dm", cpuRequest)
+
+	return cfg, nil
+}
