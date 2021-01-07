@@ -9,10 +9,15 @@ GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
 EMBEDDED_BINS_BUILDMODE ?= docker
 
 # k0s runs on linux even if its built on mac or windows
-GOOS ?= linux
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
+DEBUG ?= false
+
+ifeq ($(DEBUG), false)
+LD_FLAGS ?= -w -s
+endif
+
 
 VERSION ?= $(shell git describe --tags)
 golint := $(shell which golangci-lint)
@@ -55,7 +60,7 @@ k0s.exe: TARGET_OS = windows
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags='-w -s -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)' \
+	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS) -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" \
 		    -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
