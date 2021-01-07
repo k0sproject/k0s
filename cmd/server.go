@@ -83,6 +83,7 @@ var (
 				}
 				serverToken = string(bytes)
 			}
+
 			return startServer(serverToken)
 		},
 	}

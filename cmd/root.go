@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -33,12 +34,13 @@ import (
 )
 
 var (
-	cfgFile      string
-	dataDir      string
-	debug        bool
-	cmdLogLevels map[string]string
-	logging      map[string]string
-	k0sVars      constant.CfgVars
+	cfgFile       string
+	dataDir       string
+	debugListenOn string
+	debug         bool
+	cmdLogLevels  map[string]string
+	logging       map[string]string
+	k0sVars       constant.CfgVars
 )
 
 var defaultLogLevels = map[string]string{
@@ -55,6 +57,7 @@ var defaultLogLevels = map[string]string{
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
 	rootCmd.PersistentFlags().StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	rootCmd.PersistentFlags().StringVar(&debugListenOn, "debugListenOn", ":6060", "Http listenOn for debug pprof handler")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
 	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 
@@ -95,6 +98,10 @@ var (
 			// set DEBUG from env, or from command flag
 			if viper.GetString("debug") != "" || debug {
 				logrus.SetLevel(logrus.DebugLevel)
+				go func() {
+					log.Println("starting debug server under", debugListenOn)
+					log.Println(http.ListenAndServe(debugListenOn, nil))
+				}()
 			}
 
 			// Set logging

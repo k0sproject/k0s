@@ -76,3 +76,26 @@ spec:
 With this config you can start your server as usual. Any workers will need to be started with
 
 `k0s worker --profile coreos [TOKEN]`
+
+
+## Profiling
+
+We drop any debug related information and symbols from the compiled binary by utilzing `-w -s` linker flags.
+
+To keep those symbols use `DEBUG` env variable:
+
+```
+$ DEBUG=true make k0s
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=" -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=" \
+		    -o k0s.code main.go
+``` 
+
+Any value not equal to the "false" would work.
+
+To add custom linker flags use `LDFLAGS` variable.
+
+```
+$ LD_FLAGS="--custom-flag=value" make k0s
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="--custom-flag=value -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=" \
+        -o k0s.code main.go
+```
