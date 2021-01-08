@@ -1050,7 +1050,7 @@ Each element has following properties:
 <p>For each profile the control plane will create separate ConfigMap with kubelet-config yaml.
 Based on the <code>--profile</code> argument given to the <code>k0s worker</code> the corresponding ConfigMap would be used to extract <code>kubelet-config.yaml</code> from.
 <code>values</code> are recursively merged with default <code>kubelet-config.yaml</code></p>
-<p>There are a few fields that cannot be overridden: 
+<p>There are a few fields that cannot be overridden:
 - <code>clusterDNS</code>
 - <code>clusterDomain</code>
 - <code>apiVersion</code>
@@ -1088,15 +1088,18 @@ Following keys are available:</p>
 <li><code>images.calico.kubecontrollers</code></li>
 <li><code>images.repository</code></li>
 </ul>
-<p>If <code>images.repository</code> is set and not empty, every image name will be prefixed with the value of <code>images.repository</code></p>
+<p>If <code>images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
 <p>Example:
 <div class="highlight"><pre><span></span><code>images:
   repository: &quot;my.own.repo&quot;
-    konnectivity:
-      image: calico/kube-controllers
-      version: v3.16.2
+  konnectivity:
+    image: calico/kube-controllers
+    version: v3.16.2
+  metricsserver:
+    image: gcr.io/k8s-staging-metrics-server/metrics-server
+    version: v0.3.7
 </code></pre></div></p>
-<p>In the runtime the image name will be calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code>.</p>
+<p>In the runtime the image names will be calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/k8s-staging-metrics-server/metrics-server</code>.</p>
 <p>This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.</p>
 <h3 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">#</a></h3>
 <p>As stated in the <a href="https://github.com/k0sproject/k0s#scope">project scope</a> we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.</p>
@@ -1124,7 +1127,7 @@ Following keys are available:</p>
 </code></pre></div>
 <p>This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.</p>
 <p>Some examples what you could use as extension charts:
-- Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (<a href="../examples/traefik-ingress/">tutorial</a>), 
+- Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (<a href="../examples/traefik-ingress/">tutorial</a>),
 - Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a>
 - Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></p>
 <h3 id="telemetry">Telemetry<a class="headerlink" href="#telemetry" title="Permanent link">#</a></h3>
