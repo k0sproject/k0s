@@ -24,12 +24,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery/cached/memory"
-	discoveryfake "k8s.io/client-go/discovery/fake"
-	"k8s.io/client-go/dynamic/fake"
-	kubetesting "k8s.io/client-go/testing"
+
+	kubeutil "github.com/k0sproject/k0s/internal/testutil"
 )
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
@@ -62,12 +59,12 @@ spec:
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
 
-	a := NewApplier(dir, "fakekpath")
+	fakes := kubeutil.NewFakeClientFactory()
+
+	a := NewApplier(dir, fakes)
 	assert.NoError(t, err)
 
-	a.client = fake.NewSimpleDynamicClient(runtime.NewScheme())
-	fakeDiscoveryClient := &discoveryfake.FakeDiscovery{Fake: &kubetesting.Fake{}}
-	fakeDiscoveryClient.Resources = []*metav1.APIResourceList{
+	fakes.RawDiscovery.Resources = []*metav1.APIResourceList{
 		{
 			GroupVersion: corev1.SchemeGroupVersion.String(),
 			APIResources: []metav1.APIResource{
@@ -78,7 +75,6 @@ spec:
 			},
 		},
 	}
-	a.discoveryClient = memory.NewMemCacheClient(fakeDiscoveryClient)
 	err = a.Apply()
 	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")

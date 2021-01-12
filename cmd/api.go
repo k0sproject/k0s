@@ -20,15 +20,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
 	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/k0sproject/k0s/internal/util"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -60,8 +61,8 @@ func startAPI() error {
 	if err != nil {
 		return err
 	}
-
-	kubeClient, err = kubernetes.Client(k0sVars.AdminKubeConfigPath)
+	// Single kube client for whole lifetime of the API
+	kubeClient, err = kubernetes.NewClient(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}

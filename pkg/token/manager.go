@@ -32,7 +32,7 @@ import (
 // NewManager creates a new token manager using given kubeconfig
 func NewManager(kubeconfig string) (*Manager, error) {
 	logrus.Debugf("loading kubeconfig from: %s", kubeconfig)
-	client, err := k8sutil.Client(kubeconfig)
+	client, err := k8sutil.NewClient(kubeconfig)
 	if err != nil {
 		return nil, err
 	}

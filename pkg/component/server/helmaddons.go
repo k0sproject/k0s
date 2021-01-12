@@ -29,28 +29,30 @@ import (
 
 // Helm watch for Chart crd
 type HelmAddons struct {
-	Client        clientset.ChartV1Beta1Interface
-	ClusterConfig *k0sv1beta1.ClusterConfig
-	saver         manifestsSaver
-	L             *logrus.Entry
-	stopCh        chan struct{}
-	informer      cache.SharedIndexInformer
-	helm          *helm.Commands
-	kubeConfig    string
+	Client            clientset.ChartV1Beta1Interface
+	ClusterConfig     *k0sv1beta1.ClusterConfig
+	saver             manifestsSaver
+	L                 *logrus.Entry
+	stopCh            chan struct{}
+	informer          cache.SharedIndexInformer
+	helm              *helm.Commands
+	kubeConfig        string
+	kubeClientFactory kubeutil.ClientFactory
 
 	dryRun     bool
 	dryRunLock sync.Mutex
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars) *HelmAddons {
+func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory) *HelmAddons {
 	return &HelmAddons{
-		ClusterConfig: c,
-		saver:         s,
-		L:             logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
-		stopCh:        make(chan struct{}),
-		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
+		ClusterConfig:     c,
+		saver:             s,
+		L:                 logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
+		stopCh:            make(chan struct{}),
+		helm:              helm.NewCommands(k0sVars),
+		kubeConfig:        k0sVars.AdminKubeConfigPath,
+		kubeClientFactory: kubeClientFactory,
 	}
 }
 
@@ -62,13 +64,14 @@ const (
 	namespaceToWatch = "kube-system"
 )
 
-// Init
+// Run runs the helm controller
 func (h *HelmAddons) Run() error {
 	h.L.Info("run begin")
 	if h.ClusterConfig.Extensions == nil || h.ClusterConfig.Extensions.Helm == nil {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
 		return nil
 	}
+	// TODO Can we use the shared kube client factory to create the clientset for helm CRDs?
 	client, err := clientset.NewForConfig(h.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed Client for helm charts: %v", err)
@@ -94,7 +97,7 @@ func (h *HelmAddons) Run() error {
 }
 
 func (h *HelmAddons) leaseLoop() error {
-	client, err := kubeutil.Client(h.kubeConfig)
+	client, err := h.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}

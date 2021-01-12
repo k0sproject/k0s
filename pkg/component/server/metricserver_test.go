@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestGetConfigWithZeroNodes(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
+
 	clusterCfg := v1beta1.DefaultClusterConfig()
 	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar"), fakeFactory)
 	require.NoError(t, err)
@@ -27,9 +26,8 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 }
 
 func TestGetConfigWithSomeNodes(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
+	fakeClient, _ := fakeFactory.GetClient()
 
 	for i := 1; i <= 100; i++ {
 		n := &corev1.Node{
@@ -37,7 +35,7 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 				Name: fmt.Sprintf("node-%d", i),
 			},
 		}
-		_, err := fakeFactory.fakeClient.CoreV1().Nodes().Create(context.TODO(), n, v1.CreateOptions{})
+		_, err := fakeClient.CoreV1().Nodes().Create(context.TODO(), n, v1.CreateOptions{})
 		require.NoError(t, err)
 	}
 

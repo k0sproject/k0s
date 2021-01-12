@@ -117,7 +117,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints() error {
 	}
 	sort.Strings(ipStrings)
 
-	c, err := a.kubeClientFactory.Create()
+	c, err := a.kubeClientFactory.GetClient()
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (a *APIEndpointReconciler) createEndpoint(addresses []string) error {
 		},
 	}
 
-	c, err := a.kubeClientFactory.Create()
+	c, err := a.kubeClientFactory.GetClient()
 	if err != nil {
 		return err
 	}
