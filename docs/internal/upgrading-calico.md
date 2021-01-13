@@ -27,7 +27,7 @@ not the calico originals.
 {{- if eq .Mode "ipip" }}
 # Enable IPIP
 - name: CALICO_IPV4POOL_IPIP
-  value: "Always"
+  value: {{ .Overlay }}
 # Enable or Disable VXLAN on the default IP pool.
 - name: CALICO_IPV4POOL_VXLAN
   value: "Never"
@@ -37,7 +37,7 @@ not the calico originals.
   value: "Never"
 # Enable VXLAN on the default IP pool.
 - name: CALICO_IPV4POOL_VXLAN
-  value: "Always"
+  value: {{ .Overlay }}
 - name: FELIX_VXLANPORT
   value: "{{ .VxlanPort }}"
 - name: FELIX_VXLANVNI

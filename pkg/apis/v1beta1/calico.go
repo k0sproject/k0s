@@ -24,6 +24,7 @@ type Calico struct {
 	EnableWireguard      bool   `yaml:"wireguard"`
 	FlexVolumeDriverPath string `yaml:"flexVolumeDriverPath"`
 	WithWindowsNodes     bool   `yaml:"withWindowsNodes"`
+	Overlay              string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -36,6 +37,7 @@ func DefaultCalico() *Calico {
 		EnableWireguard:      false,
 		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
 		WithWindowsNodes:     false,
+		Overlay:              "Always",
 	}
 }
 
@@ -48,6 +50,7 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.EnableWireguard = false
 	c.WithWindowsNodes = false
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
+	c.Overlay = "Always"
 
 	type ycalico Calico
 	yc := (*ycalico)(c)
