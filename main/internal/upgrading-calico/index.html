@@ -635,7 +635,7 @@ not the calico originals.</p>
 <div class="highlight"><pre><span></span><code>{{- if eq .Mode &quot;ipip&quot; }}
 # Enable IPIP
 - name: CALICO_IPV4POOL_IPIP
-  value: &quot;Always&quot;
+  value: {{ .Overlay }}
 # Enable or Disable VXLAN on the default IP pool.
 - name: CALICO_IPV4POOL_VXLAN
   value: &quot;Never&quot;
@@ -645,7 +645,7 @@ not the calico originals.</p>
   value: &quot;Never&quot;
 # Enable VXLAN on the default IP pool.
 - name: CALICO_IPV4POOL_VXLAN
-  value: &quot;Always&quot;
+  value: {{ .Overlay }}
 - name: FELIX_VXLANPORT
   value: &quot;{{ .VxlanPort }}&quot;
 - name: FELIX_VXLANVNI
