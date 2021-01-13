@@ -51,6 +51,7 @@ func init() {
 	serverCmd.Flags().StringVar(&serverWorkerProfile, "profile", "default", "worker profile to use on the node")
 	serverCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
 	serverCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
+	serverCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 }
 
 var (
@@ -413,26 +414,31 @@ func enableServerWorker(clusterConfig *config.ClusterConfig, k0sVars constant.Cf
 		K0sVars:  k0sVars,
 	}
 	kubelet := &worker.Kubelet{
+		CRISocket:           criSocket,
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
 		LogLevel:            logging["kubelet"],
 		K0sVars:             k0sVars,
 	}
 
-	if err := containerd.Init(); err != nil {
-		logrus.Errorf("failed to init containerd: %s", err)
+	if criSocket == "" {
+		if err := containerd.Init(); err != nil {
+			logrus.Errorf("failed to init containerd: %s", err)
+		}
+		if err := containerd.Run(); err != nil {
+			logrus.Errorf("failed to run containerd: %s", err)
+		}
+		componentManager.Add(containerd)
 	}
+
 	if err := kubelet.Init(); err != nil {
 		logrus.Errorf("failed to init kubelet: %s", err)
 	}
-	if err := containerd.Run(); err != nil {
-		logrus.Errorf("failed to run containerd: %s", err)
-	}
+
 	if err := kubelet.Run(); err != nil {
 		logrus.Errorf("failed to run kubelet: %s", err)
 	}
 
-	componentManager.Add(containerd)
 	componentManager.Add(kubelet)
 
 	return nil
