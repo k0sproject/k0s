@@ -83,16 +83,15 @@ func (k *Kubelet) Run() error {
 	// this will return /run/systemd/resolve/resolv.conf
 	resolvConfPath := resolvconf.Path()
 
-	args := []string{
-		fmt.Sprintf("--root-dir=%s", k.dataDir),
-
-		fmt.Sprintf("--config=%s", kubeletConfigPath),
-		fmt.Sprintf("--bootstrap-kubeconfig=%s", k.K0sVars.KubeletBootstrapConfigPath),
-		fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KubeletAuthConfigPath),
-		fmt.Sprintf("--v=%s", k.LogLevel),
-		"--kube-reserved-cgroup=system.slice",
-		"--runtime-cgroups=/system.slice/containerd.service",
-		"--kubelet-cgroups=/system.slice/containerd.service",
+	args := util.MappedArgs{
+		"--root-dir":             k.dataDir,
+		"--config":               kubeletConfigPath,
+		"--bootstrap-kubeconfig": k.K0sVars.KubeletBootstrapConfigPath,
+		"--kubeconfig":           k.K0sVars.KubeletAuthConfigPath,
+		"--v":                    k.LogLevel,
+		"--kube-reserved-cgroup": "system.slice",
+		"--runtime-cgroups":      "/system.slice/containerd.service",
+		"--kubelet-cgroups":      "/system.slice/containerd.service",
 	}
 
 	if runtime.GOOS == "windows" {
@@ -100,20 +99,20 @@ func (k *Kubelet) Run() error {
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %v", err)
 		}
-		args = append(args, "--cgroups-per-qos=false")
-		args = append(args, "--enforce-node-allocatable=")
-		args = append(args, "--pod-infra-container-image=kubeletwin/pause")
-		args = append(args, "--network-plugin=cni")
-		args = append(args, "--cni-bin-dir=C:\\k\\cni")
-		args = append(args, "--cni-conf-dir=C:\\k\\cni\\config")
-		args = append(args, "--hostname-override="+node)
-		args = append(args, `--resolv-conf=`)
-		args = append(args, "--cluster-domain=cluster.local")
-		args = append(args, "--hairpin-mode=promiscuous-bridge")
-		args = append(args, "--cert-dir=C:\\var\\lib\\k0s\\kubelet_certs")
+		args["--cgroups-per-qos"] = "false"
+		args["--enforce-node-allocatable"] = ""
+		args["--pod-infra-container-image"] = "kubeletwin/pause"
+		args["--network-plugin"] = "cni"
+		args["--cni-bin-dir"] = "C:\\k\\cni"
+		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
+		args["--hostname-override"] = node
+		args["--resolv-conf"] = ""
+		args["--cluster-domain"] = "cluster.local"
+		args["--hairpin-mode"] = "promiscuous-bridge"
+		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	} else {
-		args = append(args, "--cgroups-per-qos=true")
-		args = append(args, fmt.Sprintf("--resolv-conf=%s", resolvConfPath))
+		args["--cgroups-per-qos"] = "true"
+		args["--resolv-conf"] = resolvConfPath
 	}
 
 	if k.CRISocket != "" {
@@ -121,26 +120,28 @@ func (k *Kubelet) Run() error {
 		if err != nil {
 			return err
 		}
-		args = append(args, fmt.Sprintf("--container-runtime=%s", rtType))
+		args["--container-runtime"] = rtType
 		shimPath := "unix:///var/run/dockershim.sock"
 		if runtime.GOOS == "windows" {
 			shimPath = "npipe:////./pipe/dockershim"
 		}
 		if rtType == "docker" {
-			args = append(args, fmt.Sprintf("--docker-endpoint=%s", rtSock))
+			args["--docker-endpoint"] = rtSock
 			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
-			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", shimPath))
+			args["--container-runtime-endpoint"] = shimPath
 		} else {
-			args = append(args, fmt.Sprintf("--container-runtime-endpoint=%s", rtSock))
+			args["--container-runtime-endpoint"] = rtSock
 		}
 	} else {
-		args = append(args, "--container-runtime=remote")
-		args = append(args, fmt.Sprintf("--container-runtime-endpoint=unix://%s", path.Join(k.K0sVars.RunDir, "containerd.sock")))
+		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
+		args["--container-runtime"] = "remote"
+		args["--container-runtime-endpoint"] = fmt.Sprintf("unix://%s", sockPath)
+		args["--containerd"] = sockPath
 	}
 
 	// We only support external providers
 	if k.EnableCloudProvider {
-		args = append(args, "--cloud-provider=external")
+		args["--cloud-provider"] = "external"
 	}
 	logrus.Infof("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
@@ -148,7 +149,7 @@ func (k *Kubelet) Run() error {
 		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),
 		RunDir:  k.K0sVars.RunDir,
 		DataDir: k.K0sVars.DataDir,
-		Args:    args,
+		Args:    args.ToArgs(),
 	}
 
 	err := retry.Do(func() error {
