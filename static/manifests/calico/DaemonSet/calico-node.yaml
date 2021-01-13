@@ -157,6 +157,10 @@ spec:
             # Auto detect the iptables backend
             - name: FELIX_IPTABLESBACKEND
               value: "auto"
+            {{- if ne .IPAutodetectionMethod "" -}}
+            - name: IP_AUTODETECTION_METHOD
+              value: {{ .IPAutodetectionMethod }}
+            {{- end -}}
             {{- if eq .Mode "ipip" }}
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP

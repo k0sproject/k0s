@@ -90,6 +90,7 @@ spec:
       mtu: 1450
       wireguard: false
       flexVolumeDriverPath: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds
+      ipAutodetectionMethod: ""
   podSecurityPolicy:
     defaultPolicy: 00-k0s-privileged
   workerProfiles: []
@@ -178,6 +179,7 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 - `mtu`: MTU to use for overlay network (default `1450`)
 - `wireguard`: enable wireguard based encryption (default `false`). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.
 - `flexVolumeDriverPath`: The host path to use for Calicos flex-volume-driver (default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.
+- `ipAutodetectionMethod`: To force non-default behaviour for Calico to pick up the interface for pod network inter-node routing. (default `""`, i.e. not set so Calico will use it's own defaults) See more at: https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods
 
 ### `spec.podSecurityPolicy`
 
