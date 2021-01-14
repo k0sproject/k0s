@@ -591,6 +591,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#testing-docs-locally" class="md-nav__link">
+    Testing docs locally
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -613,9 +620,11 @@ This guide will provide a simple how-to on how to configure and deploy newly add
 <h2 id="adding-a-new-link-to-the-navigation">Adding A New link to the Navigation<a class="headerlink" href="#adding-a-new-link-to-the-navigation" title="Permanent link">#</a></h2>
 <ul>
 <li>All docs must live under the <code>docs</code> directory (I.E., changes to the main <code>README.md</code> are not reflected in the website).</li>
-<li>Add a new link under <code>nav</code> in the main <a href="https://github.com/k0sproject/k0s/blob/main/mkdocs.yml">mkdocs.yml</a> file:
+<li>
+<p>Add a new link under <code>nav</code> in the main <a href="https://github.com/k0sproject/k0s/blob/main/mkdocs.yml">mkdocs.yml</a> file:
     ```
-  nav:<ul>
+  nav:</p>
+<ul>
 <li>Overview: README.md</li>
 <li>Creating A Cluster:<ul>
 <li>Quick Start Guide: create-cluster.md</li>
@@ -648,21 +657,13 @@ This guide will provide a simple how-to on how to configure and deploy newly add
 </ul>
 </li>
 <li>
-<p>Test your deployment locally, using <code>mike</code>:
-    <div class="highlight"><pre><span></span><code>version=&quot;v0.9.0&quot; # example
-mike deploy ${version}
-</code></pre></div></p>
-<div class="highlight"><pre><span></span><code>mike set-default ${version}
-</code></pre></div>
-<p><div class="highlight"><pre><span></span><code>mike serve
-</code></pre></div>
-Your local version should be served under: http://localhost:8000.</p>
-</li>
-<li>
 <p>Once your changes are pushed to <code>main</code>, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22</p>
 </li>
 <li>You should see the deployment outcome in the <code>gh-pages</code> deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages    </li>
 </ul>
+<h2 id="testing-docs-locally">Testing docs locally<a class="headerlink" href="#testing-docs-locally" title="Permanent link">#</a></h2>
+<p>We've got a dockerized setup for easily testing docs in local environment. Simply run <code>docker-compose up</code> in the docs root folder. The docs will be available on <code>localhost:80</code>.</p>
+<p><strong>Note</strong> If you have something already running locally on port <code>80</code> you need to change the mapped port on the <code>docker-compose.yml</code> file.</p>
                 
               
               
