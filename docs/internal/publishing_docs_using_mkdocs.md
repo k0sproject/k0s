@@ -34,20 +34,12 @@ Install mike: https://github.com/jimporter/mike#installation
         - Workflow: contributors/github_workflow.md
         - Testing: contributors/testing.md
     ```
-- Test your deployment locally, using `mike`:
-    ```
-    version="v0.9.0" # example
-    mike deploy ${version}
-    ```
-  
-    ```
-    mike set-default ${version}
-    ```
-  
-    ```
-    mike serve
-    ```
-    Your local version should be served under: http://localhost:8000.
 
 - Once your changes are pushed to `main`, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22
 - You should see the deployment outcome in the `gh-pages` deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages    
+
+## Testing docs locally
+
+We've got a dockerized setup for easily testing docs in local environment. Simply run `docker-compose up` in the docs root folder. The docs will be available on `localhost:80`.
+
+**Note** If you have something already running locally on port `80` you need to change the mapped port on the `docker-compose.yml` file.
