@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
+var (
 	k0sServiceName = "k0s"
 	k0sDescription = "k0s - Zero Friction Kubernetes"
 )
@@ -30,14 +30,12 @@ func EnsureService(args []string) error {
 	var k0sDisplayName string
 
 	prg := &program{}
-
 	for _, v := range args {
-		if v == "server" {
-			k0sDisplayName = "k0s server"
-		} else {
-			k0sDisplayName = "k0s worker"
+		if v == "server" || v == "worker" {
+			k0sDisplayName = "k0s " + v
+			k0sServiceName = k0sServiceName + v
+			break
 		}
-
 	}
 
 	// initial svc config

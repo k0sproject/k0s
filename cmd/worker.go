@@ -45,6 +45,7 @@ func init() {
 	workerCmd.Flags().StringVar(&clusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
+	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 }
 
 var (

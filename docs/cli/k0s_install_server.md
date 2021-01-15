@@ -1,21 +1,21 @@
-## k0s server
+## k0s install server
 
-Run server
+Helper command for setting up k0s as server node on a brand-new system. Must be run as root (or with sudo)
 
 ```
-k0s server [join-token] [flags]
+k0s install server [flags]
 ```
 
 ### Examples
 
 ```
-	Command to associate master nodes:
-	CLI argument:
-	$ k0s server [join-token]
+All default values of server command will be passed to the service stub unless overriden. 
+To get information about default values run "k0s install server --help"
 
-	or CLI flag:
-	$ k0s server --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag
+With server subcommand you can setup a single node cluster by running:
+
+	k0s install server --enable-worker
+	
 ```
 
 ### Options
@@ -39,5 +39,5 @@ k0s server [join-token] [flags]
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
+* [k0s install](k0s_install.md)	 - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)
 

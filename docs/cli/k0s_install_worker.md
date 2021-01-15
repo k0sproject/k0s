@@ -1,21 +1,19 @@
-## k0s worker
+## k0s install worker
 
-Run worker
+Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)
 
 ```
-k0s worker [join-token] [flags]
+k0s install worker [flags]
 ```
 
 ### Examples
 
 ```
-	Command to add worker node to the master node:
-	CLI argument:
-	$ k0s worker [token]
+Worker subcommand allows you to pass in all available worker parameters. 
+All default values of worker command will be passed to the service stub unless overriden.
+To get information about default values run "k0s install worker --help"
 
-	or CLI flag:
-	$ k0s worker --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag
+Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services
 ```
 
 ### Options
@@ -43,5 +41,5 @@ k0s worker [join-token] [flags]
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
+* [k0s install](k0s_install.md)	 - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)
 

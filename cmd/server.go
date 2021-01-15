@@ -52,6 +52,8 @@ func init() {
 	serverCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
 	serverCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	serverCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	installServerCmd.Flags().AddFlagSet(serverCmd.Flags())
+
 }
 
 var (
