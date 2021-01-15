@@ -17,27 +17,29 @@ package v1beta1
 
 // Calico defines the calico related config options
 type Calico struct {
-	Mode                 string `yaml:"mode"`
-	VxlanPort            int    `yaml:"vxlanPort"`
-	VxlanVNI             int    `yaml:"vxlanVNI"`
-	MTU                  int    `yaml:"mtu"`
-	EnableWireguard      bool   `yaml:"wireguard"`
-	FlexVolumeDriverPath string `yaml:"flexVolumeDriverPath"`
-	WithWindowsNodes     bool   `yaml:"withWindowsNodes"`
-	Overlay              string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
+	Mode                  string `yaml:"mode"`
+	VxlanPort             int    `yaml:"vxlanPort"`
+	VxlanVNI              int    `yaml:"vxlanVNI"`
+	MTU                   int    `yaml:"mtu"`
+	EnableWireguard       bool   `yaml:"wireguard"`
+	FlexVolumeDriverPath  string `yaml:"flexVolumeDriverPath"`
+	WithWindowsNodes      bool   `yaml:"withWindowsNodes"`
+	Overlay               string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
+	IPAutodetectionMethod string `yaml:"ipAutodetectionMethod"`
 }
 
 // DefaultCalico returns sane defaults for calico
 func DefaultCalico() *Calico {
 	return &Calico{
-		Mode:                 "vxlan",
-		VxlanPort:            4789,
-		VxlanVNI:             4096,
-		MTU:                  1450,
-		EnableWireguard:      false,
-		FlexVolumeDriverPath: "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		WithWindowsNodes:     false,
-		Overlay:              "Always",
+		Mode:                  "vxlan",
+		VxlanPort:             4789,
+		VxlanVNI:              4096,
+		MTU:                   1450,
+		EnableWireguard:       false,
+		FlexVolumeDriverPath:  "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
+		WithWindowsNodes:      false,
+		Overlay:               "Always",
+		IPAutodetectionMethod: "",
 	}
 }
 
@@ -51,6 +53,7 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.WithWindowsNodes = false
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
+	c.IPAutodetectionMethod = ""
 
 	type ycalico Calico
 	yc := (*ycalico)(c)
