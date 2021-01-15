@@ -392,8 +392,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#worker-plane" class="md-nav__link">
-    Worker plane
+  <a href="#worker-node" class="md-nav__link">
+    Worker node
   </a>
   
 </li>
@@ -672,8 +672,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#worker-plane" class="md-nav__link">
-    Worker plane
+  <a href="#worker-node" class="md-nav__link">
+    Worker node
   </a>
   
 </li>
@@ -706,12 +706,13 @@
 <p><img alt="k0s Controller processes" src="../img/k0s_controller_processes.png" /></p>
 <p>k0s creates, manages and configures each of the components. k0s runs all control plane components as "naked" processes. So on the controller node there's no container engine running.</p>
 <h3 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h3>
-<p>Typically Kubernetes control plane supports only etcd as the datastore. In addition to etcd, k0s supports many other datastore options. This is achieved by including <a href="https://github.com/rancher/kine/">kine</a>. Kine allows wide variety of backend data stores to be used such as MySQL, PostgreSQL, SQLite and dqlite. See more in storage <a href="../configuration/#spec.storage">documentation</a></p>
+<p>Typically Kubernetes control plane supports only etcd as the datastore. In addition to etcd, k0s supports many other datastore options. This is achieved by including <a href="https://github.com/rancher/kine/">kine</a>. Kine allows wide variety of backend data stores to be used such as MySQL, PostgreSQL, SQLite and dqlite. See more in storage <a href="../configuration/#specstorage">documentation</a></p>
 <p>In case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. This means for example that by joining a new controller node with <code>k0s server "long-join-token"</code> k0s will automatically adjust the etcd cluster membership info to allow the new member to join the cluster.</p>
 <p><strong>Note:</strong> Currently k0s cannot shrink the etcd cluster. For now user needs to manually remove the etcd member and only after that shutdown the k0s controller on the removed node.</p>
-<h2 id="worker-plane">Worker plane<a class="headerlink" href="#worker-plane" title="Permanent link">#</a></h2>
+<h2 id="worker-node">Worker node<a class="headerlink" href="#worker-node" title="Permanent link">#</a></h2>
 <p><img alt="k0s worker processes" src="../img/k0s_worker_processes.png" /></p>
-<p>Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. Currently we support only <a href="https://containerd.io">containerd</a> as the container engine.</p>
+<p>Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. </p>
+<p>By default, k0s workers use <a href="https://containerd.io">containerd</a> as a high-level runtime and <a href="https://github.com/opencontainers/runc">runc</a> as a low-level runtime. Custom runtimes are also supported as described <a href="../custom-cri-runtime/">here</a>.</p>
                 
               
               
@@ -767,7 +768,7 @@
       <div class="md-footer-copyright">
         
           <div class="md-footer-copyright__highlight">
-            Copyright &copy; 2020 <a href="https://mirantis.com/">Mirantis Inc.</a> - All rights reserved.
+            Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</a> - All rights reserved.
           </div>
         
         
@@ -795,7 +796,7 @@
     
       
       
-      <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="Lens Website" class="md-footer-social__link">
+      <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="k0s Website" class="md-footer-social__link">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 01-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0120.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0020.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 00-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg>
       </a>
     
