@@ -18,12 +18,10 @@ package applier
 import (
 	"context"
 	"path"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
-	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -33,12 +31,14 @@ import (
 
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
+	K0sVars           constant.CfgVars
+	KubeClientFactory kubeutil.ClientFactory
+
+	//client               kubernetes.Interface
 	applier              Applier
 	bundlePath           string
 	cancelLeaderElection context.CancelFunc
 	cancelWatcher        context.CancelFunc
-	client               kubernetes.Interface
-	K0sVars              constant.CfgVars
 	log                  *logrus.Entry
 	stacks               map[string]*StackApplier
 }
@@ -53,32 +53,19 @@ func (m *Manager) Init() error {
 	m.stacks = make(map[string]*StackApplier)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
-	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.K0sVars.AdminKubeConfigPath)
+	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
 	return err
-}
-
-func (m *Manager) retrieveKubeClient() error {
-	client, err := kubeutil.Client(m.K0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return err
-	}
-
-	m.client = client
-
-	return nil
 }
 
 // Run runs the Manager
 func (m *Manager) Run() error {
 	log := m.log
-
-	for m.client == nil {
-		log.Debug("retrieving kube client config")
-		_ = m.retrieveKubeClient()
-		time.Sleep(10 * time.Millisecond)
+	kubeClient, err := m.KubeClientFactory.GetClient()
+	if err != nil {
+		return nil
 	}
 
-	leasePool, err := leaderelection.NewLeasePool(m.client, "k0s-manifest-applier", leaderelection.WithLogger(log))
+	leasePool, err := leaderelection.NewLeasePool(kubeClient, "k0s-manifest-applier", leaderelection.WithLogger(log))
 
 	if err != nil {
 		return err
@@ -186,7 +173,7 @@ func (m *Manager) createStack(name string) error {
 		return nil
 	}
 	m.log.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name, m.K0sVars.AdminKubeConfigPath)
+	sa, err := NewStackApplier(name, m.KubeClientFactory)
 	if err != nil {
 		return err
 	}

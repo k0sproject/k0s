@@ -33,7 +33,7 @@ type KubeletConfigClient struct {
 
 // NewKubeletConfigClient creates new KubeletConfigClient using the specified kubeconfig
 func NewKubeletConfigClient(kubeconfigPath string) (*KubeletConfigClient, error) {
-	kubeClient, err := k8sutil.Client(kubeconfigPath)
+	kubeClient, err := k8sutil.NewClient(kubeconfigPath)
 	if err != nil {
 		return nil, err
 	}

@@ -19,13 +19,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 type fakeAlwaysLeaderElector struct {
@@ -59,18 +58,9 @@ var expectedAddresses = []string{
 	"185.199.111.153",
 }
 
-type fakeClientFactory struct {
-	fakeClient kubernetes.Interface
-}
-
-func (f *fakeClientFactory) Create() (kubernetes.Interface, error) {
-	return f.fakeClient, nil
-}
-
 func TestBasicReconcilerWithNoLeader(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
+
 	config := &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
 			API: &v1beta1.APISpec{
@@ -85,7 +75,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	assert.NoError(t, r.Init())
 
 	assert.NoError(t, r.reconcileEndpoints())
-	client, err := fakeFactory.Create()
+	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 	_, err = client.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
@@ -95,9 +85,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 }
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
 	config := &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
 			API: &v1beta1.APISpec{
@@ -116,9 +104,8 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 }
 
 func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
+
 	existingEp := corev1.Endpoints{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Endpoints",
@@ -129,7 +116,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 		},
 		Subsets: []corev1.EndpointSubset{},
 	}
-	fakeClient, err := fakeFactory.Create()
+	fakeClient, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 	_, err = fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -151,9 +138,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 }
 
 func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
-	var fakeFactory = &fakeClientFactory{
-		fakeClient: fake.NewSimpleClientset(),
-	}
+	fakeFactory := testutil.NewFakeClientFactory()
 	existingEp := corev1.Endpoints{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Endpoints",
@@ -172,7 +157,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 		},
 	}
 
-	fakeClient, _ := fakeFactory.Create()
+	fakeClient, _ := fakeFactory.GetClient()
 
 	_, err := fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -194,9 +179,9 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }
 
-func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFactory *fakeClientFactory) *corev1.Endpoints {
+func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFactory testutil.FakeClientFactory) *corev1.Endpoints {
 
-	fakeClient, _ := fakeFactory.Create()
+	fakeClient, _ := fakeFactory.GetClient()
 	ep, err := fakeClient.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))

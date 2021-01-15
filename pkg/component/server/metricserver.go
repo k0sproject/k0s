@@ -298,7 +298,7 @@ func (m *MetricServer) getConfig() (metricsConfig, error) {
 		Image: m.clusterConfig.Images.MetricsServer.URI(),
 	}
 
-	kubeClient, err := m.kubeClientFactory.Create()
+	kubeClient, err := m.kubeClientFactory.GetClient()
 	if err != nil {
 		return cfg, err
 	}

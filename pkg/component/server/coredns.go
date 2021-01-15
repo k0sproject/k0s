@@ -239,8 +239,8 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars) (*CoreDNS, error) {
-	client, err := k8sutil.Client(k0sVars.AdminKubeConfigPath)
+func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactory) (*CoreDNS, error) {
+	client, err := clientFactory.GetClient()
 	if err != nil {
 		return nil, err
 	}

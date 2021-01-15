@@ -20,13 +20,19 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 // ClientFactory defines a factory interface to load a kube client
 type ClientFactory interface {
-	Create() (kubernetes.Interface, error)
+	GetClient() (kubernetes.Interface, error)
+	GetDynamicClient() (dynamic.Interface, error)
+	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
@@ -36,22 +42,37 @@ func NewAdminClientFactory(k0sVars constant.CfgVars) ClientFactory {
 	}
 }
 
+// clientFactory implements a cached and lazy-loading ClientFactory for all the different types of kube clients we use
+// It's imoplemented as lazy-loading so we can create the factory itself before we have the api, etcd and other components up so we can pass
+// the factory itself to components needing kube clients and creation time.
 type clientFactory struct {
 	configPath string
 
-	client kubernetes.Interface
-	mutex  sync.Mutex
+	client          kubernetes.Interface
+	dynamicClient   dynamic.Interface
+	discoveryClient discovery.CachedDiscoveryInterface
+	restConfig      *rest.Config
+
+	mutex sync.Mutex
 }
 
-func (c *clientFactory) Create() (kubernetes.Interface, error) {
+func (c *clientFactory) GetClient() (kubernetes.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
+	var err error
+
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+		}
+	}
 
 	if c.client != nil {
 		return c.client, nil
 	}
 
-	client, err := Client(c.configPath)
+	client, err := kubernetes.NewForConfig(c.restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +83,59 @@ func (c *clientFactory) Create() (kubernetes.Interface, error) {
 
 }
 
-// Client creates new k8s client based of the given kubeconfig
-func Client(kubeconfig string) (kubernetes.Interface, error) {
+func (c *clientFactory) GetDynamicClient() (dynamic.Interface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var err error
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+		}
+	}
+
+	if c.dynamicClient != nil {
+		return c.dynamicClient, nil
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(c.restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	c.dynamicClient = dynamicClient
+
+	return c.dynamicClient, nil
+}
+
+func (c *clientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var err error
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+		}
+	}
+
+	if c.discoveryClient != nil {
+		return c.discoveryClient, nil
+	}
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(c.restConfig)
+	cachedDiscoveryClient := memory.NewMemCacheClient(discoveryClient)
+	if err != nil {
+		return nil, err
+	}
+	c.discoveryClient = cachedDiscoveryClient
+
+	return c.discoveryClient, nil
+}
+
+// NewClient creates new k8s client based of the given kubeconfig
+// This should be only used in cases where the client is "short-running" and shouldn't/cannot use the common "cached" one.
+func NewClient(kubeconfig string) (kubernetes.Interface, error) {
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {

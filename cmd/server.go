@@ -168,6 +168,9 @@ func startServer(token string) error {
 	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
 	componentManager.Add(storageBackend)
 
+	// common factory to get the admin kube client that's needed in many components
+	adminClientFactory := kubernetes.NewAdminClientFactory(k0sVars)
+
 	componentManager.Add(&server.APIServer{
 		ClusterConfig: clusterConfig,
 		K0sVars:       k0sVars,
@@ -189,7 +192,7 @@ func startServer(token string) error {
 		LogLevel:      logging["kube-controller-manager"],
 		K0sVars:       k0sVars,
 	})
-	componentManager.Add(&applier.Manager{K0sVars: k0sVars})
+	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory})
 	componentManager.Add(&server.K0SControlAPI{
 		ConfigPath: cfgFile,
 		K0sVars:    k0sVars,
@@ -197,15 +200,12 @@ func startServer(token string) error {
 
 	if clusterConfig.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{
-			ClusterConfig: clusterConfig,
-			Version:       build.Version,
-			K0sVars:       k0sVars,
+			ClusterConfig:     clusterConfig,
+			Version:           build.Version,
+			K0sVars:           k0sVars,
+			KubeClientFactory: adminClientFactory,
 		})
 	}
-
-	// common factory to get the admin kube client that's needed in many components
-	// TODO: Refactor all needed components to use this factory
-	adminClientFactory := kubernetes.NewAdminClientFactory(k0sVars)
 
 	// One leader elector per controller
 	// TODO: Make all other needed components use this "global" leader elector
@@ -288,7 +288,7 @@ func startServer(token string) error {
 	return nil
 }
 
-func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory kubernetes.ClientFactory) map[string]component.Component {
+func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, cf kubernetes.ClientFactory) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
 	clusterSpec := clusterConf.Spec
 
@@ -306,7 +306,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 		reconcilers["kube-proxy"] = proxy
 	}
 
-	coreDNS, err := server.NewCoreDNS(clusterConf, k0sVars)
+	coreDNS, err := server.NewCoreDNS(clusterConf, k0sVars, cf)
 	if err != nil {
 		logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
 	} else {
@@ -320,9 +320,9 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
 	reconcilers["crd"] = server.NewCRD(manifestsSaver)
-	reconcilers["helmAddons"] = server.NewHelmAddons(clusterConf, manifestsSaver, k0sVars)
+	reconcilers["helmAddons"] = server.NewHelmAddons(clusterConf, manifestsSaver, k0sVars, cf)
 
-	metricServer, err := server.NewMetricServer(clusterConf, k0sVars, kubeClientFactory)
+	metricServer, err := server.NewMetricServer(clusterConf, k0sVars, cf)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric server reconciler: %s", err.Error())
 	} else {

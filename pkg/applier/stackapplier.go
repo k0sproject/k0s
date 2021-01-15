@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	"github.com/k0sproject/k0s/pkg/debounce"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 )
@@ -36,7 +37,7 @@ type StackApplier struct {
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeConfig string) (*StackApplier, error) {
+func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func NewStackApplier(path string, kubeConfig string) (*StackApplier, error) {
 	if err != nil {
 		return nil, err
 	}
-	applier := NewApplier(path, kubeConfig)
+	applier := NewApplier(path, kubeClientFactory)
 	log := logrus.WithField("component", "applier-"+applier.Name)
 	log.WithField("path", path).Debug("created stack applier")
 
