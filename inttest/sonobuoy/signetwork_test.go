@@ -64,7 +64,7 @@ func (s *NetworkSuite) TestSigNetwork() {
 		`--e2e-focus=\[sig-network\].*\[Conformance\]`,
 		`--e2e-skip=\[Serial\]`,
 		"--e2e-parallel=y",
-		"--kube-conformance-image-version=v1.20.1",
+		"--kube-conformance-image-version=v1.20.2",
 	}
 	s.T().Log("running sonobuoy, this may take a while")
 	sonoFinished := make(chan bool)
