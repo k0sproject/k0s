@@ -81,6 +81,6 @@ extra:
         name: k0s on Slack
       - icon: fontawesome/solid/link
         link: https://k0sproject.io/
-        name: Lens Website
+        name: k0s Website
     version:
       method: mike
