@@ -42,9 +42,9 @@ my_fork git@github.com:{ github_username }/k0s.git (push)
 ```
 
 ## Create & Rebase Your Feature Branch
-Create a feature branch:
+Create a feature branch and switch to it:
 ```
-git branch -b my_feature_branch
+git checkout -b my_feature_branch
 ```
 Rebase your branch:
 ```

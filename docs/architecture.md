@@ -22,14 +22,16 @@ k0s creates, manages and configures each of the components. k0s runs all control
 
 ### Storage
 
-Typically Kubernetes control plane supports only etcd as the datastore. In addition to etcd, k0s supports many other datastore options. This is achieved by including [kine](https://github.com/rancher/kine/). Kine allows wide variety of backend data stores to be used such as MySQL, PostgreSQL, SQLite and dqlite. See more in storage [documentation](configuration.md#spec.storage)
+Typically Kubernetes control plane supports only etcd as the datastore. In addition to etcd, k0s supports many other datastore options. This is achieved by including [kine](https://github.com/rancher/kine/). Kine allows wide variety of backend data stores to be used such as MySQL, PostgreSQL, SQLite and dqlite. See more in storage [documentation](configuration.md#specstorage)
 
 In case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. This means for example that by joining a new controller node with `k0s server "long-join-token"` k0s will automatically adjust the etcd cluster membership info to allow the new member to join the cluster.
 
 **Note:** Currently k0s cannot shrink the etcd cluster. For now user needs to manually remove the etcd member and only after that shutdown the k0s controller on the removed node.
 
-## Worker plane
+## Worker node
 
 ![k0s worker processes](img/k0s_worker_processes.png)
 
-Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. Currently we support only [containerd](https://containerd.io) as the container engine.
+Like for the control plane, k0s creates and manages the core worker components as naked processes on the worker node. 
+
+By default, k0s workers use [containerd](https://containerd.io) as a high-level runtime and [runc](https://github.com/opencontainers/runc) as a low-level runtime. Custom runtimes are also supported as described [here](custom-cri-runtime.md).
