@@ -948,6 +948,7 @@
       <span class="nt">mtu</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
       <span class="nt">wireguard</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
       <span class="nt">flexVolumeDriverPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
+      <span class="nt">ipAutodetectionMethod</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
   <span class="nt">podSecurityPolicy</span><span class="p">:</span>
     <span class="nt">defaultPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span>
   <span class="nt">workerProfiles</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
@@ -1034,6 +1035,7 @@
 <li><code>mtu</code>: MTU to use for overlay network (default <code>1450</code>)</li>
 <li><code>wireguard</code>: enable wireguard based encryption (default <code>false</code>). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.</li>
 <li><code>flexVolumeDriverPath</code>: The host path to use for Calicos flex-volume-driver (default: <code>/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</code>). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.</li>
+<li><code>ipAutodetectionMethod</code>: To force non-default behaviour for Calico to pick up the interface for pod network inter-node routing. (default <code>""</code>, i.e. not set so Calico will use it's own defaults) See more at: https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods</li>
 </ul>
 <h3 id="specpodsecuritypolicy"><code>spec.podSecurityPolicy</code><a class="headerlink" href="#specpodsecuritypolicy" title="Permanent link">#</a></h3>
 <p>Configures the default <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">psp</a> to be set. k0s creates two PSPs out of box:</p>
