@@ -1027,6 +1027,7 @@
 <li><code>podCIDR</code>: Pod network CIDR to be used in the cluster</li>
 <li><code>serviceCIDR</code>: Network CIDR to be used for cluster VIP services.</li>
 </ul>
+<p><strong>Note:</strong> In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.</p>
 <h4><code>spec.network.calico</code></h4>
 <ul>
 <li><code>mode</code>: <code>vxlan</code> (default) or <code>ipip</code></li>
