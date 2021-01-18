@@ -82,7 +82,7 @@ smoketests: $(smoketests)
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
-	go test -race ./pkg/...
+	go test -race ./pkg/... ./internal/...
 
 .PHONY: clean
 clean:
