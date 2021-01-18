@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_worker/">
+        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_install_server/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s worker - k0s Documentation</title>
+        <title>K0s install server - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-worker" class="md-skip">
+        <a href="#k0s-install-server" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s worker
+              K0s install server
             
           </span>
         </div>
@@ -574,11 +574,11 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-worker" class="md-nav__link">
-    k0s worker
+  <a href="#k0s-install-server" class="md-nav__link">
+    k0s install server
   </a>
   
-    <nav class="md-nav" aria-label="k0s worker">
+    <nav class="md-nav" aria-label="k0s install server">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -628,30 +628,25 @@
               
                 
                 
-                  <h1>K0s worker</h1>
+                  <h1>K0s install server</h1>
                 
-                <h2 id="k0s-worker">k0s worker<a class="headerlink" href="#k0s-worker" title="Permanent link">#</a></h2>
-<p>Run worker</p>
-<div class="highlight"><pre><span></span><code>k0s worker [join-token] [flags]
+                <h2 id="k0s-install-server">k0s install server<a class="headerlink" href="#k0s-install-server" title="Permanent link">#</a></h2>
+<p>Helper command for setting up k0s as server node on a brand-new system. Must be run as root (or with sudo)</p>
+<div class="highlight"><pre><span></span><code>k0s install server [flags]
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>    Command to add worker node to the master node:
-    CLI argument:
-    $ k0s worker [token]
+<div class="highlight"><pre><span></span><code>All default values of server command will be passed to the service stub unless overriden. 
+To get information about default values run &quot;k0s install server --help&quot;
 
-    or CLI flag:
-    $ k0s worker --token-file [path_to_file]
-    Note: Token can be passed either as a CLI argument or as a flag
+With server subcommand you can setup a single node cluster by running:
+
+    k0s install server --enable-worker
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --api-server string       HACK: api-server for the windows worker node
-      --cidr-range string       HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cluster-dns string      HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
-      --cri-socket string       contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --enable-cloud-provider   Whether or not to enable cloud provider support in kubelet
-  -h, --help                    help for worker
-      --profile string          worker profile to use on the node (default &quot;default&quot;)
-      --token-file string       Path to the file containing token.
+<div class="highlight"><pre><span></span><code>      --enable-worker       enable worker (default false)
+  -h, --help                help for server
+      --profile string      worker profile to use on the node (default &quot;default&quot;)
+      --token-file string   Path to the file containing join-token.
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
@@ -662,7 +657,7 @@
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
+<li><a href="../k0s_install/">k0s install</a>  - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
 </ul>
                 
               

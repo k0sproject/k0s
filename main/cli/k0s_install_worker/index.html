@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_worker/">
+        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_install_worker/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s worker - k0s Documentation</title>
+        <title>K0s install worker - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-worker" class="md-skip">
+        <a href="#k0s-install-worker" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s worker
+              K0s install worker
             
           </span>
         </div>
@@ -574,11 +574,11 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-worker" class="md-nav__link">
-    k0s worker
+  <a href="#k0s-install-worker" class="md-nav__link">
+    k0s install worker
   </a>
   
-    <nav class="md-nav" aria-label="k0s worker">
+    <nav class="md-nav" aria-label="k0s install worker">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -628,20 +628,18 @@
               
                 
                 
-                  <h1>K0s worker</h1>
+                  <h1>K0s install worker</h1>
                 
-                <h2 id="k0s-worker">k0s worker<a class="headerlink" href="#k0s-worker" title="Permanent link">#</a></h2>
-<p>Run worker</p>
-<div class="highlight"><pre><span></span><code>k0s worker [join-token] [flags]
+                <h2 id="k0s-install-worker">k0s install worker<a class="headerlink" href="#k0s-install-worker" title="Permanent link">#</a></h2>
+<p>Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)</p>
+<div class="highlight"><pre><span></span><code>k0s install worker [flags]
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>    Command to add worker node to the master node:
-    CLI argument:
-    $ k0s worker [token]
+<div class="highlight"><pre><span></span><code>Worker subcommand allows you to pass in all available worker parameters. 
+All default values of worker command will be passed to the service stub unless overriden.
+To get information about default values run &quot;k0s install worker --help&quot;
 
-    or CLI flag:
-    $ k0s worker --token-file [path_to_file]
-    Note: Token can be passed either as a CLI argument or as a flag
+Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;--cluster-dns&quot; will be ignored since install command doesn&#39;t yet support Windows services
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --api-server string       HACK: api-server for the windows worker node
@@ -662,7 +660,7 @@
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
+<li><a href="../k0s_install/">k0s install</a>  - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
 </ul>
                 
               
