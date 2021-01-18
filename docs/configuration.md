@@ -171,6 +171,8 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 - `podCIDR`: Pod network CIDR to be used in the cluster
 - `serviceCIDR`: Network CIDR to be used for cluster VIP services.
 
+**Note:** In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.
+
 #### `spec.network.calico`
 
 - `mode`: `vxlan` (default) or `ipip`
