@@ -75,6 +75,15 @@ func EnsureService(args []string) error {
 	return nil
 }
 
+func GetSysInit() (string, error) {
+	prg := &program{}
+	s, err := service.New(prg, &service.Config{Name: "132"})
+	if err != nil {
+		return "", err
+	}
+	return s.Platform(), nil
+}
+
 // Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template
 // Currently mostly for KillMode=process so we get systemd to only send the sigterm to the main process
 const systemdScript = `[Unit]
