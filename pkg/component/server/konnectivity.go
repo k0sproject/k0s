@@ -16,9 +16,11 @@ limitations under the License.
 package server
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -26,7 +28,14 @@ import (
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+)
+
+const (
+	konnectivityLeaseName      = "konnectivity-server"
+	konnectivityLeaseNameSpace = "kube-node-lease"
+	serviceName                = "konnectivity-server"
 )
 
 // Konnectivity implement the component interface of konnectivity server
@@ -36,6 +45,11 @@ type Konnectivity struct {
 	LogLevel      string
 	supervisor    supervisor.Supervisor
 	uid           int
+
+	// used for lease lock
+	serverCount int
+	leaseLock   *kubernetes.LeaseLock
+	done        chan bool
 }
 
 // Init ...
@@ -54,43 +68,59 @@ func (k *Konnectivity) Init() error {
 	if err != nil && os.Geteuid() == 0 {
 		return fmt.Errorf("failed to chown %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
+
+	// set default serverCount to 1
+	k.serverCount = kubernetes.MinLeaseHolders
 	return assets.Stage(k.K0sVars.BinDir, "konnectivity-server", constant.BinDirMode)
 }
 
 // Run ..
 func (k *Konnectivity) Run() error {
+	args := []string{
+		fmt.Sprintf("--uds-name=%s", filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock")),
+		fmt.Sprintf("--cluster-cert=%s", filepath.Join(k.K0sVars.CertRootDir, "server.crt")),
+		fmt.Sprintf("--cluster-key=%s", filepath.Join(k.K0sVars.CertRootDir, "server.key")),
+		fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KonnectivityKubeConfigPath),
+		"--mode=grpc",
+		"--server-port=0",
+		"--agent-port=8132",
+		"--admin-port=8133",
+		"--agent-namespace=kube-system",
+		"--agent-service-account=konnectivity-agent",
+		"--authentication-audience=system:konnectivity-server",
+		"--logtostderr=true",
+		"--stderrthreshold=1",
+		"-v=2",
+		fmt.Sprintf("--v=%s", k.LogLevel),
+		"--enable-profiling=false",
+	}
+
+	if k.ClusterConfig.Spec.API.ExternalAddress != "" {
+		serverID, err := util.MachineID()
+		if err != nil {
+			logrus.Errorf("failed to fetch server ID for %v", serviceName)
+		}
+		args = append(args, fmt.Sprintf("--server-count=%d", k.serverCount))
+		args = append(args, fmt.Sprintf("--server-id=%s", serverID))
+	}
+
 	logrus.Info("Starting konnectivity")
 	k.supervisor = supervisor.Supervisor{
 		Name:    "konnectivity",
 		BinPath: assets.BinPath("konnectivity-server", k.K0sVars.BinDir),
 		DataDir: k.K0sVars.DataDir,
 		RunDir:  k.K0sVars.RunDir,
-		Args: []string{
-			fmt.Sprintf("--uds-name=%s", filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock")),
-			fmt.Sprintf("--cluster-cert=%s", filepath.Join(k.K0sVars.CertRootDir, "server.crt")),
-			fmt.Sprintf("--cluster-key=%s", filepath.Join(k.K0sVars.CertRootDir, "server.key")),
-			fmt.Sprintf("--kubeconfig=%s", k.K0sVars.KonnectivityKubeConfigPath),
-			"--mode=grpc",
-			"--server-port=0",
-			"--agent-port=8132",
-			"--admin-port=8133",
-			"--agent-namespace=kube-system",
-			"--agent-service-account=konnectivity-agent",
-			"--authentication-audience=system:konnectivity-server",
-			"--logtostderr=true",
-			"--stderrthreshold=1",
-			"-v=2",
-			fmt.Sprintf("--v=%s", k.LogLevel),
-			"--enable-profiling=false",
-		},
-		UID: k.uid,
+		Args:    args,
+		UID:     k.uid,
 	}
 
 	err := k.supervisor.Supervise()
 	if err != nil {
 		return err
 	}
-
+	if k.ClusterConfig.Spec.API.ExternalAddress != "" {
+		k.runLease()
+	}
 	return k.writeKonnectivityAgent()
 }
 
@@ -115,7 +145,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
-			APIAddress: k.ClusterConfig.Spec.API.Address,
+			APIAddress: k.ClusterConfig.Spec.API.ExternalAddress,
 			Image:      k.ClusterConfig.Images.Konnectivity.URI(),
 		},
 		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
@@ -124,8 +154,89 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	if err != nil {
 		return fmt.Errorf("failed to write konnectivity agent manifest: %v", err)
 	}
-
 	return nil
+}
+
+func (k *Konnectivity) runLease() {
+	k.done = make(chan bool)
+
+	go func() {
+		logrus.Infof("starting %v lease watcher", serviceName)
+		leaseLock, err := k.newLeaseLock()
+		if err != nil {
+			logrus.Error(err)
+		}
+		k.leaseLock = leaseLock
+		logrus.Debugf("found %v lease holders", k.serverCount)
+
+		ctx := context.Background()
+		defer func() {
+			k.done <- true
+		}()
+		for {
+			k.leaseLock.LeaseRunner(ctx)
+		}
+	}()
+
+	go func() {
+		logrus.Infof("watching %v lease holders", serviceName)
+		ticker := time.NewTicker(10 * time.Second)
+		ctx := context.Background()
+
+		defer func() {
+			k.done <- true
+		}()
+		for {
+			select {
+			case <-k.done:
+				return
+			case <-ticker.C:
+				observedLeaseHolders := k.leaseLock.CountValidLeaseHolders(ctx)
+				if observedLeaseHolders != k.serverCount {
+					logrus.Debugf("change in %v lease holders detected. refreshing service.", serviceName)
+					k.serverCount = observedLeaseHolders
+
+					// restarting service
+					if err := k.Stop(); err != nil {
+						logrus.Errorf("error stopping %v service: %v", serviceName, err)
+					}
+					if err := k.Run(); err != nil {
+						logrus.Errorf("error starting %v service: %v", serviceName, err)
+					}
+				}
+			}
+			logrus.Debugf("found %v lease holders for %v", k.serverCount, serviceName)
+		}
+	}()
+}
+
+func (k *Konnectivity) newLeaseLock() (*kubernetes.LeaseLock, error) {
+	client, err := kubernetes.NewClient(k.K0sVars.AdminKubeConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lease client: %v", err)
+	}
+
+	holderIdentity, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
+	log := logrus.WithFields(logrus.Fields{"component": "konnectivity"})
+
+	leaseConfig := &kubernetes.LeaseConfig{
+		HolderIdentity: holderIdentity,
+		Name:           fmt.Sprintf("%v-%v", konnectivityLeaseName, holderIdentity),
+		Namespace:      konnectivityLeaseNameSpace,
+		ServiceName:    serviceName,
+		LeaseDuration:  120 * time.Second, // to prevent flapping of the konnectivity service, the lease is somewhat longer than normal
+		RenewDeadline:  40 * time.Second,
+		RetryPeriod:    30 * time.Second,
+	}
+	return &kubernetes.LeaseLock{
+		Config: leaseConfig,
+		Client: client.CoordinationV1(),
+		Log:    log,
+	}, nil
 }
 
 const konnectivityAgentTemplate = `

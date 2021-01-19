@@ -46,12 +46,26 @@ extensions:
 List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
 
 
-## Configuring multi-node controlplane
+## Configuring an HA Control Plane
 
-When configuring an elastic/HA controlplane one must use same configuration options on each node for the cluster level options. Following options need to match on each node, otherwise the control plane components will end up in very unknown states:
+The following pre-requisites are required in order to configure an HA control plane:
+ 
+### Requirements
+##### Load Balancer
+A load balancer with a single external IP should be configured as the IP gateway for the controllers.
+The load balancer should allow traffic to each controller on the following ports:
+
+- 6443
+- 8132
+- 8133
+
+##### Cluster configuration
+On each controller node, a k0s.yaml configuration file should be configured.
+The following options need to match on each node, otherwise the control plane components will end up in very unknown states:
+
 - `network`
 - `storage`: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.
-
+- `externalAddress`
 
 ## Full config reference
 
