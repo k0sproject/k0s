@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/stale@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GH_TOKEN }}
           # Empty message to prevent issues from being closed or staled
           stale-issue-message: ''
           stale-pr-message: 'The PR is marked as stale since no activity has been recorded in 30 days'
