@@ -59,8 +59,10 @@ Please don't use `git pull` instead of the above `fetch / rebase`. `git pull` do
 
 Commit and sign your changes:
 ```
-git commit -m "my commit title" --signoff
+git commit --signoff
 ```
+The commit message should have a short title as first line, an empty line and then a longer description that explains why the change was made, unless it is obvious.
+
 You can go back and edit/build/test some more, then `commit --amend` in a few cycles.
 
 When ready, push your changes to your fork's repository:
