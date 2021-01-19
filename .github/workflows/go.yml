@@ -66,7 +66,6 @@ jobs:
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
           restore-keys: |
             ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-
       - name: Run unit tests
         run: make check-unit
 
@@ -307,9 +306,9 @@ jobs:
     if: github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
-
       - name: codegen
-        run: make pkg/assets/zz_generated_offsets_linux.go
+        run: |
+          make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
         env:
           EMBEDDED_BINS_BUILDMODE: none
 
