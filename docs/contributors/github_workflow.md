@@ -89,11 +89,12 @@ Small commits that contain typo fixes, rebases, review feedbacks, etc should be 
 To do that, it's best to perform an [interactive rebase](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History):
 
 #### Example 
-If you PR has 3 commits, count backwards from your last commit using `HEAD~3`:
+Rebase your feature branch against upstream main branch:
 ```
-git rebase -i HEAD~3
+git rebase -i origin/main
 ```
-Output would be similar to this:
+
+If your PR has 3 commits, output would be similar to this:
 ```
 pick f7f3f6d Changed some code
 pick 310154e fixed some typos
@@ -123,7 +124,7 @@ pick a5f4a0d made some review changes
 #
 # Note that empty commits are commented out
 ```
-Use a command line text editor to change the word `pick` to `fixup` for the commits you want to squash, then save your changes and continue the rebase:
+Use a command line text editor to change the word `pick` to `f` of `fixup` for the commits you want to squash, then save your changes and continue the rebase:
 
 Per the output above, you can see that:
 ```
