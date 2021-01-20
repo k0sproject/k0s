@@ -4,16 +4,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/Microsoft/hcsshim"
-	"github.com/avast/retry-go"
-	"github.com/k0sproject/k0s/pkg/token"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"k8s.io/client-go/tools/clientcmd"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/Microsoft/hcsshim"
+	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/token"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type CalicoInstaller struct {
@@ -148,7 +149,8 @@ func getSourceVip() (string, error) {
 
 // installCalicoPowershell is port of the original calico installer
 // with droped customization and no need to download kubernetes components
-// since we have staged them
+// since we have staged them.
+// We also skip building the pause image as we're using the semi-official MS image from mcr.microsoft.com/oss/kubernetes/pause:1.4.1
 // the original script is done by Tigera, Inc
 // and can be accessed over the web on https://docs.projectcalico.org/scripts/install-calico-windows.ps1
 const installCalicoPowershell = `
@@ -204,11 +206,8 @@ function PrepareDockerFile()
 function PrepareKubernetes()
 {
     DownloadFiles
-    PrepareDockerFile
     ipmo C:\k\hns.psm1
 
-    # Prepare POD infra Images
-    c:\k\InstallImages.ps1
 }
 
 function GetPlatformType()
