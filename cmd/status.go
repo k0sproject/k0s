@@ -52,11 +52,11 @@ var (
 			}
 
 			if status.Pid != 0 {
-				if ver, err := getK0sVersion(status.Pid); err != nil {
+				ver, err := getK0sVersion(status.Pid)
+				if err != nil {
 					return err
-				} else {
-					status.Version = ver
 				}
+				status.Version = ver
 
 				if user, err := getProcessOwner(status.Pid); err != nil {
 					return err
@@ -106,12 +106,12 @@ func (s K0sStatus) String() {
 		if s.Pid == 0 {
 			fmt.Println("K0s not running")
 			return
-		} else {
-			fmt.Println("Version:", s.Version)
-			fmt.Println("Process ID:", s.Pid)
-			fmt.Println("Parent Process ID:", s.PPid)
-			fmt.Println("Role:", s.Role)
 		}
+
+		fmt.Println("Version:", s.Version)
+		fmt.Println("Process ID:", s.Pid)
+		fmt.Println("Parent Process ID:", s.PPid)
+		fmt.Println("Role:", s.Role)
 
 		if s.SysInit != "" {
 			fmt.Println("Init System:", s.SysInit)
