@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/build"
@@ -40,16 +42,29 @@ var (
 		Short:   "Helper command for get general information about k0s",
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if runtime.GOOS == "windows" {
+				return fmt.Errorf("currently not supported on windows")
+			}
+
 			var err error
 
 			if status, err = getPid(); err != nil {
 				return err
 			}
-			if status.Role, err = getRole(status.Pid); err != nil {
-				return err
-			}
-			if status.SysInit, status.StubFile, err = getSysInit(status.Role); err != nil {
-				return err
+
+			if status.Pid != 0 {
+				if user, err := getProcessOwner(status.Pid); err != nil {
+					return err
+				} else if !strings.Contains(user, "root") {
+					return fmt.Errorf("k0s status should be run as root")
+				}
+
+				if status.SysInit, status.StubFile, err = getSysInit(status.Role); err != nil {
+					return err
+				}
+				if status.Role, err = getRole(status.Pid); err != nil {
+					return err
+				}
 			}
 
 			status.output = output
@@ -93,7 +108,10 @@ func (s K0sStatus) String() {
 			fmt.Println("Role:", s.Role)
 		}
 
-		fmt.Println("Init System:", s.SysInit)
+		if s.SysInit != "" {
+			fmt.Println("Init System:", s.SysInit)
+
+		}
 		if s.StubFile != "" {
 			fmt.Println("Service file:", s.StubFile)
 		}
@@ -122,6 +140,7 @@ func getSysInit(role string) (sysInit string, stubFile string, err error) {
 	return sysInit, stubFile, err
 
 }
+
 func getRole(pid int) (role string, err error) {
 	if runtime.GOOS == "windows" {
 		return "worker", nil
@@ -129,25 +148,27 @@ func getRole(pid int) (role string, err error) {
 
 	var raw []byte
 	if raw, err = ioutil.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid)); err != nil {
-		return "", fmt.Errorf("K0s not running")
+		return "", err
 	}
 	cmdln := string(raw)
 	if strings.Contains(cmdln, "enable-worker") {
 		return "server+worker", nil
 	} else if strings.Contains(cmdln, "server") {
 		return "server", nil
+	} else if strings.Contains(cmdln, "worker") {
+		return "worker", nil
 	}
-	return role, nil
+	return "", fmt.Errorf("k0s role is not found")
 }
 
 func getPid() (status *K0sStatus, err error) {
 	processList, err := ps.Processes()
 	if err != nil {
-
 		return nil, err
 	}
+
 	for _, p := range processList {
-		if p.Executable() == "k0s" && hasChildern(p.Pid(), processList) {
+		if p.Executable() == "k0s" && hasChildren(p.Pid(), processList) {
 			status = &K0sStatus{Pid: p.Pid(),
 				PPid: p.PPid()}
 
@@ -158,11 +179,19 @@ func getPid() (status *K0sStatus, err error) {
 	return &K0sStatus{}, nil
 }
 
-func hasChildern(pid int, processes []ps.Process) bool {
+func hasChildren(pid int, processes []ps.Process) bool {
 	for _, p := range processes {
 		if p.PPid() == pid {
 			return true
 		}
 	}
 	return false
+}
+
+func getProcessOwner(pid int) (string, error) {
+	stdout, err := exec.Command("ps", "-o", "user=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(stdout), nil
 }
