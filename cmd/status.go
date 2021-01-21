@@ -198,7 +198,7 @@ func getProcessOwner(pid int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(stdout), nil
+	return strings.TrimSuffix(string(stdout), "\n"), nil
 }
 
 func getK0sVersion(pid int) (string, error) {
