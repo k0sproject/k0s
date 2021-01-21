@@ -78,6 +78,7 @@ func init() {
 	rootCmd.AddCommand(kubeconfigCmd)
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(statusCmd)
 
 	rootCmd.DisableAutoGenTag = true
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
