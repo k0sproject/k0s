@@ -61,6 +61,8 @@ extensions:
               addresses:
               - 172.17.0.2
 ```
+(you might need to replace the 172.17.0.2 IP with your local IP which you can find higher up in the generated file
+under spec.api.address)
 
 As you can see it adds both Ambassador and Metallb (required for LoadBalancers) with corresponding repositories
 and (minimal) configurations. This example only uses your local network - providing a range of IPs for 
