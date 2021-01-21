@@ -26,7 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/install"
 	ps "github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
@@ -53,6 +52,12 @@ var (
 			}
 
 			if status.Pid != 0 {
+				if ver, err := getK0sVersion(status.Pid); err != nil {
+					return err
+				} else {
+					status.Version = ver
+				}
+
 				if user, err := getProcessOwner(status.Pid); err != nil {
 					return err
 				} else if !strings.Contains(user, "root") {
@@ -90,7 +95,6 @@ type K0sStatus struct {
 }
 
 func (s K0sStatus) String() {
-	s.Version = build.Version
 	switch s.output {
 	case "json":
 		jsn, _ := json.MarshalIndent(s, "", "   ")
@@ -99,10 +103,11 @@ func (s K0sStatus) String() {
 		ym, _ := yaml.Marshal(s)
 		fmt.Println(string(ym))
 	default:
-		fmt.Println("Version:", s.Version)
 		if s.Pid == 0 {
 			fmt.Println("K0s not running")
+			return
 		} else {
+			fmt.Println("Version:", s.Version)
 			fmt.Println("Process ID:", s.Pid)
 			fmt.Println("Parent Process ID:", s.PPid)
 			fmt.Println("Role:", s.Role)
@@ -194,4 +199,13 @@ func getProcessOwner(pid int) (string, error) {
 		return "", err
 	}
 	return string(stdout), nil
+}
+
+func getK0sVersion(pid int) (string, error) {
+	cmd := fmt.Sprintf("/proc/%d/exe", pid)
+	stdout, err := exec.Command(cmd, "version").Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(string(stdout), "\n"), nil
 }
