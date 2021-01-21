@@ -101,7 +101,7 @@ func (k *Kubelet) Run() error {
 		}
 		args["--cgroups-per-qos"] = "false"
 		args["--enforce-node-allocatable"] = ""
-		args["--pod-infra-container-image"] = "kubeletwin/pause"
+		args["--pod-infra-container-image"] = "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
 		args["--network-plugin"] = "cni"
 		args["--cni-bin-dir"] = "C:\\k\\cni"
 		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
