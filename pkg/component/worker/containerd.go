@@ -65,9 +65,7 @@ func (c *ContainerD) Run() error {
 	}
 	// TODO We need to dump the config file suited for k0s use
 
-	c.supervisor.Supervise()
-
-	return nil
+	return c.supervisor.Supervise()
 }
 
 // Stop stops containerD

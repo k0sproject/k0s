@@ -23,8 +23,11 @@ func TestSupervisor(t *testing.T) {
 	}
 
 	for _, s := range testSupervisors {
-		s.Supervise()
-		err := s.Stop()
+		err := s.Supervise()
+		if err != nil {
+			t.Errorf("Failed to start %s: %w", s.Name, err)
+		}
+		err = s.Stop()
 		if err != nil {
 			t.Errorf("Failed to stop %s: %w", s.Name, err)
 		}

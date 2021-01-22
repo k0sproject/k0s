@@ -83,9 +83,7 @@ func (a *Scheduler) Run() error {
 	}
 	// TODO We need to dump the config file suited for k0s use
 
-	a.supervisor.Supervise()
-
-	return nil
+	return a.supervisor.Supervise()
 }
 
 // Stop stops Scheduler

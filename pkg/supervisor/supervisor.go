@@ -92,13 +92,12 @@ func (s *Supervisor) processWaitQuit() bool {
 }
 
 // Supervise Starts supervising the given process
-func (s *Supervisor) Supervise() {
+func (s *Supervisor) Supervise() error {
 	s.log = logrus.WithField("component", s.Name)
-	s.quit = make(chan bool)
-	s.done = make(chan bool)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
 	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
 		s.log.Warnf("failed to initialize dir: %v", err)
+		return err
 	}
 
 	if s.TimeoutStop == 0 {
@@ -107,6 +106,9 @@ func (s *Supervisor) Supervise() {
 	if s.TimeoutRespawn == 0 {
 		s.TimeoutRespawn = 5 * time.Second
 	}
+
+	s.quit = make(chan bool)
+	s.done = make(chan bool)
 
 	go func() {
 		s.log.Info("Starting to supervise")
@@ -147,6 +149,7 @@ func (s *Supervisor) Supervise() {
 			}
 		}
 	}()
+	return nil
 }
 
 // Stop stops the supervised

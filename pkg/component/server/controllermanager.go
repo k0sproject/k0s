@@ -113,9 +113,7 @@ func (a *ControllerManager) Run() error {
 		GID:     a.gid,
 	}
 
-	a.supervisor.Supervise()
-
-	return nil
+	return a.supervisor.Supervise()
 }
 
 // Stop stops ControllerManager
