@@ -34,18 +34,21 @@ import (
 
 // Supervisor is dead simple and stupid process supervisor, just tries to keep the process running in a while-true loop
 type Supervisor struct {
-	Name    string
-	BinPath string
-	RunDir  string
-	DataDir string
-	Args    []string
-	PidFile string
-	UID     int
-	GID     int
-	cmd     *exec.Cmd
-	quit    chan bool
-	done    chan bool
-	log     *logrus.Entry
+	Name           string
+	BinPath        string
+	RunDir         string
+	DataDir        string
+	Args           []string
+	PidFile        string
+	UID            int
+	GID            int
+	TimeoutStop    time.Duration
+	TimeoutRespawn time.Duration
+
+	cmd  *exec.Cmd
+	quit chan bool
+	done chan bool
+	log  *logrus.Entry
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
@@ -72,7 +75,7 @@ func (s *Supervisor) processWaitQuit() bool {
 				s.log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
 			}
 			select {
-			case <-time.After(5 * time.Second):
+			case <-time.After(s.TimeoutStop):
 				continue
 			case <-waitresult:
 				return true
@@ -97,6 +100,14 @@ func (s *Supervisor) Supervise() {
 	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
 		s.log.Warnf("failed to initialize dir: %v", err)
 	}
+
+	if s.TimeoutStop == 0 {
+		s.TimeoutStop = 5 * time.Second
+	}
+	if s.TimeoutRespawn == 0 {
+		s.TimeoutRespawn = 5 * time.Second
+	}
+
 	go func() {
 		s.log.Info("Starting to supervise")
 		defer func() {
@@ -125,13 +136,13 @@ func (s *Supervisor) Supervise() {
 			}
 
 			// TODO Maybe some backoff thingy would be nice
-			s.log.Info("respawning in 5 secs")
+			s.log.Infof("respawning in %s", s.TimeoutRespawn.String())
 
 			select {
 			case <-s.quit:
 				s.log.Debug("respawn cancelled")
 				return
-			case <-time.After(5 * time.Second):
+			case <-time.After(s.TimeoutRespawn):
 				s.log.Debug("respawning")
 			}
 		}
