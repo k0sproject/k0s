@@ -45,12 +45,12 @@ type Supervisor struct {
 	cmd     *exec.Cmd
 	quit    chan bool
 	done    chan bool
+	log     *logrus.Entry
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
 func (s *Supervisor) processWaitQuit() bool {
-	log := logrus.WithField("component", s.Name)
 	waitresult := make(chan error)
 	go func() {
 		waitresult <- s.cmd.Wait()
@@ -59,17 +59,17 @@ func (s *Supervisor) processWaitQuit() bool {
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
 	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.PidFileMode)
 	if err != nil {
-		log.Warnf("Failed to write file %s: %v", s.PidFile, err)
+		s.log.Warnf("Failed to write file %s: %v", s.PidFile, err)
 	}
 	defer os.Remove(s.PidFile)
 
 	select {
 	case <-s.quit:
 		for {
-			log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
+			s.log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
 			err := s.cmd.Process.Signal(syscall.SIGTERM)
 			if err != nil {
-				log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
+				s.log.Warnf("Failed to send SIGTERM to pid %d: %s", s.cmd.Process.Pid, err)
 			}
 			select {
 			case <-time.After(5 * time.Second):
@@ -80,9 +80,9 @@ func (s *Supervisor) processWaitQuit() bool {
 		}
 	case err := <-waitresult:
 		if err != nil {
-			log.Warn(err)
+			s.log.Warn(err)
 		} else {
-			log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
+			s.log.Warnf("Process exited with code: %d", s.cmd.ProcessState.ExitCode())
 		}
 	}
 	return false
@@ -90,15 +90,15 @@ func (s *Supervisor) processWaitQuit() bool {
 
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise() {
-	log := logrus.WithField("component", s.Name)
+	s.log = logrus.WithField("component", s.Name)
 	s.quit = make(chan bool)
 	s.done = make(chan bool)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
 	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
-		log.Warnf("failed to initialize dir: %v", err)
+		s.log.Warnf("failed to initialize dir: %v", err)
 	}
 	go func() {
-		log.Info("Starting to supervise")
+		s.log.Info("Starting to supervise")
 		defer func() {
 			s.done <- true
 		}()
@@ -111,28 +111,28 @@ func (s *Supervisor) Supervise() {
 			// get signals sent directly to parent.
 			s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
-			s.cmd.Stdout = log.Writer()
-			s.cmd.Stderr = log.Writer()
+			s.cmd.Stdout = s.log.Writer()
+			s.cmd.Stderr = s.log.Writer()
 
 			err := s.cmd.Start()
 			if err != nil {
-				log.Warnf("Failed to start: %s", err)
+				s.log.Warnf("Failed to start: %s", err)
 			} else {
-				log.Info("Started successfully, go nuts")
+				s.log.Info("Started successfully, go nuts")
 				if s.processWaitQuit() {
 					return
 				}
 			}
 
 			// TODO Maybe some backoff thingy would be nice
-			log.Info("respawning in 5 secs")
+			s.log.Info("respawning in 5 secs")
 
 			select {
 			case <-s.quit:
-				log.Debug("respawn cancelled")
+				s.log.Debug("respawn cancelled")
 				return
 			case <-time.After(5 * time.Second):
-				log.Debug("respawning")
+				s.log.Debug("respawning")
 			}
 		}
 	}()
