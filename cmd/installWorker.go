@@ -28,7 +28,6 @@ var (
 		Short: "Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)",
 		Example: `Worker subcommand allows you to pass in all available worker parameters. 
 All default values of worker command will be passed to the service stub unless overriden.
-To get information about default values run "k0s install worker --help"
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		RunE: func(cmd *cobra.Command, args []string) error {

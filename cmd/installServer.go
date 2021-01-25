@@ -27,7 +27,6 @@ var (
 		Use:   "server",
 		Short: "Helper command for setting up k0s as server node on a brand-new system. Must be run as root (or with sudo)",
 		Example: `All default values of server command will be passed to the service stub unless overriden. 
-To get information about default values run "k0s install server --help"
 
 With server subcommand you can setup a single node cluster by running:
 
