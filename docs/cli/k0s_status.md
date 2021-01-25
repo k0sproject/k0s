@@ -1,11 +1,22 @@
-## k0s etcd
+## k0s status
 
-Manage etcd cluster
+Helper command for get general information about k0s
+
+```
+k0s status [flags]
+```
+
+### Examples
+
+```
+The command will return information about system init, PID, k0s role, kubeconfig and similar.
+```
 
 ### Options
 
 ```
-  -h, --help   help for etcd
+  -h, --help         help for status
+  -o, --out string   sets type of out put to json or yaml
 ```
 
 ### Options inherited from parent commands
@@ -21,6 +32,4 @@ Manage etcd cluster
 ### SEE ALSO
 
 * [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-* [k0s etcd leave](k0s_etcd_leave.md)	 - Sign off a given etc node from etcd cluster
-* [k0s etcd member-list](k0s_etcd_member-list.md)	 - Returns etcd cluster members list
 

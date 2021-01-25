@@ -1,11 +1,20 @@
-## k0s etcd
+## k0s validate config
 
-Manage etcd cluster
+Helper command for validating the config file
+
+### Synopsis
+
+Example:
+   k0s validate config --config path_to_config.yaml
+
+```
+k0s validate config [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for etcd
+  -h, --help   help for config
 ```
 
 ### Options inherited from parent commands
@@ -20,7 +29,5 @@ Manage etcd cluster
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-* [k0s etcd leave](k0s_etcd_leave.md)	 - Sign off a given etc node from etcd cluster
-* [k0s etcd member-list](k0s_etcd_member-list.md)	 - Returns etcd cluster members list
+* [k0s validate](k0s_validate.md)	 - Helper command for validating the config file
 
