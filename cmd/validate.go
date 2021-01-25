@@ -27,8 +27,12 @@ var (
 	validateCmd = &cobra.Command{
 		Use:   "validate",
 		Short: "Helper command for validating the config file",
+	}
+	validateConfigCmd = &cobra.Command{
+		Use:   "config",
+		Short: "Helper command for validating the config file",
 		Long: `Example:
-   k0s validate --config path_to_config.yaml`,
+   k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := validateConfig(cfgFile)
 			if err != nil {
@@ -39,6 +43,9 @@ var (
 	}
 )
 
+func init() {
+	validateCmd.AddCommand(validateConfigCmd)
+}
 func validateConfig(cfgPath string) error {
 	clusterConfig, err := config.FromYaml(cfgPath)
 	if err != nil {
