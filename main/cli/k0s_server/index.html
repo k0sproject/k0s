@@ -644,7 +644,8 @@
     Note: Token can be passed either as a CLI argument or as a flag
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --enable-worker       enable worker (default false)
+<div class="highlight"><pre><span></span><code>      --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+      --enable-worker       enable worker (default false)
   -h, --help                help for server
       --profile string      worker profile to use on the node (default &quot;default&quot;)
       --token-file string   Path to the file containing join-token.
@@ -654,7 +655,7 @@
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default &quot;:6060&quot;)
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
+  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
