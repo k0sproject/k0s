@@ -10,7 +10,6 @@ k0s install server [flags]
 
 ```
 All default values of server command will be passed to the service stub unless overriden. 
-To get information about default values run "k0s install server --help"
 
 With server subcommand you can setup a single node cluster by running:
 
@@ -35,7 +34,7 @@ With server subcommand you can setup a single node cluster by running:
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default ":6060")
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
+  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
 ```
 
 ### SEE ALSO

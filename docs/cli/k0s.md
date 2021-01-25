@@ -14,7 +14,7 @@ k0s - The zero friction Kubernetes - https://k0sproject.io
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default ":6060")
   -h, --help                     help for k0s
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
+  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
 ```
 
 ### SEE ALSO
