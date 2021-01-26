@@ -170,9 +170,7 @@ func (k *Kubelet) Run() error {
 		return err
 	}
 
-	k.supervisor.Supervise()
-
-	return nil
+	return k.supervisor.Supervise()
 }
 
 // Stop stops kubelet

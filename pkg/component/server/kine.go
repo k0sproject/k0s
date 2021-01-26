@@ -97,9 +97,7 @@ func (k *Kine) Run() error {
 		GID: k.gid,
 	}
 
-	k.supervisor.Supervise()
-
-	return nil
+	return k.supervisor.Supervise()
 }
 
 // Stop stops kine

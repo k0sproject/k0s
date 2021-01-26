@@ -152,7 +152,7 @@ func (a *APIServer) Run() error {
 		default:
 			return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
 		}
-		a.supervisor.Supervise()
+		return a.supervisor.Supervise()
 	}
 
 	return nil

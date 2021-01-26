@@ -167,9 +167,7 @@ func (e *Etcd) Run() error {
 		GID:     e.gid,
 	}
 
-	e.supervisor.Supervise()
-
-	return nil
+	return e.supervisor.Supervise()
 }
 
 // Stop stops etcd

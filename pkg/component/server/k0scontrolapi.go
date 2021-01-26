@@ -58,8 +58,7 @@ func (m *K0SControlAPI) Run() error {
 		},
 	}
 
-	m.supervisor.Supervise()
-	return nil
+	return m.supervisor.Supervise()
 }
 
 // Stop stops k0s api

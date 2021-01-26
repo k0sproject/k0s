@@ -86,7 +86,10 @@ func (k *Konnectivity) Run() error {
 		UID: k.uid,
 	}
 
-	k.supervisor.Supervise()
+	err := k.supervisor.Supervise()
+	if err != nil {
+		return err
+	}
 
 	return k.writeKonnectivityAgent()
 }
