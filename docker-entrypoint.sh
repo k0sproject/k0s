@@ -25,4 +25,10 @@ iptables-save \
 cp /etc/resolv.conf /etc/resolv.conf.original
 sed -e "s/${docker_embedded_dns_ip}/${docker_host_ip}/g" /etc/resolv.conf.original >/etc/resolv.conf
 
+# write config from environment variable
+if [ ! -z "$K0S_CONFIG" ]; then
+  mkdir -p /etc/k0s
+  echo -n "$K0S_CONFIG" > /etc/k0s/config.yaml
+fi
+
 exec $@
