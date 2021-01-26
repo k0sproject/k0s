@@ -41,34 +41,6 @@ spec:
       terminationGracePeriodSeconds: 0
       priorityClassName: system-node-critical
       initContainers:
-        # This container performs upgrade from host-local IPAM to calico-ipam.
-        # It can be deleted if this is a fresh installation, or if you have already
-        # upgraded to use calico-ipam.
-        - name: upgrade-ipam
-          image: {{ .CalicoCNIImage }}
-          command: ["/opt/cni/bin/calico-ipam", "-upgrade"]
-          envFrom:
-          - configMapRef:
-              # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.
-              name: kubernetes-services-endpoint
-              optional: true
-          env:
-            - name: KUBERNETES_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: CALICO_NETWORKING_BACKEND
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: calico_backend
-          volumeMounts:
-            - mountPath: /var/lib/cni/networks
-              name: host-local-net-dir
-            - mountPath: /host/opt/cni/bin
-              name: cni-bin-dir
-          securityContext:
-            privileged: true
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
@@ -108,15 +80,6 @@ spec:
               name: cni-bin-dir
             - mountPath: /host/etc/cni/net.d
               name: cni-net-dir
-          securityContext:
-            privileged: true
-        # Adds a Flex Volume Driver that creates a per-pod Unix Domain Socket to allow Dikastes
-        # to communicate with Felix over the Policy Sync API.
-        - name: flexvol-driver
-          image: {{ .CalicoFlexVolumeImage }}
-          volumeMounts:
-          - name: flexvol-driver-host
-            mountPath: /host/driver
           securityContext:
             privileged: true
       containers:
@@ -277,19 +240,8 @@ spec:
         - name: cni-net-dir
           hostPath:
             path: /etc/cni/net.d
-        # Mount in the directory for host-local IPAM allocations. This is
-        # used when upgrading from host-local to calico-ipam, and can be removed
-        # if not using the upgrade-ipam init container.
-        - name: host-local-net-dir
-          hostPath:
-            path: /var/lib/cni/networks
         # Used to create per-pod Unix Domain Sockets
         - name: policysync
           hostPath:
             type: DirectoryOrCreate
             path: /var/run/nodeagent
-        # Used to install Flex Volume Driver
-        - name: flexvol-driver-host
-          hostPath:
-            type: DirectoryOrCreate
-            path: {{ .FlexVolumeDriverPath }}
