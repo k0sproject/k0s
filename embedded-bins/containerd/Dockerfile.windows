@@ -1,0 +1,20 @@
+FROM alpine:3.13 AS build
+
+ARG VERSION
+
+ENV KUBE_BUILD_PLATFORMS=windows/amd64
+
+RUN apk add curl
+
+RUN curl -sSfL https://github.com/containerd/containerd/releases/download/v${VERSION}/containerd-${VERSION}-windows-amd64.tar.gz -o containerd.tar.gz && \
+	tar -zxvf containerd.tar.gz
+
+RUN pwd && ls -lah
+
+FROM scratch
+COPY --from=build \
+	/bin/containerd-shim-runhcs-v1.exe \
+	/bin/containerd.exe \
+	/bin/ctr.exe \
+	/bin/
+CMD ["/bin/containerd.exe"]

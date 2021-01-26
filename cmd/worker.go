@@ -110,9 +110,9 @@ func startWorker(token string) error {
 	}
 
 	componentManager := component.NewManager()
-	if runtime.GOOS == "windows" && criSocket == "" {
-		return fmt.Errorf("windows worker needs to have external CRI")
-	}
+	// if runtime.GOOS == "windows" && criSocket == "" {
+	// 	return fmt.Errorf("windows worker needs to have external CRI")
+	// }
 	if criSocket == "" {
 		componentManager.Add(&worker.ContainerD{
 			LogLevel: logging["containerd"],
