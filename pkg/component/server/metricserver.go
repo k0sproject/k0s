@@ -281,7 +281,9 @@ func (m *MetricServer) Run() error {
 
 // Stop stops the reconciler
 func (m *MetricServer) Stop() error {
-	close(m.tickerDone)
+	if m.tickerDone != nil {
+		close(m.tickerDone)
+	}
 	return nil
 }
 
