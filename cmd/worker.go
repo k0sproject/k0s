@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -162,7 +163,7 @@ func startWorker(token string) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	err = componentManager.Start()
+	err = componentManager.Start(context.Background())
 	if err != nil {
 		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
 		c <- syscall.SIGTERM

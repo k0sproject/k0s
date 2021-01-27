@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -236,7 +237,7 @@ func startServer(token string) error {
 
 	perfTimer.Checkpoint("starting-components")
 	// Start components
-	err = componentManager.Start()
+	err = componentManager.Start(context.Background())
 	perfTimer.Checkpoint("finished-starting-components")
 	if err != nil {
 		logrus.Errorf("failed to start server components: %s", err)

@@ -76,7 +76,7 @@ func (m *Manager) Init() error {
 }
 
 // Start starts all managed components
-func (m *Manager) Start() error {
+func (m *Manager) Start(ctx context.Context) error {
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
@@ -86,7 +86,7 @@ func (m *Manager) Start() error {
 			return err
 		}
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
-		if err := waitForHealthy(comp, compName); err != nil {
+		if err := waitForHealthy(ctx, comp, compName); err != nil {
 			return err
 		}
 	}
@@ -109,8 +109,8 @@ func (m *Manager) Stop() error {
 }
 
 // waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false
-func waitForHealthy(comp Component, name string) error {
-	ctx, cancelFunction := context.WithTimeout(context.Background(), 2*time.Minute)
+func waitForHealthy(ctx context.Context, comp Component, name string) error {
+	ctx, cancelFunction := context.WithTimeout(ctx, 2*time.Minute)
 
 	// clear up context after timeout
 	defer cancelFunction()
