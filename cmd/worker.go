@@ -158,18 +158,33 @@ func startWorker(token string) error {
 
 	worker.KernelSetup()
 
-	// Set up signal handling. Use bufferend channel so we dont miss
+	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
+	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
 
-	err = componentManager.Start(context.Background())
+	go func() {
+		select {
+		case <-c:
+			logrus.Info("Shutting down k0s server")
+			cancel()
+		case <-ctx.Done():
+			logrus.Debug("Context done in go-routine")
+		}
+	}()
+
+	err = componentManager.Start(ctx)
 	if err != nil {
 		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
 		c <- syscall.SIGTERM
 	}
 	// Wait for k0s process termination
-	<-c
+	<-ctx.Done()
 	logrus.Info("Shutting down k0s worker")
 
 	// Stop components

@@ -232,12 +232,27 @@ func startServer(token string) error {
 
 	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
+	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
+
+	go func() {
+		select {
+		case <-c:
+			logrus.Info("Shutting down k0s server")
+			cancel()
+		case <-ctx.Done():
+			logrus.Debug("Context done in go-routine")
+		}
+	}()
 
 	perfTimer.Checkpoint("starting-components")
 	// Start components
-	err = componentManager.Start(context.Background())
+	err = componentManager.Start(ctx)
 	perfTimer.Checkpoint("finished-starting-components")
 	if err != nil {
 		logrus.Errorf("failed to start server components: %s", err)
@@ -274,8 +289,8 @@ func startServer(token string) error {
 	perfTimer.Output()
 
 	// Wait for k0s process termination
-	<-c
-	logrus.Info("Shutting down k0s server")
+	<-ctx.Done()
+	logrus.Debug("Context done in main")
 
 	// Stop all reconcilers first
 	for _, reconciler := range reconcilers {
