@@ -82,80 +82,75 @@ func (a *APIServer) Run() error {
 	if err != nil {
 		return err
 	}
-	logrus.Debug("Waiting for storage backend to report back healthy")
-	if err := a.Storage.Healthy(); err == nil {
-		logrus.Info("Starting kube-apiserver")
-		args := map[string]string{
-			"advertise-address":                a.ClusterConfig.Spec.API.Address,
-			"authorization-mode":               "Node,RBAC",
-			"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-			"enable-bootstrap-token-auth":      "true",
-			"kubelet-client-certificate":       path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.crt"),
-			"kubelet-client-key":               path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.key"),
-			"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
-			"proxy-client-cert-file":           path.Join(a.K0sVars.CertRootDir, "front-proxy-client.crt"),
-			"proxy-client-key-file":            path.Join(a.K0sVars.CertRootDir, "front-proxy-client.key"),
-			"requestheader-allowed-names":      "front-proxy-client",
-			"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
-			"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
-			"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
-			"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
-			"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
-			"egress-selector-config-file":      path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
-			"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
-			"service-account-issuer":           "api",
-			"api-audiences":                    "system:konnectivity-server",
-			"insecure-port":                    "0",
-			"profiling":                        "false",
-			"v":                                a.LogLevel,
-		}
-
-		for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
-			if args[name] != "" && name != "profiling" {
-				return fmt.Errorf("cannot override apiserver flag: %s", name)
-			}
-			args[name] = value
-		}
-
-		for name, value := range apiDefaultArgs {
-			if args[name] == "" {
-				args[name] = value
-			}
-		}
-		if a.ClusterConfig.Spec.API.ExternalAddress != "" {
-			args["endpoint-reconciler-type"] = "none"
-		}
-		apiServerArgs := []string{}
-		for name, value := range args {
-			apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
-		}
-
-		a.supervisor = supervisor.Supervisor{
-			Name:    "kube-apiserver",
-			BinPath: assets.BinPath("kube-apiserver", a.K0sVars.BinDir),
-			RunDir:  a.K0sVars.RunDir,
-			DataDir: a.K0sVars.DataDir,
-			Args:    apiServerArgs,
-			UID:     a.uid,
-			GID:     a.gid,
-		}
-		switch a.ClusterConfig.Spec.Storage.Type {
-		case config.KineStorageType:
-			a.supervisor.Args = append(a.supervisor.Args,
-				fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
-		case config.EtcdStorageType:
-			a.supervisor.Args = append(a.supervisor.Args,
-				"--etcd-servers=https://127.0.0.1:2379",
-				fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
-				fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
-				fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
-		default:
-			return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
-		}
-		return a.supervisor.Supervise()
+	logrus.Info("Starting kube-apiserver")
+	args := map[string]string{
+		"advertise-address":                a.ClusterConfig.Spec.API.Address,
+		"authorization-mode":               "Node,RBAC",
+		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"enable-bootstrap-token-auth":      "true",
+		"kubelet-client-certificate":       path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":               path.Join(a.K0sVars.CertRootDir, "apiserver-kubelet-client.key"),
+		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
+		"proxy-client-cert-file":           path.Join(a.K0sVars.CertRootDir, "front-proxy-client.crt"),
+		"proxy-client-key-file":            path.Join(a.K0sVars.CertRootDir, "front-proxy-client.key"),
+		"requestheader-allowed-names":      "front-proxy-client",
+		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
+		"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
+		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
+		"egress-selector-config-file":      path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
+		"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
+		"service-account-issuer":           "api",
+		"api-audiences":                    "system:konnectivity-server",
+		"insecure-port":                    "0",
+		"profiling":                        "false",
+		"v":                                a.LogLevel,
 	}
 
-	return nil
+	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
+		if args[name] != "" && name != "profiling" {
+			return fmt.Errorf("cannot override apiserver flag: %s", name)
+		}
+		args[name] = value
+	}
+
+	for name, value := range apiDefaultArgs {
+		if args[name] == "" {
+			args[name] = value
+		}
+	}
+	if a.ClusterConfig.Spec.API.ExternalAddress != "" {
+		args["endpoint-reconciler-type"] = "none"
+	}
+	apiServerArgs := []string{}
+	for name, value := range args {
+		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
+	}
+
+	a.supervisor = supervisor.Supervisor{
+		Name:    "kube-apiserver",
+		BinPath: assets.BinPath("kube-apiserver", a.K0sVars.BinDir),
+		RunDir:  a.K0sVars.RunDir,
+		DataDir: a.K0sVars.DataDir,
+		Args:    apiServerArgs,
+		UID:     a.uid,
+		GID:     a.gid,
+	}
+	switch a.ClusterConfig.Spec.Storage.Type {
+	case config.KineStorageType:
+		a.supervisor.Args = append(a.supervisor.Args,
+			fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
+	case config.EtcdStorageType:
+		a.supervisor.Args = append(a.supervisor.Args,
+			"--etcd-servers=https://127.0.0.1:2379",
+			fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
+			fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
+			fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
+	default:
+		return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
+	}
+	return a.supervisor.Supervise()
 }
 
 func (a *APIServer) writeKonnectivityConfig() error {
