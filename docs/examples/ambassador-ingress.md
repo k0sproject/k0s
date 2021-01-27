@@ -16,17 +16,25 @@ If you're not on a platform natively supported by k0s, running under docker is a
 to map that into the k0s container - and of course we'll need to expose the ports required by
 Ambassador for outside access.
 
-Start by running k0s under docker:
+Start by running k0s under docker (you might need to [authenticate with the GitHub container Registry](https://docs.github.com/en/packages/guides/pushing-and-pulling-docker-images#authenticating-to-github-container-registry) first) :
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:v0.9.1
 ```
 
-Once running export the default configuration file using
+Once running export the default k0s configuration file using
 
 ```sh
 docker exec k0s k0s default-config > my-cluster.yaml
 ```
+
+and export the cluster config so you can access it with kubectl:
+
+```sh
+docker exec k0s cat /var/lib/k0s/pki/admin.conf > k0s-cluster.conf
+export KUBECONFIG=$KUBECONFIG:<absolute path to k0s-cluster.conf>
+```
+(somewhat brute-force but gets the job done)
 
 ## Configuring k0s.yaml
 
