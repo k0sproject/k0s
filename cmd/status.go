@@ -71,7 +71,7 @@ var (
 					return err
 				}
 			} else {
-				fmt.Println("K0s not running")
+				fmt.Fprintln(os.Stderr, "K0s not running")
 				os.Exit(1)
 			}
 
