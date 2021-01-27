@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -239,5 +240,8 @@ func (e *Etcd) setupCerts() error {
 // Health-check interface
 func (e *Etcd) Healthy() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
-	return etcd.CheckEtcdReady(e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
+	cancel()
+	return err
 }
