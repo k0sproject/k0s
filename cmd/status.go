@@ -70,6 +70,9 @@ var (
 				if status.Role, err = getRole(status.Pid); err != nil {
 					return err
 				}
+			} else {
+				fmt.Println("K0s not running")
+				os.Exit(1)
 			}
 
 			status.output = output
