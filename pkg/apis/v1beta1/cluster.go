@@ -17,6 +17,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
@@ -115,15 +116,30 @@ func (a *APISpec) Sans() []string {
 	return util.Unique(sans)
 }
 
-// FromYaml ...
-func FromYaml(filename string) (*ClusterConfig, error) {
+// FromYamlFile ...
+func FromYamlFile(filename string) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read config file at %s", filename)
 	}
 
+	return FromYamlString(string(buf))
+}
+
+// FromYamlPipe
+func FromYamlPipe(r io.Reader) (*ClusterConfig, error) {
+	input, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, nil
+	}
+	return FromYamlString(string(input))
+
+}
+
+// FromYamlString
+func FromYamlString(yml string) (*ClusterConfig, error) {
 	config := &ClusterConfig{}
-	err = yaml.Unmarshal(buf, &config)
+	err := yaml.Unmarshal([]byte(yml), &config)
 	if err != nil {
 		return config, err
 	}
