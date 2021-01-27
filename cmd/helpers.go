@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -25,8 +26,13 @@ import (
 )
 
 // ConfigFromYaml returns given k0s config or default config
-func ConfigFromYaml(cfgPath string) (*config.ClusterConfig, error) {
-	clusterConfig, err := config.FromYaml(cfgPath)
+func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err error) {
+	if isInputFromPipe() {
+		clusterConfig, err = config.FromYamlPipe(os.Stdin)
+	} else {
+		clusterConfig, err = config.FromYamlFile(cfgPath)
+	}
+
 	if err != nil {
 		logrus.Errorf("Failed to read cluster config: %s", err.Error())
 		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
@@ -48,4 +54,9 @@ func ConfigFromYaml(cfgPath string) (*config.ClusterConfig, error) {
 		clusterConfig.Install = config.DefaultInstallSpec()
 	}
 	return clusterConfig, nil
+}
+
+func isInputFromPipe() bool {
+	fi, _ := os.Stdin.Stat()
+	return fi.Mode()&os.ModeCharDevice == 0
 }

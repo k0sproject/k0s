@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -46,8 +47,14 @@ var (
 func init() {
 	validateCmd.AddCommand(validateConfigCmd)
 }
-func validateConfig(cfgPath string) error {
-	clusterConfig, err := config.FromYaml(cfgPath)
+func validateConfig(cfgPath string) (err error) {
+	var clusterConfig *config.ClusterConfig
+
+	if isInputFromPipe() {
+		clusterConfig, err = config.FromYamlPipe(os.Stdin)
+	} else {
+		clusterConfig, err = config.FromYamlFile(cfgPath)
+	}
 	if err != nil {
 		return err
 	}
