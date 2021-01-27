@@ -20,9 +20,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghodss/yaml"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/require"
 )
@@ -135,7 +136,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 func requireConfigMap(t *testing.T, spec string, name string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-
+	dst = v1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "ConfigMap", dst["kind"])
 	require.Equal(t, name, dst["metadata"].(map[string]interface{})["name"])
 	spec, foundSpec := dst["data"].(map[string]interface{})["kubelet"].(string)
@@ -146,6 +147,7 @@ func requireConfigMap(t *testing.T, spec string, name string) {
 func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
+	dst = v1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "Role", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
 	currentResourceNames := []string{}
@@ -158,6 +160,7 @@ func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 func requireRoleBinding(t *testing.T, spec string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
+	dst = v1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "RoleBinding", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
 }

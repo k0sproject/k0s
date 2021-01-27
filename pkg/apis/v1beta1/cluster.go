@@ -45,30 +45,40 @@ type ClusterMeta struct {
 // ClusterSpec ...
 type ClusterSpec struct {
 	API               *APISpec               `yaml:"api"`
-	ControllerManager *ControllerManagerSpec `yaml:"controllerManager"`
-	Scheduler         *SchedulerSpec         `yaml:"scheduler"`
+	ControllerManager *ControllerManagerSpec `yaml:"controllerManager,omitempty"`
+	Scheduler         *SchedulerSpec         `yaml:"scheduler,omitempty"`
 	Storage           *StorageSpec           `yaml:"storage"`
 	Network           *Network               `yaml:"network"`
 	PodSecurityPolicy *PodSecurityPolicy     `yaml:"podSecurityPolicy"`
-	WorkerProfiles    WorkerProfiles         `yaml:"workerProfiles"`
+	WorkerProfiles    WorkerProfiles         `yaml:"workerProfiles,omitempty"`
 }
 
 // APISpec ...
 type APISpec struct {
 	Address         string            `yaml:"address"`
-	ExternalAddress string            `yaml:"externalAddress"`
+	ExternalAddress string            `yaml:"externalAddress,omitempty"`
 	SANs            []string          `yaml:"sans"`
-	ExtraArgs       map[string]string `yaml:"extraArgs"`
+	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // ControllerManagerSpec ...
 type ControllerManagerSpec struct {
-	ExtraArgs map[string]string `yaml:"extraArgs"`
+	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+}
+
+// IsZero needed to omit empty object from yaml output
+func (c *ControllerManagerSpec) IsZero() bool {
+	return len(c.ExtraArgs) == 0
 }
 
 // SchedulerSpec ...
 type SchedulerSpec struct {
-	ExtraArgs map[string]string `yaml:"extraArgs"`
+	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+}
+
+// IsZero needed to omit empty object from yaml output
+func (s *SchedulerSpec) IsZero() bool {
+	return len(s.ExtraArgs) == 0
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
@@ -176,19 +186,24 @@ func DefaultAPISpec() *APISpec {
 	addresses, _ := util.AllAddresses()
 	publicAddress, _ := util.FirstPublicAddress()
 	return &APISpec{
-		SANs:    append(addresses, publicAddress),
-		Address: publicAddress,
+		SANs:      addresses,
+		Address:   publicAddress,
+		ExtraArgs: make(map[string]string),
 	}
 }
 
 // DefaultClusterSpec default settings
 func DefaultClusterSpec() *ClusterSpec {
 	return &ClusterSpec{
-		Storage:           DefaultStorageSpec(),
-		Network:           DefaultNetwork(),
-		API:               DefaultAPISpec(),
-		ControllerManager: &ControllerManagerSpec{},
-		Scheduler:         &SchedulerSpec{},
+		Storage: DefaultStorageSpec(),
+		Network: DefaultNetwork(),
+		API:     DefaultAPISpec(),
+		ControllerManager: &ControllerManagerSpec{
+			ExtraArgs: make(map[string]string),
+		},
+		Scheduler: &SchedulerSpec{
+			ExtraArgs: make(map[string]string),
+		},
 		PodSecurityPolicy: DefaultPodSecurityPolicy(),
 	}
 }

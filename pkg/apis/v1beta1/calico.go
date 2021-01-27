@@ -25,7 +25,7 @@ type Calico struct {
 	FlexVolumeDriverPath  string `yaml:"flexVolumeDriverPath"`
 	WithWindowsNodes      bool   `yaml:"withWindowsNodes"`
 	Overlay               string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
-	IPAutodetectionMethod string `yaml:"ipAutodetectionMethod"`
+	IPAutodetectionMethod string `yaml:"ipAutodetectionMethod,omitempty"`
 }
 
 // DefaultCalico returns sane defaults for calico
