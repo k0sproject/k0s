@@ -107,14 +107,9 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
-	s.quit = make(chan bool)
-	s.done = make(chan bool)
-
+	started := make(chan error)
 	go func() {
 		s.log.Info("Starting to supervise")
-		defer func() {
-			s.done <- true
-		}()
 		for {
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 			s.cmd.Dir = s.DataDir
@@ -130,8 +125,22 @@ func (s *Supervisor) Supervise() error {
 			err := s.cmd.Start()
 			if err != nil {
 				s.log.Warnf("Failed to start: %s", err)
+				if s.quit == nil {
+					started <- err
+					return
+				}
 			} else {
-				s.log.Info("Started successfully, go nuts")
+				if s.quit == nil {
+					s.log.Info("Started successfully, go nuts")
+					s.quit = make(chan bool)
+					s.done = make(chan bool)
+					defer func() {
+						s.done <- true
+					}()
+					started <- nil
+				} else {
+					s.log.Info("Restarted")
+				}
 				if s.processWaitQuit() {
 					return
 				}
@@ -149,7 +158,7 @@ func (s *Supervisor) Supervise() error {
 			}
 		}
 	}()
-	return nil
+	return <-started
 }
 
 // Stop stops the supervised
