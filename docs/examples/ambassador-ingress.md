@@ -16,7 +16,7 @@ If you're not on a platform natively supported by k0s, running under docker is a
 to map that into the k0s container - and of course we'll need to expose the ports required by
 Ambassador for outside access.
 
-Start by running k0s under docker (you might need to [authenticate with the GitHub container Registry](https://docs.github.com/en/packages/guides/pushing-and-pulling-docker-images#authenticating-to-github-container-registry) first) :
+Start by running k0s under docker (you might need to [configure Docker for GitHub](https://docs.github.com/en/packages/guides/configuring-docker-for-use-with-github-packages) first) :
 
 ```sh
 docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:v0.9.1
@@ -77,13 +77,13 @@ and (minimal) configurations. This example only uses your local network - provid
 MetalLB that are addressable on your LAN is suggested if you want to access these services from anywhere on 
 your network.
 
-Now restart your k0s docker container with additional ports and the above config file mapped into it:
+Now stop/remove your k0s container with `docker stop` and `docker rm k0s`, then start it again with additional ports and the above config file mapped into it:
 
 ```sh
 docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <path to conf file>:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.pkg.github.com/k0sproject/k0s/k0s:v0.9.1
 ```
 
-Let it start, and eventually you'll be able to list the Ambassador Services:
+Let it start, and eventually (this can take some time) you'll be able to list the Ambassador Services:
 
 ```shell
 kubectl get services -n ambassador
@@ -97,7 +97,7 @@ Install the Ambassador [edgectl tool](https://www.getambassador.io/docs/latest/t
 and run the login command:
 
 ```shell
-./edgectl login --namespace=ambassador localhost
+edgectl login --namespace=ambassador localhost
 ```
 
 This will open your browser and take you to the [Ambassador Console](https://www.getambassador.io/docs/latest/topics/using/edge-policy-console/) - all ready to go.
@@ -159,7 +159,7 @@ spec:
 Once you've created this, apply it:
 
 ```sh
-> kubectl apply -f petstore.yaml
+kubectl apply -f petstore.yaml
 service/petstore created
 deployment.apps/petstore created
 mapping.getambassador.io/petstore created
@@ -168,7 +168,7 @@ mapping.getambassador.io/petstore created
 and you should be able to curl the service:
 
 ```shell
-> curl -k https://localhost/petstore/api/v3/pet/findByStatus?status=available
+curl -k 'https://localhost/petstore/api/v3/pet/findByStatus?status=available'
 [{"id":1,"category":{"id":2,"name":"Cats"},"name":"Cat 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":2,"category":{"id":2,"name":"Cats"},"name":"Cat 2","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag2"},{"id":2,"name":"tag3"}],"status":"available"},{"id":4,"category":{"id":1,"name":"Dogs"},"name":"Dog 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":7,"category":{"id":4,"name":"Lions"},"name":"Lion 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":8,"category":{"id":4,"name":"Lions"},"name":"Lion 2","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag2"},{"id":2,"name":"tag3"}],"status":"available"},{"id":9,"category":{"id":4,"name":"Lions"},"name":"Lion 3","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag3"},{"id":2,"name":"tag4"}],"status":"available"},{"id":10,"category":{"id":3,"name":"Rabbits"},"name":"Rabbit 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag3"},{"id":2,"name":"tag4"}],"status":"available"}]
 ```
 
