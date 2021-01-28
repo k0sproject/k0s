@@ -239,35 +239,9 @@ func (e *Etcd) setupCerts() error {
 
 // Health-check interface
 func (e *Etcd) Healthy() error {
-	if err := waitForHealthy(e.K0sVars); err != nil {
-		return err
-	}
-	return nil
-}
-
-// waitForHealthy waits until etcd is healthy and returns true upon success. If a timeout occurs, it returns false
-func waitForHealthy(k0sVars constant.CfgVars) error {
-	log := logrus.WithField("component", "etcd")
-	ctx, cancelFunction := context.WithTimeout(context.Background(), 2*time.Minute)
-
-	// clear up context after timeout
-	defer cancelFunction()
-
-	// loop forever, until the context is canceled or until etcd is healthy
-	ticker := time.NewTicker(100 * time.Millisecond)
-	for {
-		select {
-		case <-ticker.C:
-			log.Debug("checking etcd endpoint for health")
-			err := etcd.CheckEtcdReady(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
-			if err != nil {
-				log.Errorf("health-check: etcd might be down: %v", err)
-			} else {
-				log.Debug("etcd is healthy. closing check")
-				return nil
-			}
-		case <-ctx.Done():
-			return fmt.Errorf("etcd health-check timed out")
-		}
-	}
+	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
+	cancel()
+	return err
 }

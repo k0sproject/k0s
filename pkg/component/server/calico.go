@@ -219,7 +219,9 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 
 // Stop stops the calico reconciler
 func (c *Calico) Stop() error {
-	close(c.tickerDone)
+	if c.tickerDone != nil {
+		close(c.tickerDone)
+	}
 	return nil
 }
 

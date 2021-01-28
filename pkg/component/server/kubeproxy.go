@@ -103,7 +103,9 @@ func (k *KubeProxy) Run() error {
 
 // Stop stop the reconcilier
 func (k *KubeProxy) Stop() error {
-	close(k.tickerDone)
+	if k.tickerDone != nil {
+		close(k.tickerDone)
+	}
 	return nil
 }
 

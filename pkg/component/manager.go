@@ -16,8 +16,10 @@ limitations under the License.
 package component
 
 import (
+	"context"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
@@ -74,7 +76,7 @@ func (m *Manager) Init() error {
 }
 
 // Start starts all managed components
-func (m *Manager) Start() error {
+func (m *Manager) Start(ctx context.Context) error {
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
@@ -84,6 +86,9 @@ func (m *Manager) Start() error {
 			return err
 		}
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
+		if err := waitForHealthy(ctx, comp, compName); err != nil {
+			return err
+		}
 	}
 	perfTimer.Output()
 	return nil
@@ -101,4 +106,30 @@ func (m *Manager) Stop() error {
 		}
 	}
 	return ret
+}
+
+// waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false
+func waitForHealthy(ctx context.Context, comp Component, name string) error {
+	ctx, cancelFunction := context.WithTimeout(ctx, 2*time.Minute)
+
+	// clear up context after timeout
+	defer cancelFunction()
+
+	// loop forever, until the context is canceled or until etcd is healthy
+	ticker := time.NewTicker(100 * time.Millisecond)
+	for {
+		select {
+		case <-ticker.C:
+			logrus.Debugf("checking %s for health", name)
+			err := comp.Healthy()
+			if err != nil {
+				logrus.Errorf("health-check: %s might be down: %v", name, err)
+			} else {
+				logrus.Debugf("%s is healthy. closing check", name)
+				return nil
+			}
+		case <-ctx.Done():
+			return fmt.Errorf("%s health-check timed out", name)
+		}
+	}
 }

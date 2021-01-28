@@ -326,7 +326,9 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 
 // Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
-	close(c.tickerDone)
+	if c.tickerDone != nil {
+		close(c.tickerDone)
+	}
 	return nil
 }
 

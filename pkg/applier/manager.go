@@ -87,7 +87,9 @@ func (m *Manager) Run() error {
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
-	m.cancelLeaderElection()
+	if m.cancelLeaderElection != nil {
+		m.cancelLeaderElection()
+	}
 	return nil
 }
 
