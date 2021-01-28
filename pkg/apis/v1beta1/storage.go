@@ -32,7 +32,7 @@ const (
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
 	Type string      `yaml:"type"`
-	Kine *KineConfig `yaml:"kine"`
+	Kine *KineConfig `yaml:"kine,omitempty"`
 	Etcd *EtcdConfig `yaml:"etcd"`
 }
 
