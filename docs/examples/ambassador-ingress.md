@@ -16,16 +16,16 @@ If you're not on a platform natively supported by k0s, running under docker is a
 to map that into the k0s container - and of course we'll need to expose the ports required by
 Ambassador for outside access.
 
-Start by running k0s under docker (you might need to [configure Docker for GitHub](https://docs.github.com/en/packages/guides/configuring-docker-for-use-with-github-packages) first) :
+Start by running k0s under docker :
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:v0.9.1
+docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:latest
 ```
 
-Once running export the default k0s configuration file using
+Once running, export the default k0s configuration file using
 
 ```sh
-docker exec k0s k0s default-config > my-cluster.yaml
+docker exec k0s k0s default-config > k0s.yaml
 ```
 
 and export the cluster config so you can access it with kubectl:
@@ -80,7 +80,7 @@ your network.
 Now stop/remove your k0s container with `docker stop` and `docker rm k0s`, then start it again with additional ports and the above config file mapped into it:
 
 ```sh
-docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <path to conf file>:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.pkg.github.com/k0sproject/k0s/k0s:v0.9.1
+docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <path to k0s.yaml file>:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.io/k0sproject/k0s:latest
 ```
 
 Let it start, and eventually (this can take some time) you'll be able to list the Ambassador Services:
@@ -174,6 +174,9 @@ curl -k 'https://localhost/petstore/api/v3/pet/findByStatus?status=available'
 
 or you can open https://localhost/petstore/ in your browser and change the URL of the specification to
 https://localhost/petstore/api/v3/openapi.json (since we mapped it to the /petstore prefix). 
+
+If you navigate to the Mappings part of the Ambassador Console (opened above) you will see the corresponding 
+PetStore mapping as configured.
 
 ## Summary
 
