@@ -182,3 +182,5 @@ PetStore mapping as configured.
 
 This should get you all set with running Ambassador under k0s. If you're not running under Docker just skip the docker-related
 steps above - but make sure that you have updated the k0s configuration in the same way as above. 
+
+If you're stuck with or have any questions about Ambassador please try the [Ambassador Slack](http://d6e.co/slack) to get help.
