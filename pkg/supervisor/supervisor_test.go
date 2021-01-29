@@ -27,7 +27,7 @@ func TestSupervisor(t *testing.T) {
 			},
 		},
 		SupervisorTest{
-			shouldFail: false,
+			shouldFail: true,
 			proc: Supervisor{
 				Name:    "supervisor-test-non-executable",
 				BinPath: "/tmp",
