@@ -35,8 +35,9 @@ With server subcommand you can setup a single node cluster by running:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flagsAndVals := []string{"server"}
 			cmd.Flags().Visit(func(f *pflag.Flag) {
-				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s", f.Name), f.Value.String())
+				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
 			})
+
 			return setup("server", flagsAndVals)
 		},
 	}

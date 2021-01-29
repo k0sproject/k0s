@@ -23,3 +23,5 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.0/b
        && chmod +x ./kubectl \
        && mv ./kubectl /usr/local/bin/kubectl
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
+# This lets etcd start when running on arm in smokes
+ENV ETCD_UNSUPPORTED_ARCH=arm64
