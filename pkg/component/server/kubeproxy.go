@@ -112,15 +112,17 @@ func (k *KubeProxy) Stop() error {
 func (k *KubeProxy) getConfig() (proxyConfig, error) {
 	config := proxyConfig{
 		// FIXME get this from somewhere
+		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
-		ClusterCIDR:          k.clusterConf.Spec.Network.PodCIDR,
 		Image:                k.clusterConf.Images.KubeProxy.URI(),
+		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
 	}
 
 	return config, nil
 }
 
 type proxyConfig struct {
+	DualStack            bool
 	ControlPlaneEndpoint string
 	ClusterCIDR          string
 	Image                string
@@ -218,6 +220,14 @@ data:
       qps: 0
     clusterCIDR: {{ .ClusterCIDR }}
     configSyncPeriod: 0s
+    {{ if .DualStack }}
+    featureGates:
+      IPv6DualStack: true
+    mode: "ipvs"
+    {{ else }}
+    mode: ""
+    {{ end }}
+    
     conntrack:
       maxPerCore: 0
       min: null
@@ -243,7 +253,6 @@ data:
       udpTimeout: 0s
     kind: KubeProxyConfiguration
     metricsBindAddress: ""
-    mode: ""
     nodePortAddresses: null
     oomScoreAdj: null
     portRange: ""

@@ -24,10 +24,11 @@ import (
 
 // Network defines the network related config options
 type Network struct {
-	PodCIDR     string  `yaml:"podCIDR"`
-	ServiceCIDR string  `yaml:"serviceCIDR"`
-	Provider    string  `yaml:"provider"`
-	Calico      *Calico `yaml:"calico"`
+	PodCIDR     string    `yaml:"podCIDR"`
+	ServiceCIDR string    `yaml:"serviceCIDR"`
+	Provider    string    `yaml:"provider"`
+	Calico      *Calico   `yaml:"calico"`
+	DualStack   DualStack `yaml:"dualStack"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
@@ -99,4 +100,20 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
+}
+
+// BuildServiceCIDR returns actual argument value for service cidr
+func (n *Network) BuildServiceCIDR() string {
+	if n.DualStack.Enabled {
+		return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
+	}
+	return n.ServiceCIDR
+}
+
+// BuildPodCIDR returns actual argument value for pod cidr
+func (n *Network) BuildPodCIDR() string {
+	if n.DualStack.Enabled {
+		return n.PodCIDR + "," + n.DualStack.IPv6PodCIDR
+	}
+	return n.PodCIDR
 }

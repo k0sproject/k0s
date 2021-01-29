@@ -48,7 +48,6 @@ var cmDefaultArgs = map[string]string{
 	"controllers":                     "*,bootstrapsigner,tokencleaner",
 	"enable-hostpath-provisioner":     "true",
 	"leader-elect":                    "true",
-	"node-cidr-mask-size":             "24",
 	"use-service-account-credentials": "true",
 }
 
@@ -78,22 +77,30 @@ func (a *ControllerManager) Run() error {
 		"authorization-kubeconfig":         ccmAuthConf,
 		"kubeconfig":                       ccmAuthConf,
 		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"cluster-cidr":                     a.ClusterConfig.Spec.Network.PodCIDR,
 		"cluster-signing-cert-file":        path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"cluster-signing-key-file":         path.Join(a.K0sVars.CertRootDir, "ca.key"),
 		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"root-ca-file":                     path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"cluster-cidr":                     a.ClusterConfig.Spec.Network.BuildPodCIDR(),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(),
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 	}
+
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
 		if args[name] != "" && name != "profiling" {
 			return fmt.Errorf("cannot override kube-controller-manager flag: %s", name)
 		}
 		args[name] = value
 	}
+	if a.ClusterConfig.Spec.Network.DualStack.Enabled {
+		args["node-cidr-mask-size-ipv6"] = "110"
+		args["node-cidr-mask-size-ipv4"] = "24"
+	} else {
+		args["node-cidr-mask-size"] = "24"
+	}
+	a.ClusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
 	for name, value := range cmDefaultArgs {
 		if args[name] == "" {
 			args[name] = value

@@ -83,10 +83,9 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
 	clientCAFile := filepath.Join(k.k0sVars.CertRootDir, "ca.crt")
 	volumePluginDir := k.k0sVars.KubeletVolumePluginDir
-	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
-
+	defaultProfile := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir, k.clusterSpec.Network.DualStack.Enabled)
 	winClientCAFile := k.k0sVars.WindowsCertRootDir + "\\ca.crt"
-	winDefaultProfile := getDefaultProfile(dnsAddress, winClientCAFile, volumePluginDir)
+	winDefaultProfile := getDefaultProfile(dnsAddress, winClientCAFile, volumePluginDir, k.clusterSpec.Network.DualStack.Enabled)
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
@@ -98,7 +97,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 		formatProfileName("default-windows"),
 	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir)
+		profileConfig := getDefaultProfile(dnsAddress, clientCAFile, volumePluginDir, false) // Do not add dualstack feature gate to the custom profiles
 		merged, err := mergeProfiles(&profileConfig, profile.Values)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
@@ -170,12 +169,11 @@ func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []stri
 	return tw.WriteToBuffer(w)
 }
 
-func getDefaultProfile(dnsAddress string, clientCAFile string, volumePluginDir string) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string, clientCAFile string, volumePluginDir string, dualStack bool) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
-	// - another good options is to use "k8s.io/kubelet/config/v1beta1" package directly
-	return unstructuredYamlObject{
+	profile := unstructuredYamlObject{
 		"apiVersion": "kubelet.config.k8s.io/v1beta1",
 		"kind":       "KubeletConfiguration",
 		"authentication": map[string]interface{}{
@@ -213,6 +211,12 @@ func getDefaultProfile(dnsAddress string, clientCAFile string, volumePluginDir s
 		"volumePluginDir":      volumePluginDir,
 		"failSwapOn":           false,
 	}
+	if dualStack {
+		profile["featureGates"] = map[string]bool{
+			"IPv6DualStack": true,
+		}
+	}
+	return profile
 }
 
 const kubeletConfigsManifestTemplate = `---
