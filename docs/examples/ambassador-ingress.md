@@ -77,7 +77,7 @@ and (minimal) configurations. This example only uses your local network - provid
 MetalLB that are addressable on your LAN is suggested if you want to access these services from anywhere on 
 your network.
 
-Now stop/remove your k0s container with `docker stop` and `docker rm k0s`, then start it again with additional ports and the above config file mapped into it:
+Now stop/remove your k0s container with `docker stop k0s` and `docker rm k0s`, then start it again with additional ports and the above config file mapped into it:
 
 ```sh
 docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <path to k0s.yaml file>:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.io/k0sproject/k0s:latest
