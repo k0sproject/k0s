@@ -52,12 +52,13 @@ The following pre-requisites are required in order to configure an HA control pl
  
 ### Requirements
 ##### Load Balancer
-A load balancer with a single external IP should be configured as the IP gateway for the controllers.
+A load balancer with a single external address should be configured as the IP gateway for the controllers.
 The load balancer should allow traffic to each controller on the following ports:
 
 - 6443
 - 8132
 - 8133
+- 9443
 
 ##### Cluster configuration
 On each controller node, a k0s.yaml configuration file should be configured.

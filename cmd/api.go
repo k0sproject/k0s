@@ -209,7 +209,7 @@ users:
 				Token     string
 				Namespace string
 			}{
-				Server:    clusterConfig.Spec.API.APIAddress(),
+				Server:    clusterConfig.Spec.API.APIAddressURL(),
 				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
 				Token:     string(secretWithToken.Data["token"]),
 				Namespace: string(secretWithToken.Data["namespace"]),

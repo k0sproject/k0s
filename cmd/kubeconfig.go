@@ -136,7 +136,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
 				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
 				User:       username,
-				JoinURL:    clusterConfig.Spec.API.APIAddress(),
+				JoinURL:    clusterConfig.Spec.API.APIAddressURL(),
 			}
 
 			var buf bytes.Buffer

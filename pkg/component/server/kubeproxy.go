@@ -112,7 +112,7 @@ func (k *KubeProxy) Stop() error {
 func (k *KubeProxy) getConfig() (proxyConfig, error) {
 	config := proxyConfig{
 		// FIXME get this from somewhere
-		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddress(),
+		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
 		ClusterCIDR:          k.clusterConf.Spec.Network.PodCIDR,
 		Image:                k.clusterConf.Images.KubeProxy.URI(),
 	}

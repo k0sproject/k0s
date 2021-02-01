@@ -181,9 +181,10 @@ func startServer(token string) error {
 		Storage:       storageBackend,
 	})
 	componentManager.Add(&server.Konnectivity{
-		ClusterConfig: clusterConfig,
-		LogLevel:      logging["konnectivity-server"],
-		K0sVars:       k0sVars,
+		ClusterConfig:     clusterConfig,
+		LogLevel:          logging["konnectivity-server"],
+		K0sVars:           k0sVars,
+		KubeClientFactory: adminClientFactory,
 	})
 	componentManager.Add(&server.Scheduler{
 		ClusterConfig: clusterConfig,

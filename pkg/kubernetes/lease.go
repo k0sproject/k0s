@@ -268,10 +268,10 @@ func (l *LeaseLock) CountValidLeaseHolders(ctx context.Context) int {
 		lease := list.Items[i]
 		leaseDurationSeconds := lease.Spec.LeaseDurationSeconds
 		leaseDuration := time.Duration(*leaseDurationSeconds) * time.Second
-		lastRenewd := lease.Spec.RenewTime
-		expires := lastRenewd.Add(leaseDuration)
+		lastRenewed := lease.Spec.RenewTime
+		expires := lastRenewed.Add(leaseDuration).Add(l.Config.RenewDeadline)
 
-		if expires.After(lastRenewd.Time) {
+		if expires.After(time.Now()) {
 			logrus.Debugf("lease for %v still valid, adding to valid lease count", *lease.Spec.HolderIdentity)
 			validLeases = append(validLeases, lease)
 		}

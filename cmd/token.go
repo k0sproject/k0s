@@ -156,7 +156,7 @@ func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role stri
 	}
 	if role == "worker" {
 		data.User = "kubelet-bootstrap"
-		data.JoinURL = clusterConfig.Spec.API.APIAddress()
+		data.JoinURL = clusterConfig.Spec.API.APIAddressURL()
 	} else {
 		data.User = "controller-bootstrap"
 		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()

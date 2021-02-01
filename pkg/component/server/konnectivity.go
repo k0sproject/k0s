@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -47,6 +48,8 @@ type Konnectivity struct {
 	uid           int
 
 	// used for lease lock
+	KubeClientFactory k8sutil.ClientFactory
+
 	serverCount int
 	leaseLock   *kubernetes.LeaseLock
 	done        chan bool
@@ -126,6 +129,9 @@ func (k *Konnectivity) Run() error {
 
 // Stop stops
 func (k *Konnectivity) Stop() error {
+	if k.ClusterConfig.Spec.API.ExternalAddress != "" {
+		k.stopLease()
+	}
 	return k.supervisor.Stop()
 }
 
@@ -145,7 +151,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
-			APIAddress: k.ClusterConfig.Spec.API.ExternalAddress,
+			APIAddress: k.ClusterConfig.Spec.API.APIAddress(),
 			Image:      k.ClusterConfig.Images.Konnectivity.URI(),
 		},
 		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
@@ -167,28 +173,27 @@ func (k *Konnectivity) runLease() {
 			logrus.Error(err)
 		}
 		k.leaseLock = leaseLock
-		logrus.Debugf("found %v lease holders", k.serverCount)
-
 		ctx := context.Background()
-		defer func() {
-			k.done <- true
-		}()
 		for {
-			k.leaseLock.LeaseRunner(ctx)
+			select {
+			case <-k.done:
+				logrus.Debugf("stopping lease watcher for %v", serviceName)
+				return
+			default:
+				k.leaseLock.LeaseRunner(ctx)
+			}
 		}
 	}()
 
 	go func() {
 		logrus.Infof("watching %v lease holders", serviceName)
-		ticker := time.NewTicker(10 * time.Second)
+		ticker := time.NewTicker(30 * time.Second)
 		ctx := context.Background()
 
-		defer func() {
-			k.done <- true
-		}()
 		for {
 			select {
 			case <-k.done:
+				logrus.Debugf("stopping lease holder count for %v", serviceName)
 				return
 			case <-ticker.C:
 				observedLeaseHolders := k.leaseLock.CountValidLeaseHolders(ctx)
@@ -197,11 +202,8 @@ func (k *Konnectivity) runLease() {
 					k.serverCount = observedLeaseHolders
 
 					// restarting service
-					if err := k.Stop(); err != nil {
-						logrus.Errorf("error stopping %v service: %v", serviceName, err)
-					}
-					if err := k.Run(); err != nil {
-						logrus.Errorf("error starting %v service: %v", serviceName, err)
+					if err := k.restartService(); err != nil {
+						logrus.Errorf("failed to restart %v: %v", serviceName, err)
 					}
 				}
 			}
@@ -211,7 +213,7 @@ func (k *Konnectivity) runLease() {
 }
 
 func (k *Konnectivity) newLeaseLock() (*kubernetes.LeaseLock, error) {
-	client, err := kubernetes.NewClient(k.K0sVars.AdminKubeConfigPath)
+	client, err := k.KubeClientFactory.GetClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lease client: %v", err)
 	}
@@ -237,6 +239,21 @@ func (k *Konnectivity) newLeaseLock() (*kubernetes.LeaseLock, error) {
 		Client: client.CoordinationV1(),
 		Log:    log,
 	}, nil
+}
+
+func (k *Konnectivity) stopLease() {
+	k.done <- true
+	close(k.done)
+}
+
+func (k *Konnectivity) restartService() error {
+	if err := k.Stop(); err != nil {
+		return fmt.Errorf("failed to stop %v: %v", serviceName, err)
+	}
+	if err := k.Run(); err != nil {
+		return fmt.Errorf("failed to start %v: %v", serviceName, err)
+	}
+	return nil
 }
 
 const konnectivityAgentTemplate = `
