@@ -34,8 +34,8 @@ func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err er
 	}
 
 	if err != nil {
-		logrus.Errorf("Failed to read cluster config: %s", err.Error())
-		logrus.Error("THINGS MIGHT NOT WORK PROPERLY AS WE'RE GONNA USE DEFAULTS")
+		logrus.Warnf("Failed to read cluster config: %s", err.Error())
+		logrus.Info("Using default config")
 		clusterConfig = config.DefaultClusterConfig()
 	}
 	// validate
