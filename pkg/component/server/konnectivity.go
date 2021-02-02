@@ -52,7 +52,8 @@ type Konnectivity struct {
 
 	serverCount int
 	leaseLock   *kubernetes.LeaseLock
-	done        chan bool
+	leaseCtx    context.Context
+	leaseCancel context.CancelFunc
 }
 
 // Init ...
@@ -164,39 +165,36 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 }
 
 func (k *Konnectivity) runLease() {
-	k.done = make(chan bool)
-
-	go func() {
+	k.leaseCtx, k.leaseCancel = context.WithCancel(context.Background())
+	go func(ctx context.Context) {
 		logrus.Infof("starting %v lease watcher", serviceName)
 		leaseLock, err := k.newLeaseLock()
 		if err != nil {
 			logrus.Error(err)
 		}
 		k.leaseLock = leaseLock
-		ctx := context.Background()
 		for {
 			select {
-			case <-k.done:
+			case <-ctx.Done():
 				logrus.Debugf("stopping lease watcher for %v", serviceName)
 				return
 			default:
-				k.leaseLock.LeaseRunner(ctx)
+				k.leaseLock.LeaseRunner(context.Background())
 			}
 		}
-	}()
+	}(k.leaseCtx)
 
-	go func() {
+	go func(ctx context.Context) {
 		logrus.Infof("watching %v lease holders", serviceName)
 		ticker := time.NewTicker(30 * time.Second)
-		ctx := context.Background()
-
+		defer ticker.Stop()
 		for {
 			select {
-			case <-k.done:
+			case <-ctx.Done():
 				logrus.Debugf("stopping lease holder count for %v", serviceName)
 				return
 			case <-ticker.C:
-				observedLeaseHolders := k.leaseLock.CountValidLeaseHolders(ctx)
+				observedLeaseHolders := k.leaseLock.CountValidLeaseHolders(context.Background())
 				if observedLeaseHolders != k.serverCount {
 					logrus.Debugf("change in %v lease holders detected. refreshing service.", serviceName)
 					k.serverCount = observedLeaseHolders
@@ -209,7 +207,7 @@ func (k *Konnectivity) runLease() {
 			}
 			logrus.Debugf("found %v lease holders for %v", k.serverCount, serviceName)
 		}
-	}()
+	}(k.leaseCtx)
 }
 
 func (k *Konnectivity) newLeaseLock() (*kubernetes.LeaseLock, error) {
@@ -242,8 +240,9 @@ func (k *Konnectivity) newLeaseLock() (*kubernetes.LeaseLock, error) {
 }
 
 func (k *Konnectivity) stopLease() {
-	k.done <- true
-	close(k.done)
+	if k.leaseCancel != nil {
+		k.leaseCancel()
+	}
 }
 
 func (k *Konnectivity) restartService() error {
