@@ -30,7 +30,7 @@ check-network-vm: bin/sonobuoy
 		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
 TIMEOUT ?= 4m
-smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-singlenode check-install
+smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-singlenode check-install check-dualstack
 
 check-byocri: TIMEOUT=5m
 

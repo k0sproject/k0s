@@ -52,6 +52,12 @@ func Test_KubeletConfig(t *testing.T) {
 			requireRoleBinding(t, manifestYamls[3])
 		})
 	})
+	t.Run("default_profile_must_have_feature_gates_if_dualstack_setup", func(t *testing.T) {
+		profile := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, true)
+		require.Equal(t, map[string]bool{
+			"IPv6DualStack": true,
+		}, profile["featureGates"])
+	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
 		k := defaultConfigWithUserProvidedProfiles(t)
 		buf, err := k.run(dnsAddr)
@@ -84,12 +90,12 @@ func Test_KubeletConfig(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal([]byte(manifestYamls[3]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 

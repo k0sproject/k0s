@@ -20,3 +20,12 @@ func (ds DualStack) EnableDualStackFeatureGate(args map[string]string) {
 		args["feature-gates"] = fg
 	}
 }
+
+// DefaultDualStack builds default values
+func DefaultDualStack() DualStack {
+	return DualStack{
+		Enabled:         false,
+		IPv6PodCIDR:     "fd00::/108",
+		IPv6ServiceCIDR: "fd01::/108",
+	}
+}

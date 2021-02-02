@@ -38,6 +38,7 @@ func DefaultNetwork() *Network {
 		ServiceCIDR: "10.96.0.0/12",
 		Provider:    "calico",
 		Calico:      DefaultCalico(),
+		DualStack:   DefaultDualStack(),
 	}
 }
 
