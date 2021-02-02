@@ -2,9 +2,9 @@ package v1beta1
 
 // DualStack defines network configuration for ipv4\ipv6 mixed cluster setup
 type DualStack struct {
-	Enabled         bool   `yaml:"enabled"`
-	IPv6PodCIDR     string `yaml:"IPv6podCIDR"`
-	IPv6ServiceCIDR string `yaml:"IPv6serviceCIDR"`
+	Enabled         bool   `yaml:"enabled,omitempty"`
+	IPv6PodCIDR     string `yaml:"IPv6podCIDR,omitempty"`
+	IPv6ServiceCIDR string `yaml:"IPv6serviceCIDR,omitempty"`
 }
 
 // EnableDualStackFeatureGate adds ipv6 feature gate to the given args colllection
@@ -23,9 +23,5 @@ func (ds DualStack) EnableDualStackFeatureGate(args map[string]string) {
 
 // DefaultDualStack builds default values
 func DefaultDualStack() DualStack {
-	return DualStack{
-		Enabled:         false,
-		IPv6PodCIDR:     "fd00::/108",
-		IPv6ServiceCIDR: "fd01::/108",
-	}
+	return DualStack{}
 }

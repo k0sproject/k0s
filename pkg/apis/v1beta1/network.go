@@ -28,7 +28,7 @@ type Network struct {
 	ServiceCIDR string    `yaml:"serviceCIDR"`
 	Provider    string    `yaml:"provider"`
 	Calico      *Calico   `yaml:"calico"`
-	DualStack   DualStack `yaml:"dualStack"`
+	DualStack   DualStack `yaml:"dualStack,omitempty"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
@@ -48,7 +48,7 @@ func (n *Network) Validate() []error {
 	if n.Provider != "calico" && n.Provider != "custom" {
 		errors = append(errors, fmt.Errorf("unsupported network provider: %s", n.Provider))
 	}
-	if n.DualStack.Enabled && n.Calico.Mode != "bird" {
+	if n.Provider == "calico" && n.DualStack.Enabled && n.Calico.Mode != "bird" {
 		errors = append(errors, fmt.Errorf("network dual stack is supported only for calico mode `bird`"))
 	}
 	return errors
