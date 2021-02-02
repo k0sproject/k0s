@@ -25,6 +25,7 @@ nav:
       - Using Cloud Providers: cloud-providers.md
       - Create a cluster with Ansible: examples/ansible-playbook.md
       - Running k0s as a service: install.md
+      - IPv4\IPv6 dual-stack networking: dual-stack.md
   - Integrations:
       - Running k0s with Traefik: examples/traefik-ingress.md
       - Running k0s with Ambassador: examples/ambassador-ingress.md

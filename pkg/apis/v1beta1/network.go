@@ -47,6 +47,9 @@ func (n *Network) Validate() []error {
 	if n.Provider != "calico" && n.Provider != "custom" {
 		errors = append(errors, fmt.Errorf("unsupported network provider: %s", n.Provider))
 	}
+	if n.DualStack.Enabled && n.Calico.Mode != "bird" {
+		errors = append(errors, fmt.Errorf("network dual stack is supported only for calico mode `bird`"))
+	}
 	return errors
 }
 
