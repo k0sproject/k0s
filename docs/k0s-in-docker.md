@@ -4,7 +4,7 @@ We publish a k0s container image with every release. By default, we run both con
 
 You can run your own k0s-in-docker easily with:
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:latest
 ```
 Just grab the kubeconfig file with `docker exec k0s cat /var/lib/k0s/pki/admin.conf` and paste e.g. into [Lens](https://github.com/lensapp/lens/).
 
@@ -32,14 +32,25 @@ version: "3.9"
 services:
   k0s:
     container_name: k0s
-    image: docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+    image: docker.io/k0sproject/k0s:latest
+    command: k0s server --config=/etc/k0s/config.yaml --enable-worker
     hostname: k0s
     privileged: true
     volumes:
       - "/var/lib/k0s"
+    tmpfs:
+      - /run
+      - /var/run
     ports:
       - "6443:6443"
     network_mode: "bridge"
+    environment:
+      K0S_CONFIG: |-
+        apiVersion: k0s.k0sproject.io/v1beta1
+        kind: Cluster
+        metadata:
+          name: k0s
+        # Any additional configuration goes here ...
 ```
 
 ## Known limitations
