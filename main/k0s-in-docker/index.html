@@ -953,7 +953,7 @@
                 <h1 id="k0s-in-docker">k0s in Docker<a class="headerlink" href="#k0s-in-docker" title="Permanent link">#</a></h1>
 <p>We publish a k0s container image with every release. By default, we run both controller and worker in the same container to provide an easy local testing "cluster".</p>
 <p>You can run your own k0s-in-docker easily with:
-<div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.pkg.github.com/k0sproject/k0s/k0s:&lt;version&gt;
+<div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.io/k0sproject/k0s:latest
 </code></pre></div>
 Just grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste e.g. into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
 <h2 id="running-workers">Running workers<a class="headerlink" href="#running-workers" title="Permanent link">#</a></h2>
@@ -971,14 +971,25 @@ Just grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/ad
 <span class="nt">services</span><span class="p">:</span>
   <span class="nt">k0s</span><span class="p">:</span>
     <span class="nt">container_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.pkg.github.com/k0sproject/k0s/k0s:&lt;version&gt;</span>
+    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:latest</span>
+    <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s server --config=/etc/k0s/config.yaml --enable-worker</span>
     <span class="nt">hostname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
     <span class="nt">privileged</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
     <span class="nt">volumes</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="s">&quot;/var/lib/k0s&quot;</span>
+    <span class="nt">tmpfs</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">/run</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">/var/run</span>
     <span class="nt">ports</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="s">&quot;6443:6443&quot;</span>
     <span class="nt">network_mode</span><span class="p">:</span> <span class="s">&quot;bridge&quot;</span>
+    <span class="nt">environment</span><span class="p">:</span>
+      <span class="nt">K0S_CONFIG</span><span class="p">:</span> <span class="p p-Indicator">|-</span>
+        <span class="no">apiVersion: k0s.k0sproject.io/v1beta1</span>
+        <span class="no">kind: Cluster</span>
+        <span class="no">metadata:</span>
+          <span class="no">name: k0s</span>
+        <span class="no"># Any additional configuration goes here ...</span>
 </code></pre></div></p>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
