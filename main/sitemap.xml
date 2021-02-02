@@ -44,10 +44,6 @@
      <lastmod>2021-02-02</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
-     <loc>https://docs.k0sproject.io/examples/traefik-ingress/</loc>
-     <lastmod>2021-02-02</lastmod>
-     <changefreq>daily</changefreq>
-    </url><url>
      <loc>https://docs.k0sproject.io/examples/ansible-playbook/</loc>
      <lastmod>2021-02-02</lastmod>
      <changefreq>daily</changefreq>
@@ -56,7 +52,67 @@
      <lastmod>2021-02-02</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
+     <loc>https://docs.k0sproject.io/examples/traefik-ingress/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/examples/ambassador-ingress/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
      <loc>https://docs.k0sproject.io/cli/k0s/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_api/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_completion/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_default-config/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_docs/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_etcd/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_install/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_kubeconfig/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_server/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_status/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_token/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_validate/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_version/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/cli/k0s_worker/</loc>
      <lastmod>2021-02-02</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
@@ -81,6 +137,10 @@
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/contributors/testing/</loc>
+     <lastmod>2021-02-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
+     <loc>https://docs.k0sproject.io/internal/publishing_docs_using_mkdocs/</loc>
      <lastmod>2021-02-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
