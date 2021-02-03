@@ -169,16 +169,26 @@ spec:
             # chosen from this range. Changing this value after installation will have
             # no effect. This should fall within `--cluster-cidr`.
             - name: CALICO_IPV4POOL_CIDR
-              value: "{{ .ClusterCIDR }}"
+              value: "{{ .ClusterCIDRIPv4 }}"
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
             # Set Felix endpoint to host default action to ACCEPT.
             - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
               value: "ACCEPT"
-            # Disable IPv6 on Kubernetes.
+            {{ if .DualStack  }}
+            - name: CALICO_IPV6POOL_NAT_OUTGOING
+              value: "true"
+            - name: FELIX_IPV6SUPPORT
+              value: "true"
+            - name: IP6
+              value: "autodetect"
+            - name: CALICO_IPV6POOL_CIDR
+              value: "{{ .ClusterCIDRIPv6 }}"
+            {{ else }}
             - name: FELIX_IPV6SUPPORT
               value: "false"
+            {{ end }}
             # Set Felix logging to "info"
             - name: FELIX_LOGSEVERITYSCREEN
               value: "info"

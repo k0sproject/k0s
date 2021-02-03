@@ -96,7 +96,7 @@ func (a *APIServer) Run() error {
 		"requestheader-allowed-names":      "front-proxy-client",
 		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"service-account-key-file":         path.Join(a.K0sVars.CertRootDir, "sa.pub"),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.ServiceCIDR,
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(),
 		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
 		"egress-selector-config-file":      path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
@@ -114,6 +114,7 @@ func (a *APIServer) Run() error {
 		}
 		args[name] = value
 	}
+	a.ClusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
 
 	for name, value := range apiDefaultArgs {
 		if args[name] == "" {

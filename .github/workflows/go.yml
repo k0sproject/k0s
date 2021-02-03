@@ -300,6 +300,37 @@ jobs:
           path: |
             /tmp/*.log
 
+  smoketest-dualstack:
+    name: Smoke test for IPv6 dualstack
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Cache compiled binary for smoke testing
+        uses: actions/cache@v2
+        id: restore-compiled-binary
+        with:
+          path: |
+            k0s
+          key: build-${{env.cachePrefix}}
+
+      - name: Run smoke test .
+        run: make -C inttest check-dualstack
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
