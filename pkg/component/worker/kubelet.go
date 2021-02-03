@@ -92,6 +92,7 @@ func (k *Kubelet) Run() error {
 		"--kube-reserved-cgroup": "system.slice",
 		"--runtime-cgroups":      "/system.slice/containerd.service",
 		"--kubelet-cgroups":      "/system.slice/containerd.service",
+		"--cert-dir":             filepath.Join(k.dataDir, "pki"),
 	}
 
 	if runtime.GOOS == "windows" {
