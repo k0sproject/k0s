@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/contributors/github_workflow/">
+        <link rel="canonical" href="https://docs.k0sproject.io/dual-stack/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,14 +19,14 @@
     
     
       
-        <title>Workflow - k0s Documentation</title>
+        <title>IPv4\IPv6 dual-stack networking - k0s Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.406af9ae.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.406af9ae.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ec60dfa4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ec60dfa4.min.css">
         
       
     
@@ -41,7 +41,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#github-workflow" class="md-skip">
+        <a href="#dual-stack-networking" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
   <nav class="md-header-nav md-grid" aria-label="Header">
     <a href="https://docs.k0sproject.io" title="k0s Documentation" class="md-header-nav__button md-logo" aria-label="k0s Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header-nav__button md-icon" for="__drawer">
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Workflow
+              IPv4\IPv6 dual-stack networking
             
           </span>
         </div>
@@ -198,7 +198,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="https://docs.k0sproject.io" title="k0s Documentation" class="md-nav__button md-logo" aria-label="k0s Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     k0s Documentation
@@ -225,7 +225,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Overview
     </a>
   </li>
@@ -258,7 +258,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../create-cluster/" class="md-nav__link">
+    <a href="../create-cluster/" class="md-nav__link">
       Quick Start Guide
     </a>
   </li>
@@ -270,7 +270,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
+    <a href="../k0s-in-docker/" class="md-nav__link">
       Run in Docker
     </a>
   </li>
@@ -282,7 +282,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-single-node/" class="md-nav__link">
+    <a href="../k0s-single-node/" class="md-nav__link">
       Single node set-up
     </a>
   </li>
@@ -294,7 +294,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../experimental-windows/" class="md-nav__link">
+    <a href="../experimental-windows/" class="md-nav__link">
       K0s in Windows (experimental)
     </a>
   </li>
@@ -332,7 +332,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../architecture/" class="md-nav__link">
+    <a href="../architecture/" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -344,7 +344,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../networking/" class="md-nav__link">
+    <a href="../networking/" class="md-nav__link">
       Networking
     </a>
   </li>
@@ -359,10 +359,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -382,7 +384,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration/" class="md-nav__link">
+    <a href="../configuration/" class="md-nav__link">
       Configuration Options
     </a>
   </li>
@@ -394,7 +396,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../containerd_config/" class="md-nav__link">
+    <a href="../containerd_config/" class="md-nav__link">
       Configuring Containerd
     </a>
   </li>
@@ -406,7 +408,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../custom-cri-runtime/" class="md-nav__link">
+    <a href="../custom-cri-runtime/" class="md-nav__link">
       Using A Custom CRI
     </a>
   </li>
@@ -418,7 +420,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cloud-providers/" class="md-nav__link">
+    <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
   </li>
@@ -430,7 +432,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ansible-playbook/" class="md-nav__link">
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
       Create a cluster with Ansible
     </a>
   </li>
@@ -442,7 +444,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../install/" class="md-nav__link">
+    <a href="../install/" class="md-nav__link">
       Running k0s as a service
     </a>
   </li>
@@ -452,11 +454,76 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../dual-stack/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        IPv4\IPv6 dual-stack networking
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       IPv4\IPv6 dual-stack networking
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cni-settings" class="md-nav__link">
+    CNI settings
+  </a>
+  
+    <nav class="md-nav" aria-label="CNI settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calico-settings" class="md-nav__link">
+    Calico settings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-cni" class="md-nav__link">
+    External CNI
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-materials" class="md-nav__link">
+    Additional materials
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -492,7 +559,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/traefik-ingress/" class="md-nav__link">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
       Running k0s with Traefik
     </a>
   </li>
@@ -504,7 +571,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
       Running k0s with Ambassador
     </a>
   </li>
@@ -542,7 +609,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s/" class="md-nav__link">
+    <a href="../cli/k0s/" class="md-nav__link">
       General
     </a>
   </li>
@@ -554,7 +621,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_api/" class="md-nav__link">
+    <a href="../cli/k0s_api/" class="md-nav__link">
       k0s api
     </a>
   </li>
@@ -566,7 +633,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_completion/" class="md-nav__link">
+    <a href="../cli/k0s_completion/" class="md-nav__link">
       k0s completion
     </a>
   </li>
@@ -578,7 +645,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_default-config/" class="md-nav__link">
+    <a href="../cli/k0s_default-config/" class="md-nav__link">
       k0s default-config
     </a>
   </li>
@@ -590,7 +657,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_docs/" class="md-nav__link">
+    <a href="../cli/k0s_docs/" class="md-nav__link">
       k0s docs
     </a>
   </li>
@@ -602,7 +669,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_etcd/" class="md-nav__link">
+    <a href="../cli/k0s_etcd/" class="md-nav__link">
       k0s etcd
     </a>
   </li>
@@ -614,7 +681,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_install/" class="md-nav__link">
+    <a href="../cli/k0s_install/" class="md-nav__link">
       k0s install
     </a>
   </li>
@@ -626,7 +693,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_kubeconfig/" class="md-nav__link">
+    <a href="../cli/k0s_kubeconfig/" class="md-nav__link">
       k0s kubeconfig
     </a>
   </li>
@@ -638,7 +705,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_server/" class="md-nav__link">
+    <a href="../cli/k0s_server/" class="md-nav__link">
       k0s server
     </a>
   </li>
@@ -650,7 +717,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_status/" class="md-nav__link">
+    <a href="../cli/k0s_status/" class="md-nav__link">
       k0s status
     </a>
   </li>
@@ -662,7 +729,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_token/" class="md-nav__link">
+    <a href="../cli/k0s_token/" class="md-nav__link">
       k0s token
     </a>
   </li>
@@ -674,7 +741,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_validate/" class="md-nav__link">
+    <a href="../cli/k0s_validate/" class="md-nav__link">
       k0s validate
     </a>
   </li>
@@ -686,7 +753,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_version/" class="md-nav__link">
+    <a href="../cli/k0s_version/" class="md-nav__link">
       k0s version
     </a>
   </li>
@@ -698,7 +765,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_worker/" class="md-nav__link">
+    <a href="../cli/k0s_worker/" class="md-nav__link">
       k0s worker
     </a>
   </li>
@@ -715,7 +782,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../manifests/" class="md-nav__link">
+    <a href="../manifests/" class="md-nav__link">
       Deploying Manifests
     </a>
   </li>
@@ -727,7 +794,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../FAQ/" class="md-nav__link">
+    <a href="../FAQ/" class="md-nav__link">
       FAQ
     </a>
   </li>
@@ -739,7 +806,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../troubleshooting/" class="md-nav__link">
+    <a href="../troubleshooting/" class="md-nav__link">
       Troubleshooting
     </a>
   </li>
@@ -749,12 +816,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
     
     <label class="md-nav__link" for="nav-10">
       Contributing
@@ -774,7 +839,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../overview/" class="md-nav__link">
+    <a href="../contributors/overview/" class="md-nav__link">
       Overview
     </a>
   </li>
@@ -784,104 +849,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Workflow
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../contributors/github_workflow/" class="md-nav__link">
       Workflow
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#fork-the-project" class="md-nav__link">
-    Fork The Project
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-the-forked-remote" class="md-nav__link">
-    Adding the Forked Remote
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-rebase-your-feature-branch" class="md-nav__link">
-    Create &amp; Rebase Your Feature Branch
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#commit-push" class="md-nav__link">
-    Commit &amp; Push
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-a-pull-request" class="md-nav__link">
-    Open a Pull Request
-  </a>
-  
-    <nav class="md-nav" aria-label="Open a Pull Request">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#get-a-code-review" class="md-nav__link">
-    Get a code review
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#squashing-commits" class="md-nav__link">
-    Squashing Commits
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#push-your-final-changes" class="md-nav__link">
-    Push Your Final Changes
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -891,7 +863,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../testing/" class="md-nav__link">
+    <a href="../contributors/testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -903,7 +875,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+    <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
       Docs
     </a>
   </li>
@@ -943,64 +915,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fork-the-project" class="md-nav__link">
-    Fork The Project
+  <a href="#cni-settings" class="md-nav__link">
+    CNI settings
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-the-forked-remote" class="md-nav__link">
-    Adding the Forked Remote
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-rebase-your-feature-branch" class="md-nav__link">
-    Create &amp; Rebase Your Feature Branch
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#commit-push" class="md-nav__link">
-    Commit &amp; Push
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-a-pull-request" class="md-nav__link">
-    Open a Pull Request
-  </a>
-  
-    <nav class="md-nav" aria-label="Open a Pull Request">
+    <nav class="md-nav" aria-label="CNI settings">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-a-code-review" class="md-nav__link">
-    Get a code review
+  <a href="#calico-settings" class="md-nav__link">
+    Calico settings
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#squashing-commits" class="md-nav__link">
-    Squashing Commits
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#push-your-final-changes" class="md-nav__link">
-    Push Your Final Changes
+  <a href="#external-cni" class="md-nav__link">
+    External CNI
   </a>
   
 </li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-materials" class="md-nav__link">
+    Additional materials
+  </a>
   
 </li>
       
@@ -1018,117 +962,32 @@
               
                 
                 
-                <h1 id="github-workflow">Github Workflow<a class="headerlink" href="#github-workflow" title="Permanent link">#</a></h1>
-<!-- TOC -->
-<ul>
-<li><a href="#fork-the-project">Fork The Project</a></li>
-<li><a href="#adding-the-forked-remote">Adding the Forked Remote</a></li>
-<li><a href="#create--rebase-your-feature-branch">Create &amp; Rebase Your Feature Branch</a></li>
-<li><a href="#commit--push">Commit &amp; Push</a></li>
-<li><a href="#open-a-pull-request">Open a Pull Request</a></li>
-<li><a href="#get-a-code-review">Get a code review</a></li>
-<li><a href="#squash-commits">Squash commits</a></li>
-<li><a href="#push-your-final-changes">Push Your Final Changes</a></li>
-</ul>
-<!-- /TOC -->
-<p>This guide assumes you have already cloned the upstream repo to your system via git clone, or via <code>go get github.com/k0sproject/k0s</code>.</p>
-<h2 id="fork-the-project">Fork The Project<a class="headerlink" href="#fork-the-project" title="Permanent link">#</a></h2>
-<ol>
-<li>Go to http://github.com/k0sproject/k0s</li>
-<li>On the top, right-hand side, click on "fork" and select your username for the fork destination.</li>
-</ol>
-<h2 id="adding-the-forked-remote">Adding the Forked Remote<a class="headerlink" href="#adding-the-forked-remote" title="Permanent link">#</a></h2>
-<p><div class="highlight"><pre><span></span><code>export GITHUB_USER={ your github&#39;s username }
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>cd $WORKDIR/k0s
-git remote add $GITHUB_USER git@github.com:${GITHUB_USER}/k0s.git
-
-# Prevent push to Upstream
-git remote set-url --push origin no_push
-
-# Set your fork remote as a default push target
-git push --set-upstream $GITHUB_USER main
+                <h1 id="dual-stack-networking">Dual-stack networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
+<p>To enable dual-stack networking use the following k0s.yaml as an example.
+This settings will set up bundled calico cni, enable feature gates for the Kubernetes components and set up kubernetes-controller-manager.
+<div class="highlight"><pre><span></span><code>spec:
+  network:
+    podCIDR: &quot;10.244.0.0/16&quot;
+    serviceCIDR: &quot;10.96.0.0/12&quot;
+    calico:
+      mode: &quot;bird&quot;
+    dualStack:
+      enabled: true
+      IPv6podCIDR: &quot;fd00::/108&quot;
+      IPv6serviceCIDR: &quot;fd01::/108&quot;
 </code></pre></div></p>
-<p>Your remotes should look something like this:
-<div class="highlight"><pre><span></span><code>➜ git remote -v
-origin  https://github.com/k0sproject/k0s (fetch)
-origin  no_push (push)
-my_fork git@github.com:{ github_username }/k0s.git (fetch)
-my_fork git@github.com:{ github_username }/k0s.git (push)
-</code></pre></div></p>
-<h2 id="create-rebase-your-feature-branch">Create &amp; Rebase Your Feature Branch<a class="headerlink" href="#create-rebase-your-feature-branch" title="Permanent link">#</a></h2>
-<p>Create a feature branch and switch to it:
-<div class="highlight"><pre><span></span><code>git checkout -b my_feature_branch
-</code></pre></div>
-Rebase your branch:
-<div class="highlight"><pre><span></span><code>git fetch origin
-
-git rebase origin/main
-Current branch my_feature_branch is up to date.
-</code></pre></div>
-Please don't use <code>git pull</code> instead of the above <code>fetch / rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
-<h2 id="commit-push">Commit &amp; Push<a class="headerlink" href="#commit-push" title="Permanent link">#</a></h2>
-<p>Commit and sign your changes:
-<div class="highlight"><pre><span></span><code>git commit --signoff
-</code></pre></div>
-The commit message should have a short title as first line, an empty line and then a longer description that explains why the change was made, unless it is obvious.</p>
-<p>You can go back and edit/build/test some more, then <code>commit --amend</code> in a few cycles.</p>
-<p>When ready, push your changes to your fork's repository:
-<div class="highlight"><pre><span></span><code>git push --set-upstream my_fork my_feature_branch
-</code></pre></div></p>
-<h2 id="open-a-pull-request">Open a Pull Request<a class="headerlink" href="#open-a-pull-request" title="Permanent link">#</a></h2>
-<p><a href="https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork">Github Docs</a></p>
-<h3 id="get-a-code-review">Get a code review<a class="headerlink" href="#get-a-code-review" title="Permanent link">#</a></h3>
-<p>Once your pull request has been opened it will be assigned to one or more reviewers, and will go through a series of smoke tests.</p>
-<p>Commit changes made in response to review comments should be added to the same branch on your fork.</p>
-<p>Very small PRs are easy to review. Very large PRs are very difficult to review.</p>
-<h3 id="squashing-commits">Squashing Commits<a class="headerlink" href="#squashing-commits" title="Permanent link">#</a></h3>
-<p>Commits on your branch should represent meaningful milestones or units of work.
-Small commits that contain typo fixes, rebases, review feedbacks, etc should be squashed.</p>
-<p>To do that, it's best to perform an <a href="https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History">interactive rebase</a>:</p>
-<h4>Example</h4>
-<p>Rebase your feature branch against upstream main branch:
-<div class="highlight"><pre><span></span><code>git rebase -i origin/main
-</code></pre></div></p>
-<p>If your PR has 3 commits, output would be similar to this:
-<div class="highlight"><pre><span></span><code>pick f7f3f6d Changed some code
-pick 310154e fixed some typos
-pick a5f4a0d made some review changes
-
-# Rebase 710f0f8..a5f4a0d onto 710f0f8
-#
-# Commands:
-# p, pick &lt;commit&gt; = use commit
-# r, reword &lt;commit&gt; = use commit, but edit the commit message
-# e, edit &lt;commit&gt; = use commit, but stop for amending
-# s, squash &lt;commit&gt; = use commit, but meld into previous commit
-# f, fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message
-# x, exec &lt;command&gt; = run command (the rest of the line) using shell
-# b, break = stop here (continue rebase later with &#39;git rebase --continue&#39;)
-# d, drop &lt;commit&gt; = remove commit
-# l, label &lt;label&gt; = label current HEAD with a name
-# t, reset &lt;label&gt; = reset HEAD to a label
-# m, merge [-C &lt;commit&gt; | -c &lt;commit&gt;] &lt;label&gt; [# &lt;oneline&gt;]
-# .       create a merge commit using the original merge commit&#39;s
-# .       message (or the oneline, if no original merge commit was
-# .       specified). Use -c &lt;commit&gt; to reword the commit message.
-#
-# These lines can be re-ordered; they are executed from top to bottom.
-#
-# However, if you remove everything, the rebase will be aborted.
-#
-# Note that empty commits are commented out
-</code></pre></div>
-Use a command line text editor to change the word <code>pick</code> to <code>f</code> of <code>fixup</code> for the commits you want to squash, then save your changes and continue the rebase:</p>
-<p>Per the output above, you can see that:
-<div class="highlight"><pre><span></span><code>fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message
-</code></pre></div>
-Which means that when rebased, the commit message "fixed some typos" will be removed, and squashed with the parent commit.</p>
-<h3 id="push-your-final-changes">Push Your Final Changes<a class="headerlink" href="#push-your-final-changes" title="Permanent link">#</a></h3>
-<p>Once done, you can push the final commits to your branch:
-<div class="highlight"><pre><span></span><code>git push --force
-</code></pre></div>
-You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if needed.</p>
+<h2 id="cni-settings">CNI settings<a class="headerlink" href="#cni-settings" title="Permanent link">#</a></h2>
+<h3 id="calico-settings">Calico settings<a class="headerlink" href="#calico-settings" title="Permanent link">#</a></h3>
+<p>Calico doesn't support tunneling for the IPv6, so "vxlan" and "ipip" backend wouldn't work. 
+If you need to have cross-pod connectivity, you need to use "bird" as a backend mode. 
+In any other mode the pods would be able to reach only pods on the same node.</p>
+<h3 id="external-cni">External CNI<a class="headerlink" href="#external-cni" title="Permanent link">#</a></h3>
+<p>The <code>k0s.yaml</code> dualStack section will enable all the neccessary feature gates for the Kubernetes components but in case of using external CNI it must be set up with IPv6 support.</p>
+<h2 id="additional-materials">Additional materials<a class="headerlink" href="#additional-materials" title="Permanent link">#</a></h2>
+<p>https://kubernetes.io/docs/concepts/services-networking/dual-stack/</p>
+<p>https://kubernetes.io/docs/tasks/network/validate-dual-stack/ </p>
+<p>https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/</p>
+<p>https://docs.projectcalico.org/networking/ipv6</p>
                 
               
               
@@ -1147,7 +1006,7 @@ You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if n
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../overview/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1156,19 +1015,19 @@ You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if n
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Overview
+                Running k0s as a service
               </div>
             </div>
           </a>
         
         
-          <a href="../testing/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../examples/traefik-ingress/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Testing
+                Running k0s with Traefik
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
@@ -1224,15 +1083,15 @@ You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if n
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.4d7724a9.min.js"></script>
-      <script src="../../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.4d7724a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "..",
           features: ['toc.autohide', 'search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.0f64ce30.min.js"
+            worker: "../assets/javascripts/worker/search.0f64ce30.min.js"
           }, typeof search !== "undefined" && search),
           version: {'method': 'mike'}
         })
