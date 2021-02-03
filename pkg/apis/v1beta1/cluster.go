@@ -101,6 +101,13 @@ func (c *ClusterConfig) Validate() []error {
 // APIAddress ...
 func (a *APISpec) APIAddress() string {
 	if a.ExternalAddress != "" {
+		return a.ExternalAddress
+	}
+	return a.Address
+}
+
+func (a *APISpec) APIAddressURL() string {
+	if a.ExternalAddress != "" {
 		return fmt.Sprintf("https://%s:6443", a.ExternalAddress)
 	}
 	return fmt.Sprintf("https://%s:6443", a.Address)
