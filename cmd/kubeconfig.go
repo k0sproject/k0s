@@ -18,6 +18,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/base64"
+	"strings"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/internal/util"
@@ -93,12 +94,12 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return errors.New("Username is mandatory")
 			}
 			var username = args[0]
-			clusterConfig, err := ConfigFromYaml(cfgFile)
-			if err != nil {
-				return err
-			}
 			var config = constant.GetConfig(dataDir)
 
+			clusterAPIURL, err := getAPIURL()
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
+			}
 			caCert, err := ioutil.ReadFile(path.Join(config.CertRootDir, "ca.crt"))
 			if err != nil {
 				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
@@ -136,7 +137,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
 				ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
 				User:       username,
-				JoinURL:    clusterConfig.Spec.API.APIAddressURL(),
+				JoinURL:    clusterAPIURL,
 			}
 
 			var buf bytes.Buffer
@@ -163,7 +164,13 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				if err != nil {
 					log.Fatal(err)
 				}
-				os.Stdout.Write(content)
+
+				clusterAPIURL, err := getAPIURL()
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
+				}
+				newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
+				os.Stdout.Write([]byte(newContent))
 			} else {
 				return errors.Errorf("failed to read admin config, is the control plane initialized on this node?")
 			}
@@ -171,3 +178,11 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 		},
 	}
 )
+
+func getAPIURL() (string, error) {
+	clusterConfig, err := ConfigFromYaml(cfgFile)
+	if err != nil {
+		return "", err
+	}
+	return clusterConfig.Spec.API.APIAddressURL(), nil
+}
