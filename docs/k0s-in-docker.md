@@ -3,8 +3,9 @@
 We publish a k0s container image with every release. By default, we run both controller and worker in the same container to provide an easy local testing "cluster".
 
 The containers are published both on Docker Hub and GitHub. The examples in this page show Docker Hub, because it's more simple to use. Using GitHub requires a separate authentication (not covered here). Alternative links:
+
 - docker.io/k0sproject/k0s:latest
-- docker.pkg.github.com/k0sproject/k0s/k0s:<version>
+- docker.pkg.github.com/k0sproject/k0s/k0s:"version"
 
 You can run your own k0s-in-docker easily with:
 ```sh

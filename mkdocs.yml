@@ -1,4 +1,4 @@
-site_name: k0s Documentation
+site_name: Documentation
 site_description: Documentation for k0s, the Zero friction Kubernetes distribution.
 site_author: Mirantis, Inc.
 site_url: https://docs.k0sproject.io
@@ -25,9 +25,6 @@ nav:
       - Using Cloud Providers: cloud-providers.md
       - Running k0s as a service: install.md
       - IPv4/IPv6 dual-stack networking: dual-stack.md
-  - Integrations:
-      - Running k0s with Traefik: examples/traefik-ingress.md
-      - Running k0s with Ambassador: examples/ambassador-ingress.md
   - Examples:
       - Installing the Traefik Ingress Controller: examples/traefik-ingress.md
       - Installing the Ambassador Gateway: examples/ambassador-ingress.md
