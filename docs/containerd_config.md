@@ -1,4 +1,4 @@
-# Containerd configuration
+# containerd configuration
 
 [containerd](https://github.com/containerd/containerd) is an industry-standard container runtime.
 

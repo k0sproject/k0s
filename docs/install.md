@@ -13,12 +13,14 @@ This is the default mode of operation. When a server role is picked, the install
 * Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)
 * Create a service file (OpenRC/Systemd) and redirects logging to `/var/log/k0s.log`.
 * If the `--debug` flag is used, it will also pass this flag along to the service file.
-* `enable-worker` (single-node) setup is not supported. If you would like to run your service in that way, a possible solution would be to run `cmd install ` as worker, and edit the startup command by hand.
 
 ## Worker Setup
 * A worker cannot run with any other user, other than `root`, so no special users will be created.
 * The service file will include the `--token-file` flag, with a value that needs to be manually changed.
 * If the `--debug` flag is used, it will also pass this flag along to the service file.
+
+## Single-node setup
+* Single-node configuration can be installed with 'k0s install server --enable-worker' command.
 
 ## Additional Documentation
 see: [k0s install](cli/k0s_install.md)
