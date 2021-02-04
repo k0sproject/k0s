@@ -1,5 +1,5 @@
 
-runc_version = 1.0.0-rc92
+runc_version = 1.0.0-rc93
 containerd_version = 1.4.3
 kubernetes_version = 1.20.2
 kine_version = 0.6.0
