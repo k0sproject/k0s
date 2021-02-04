@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s in Windows (experimental) - k0s Documentation</title>
+        <title>Windows (experimental) - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#windows-support" class="md-skip">
+        <a href="#running-k0s-worker-nodes-in-windows" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s in Windows (experimental)
+              Windows (experimental)
             
           </span>
         </div>
@@ -243,13 +243,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
-      Creating A Cluster
+      Creating a Cluster
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating A Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating A Cluster
+        Creating a Cluster
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -261,19 +261,7 @@
 
   <li class="md-nav__item">
     <a href="../create-cluster/" class="md-nav__link">
-      Quick Start Guide
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../k0s-in-docker/" class="md-nav__link">
-      Run in Docker
+      Multi-Node Cluster
     </a>
   </li>
 
@@ -285,7 +273,19 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single node set-up
+      Single-Node Cluster
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../k0s-in-docker/" class="md-nav__link">
+      Docker
     </a>
   </li>
 
@@ -305,12 +305,12 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        K0s in Windows (experimental)
+        Windows (experimental)
         <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      K0s in Windows (experimental)
+      Windows (experimental)
     </a>
     
       
@@ -329,6 +329,13 @@
         <li class="md-nav__item">
   <a href="#experimental-status" class="md-nav__link">
     Experimental status
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
   </a>
   
 </li>
@@ -497,7 +504,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Configuring Containerd
+      Containerd Configuration
     </a>
   </li>
 
@@ -509,7 +516,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using A Custom CRI
+      Using a Custom CRI
     </a>
   </li>
 
@@ -522,18 +529,6 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../examples/ansible-playbook/" class="md-nav__link">
-      Create a cluster with Ansible
     </a>
   </li>
 
@@ -557,7 +552,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4\IPv6 dual-stack networking
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -627,13 +622,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      CLI Commands
+      Examples
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="CLI Commands" data-md-level="1">
+    <nav class="md-nav" aria-label="Examples" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
         <span class="md-nav__icon md-icon"></span>
-        CLI Commands
+        Examples
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -644,8 +639,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s/" class="md-nav__link">
-      General
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Installing the Traefik Ingress Controller
     </a>
   </li>
 
@@ -656,8 +651,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_api/" class="md-nav__link">
-      k0s api
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      Installing the Ambassador Gateway
     </a>
   </li>
 
@@ -668,8 +663,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_completion/" class="md-nav__link">
-      k0s completion
+    <a href="../raspberry-pi4/" class="md-nav__link">
+      Creating Raspberry Pi 4 Cluster
     </a>
   </li>
 
@@ -680,128 +675,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_default-config/" class="md-nav__link">
-      k0s default-config
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_docs/" class="md-nav__link">
-      k0s docs
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_etcd/" class="md-nav__link">
-      k0s etcd
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_install/" class="md-nav__link">
-      k0s install
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_kubeconfig/" class="md-nav__link">
-      k0s kubeconfig
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_server/" class="md-nav__link">
-      k0s server
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_status/" class="md-nav__link">
-      k0s status
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_token/" class="md-nav__link">
-      k0s token
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_validate/" class="md-nav__link">
-      k0s validate
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_version/" class="md-nav__link">
-      k0s version
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_worker/" class="md-nav__link">
-      k0s worker
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
+      Creating a cluster with Ansible Playbook
     </a>
   </li>
 
@@ -911,7 +786,7 @@
 
   <li class="md-nav__item">
     <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
-      Docs
+      Documentation
     </a>
   </li>
 
@@ -952,6 +827,13 @@
         <li class="md-nav__item">
   <a href="#experimental-status" class="md-nav__link">
     Experimental status
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
   </a>
   
 </li>
@@ -1032,9 +914,11 @@
               
                 
                 
-                <h1 id="windows-support">Windows support<a class="headerlink" href="#windows-support" title="Permanent link">#</a></h1>
+                <h1 id="running-k0s-worker-nodes-in-windows">Running k0s worker nodes in Windows<a class="headerlink" href="#running-k0s-worker-nodes-in-windows" title="Permanent link">#</a></h1>
 <h2 id="experimental-status">Experimental status<a class="headerlink" href="#experimental-status" title="Permanent link">#</a></h2>
-<p>Windows support feature is under active development and MUST BE considered as highly experemential. </p>
+<p>Windows support feature is under active development and MUST BE considered as experemential.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
+<p>The cluster must have at least one worker node and control plane running on Linux. Windows can be used for running additional worker nodes.</p>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">#</a></h2>
 <p><code>make clean k0s.exe</code></p>
 <p>This should create k0s.exe with staged kubelet.exe and kube-proxy.exe</p>
@@ -1046,7 +930,6 @@ During the first run calico install script created as <code>C:\bootstrap.ps1</co
 <p>It is expected to have docker EE installed on the windows node (we need it during the initial calico set up)</p>
 <div class="highlight"><pre><span></span><code>C:\&gt;k0s.exe worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=&lt;cidr_range&gt; --cluster-dns=&lt;clusterdns&gt; --api-server=&lt;k0s api&gt; &lt;token&gt;
 </code></pre></div>
-<p>Cluster MUST have at least one linux worker node.</p>
 <p>Cluster control plane must be inited with proper config (see section below)</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <h3 id="strict-affinity">Strict-affinity<a class="headerlink" href="#strict-affinity" title="Permanent link">#</a></h3>
@@ -1106,7 +989,7 @@ spec:
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../k0s-single-node/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../k0s-in-docker/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1115,7 +998,7 @@ spec:
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Single node set-up
+                Docker
               </div>
             </div>
           </a>

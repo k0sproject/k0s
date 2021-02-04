@@ -19,7 +19,7 @@
     
     
       
-        <title>Create a cluster with Ansible - k0s Documentation</title>
+        <title>Creating a cluster with Ansible Playbook - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#install-a-k0s-cluster-with-a-ansible-playbook" class="md-skip">
+        <a href="#creating-a-cluster-with-ansible-playbook" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Create a cluster with Ansible
+              Creating a cluster with Ansible Playbook
             
           </span>
         </div>
@@ -241,13 +241,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
     
     <label class="md-nav__link" for="nav-2">
-      Creating A Cluster
+      Creating a Cluster
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating A Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating A Cluster
+        Creating a Cluster
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -259,19 +259,7 @@
 
   <li class="md-nav__item">
     <a href="../../create-cluster/" class="md-nav__link">
-      Quick Start Guide
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
-      Run in Docker
+      Multi-Node Cluster
     </a>
   </li>
 
@@ -283,7 +271,19 @@
 
   <li class="md-nav__item">
     <a href="../../k0s-single-node/" class="md-nav__link">
-      Single node set-up
+      Single-Node Cluster
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../k0s-in-docker/" class="md-nav__link">
+      Docker
     </a>
   </li>
 
@@ -295,7 +295,7 @@
 
   <li class="md-nav__item">
     <a href="../../experimental-windows/" class="md-nav__link">
-      K0s in Windows (experimental)
+      Windows (experimental)
     </a>
   </li>
 
@@ -359,12 +359,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -397,7 +395,7 @@
 
   <li class="md-nav__item">
     <a href="../../containerd_config/" class="md-nav__link">
-      Configuring Containerd
+      Containerd Configuration
     </a>
   </li>
 
@@ -409,7 +407,7 @@
 
   <li class="md-nav__item">
     <a href="../../custom-cri-runtime/" class="md-nav__link">
-      Using A Custom CRI
+      Using a Custom CRI
     </a>
   </li>
 
@@ -423,91 +421,6 @@
     <a href="../../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
-  </li>
-
-        
-          
-          
-          
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Create a cluster with Ansible
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      Create a cluster with Ansible
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#download-k0s-ansible" class="md-nav__link">
-    Download k0s-ansible
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-virtual-machines" class="md-nav__link">
-    Create virtual machines
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-ansible-inventory" class="md-nav__link">
-    Create Ansible inventory
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test-the-connection-to-the-virtual-machines" class="md-nav__link">
-    Test the connection to the virtual machines
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provision-the-cluster-with-ansible" class="md-nav__link">
-    Provision the cluster with Ansible
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#use-the-cluster-with-kubectl" class="md-nav__link">
-    Use the cluster with kubectl
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -530,7 +443,7 @@
 
   <li class="md-nav__item">
     <a href="../../dual-stack/" class="md-nav__link">
-      IPv4\IPv6 dual-stack networking
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -594,19 +507,21 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
     
     <label class="md-nav__link" for="nav-6">
-      CLI Commands
+      Examples
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="CLI Commands" data-md-level="1">
+    <nav class="md-nav" aria-label="Examples" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
         <span class="md-nav__icon md-icon"></span>
-        CLI Commands
+        Examples
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -617,8 +532,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s/" class="md-nav__link">
-      General
+    <a href="../traefik-ingress/" class="md-nav__link">
+      Installing the Traefik Ingress Controller
     </a>
   </li>
 
@@ -629,8 +544,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_api/" class="md-nav__link">
-      k0s api
+    <a href="../ambassador-ingress/" class="md-nav__link">
+      Installing the Ambassador Gateway
     </a>
   </li>
 
@@ -641,8 +556,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cli/k0s_completion/" class="md-nav__link">
-      k0s completion
+    <a href="../../raspberry-pi4/" class="md-nav__link">
+      Creating Raspberry Pi 4 Cluster
     </a>
   </li>
 
@@ -651,131 +566,84 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_default-config/" class="md-nav__link">
-      k0s default-config
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Creating a cluster with Ansible Playbook
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      Creating a cluster with Ansible Playbook
     </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_docs/" class="md-nav__link">
-      k0s docs
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_etcd/" class="md-nav__link">
-      k0s etcd
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_install/" class="md-nav__link">
-      k0s install
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_kubeconfig/" class="md-nav__link">
-      k0s kubeconfig
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_server/" class="md-nav__link">
-      k0s server
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_status/" class="md-nav__link">
-      k0s status
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_token/" class="md-nav__link">
-      k0s token
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_validate/" class="md-nav__link">
-      k0s validate
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_version/" class="md-nav__link">
-      k0s version
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../cli/k0s_worker/" class="md-nav__link">
-      k0s worker
-    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#download-k0s-ansible" class="md-nav__link">
+    Download k0s-ansible
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-virtual-machines" class="md-nav__link">
+    Create virtual machines
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-ansible-inventory" class="md-nav__link">
+    Create Ansible inventory
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-the-connection-to-the-virtual-machines" class="md-nav__link">
+    Test the connection to the virtual machines
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provision-the-cluster-with-ansible" class="md-nav__link">
+    Provision the cluster with Ansible
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-the-cluster-with-kubectl" class="md-nav__link">
+    Use the cluster with kubectl
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -884,7 +752,7 @@
 
   <li class="md-nav__item">
     <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
-      Docs
+      Documentation
     </a>
   </li>
 
@@ -978,7 +846,7 @@
               
                 
                 
-                <h1 id="install-a-k0s-cluster-with-a-ansible-playbook">Install a k0s cluster with a Ansible Playbook<a class="headerlink" href="#install-a-k0s-cluster-with-a-ansible-playbook" title="Permanent link">#</a></h1>
+                <h1 id="creating-a-cluster-with-ansible-playbook">Creating a cluster with Ansible Playbook<a class="headerlink" href="#creating-a-cluster-with-ansible-playbook" title="Permanent link">#</a></h1>
 <p>Using Ansible and the k0s-ansible playbook, you can install a multi-node Kubernetes Cluster in a couple of minutes. Ansible is a popular infrastructure as code tool which helps you automate tasks to achieve the desired state in a system.</p>
 <p>This guide shows how you can install k0s on local virtual machines. In this guide, the following tools are used:</p>
 <ul>
@@ -1191,7 +1059,7 @@ pod &quot;hello-k0s&quot; deleted
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../../raspberry-pi4/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1200,19 +1068,19 @@ pod &quot;hello-k0s&quot; deleted
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Using Cloud Providers
+                Creating Raspberry Pi 4 Cluster
               </div>
             </div>
           </a>
         
         
-          <a href="../../install/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../../manifests/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Running k0s as a service
+                Deploying Manifests
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

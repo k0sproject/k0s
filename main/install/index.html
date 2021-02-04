@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#service-and-logging" class="md-skip">
+        <a href="#running-k0s-as-a-service" class="md-skip">
           Skip to content
         </a>
       
@@ -241,13 +241,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
     
     <label class="md-nav__link" for="nav-2">
-      Creating A Cluster
+      Creating a Cluster
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating A Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating A Cluster
+        Creating a Cluster
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -259,19 +259,7 @@
 
   <li class="md-nav__item">
     <a href="../create-cluster/" class="md-nav__link">
-      Quick Start Guide
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../k0s-in-docker/" class="md-nav__link">
-      Run in Docker
+      Multi-Node Cluster
     </a>
   </li>
 
@@ -283,7 +271,19 @@
 
   <li class="md-nav__item">
     <a href="../k0s-single-node/" class="md-nav__link">
-      Single node set-up
+      Single-Node Cluster
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../k0s-in-docker/" class="md-nav__link">
+      Docker
     </a>
   </li>
 
@@ -295,7 +295,7 @@
 
   <li class="md-nav__item">
     <a href="../experimental-windows/" class="md-nav__link">
-      K0s in Windows (experimental)
+      Windows (experimental)
     </a>
   </li>
 
@@ -397,7 +397,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Configuring Containerd
+      Containerd Configuration
     </a>
   </li>
 
@@ -409,7 +409,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using A Custom CRI
+      Using a Custom CRI
     </a>
   </li>
 
@@ -422,18 +422,6 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../examples/ansible-playbook/" class="md-nav__link">
-      Create a cluster with Ansible
     </a>
   </li>
 
@@ -479,32 +467,33 @@
     Caveats
   </a>
   
-    <nav class="md-nav" aria-label="Caveats">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#server-setup" class="md-nav__link">
     Server setup
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#worker-setup" class="md-nav__link">
     Worker Setup
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-documentation" class="md-nav__link">
-    Additional Documentation
+      
+        <li class="md-nav__item">
+  <a href="#single-node-setup" class="md-nav__link">
+    Single-node setup
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#additional-documentation" class="md-nav__link">
+    Additional Documentation
+  </a>
   
 </li>
       
@@ -522,7 +511,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4\IPv6 dual-stack networking
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -592,13 +581,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      CLI Commands
+      Examples
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="CLI Commands" data-md-level="1">
+    <nav class="md-nav" aria-label="Examples" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
         <span class="md-nav__icon md-icon"></span>
-        CLI Commands
+        Examples
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -609,8 +598,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s/" class="md-nav__link">
-      General
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Installing the Traefik Ingress Controller
     </a>
   </li>
 
@@ -621,8 +610,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_api/" class="md-nav__link">
-      k0s api
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      Installing the Ambassador Gateway
     </a>
   </li>
 
@@ -633,8 +622,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_completion/" class="md-nav__link">
-      k0s completion
+    <a href="../raspberry-pi4/" class="md-nav__link">
+      Creating Raspberry Pi 4 Cluster
     </a>
   </li>
 
@@ -645,128 +634,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_default-config/" class="md-nav__link">
-      k0s default-config
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_docs/" class="md-nav__link">
-      k0s docs
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_etcd/" class="md-nav__link">
-      k0s etcd
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_install/" class="md-nav__link">
-      k0s install
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_kubeconfig/" class="md-nav__link">
-      k0s kubeconfig
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_server/" class="md-nav__link">
-      k0s server
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_status/" class="md-nav__link">
-      k0s status
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_token/" class="md-nav__link">
-      k0s token
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_validate/" class="md-nav__link">
-      k0s validate
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_version/" class="md-nav__link">
-      k0s version
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_worker/" class="md-nav__link">
-      k0s worker
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
+      Creating a cluster with Ansible Playbook
     </a>
   </li>
 
@@ -876,7 +745,7 @@
 
   <li class="md-nav__item">
     <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
-      Docs
+      Documentation
     </a>
   </li>
 
@@ -919,32 +788,33 @@
     Caveats
   </a>
   
-    <nav class="md-nav" aria-label="Caveats">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#server-setup" class="md-nav__link">
     Server setup
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#worker-setup" class="md-nav__link">
     Worker Setup
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-documentation" class="md-nav__link">
-    Additional Documentation
+      
+        <li class="md-nav__item">
+  <a href="#single-node-setup" class="md-nav__link">
+    Single-node setup
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#additional-documentation" class="md-nav__link">
+    Additional Documentation
+  </a>
   
 </li>
       
@@ -962,30 +832,32 @@
               
                 
                 
-                <h1 id="service-and-logging">Service and Logging<a class="headerlink" href="#service-and-logging" title="Permanent link">#</a></h1>
-<p>We've created the subcommand <code>k0s install</code> to allow users to easily install k0s as a service, and define its logging.</p>
-<p>This is an <strong>alpha state</strong> feature.</p>
+                <h1 id="running-k0s-as-a-service">Running k0s as a service<a class="headerlink" href="#running-k0s-as-a-service" title="Permanent link">#</a></h1>
+<p>Sub-command <code>k0s install</code> allows users to easily install k0s as a service, and define its logging.</p>
 <h2 id="caveats">Caveats<a class="headerlink" href="#caveats" title="Permanent link">#</a></h2>
 <ul>
 <li>This command is strictly a helper command. It is not meant to provide a fully-automated solution, since you can run k0s in multiple, very different ways.</li>
 <li>It configures your service set-up as either a worker or a server, and will have different tasks, depending on the role you pick.</li>
 <li>Supported services: OpenRC &amp; Systemd</li>
 </ul>
-<h3 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">#</a></h3>
+<h2 id="server-setup">Server setup<a class="headerlink" href="#server-setup" title="Permanent link">#</a></h2>
 <p>This is the default mode of operation. When a server role is picked, the installer will do the following:</p>
 <ul>
 <li>Create user accounts for the different components (see https://github.com/k0sproject/k0s/blob/main/pkg/apis/v1beta1/system.go#L6)</li>
 <li>Create a service file (OpenRC/Systemd) and redirects logging to <code>/var/log/k0s.log</code>.</li>
 <li>If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.</li>
-<li><code>enable-worker</code> (single-node) setup is not supported. If you would like to run your service in that way, a possible solution would be to run <code>cmd install</code> as worker, and edit the startup command by hand.</li>
 </ul>
-<h3 id="worker-setup">Worker Setup<a class="headerlink" href="#worker-setup" title="Permanent link">#</a></h3>
+<h2 id="worker-setup">Worker Setup<a class="headerlink" href="#worker-setup" title="Permanent link">#</a></h2>
 <ul>
 <li>A worker cannot run with any other user, other than <code>root</code>, so no special users will be created.</li>
 <li>The service file will include the <code>--token-file</code> flag, with a value that needs to be manually changed.</li>
 <li>If the <code>--debug</code> flag is used, it will also pass this flag along to the service file.</li>
 </ul>
-<h3 id="additional-documentation">Additional Documentation<a class="headerlink" href="#additional-documentation" title="Permanent link">#</a></h3>
+<h2 id="single-node-setup">Single-node setup<a class="headerlink" href="#single-node-setup" title="Permanent link">#</a></h2>
+<ul>
+<li>Single-node configuration can be installed with 'k0s install server --enable-worker' command.</li>
+</ul>
+<h2 id="additional-documentation">Additional Documentation<a class="headerlink" href="#additional-documentation" title="Permanent link">#</a></h2>
 <p>see: <a href="../cli/k0s_install/">k0s install</a></p>
                 
               
@@ -1005,7 +877,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../examples/ansible-playbook/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1014,7 +886,7 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Create a cluster with Ansible
+                Using Cloud Providers
               </div>
             </div>
           </a>
@@ -1026,7 +898,7 @@
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                IPv4\IPv6 dual-stack networking
+                IPv4/IPv6 dual-stack networking
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

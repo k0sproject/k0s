@@ -19,7 +19,7 @@
     
     
       
-        <title>Quick Start Guide - k0s Documentation</title>
+        <title>Multi-Node Cluster - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#creating-a-cluster-with-k0s" class="md-skip">
+        <a href="#creating-a-multi-node-cluster" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Quick Start Guide
+              Multi-Node Cluster
             
           </span>
         </div>
@@ -243,13 +243,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
-      Creating A Cluster
+      Creating a Cluster
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating A Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating A Cluster
+        Creating a Cluster
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -269,12 +269,12 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        Quick Start Guide
+        Multi-Node Cluster
         <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      Quick Start Guide
+      Multi-Node Cluster
     </a>
     
       
@@ -406,8 +406,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../k0s-in-docker/" class="md-nav__link">
-      Run in Docker
+    <a href="../k0s-single-node/" class="md-nav__link">
+      Single-Node Cluster
     </a>
   </li>
 
@@ -418,8 +418,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../k0s-single-node/" class="md-nav__link">
-      Single node set-up
+    <a href="../k0s-in-docker/" class="md-nav__link">
+      Docker
     </a>
   </li>
 
@@ -431,7 +431,7 @@
 
   <li class="md-nav__item">
     <a href="../experimental-windows/" class="md-nav__link">
-      K0s in Windows (experimental)
+      Windows (experimental)
     </a>
   </li>
 
@@ -531,7 +531,7 @@
 
   <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
-      Configuring Containerd
+      Containerd Configuration
     </a>
   </li>
 
@@ -543,7 +543,7 @@
 
   <li class="md-nav__item">
     <a href="../custom-cri-runtime/" class="md-nav__link">
-      Using A Custom CRI
+      Using a Custom CRI
     </a>
   </li>
 
@@ -556,18 +556,6 @@
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../examples/ansible-playbook/" class="md-nav__link">
-      Create a cluster with Ansible
     </a>
   </li>
 
@@ -591,7 +579,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4\IPv6 dual-stack networking
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -661,13 +649,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      CLI Commands
+      Examples
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="CLI Commands" data-md-level="1">
+    <nav class="md-nav" aria-label="Examples" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
         <span class="md-nav__icon md-icon"></span>
-        CLI Commands
+        Examples
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -678,8 +666,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s/" class="md-nav__link">
-      General
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
+      Installing the Traefik Ingress Controller
     </a>
   </li>
 
@@ -690,8 +678,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_api/" class="md-nav__link">
-      k0s api
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      Installing the Ambassador Gateway
     </a>
   </li>
 
@@ -702,8 +690,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_completion/" class="md-nav__link">
-      k0s completion
+    <a href="../raspberry-pi4/" class="md-nav__link">
+      Creating Raspberry Pi 4 Cluster
     </a>
   </li>
 
@@ -714,128 +702,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../cli/k0s_default-config/" class="md-nav__link">
-      k0s default-config
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_docs/" class="md-nav__link">
-      k0s docs
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_etcd/" class="md-nav__link">
-      k0s etcd
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_install/" class="md-nav__link">
-      k0s install
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_kubeconfig/" class="md-nav__link">
-      k0s kubeconfig
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_server/" class="md-nav__link">
-      k0s server
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_status/" class="md-nav__link">
-      k0s status
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_token/" class="md-nav__link">
-      k0s token
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_validate/" class="md-nav__link">
-      k0s validate
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_version/" class="md-nav__link">
-      k0s version
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../cli/k0s_worker/" class="md-nav__link">
-      k0s worker
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
+      Creating a cluster with Ansible Playbook
     </a>
   </li>
 
@@ -945,7 +813,7 @@
 
   <li class="md-nav__item">
     <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
-      Docs
+      Documentation
     </a>
   </li>
 
@@ -1100,7 +968,7 @@
               
                 
                 
-                <h1 id="creating-a-cluster-with-k0s">Creating A cluster with k0s<a class="headerlink" href="#creating-a-cluster-with-k0s" title="Permanent link">#</a></h1>
+                <h1 id="creating-a-multi-node-cluster">Creating a multi-node cluster<a class="headerlink" href="#creating-a-multi-node-cluster" title="Permanent link">#</a></h1>
 <p>As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.</p>
 <h2 id="pre-requisites">Pre-requisites<a class="headerlink" href="#pre-requisites" title="Permanent link">#</a></h2>
 <p>Download k0s binary from <a href="https://github.com/k0sproject/k0s/releases/latest">releases</a> and push it to all the nodes you wish to connect to the cluster.</p>
@@ -1213,13 +1081,13 @@ $ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
           </a>
         
         
-          <a href="../k0s-in-docker/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../k0s-single-node/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Run in Docker
+                Single-Node Cluster
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

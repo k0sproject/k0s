@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/conformance-testing/">
+        <link rel="canonical" href="https://docs.k0sproject.io/raspberry-pi4/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Kubernetes conformance testing for k0s - k0s Documentation</title>
+        <title>Creating Raspberry Pi 4 Cluster - k0s Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kubernetes-conformance-testing-for-k0s" class="md-skip">
+        <a href="#creating-raspberry-pi-4-cluster" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Kubernetes conformance testing for k0s
+              Creating Raspberry Pi 4 Cluster
             
           </span>
         </div>
@@ -507,10 +507,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
     
     <label class="md-nav__link" for="nav-6">
       Examples
@@ -552,11 +554,178 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../raspberry-pi4/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Creating Raspberry Pi 4 Cluster
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Creating Raspberry Pi 4 Cluster
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walkthrough" class="md-nav__link">
+    Walkthrough
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-operating-system" class="md-nav__link">
+    Hardware &amp; Operating System
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware &amp; Operating System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#downloading-ubuntu" class="md-nav__link">
+    Downloading Ubuntu
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-ubuntu" class="md-nav__link">
+    Installing Ubuntu
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    Networking
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openssh" class="md-nav__link">
+    OpenSSH
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-nodes" class="md-nav__link">
+    Setup Nodes
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup Nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cgroup-configuration" class="md-nav__link">
+    CGroup Configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap-optional" class="md-nav__link">
+    Swap (Optional)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-modules" class="md-nav__link">
+    Kernel Modules
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-k0s" class="md-nav__link">
+    Download K0s
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploying-kubernetes" class="md-nav__link">
+    Deploying Kubernetes
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploying Kubernetes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#control-plane-node" class="md-nav__link">
+    Control Plane Node
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker" class="md-nav__link">
+    Worker
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-to-your-cluster" class="md-nav__link">
+    Connecting To Your Cluster
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -699,6 +868,165 @@
                 
               
               
+                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                  <div class="md-sidebar__scrollwrap">
+                    <div class="md-sidebar__inner">
+                      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#walkthrough" class="md-nav__link">
+    Walkthrough
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-operating-system" class="md-nav__link">
+    Hardware &amp; Operating System
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware &amp; Operating System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#downloading-ubuntu" class="md-nav__link">
+    Downloading Ubuntu
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#installing-ubuntu" class="md-nav__link">
+    Installing Ubuntu
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    Networking
+  </a>
+  
+    <nav class="md-nav" aria-label="Networking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openssh" class="md-nav__link">
+    OpenSSH
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-nodes" class="md-nav__link">
+    Setup Nodes
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup Nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cgroup-configuration" class="md-nav__link">
+    CGroup Configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap-optional" class="md-nav__link">
+    Swap (Optional)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-modules" class="md-nav__link">
+    Kernel Modules
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-k0s" class="md-nav__link">
+    Download K0s
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploying-kubernetes" class="md-nav__link">
+    Deploying Kubernetes
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploying Kubernetes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#control-plane-node" class="md-nav__link">
+    Control Plane Node
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker" class="md-nav__link">
+    Worker
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-to-your-cluster" class="md-nav__link">
+    Connecting To Your Cluster
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                    </div>
+                  </div>
+                </div>
+              
             
           
           <div class="md-content">
@@ -706,14 +1034,183 @@
               
                 
                 
-                <h1 id="kubernetes-conformance-testing-for-k0s">Kubernetes conformance testing for k0s<a class="headerlink" href="#kubernetes-conformance-testing-for-k0s" title="Permanent link">#</a></h1>
-<p>We run the conformance testing for the last RC build for a release. Follow the <a href="https://github.com/cncf/k8s-conformance/blob/master/instructions.md">instructions</a> as the conformance testing repository.</p>
-<p>In a nutshell, you need to:
-- Setup k0s on some VMs/bare metal boxes
-- Download, if you do not already have, <a href="https://github.com/vmware-tanzu/sonobuoy">sonobuoy</a> tool
-- Run the conformance tests with something like <code>sonobuoy run --mode=certified-conformance</code>
-- Wait for couple hours
-- Collect results</p>
+                <h1 id="creating-raspberry-pi-4-cluster">Creating Raspberry Pi 4 Cluster<a class="headerlink" href="#creating-raspberry-pi-4-cluster" title="Permanent link">#</a></h1>
+<p>This is a highly opinionated example of deploying the <a href="https://github.com/k0sproject/k0s">K0s</a> distribution of <a href="https://kubernetes.io">Kubernetes</a> to a cluster comprised of <a href="https://www.raspberrypi.org/products/raspberry-pi-4-model-b/">Raspberry Pi 4 Computers</a> with <a href="https://ubuntu.com">Ubuntu 20.04 LTS</a> as the operating system.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>The following tools should be installed on your local workstation to use this example:</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">Kubectl</a> <code>v1.19.4</code>+</li>
+<li><a href="https://github.com/raspberrypi/rpi-imager">Raspberry Pi Imager</a> <code>v1.5</code>+</li>
+</ul>
+<h2 id="walkthrough">Walkthrough<a class="headerlink" href="#walkthrough" title="Permanent link">#</a></h2>
+<p>In order to deploy K0s on your Raspberry Pi systems we'll follow these steps:</p>
+<ol>
+<li>Hardware &amp; Operating System Setup</li>
+<li>Networking Configurations</li>
+<li>Node Configurations</li>
+<li>Deploying Kubernetes</li>
+</ol>
+<p>These steps require a fair amount of pre-requisite knowledge of <a href="https://linux.com">Linux</a> and assume a basic understanding of the <a href="https://ubuntu.com">Ubuntu Linux Distribution</a> as well as <a href="https://kubernetes.io">Kubernetes</a>.</p>
+<p>If you're feeling out of sorts, consider reading through the <a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/">Kubernetes Basics Documentation</a> for more context and some less complex exercises to get started with.</p>
+<h2 id="hardware-operating-system">Hardware &amp; Operating System<a class="headerlink" href="#hardware-operating-system" title="Permanent link">#</a></h2>
+<p><strong>Note</strong> that this example was developed with <a href="https://www.raspberrypi.org/products/raspberry-pi-4-model-b/">Raspberry Pi 4 Model B Computers</a> with 8GB of RAM and 64GB SD Cards. You may have to do some manual editing of the example code and k0s configuration to get things working in your environment if you use lower spec machines.</p>
+<h3 id="downloading-ubuntu">Downloading Ubuntu<a class="headerlink" href="#downloading-ubuntu" title="Permanent link">#</a></h3>
+<p>When this example was developed the following image was used:</p>
+<ul>
+<li><a href="https://ubuntu.com/download/raspberry-pi/thank-you?version=20.04.1&amp;architecture=server-arm64+raspi">Ubuntu Server 20.04.1 LTS RASPI 4 Image</a></li>
+</ul>
+<p>It's likely later versions and other versions will work but when in doubt consider using the above image for the nodes.</p>
+<h3 id="installing-ubuntu">Installing Ubuntu<a class="headerlink" href="#installing-ubuntu" title="Permanent link">#</a></h3>
+<p>The <a href="https://raspberrypi.org">Raspberry Pi Foundation</a> provides a convenient <a href="https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/">imaging tool</a> for writing the Ubuntu image to your nodes' SD cards by selecting the image and the SD card you want to write it to.</p>
+<p>If all goes well it should be as simple as flashing the SD, inserting it into the Raspberry Pi system, and turning it on and Ubuntu will bootstrap itself. If you run into any trouble however, Ubuntu provides <a href="https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi">documentation on installing Ubuntu on Raspberry Pi Computers</a>.</p>
+<p>Note that the default login credentials for the systems once <a href="https://cloud-init.io/">cloud-init</a> finishes bootstrapping the system will be user <code>ubuntu</code> with password <code>ubuntu</code> and you'll be required to change the password on first login.</p>
+<h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
+<p>For this example it's assumed that you have all computers connected to eachother on the same subnet, but the rest is pretty much open ended.</p>
+<p>Make sure that you review the <a href="https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols">K0s required ports documentation</a> to ensure that your network and firewall configurations will allow necessary traffic for the cluster.</p>
+<p>Review the <a href="https://ubuntu.com/server/docs/network-configuration">Ubuntu Server Networking Configuration Documentation</a> and ensure that all systems get a static IP address on the network, or that the network is providing a static DHCP lease for the nodes.</p>
+<h3 id="openssh">OpenSSH<a class="headerlink" href="#openssh" title="Permanent link">#</a></h3>
+<p>Ubuntu Server will deploy and enable <a href="https://www.openssh.com/">OpenSSH</a> by default, but make sure that for whichever user you're going to deploy the cluster with on the build system their <a href="https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/">SSH Key is copied to each node's root user</a>, or you may have to do additional manual configurations to run the example.</p>
+<p>Effectively before you start, you should have it configured so that the current user can run:</p>
+<div class="highlight"><pre><span></span><code>$ ssh root@<span class="si">${</span><span class="nv">HOST</span><span class="si">}</span>
+</code></pre></div>
+<p>Where <code>${HOST}</code> is any node and the login will succeed with no further prompts.</p>
+<h2 id="setup-nodes">Setup Nodes<a class="headerlink" href="#setup-nodes" title="Permanent link">#</a></h2>
+<p>Each node (whether control plane or not) will need some additional setup to prepare for K0s deployment.</p>
+<h3 id="cgroup-configuration">CGroup Configuration<a class="headerlink" href="#cgroup-configuration" title="Permanent link">#</a></h3>
+<p>Ensure that the following packages are installed on each node:</p>
+<div class="highlight"><pre><span></span><code>$ apt-get install cgroup-lite cgroup-tools cgroupfs-mount
+</code></pre></div>
+<p>Additionally not all Ubuntu images are going to have the <code>memory</code> cgroup enabled in the Kernel by default, one simple way to enable this is by adding it to the Kernel command line.</p>
+<p>Open the file <code>/boot/firmware/cmdline.txt</code> which is responsible for managing the Kernel parameters, and ensure that the following parameters exist (add them if not):</p>
+<div class="highlight"><pre><span></span><code><span class="nv">cgroup_enable</span><span class="o">=</span>cpuset <span class="nv">cgroup_enable</span><span class="o">=</span>memory <span class="nv">cgroup_memory</span><span class="o">=</span><span class="m">1</span>
+</code></pre></div>
+<p>Make sure you <code>reboot</code> each node to ensure the <code>memory</code> cgroup is loaded.</p>
+<h3 id="swap-optional">Swap (Optional)<a class="headerlink" href="#swap-optional" title="Permanent link">#</a></h3>
+<p>While this is <em>technical optional</em> if you don't have the 8GB RAM Raspberry PI for your nodes and instead have the 4GB it can be helpful to enable swap to ease some memory pressure.</p>
+<p>You can create a swapfile by running the following:</p>
+<div class="highlight"><pre><span></span><code>fallocate -l 2G /swapfile
+chmod <span class="m">0600</span> /swapfile
+mkswap /swapfile
+swapon -a
+</code></pre></div>
+<p>To ensure that the usage of swap is not too agressive, make sure you set the <code>sudo sysctl vm.swappiness=10</code> (the default is generally higher). Configure this in <code>/etc/sysctl.d/*</code> to be persistent.</p>
+<p>Lastly to ensure that your swap is mounted after reboots, make sure the following line exists in your <code>/etc/fstab</code> configuration:</p>
+<div class="highlight"><pre><span></span><code>/swapfile         none           swap sw       <span class="m">0</span> <span class="m">0</span>
+</code></pre></div>
+<h3 id="kernel-modules">Kernel Modules<a class="headerlink" href="#kernel-modules" title="Permanent link">#</a></h3>
+<p>Some important Kernel modules to keep track of are the <code>overlay</code>, <code>nf_conntrack</code> and <code>br_netfilter</code> modules, ensure those are loaded:</p>
+<div class="highlight"><pre><span></span><code>$ modprobe overlay
+$ modprobe nf_conntrack
+$ modprobe br_netfilter
+</code></pre></div>
+<p>Add each of these modules to your <code>/etc/modules-load.d/modules.conf</code> file as well to ensure they persist after reboot.</p>
+<h3 id="download-k0s">Download K0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h3>
+<p>Download a <a href="https://github.com/k0sproject/k0s/releases/tag/v0.9.1">K0s release</a>, for example:</p>
+<div class="highlight"><pre><span></span><code>$ wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0s-v0.9.1-arm64
+$ chmod a+x /tmp/k0s
+$ sudo mv /tmp/k0s /usr/bin/k0s
+</code></pre></div>
+<p>Now you'll be able to run <code>k0s</code>:</p>
+<div class="highlight"><pre><span></span><code>$ k0s version
+v0.9.1
+</code></pre></div>
+<h2 id="deploying-kubernetes">Deploying Kubernetes<a class="headerlink" href="#deploying-kubernetes" title="Permanent link">#</a></h2>
+<p>Each node is now setup to handle being a control plane node or worker node.</p>
+<h3 id="control-plane-node">Control Plane Node<a class="headerlink" href="#control-plane-node" title="Permanent link">#</a></h3>
+<p>For this demonstration, we'll use a non-ha control plane with a single node.</p>
+<h4>Systemd Service</h4>
+<p>Create a systemd service file for <code>k0s</code>:</p>
+<div class="highlight"><pre><span></span><code>$ cat <span class="s">&lt;&lt; EOF &gt; /etc/systemd/system/k0s.service</span>
+<span class="s">[Unit]</span>
+<span class="s">Description=k0s - Kubernetes Control Plane &amp; Worker</span>
+<span class="s">ConditionFileIsExecutable=/usr/bin/k0s</span>
+<span class="s">After=network.target</span>
+
+<span class="s">[Service]</span>
+<span class="s">EnvironmentFile=/etc/sysconfig/k0s</span>
+<span class="s">ExecStart=/usr/bin/k0s server</span>
+<span class="s">KillMode=process</span>
+<span class="s">Restart=always</span>
+<span class="s">RestartSec=120</span>
+<span class="s">StartLimitBurst=10</span>
+<span class="s">StartLimitInterval=5</span>
+
+<span class="s">[Install]</span>
+<span class="s">WantedBy=multi-user.target</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>Enable and start the service:</p>
+<div class="highlight"><pre><span></span><code>$ systemctl <span class="nb">enable</span> --now k0s
+</code></pre></div>
+<p>Run <code>systemctl status k0s</code> to verify the service status.</p>
+<h4>Worker Tokens</h4>
+<p>For each worker node that you expect to have, create a join token (and save this for later steps):</p>
+<div class="highlight"><pre><span></span><code>$ k0s token create --role worker
+</code></pre></div>
+<h3 id="worker">Worker<a class="headerlink" href="#worker" title="Permanent link">#</a></h3>
+<p>For any number of worker nodes which you created join tokens for we'll need to deploy a worker service and start it.</p>
+<h4>Systemd Service</h4>
+<p>Create the join token for the worker:</p>
+<div class="highlight"><pre><span></span><code>$ mkdir -p /var/lib/k0s/
+$ <span class="nb">echo</span> <span class="si">${</span><span class="nv">TOKEN_CONTENT</span><span class="si">}</span> &gt; /var/lib/k0s/join-token
+</code></pre></div>
+<p>Where <code>${TOKEN_CONTENT}</code> is one of the join tokens you created in the control plane setup.</p>
+<p>Then deploy the systemd service for the worker:</p>
+<div class="highlight"><pre><span></span><code>$ cat <span class="s">&lt;&lt; EOF &gt; /etc/systemd/system/k0s.service</span>
+<span class="s">[Unit]</span>
+<span class="s">Description=k0s - Kubernetes Worker</span>
+<span class="s">ConditionFileIsExecutable=/usr/bin/k0s</span>
+<span class="s">After=network.target</span>
+
+<span class="s">[Service]</span>
+<span class="s">EnvironmentFile=-/etc/sysconfig/k0s</span>
+<span class="s">ExecStart=/usr/bin/k0s worker --token-file /var/lib/k0s/join-token</span>
+<span class="s">KillMode=process</span>
+<span class="s">Restart=always</span>
+<span class="s">RestartSec=120</span>
+<span class="s">StartLimitBurst=10</span>
+<span class="s">StartLimitInterval=5</span>
+
+<span class="s">[Install]</span>
+<span class="s">WantedBy=multi-user.target</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>Enable and start the service:</p>
+<div class="highlight"><pre><span></span><code>$ systemctl <span class="nb">enable</span> --now k0s
+</code></pre></div>
+<p>Run <code>systemctl status k0s</code> to verify the service status.</p>
+<h2 id="connecting-to-your-cluster">Connecting To Your Cluster<a class="headerlink" href="#connecting-to-your-cluster" title="Permanent link">#</a></h2>
+<p>Now generate a <code>kubeconfig</code> for the cluster and start managing it with <code>kubectl</code>:</p>
+<div class="highlight"><pre><span></span><code>ssh root@<span class="si">${</span><span class="nv">CONTROL_PLANE_NODE</span><span class="si">}</span> k0s kubeconfig create --groups <span class="s2">&quot;system:masters&quot;</span> k0s &gt; config.yaml
+<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/config.yaml
+kubectl create clusterrolebinding k0s-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span>k0s
+</code></pre></div>
+<p>Where <code>${CONTROL_PLANE_NODE}</code> is the address of your control plane node.</p>
+<p>Now the cluster can be accessed and used:</p>
+<div class="highlight"><pre><span></span><code>$ kubectl get nodes,deployments,pods -A
+NAME         STATUS   ROLES    AGE     VERSION
+node/k8s-4   Ready    &lt;none&gt;   5m9s    v1.20.1-k0s1
+node/k8s-5   Ready    &lt;none&gt;   5m      v1.20.1-k0s1
+node/k8s-6   Ready    &lt;none&gt;   4m45s   v1.20.1-k0s1
+
+NAMESPACE     NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/calico-kube-controllers   <span class="m">1</span>/1     <span class="m">1</span>            <span class="m">1</span>           12m
+kube-system   deployment.apps/coredns                   <span class="m">1</span>/1     <span class="m">1</span>            <span class="m">1</span>           12m
+
+NAMESPACE     NAME                                           READY   STATUS        RESTARTS   AGE
+kube-system   pod/calico-kube-controllers-5f6546844f-rjdkz   <span class="m">1</span>/1     Running       <span class="m">0</span>          12m
+kube-system   pod/calico-node-j475n                          <span class="m">1</span>/1     Running       <span class="m">0</span>          5m9s
+kube-system   pod/calico-node-lnfrf                          <span class="m">1</span>/1     Running       <span class="m">0</span>          4m45s
+kube-system   pod/calico-node-pzp7x                          <span class="m">1</span>/1     Running       <span class="m">0</span>          5m
+kube-system   pod/coredns-5c98d7d4d8-bg9pl                   <span class="m">1</span>/1     Running       <span class="m">0</span>          12m
+kube-system   pod/konnectivity-agent-548hp                   <span class="m">1</span>/1     Running       <span class="m">0</span>          4m45s
+kube-system   pod/konnectivity-agent-66cr8                   <span class="m">1</span>/1     Running       <span class="m">0</span>          4m49s
+kube-system   pod/konnectivity-agent-lxt9z                   <span class="m">1</span>/1     Running       <span class="m">0</span>          4m58s
+kube-system   pod/kube-proxy-ct6bg                           <span class="m">1</span>/1     Running       <span class="m">0</span>          5m
+kube-system   pod/kube-proxy-hg8t2                           <span class="m">1</span>/1     Running       <span class="m">0</span>          4m45s
+kube-system   pod/kube-proxy-vghs9                           <span class="m">1</span>/1     Running       <span class="m">0</span>          5m9s
+</code></pre></div>
+<p>Enjoy!</p>
                 
               
               
@@ -728,6 +1225,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../examples/ambassador-ingress/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Installing the Ambassador Gateway
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../examples/ansible-playbook/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Creating a cluster with Ansible Playbook
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
