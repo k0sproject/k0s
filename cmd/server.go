@@ -180,6 +180,14 @@ func startServer(token string) error {
 		LogLevel:      logging["kube-apiserver"],
 		Storage:       storageBackend,
 	})
+
+	if clusterConfig.Spec.API.ExternalAddress != "" {
+		componentManager.Add(&server.ControllerLease{
+			ClusterConfig:     clusterConfig,
+			KubeClientFactory: adminClientFactory,
+		})
+	}
+
 	componentManager.Add(&server.Konnectivity{
 		ClusterConfig:     clusterConfig,
 		LogLevel:          logging["konnectivity-server"],
