@@ -1,4 +1,4 @@
-# k0s configuration
+# Configuration options
 
 ## Control plane
 

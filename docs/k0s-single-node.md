@@ -1,9 +1,9 @@
-# k0s Single Node Quick Start
+# Creating a single-node cluster
 These instructions outline a quick method for running a local k0s master and worker in a single node.
 
 > **_NOTE:_**  This method of running k0s is only recommended for dev, test or POC environments.
 
-## Prepare Dependencies
+## Prepare dependencies
 #### 1. Download the k0s binary
 ```sh
 curl -sSLf https://get.k0s.sh | sh

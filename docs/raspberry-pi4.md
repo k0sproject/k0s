@@ -1,15 +1,15 @@
-# Raspberry Pi 4 K0s Kubernetes Cluster
+# Creating Raspberry Pi 4 Cluster
 
 This is a highly opinionated example of deploying the [K0s](https://github.com/k0sproject/k0s) distribution of [Kubernetes](https://kubernetes.io) to a cluster comprised of [Raspberry Pi 4 Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with [Ubuntu 20.04 LTS](https://ubuntu.com) as the operating system.
 
-# Prerequisites
+## Prerequisites
 
 The following tools should be installed on your local workstation to use this example:
 
 * [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) `v1.19.4`+
 * [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) `v1.5`+
 
-# Walkthrough
+## Walkthrough
 
 In order to deploy K0s on your Raspberry Pi systems we'll follow these steps:
 

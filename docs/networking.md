@@ -1,4 +1,4 @@
-# k0s Networking
+# Networking
 
 ## In-cluster networking
 
