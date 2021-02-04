@@ -10,27 +10,31 @@ copyright: Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</
 edit_uri: ""
 nav:
   - Overview: README.md
-  - Creating A Cluster:
-      - Quick Start Guide: create-cluster.md
-      - Run in Docker: k0s-in-docker.md
-      - Single node set-up: k0s-single-node.md
-      - K0s in Windows (experimental): experimental-windows.md
+  - Creating a Cluster:
+      - Multi-Node Cluster:      create-cluster.md
+      - Single-Node Cluster:     k0s-single-node.md
+      - Docker:                  k0s-in-docker.md
+      - Windows (experimental):  experimental-windows.md
   - Architecture:
       - Architecture: architecture.md
-      - Networking: networking.md
+      - Networking:   networking.md
   - Configuration:
       - Configuration Options: configuration.md
-      - Configuring Containerd: containerd_config.md
-      - Using A Custom CRI: custom-cri-runtime.md
+      - Containerd Configuration: containerd_config.md
+      - Using a Custom CRI: custom-cri-runtime.md
       - Using Cloud Providers: cloud-providers.md
-      - Create a cluster with Ansible: examples/ansible-playbook.md
       - Running k0s as a service: install.md
-      - IPv4\IPv6 dual-stack networking: dual-stack.md
+      - IPv4/IPv6 dual-stack networking: dual-stack.md
   - Integrations:
       - Running k0s with Traefik: examples/traefik-ingress.md
       - Running k0s with Ambassador: examples/ambassador-ingress.md
+  - Examples:
+      - Installing the Traefik Ingress Controller: examples/traefik-ingress.md
+      - Installing the Ambassador Gateway: examples/ambassador-ingress.md
+      - Creating Raspberry Pi 4 Cluster: raspberry-pi4.md
+      - Creating a cluster with Ansible Playbook: examples/ansible-playbook.md
   - CLI Commands:
-      - General:            cli/k0s.md
+      - k0s:                cli/README.md
       - k0s api:            cli/k0s_api.md
       - k0s completion:     cli/k0s_completion.md
       - k0s default-config: cli/k0s_default-config.md
@@ -51,7 +55,7 @@ nav:
       - Overview: contributors/overview.md
       - Workflow: contributors/github_workflow.md
       - Testing: contributors/testing.md
-      - Docs: internal/publishing_docs_using_mkdocs.md
+      - Documentation: internal/publishing_docs_using_mkdocs.md
 theme:
     name: 'material'
     highlightjs: true

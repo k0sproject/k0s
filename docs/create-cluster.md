@@ -1,4 +1,4 @@
-# Creating A cluster with k0s
+# Creating a multi-node cluster
 
 As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
 

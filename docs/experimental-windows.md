@@ -1,9 +1,12 @@
-# Windows support
+# Running k0s worker nodes in Windows
 
 ## Experimental status
 
-Windows support feature is under active development and MUST BE considered as highly experemential. 
+Windows support feature is under active development and MUST BE considered as experemential.
 
+## Requirements
+
+The cluster must have at least one worker node and control plane running on Linux. Windows can be used for running additional worker nodes.
 
 ## Build
 
@@ -25,8 +28,6 @@ It is expected to have docker EE installed on the windows node (we need it durin
 ```
 C:\>k0s.exe worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
 ```
-
-Cluster MUST have at least one linux worker node.
 
 Cluster control plane must be inited with proper config (see section below)
 

@@ -1,4 +1,4 @@
-# Install a k0s cluster with a Ansible Playbook
+# Creating a cluster with Ansible Playbook
 
 Using Ansible and the k0s-ansible playbook, you can install a multi-node Kubernetes Cluster in a couple of minutes. Ansible is a popular infrastructure as code tool which helps you automate tasks to achieve the desired state in a system.
 

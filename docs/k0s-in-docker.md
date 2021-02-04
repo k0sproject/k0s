@@ -1,6 +1,10 @@
-# k0s in Docker
+# Running k0s in Docker
 
 We publish a k0s container image with every release. By default, we run both controller and worker in the same container to provide an easy local testing "cluster".
+
+The containers are published both on Docker Hub and GitHub. The examples in this page show Docker Hub, because it's more simple to use. Using GitHub requires a separate authentication (not covered here). Alternative links:
+- docker.io/k0sproject/k0s:latest
+- docker.pkg.github.com/k0sproject/k0s/k0s:<version>
 
 You can run your own k0s-in-docker easily with:
 ```sh
@@ -19,7 +23,7 @@ token=$(docker exec -t -i k0s k0s token create --role=worker)
 
 Then join a new worker by running the container with:
 ```
-docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.pkg.github.com/k0sproject/k0s/k0s:<version> k0s worker $token
+docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.io/k0sproject/k0s:latest k0s worker $token
 ```
 
 Repeat for as many workers you need, and have resources for. :)
