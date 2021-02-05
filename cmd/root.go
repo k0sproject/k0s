@@ -71,7 +71,6 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(tokenCmd)
 	rootCmd.AddCommand(controllerCmd)
-	rootCmd.AddCommand(serverCmd) // backward-compatibility for "server" command
 	rootCmd.AddCommand(workerCmd)
 	rootCmd.AddCommand(APICmd)
 	rootCmd.AddCommand(etcdCmd)

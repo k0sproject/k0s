@@ -53,8 +53,6 @@ func init() {
 	controllerCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
 	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
-
-	serverCmd.Flags().AddFlagSet(controllerCmd.Flags())
 	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
 
 }
@@ -64,8 +62,9 @@ var (
 	enableWorker            bool
 	controllerToken         string
 	controllerCmd           = &cobra.Command{
-		Use:   "controller [join-token]",
-		Short: "Run controller",
+		Use:     "controller [join-token]",
+		Short:   "Run controller",
+		Aliases: []string{"server"},
 		Example: `	Command to associate master nodes:
 	CLI argument:
 	$ k0s controller [join-token]
@@ -93,30 +92,6 @@ var (
 		},
 	}
 )
-
-// backward-compatibility for "server" command
-var serverCmd = &cobra.Command{
-	Use:   "server [join-token]",
-	Short: "alias for controller command. WARN: will be depracated in favor of controller command in future releases",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			controllerToken = args[0]
-		}
-		if len(controllerToken) > 0 && len(tokenFile) > 0 {
-			return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
-		}
-
-		if len(tokenFile) > 0 {
-			bytes, err := ioutil.ReadFile(tokenFile)
-			if err != nil {
-				return err
-			}
-			controllerToken = string(bytes)
-		}
-
-		return startController(controllerToken)
-	},
-}
 
 // If we've got CA in place we assume the node has already joined previously
 func needToJoin(k0sVars constant.CfgVars) bool {
