@@ -16,15 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"reflect"
-	"strings"
 
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/k0sproject/k0s/pkg/install"
 )
 
 func init() {
@@ -33,12 +30,49 @@ func init() {
 
 	addPersistentFlags(installControllerCmd)
 	addPersistentFlags(installWorkerCmd)
+
+	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
+	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
+	addPersistentFlags(installCmd)
 }
 
 var (
 	installCmd = &cobra.Command{
 		Use:   "install",
 		Short: "Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)",
+	}
+)
+
+var (
+	installControllerCmd = &cobra.Command{
+		Use:     "controller",
+		Short:   "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
+		Aliases: []string{"server"},
+		Example: `All default values of controller command will be passed to the service stub unless overriden. 
+
+With controller subcommand you can setup a single node cluster by running:
+
+	k0s install controller --enable-worker
+	`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			flagsAndVals := []string{"controller"}
+			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			return setup("controller", flagsAndVals)
+		},
+	}
+
+	installWorkerCmd = &cobra.Command{
+		Use:   "worker",
+		Short: "Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)",
+		Example: `Worker subcommand allows you to pass in all available worker parameters. 
+All default values of worker command will be passed to the service stub unless overriden.
+
+Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			flagsAndVals := []string{"worker"}
+			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			return setup("worker", flagsAndVals)
+		},
 	}
 )
 
@@ -51,7 +85,11 @@ func setup(role string, args []string) error {
 	}
 
 	if role == "controller" {
-		if err := createControllerUsers(); err != nil {
+		clusterConfig, err := ConfigFromYaml(cfgFile)
+		if err != nil {
+			logrus.Errorf("failed to get cluster setup: %v", err)
+		}
+		if err := install.CreateControllerUsers(clusterConfig, k0sVars); err != nil {
 			logrus.Errorf("failed to create controller users: %v", err)
 		}
 	}
@@ -61,35 +99,4 @@ func setup(role string, args []string) error {
 		logrus.Errorf("failed to install k0s service: %v", err)
 	}
 	return nil
-}
-
-func createControllerUsers() error {
-	clusterConfig, err := ConfigFromYaml(cfgFile)
-	if err != nil {
-		return err
-	}
-
-	users := getUserList(*clusterConfig.Install.SystemUsers)
-
-	var messages []string
-	for _, v := range users {
-		if err := install.EnsureUser(v, k0sVars.DataDir); err != nil {
-			messages = append(messages, err.Error())
-		}
-	}
-
-	if len(messages) > 0 {
-		return fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return nil
-}
-
-func getUserList(sysUsers v1beta1.SystemUser) []string {
-	v := reflect.ValueOf(sysUsers)
-	values := make([]string, v.NumField())
-
-	for i := 0; i < v.NumField(); i++ {
-		values[i] = v.Field(i).String()
-	}
-	return values
 }

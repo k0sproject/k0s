@@ -33,12 +33,12 @@ import (
 
 var (
 	cfgFile       string
-	dataDir       string
-	debugListenOn string
-	debug         bool
 	cmdLogLevels  map[string]string
-	logging       map[string]string
+	dataDir       string
+	debug         bool
+	debugListenOn string
 	k0sVars       constant.CfgVars
+	logging       map[string]string
 )
 
 var defaultLogLevels = map[string]string{
