@@ -97,7 +97,7 @@ With strong enough arguments we might take in new addons but in general those sh
 Move the built `k0s` binary to each of the nodes.
 
 ```
-k0s server
+k0s controller
 ```
 
 This creates all the necessary certs and configs in `/var/lib/k0s/pki`. k0s runs all control plane components in separate "naked" processes, does not depend on kubelet or container engine.

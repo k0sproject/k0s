@@ -206,10 +206,10 @@ func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) erro
 
 	if dataDir != "" {
 		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --data-dir=%s --config=%s", dataDir, cfgPath)
-		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --data-dir=%s --config=%s >/tmp/k0s-server.log 2>&1 &", dataDir, cfgPath)
+		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller --data-dir=%s --config=%s >/tmp/k0s-controller.log 2>&1 &", dataDir, cfgPath)
 	} else {
 		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --config=%s", cfgPath)
-		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --config=%s >/tmp/k0s-server.log 2>&1 &", cfgPath)
+		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller --config=%s >/tmp/k0s-controller.log 2>&1 &", cfgPath)
 	}
 	_, err = ssh.ExecWithOutput(installCmd)
 	if err != nil {
@@ -231,7 +231,7 @@ func (s *FootlooseSuite) JoinController(idx int, token string, dataDir string) e
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s --debug server %s >/tmp/k0s-server.log 2>&1 &", token))
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s --debug controller %s >/tmp/k0s-controller.log 2>&1 &", token))
 	if err != nil {
 		return err
 	}

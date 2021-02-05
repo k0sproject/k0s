@@ -171,7 +171,7 @@ func startWorker(token string) error {
 	go func() {
 		select {
 		case <-c:
-			logrus.Info("Shutting down k0s server")
+			logrus.Info("Shutting down k0s controller")
 			cancel()
 		case <-ctx.Done():
 			logrus.Debug("Context done in go-routine")

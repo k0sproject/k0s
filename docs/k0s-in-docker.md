@@ -38,7 +38,7 @@ services:
   k0s:
     container_name: k0s
     image: docker.io/k0sproject/k0s:latest
-    command: k0s server --config=/etc/k0s/config.yaml --enable-worker
+    command: k0s controller --config=/etc/k0s/config.yaml --enable-worker
     hostname: k0s
     privileged: true
     volumes:

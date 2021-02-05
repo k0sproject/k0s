@@ -45,7 +45,7 @@ footloose ssh root@controller0
 Bootstrap the controlplane:
 ```
 # cd /root/k0s
-# ./k0s server
+# ./k0s controller
 ```
 
 Yes, really. It's that easy. In less than a minute we'll have the control plane up-and-running.
@@ -69,7 +69,7 @@ footloose ssh root@controller1
 Bootstrap the controlplane:
 ```
 # cd /root/k0s
-# ./k0s server --join-address https://<controller0 IP>:9443 "that_long_token"
+# ./k0s controller --join-address https://<controller0 IP>:9443 "that_long_token"
 ```
 
 And voilà, our second controller node is up-and-running in no time.

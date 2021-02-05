@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package server
+package controller
 
 import (
 	"fmt"
@@ -31,8 +31,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-// ControllerManager implement the component interface to run kube scheduler
-type ControllerManager struct {
+// Manager implement the component interface to run kube scheduler
+type Manager struct {
 	ClusterConfig *config.ClusterConfig
 	gid           int
 	K0sVars       constant.CfgVars
@@ -52,7 +52,7 @@ var cmDefaultArgs = map[string]string{
 }
 
 // Init extracts the needed binaries
-func (a *ControllerManager) Init() error {
+func (a *Manager) Init() error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = util.GetUID(constant.ApiserverUser)
@@ -68,8 +68,8 @@ func (a *ControllerManager) Init() error {
 	return assets.Stage(a.K0sVars.BinDir, "kube-controller-manager", constant.BinDirMode)
 }
 
-// Run runs kube ControllerManager
-func (a *ControllerManager) Run() error {
+// Run runs kube Manager
+func (a *Manager) Run() error {
 	logrus.Info("Starting kube-controller-manager")
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
 	args := map[string]string{
@@ -123,10 +123,10 @@ func (a *ControllerManager) Run() error {
 	return a.supervisor.Supervise()
 }
 
-// Stop stops ControllerManager
-func (a *ControllerManager) Stop() error {
+// Stop stops Manager
+func (a *Manager) Stop() error {
 	return a.supervisor.Stop()
 }
 
 // Health-check interface
-func (a *ControllerManager) Healthy() error { return nil }
+func (a *Manager) Healthy() error { return nil }

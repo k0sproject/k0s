@@ -1,9 +1,9 @@
-## k0s server
+## k0s controller
 
-Run server
+Run controller
 
 ```
-k0s server [join-token] [flags]
+k0s controller [join-token] [flags]
 ```
 
 ### Examples
@@ -11,10 +11,10 @@ k0s server [join-token] [flags]
 ```
 	Command to associate master nodes:
 	CLI argument:
-	$ k0s server [join-token]
+	$ k0s controller [join-token]
 
 	or CLI flag:
-	$ k0s server --token-file [path_to_file]
+	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag
 ```
 
@@ -23,7 +23,7 @@ k0s server [join-token] [flags]
 ```
       --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --enable-worker       enable worker (default false)
-  -h, --help                help for server
+  -h, --help                help for controller
       --profile string      worker profile to use on the node (default "default")
       --token-file string   Path to the file containing join-token.
 ```
@@ -35,7 +35,7 @@ k0s server [join-token] [flags]
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default ":6060")
-  -l, --logging stringToString   Logging Levels for the different components (default [containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info])
+  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
 ```
 
 ### SEE ALSO

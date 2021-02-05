@@ -28,7 +28,7 @@ import (
 )
 
 func init() {
-	installCmd.AddCommand(installServerCmd)
+	installCmd.AddCommand(installControllerCmd)
 	installCmd.AddCommand(installWorkerCmd)
 }
 
@@ -47,9 +47,9 @@ func setup(role string, args []string) error {
 		logrus.Fatal("this command must be run as root!")
 	}
 
-	if role == "server" {
-		if err := createServerUsers(); err != nil {
-			logrus.Errorf("failed to create server users: %v", err)
+	if role == "controller" {
+		if err := createControllerUsers(); err != nil {
+			logrus.Errorf("failed to create controller users: %v", err)
 		}
 	}
 
@@ -60,7 +60,7 @@ func setup(role string, args []string) error {
 	return nil
 }
 
-func createServerUsers() error {
+func createControllerUsers() error {
 	clusterConfig, err := ConfigFromYaml(cfgFile)
 	if err != nil {
 		return err
