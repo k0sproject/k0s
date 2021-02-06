@@ -45,6 +45,11 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("controller0", kc)
 	s.NoError(err)
 
+	// Verify we get the Ready=true status for the node through embedded kubectl command
+	status, err := ssh.ExecWithOutput(`k0s kubectl get node controller0 -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`)
+	s.Require().NoError(err)
+	s.Require().Equal("True", status)
+
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
 		Limit: 100,
 	})
