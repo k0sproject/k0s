@@ -40,7 +40,7 @@ func init() {
 	if kubeConfig == "" {
 		kubeConfig = viper.GetString("KUBECONFIG")
 	}
-	tokenCreateCmd.Flags().StringVar(&tokenExpiry, "expiry", "0", "set duration time for token")
+	tokenCreateCmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
 	tokenCreateCmd.Flags().StringVar(&tokenRole, "role", "worker", "Either worker or controller")
 	tokenCreateCmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
@@ -92,6 +92,9 @@ users:
 	tokenCreateCmd = &cobra.Command{
 		Use:   "create",
 		Short: "Create join token",
+		Example: `k0s token create --role worker --expiry 100h //sets expiration time to 100 hours
+k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
