@@ -646,6 +646,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -653,6 +655,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -662,57 +666,9 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-completion" class="md-nav__link">
-    k0s completion
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
   </a>
-  
-    <nav class="md-nav" aria-label="k0s completion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bash" class="md-nav__link">
-    Bash
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zsh" class="md-nav__link">
-    Zsh
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fish" class="md-nav__link">
-    Fish
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -730,33 +686,27 @@
               
                 
                 
-                  <h1>K0s completion</h1>
-                
                 <h2 id="k0s-completion">k0s completion<a class="headerlink" href="#k0s-completion" title="Permanent link">#</a></h2>
 <p>Generate completion script</p>
-<p>To load completions:
+<h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
+<p>To load completions:</p>
+<p>Bash:</p>
+<p>$ source &lt;(k0s completion bash)</p>
+<h1 id="to-load-completions-for-each-session-execute-once">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once" title="Permanent link">#</a></h1>
+<p>$ k0s completion bash &gt; /etc/bash_completion.d/k0s</p>
+<p>Zsh:</p>
+<h1 id="if-shell-completion-is-not-already-enabled-in-your-environment-you-will-need">If shell completion is not already enabled in your environment you will need<a class="headerlink" href="#if-shell-completion-is-not-already-enabled-in-your-environment-you-will-need" title="Permanent link">#</a></h1>
+<h1 id="to-enable-it-you-can-execute-the-following-once">to enable it.  You can execute the following once:<a class="headerlink" href="#to-enable-it-you-can-execute-the-following-once" title="Permanent link">#</a></h1>
+<p>$ echo "autoload -U compinit; compinit" &gt;&gt; ~/.zshrc</p>
+<h1 id="to-load-completions-for-each-session-execute-once_1">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_1" title="Permanent link">#</a></h1>
+<p>$ k0s completion zsh &gt; "${fpath[1]}/_k0s"</p>
+<h1 id="you-will-need-to-start-a-new-shell-for-this-setup-to-take-effect">You will need to start a new shell for this setup to take effect.<a class="headerlink" href="#you-will-need-to-start-a-new-shell-for-this-setup-to-take-effect" title="Permanent link">#</a></h1>
+<p>Fish:</p>
+<p>$ k0s completion fish | source</p>
+<h1 id="to-load-completions-for-each-session-execute-once_2">To load completions for each session, execute once:<a class="headerlink" href="#to-load-completions-for-each-session-execute-once_2" title="Permanent link">#</a></h1>
+<p>$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish</p>
 <div class="highlight"><pre><span></span><code>k0s completion [bash|zsh|fish|powershell]
-</code></pre></div></p>
-<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
-<p><div class="highlight"><pre><span></span><code>source &lt;(k0s completion bash)
 </code></pre></div>
-To load completions for each session, execute once:
-<div class="highlight"><pre><span></span><code>k0s completion bash &gt; /etc/bash_completion.d/k0s
-</code></pre></div></p>
-<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
-<p>If shell completion is not already enabled in your environment you will need to enable it. You can execute the following once:
-<div class="highlight"><pre><span></span><code>echo &quot;autoload -U compinit; compinit&quot; &gt;&gt; ~/.zshrc
-</code></pre></div>
-To load completions for each session, execute once:
-<div class="highlight"><pre><span></span><code>k0s completion zsh &gt; &quot;${fpath[1]}/_k0s&quot;
-</code></pre></div>
-You will need to start a new shell for this setup to take effect.</p>
-<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
-<p><div class="highlight"><pre><span></span><code>k0s completion fish | source
-</code></pre></div>
-To load completions for each session, execute once:
-<div class="highlight"><pre><span></span><code>k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
-</code></pre></div></p>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>  -h, --help   help for completion
 </code></pre></div>
@@ -765,7 +715,7 @@ To load completions for each session, execute once:
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default &quot;:6060&quot;)
-  -l, --logging stringToString   Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
+  -l, --logging stringToString   Logging Levels for the different components (default [containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info])
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
