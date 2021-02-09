@@ -807,7 +807,7 @@ Just grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/ad
   <span class="nt">k0s</span><span class="p">:</span>
     <span class="nt">container_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
     <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:latest</span>
-    <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s server --config=/etc/k0s/config.yaml --enable-worker</span>
+    <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span>
     <span class="nt">hostname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
     <span class="nt">privileged</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
     <span class="nt">volumes</span><span class="p">:</span>

@@ -597,8 +597,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-doesnt-kubectl-get-nodes-list-the-k0s-server" class="md-nav__link">
-    Why doesn't kubectl get nodes list the k0s server?
+  <a href="#why-doesnt-kubectl-get-nodes-list-the-k0s-controllers" class="md-nav__link">
+    Why doesn't kubectl get nodes list the k0s controllers?
   </a>
   
 </li>
@@ -746,8 +746,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-doesnt-kubectl-get-nodes-list-the-k0s-server" class="md-nav__link">
-    Why doesn't kubectl get nodes list the k0s server?
+  <a href="#why-doesnt-kubectl-get-nodes-list-the-k0s-controllers" class="md-nav__link">
+    Why doesn't kubectl get nodes list the k0s controllers?
   </a>
   
 </li>
@@ -770,7 +770,7 @@
 <h3 id="how-is-k0s-pronounced">How is k0s pronounced?<a class="headerlink" href="#how-is-k0s-pronounced" title="Permanent link">#</a></h3>
 <p>kay-zero-ess</p>
 <h3 id="how-do-i-run-a-single-node-cluster">How do I run a single node cluster?<a class="headerlink" href="#how-do-i-run-a-single-node-cluster" title="Permanent link">#</a></h3>
-<p><code>k0s server --enable-worker</code></p>
+<p><code>k0s controller --enable-worker</code></p>
 <h3 id="how-do-i-connect-to-the-cluster">How do I connect to the cluster?<a class="headerlink" href="#how-do-i-connect-to-the-cluster" title="Permanent link">#</a></h3>
 <p>You find the config in <code>${DATADIR}/pki/admin.conf</code> (default: <code>/var/lib/k0s/pki/admin.conf</code>). Copy this file, and
 change the <code>localhost</code> entry to the public ip of the controller. Use the
@@ -778,11 +778,11 @@ modified config to connect with kubectl:
 <div class="highlight"><pre><span></span><code>export KUBECONFIG=/path/to/admin.conf
 kubectl ...
 </code></pre></div></p>
-<h3 id="why-doesnt-kubectl-get-nodes-list-the-k0s-server">Why doesn't <code>kubectl get nodes</code> list the k0s server?<a class="headerlink" href="#why-doesnt-kubectl-get-nodes-list-the-k0s-server" title="Permanent link">#</a></h3>
+<h3 id="why-doesnt-kubectl-get-nodes-list-the-k0s-controllers">Why doesn't <code>kubectl get nodes</code> list the k0s controllers?<a class="headerlink" href="#why-doesnt-kubectl-get-nodes-list-the-k0s-controllers" title="Permanent link">#</a></h3>
 <p>As a default, the control plane does not run kubelet at all, and will not
-accept any workloads, so the server will not show up on the node list in
-kubectl. If you want your server to accept workloads and run pods, you do so with:
-<code>k0s server --enable-worker</code> (recommended only as test/dev/POC environments).</p>
+accept any workloads, so the controller will not show up on the node list in
+kubectl. If you want your controller to accept workloads and run pods, you do so with:
+<code>k0s controller --enable-worker</code> (recommended only as test/dev/POC environments).</p>
                 
               
               

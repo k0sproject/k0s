@@ -925,7 +925,7 @@
 <p>That's it, really.</p>
 <h2 id="bootstrapping-controller-node">Bootstrapping controller node<a class="headerlink" href="#bootstrapping-controller-node" title="Permanent link">#</a></h2>
 <p>Create a <a href="../configuration/">configuration</a> file if you wish to tune some of the settings.</p>
-<div class="highlight"><pre><span></span><code>$ k0s server -c k0s.yaml
+<div class="highlight"><pre><span></span><code>$ k0s controller -c k0s.yaml
 </code></pre></div>
 <p>That's it, really. k0s process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.</p>
 <p>Naturally, to make k0s boot up the control plane when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.</p>
@@ -956,7 +956,7 @@
 <div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h
 </code></pre></div></p>
 <p>On the new controller, run:
-<div class="highlight"><pre><span></span><code>k0s server <span class="s2">&quot;long-join-token&quot;</span>
+<div class="highlight"><pre><span></span><code>k0s controller <span class="s2">&quot;long-join-token&quot;</span>
 </code></pre></div></p>
 <h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
 <p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.

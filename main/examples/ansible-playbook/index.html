@@ -847,7 +847,7 @@ k0s-7 Running 192.168.64.61 Ubuntu 20.04 LTS
 </code></pre></div>
 <p>Now we need to create our inventory. The before built virtual machines need to be assigned to the different host groups required by the playbook's logic.</p>
 <ul>
-<li><code>initial_controller</code> = must contain a single node that creates the worker and server tokens needed by the other nodes.</li>
+<li><code>initial_controller</code> = must contain a single node that creates the worker and controller tokens needed by the other nodes.</li>
 <li><code>controller</code> = can contain nodes that, together with the host from <code>initial_controller</code> form a highly available isolated control plane.</li>
 <li><code>worker</code> = must contain at least one node so that we can deploy Kubernetes objects.</li>
 </ul>

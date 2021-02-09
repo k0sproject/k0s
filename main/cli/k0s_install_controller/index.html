@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_install_server/">
+        <link rel="canonical" href="https://docs.k0sproject.io/cli/k0s_install_controller/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s install server - Documentation</title>
+        <title>K0s install controller - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-install-server" class="md-skip">
+        <a href="#k0s-install-controller" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s install server
+              K0s install controller
             
           </span>
         </div>
@@ -662,11 +662,11 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-install-server" class="md-nav__link">
-    k0s install server
+  <a href="#k0s-install-controller" class="md-nav__link">
+    k0s install controller
   </a>
   
-    <nav class="md-nav" aria-label="k0s install server">
+    <nav class="md-nav" aria-label="k0s install controller">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -716,23 +716,23 @@
               
                 
                 
-                  <h1>K0s install server</h1>
+                  <h1>K0s install controller</h1>
                 
-                <h2 id="k0s-install-server">k0s install server<a class="headerlink" href="#k0s-install-server" title="Permanent link">#</a></h2>
-<p>Helper command for setting up k0s as server node on a brand-new system. Must be run as root (or with sudo)</p>
-<div class="highlight"><pre><span></span><code>k0s install server [flags]
+                <h2 id="k0s-install-controller">k0s install controller<a class="headerlink" href="#k0s-install-controller" title="Permanent link">#</a></h2>
+<p>Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)</p>
+<div class="highlight"><pre><span></span><code>k0s install controller [flags]
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>All default values of server command will be passed to the service stub unless overriden. 
+<div class="highlight"><pre><span></span><code>All default values of controller command will be passed to the service stub unless overriden. 
 
-With server subcommand you can setup a single node cluster by running:
+With controller subcommand you can setup a single node cluster by running:
 
-    k0s install server --enable-worker
+    k0s install controller --enable-worker
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --enable-worker       enable worker (default false)
-  -h, --help                help for server
+  -h, --help                help for controller
       --profile string      worker profile to use on the node (default &quot;default&quot;)
       --token-file string   Path to the file containing join-token.
 </code></pre></div>
@@ -741,7 +741,7 @@ With server subcommand you can setup a single node cluster by running:
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
       --debugListenOn string     Http listenOn for debug pprof handler (default &quot;:6060&quot;)
-  -l, --logging stringToString   Logging Levels for the different components (default [containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info])
+  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
