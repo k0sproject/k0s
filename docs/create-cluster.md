@@ -13,7 +13,7 @@ That's it, really.
 Create a [configuration](configuration.md) file if you wish to tune some of the settings.
 
 ```
-$ k0s server -c k0s.yaml
+$ k0s controller -c k0s.yaml
 ```
 
 That's it, really. k0s process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.
@@ -69,7 +69,7 @@ k0s token create --role=controller --expiry=1h
 
 On the new controller, run:
 ```sh
-k0s server "long-join-token"
+k0s controller "long-join-token"
 ```
 
 ## Adding a Cluster User

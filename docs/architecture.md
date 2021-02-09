@@ -24,7 +24,7 @@ k0s creates, manages and configures each of the components. k0s runs all control
 
 Typically Kubernetes control plane supports only etcd as the datastore. In addition to etcd, k0s supports many other datastore options. This is achieved by including [kine](https://github.com/rancher/kine/). Kine allows wide variety of backend data stores to be used such as MySQL, PostgreSQL, SQLite and dqlite. See more in storage [documentation](configuration.md#specstorage)
 
-In case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. This means for example that by joining a new controller node with `k0s server "long-join-token"` k0s will automatically adjust the etcd cluster membership info to allow the new member to join the cluster.
+In case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. This means for example that by joining a new controller node with `k0s controller "long-join-token"` k0s will automatically adjust the etcd cluster membership info to allow the new member to join the cluster.
 
 **Note:** Currently k0s cannot shrink the etcd cluster. For now user needs to manually remove the etcd member and only after that shutdown the k0s controller on the removed node.
 

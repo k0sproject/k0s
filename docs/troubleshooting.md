@@ -36,11 +36,11 @@ The easiest but most crude way to workaround is to disable the systemd-resolved 
 
 Read more at CoreDNS [troubleshooting docs](https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters).
 
-## `k0s server` fails on ARM boxes
+## `k0s controller` fails on ARM boxes
 
 In the logs you probably see ETCD not starting up properly.
 
-Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s server` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
+Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s controller` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
 
 As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.
 
@@ -73,7 +73,7 @@ spec:
         volumePluginDir: /etc/k0s/kubelet-plugins/volume/exec/
 ```
 
-With this config you can start your server as usual. Any workers will need to be started with
+With this config you can start your controller as usual. Any workers will need to be started with
 
 `k0s worker --profile coreos [TOKEN]`
 

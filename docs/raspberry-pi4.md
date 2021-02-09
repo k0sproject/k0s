@@ -155,7 +155,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/k0s
-ExecStart=/usr/bin/k0s server
+ExecStart=/usr/bin/k0s controller
 KillMode=process
 Restart=always
 RestartSec=120

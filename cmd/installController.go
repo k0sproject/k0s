@@ -23,22 +23,22 @@ import (
 )
 
 var (
-	installServerCmd = &cobra.Command{
-		Use:   "server",
-		Short: "Helper command for setting up k0s as server node on a brand-new system. Must be run as root (or with sudo)",
-		Example: `All default values of server command will be passed to the service stub unless overriden. 
+	installControllerCmd = &cobra.Command{
+		Use:   "controller",
+		Short: "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
+		Example: `All default values of controller command will be passed to the service stub unless overriden. 
 
-With server subcommand you can setup a single node cluster by running:
+With controller subcommand you can setup a single node cluster by running:
 
-	k0s install server --enable-worker
+	k0s install controller --enable-worker
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flagsAndVals := []string{"server"}
+			flagsAndVals := []string{"controller"}
 			cmd.Flags().Visit(func(f *pflag.Flag) {
 				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
 			})
 
-			return setup("server", flagsAndVals)
+			return setup("controller", flagsAndVals)
 		},
 	}
 )

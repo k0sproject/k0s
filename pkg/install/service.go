@@ -31,7 +31,7 @@ func EnsureService(args []string) error {
 
 	prg := &program{}
 	for _, v := range args {
-		if v == "server" || v == "worker" {
+		if v == "controller" || v == "worker" {
 			k0sDisplayName = "k0s " + v
 			k0sServiceName = k0sServiceName + v
 			break

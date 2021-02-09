@@ -68,7 +68,7 @@ $ cp -rfp inventory/sample inventory/multipass
 
 Now we need to create our inventory. The before built virtual machines need to be assigned to the different host groups required by the playbook's logic.
 
-- `initial_controller` = must contain a single node that creates the worker and server tokens needed by the other nodes.
+- `initial_controller` = must contain a single node that creates the worker and controller tokens needed by the other nodes.
 - `controller` = can contain nodes that, together with the host from `initial_controller` form a highly available isolated control plane.
 - `worker` = must contain at least one node so that we can deploy Kubernetes objects.
 

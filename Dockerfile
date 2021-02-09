@@ -11,4 +11,4 @@ ADD docker-entrypoint.sh /entrypoint.sh
 ADD ./k0s /usr/local/bin/k0s 
 ENTRYPOINT [ "/bin/sh", "/entrypoint.sh" ]
 
-CMD ["k0s", "server", "--enable-worker"]
+CMD ["k0s", "controller", "--enable-worker"]

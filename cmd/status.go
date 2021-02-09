@@ -127,8 +127,8 @@ func (s K0sStatus) String() {
 
 }
 func getSysInit(role string) (sysInit string, stubFile string, err error) {
-	if role == "server+worker" {
-		role = "server"
+	if role == "controller+worker" {
+		role = "controller"
 	}
 	if sysInit, err = install.GetSysInit(); err != nil {
 		return sysInit, stubFile, err
@@ -160,9 +160,9 @@ func getRole(pid int) (role string, err error) {
 	}
 	cmdln := string(raw)
 	if strings.Contains(cmdln, "enable-worker") {
-		return "server+worker", nil
-	} else if strings.Contains(cmdln, "server") {
-		return "server", nil
+		return "controller+worker", nil
+	} else if strings.Contains(cmdln, "controller") {
+		return "controller", nil
 	} else if strings.Contains(cmdln, "worker") {
 		return "worker", nil
 	}

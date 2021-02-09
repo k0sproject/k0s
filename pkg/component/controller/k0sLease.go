@@ -1,4 +1,4 @@
-package server
+package controller
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 // ControllerLease implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
-type ControllerLease struct {
+type K0sLease struct {
 	ClusterConfig     *config.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactory
 
@@ -24,15 +24,15 @@ type ControllerLease struct {
 }
 
 // Init initializes the component needs
-func (c *ControllerLease) Init() error {
+func (l *K0sLease) Init() error {
 	return nil
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
-func (c *ControllerLease) Run() error {
-	c.cancelCtx, c.cancelFunc = context.WithCancel(context.Background())
+func (l *K0sLease) Run() error {
+	l.cancelCtx, l.cancelFunc = context.WithCancel(context.Background())
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
-	client, err := c.KubeClientFactory.GetClient()
+	client, err := l.KubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
@@ -54,7 +54,7 @@ func (c *ControllerLease) Run() error {
 		return err
 	}
 
-	c.leaseCancel = cancel
+	l.leaseCancel = cancel
 
 	go func() {
 		for {
@@ -63,7 +63,7 @@ func (c *ControllerLease) Run() error {
 				log.Info("acquired leader lease")
 			case <-events.LostLease:
 				log.Error("lost leader lease, this should not really happen!?!?!?")
-			case <-c.cancelCtx.Done():
+			case <-l.cancelCtx.Done():
 				return
 			}
 		}
@@ -72,16 +72,16 @@ func (c *ControllerLease) Run() error {
 }
 
 // Stop stops the component
-func (c *ControllerLease) Stop() error {
-	if c.leaseCancel != nil {
-		c.leaseCancel()
+func (l *K0sLease) Stop() error {
+	if l.leaseCancel != nil {
+		l.leaseCancel()
 	}
 
-	if c.cancelFunc != nil {
-		c.cancelFunc()
+	if l.cancelFunc != nil {
+		l.cancelFunc()
 	}
 	return nil
 }
 
 // Healthy is a no-op healchcheck
-func (c *ControllerLease) Healthy() error { return nil }
+func (l *K0sLease) Healthy() error { return nil }

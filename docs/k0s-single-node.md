@@ -33,7 +33,7 @@ k0s default-config | tee ${HOME}/.k0s/k0s.yaml
 
 #### 3. Start k0s
 ```sh
-sudo k0s server -c ${HOME}/.k0s/k0s.yaml --enable-worker &
+sudo k0s controller -c ${HOME}/.k0s/k0s.yaml --enable-worker &
 ```
 
 ## Use kubectl to access k0s
