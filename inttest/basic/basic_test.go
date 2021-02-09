@@ -41,6 +41,10 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker0", kc)
 	s.NoError(err)
 
+	labels, err := s.GetNodeLabels("worker0", kc)
+	s.NoError(err)
+	s.Equal("bar", labels["k0sproject.io/foo"])
+
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 

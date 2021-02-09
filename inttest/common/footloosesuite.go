@@ -276,9 +276,9 @@ func (s *FootlooseSuite) RunWorkers(dataDir string) error {
 
 	var workerCommand string
 	if dataDir != "" {
-		workerCommand = fmt.Sprintf(`nohup k0s --debug --data-dir=%s worker "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
+		workerCommand = fmt.Sprintf(`nohup k0s --debug --data-dir=%s worker --labels="k0sproject.io/foo=bar" "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
 	} else {
-		workerCommand = fmt.Sprintf(`nohup k0s --debug worker "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+		workerCommand = fmt.Sprintf(`nohup k0s --debug worker --labels="k0sproject.io/foo=bar" "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	}
 
 	for i := 0; i < s.WorkerCount; i++ {
@@ -386,6 +386,15 @@ func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset)
 
 		return false, nil
 	})
+}
+
+// GetNodeLabels return the labels of given node
+func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (map[string]string, error) {
+	n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return n.Labels, nil
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.
