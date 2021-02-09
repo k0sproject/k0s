@@ -46,6 +46,7 @@ func init() {
 	workerCmd.Flags().StringVar(&clusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
 	workerCmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
+	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 }
 
@@ -59,6 +60,8 @@ var (
 	clusterDNS    string
 
 	cloudProvider bool
+
+	labels []string
 
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",
@@ -132,6 +135,7 @@ func startWorker(token string) error {
 		KubeletConfigClient: kubeletConfigClient,
 		LogLevel:            logging["kubelet"],
 		Profile:             workerProfile,
+		Labels:              labels,
 	})
 
 	if runtime.GOOS == "windows" {
