@@ -1,7 +1,12 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/k0sproject/k0s/pkg/install"
 )
 
 func init() {
@@ -21,7 +26,7 @@ var (
 		Use:   "controller",
 		Short: "Helper command for uninstalling k0s controller node. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return reset("controller")
 		},
 	}
 
@@ -29,7 +34,20 @@ var (
 		Use:   "worker",
 		Short: "Helper command for uninstalling k0s worker node. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return reset("worker")
 		},
 	}
 )
+
+func reset(role string) error {
+	if os.Geteuid() != 0 {
+		logrus.Fatal("this command must be run as root!")
+	}
+
+	err := install.UninstallService(role)
+	if err != nil {
+		logrus.Errorf("failed to uninstall k0s service: %v", err)
+	}
+
+	return nil
+}

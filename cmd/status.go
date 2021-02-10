@@ -19,17 +19,15 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/install"
-	ps "github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	"github.com/k0sproject/k0s/pkg/install"
 )
 
 var (
@@ -44,9 +42,7 @@ var (
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-
 			var err error
-
 			if status, err = getPid(); err != nil {
 				return err
 			}
@@ -58,16 +54,16 @@ var (
 				}
 				status.Version = ver
 
-				if user, err := getProcessOwner(status.Pid); err != nil {
+				if user, err := install.GetProcessOwner(status.Pid); err != nil {
 					return err
 				} else if !strings.Contains(user, "root") {
 					return fmt.Errorf("k0s status should be run as root")
 				}
 
-				if status.SysInit, status.StubFile, err = getSysInit(status.Role); err != nil {
+				if status.SysInit, status.StubFile, err = install.GetSysInit(status.Role); err != nil {
 					return err
 				}
-				if status.Role, err = getRole(status.Pid); err != nil {
+				if status.Role, err = install.GetRoleByPID(status.Pid); err != nil {
 					return err
 				}
 			} else {
@@ -126,84 +122,17 @@ func (s K0sStatus) String() {
 	}
 
 }
-func getSysInit(role string) (sysInit string, stubFile string, err error) {
-	if role == "controller+worker" {
-		role = "controller"
-	}
-	if sysInit, err = install.GetSysInit(); err != nil {
-		return sysInit, stubFile, err
-	}
-	if sysInit == "linux-systemd" {
-		stubFile = fmt.Sprintf("/etc/systemd/system/k0s%s.service", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	} else if sysInit == "linux-openrc" {
-		stubFile = fmt.Sprintf("/etc/init.d/k0s%s", role)
-		if _, err := os.Stat(stubFile); err != nil {
-			stubFile = ""
-		}
-	}
-
-	return sysInit, stubFile, err
-
-}
-
-func getRole(pid int) (role string, err error) {
-	if runtime.GOOS == "windows" {
-		return "worker", nil
-	}
-
-	var raw []byte
-	if raw, err = ioutil.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid)); err != nil {
-		return "", err
-	}
-	cmdln := string(raw)
-	if strings.Contains(cmdln, "enable-worker") {
-		return "controller+worker", nil
-	} else if strings.Contains(cmdln, "controller") {
-		return "controller", nil
-	} else if strings.Contains(cmdln, "worker") {
-		return "worker", nil
-	} else if strings.Contains(cmdln, "server") {
-		return "controller", nil
-	}
-	return "", fmt.Errorf("k0s role is not found")
-}
 
 func getPid() (status *K0sStatus, err error) {
-	processList, err := ps.Processes()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, p := range processList {
-		if p.Executable() == "k0s" && hasChildren(p.Pid(), processList) {
-			status = &K0sStatus{Pid: p.Pid(),
-				PPid: p.PPid()}
-
-			return status, nil
+	pid, ppid, err := install.GetProcessID()
+	if err == nil && pid != nil {
+		status = &K0sStatus{
+			Pid:  *pid,
+			PPid: *ppid,
 		}
+		return status, nil
 	}
-
 	return &K0sStatus{}, nil
-}
-
-func hasChildren(pid int, processes []ps.Process) bool {
-	for _, p := range processes {
-		if p.PPid() == pid {
-			return true
-		}
-	}
-	return false
-}
-
-func getProcessOwner(pid int) (string, error) {
-	stdout, err := exec.Command("ps", "-o", "user=", "-p", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSuffix(string(stdout), "\n"), nil
 }
 
 func getK0sVersion(pid int) (string, error) {
