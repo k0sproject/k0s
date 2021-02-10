@@ -82,7 +82,6 @@ func (n *Network) InternalAPIAddress() (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to parse service CIDR %s: %s", n.ServiceCIDR, err.Error())
 	}
-
 	address := ipnet.IP.To4()
 	address[3] = address[3] + 1
 	return address.String(), nil
@@ -109,7 +108,7 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // BuildServiceCIDR returns actual argument value for service cidr
 func (n *Network) BuildServiceCIDR() string {
 	if n.DualStack.Enabled {
-		return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
+		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
 	}
 	return n.ServiceCIDR
 }
@@ -117,7 +116,7 @@ func (n *Network) BuildServiceCIDR() string {
 // BuildPodCIDR returns actual argument value for pod cidr
 func (n *Network) BuildPodCIDR() string {
 	if n.DualStack.Enabled {
-		return n.PodCIDR + "," + n.DualStack.IPv6PodCIDR
+		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
 	}
 	return n.PodCIDR
 }

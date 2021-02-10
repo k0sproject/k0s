@@ -17,11 +17,11 @@ package v1beta1
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
+	"net"
 
 	"github.com/k0sproject/k0s/internal/util"
 )
@@ -107,18 +107,29 @@ func (a *APISpec) APIAddress() string {
 }
 
 func (a *APISpec) APIAddressURL() string {
-	if a.ExternalAddress != "" {
-		return fmt.Sprintf("https://%s:6443", a.ExternalAddress)
-	}
-	return fmt.Sprintf("https://%s:6443", a.Address)
+	return a.getExternalURIForPort(6443)
+}
+
+// IsIPv6String returns if ip is IPv6.
+func IsIPv6String(ip string) bool {
+	netIP := net.ParseIP(ip)
+	return netIP != nil && netIP.To4() == nil
 }
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
+	return a.getExternalURIForPort(9443)
+}
+
+func (a *APISpec) getExternalURIForPort(port int) string {
+	addr := a.Address
 	if a.ExternalAddress != "" {
-		return fmt.Sprintf("https://%s:9443", a.ExternalAddress)
+		addr = a.ExternalAddress
 	}
-	return fmt.Sprintf("https://%s:9443", a.Address)
+	if IsIPv6String(addr) {
+		return fmt.Sprintf("https://[%s]:%d", addr, port)
+	}
+	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
 // Sans return the given SANS plus all local adresses and externalAddress if given

@@ -78,8 +78,8 @@ func (c *Certificates) Init() error {
 
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
-
-	caCertPath, caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.crt"), filepath.Join(c.K0sVars.CertRootDir, "ca.key")
+	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
+	caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.key")
 
 	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
@@ -215,6 +215,15 @@ func (c *Certificates) Init() error {
 		return err
 	}
 	hostnames = append(hostnames, internalAPIAddress)
+
+	internalAPIAddressIPv6, err := c.ClusterSpec.Network.DualStack.InternalAPIAddress()
+	if err != nil {
+		return fmt.Errorf("can't parse IPv6 internal API address: %v", err)
+	}
+
+	if internalAPIAddressIPv6 != "" {
+		hostnames = append(hostnames, internalAPIAddressIPv6)
+	}
 
 	eg.Go(func() error {
 		serverReq := certificate.Request{
