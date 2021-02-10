@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	discoveryfake "k8s.io/client-go/discovery/fake"
@@ -12,12 +13,22 @@ import (
 	kubetesting "k8s.io/client-go/testing"
 )
 
-func NewFakeClientFactory() FakeClientFactory {
+// NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface
+func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
 	rawDiscovery := &discoveryfake.FakeDiscovery{Fake: &kubetesting.Fake{}}
 
+	// Remember to list all "xyzList" types for resource types we use with the fake client
+	// and use "list" verb on
+	gvkLists := map[schema.GroupVersionResource]string{
+		{Group: "", Version: "v1", Resource: "pods"}:       "PodList",
+		{Group: "", Version: "v1", Resource: "namespaces"}: "NamespaceList",
+		{Group: "", Version: "v1", Resource: "nodes"}:      "NodeList",
+		{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMapList",
+	}
+
 	return FakeClientFactory{
-		Client:          fake.NewSimpleClientset(),
-		DynamicClient:   dynamicfake.NewSimpleDynamicClient(runtime.NewScheme()),
+		Client:          fake.NewSimpleClientset(objects...),
+		DynamicClient:   dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), gvkLists),
 		DiscoveryClient: memory.NewMemCacheClient(rawDiscovery),
 		RawDiscovery:    rawDiscovery,
 	}

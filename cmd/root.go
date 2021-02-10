@@ -59,7 +59,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	rootCmd.PersistentFlags().StringVar(&debugListenOn, "debugListenOn", ":6060", "Http listenOn for debug pprof handler")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
-	rootCmd.PersistentFlags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 
 	// initialize configuration
 	err := initConfig()
@@ -80,6 +79,7 @@ func init() {
 	rootCmd.AddCommand(completionCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(validateCmd)
+	rootCmd.AddCommand(kubectlCmd)
 
 	rootCmd.DisableAutoGenTag = true
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"

@@ -13,7 +13,6 @@ require (
 	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.10.0 // indirect
-	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
@@ -41,9 +40,8 @@ require (
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
-	golang.org/x/sys v0.0.0-20201109165425-215b40eba54c // indirect
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
@@ -52,10 +50,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	helm.sh/helm/v3 v3.4.0
 	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
-	k8s.io/api v0.19.3
-	k8s.io/apimachinery v0.19.3
-	k8s.io/cli-runtime v0.19.3
-	k8s.io/client-go v0.19.3
+	k8s.io/api v0.20.2
+	k8s.io/apimachinery v0.20.2
+	k8s.io/cli-runtime v0.20.2
+	k8s.io/client-go v0.20.2
+	k8s.io/kubectl v0.20.2
 )
 
 // We need to force to a git commit of 3.4.13 release, see https://github.com/etcd-io/etcd/issues/12109
