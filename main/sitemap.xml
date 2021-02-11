@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://docs.k0sproject.io/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/create-cluster/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/k0s-single-node/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/k0s-in-docker/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/experimental-windows/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/architecture/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/networking/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/configuration/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/containerd_config/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/custom-cri-runtime/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/cloud-providers/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/install/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/dual-stack/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/examples/traefik-ingress/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/examples/ambassador-ingress/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/raspberry-pi4/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/examples/ansible-playbook/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/manifests/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/FAQ/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/troubleshooting/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/contributors/overview/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/contributors/github_workflow/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/contributors/testing/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/internal/publishing_docs_using_mkdocs/</loc>
-     <lastmod>2021-02-10</lastmod>
+     <lastmod>2021-02-11</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>
