@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -33,7 +34,12 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flagsAndVals := []string{"worker"}
 			cmd.Flags().Visit(func(f *pflag.Flag) {
-				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
+				if f.Value.Type() == "stringSlice" { // this is a workaround to parse f.Value correctly
+					labels := f.Value.String()
+					flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s="%s"`, f.Name, strings.Trim(labels, "[]")))
+				} else {
+					flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
+				}
 			})
 
 			return setup("worker", flagsAndVals)
