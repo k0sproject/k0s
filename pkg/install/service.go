@@ -76,7 +76,6 @@ func UninstallService(role string) error {
 	if err != nil {
 		return err
 	}
-
 	logrus.Info("Uninstalling the k0s service")
 	err = s.Stop()
 	if err != nil {

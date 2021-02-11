@@ -30,6 +30,22 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constan
 	return nil
 }
 
+// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
+	users := getUserList(*clusterConfig.Install.SystemUsers)
+	var messages []string
+	for _, v := range users {
+		if err := DeleteUser(v); err != nil {
+			messages = append(messages, err.Error())
+		}
+	}
+	if len(messages) > 0 {
+		// don't fail the command, just notify on errors
+		return fmt.Errorf(strings.Join(messages, "\n"))
+	}
+	return nil
+}
+
 // EnsureUser checks if a user exists, and creates it, if it doesn't
 // TODO: we should also consider modifying the user, if the user exists, but with wrong settings
 func EnsureUser(name string, homeDir string) error {
@@ -79,6 +95,28 @@ func CreateUser(userName string, homeDir string, shell string) error {
 	return nil
 }
 
+// DeleteUser deletes system users with either `deluser` or `userdel` command
+func DeleteUser(userName string) error {
+	var userCmd string
+	var userCmdArgs []string
+
+	logrus.Infof("deleting user: %s", userName)
+	_, err := util.GetExecPath("userdel")
+	if err == nil {
+		userCmd = "userdel"
+		userCmdArgs = []string{userName}
+	} else {
+		userCmd = "deluser"
+		userCmdArgs = []string{`--system`, userName}
+	}
+
+	cmd := exec.Command(userCmd, userCmdArgs...)
+	if err := execCmd(cmd); err != nil {
+		return err
+	}
+	return nil
+}
+
 // cmd wrapper
 func execCmd(cmd *exec.Cmd) error {
 	logrus.Debugf("executing command: %v", quoteCmd(cmd))
@@ -112,5 +150,5 @@ func getUserList(sysUsers v1beta1.SystemUser) []string {
 	for i := 0; i < v.NumField(); i++ {
 		values[i] = v.Field(i).String()
 	}
-	return values
+	return util.Unique(values)
 }

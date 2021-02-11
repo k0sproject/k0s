@@ -43,11 +43,20 @@ func reset(role string) error {
 	if os.Geteuid() != 0 {
 		logrus.Fatal("this command must be run as root!")
 	}
-
 	err := install.UninstallService(role)
 	if err != nil {
 		logrus.Errorf("failed to uninstall k0s service: %v", err)
 	}
 
+	if role == "controller" {
+		clusterConfig, err := ConfigFromYaml(cfgFile)
+		if err != nil {
+			logrus.Errorf("failed to get cluster setup: %v", err)
+		}
+		if err := install.DeleteControllerUsers(clusterConfig); err != nil {
+			// don't fail, just notify on delete error
+			logrus.Infof("failed to delete controller users: %v", err)
+		}
+	}
 	return nil
 }
