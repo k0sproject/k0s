@@ -25,25 +25,42 @@ type NetworkSuite struct {
 	suite.Suite
 }
 
-func (s *NetworkSuite) TestDNSAddress() {
-	n := DefaultNetwork()
-	dns, err := n.DNSAddress()
-	s.NoError(err)
-	s.Equal("10.96.0.10", dns)
-
-	api, err := n.InternalAPIAddress()
-	s.NoError(err)
-	s.Equal("10.96.0.1", api)
-
-	n.ServiceCIDR = "10.96.0.248/29"
-	dns, err = n.DNSAddress()
-	s.NoError(err)
-	s.Equal("10.96.0.250", dns)
-
-	api, err = n.InternalAPIAddress()
-	s.NoError(err)
-	s.Equal("10.96.0.249", api)
-
+func (s *NetworkSuite) TestAddresses() {
+	s.T().Run("DNS_default_service_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		dns, err := n.DNSAddress()
+		s.NoError(err)
+		s.Equal("10.96.0.10", dns)
+	})
+	s.T().Run("DNS_uses_non_default_service_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.ServiceCIDR = "10.96.0.248/29"
+		dns, err := n.DNSAddress()
+		s.NoError(err)
+		s.Equal("10.96.0.250", dns)
+	})
+	s.T().Run("Internal_api_address_default", func(t *testing.T) {
+		n := DefaultNetwork()
+		api, err := n.InternalAPIAddresses()
+		s.NoError(err)
+		s.Equal([]string{"10.96.0.1"}, api)
+	})
+	s.T().Run("Internal_api_address_non_default_single_stack", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.ServiceCIDR = "10.96.0.248/29"
+		api, err := n.InternalAPIAddresses()
+		s.NoError(err)
+		s.Equal([]string{"10.96.0.249"}, api)
+	})
+	s.T().Run("Internal_api_address_non_default_dual_stack", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.ServiceCIDR = "10.96.0.248/29"
+		n.DualStack.Enabled = true
+		n.DualStack.IPv6ServiceCIDR = "fd00::/108"
+		api, err := n.InternalAPIAddresses()
+		s.NoError(err)
+		s.Equal([]string{"10.96.0.249", "fd00::1"}, api)
+	})
 }
 
 func (s *NetworkSuite) TestCalicoDefaults() {

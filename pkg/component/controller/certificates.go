@@ -210,20 +210,11 @@ func (c *Certificates) Init() error {
 
 	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
-	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddress()
+	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
 	if err != nil {
 		return err
 	}
-	hostnames = append(hostnames, internalAPIAddress)
-
-	internalAPIAddressIPv6, err := c.ClusterSpec.Network.DualStack.InternalAPIAddress()
-	if err != nil {
-		return fmt.Errorf("can't parse IPv6 internal API address: %v", err)
-	}
-
-	if internalAPIAddressIPv6 != "" {
-		hostnames = append(hostnames, internalAPIAddressIPv6)
-	}
+	hostnames = append(hostnames, internalAPIAddress...)
 
 	eg.Go(func() error {
 		serverReq := certificate.Request{

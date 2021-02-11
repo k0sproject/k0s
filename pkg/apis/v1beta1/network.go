@@ -20,6 +20,7 @@ import (
 	"net"
 
 	"github.com/pkg/errors"
+	utilnet "k8s.io/utils/net"
 )
 
 // Network defines the network related config options
@@ -76,15 +77,28 @@ func (n *Network) DNSAddress() (string, error) {
 	return address.String(), nil
 }
 
-// InternalAPIAddress calculates the internal API address of configured service CIDR block.
-func (n *Network) InternalAPIAddress() (string, error) {
-	_, ipnet, err := net.ParseCIDR(n.ServiceCIDR)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse service CIDR %s: %s", n.ServiceCIDR, err.Error())
+// InternalAPIAddresses calculates the internal API address of configured service CIDR block.
+func (n *Network) InternalAPIAddresses() ([]string, error) {
+	cidrs := []string{n.ServiceCIDR}
+
+	if n.DualStack.Enabled {
+		cidrs = append(cidrs, n.DualStack.IPv6ServiceCIDR)
 	}
-	address := ipnet.IP.To4()
-	address[3] = address[3] + 1
-	return address.String(), nil
+
+	parsedCIDRs, err := utilnet.ParseCIDRs(cidrs)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse service cidr to build internal API address: %v", err)
+	}
+
+	stringifiedAddresses := make([]string, len(parsedCIDRs))
+	for i, ip := range parsedCIDRs {
+		apiIP, err := utilnet.GetIndexedIP(ip, 1)
+		if err != nil {
+			return nil, fmt.Errorf("can't build internal API address: %v", err)
+		}
+		stringifiedAddresses[i] = apiIP.String()
+	}
+	return stringifiedAddresses, nil
 }
 
 // UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
