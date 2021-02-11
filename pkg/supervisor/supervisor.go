@@ -175,7 +175,7 @@ func getEnv(dataDir string) []string {
 	env := os.Environ()
 	for i, e := range env {
 		if strings.HasPrefix(e, "PATH=") {
-			env[i] = fmt.Sprintf("PATH=%s:%s", os.Getenv("PATH"), path.Join(dataDir, "bin"))
+			env[i] = fmt.Sprintf("PATH=%s:%s", path.Join(dataDir, "bin"), os.Getenv("PATH"))
 		}
 	}
 	return env
