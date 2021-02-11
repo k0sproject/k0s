@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -55,6 +56,12 @@ type Etcd struct {
 // Init extracts the needed binaries
 func (e *Etcd) Init() error {
 	var err error
+
+	if err = detectUnsupportedEtcdArch(); err != nil {
+		logrus.Error(errors.Wrap(err, "Missing environment variable"))
+		return err
+	}
+
 	e.uid, err = util.GetUID(constant.EtcdUser)
 	if err != nil {
 		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
@@ -244,4 +251,13 @@ func (e *Etcd) Healthy() error {
 	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
 	cancel()
 	return err
+}
+
+func detectUnsupportedEtcdArch() error {
+	if strings.Contains(runtime.GOARCH, "arm") {
+		if os.Getenv("ETCD_UNSUPPORTED_ARCH") != runtime.GOARCH {
+			return fmt.Errorf("running ETCD on %s requires ETCD_UNSUPPORTED_ARCH=%s ", runtime.GOARCH, runtime.GOARCH)
+		}
+	}
+	return nil
 }
