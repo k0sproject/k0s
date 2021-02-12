@@ -31,6 +31,7 @@ func init() {
 
 	etcdCmd.AddCommand(etcdLeaveCmd)
 	etcdCmd.AddCommand(etcdListCmd)
+	addPersistentFlags(etcdCmd)
 }
 
 var (

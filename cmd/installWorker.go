@@ -19,6 +19,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
+}
+
 var (
 	installWorkerCmd = &cobra.Command{
 		Use:   "worker",

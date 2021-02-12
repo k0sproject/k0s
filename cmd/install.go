@@ -30,6 +30,7 @@ import (
 func init() {
 	installCmd.AddCommand(installControllerCmd)
 	installCmd.AddCommand(installWorkerCmd)
+	addPersistentFlags(installCmd)
 }
 
 var (

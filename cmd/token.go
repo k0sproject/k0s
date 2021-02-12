@@ -29,6 +29,7 @@ func init() {
 	tokenCmd.AddCommand(tokenCreateCmd)
 	tokenCmd.AddCommand(tokenListCmd)
 	tokenCmd.AddCommand(tokenInvalidateCmd)
+	addPersistentFlags(tokenCmd)
 }
 
 var (
