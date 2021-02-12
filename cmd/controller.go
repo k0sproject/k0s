@@ -221,7 +221,12 @@ func startController(token string) error {
 
 	// One leader elector per controller
 	// TODO: Make all other needed components use this "global" leader elector
-	leaderElector := controller.NewLeaderElector(clusterConfig, adminClientFactory)
+	var leaderElector controller.LeaderElector
+	if clusterConfig.Spec.API.ExternalAddress != "" {
+		leaderElector = controller.NewLeaderElector(clusterConfig, adminClientFactory)
+	} else {
+		leaderElector = &controller.DummyLeaderElector{Leader: true}
+	}
 	componentManager.Add(leaderElector)
 
 	if clusterConfig.Spec.API.ExternalAddress != "" {
