@@ -86,8 +86,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	optionally add groups:
 	$ k0s kubeconfig create [username] --groups [groups]`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Disable logrus and cfssl logging for user commands to avoid printing debug info to stdout
-			logrus.SetLevel(logrus.FatalLevel)
+			// disable cfssl log
 			log.Level = log.LevelFatal
 
 			if len(args) == 0 {
@@ -180,6 +179,9 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 )
 
 func getAPIURL() (string, error) {
+	// Disable logrus
+	logrus.SetLevel(logrus.FatalLevel)
+
 	clusterConfig, err := ConfigFromYaml(cfgFile)
 	if err != nil {
 		return "", err
