@@ -78,8 +78,8 @@ func (c *Certificates) Init() error {
 
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
-
-	caCertPath, caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.crt"), filepath.Join(c.K0sVars.CertRootDir, "ca.key")
+	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
+	caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.key")
 
 	if err := c.CertManager.EnsureCA("ca", "kubernetes-ca"); err != nil {
 		return err
@@ -210,11 +210,11 @@ func (c *Certificates) Init() error {
 
 	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
-	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddress()
+	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
 	if err != nil {
 		return err
 	}
-	hostnames = append(hostnames, internalAPIAddress)
+	hostnames = append(hostnames, internalAPIAddress...)
 
 	eg.Go(func() error {
 		serverReq := certificate.Request{
