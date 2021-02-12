@@ -30,6 +30,11 @@ var (
 		Short: kubectlCmd.Short,
 		Long:  kubectlCmd.Long,
 		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(os.Args, args)
+			if len(args) == 0 {
+				kubectlCmd.Help()
+				return
+			}
 			os.Args = os.Args[2:]
 			os.Args[0] = "kubectl"
 			fmt.Println(os.Args)
@@ -38,3 +43,9 @@ var (
 		},
 	}
 )
+
+func init() {
+	kubectlWrapCmd.SetHelpFunc(func(command *cobra.Command, strings []string) {
+		kubectlCmd.Help()
+	})
+}
