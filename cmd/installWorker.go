@@ -16,10 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 var (
@@ -32,10 +29,7 @@ All default values of worker command will be passed to the service stub unless o
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flagsAndVals := []string{"worker"}
-			cmd.Flags().Visit(func(f *pflag.Flag) {
-				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
-			})
-
+			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
 			return setup("worker", flagsAndVals)
 		},
 	}

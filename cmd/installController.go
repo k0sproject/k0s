@@ -16,10 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 var (
@@ -33,12 +30,9 @@ With controller subcommand you can setup a single node cluster by running:
 	k0s install controller --enable-worker
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flagsAndVals := []string{"controller"}
-			cmd.Flags().Visit(func(f *pflag.Flag) {
-				flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
-			})
-
-			return setup("controller", flagsAndVals)
+			flagsAndVals := []string{"server"}
+			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			return setup("server", flagsAndVals)
 		},
 	}
 )
