@@ -28,6 +28,7 @@ func init() {
 
 	tokenCmd.AddCommand(tokenCreateCmd)
 	tokenCmd.AddCommand(tokenListCmd)
+	tokenCmd.AddCommand(tokenInvalidateCmd)
 }
 
 var (
@@ -40,8 +41,5 @@ var (
 	tokenCmd = &cobra.Command{
 		Use:   "token",
 		Short: "Manage join tokens",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return tokenCreateCmd.Usage()
-		},
 	}
 )
