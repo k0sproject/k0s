@@ -47,6 +47,7 @@ type Kubelet struct {
 	dataDir             string
 	supervisor          supervisor.Supervisor
 	ClusterDNS          string
+	Labels              []string
 }
 
 // Init extracts the needed binaries
@@ -93,6 +94,10 @@ func (k *Kubelet) Run() error {
 		"--runtime-cgroups":      "/system.slice/containerd.service",
 		"--kubelet-cgroups":      "/system.slice/containerd.service",
 		"--cert-dir":             filepath.Join(k.dataDir, "pki"),
+	}
+
+	if len(k.Labels) > 0 {
+		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
 	if runtime.GOOS == "windows" {
