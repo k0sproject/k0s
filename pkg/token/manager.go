@@ -22,12 +22,23 @@ import (
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/util"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
+
+type Token struct {
+	ID     string
+	Role   string
+	Expiry string
+}
+
+func (t Token) ToArray() []string {
+	return []string{t.ID, t.Role, t.Expiry}
+}
 
 // NewManager creates a new token manager using given kubeconfig
 func NewManager(kubeconfig string) (*Manager, error) {
@@ -93,4 +104,38 @@ func (m *Manager) Create(valid time.Duration, role string) (string, error) {
 	}
 
 	return token, nil
+}
+
+// List returna all the join tokens for given role. If role == "" then it returns all join tokens
+func (m *Manager) List(role string) ([]Token, error) {
+	tokenList, err := m.client.CoreV1().Secrets("kube-system").List(context.TODO(), metav1.ListOptions{
+		FieldSelector: "type=bootstrap.kubernetes.io/token",
+	})
+	if err != nil {
+		return nil, err
+	}
+	tokens := make([]Token, 0, len(tokenList.Items))
+
+	for _, t := range tokenList.Items {
+		r := "worker"
+		if string(t.Data["usage-controller-join"]) == "true" {
+			r = "controller"
+		}
+		if r == role || role == "" {
+			tokens = append(tokens, Token{
+				ID:     string(t.Data["token-id"]),
+				Role:   r,
+				Expiry: string(t.Data["expiration"]),
+			})
+		}
+	}
+	return tokens, nil
+}
+
+func (m *Manager) Remove(tokenID string) error {
+	err := m.client.CoreV1().Secrets("kube-system").Delete(context.TODO(), fmt.Sprintf("bootstrap-token-%s", tokenID), metav1.DeleteOptions{})
+	if errors.IsNotFound(err) {
+		return nil
+	}
+	return err
 }
