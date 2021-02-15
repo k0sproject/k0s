@@ -15,6 +15,7 @@ nav:
       - Single-Node Cluster:     k0s-single-node.md
       - Docker:                  k0s-in-docker.md
       - Windows (experimental):  experimental-windows.md
+      - System Requirements:     system-requirements.md
   - Architecture:
       - Architecture: architecture.md
       - Networking:   networking.md
