@@ -20,7 +20,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra/doc"
 
@@ -28,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -59,12 +57,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	rootCmd.PersistentFlags().StringVar(&debugListenOn, "debugListenOn", ":6060", "Http listenOn for debug pprof handler")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
-
-	// initialize configuration
-	err := initConfig()
-	if err != nil {
-		fmt.Printf("err: %v", err)
-	}
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
@@ -135,28 +127,6 @@ var (
 		},
 	}
 )
-
-func initConfig() error {
-	// look for k0s.yaml in PWD
-	if cfgFile == "" {
-		execFolderPath, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		cfgFile = filepath.Join(execFolderPath, "k0s.yaml")
-	}
-
-	// check if config file exists
-	if util.FileExists(cfgFile) {
-		viper.SetConfigFile(cfgFile)
-		logrus.Debugf("Using config file: %v", cfgFile)
-	}
-
-	// Add env vars to Config
-	viper.AutomaticEnv()
-
-	return nil
-}
 
 func generateDocs() error {
 	if err := doc.GenMarkdownTree(rootCmd, "./docs/cli"); err != nil {

@@ -32,7 +32,7 @@ type BasicSuite struct {
 
 func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
-	s.NoError(s.InitMainController("/tmp/k0s.yaml", customDataDir))
+	s.NoError(s.InitMainController("", customDataDir))
 	s.NoError(s.RunWorkers(customDataDir))
 
 	kc, err := s.KubeClient("controller0", customDataDir)
