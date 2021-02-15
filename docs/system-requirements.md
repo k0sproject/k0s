@@ -4,7 +4,7 @@ These are the k0s system requirements.
 
 ## Hardware
 
-Minimum HW requirements.
+The following table shows the minimum HW requirements. All values are approximations and results may vary.
 
 | Role                | Virtual CPU (vCPU)     | Memory (RAM)           |
 |---------------------|------------------------|------------------------|
