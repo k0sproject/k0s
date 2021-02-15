@@ -27,16 +27,17 @@ import (
 
 // ConfigFromYaml returns given k0s config or default config
 func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err error) {
-	if isInputFromPipe() {
+	if cfgPath == "" {
+		logrus.Info("no config file given, using defaults")
+		clusterConfig = config.DefaultClusterConfig()
+	} else if isInputFromPipe() {
 		clusterConfig, err = config.FromYamlPipe(os.Stdin)
 	} else {
 		clusterConfig, err = config.FromYamlFile(cfgPath)
 	}
 
 	if err != nil {
-		logrus.Warnf("Failed to read cluster config: %s", err.Error())
-		logrus.Info("Using default config")
-		clusterConfig = config.DefaultClusterConfig()
+		return nil, err
 	}
 	// validate
 	errors := clusterConfig.Validate()
