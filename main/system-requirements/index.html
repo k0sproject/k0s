@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/contributors/overview/">
+        <link rel="canonical" href="https://docs.k0sproject.io/system-requirements/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,14 +19,14 @@
     
     
       
-        <title>Overview - Documentation</title>
+        <title>System Requirements - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.406af9ae.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.406af9ae.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ec60dfa4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ec60dfa4.min.css">
         
       
     
@@ -41,7 +41,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing-to-k0s" class="md-skip">
+        <a href="#system-requirements" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
   <nav class="md-header-nav md-grid" aria-label="Header">
     <a href="https://docs.k0sproject.io" title="Documentation" class="md-header-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header-nav__button md-icon" for="__drawer">
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Overview
+              System Requirements
             
           </span>
         </div>
@@ -198,7 +198,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="https://docs.k0sproject.io" title="Documentation" class="md-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -225,7 +225,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Overview
     </a>
   </li>
@@ -235,10 +235,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Creating a Cluster
@@ -258,7 +260,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../create-cluster/" class="md-nav__link">
+    <a href="../create-cluster/" class="md-nav__link">
       Multi-Node Cluster
     </a>
   </li>
@@ -270,7 +272,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-single-node/" class="md-nav__link">
+    <a href="../k0s-single-node/" class="md-nav__link">
       Single-Node Cluster
     </a>
   </li>
@@ -282,7 +284,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
+    <a href="../k0s-in-docker/" class="md-nav__link">
       Docker
     </a>
   </li>
@@ -294,7 +296,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../experimental-windows/" class="md-nav__link">
+    <a href="../experimental-windows/" class="md-nav__link">
       Windows (experimental)
     </a>
   </li>
@@ -304,11 +306,70 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../system-requirements/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        System Requirements
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       System Requirements
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hardware" class="md-nav__link">
+    Hardware
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host-operating-system" class="md-nav__link">
+    Host operating system
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    Architecture
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    Networking
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -344,7 +405,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../architecture/" class="md-nav__link">
+    <a href="../architecture/" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -356,7 +417,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../networking/" class="md-nav__link">
+    <a href="../networking/" class="md-nav__link">
       Networking
     </a>
   </li>
@@ -394,7 +455,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration/" class="md-nav__link">
+    <a href="../configuration/" class="md-nav__link">
       Configuration Options
     </a>
   </li>
@@ -406,7 +467,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../containerd_config/" class="md-nav__link">
+    <a href="../containerd_config/" class="md-nav__link">
       Containerd Configuration
     </a>
   </li>
@@ -418,7 +479,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../custom-cri-runtime/" class="md-nav__link">
+    <a href="../custom-cri-runtime/" class="md-nav__link">
       Using a Custom CRI
     </a>
   </li>
@@ -430,7 +491,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cloud-providers/" class="md-nav__link">
+    <a href="../cloud-providers/" class="md-nav__link">
       Using Cloud Providers
     </a>
   </li>
@@ -442,7 +503,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../install/" class="md-nav__link">
+    <a href="../install/" class="md-nav__link">
       Running k0s as a service
     </a>
   </li>
@@ -454,7 +515,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../dual-stack/" class="md-nav__link">
+    <a href="../dual-stack/" class="md-nav__link">
       IPv4/IPv6 dual-stack networking
     </a>
   </li>
@@ -492,7 +553,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/traefik-ingress/" class="md-nav__link">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
       Installing the Traefik Ingress Controller
     </a>
   </li>
@@ -504,7 +565,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
       Installing the Ambassador Gateway
     </a>
   </li>
@@ -516,7 +577,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../raspberry-pi4/" class="md-nav__link">
+    <a href="../raspberry-pi4/" class="md-nav__link">
       Creating Raspberry Pi 4 Cluster
     </a>
   </li>
@@ -528,7 +589,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ansible-playbook/" class="md-nav__link">
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
       Creating a cluster with Ansible Playbook
     </a>
   </li>
@@ -545,7 +606,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../manifests/" class="md-nav__link">
+    <a href="../manifests/" class="md-nav__link">
       Deploying Manifests
     </a>
   </li>
@@ -557,7 +618,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../FAQ/" class="md-nav__link">
+    <a href="../FAQ/" class="md-nav__link">
       FAQ
     </a>
   </li>
@@ -569,7 +630,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../troubleshooting/" class="md-nav__link">
+    <a href="../troubleshooting/" class="md-nav__link">
       Troubleshooting
     </a>
   </li>
@@ -579,12 +640,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
     
     <label class="md-nav__link" for="nav-9">
       Contributing
@@ -602,77 +661,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Overview
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../contributors/overview/" class="md-nav__link">
       Overview
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#code-of-conduct" class="md-nav__link">
-    Code of Conduct
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#github-workflow" class="md-nav__link">
-    Github Workflow
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-testing" class="md-nav__link">
-    Code Testing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    License
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#community" class="md-nav__link">
-    Community
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -682,7 +675,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../github_workflow/" class="md-nav__link">
+    <a href="../contributors/github_workflow/" class="md-nav__link">
       Workflow
     </a>
   </li>
@@ -694,7 +687,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../testing/" class="md-nav__link">
+    <a href="../contributors/testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -706,7 +699,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+    <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
       Documentation
     </a>
   </li>
@@ -746,36 +739,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#code-of-conduct" class="md-nav__link">
-    Code of Conduct
+  <a href="#hardware" class="md-nav__link">
+    Hardware
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#github-workflow" class="md-nav__link">
-    Github Workflow
+  <a href="#host-operating-system" class="md-nav__link">
+    Host operating system
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-testing" class="md-nav__link">
-    Code Testing
+  <a href="#architecture" class="md-nav__link">
+    Architecture
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    License
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#community" class="md-nav__link">
-    Community
+  <a href="#networking" class="md-nav__link">
+    Networking
   </a>
   
 </li>
@@ -794,38 +780,73 @@
               
                 
                 
-                <h1 id="contributing-to-k0s">Contributing to k0s<a class="headerlink" href="#contributing-to-k0s" title="Permanent link">#</a></h1>
-<p>Thank you for taking the time to make a contribution to k0s. The following document is a set of guidelines and instructions for contributing to k0s.</p>
-<p>When contributing to this repository, please consider first discussing the change you wish to make by opening an issue.</p>
-<h2 id="code-of-conduct">Code of Conduct<a class="headerlink" href="#code-of-conduct" title="Permanent link">#</a></h2>
-<p>Our code of conduct can be found in the link below. Please follow it in all your interactions with the project.</p>
+                <h1 id="system-requirements">System requirements<a class="headerlink" href="#system-requirements" title="Permanent link">#</a></h1>
+<p>These are the k0s system requirements.</p>
+<h2 id="hardware">Hardware<a class="headerlink" href="#hardware" title="Permanent link">#</a></h2>
+<p>The following table shows the minimum HW requirements. All values are approximations and results may vary.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Virtual CPU (vCPU)</th>
+<th>Memory (RAM)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controller node</td>
+<td>1 vCPU (2 recommended)</td>
+<td>1 GB (2 recommended)</td>
+</tr>
+<tr>
+<td>Worker node</td>
+<td>1 vCPU (2 recommended)</td>
+<td>1 GB (2 recommended)</td>
+</tr>
+<tr>
+<td>Controller + worker</td>
+<td>1 vCPU (2 recommended)</td>
+<td>1 GB (2 recommended)</td>
+</tr>
+</tbody>
+</table>
+<p>For optimal storage performance we recommend using an SSD disk. Cluster latency and throughput are sensitive to storage:
+<a href="https://etcd.io/docs/current/op-guide/performance/">https://etcd.io/docs/current/op-guide/performance/</a></p>
+<p>k0s part of the storage consumption is presented in the following table. Note that the operating system and application requirements must be added on top.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Storage (k0s part)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controller node</td>
+<td>~0.5 GB</td>
+</tr>
+<tr>
+<td>Worker node</td>
+<td>~1.3 GB</td>
+</tr>
+<tr>
+<td>Controller + worker</td>
+<td>~1.7 GB</td>
+</tr>
+</tbody>
+</table>
+<h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../CODE_OF_CONDUCT/">Code Of Conduct</a> </li>
+<li>Linux (kernel v3.10 or newer)</li>
+<li>Windows Server 2019</li>
 </ul>
-<h2 id="github-workflow">Github Workflow<a class="headerlink" href="#github-workflow" title="Permanent link">#</a></h2>
-<p>We Use <a href="https://guides.github.com/introduction/flow/index.html">Github Flow</a>, so all code changes are tracked via Pull Requests.
-A detailed guide on the recommended workflow can be found below:</p>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../github_workflow/">Github Workflow</a></li>
+<li>Intel (x86-64)</li>
+<li>ARM (ARM64)</li>
 </ul>
-<h2 id="code-testing">Code Testing<a class="headerlink" href="#code-testing" title="Permanent link">#</a></h2>
-<p>All submitted PRs go through a set of tests and reviews. You can run most of these tests <em>before</em> a PR is submitted.
-In fact, we recommend it, because it will save on many possible review iterations and automated tests.
-The testing guidelines can be found here:</p>
-<ul>
-<li><a href="../testing/">Contributor's Guide to Testing</a></li>
-</ul>
-<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">#</a></h2>
-<p>By contributing, you agree that your contributions will be licensed as followed:</p>
-<ul>
-<li>All content residing under the "docs/" directory of this repository is licensed under "Creative Commons Attribution Share Alike 4.0 International" (CC-BY-SA-4.0). See docs/LICENCE for details.</li>
-<li>Content outside of the above mentioned directories or restrictions above is available under the "Apache License 2.0".</li>
-</ul>
-<h2 id="community">Community<a class="headerlink" href="#community" title="Permanent link">#</a></h2>
-<p>Some of you might have noticed we have official community blog hosted on <a href="https://medium.com/k0sproject">Medium</a>. If you are not yet following us, we'd like to invite you to do so now! 
-Make sure to <a href="https://twitter.com/k0sproject">follow us on Twitter</a> as well 😊
-We have also agreed to share Slack with Lens IDE team. They are close friends of the k0s crew, and many of the Kubernetes users are using Lens anyway, so it felt very natural for us to share their Slack. </p>
-<p>You’ll find us on dedicated k0s channel. Please <a href="https://join.slack.com/t/k8slens/shared_invite/enQtOTc5NjAyNjYyOTk4LWU1NDQ0ZGFkOWJkNTRhYTc2YjVmZDdkM2FkNGM5MjhiYTRhMDU2NDQ1MzIyMDA4ZGZlNmExOTc0N2JmY2M3ZGI">join the k0s Slack channel</a> to hear the latest news, discussions and provide your feedback!</p>
+<h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
+<p>See <a href="../networking/">networking</a> for the needed open ports.</p>
                 
               
               
@@ -844,7 +865,7 @@ We have also agreed to share Slack with Lens IDE team. They are close friends of
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../../troubleshooting/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../experimental-windows/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -853,19 +874,19 @@ We have also agreed to share Slack with Lens IDE team. They are close friends of
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Troubleshooting
+                Windows (experimental)
               </div>
             </div>
           </a>
         
         
-          <a href="../github_workflow/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Workflow
+                Architecture
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
@@ -921,15 +942,15 @@ We have also agreed to share Slack with Lens IDE team. They are close friends of
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.4d7724a9.min.js"></script>
-      <script src="../../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.4d7724a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "..",
           features: ['toc.autohide', 'search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.0f64ce30.min.js"
+            worker: "../assets/javascripts/worker/search.0f64ce30.min.js"
           }, typeof search !== "undefined" && search),
           version: {'method': 'mike'}
         })
