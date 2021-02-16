@@ -210,6 +210,8 @@ func getDefaultProfile(dnsAddress string, clientCAFile string, volumePluginDir s
 		"volumeStatsAggPeriod": "0s",
 		"volumePluginDir":      volumePluginDir,
 		"failSwapOn":           false,
+		"rotateCertificates":   true,
+		"serverTLSBootstrap":   true,
 	}
 	if dualStack {
 		profile["featureGates"] = map[string]bool{

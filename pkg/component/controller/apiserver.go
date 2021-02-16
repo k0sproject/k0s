@@ -107,6 +107,7 @@ func (a *APIServer) Run() error {
 		"insecure-port":                    "0",
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
+		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 	}
 
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
