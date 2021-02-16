@@ -21,8 +21,9 @@ import (
 
 var (
 	installControllerCmd = &cobra.Command{
-		Use:   "controller",
-		Short: "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
+		Use:     "controller",
+		Short:   "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
+		Aliases: []string{"server"},
 		Example: `All default values of controller command will be passed to the service stub unless overriden. 
 
 With controller subcommand you can setup a single node cluster by running:
@@ -30,9 +31,9 @@ With controller subcommand you can setup a single node cluster by running:
 	k0s install controller --enable-worker
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flagsAndVals := []string{"server"}
+			flagsAndVals := []string{"controller"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
-			return setup("server", flagsAndVals)
+			return setup("controller", flagsAndVals)
 		},
 	}
 )
