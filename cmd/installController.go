@@ -19,6 +19,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
+}
+
 var (
 	installControllerCmd = &cobra.Command{
 		Use:     "controller",

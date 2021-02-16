@@ -42,6 +42,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
+func init() {
+	addPersistentFlags(APICmd)
+}
+
 var (
 	kubeClient    k8s.Interface
 	clusterConfig *v1beta1.ClusterConfig

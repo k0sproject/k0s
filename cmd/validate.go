@@ -46,7 +46,9 @@ var (
 
 func init() {
 	validateCmd.AddCommand(validateConfigCmd)
+	addPersistentFlags(validateCmd)
 }
+
 func validateConfig(cfgPath string) (err error) {
 	var clusterConfig *config.ClusterConfig
 

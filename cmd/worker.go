@@ -49,20 +49,19 @@ func init() {
 	workerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
+	addPersistentFlags(workerCmd)
 }
 
 var (
-	workerProfile string
-	tokenArg      string
-	tokenFile     string
-	criSocket     string
 	apiServer     string
 	cidrRange     string
-	clusterDNS    string
-
 	cloudProvider bool
-
-	labels []string
+	clusterDNS    string
+	criSocket     string
+	labels        []string
+	tokenArg      string
+	tokenFile     string
+	workerProfile string
 
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",

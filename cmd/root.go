@@ -21,10 +21,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/spf13/cobra/doc"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/k0sproject/k0s/pkg/build"
@@ -53,11 +53,10 @@ var defaultLogLevels = map[string]string{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
 	rootCmd.PersistentFlags().StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	rootCmd.PersistentFlags().StringVar(&debugListenOn, "debugListenOn", ":6060", "Http listenOn for debug pprof handler")
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
 
+	addPersistentFlags(rootCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(tokenCmd)
@@ -78,7 +77,6 @@ func init() {
 	if build.EulaNotice != "" {
 		longDesc = longDesc + "\n" + build.EulaNotice
 	}
-
 	rootCmd.Long = longDesc
 }
 
@@ -141,6 +139,13 @@ func setLogging(inputLogs map[string]string) map[string]string {
 		defaultLogLevels[k] = inputLogs[k]
 	}
 	return defaultLogLevels
+}
+
+func addPersistentFlags(cmd *cobra.Command) {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
+	flagset.BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
+	cmd.Flags().AddFlagSet(flagset)
 }
 
 func Execute() {
