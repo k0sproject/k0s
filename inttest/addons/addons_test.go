@@ -43,9 +43,9 @@ type AddonsSuite struct {
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
-	as.prepareConfigWithAddons(addonName)
+	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
-	as.Require().NoError(as.InitMainController("/tmp/k0s.yaml", ""))
+	as.Require().NoError(as.InitMainController([]string{"--config=/tmp/k0s.yaml"}))
 	as.waitForPrometheusRelease(addonName, 1)
 
 	values := map[string]interface{}{
@@ -214,10 +214,6 @@ func TestAddonsSuite(t *testing.T) {
 
 	suite.Run(t, &s)
 
-}
-
-func (as *AddonsSuite) prepareConfigWithAddons(addonName string) {
-	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 }
 
 func (as *AddonsSuite) putFile(path string, content string) {

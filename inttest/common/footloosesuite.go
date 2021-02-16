@@ -192,8 +192,18 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
+func getDataDir(args []string) string {
+	dataDir := ""
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--data-dir=") {
+			dataDir = strings.TrimPrefix(arg, "--data-dir=")
+		}
+	}
+	return dataDir
+}
+
 // InitMainController inits first controller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) error {
+func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -201,16 +211,14 @@ func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) erro
 	}
 	defer ssh.Disconnect()
 
-	var startCmd string
-	var installCmd string
-
-	if dataDir != "" {
-		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --data-dir=%s --config=%s", dataDir, cfgPath)
-		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller --data-dir=%s --config=%s >/tmp/k0s-controller.log 2>&1 &", dataDir, cfgPath)
-	} else {
-		installCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install --config=%s", cfgPath)
-		startCmd = fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller --config=%s >/tmp/k0s-controller.log 2>&1 &", cfgPath)
+	opts := ""
+	for _, arg := range k0sArgs {
+		opts = fmt.Sprintf("%s %s", opts, arg)
 	}
+
+	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install %s", opts)
+	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller %s >/tmp/k0s-controller.log 2>&1 &", opts)
+
 	_, err = ssh.ExecWithOutput(installCmd)
 	if err != nil {
 		return err
@@ -220,7 +228,7 @@ func (s *FootlooseSuite) InitMainController(cfgPath string, dataDir string) erro
 	if err != nil {
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode, dataDir)
+	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
 }
 
 // JoinController joins the cluster with a given token
