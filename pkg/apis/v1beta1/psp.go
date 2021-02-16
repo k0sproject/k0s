@@ -15,7 +15,11 @@ limitations under the License.
 */
 package v1beta1
 
-import "github.com/k0sproject/k0s/pkg/constant"
+import (
+	"fmt"
+
+	"github.com/k0sproject/k0s/pkg/constant"
+)
 
 // PodSecurityPolicy defines the config options for setting system level default PSP
 type PodSecurityPolicy struct {
@@ -27,4 +31,12 @@ func DefaultPodSecurityPolicy() *PodSecurityPolicy {
 	return &PodSecurityPolicy{
 		DefaultPolicy: constant.DefaultPSP,
 	}
+}
+
+// Validate check that the given psp is one of the built-in ones
+func (p *PodSecurityPolicy) Validate() []error {
+	if p.DefaultPolicy != "00-k0s-privileged" && p.DefaultPolicy != "99-k0s-restricted" {
+		return []error{fmt.Errorf("%s is not a built-in pod security policy", p.DefaultPolicy)}
+	}
+	return nil
 }

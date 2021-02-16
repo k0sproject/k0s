@@ -52,6 +52,28 @@ func (n *Network) Validate() []error {
 	if n.Provider == "calico" && n.DualStack.Enabled && n.Calico.Mode != "bird" {
 		errors = append(errors, fmt.Errorf("network dual stack is supported only for calico mode `bird`"))
 	}
+
+	_, _, err := net.ParseCIDR(n.PodCIDR)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("invalid pod CIDR %s", n.PodCIDR))
+	}
+
+	_, _, err = net.ParseCIDR(n.ServiceCIDR)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("invalid service CIDR %s", n.ServiceCIDR))
+	}
+
+	if n.DualStack.Enabled {
+		_, _, err := net.ParseCIDR(n.DualStack.IPv6PodCIDR)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("invalid pod IPv6 CIDR %s", n.DualStack.IPv6PodCIDR))
+		}
+		_, _, err = net.ParseCIDR(n.DualStack.IPv6ServiceCIDR)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("invalid service IPv6 CIDR %s", n.DualStack.IPv6ServiceCIDR))
+		}
+	}
+
 	return errors
 }
 

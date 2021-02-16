@@ -96,6 +96,71 @@ spec:
 	s.Equal("vxlan", n.Calico.Mode)
 }
 
+func (s *NetworkSuite) TestValidation() {
+	s.T().Run("defaults_are_valid", func(t *testing.T) {
+		n := DefaultNetwork()
+
+		s.Nil(n.Validate())
+	})
+
+	s.T().Run("invalid_provider", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.Provider = "foobar"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+	})
+
+	s.T().Run("invalid_pod_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.PodCIDR = "foobar"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "invalid pod CIDR")
+	})
+
+	s.T().Run("invalid_service_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.ServiceCIDR = "foobar"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "invalid service CIDR")
+	})
+
+	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.Calico.Mode = "bird"
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "foobar"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "invalid service IPv6 CIDR")
+	})
+
+	s.T().Run("invalid_ipv6_pod_cidr", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.Calico.Mode = "bird"
+		n.DualStack = DefaultDualStack()
+		n.DualStack.IPv6PodCIDR = "foobar"
+		n.DualStack.IPv6ServiceCIDR = "fd00::/108"
+		n.DualStack.Enabled = true
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "invalid pod IPv6 CIDR")
+	})
+}
+
 func TestNetworkSuite(t *testing.T) {
 	ns := &NetworkSuite{}
 
