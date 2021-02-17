@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -24,7 +23,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
 
 // Helm watch for Chart crd
@@ -38,13 +36,11 @@ type HelmAddons struct {
 	helm              *helm.Commands
 	kubeConfig        string
 	kubeClientFactory kubeutil.ClientFactory
-
-	dryRun     bool
-	dryRunLock sync.Mutex
+	leaderElector     LeaderElector
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory) *HelmAddons {
+func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory, leaderElector LeaderElector) *HelmAddons {
 	return &HelmAddons{
 		ClusterConfig:     c,
 		saver:             s,
@@ -53,6 +49,7 @@ func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars consta
 		helm:              helm.NewCommands(k0sVars),
 		kubeConfig:        k0sVars.AdminKubeConfigPath,
 		kubeClientFactory: kubeClientFactory,
+		leaderElector:     leaderElector,
 	}
 }
 
@@ -89,47 +86,7 @@ func (h *HelmAddons) Run() error {
 	}
 	h.L.Info("Successfully synced controller cache")
 
-	if err := h.leaseLoop(); err != nil {
-		return fmt.Errorf("can't init lease pool: %v", err)
-	}
 	go h.CrdControlLoop()
-	return nil
-}
-
-func (h *HelmAddons) leaseLoop() error {
-	client, err := h.kubeClientFactory.GetClient()
-	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
-	}
-	leasePool, err := leaderelection.NewLeasePool(client, "k0s-helm-addons", leaderelection.WithLogger(h.L))
-
-	if err != nil {
-		return err
-	}
-	events, _, err := leasePool.Watch()
-
-	if err != nil {
-		return err
-	}
-
-	go func() {
-
-		for {
-			select {
-			case <-events.AcquiredLease:
-				h.L.Info("acquired leader lease")
-				h.dryRunLock.Lock()
-				h.dryRun = false
-				h.dryRunLock.Unlock()
-
-			case <-events.LostLease:
-				h.L.Info("lost leader lease")
-				h.dryRunLock.Lock()
-				h.dryRun = true
-				h.dryRunLock.Unlock()
-			}
-		}
-	}()
 	return nil
 }
 
@@ -277,7 +234,7 @@ func (h *HelmAddons) saveError(origErr error, objectID string) {
 func (h *HelmAddons) uninstall(id string) error {
 	parts := strings.Split(id, "/")
 	namespace, releaseName := parts[0], parts[1]
-	if h.dryRun {
+	if !h.leaderElector.IsLeader() {
 		h.L.Info("dry run, doesn't uninstall")
 		return nil
 	}
@@ -289,7 +246,7 @@ func (h *HelmAddons) uninstall(id string) error {
 
 func (h *HelmAddons) reconcile(objectID string) error {
 
-	if h.dryRun {
+	if !h.leaderElector.IsLeader() {
 		h.L.Info("dry run, doesn't reconcile")
 		return nil
 	}

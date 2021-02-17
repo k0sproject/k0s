@@ -278,7 +278,7 @@ func startController(token string) error {
 	}
 
 	// in-cluster component reconcilers
-	reconcilers := createClusterReconcilers(clusterConfig, k0sVars, adminClientFactory)
+	reconcilers := createClusterReconcilers(clusterConfig, k0sVars, adminClientFactory, leaderElector)
 	if err == nil {
 		perfTimer.Checkpoint("starting-reconcilers")
 
@@ -324,7 +324,7 @@ func startController(token string) error {
 	return nil
 }
 
-func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, cf kubernetes.ClientFactory) map[string]component.Component {
+func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, cf kubernetes.ClientFactory, leaderElector controller.LeaderElector) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
 	clusterSpec := clusterConf.Spec
 
@@ -356,7 +356,7 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
 	reconcilers["crd"] = controller.NewCRD(manifestsSaver)
-	reconcilers["helmAddons"] = controller.NewHelmAddons(clusterConf, manifestsSaver, k0sVars, cf)
+	reconcilers["helmAddons"] = controller.NewHelmAddons(clusterConf, manifestsSaver, k0sVars, cf, leaderElector)
 
 	metricServer, err := controller.NewMetricServer(clusterConf, k0sVars, cf)
 	if err != nil {
