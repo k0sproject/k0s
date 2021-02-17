@@ -84,6 +84,11 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// Validate validates storage specs correctness
+func (s *StorageSpec) Validate() []error {
+	return nil
+}
+
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
 	PeerAddress string `yaml:"peerAddress"`

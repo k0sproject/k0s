@@ -16,14 +16,11 @@ limitations under the License.
 package v1beta1
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
-	"net"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 // ClusterConfig cluster manifest
@@ -52,14 +49,6 @@ type ClusterSpec struct {
 	Network           *Network               `yaml:"network"`
 	PodSecurityPolicy *PodSecurityPolicy     `yaml:"podSecurityPolicy"`
 	WorkerProfiles    WorkerProfiles         `yaml:"workerProfiles,omitempty"`
-}
-
-// APISpec ...
-type APISpec struct {
-	Address         string            `yaml:"address"`
-	ExternalAddress string            `yaml:"externalAddress,omitempty"`
-	SANs            []string          `yaml:"sans"`
-	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`
 }
 
 // ControllerManagerSpec ...
@@ -91,57 +80,13 @@ type InstallSpec struct {
 func (c *ClusterConfig) Validate() []error {
 	var errors []error
 
+	errors = append(errors, c.Spec.API.Validate()...)
+	errors = append(errors, c.Spec.Storage.Validate()...)
 	errors = append(errors, c.Spec.Network.Validate()...)
 	errors = append(errors, c.Spec.WorkerProfiles.Validate()...)
-	// TODO We need to validate all other parts too
+	errors = append(errors, c.Spec.PodSecurityPolicy.Validate()...)
 
 	return errors
-}
-
-// APIAddress ...
-func (a *APISpec) APIAddress() string {
-	if a.ExternalAddress != "" {
-		return a.ExternalAddress
-	}
-	return a.Address
-}
-
-func (a *APISpec) APIAddressURL() string {
-	return a.getExternalURIForPort(6443)
-}
-
-// IsIPv6String returns if ip is IPv6.
-func IsIPv6String(ip string) bool {
-	netIP := net.ParseIP(ip)
-	return netIP != nil && netIP.To4() == nil
-}
-
-// K0sControlPlaneAPIAddress returns the controller join APIs address
-func (a *APISpec) K0sControlPlaneAPIAddress() string {
-	return a.getExternalURIForPort(9443)
-}
-
-func (a *APISpec) getExternalURIForPort(port int) string {
-	addr := a.Address
-	if a.ExternalAddress != "" {
-		addr = a.ExternalAddress
-	}
-	if IsIPv6String(addr) {
-		return fmt.Sprintf("https://[%s]:%d", addr, port)
-	}
-	return fmt.Sprintf("https://%s:%d", addr, port)
-}
-
-// Sans return the given SANS plus all local adresses and externalAddress if given
-func (a *APISpec) Sans() []string {
-	sans, _ := util.AllAddresses()
-	sans = append(sans, a.Address)
-	sans = append(sans, a.SANs...)
-	if a.ExternalAddress != "" {
-		sans = append(sans, a.ExternalAddress)
-	}
-
-	return util.Unique(sans)
 }
 
 // FromYamlFile ...
@@ -212,18 +157,6 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
-}
-
-// DefaultAPISpec default settings
-func DefaultAPISpec() *APISpec {
-	// Collect all nodes addresses for sans
-	addresses, _ := util.AllAddresses()
-	publicAddress, _ := util.FirstPublicAddress()
-	return &APISpec{
-		SANs:      addresses,
-		Address:   publicAddress,
-		ExtraArgs: make(map[string]string),
-	}
 }
 
 // DefaultClusterSpec default settings
