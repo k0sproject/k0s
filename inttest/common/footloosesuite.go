@@ -216,16 +216,18 @@ func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
 		opts = fmt.Sprintf("%s %s", opts, arg)
 	}
 
-	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install %s", opts)
+	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install controller %s", opts)
 	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller %s >/tmp/k0s-controller.log 2>&1 &", opts)
 
 	_, err = ssh.ExecWithOutput(installCmd)
 	if err != nil {
+		s.T().Logf("failed to execute '%s' on %s", installCmd, controllerNode)
 		return err
 	}
 
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
+		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
 		return err
 	}
 	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
