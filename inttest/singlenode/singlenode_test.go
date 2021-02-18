@@ -30,25 +30,13 @@ type SingleNodeSuite struct {
 }
 
 func (s *SingleNodeSuite) TestK0sGetsUp() {
-	ssh, err := s.SSH("controller0")
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	_, err = ssh.ExecWithOutput("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug server --enable-worker >/tmp/k0s-server.log 2>&1 &")
-	s.Require().NoError(err)
-	err = s.WaitForKubeAPI("controller0", "")
-	s.Require().NoError(err)
+	s.NoError(s.InitMainController([]string{"--enable-worker"}))
 
 	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)
 
 	err = s.WaitForNodeReady("controller0", kc)
 	s.NoError(err)
-
-	// Verify we get the Ready=true status for the node through embedded kubectl command
-	status, err := ssh.ExecWithOutput(`k0s kubectl get node controller0 -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`)
-	s.Require().NoError(err)
-	s.Require().Equal("True", status)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
 		Limit: 100,
