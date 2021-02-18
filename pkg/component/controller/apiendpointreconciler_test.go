@@ -27,30 +27,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type fakeAlwaysLeaderElector struct {
-}
-
-func (f *fakeAlwaysLeaderElector) Run() error     { return nil }
-func (f *fakeAlwaysLeaderElector) Init() error    { return nil }
-func (f *fakeAlwaysLeaderElector) Stop() error    { return nil }
-func (f *fakeAlwaysLeaderElector) Healthy() error { return nil }
-
-func (f *fakeAlwaysLeaderElector) IsLeader() bool {
-	return true
-}
-
-type fakeNeverLeaderElector struct {
-}
-
-func (f *fakeNeverLeaderElector) Run() error     { return nil }
-func (f *fakeNeverLeaderElector) Init() error    { return nil }
-func (f *fakeNeverLeaderElector) Stop() error    { return nil }
-func (f *fakeNeverLeaderElector) Healthy() error { return nil }
-
-func (f *fakeNeverLeaderElector) IsLeader() bool {
-	return false
-}
-
 var expectedAddresses = []string{
 	"185.199.108.153",
 	"185.199.109.153",
@@ -70,7 +46,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &fakeNeverLeaderElector{}, fakeFactory)
+	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: false}, fakeFactory)
 
 	assert.NoError(t, r.Init())
 
@@ -95,7 +71,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &fakeAlwaysLeaderElector{}, fakeFactory)
+	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
 
 	assert.NoError(t, r.Init())
 
@@ -129,7 +105,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &fakeAlwaysLeaderElector{}, fakeFactory)
+	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
 
 	assert.NoError(t, r.Init())
 
@@ -170,7 +146,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 			},
 		},
 	}
-	r := NewEndpointReconciler(config, &fakeAlwaysLeaderElector{}, fakeFactory)
+	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
 
 	assert.NoError(t, r.Init())
 
