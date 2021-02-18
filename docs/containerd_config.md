@@ -2,13 +2,13 @@
 
 [containerd](https://github.com/containerd/containerd) is an industry-standard container runtime.
 
-**NOTE:** In most use cases changes to the containerd configuration will not be required. 
+**NOTE:** In most use cases changes to the containerd configuration will not be required.
 
 In order to make changes to containerd configuration first you need to generate a default containerd configuration by running:
 ```
-containerd config default > /etc/k0s/containerd.toml
+containerd config default > /var/lib/k0s/containerd.toml
 ```
-This command will set the default values to `/etc/k0s/containerd.toml`. 
+This command will set the default values to `/var/lib/k0s/containerd.toml`.
 
 `k0s` runs containerd with the following default values:
 ```
@@ -16,7 +16,7 @@ This command will set the default values to `/etc/k0s/containerd.toml`.
     --root=/var/lib/k0s/containerd \
     --state=/var/lib/k0s/run/containerd \
     --address=/var/lib/k0s/run/containerd.sock \
-    --config=/etc/k0s/containerd.toml
+    --config=/var/lib/k0s/containerd.toml
 ```
 
 Before proceeding further, add the following default values to the configuration file:
@@ -32,7 +32,7 @@ state = "/var/lib/k0s/run/containerd"
 
 Next if you want to change CRI look into this section
 
- ``` 
+ ```
   [plugins."io.containerd.runtime.v1.linux"]
     shim = "containerd-shim"
     runtime = "runc"
@@ -63,7 +63,7 @@ See gVisor [install docs](https://gvisor.dev/docs/user_guide/install/)
 
 Next we need to prepare the config for `k0s` managed containerD to utilize gVisor as additional runtime:
 ```sh
-cat <<EOF | sudo tee /etc/k0s/containerd.toml
+cat <<EOF | sudo tee /var/lib/k0s/containerd.toml
 disabled_plugins = ["restart"]
 [plugins.linux]
   shim_debug = true

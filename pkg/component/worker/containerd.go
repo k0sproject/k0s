@@ -60,7 +60,7 @@ func (c *ContainerD) Run() error {
 			fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
 			fmt.Sprintf("--log-level=%s", c.LogLevel),
-			"--config=/etc/k0s/containerd.toml",
+			fmt.Sprintf("--config=%s", c.K0sVars.ContainerdConfigPath),
 		},
 	}
 	// TODO We need to dump the config file suited for k0s use

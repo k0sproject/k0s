@@ -76,6 +76,7 @@ type CfgVars struct {
 	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
 	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
+	ContainerdConfigPath       string // ContainerdConfigPath defines the default path for containerd config
 	WindowsCertRootDir         string // WindowsCertRootDir defines the root location for all pki related artifacts
 	DataDir                    string // Data directory containing k0s state
 	EtcdCertDir                string // EtcdCertDir contains etcd certificates
@@ -120,6 +121,7 @@ func GetConfig(dataDir string) CfgVars {
 		AdminKubeConfigPath:        formatPath(certDir, "admin.conf"),
 		BinDir:                     formatPath(dataDir, "bin"),
 		CertRootDir:                certDir,
+		ContainerdConfigPath:       formatPath(dataDir, "containerd.toml"),
 		WindowsCertRootDir:         winCertDir,
 		DataDir:                    dataDir,
 		EtcdCertDir:                formatPath(certDir, "etcd"),
