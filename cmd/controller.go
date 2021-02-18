@@ -204,7 +204,17 @@ func startController(token string) error {
 		LogLevel:      logging["kube-controller-manager"],
 		K0sVars:       k0sVars,
 	})
-	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory})
+
+	// One leader elector per controller
+	var leaderElector controller.LeaderElector
+	if clusterConfig.Spec.API.ExternalAddress != "" {
+		leaderElector = controller.NewLeaderElector(clusterConfig, adminClientFactory)
+	} else {
+		leaderElector = &controller.DummyLeaderElector{Leader: true}
+	}
+	componentManager.Add(leaderElector)
+
+	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
 	componentManager.Add(&controller.K0SControlAPI{
 		ConfigPath: cfgFile,
 		K0sVars:    k0sVars,
@@ -218,16 +228,6 @@ func startController(token string) error {
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-
-	// One leader elector per controller
-	// TODO: Make all other needed components use this "global" leader elector
-	var leaderElector controller.LeaderElector
-	if clusterConfig.Spec.API.ExternalAddress != "" {
-		leaderElector = controller.NewLeaderElector(clusterConfig, adminClientFactory)
-	} else {
-		leaderElector = &controller.DummyLeaderElector{Leader: true}
-	}
-	componentManager.Add(leaderElector)
 
 	if clusterConfig.Spec.API.ExternalAddress != "" {
 		componentManager.Add(controller.NewEndpointReconciler(

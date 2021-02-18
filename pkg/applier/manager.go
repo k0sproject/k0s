@@ -24,9 +24,9 @@ import (
 	"gopkg.in/fsnotify.v1"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
 
 // Manager is the Component interface wrapper for Applier
@@ -35,12 +35,13 @@ type Manager struct {
 	KubeClientFactory kubeutil.ClientFactory
 
 	//client               kubernetes.Interface
-	applier              Applier
-	bundlePath           string
-	cancelLeaderElection context.CancelFunc
-	cancelWatcher        context.CancelFunc
-	log                  *logrus.Entry
-	stacks               map[string]*StackApplier
+	applier       Applier
+	bundlePath    string
+	cancelWatcher context.CancelFunc
+	log           *logrus.Entry
+	stacks        map[string]*StackApplier
+
+	LeaderElector controller.LeaderElector
 }
 
 // Init initializes the Manager
@@ -54,64 +55,34 @@ func (m *Manager) Init() error {
 	m.bundlePath = m.K0sVars.ManifestsDir
 
 	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
+
+	m.LeaderElector.AddAcquiredLeaseCallback(func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		m.cancelWatcher = cancel
+		go func() {
+			_ = m.runWatchers(ctx)
+		}()
+	})
+	m.LeaderElector.AddLostLeaseCallback(func() {
+		if m.cancelWatcher != nil {
+			m.cancelWatcher()
+		}
+	})
+
 	return err
 }
 
 // Run runs the Manager
 func (m *Manager) Run() error {
-	log := m.log
-	kubeClient, err := m.KubeClientFactory.GetClient()
-	if err != nil {
-		return nil
-	}
-
-	leasePool, err := leaderelection.NewLeasePool(kubeClient, "k0s-manifest-applier", leaderelection.WithLogger(log))
-
-	if err != nil {
-		return err
-	}
-
-	electionEvents := &leaderelection.LeaseEvents{
-		AcquiredLease: make(chan struct{}),
-		LostLease:     make(chan struct{}),
-	}
-
-	go m.watchLeaseEvents(electionEvents)
-	go func() {
-		_, cancel, _ := leasePool.Watch(leaderelection.WithOutputChannels(electionEvents))
-		m.cancelLeaderElection = cancel
-	}()
-
 	return nil
 }
 
 // Stop stops the Manager
 func (m *Manager) Stop() error {
-	if m.cancelLeaderElection != nil {
-		m.cancelLeaderElection()
+	if m.cancelWatcher != nil {
+		m.cancelWatcher()
 	}
 	return nil
-}
-
-func (m *Manager) watchLeaseEvents(events *leaderelection.LeaseEvents) {
-	log := m.log
-
-	for {
-		select {
-		case <-events.AcquiredLease:
-			log.Info("acquired leader lease")
-			ctx, cancel := context.WithCancel(context.Background())
-			m.cancelWatcher = cancel
-			go func() {
-				_ = m.runWatchers(ctx)
-			}()
-		case <-events.LostLease:
-			log.Info("lost leader lease")
-			if m.cancelWatcher != nil {
-				m.cancelWatcher()
-			}
-		}
-	}
 }
 
 func (m *Manager) runWatchers(ctx context.Context) error {

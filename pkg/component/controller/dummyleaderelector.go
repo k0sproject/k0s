@@ -16,11 +16,29 @@ limitations under the License.
 package controller
 
 type DummyLeaderElector struct {
-	Leader bool
+	Leader    bool
+	callbacks []func()
 }
 
 func (l *DummyLeaderElector) Init() error    { return nil }
-func (l *DummyLeaderElector) Run() error     { return nil }
 func (l *DummyLeaderElector) Stop() error    { return nil }
 func (l *DummyLeaderElector) IsLeader() bool { return l.Leader }
 func (l *DummyLeaderElector) Healthy() error { return nil }
+
+func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
+	l.callbacks = append(l.callbacks, fn)
+}
+
+func (l *DummyLeaderElector) AddLostLeaseCallback(fn func()) {}
+
+func (l *DummyLeaderElector) Run() error {
+	if !l.Leader {
+		return nil
+	}
+	for _, fn := range l.callbacks {
+		if fn != nil {
+			fn()
+		}
+	}
+	return nil
+}

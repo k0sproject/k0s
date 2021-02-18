@@ -31,6 +31,8 @@ import (
 // LeaderElector is the common leader elector component to manage each controller leader status
 type LeaderElector interface {
 	IsLeader() bool
+	AddAcquiredLeaseCallback(fn func())
+	AddLostLeaseCallback(fn func())
 	component.Component
 }
 
