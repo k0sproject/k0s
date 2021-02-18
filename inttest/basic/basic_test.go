@@ -23,7 +23,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	capi "k8s.io/api/certificates/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 type BasicSuite struct {
@@ -62,6 +64,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
 
 	s.Require().NoError(s.checkCertPerms("controller0"))
+	s.Require().NoError(s.checkCSRs("worker0", kc))
+	s.Require().NoError(s.checkCSRs("worker1", kc))
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
@@ -81,6 +85,34 @@ func (s *BasicSuite) checkCertPerms(node string) error {
 	}
 
 	return nil
+}
+
+func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
+	opts := v1.ListOptions{
+		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
+	}
+	csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(context.TODO(), opts)
+	if err != nil {
+		return err
+	}
+
+	for _, csr := range csrs.Items {
+		if csr.Spec.Username == fmt.Sprintf("system:node:%s", node) {
+			if isCSRApproved(csr) {
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("No CSRs have been approved")
+}
+
+func isCSRApproved(csr capi.CertificateSigningRequest) bool {
+	for _, condition := range csr.Status.Conditions {
+		if condition.Type == capi.CertificateApproved && condition.Reason == "Autoapproved by K0s CSRApprover" {
+			return true
+		}
+	}
+	return false
 }
 
 func TestBasicSuite(t *testing.T) {
