@@ -154,7 +154,7 @@ func getSourceVip() (string, error) {
 // the original script is done by Tigera, Inc
 // and can be accessed over the web on https://docs.projectcalico.org/scripts/install-calico-windows.ps1
 const installCalicoPowershell = `
-# Copyright 2020 Mirantis, Inc.
+# Copyright 2021 k0s authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Mirantis, Inc.
+Copyright 2021 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,14 +26,16 @@ package dualstack
 import (
 	"context"
 	"fmt"
+
 	"github.com/stretchr/testify/suite"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	k8s "k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"testing"
 )
 
 type DualstackSuite struct {
