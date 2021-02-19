@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Mirantis, Inc.
+Copyright 2021 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -165,6 +165,8 @@ func getRole(pid int) (role string, err error) {
 		return "controller", nil
 	} else if strings.Contains(cmdln, "worker") {
 		return "worker", nil
+	} else if strings.Contains(cmdln, "server") {
+		return "controller", nil
 	}
 	return "", fmt.Errorf("k0s role is not found")
 }
