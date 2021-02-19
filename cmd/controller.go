@@ -232,6 +232,10 @@ func startController(token string) error {
 		))
 	}
 
+	componentManager.Add(controller.NewCSRApprover(clusterConfig,
+		leaderElector,
+		adminClientFactory))
+
 	perfTimer.Checkpoint("starting-component-init")
 	// init components
 	if err := componentManager.Init(); err != nil {

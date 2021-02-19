@@ -20,10 +20,11 @@ func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
 	// Remember to list all "xyzList" types for resource types we use with the fake client
 	// and use "list" verb on
 	gvkLists := map[schema.GroupVersionResource]string{
-		{Group: "", Version: "v1", Resource: "pods"}:       "PodList",
-		{Group: "", Version: "v1", Resource: "namespaces"}: "NamespaceList",
-		{Group: "", Version: "v1", Resource: "nodes"}:      "NodeList",
-		{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMapList",
+		{Group: "", Version: "v1", Resource: "pods"}:                                          "PodList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:                                    "NamespaceList",
+		{Group: "", Version: "v1", Resource: "nodes"}:                                         "NodeList",
+		{Group: "", Version: "v1", Resource: "configmaps"}:                                    "ConfigMapList",
+		{Group: "certificates.k8s.io", Version: "v1", Resource: "certificatesigningrequests"}: "CertificateSigningRequestList",
 	}
 
 	return FakeClientFactory{
