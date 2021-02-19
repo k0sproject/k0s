@@ -46,7 +46,7 @@ var (
 
 func init() {
 	validateCmd.AddCommand(validateConfigCmd)
-	addPersistentFlags(validateCmd)
+	addPersistentFlags(validateConfigCmd)
 }
 
 func validateConfig(cfgPath string) (err error) {
