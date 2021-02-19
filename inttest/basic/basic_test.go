@@ -66,6 +66,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.checkCertPerms("controller0"))
 	s.Require().NoError(s.checkCSRs("worker0", kc))
 	s.Require().NoError(s.checkCSRs("worker1", kc))
+
+	s.Require().NoError(s.verifyKubeletAddressFlag("worker0"))
+	s.Require().NoError(s.verifyKubeletAddressFlag("worker1"))
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
@@ -82,6 +85,25 @@ func (s *BasicSuite) checkCertPerms(node string) error {
 
 	if output != "" {
 		return fmt.Errorf("some private files having non 640 permissions: %s", output)
+	}
+
+	return nil
+}
+
+// Verifies that kubelet process has the address flag set
+func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(`grep -e '--address=0.0.0.0' /proc/$(pidof kubelet)/cmdline`)
+	if err != nil {
+		return err
+	}
+	if output != "--address=0.0.0.0" {
+		return fmt.Errorf("kubelet does not have the address flag set")
 	}
 
 	return nil

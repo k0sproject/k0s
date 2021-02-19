@@ -48,20 +48,23 @@ func init() {
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 	workerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	workerCmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
+
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	addPersistentFlags(workerCmd)
 }
 
 var (
-	apiServer     string
-	cidrRange     string
-	cloudProvider bool
-	clusterDNS    string
-	criSocket     string
-	labels        []string
-	tokenArg      string
-	tokenFile     string
-	workerProfile string
+	apiServer        string
+	cidrRange        string
+	cloudProvider    bool
+	clusterDNS       string
+	criSocket        string
+	labels           []string
+	tokenArg         string
+	tokenFile        string
+	workerProfile    string
+	kubeletExtraArgs string
 
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",
@@ -136,6 +139,7 @@ func startWorker(token string) error {
 		LogLevel:            logging["kubelet"],
 		Profile:             workerProfile,
 		Labels:              labels,
+		ExtraArgs:           kubeletExtraArgs,
 	})
 
 	if runtime.GOOS == "windows" {

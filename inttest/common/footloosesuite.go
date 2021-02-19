@@ -286,9 +286,9 @@ func (s *FootlooseSuite) RunWorkers(dataDir string) error {
 
 	var workerCommand string
 	if dataDir != "" {
-		workerCommand = fmt.Sprintf(`nohup k0s worker --debug --data-dir=%s --labels="k0sproject.io/foo=bar" "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
+		workerCommand = fmt.Sprintf(`nohup k0s --debug --data-dir=%s worker --labels="k0sproject.io/foo=bar" --kubelet-extra-args="--address=0.0.0.0" "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
 	} else {
-		workerCommand = fmt.Sprintf(`nohup k0s worker --debug  --labels="k0sproject.io/foo=bar" "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+		workerCommand = fmt.Sprintf(`nohup k0s --debug worker --labels="k0sproject.io/foo=bar" --kubelet-extra-args="--address=0.0.0.0" "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	}
 
 	for i := 0; i < s.WorkerCount; i++ {

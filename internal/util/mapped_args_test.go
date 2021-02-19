@@ -33,3 +33,17 @@ func TestToArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestMerge(t *testing.T) {
+	original := MappedArgs{
+		"foo": "bar",
+	}
+
+	original.Merge(MappedArgs{
+		"another": "val",
+		"foo":     "overridden",
+	})
+
+	assert.Equal(t, "overridden", original["foo"])
+	assert.Equal(t, "val", original["another"])
+}
