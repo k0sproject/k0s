@@ -1,6 +1,8 @@
 package telemetry
 
-import "gopkg.in/segmentio/analytics-go.v3"
+import (
+	analytics "github.com/segmentio/analytics-go"
+)
 
 var segmentToken = ""
 
