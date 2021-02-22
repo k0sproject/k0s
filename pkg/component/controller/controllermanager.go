@@ -110,6 +110,11 @@ func (a *Manager) Run() error {
 	for name, value := range args {
 		cmArgs = append(cmArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
+
+	if a.ClusterConfig.Spec.API.ExternalAddress == "" {
+		cmArgs = append(cmArgs, "--leader-elect=false")
+	}
+
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-controller-manager",
 		BinPath: assets.BinPath("kube-controller-manager", a.K0sVars.BinDir),
