@@ -216,8 +216,8 @@ func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
 		opts = fmt.Sprintf("%s %s", opts, arg)
 	}
 
-	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s --debug install controller %s", opts)
-	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s --debug controller %s >/tmp/k0s-controller.log 2>&1 &", opts)
+	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s install controller --debug %s", opts)
+	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", opts)
 
 	_, err = ssh.ExecWithOutput(installCmd)
 	if err != nil {
@@ -241,7 +241,7 @@ func (s *FootlooseSuite) JoinController(idx int, token string, dataDir string) e
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s --debug controller %s >/tmp/k0s-controller.log 2>&1 &", token))
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", token))
 	if err != nil {
 		return err
 	}
@@ -286,9 +286,9 @@ func (s *FootlooseSuite) RunWorkers(dataDir string) error {
 
 	var workerCommand string
 	if dataDir != "" {
-		workerCommand = fmt.Sprintf(`nohup k0s --debug --data-dir=%s worker --labels="k0sproject.io/foo=bar" "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
+		workerCommand = fmt.Sprintf(`nohup k0s worker --debug --data-dir=%s --labels="k0sproject.io/foo=bar" "%s" - >/tmp/k0s-worker.log 2>&1 &`, dataDir, token)
 	} else {
-		workerCommand = fmt.Sprintf(`nohup k0s --debug worker --labels="k0sproject.io/foo=bar" "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+		workerCommand = fmt.Sprintf(`nohup k0s worker --debug  --labels="k0sproject.io/foo=bar" "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	}
 
 	for i := 0; i < s.WorkerCount; i++ {
