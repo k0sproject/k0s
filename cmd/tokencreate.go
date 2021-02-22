@@ -38,6 +38,8 @@ func init() {
 	tokenCreateCmd.Flags().StringVar(&tokenRole, "role", "worker", "Either worker or controller")
 	tokenCreateCmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
+	addPersistentFlags(tokenCreateCmd)
+
 	// shell completion options
 	_ = tokenCreateCmd.MarkFlagRequired("role")
 	_ = tokenCreateCmd.RegisterFlagCompletionFunc("role", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
