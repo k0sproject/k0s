@@ -32,12 +32,12 @@ This can be done in two ways.
 In the same directory as your `main.tf` file, create an additional file `terraform.tfvars` with the following input:
 ```
 k0s_version=v0.9.0
-k8s_version=v1.20.2
+k8s_version=v1.20.4
 onobuoy_version=0.20.0
 ```  
 ### 2. Environment variables
 ```
-TF_VAR_k0s_version=v0.7.0-beta1 TF_VAR_sonobuoy_version=0.18.0 TF_VAR_k8s_version=v1.20.2 terraform apply
+TF_VAR_k0s_version=v0.7.0-beta1 TF_VAR_sonobuoy_version=0.18.0 TF_VAR_k8s_version=v1.20.4 terraform apply
 ```
 **NOTE:** By default, terraform will fetch sonobuoy version **0.20.0**. If you want to use a different version you can override this with one of the above methods. 
 

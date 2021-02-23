@@ -1,7 +1,7 @@
 
 runc_version = 1.0.0-rc93
 containerd_version = 1.4.3
-kubernetes_version = 1.20.2
+kubernetes_version = 1.20.4
 kine_version = 0.6.0
 etcd_version = 3.4.14
 konnectivity_version = 0.0.14
