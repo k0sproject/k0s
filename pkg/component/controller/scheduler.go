@@ -72,6 +72,10 @@ func (a *Scheduler) Run() error {
 	for name, value := range args {
 		schedulerArgs = append(schedulerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}
+	if a.ClusterConfig.Spec.API.ExternalAddress == "" {
+		schedulerArgs = append(schedulerArgs, "--leader-elect=false")
+	}
+
 	a.supervisor = supervisor.Supervisor{
 		Name:    "kube-scheduler",
 		BinPath: assets.BinPath("kube-scheduler", a.K0sVars.BinDir),

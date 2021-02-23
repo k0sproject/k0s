@@ -31,6 +31,8 @@ import (
 // LeaderElector is the common leader elector component to manage each controller leader status
 type LeaderElector interface {
 	IsLeader() bool
+	AddAcquiredLeaseCallback(fn func())
+	AddLostLeaseCallback(fn func())
 	component.Component
 }
 
@@ -43,6 +45,9 @@ type leaderElector struct {
 	leaderStatus      atomic.Value
 	kubeClientFactory kubeutil.ClientFactory
 	leaseCancel       context.CancelFunc
+
+	acquiredLeaseCallbacks []func()
+	lostLeaseCallbacks     []func()
 }
 
 // NewLeaderElector creates new leader elector
@@ -84,13 +89,31 @@ func (l *leaderElector) Run() error {
 			case <-events.AcquiredLease:
 				l.L.Info("acquired leader lease")
 				l.leaderStatus.Store(true)
+				runCallbacks(l.acquiredLeaseCallbacks)
 			case <-events.LostLease:
 				l.L.Info("lost leader lease")
 				l.leaderStatus.Store(false)
+				runCallbacks(l.lostLeaseCallbacks)
 			}
 		}
 	}()
 	return nil
+}
+
+func runCallbacks(callbacks []func()) {
+	for _, fn := range callbacks {
+		if fn != nil {
+			fn()
+		}
+	}
+}
+
+func (l *leaderElector) AddAcquiredLeaseCallback(fn func()) {
+	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
+}
+
+func (l *leaderElector) AddLostLeaseCallback(fn func()) {
+	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
 }
 
 func (l *leaderElector) Stop() error {
