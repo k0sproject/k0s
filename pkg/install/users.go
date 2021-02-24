@@ -122,7 +122,7 @@ func DeleteUser(userName string) error {
 		userCmdArgs = []string{userName}
 	} else {
 		userCmd = "deluser"
-		userCmdArgs = []string{`--system`, userName}
+		userCmdArgs = []string{userName}
 	}
 
 	cmd := exec.Command(userCmd, userCmdArgs...)

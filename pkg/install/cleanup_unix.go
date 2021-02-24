@@ -172,6 +172,27 @@ func (c *CleanUpConfig) listContainers() ([]string, error) {
 func (c *CleanUpConfig) RemoveAllDirectories() error {
 	var msg []string
 
+	// unmount any leftover overlays (such as in alpine)
+	mounter := mount.New("")
+	procMounts, err := mounter.List()
+	if err != nil {
+		return err
+	}
+	// search and unmount kubelet volume mounts
+	for _, v := range procMounts {
+		if strings.Compare(v.Path, fmt.Sprintf("%s/kubelet", c.dataDir)) == 0 {
+			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
+			if err = mounter.Unmount(v.Path); err != nil {
+				msg = append(msg, err.Error())
+			}
+		} else if strings.Compare(v.Path, c.dataDir) == 0 {
+			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
+			if err = mounter.Unmount(v.Path); err != nil {
+				msg = append(msg, err.Error())
+			}
+		}
+	}
+
 	logrus.Infof("deleting k0s generated data-dir (%v) and run-dir (%v)", c.dataDir, c.runDir)
 	if err := os.RemoveAll(c.dataDir); err != nil {
 		fmtError := fmt.Errorf("failed to delete %v. err: %v", c.dataDir, err)

@@ -70,7 +70,6 @@ func reset() error {
 	if err := cfg.RemoveAllDirectories(); err != nil {
 		logger.Info(err.Error())
 	}
-	logrus.Errorf("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
-
+	logrus.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
 	return nil
 }
