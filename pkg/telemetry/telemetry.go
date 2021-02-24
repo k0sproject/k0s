@@ -20,10 +20,17 @@ type telemetryData struct {
 	WorkerNodesCount       int
 	ControlPlaneNodesCount int
 	WorkerData             []workerData
+	CPUTotal               int64
+	MEMTotal               int64
 }
 
 // Cannot use properly typed structs as they fail to be parsed properly on segment side :(
 type workerData map[string]interface{}
+
+type workerSums struct {
+	cpuTotal int64
+	memTotal int64
+}
 
 func (td telemetryData) asProperties() analytics.Properties {
 	return analytics.Properties{
@@ -33,6 +40,8 @@ func (td telemetryData) asProperties() analytics.Properties {
 		"controlPlaneNodesCount": td.ControlPlaneNodesCount,
 		"version":                td.Version,
 		"workerData":             td.WorkerData,
+		"memTotal":               td.MEMTotal,
+		"cpuTotal":               td.CPUTotal,
 	}
 }
 
@@ -47,13 +56,15 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 	if err != nil {
 		return data, fmt.Errorf("can't collect cluster ID: %v", err)
 	}
-	wds, err := c.getWorkerData()
+	wds, sums, err := c.getWorkerData()
 	if err != nil {
 		return data, fmt.Errorf("can't collect workers count: %v", err)
 	}
 
 	data.WorkerNodesCount = len(wds)
 	data.WorkerData = wds
+	data.MEMTotal = sums.memTotal
+	data.CPUTotal = sums.cpuTotal
 	data.ControlPlaneNodesCount, err = c.getControlPlaneNodeCount()
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %v", err)
@@ -81,14 +92,15 @@ func (c Component) getClusterID() (string, error) {
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
-func (c Component) getWorkerData() ([]workerData, error) {
+func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, workerSums{}, err
 	}
 
 	wds := make([]workerData, len(nodes.Items))
-
+	var memTotal int64
+	var cpuTotal int64
 	for idx, n := range nodes.Items {
 		wd := workerData{
 			"os":   n.Status.NodeInfo.OSImage,
@@ -97,9 +109,11 @@ func (c Component) getWorkerData() ([]workerData, error) {
 			"mem":  n.Status.Capacity.Memory().ScaledValue(resource.Mega),
 		}
 		wds[idx] = wd
+		memTotal += n.Status.Capacity.Memory().ScaledValue(resource.Mega)
+		cpuTotal += n.Status.Capacity.Cpu().Value()
 	}
 
-	return wds, nil
+	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
 }
 
 func (c Component) getControlPlaneNodeCount() (int, error) {
