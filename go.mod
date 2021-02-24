@@ -31,6 +31,7 @@ require (
 	github.com/onsi/gomega v1.10.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
+	github.com/segmentio/analytics-go v3.1.0+incompatible
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
@@ -62,6 +63,9 @@ require (
 
 // We need to force to a git commit of 3.4.13 release, see https://github.com/etcd-io/etcd/issues/12109
 replace go.etcd.io/etcd => github.com/etcd-io/etcd v0.5.0-alpha.5.0.20200824191128-ae9734ed278b
+
+// Remove once https://github.com/segmentio/analytics-go/pull/172 is merged
+replace github.com/segmentio/analytics-go v3.1.0+incompatible => github.com/kke/analytics-go v1.2.1-0.20210209122110-10364370169e
 
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
