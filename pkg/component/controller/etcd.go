@@ -128,11 +128,20 @@ func (e *Etcd) Run() error {
 	}
 
 	if e.Join {
-		logrus.Infof("starting to sync etcd config")
-		etcdResponse, err := e.JoinClient.JoinEtcd(peerURL)
+		var etcdResponse config.EtcdResponse
+		var err error
+		for i := 0; i < 20; i++ {
+			logrus.Infof("trying to sync etcd config")
+			etcdResponse, err = e.JoinClient.JoinEtcd(peerURL)
+			if err == nil {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
 		if err != nil {
 			return err
 		}
+
 		logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 		// Write etcd ca cert&key
 		if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
