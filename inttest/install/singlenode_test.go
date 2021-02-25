@@ -19,9 +19,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,6 +60,18 @@ func (s *InstallSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
+
+	s.T().Log("running k0s reset command")
+
+	_, err = ssh.ExecWithOutput("rc-service k0scontroller stop")
+	s.Require().NoError(err)
+
+	_, err = ssh.ExecWithOutput("k0s reset --debug")
+	s.Require().NoError(err)
+
+	fileCount, err := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
+	s.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
+	s.Require().NoError(err)
 }
 
 func TestInstallSuite(t *testing.T) {
