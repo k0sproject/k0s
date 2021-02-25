@@ -30,7 +30,7 @@ type SingleNodeSuite struct {
 }
 
 func (s *SingleNodeSuite) TestK0sGetsUp() {
-	s.NoError(s.InitMainController([]string{"--single"}))
+	s.NoError(s.InitMainController("--single"))
 
 	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)

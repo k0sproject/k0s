@@ -45,7 +45,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.T().Logf("ip address: %s", ipAddress)
 
 	s.putFile("controller0", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
-	s.NoError(s.InitMainController([]string{"--config=/tmp/k0s.yaml"}))
+	s.NoError(s.InitMainController("--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)

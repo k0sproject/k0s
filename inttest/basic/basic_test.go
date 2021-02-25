@@ -36,7 +36,7 @@ type BasicSuite struct {
 
 func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
-	s.NoError(s.InitMainController([]string{fmt.Sprintf("--data-dir=%s", customDataDir)}))
+	s.NoError(s.InitMainController(fmt.Sprintf("--data-dir=%s", customDataDir)))
 	s.NoError(s.RunWorkers(customDataDir, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
 	kc, err := s.KubeClient("controller0", customDataDir)

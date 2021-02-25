@@ -203,7 +203,7 @@ func getDataDir(args []string) string {
 }
 
 // InitMainController inits first controller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
+func (s *FootlooseSuite) InitMainController(k0sArgs ...string) error {
 	controllerNode := fmt.Sprintf("controller%d", 0)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -211,10 +211,7 @@ func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
 	}
 	defer ssh.Disconnect()
 
-	opts := ""
-	for _, arg := range k0sArgs {
-		opts = fmt.Sprintf("%s %s", opts, arg)
-	}
+	opts := strings.Join(k0sArgs, " ")
 
 	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s install controller --debug %s", opts)
 	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", opts)

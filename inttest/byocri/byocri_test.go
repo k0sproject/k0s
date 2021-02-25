@@ -33,7 +33,7 @@ type BYOCRISuite struct {
 
 func (s *BYOCRISuite) TestK0sGetsUp() {
 
-	s.NoError(s.InitMainController([]string{}))
+	s.NoError(s.InitMainController())
 	s.Require().NoError(s.runDockerWorker())
 
 	kc, err := s.KubeClient("controller0", "")
