@@ -16,6 +16,7 @@ nav:
       - Docker:                  k0s-in-docker.md
       - Windows (experimental):  experimental-windows.md
       - System Requirements:     system-requirements.md
+      - Worker node configuration: worker-node-config.md
   - Architecture:
       - Architecture: architecture.md
       - Networking:   networking.md

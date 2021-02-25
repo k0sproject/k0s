@@ -48,6 +48,7 @@ type Kubelet struct {
 	supervisor          supervisor.Supervisor
 	ClusterDNS          string
 	Labels              []string
+	ExtraArgs           string
 }
 
 // Init extracts the needed binaries
@@ -149,6 +150,13 @@ func (k *Kubelet) Run() error {
 	if k.EnableCloudProvider {
 		args["--cloud-provider"] = "external"
 	}
+
+	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	if k.ExtraArgs != "" {
+		extras := util.SplitFlags(k.ExtraArgs)
+		args.Merge(extras)
+	}
+
 	logrus.Infof("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,
