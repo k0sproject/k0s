@@ -312,6 +312,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../worker-node-config/" class="md-nav__link">
+      Worker node configuration
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -1040,7 +1052,7 @@
 <h2 id="configuring-an-ha-control-plane">Configuring an HA Control Plane<a class="headerlink" href="#configuring-an-ha-control-plane" title="Permanent link">#</a></h2>
 <p>The following pre-requisites are required in order to configure an HA control plane:</p>
 <h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
-<h5>Load Balancer</h5>
+<h5 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h5>
 <p>A load balancer with a single external address should be configured as the IP gateway for the controllers.
 The load balancer should allow traffic to each controller on the following ports:</p>
 <ul>
@@ -1049,7 +1061,7 @@ The load balancer should allow traffic to each controller on the following ports
 <li>8133</li>
 <li>9443</li>
 </ul>
-<h5>Cluster configuration</h5>
+<h5 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h5>
 <p>On each controller node, a k0s.yaml configuration file should be configured.
 The following options need to match on each node, otherwise the control plane components will end up in very unknown states:</p>
 <ul>
@@ -1170,7 +1182,7 @@ The following options need to match on each node, otherwise the control plane co
 <li><code>serviceCIDR</code>: Network CIDR to be used for cluster VIP services.</li>
 </ul>
 <p><strong>Note:</strong> In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.</p>
-<h4><code>spec.network.calico</code></h4>
+<h4 id="specnetworkcalico"><code>spec.network.calico</code><a class="headerlink" href="#specnetworkcalico" title="Permanent link">#</a></h4>
 <ul>
 <li><code>mode</code>: <code>vxlan</code> (default) or <code>ipip</code></li>
 <li><code>vxlanPort</code>: The UDP port to use for VXLAN (default <code>4789</code>)</li>

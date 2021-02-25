@@ -312,6 +312,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../worker-node-config/" class="md-nav__link">
+      Worker node configuration
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -1080,7 +1092,7 @@ v0.9.1
 <p>Each node is now setup to handle being a control plane node or worker node.</p>
 <h3 id="control-plane-node">Control Plane Node<a class="headerlink" href="#control-plane-node" title="Permanent link">#</a></h3>
 <p>For this demonstration, we'll use a non-ha control plane with a single node.</p>
-<h4>Systemd Service</h4>
+<h4 id="systemd-service">Systemd Service<a class="headerlink" href="#systemd-service" title="Permanent link">#</a></h4>
 <p>Create a systemd service file for <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code>$ cat <span class="s">&lt;&lt; EOF &gt; /etc/systemd/system/k0s.service</span>
 <span class="s">[Unit]</span>
@@ -1105,13 +1117,13 @@ v0.9.1
 <div class="highlight"><pre><span></span><code>$ systemctl <span class="nb">enable</span> --now k0s
 </code></pre></div>
 <p>Run <code>systemctl status k0s</code> to verify the service status.</p>
-<h4>Worker Tokens</h4>
+<h4 id="worker-tokens">Worker Tokens<a class="headerlink" href="#worker-tokens" title="Permanent link">#</a></h4>
 <p>For each worker node that you expect to have, create a join token (and save this for later steps):</p>
 <div class="highlight"><pre><span></span><code>$ k0s token create --role worker
 </code></pre></div>
 <h3 id="worker">Worker<a class="headerlink" href="#worker" title="Permanent link">#</a></h3>
 <p>For any number of worker nodes which you created join tokens for we'll need to deploy a worker service and start it.</p>
-<h4>Systemd Service</h4>
+<h4 id="systemd-service_1">Systemd Service<a class="headerlink" href="#systemd-service_1" title="Permanent link">#</a></h4>
 <p>Create the join token for the worker:</p>
 <div class="highlight"><pre><span></span><code>$ mkdir -p /var/lib/k0s/
 $ <span class="nb">echo</span> <span class="si">${</span><span class="nv">TOKEN_CONTENT</span><span class="si">}</span> &gt; /var/lib/k0s/join-token

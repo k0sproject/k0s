@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/custom-cri-runtime/">
+        <link rel="canonical" href="https://docs.k0sproject.io/worker-node-config/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Using a Custom CRI - Documentation</title>
+        <title>Worker node configuration - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#custom-cri-runtime" class="md-skip">
+        <a href="#configuration-options-for-worker-nodes" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Using a Custom CRI
+              Worker node configuration
             
           </span>
         </div>
@@ -235,10 +235,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Creating a Cluster
@@ -316,11 +318,56 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../worker-node-config/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Worker node configuration
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Worker node configuration
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#node-labels" class="md-nav__link">
+    Node labels
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kubelet-args" class="md-nav__link">
+    Kubelet args
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -383,12 +430,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -430,20 +475,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../custom-cri-runtime/" class="md-nav__link">
       Using a Custom CRI
     </a>
-    
   </li>
 
         
@@ -684,6 +720,43 @@
                 
               
               
+                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                  <div class="md-sidebar__scrollwrap">
+                    <div class="md-sidebar__inner">
+                      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#node-labels" class="md-nav__link">
+    Node labels
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kubelet-args" class="md-nav__link">
+    Kubelet args
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                    </div>
+                  </div>
+                </div>
+              
             
           
           <div class="md-content">
@@ -691,16 +764,19 @@
               
                 
                 
-                <h1 id="custom-cri-runtime">Custom CRI runtime<a class="headerlink" href="#custom-cri-runtime" title="Permanent link">#</a></h1>
-<p>k0s supports users bringing their own CRI runtime (for example, docker). In which case, k0s will not start nor manage the runtime, and it is fully up to the user to configure it properly.</p>
-<p>To run a k0s worker with a custom CRI runtime use the option <code>--cri-socket</code>. 
-It takes input in the form of <code>&lt;type&gt;:&lt;socket&gt;</code> where:</p>
-<ul>
-<li><code>type</code>: Either <code>remote</code> or <code>docker</code>. Use <code>docker</code> for pure docker setup, <code>remote</code> for anything else.</li>
-<li><code>socket</code>: Path to the socket, examples: <code>unix:///var/run/docker.sock</code></li>
-</ul>
-<p>To run k0s with pre-existing docker setup run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/docker.sock &lt;token&gt;</code>.</p>
-<p>When <code>docker</code> is used as a runtime, k0s will configure kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
+                <h1 id="configuration-options-for-worker-nodes">Configuration options for worker nodes<a class="headerlink" href="#configuration-options-for-worker-nodes" title="Permanent link">#</a></h1>
+<p>Currently <code>k0s worker</code> command does not take in any special yaml configuration. There still is ways how to configure the workers, the following chapters provide instructions for ways you can configure how the worker runs various components.</p>
+<h2 id="node-labels">Node labels<a class="headerlink" href="#node-labels" title="Permanent link">#</a></h2>
+<p><code>k0s worker</code> command accepts <code>--labels</code> flag with which you can make the newly joined worker node the register itself in the Kubernetes API with the given set of labels.</p>
+<p>So for example when running the worker with <code>k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"</code> will result in:
+<div class="highlight"><pre><span></span><code>/ # kubectl get node --show-labels
+NAME      STATUS     ROLES    AGE   VERSION        LABELS
+worker0   NotReady   &lt;none&gt;   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
+</code></pre></div></p>
+<p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node and changing them afterwards has no effect.</p>
+<h2 id="kubelet-args">Kubelet args<a class="headerlink" href="#kubelet-args" title="Permanent link">#</a></h2>
+<p><code>k0s worker</code> command accepts a generic flag to pass in any set of argument for kubelet process.</p>
+<p>For example running <code>k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"</code> will "pass on" the given flags to kubelet as-is. As the flags are passed as-is make sure you are passing in properly formatted and valued flags as k0s will NOT validate those at all.</p>
                 
               
               
@@ -719,7 +795,7 @@ It takes input in the form of <code>&lt;type&gt;:&lt;socket&gt;</code> where:</p
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../containerd_config/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../system-requirements/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -728,19 +804,19 @@ It takes input in the form of <code>&lt;type&gt;:&lt;socket&gt;</code> where:</p
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Containerd Configuration
+                System Requirements
               </div>
             </div>
           </a>
         
         
-          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Using Cloud Providers
+                Architecture
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
