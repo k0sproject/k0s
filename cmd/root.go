@@ -70,7 +70,9 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(validateCmd)
 	rootCmd.AddCommand(kubectlCmd)
+	rootCmd.AddCommand(airgapCmd)
 	rootCmd.AddCommand(resetCmd)
+
 	rootCmd.DisableAutoGenTag = true
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
 	if build.EulaNotice != "" {

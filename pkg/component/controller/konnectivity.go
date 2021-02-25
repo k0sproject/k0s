@@ -177,6 +177,7 @@ func (k *Konnectivity) Stop() error {
 type konnectivityAgentConfig struct {
 	APIAddress string
 	Image      string
+	PullPolicy string
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
@@ -192,6 +193,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.APIAddress(),
 			Image:      k.ClusterConfig.Spec.Images.Konnectivity.URI(),
+			PullPolicy: k.ClusterConfig.Spec.Images.DefaultPullPolicy,
 		},
 		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}
@@ -298,6 +300,7 @@ spec:
           operator: "Exists"
       containers:
         - image: {{ .Image }}
+          imagePullPolicy: {{ .PullPolicy }}
           name: konnectivity-agent
           command: ["/proxy-agent"]
           args: [

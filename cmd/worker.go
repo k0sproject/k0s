@@ -48,6 +48,7 @@ func init() {
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 	workerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	workerCmd.Flags().StringVar(&airGapBundle, "airgap-bundle", "", "OCI bundle for airgap install")
 	workerCmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
@@ -65,6 +66,7 @@ var (
 	tokenFile        string
 	workerProfile    string
 	kubeletExtraArgs string
+	airGapBundle     string
 
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",
@@ -125,6 +127,10 @@ func startWorker(token string) error {
 			LogLevel: logging["containerd"],
 			K0sVars:  k0sVars,
 		})
+	}
+
+	if airGapBundle != "" {
+		componentManager.Add(worker.NewAirgapReconciler(airGapBundle, k0sVars))
 	}
 
 	if workerProfile == "default" && runtime.GOOS == "windows" {
@@ -188,7 +194,7 @@ func startWorker(token string) error {
 
 	err = componentManager.Start(ctx)
 	if err != nil {
-		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
+		logrus.WithError(err).Error("failed to start some of the worker components")
 		c <- syscall.SIGTERM
 	}
 	// Wait for k0s process termination
@@ -197,8 +203,9 @@ func startWorker(token string) error {
 
 	// Stop components
 	if err := componentManager.Stop(); err != nil {
-		logrus.Errorf("error while stoping component manager %s", err)
+		logrus.WithError(err).Error("error while stoping component manager")
 	}
+
 	return nil
 
 }

@@ -63,6 +63,7 @@ type calicoConfig struct {
 	CalicoKubeControllersImage string
 	Overlay                    string
 	IPAutodetectionMethod      string
+	PullPolicy                 string
 }
 
 // NewCalico creates new Calico reconciler component
@@ -214,6 +215,7 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		WithWindowsNodes:           c.clusterConf.Spec.Network.Calico.WithWindowsNodes,
 		Overlay:                    c.clusterConf.Spec.Network.Calico.Overlay,
 		IPAutodetectionMethod:      c.clusterConf.Spec.Network.Calico.IPAutodetectionMethod,
+		PullPolicy:                 c.clusterConf.Images.DefaultPullPolicy,
 	}
 
 	return config, nil

@@ -36,6 +36,7 @@ spec:
       containers:
         - name: calico-kube-controllers
           image: {{ .CalicoKubeControllersImage }}
+          imagePullPolicy: {{ .PullPolicy }}
           env:
             # Choose which controllers to run.
             - name: ENABLED_CONTROLLERS

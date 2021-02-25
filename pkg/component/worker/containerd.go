@@ -32,6 +32,8 @@ type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
 	K0sVars    constant.CfgVars
+
+	OCIBundlePath string
 }
 
 // Init extracts the needed binaries

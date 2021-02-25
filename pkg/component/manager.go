@@ -29,13 +29,14 @@ import (
 // Manager manages components
 type Manager struct {
 	components []Component
-	sync       map[string]bool
+	sync       map[string]struct{}
 }
 
 // NewManager creates a manager
 func NewManager() *Manager {
 	return &Manager{
 		components: []Component{},
+		sync:       map[string]struct{}{},
 	}
 }
 
@@ -48,21 +49,18 @@ func (m *Manager) Add(component Component) {
 func (m *Manager) AddSync(component Component) {
 	m.components = append(m.components, component)
 	compName := reflect.TypeOf(component).Elem().Name()
-	if m.sync == nil {
-		m.sync = make(map[string]bool)
-	}
-	m.sync[compName] = true
+	m.sync[compName] = struct{}{}
 }
 
 // Init initializes all managed components
 func (m *Manager) Init() error {
-	g := new(errgroup.Group)
+	var g errgroup.Group
 
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		logrus.Infof("initializing %v\n", compName)
 		c := comp
-		if m.sync[compName] {
+		if _, found := m.sync[compName]; found {
 			if err := c.Init(); err != nil {
 				return err
 			}
@@ -77,11 +75,13 @@ func (m *Manager) Init() error {
 
 // Start starts all managed components
 func (m *Manager) Start(ctx context.Context) error {
+
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
+
 		if err := comp.Run(); err != nil {
 			return err
 		}
