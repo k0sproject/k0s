@@ -18,9 +18,7 @@ package install
 import (
 	"fmt"
 	"io/ioutil"
-	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/mitchellh/go-ps"
@@ -40,14 +38,6 @@ func GetProcessID() (pid *int, ppid *int, err error) {
 		}
 	}
 	return nil, nil, nil
-}
-
-func GetProcessOwner(pid int) (string, error) {
-	stdout, err := exec.Command("ps", "-o", "user=", "-p", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSuffix(string(stdout), "\n"), nil
 }
 
 func hasChildren(pid int, processes []ps.Process) bool {

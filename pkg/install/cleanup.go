@@ -18,6 +18,7 @@ package install
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -26,12 +27,12 @@ import (
 )
 
 type CleanUpConfig struct {
+	containerdBinPath    string
+	containerdCmd        *exec.Cmd
 	containerdSockerPath string
 	criSocketPath        string
 	crictlBinPath        string
 	dataDir              string
-	containerdBinPath    string
-	quit                 chan bool
 	runDir               string
 }
 
@@ -43,9 +44,6 @@ func (c *CleanUpConfig) WorkerCleanup() error {
 	}
 	logrus.Info("starting containerd for cleanup operations...")
 
-	quit := make(chan bool)
-	c.quit = quit
-
 	if err := c.startContainerd(); err != nil {
 		return err
 	}
@@ -56,7 +54,6 @@ func (c *CleanUpConfig) WorkerCleanup() error {
 		logrus.Errorf("error removing kubelet mounts: %v", err)
 		msg = append(msg, err.Error())
 	}
-
 	logrus.Info("successfully removed kubelet mounts!")
 	logrus.Info("attempting to clean up network namespaces...")
 	if err := c.cleanupNetworkNamespace(); err != nil {

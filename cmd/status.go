@@ -24,6 +24,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
@@ -54,10 +56,8 @@ var (
 				}
 				status.Version = ver
 
-				if user, err := install.GetProcessOwner(status.Pid); err != nil {
-					return err
-				} else if !strings.Contains(user, "root") {
-					return fmt.Errorf("k0s status should be run as root")
+				if os.Geteuid() != 0 {
+					logrus.Fatal("k0s status must be run as root!")
 				}
 
 				if status.SysInit, status.StubFile, err = install.GetSysInit(status.Role); err != nil {

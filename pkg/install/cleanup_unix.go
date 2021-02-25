@@ -1,3 +1,18 @@
+/*
+Copyright 2021 k0s authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package install
 
 import (
@@ -6,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -134,27 +150,26 @@ func (c *CleanUpConfig) startContainerd() error {
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start containerd: %v", err)
 	}
-	go func() {
-		for {
-			select {
-			case <-c.quit:
-				logrus.Debug("stopping clean-up instance of containerd...")
-				if err := cmd.Process.Kill(); err != nil {
-					logrus.Errorf("failed to kill containerd: %v", err)
-				}
-			default:
-				continue
-			}
-		}
-	}()
 
+	c.containerdCmd = cmd
 	return nil
 }
 
 func (c *CleanUpConfig) stopContainerd() {
 	logrus.Debug("attempting to stop containerd")
-	c.quit <- true
+	logrus.Debugf("found containerd pid: %v", c.containerdCmd.Process.Pid)
+	if err := c.containerdCmd.Process.Signal(os.Interrupt); err != nil {
+		logrus.Errorf("failed to kill containerd: %v", err)
+	}
+	// if process, didn't exit, wait a few seconds and send SIGKILL
+	if c.containerdCmd.ProcessState.ExitCode() != -1 {
+		time.Sleep(5 * time.Second)
 
+		if err := c.containerdCmd.Process.Kill(); err != nil {
+			logrus.Errorf("failed to send SIGKILL to containerd: %v", err)
+		}
+	}
+	logrus.Debug("successfully stopped containerd")
 }
 
 func (c *CleanUpConfig) listContainers() ([]string, error) {
