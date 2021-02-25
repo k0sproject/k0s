@@ -32,13 +32,14 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig *config.ClusterConfig
-	K0sVars       constant.CfgVars
-	LogLevel      string
-	Storage       component.Component
-	gid           int
-	supervisor    supervisor.Supervisor
-	uid           int
+	ClusterConfig      *config.ClusterConfig
+	K0sVars            constant.CfgVars
+	LogLevel           string
+	Storage            component.Component
+	EnableKonnectivity bool
+	gid                int
+	supervisor         supervisor.Supervisor
+	uid                int
 }
 
 var apiDefaultArgs = map[string]string{
@@ -79,10 +80,6 @@ func (a *APIServer) Init() error {
 
 // Run runs kube api
 func (a *APIServer) Run() error {
-	err := a.writeKonnectivityConfig()
-	if err != nil {
-		return err
-	}
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
@@ -100,14 +97,21 @@ func (a *APIServer) Run() error {
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.Address),
 		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
-		"egress-selector-config-file":      path.Join(a.K0sVars.DataDir, "konnectivity.conf"),
 		"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"service-account-issuer":           "api",
-		"api-audiences":                    "system:konnectivity-server",
 		"insecure-port":                    "0",
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+	}
+
+	if a.EnableKonnectivity {
+		err := a.writeKonnectivityConfig()
+		if err != nil {
+			return err
+		}
+		args["egress-selector-config-file"] = path.Join(a.K0sVars.DataDir, "konnectivity.conf")
+		args["api-audiences"] = "system:konnectivity-server"
 	}
 
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {

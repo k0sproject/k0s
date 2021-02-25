@@ -51,6 +51,7 @@ import (
 func init() {
 	controllerCmd.Flags().StringVar(&controllerWorkerProfile, "profile", "default", "worker profile to use on the node")
 	controllerCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
+	controllerCmd.Flags().BoolVar(&singleNode, "single", false, "enable single node (implies --enable-worker, default false)")
 	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
@@ -61,6 +62,7 @@ func init() {
 var (
 	controllerWorkerProfile string
 	enableWorker            bool
+	singleNode              bool
 	controllerToken         string
 	controllerCmd           = &cobra.Command{
 		Use:     "controller [join-token]",
@@ -87,6 +89,9 @@ var (
 					return err
 				}
 				controllerToken = string(bytes)
+			}
+			if singleNode {
+				enableWorker = true
 			}
 
 			return startController(controllerToken)
@@ -189,12 +194,14 @@ func startController(token string) error {
 		})
 	}
 
-	componentManager.Add(&controller.Konnectivity{
-		ClusterConfig:     clusterConfig,
-		LogLevel:          logging["konnectivity-server"],
-		K0sVars:           k0sVars,
-		KubeClientFactory: adminClientFactory,
-	})
+	if !singleNode {
+		componentManager.Add(&controller.Konnectivity{
+			ClusterConfig:     clusterConfig,
+			LogLevel:          logging["konnectivity-server"],
+			K0sVars:           k0sVars,
+			KubeClientFactory: adminClientFactory,
+		})
+	}
 	componentManager.Add(&controller.Scheduler{
 		ClusterConfig: clusterConfig,
 		LogLevel:      logging["kube-scheduler"],
