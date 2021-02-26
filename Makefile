@@ -81,7 +81,7 @@ k0s.exe k0s: $(GO_SRCS)
 lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run ./...
 
-smoketests := check-addons check-basic check-byocri check-hacontrolplane check-kine check-network check-singlenode check-install check-dualstack
+smoketests := check-addons check-basic check-byocri check-dualstack check-hacontrolplane check-install check-kine check-multicontroller check-network check-singlenode
 .PHONY: $(smoketests)
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
