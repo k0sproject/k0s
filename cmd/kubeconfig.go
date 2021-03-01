@@ -23,7 +23,6 @@ import (
 	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -93,7 +92,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return errors.New("Username is mandatory")
 			}
 			var username = args[0]
-			var config = constant.GetConfig(dataDir)
+			var config = k0sVars
 
 			clusterAPIURL, err := getAPIURL()
 			if err != nil {

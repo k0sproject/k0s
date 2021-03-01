@@ -100,7 +100,7 @@ var (
 )
 
 // If we've got CA in place we assume the node has already joined previously
-func needToJoin(k0sVars constant.CfgVars) bool {
+func needToJoin() bool {
 	if util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.key")) &&
 		util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.crt")) {
 		return false
@@ -129,7 +129,7 @@ func startController(token string) error {
 	var join = false
 
 	var joinClient *v1beta1.JoinClient
-	if token != "" && needToJoin(k0sVars) {
+	if token != "" && needToJoin() {
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
