@@ -1,7 +1,23 @@
+/*
+Copyright 2021 k0s Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package install
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -27,22 +43,14 @@ func (p *program) Stop(s service.Service) error {
 // EnsureService installs the k0s service, per the given arguments, and the detected platform
 func EnsureService(args []string) error {
 	var deps []string
-	var k0sDisplayName string
+	var svcConfig *service.Config
 
 	prg := &program{}
 	for _, v := range args {
 		if v == "controller" || v == "worker" {
-			k0sDisplayName = "k0s " + v
-			k0sServiceName = k0sServiceName + v
+			svcConfig = getServiceConfig(v)
 			break
 		}
-	}
-
-	// initial svc config
-	svcConfig := &service.Config{
-		Name:        k0sServiceName,
-		DisplayName: k0sDisplayName,
-		Description: k0sDescription,
 	}
 
 	s, err := service.New(prg, svcConfig)
@@ -75,13 +83,69 @@ func EnsureService(args []string) error {
 	return nil
 }
 
-func GetSysInit() (string, error) {
+func UninstallService(role string) error {
+	prg := &program{}
+
+	if role == "controller+worker" {
+		role = "controller"
+	}
+
+	svcConfig := getServiceConfig(role)
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		return err
+	}
+	logrus.Info("Uninstalling the k0s service")
+
+	err = s.Uninstall()
+	if err != nil {
+		return fmt.Errorf("failed to remove the k0s service: %v", err)
+	}
+	return nil
+}
+
+// GetSysInit returns the sys init platform name, and the stub file path for a system
+func GetSysInit(role string) (sysInitPlatform string, stubFile string, err error) {
+	if role == "controller+worker" {
+		role = "controller"
+	}
+	if sysInitPlatform, err = getSysInitPlatform(); err != nil {
+		return sysInitPlatform, stubFile, err
+	}
+	if sysInitPlatform == "linux-systemd" {
+		stubFile = fmt.Sprintf("/etc/systemd/system/k0s%s.service", role)
+		if _, err := os.Stat(stubFile); err != nil {
+			stubFile = ""
+		}
+	} else if sysInitPlatform == "linux-openrc" {
+		stubFile = fmt.Sprintf("/etc/init.d/k0s%s", role)
+		if _, err := os.Stat(stubFile); err != nil {
+			stubFile = ""
+		}
+	}
+	return sysInitPlatform, stubFile, err
+}
+
+func getSysInitPlatform() (string, error) {
 	prg := &program{}
 	s, err := service.New(prg, &service.Config{Name: "132"})
 	if err != nil {
 		return "", err
 	}
 	return s.Platform(), nil
+}
+
+func getServiceConfig(role string) *service.Config {
+	var k0sDisplayName string
+	if role == "controller" || role == "worker" {
+		k0sDisplayName = "k0s " + role
+		k0sServiceName = k0sServiceName + role
+	}
+	return &service.Config{
+		Name:        k0sServiceName,
+		DisplayName: k0sDisplayName,
+		Description: k0sDescription,
+	}
 }
 
 // Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template

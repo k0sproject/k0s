@@ -1,3 +1,18 @@
+/*
+Copyright 2021 k0s Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package install
 
 import (
@@ -5,12 +20,46 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"reflect"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
+
+// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) error {
+	users := getUserList(*clusterConfig.Install.SystemUsers)
+	var messages []string
+	for _, v := range users {
+		if err := EnsureUser(v, k0sVars.DataDir); err != nil {
+			messages = append(messages, err.Error())
+		}
+	}
+	if len(messages) > 0 {
+		return fmt.Errorf(strings.Join(messages, "\n"))
+	}
+	return nil
+}
+
+// CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
+func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
+	users := getUserList(*clusterConfig.Install.SystemUsers)
+	var messages []string
+	for _, v := range users {
+		if err := DeleteUser(v); err != nil {
+			messages = append(messages, err.Error())
+		}
+	}
+	if len(messages) > 0 {
+		// don't fail the command, just notify on errors
+		return fmt.Errorf(strings.Join(messages, "\n"))
+	}
+	return nil
+}
 
 // EnsureUser checks if a user exists, and creates it, if it doesn't
 // TODO: we should also consider modifying the user, if the user exists, but with wrong settings
@@ -61,6 +110,28 @@ func CreateUser(userName string, homeDir string, shell string) error {
 	return nil
 }
 
+// DeleteUser deletes system users with either `deluser` or `userdel` command
+func DeleteUser(userName string) error {
+	var userCmd string
+	var userCmdArgs []string
+
+	logrus.Infof("deleting user: %s", userName)
+	_, err := util.GetExecPath("userdel")
+	if err == nil {
+		userCmd = "userdel"
+		userCmdArgs = []string{userName}
+	} else {
+		userCmd = "deluser"
+		userCmdArgs = []string{userName}
+	}
+
+	cmd := exec.Command(userCmd, userCmdArgs...)
+	if err := execCmd(cmd); err != nil {
+		return err
+	}
+	return nil
+}
+
 // cmd wrapper
 func execCmd(cmd *exec.Cmd) error {
 	logrus.Debugf("executing command: %v", quoteCmd(cmd))
@@ -84,4 +155,15 @@ func quoteCmd(cmd *exec.Cmd) string {
 		q = append(q, fmt.Sprintf("%q", s))
 	}
 	return strings.Join(q, ` `)
+}
+
+// get user list
+func getUserList(sysUsers v1beta1.SystemUser) []string {
+	v := reflect.ValueOf(sysUsers)
+	values := make([]string, v.NumField())
+
+	for i := 0; i < v.NumField(); i++ {
+		values[i] = v.Field(i).String()
+	}
+	return util.Unique(values)
 }

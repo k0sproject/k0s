@@ -55,6 +55,7 @@ func init() {
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 	addPersistentFlags(controllerCmd)
+	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
 }
 
 var (
