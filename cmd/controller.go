@@ -92,6 +92,7 @@ var (
 			}
 			if singleNode {
 				enableWorker = true
+				k0sVars.DefaultStorageType = "kine"
 			}
 
 			return startController(controllerToken)
@@ -157,7 +158,7 @@ func startController(token string) error {
 	var storageBackend component.Component
 
 	switch clusterConfig.Spec.Storage.Type {
-	case v1beta1.KineStorageType, "":
+	case v1beta1.KineStorageType:
 		storageBackend = &controller.Kine{
 			Config:  clusterConfig.Spec.Storage.Kine,
 			K0sVars: k0sVars,

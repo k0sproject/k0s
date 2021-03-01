@@ -87,6 +87,8 @@ type CfgVars struct {
 	RunDir                     string // location of supervised pid files and sockets
 	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
 	OCIBundleDir               string // location for OCI bundles
+	DefaultStorageType         string // Default backend storage
+
 	// Helm config
 	HelmHome             string
 	HelmRepositoryCache  string
