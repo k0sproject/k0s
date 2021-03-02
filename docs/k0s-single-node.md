@@ -23,7 +23,7 @@ k0s default-config > k0s.yaml
 
 #### 2. Start k0s
 ```sh
-$ sudo k0s install controller -c k0s.yaml --enable-worker
+$ sudo k0s install controller -c /full/path/to/k0s.yaml --enable-worker
 INFO[2021-02-25 15:34:59] Installing k0s service
 $ sudo systemctl start k0scontroller.service
 ```
