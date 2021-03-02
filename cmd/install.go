@@ -59,6 +59,7 @@ With controller subcommand you can setup a single node cluster by running:
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
 			return setup("controller", flagsAndVals)
 		},
+		PreRunE: preRunValidateConfig,
 	}
 
 	installWorkerCmd = &cobra.Command{
@@ -73,6 +74,7 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
 			return setup("worker", flagsAndVals)
 		},
+		PreRunE: preRunValidateConfig,
 	}
 )
 
@@ -97,6 +99,14 @@ func setup(role string, args []string) error {
 	err := install.EnsureService(args)
 	if err != nil {
 		logrus.Errorf("failed to install k0s service: %v", err)
+	}
+	return nil
+}
+
+func preRunValidateConfig(cmd *cobra.Command, args []string) error {
+	err := validateConfig(cfgFile)
+	if err != nil {
+		return err
 	}
 	return nil
 }
