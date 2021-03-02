@@ -162,10 +162,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 ## Under the hood
 
 Workers are always run as root. For controllers, the command will create the following system users:
-* `etcd`
-* `kube-apiserver`
-* `konnectivity-server`
-* `kube-scheduler`
+  `etcd`, `kube-apiserver`, `konnectivity-server`, `kube-scheduler`
 
 
 ## Additional Documentation
