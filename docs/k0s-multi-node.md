@@ -1,10 +1,30 @@
+- [Creating a multi-node cluster](#creating-a-multi-node-cluster)
+  - [Prerequisites](#prerequisites)
+  - [Bootstrapping a controller node](#bootstrapping-a-controller-node)
+  - [Create a join token](#create-a-join-token)
+  - [Adding Workers to a Cluster](#adding-workers-to-a-cluster)
+  - [Tokens](#tokens)
+  - [Adding a Controller Node](#adding-a-controller-node)
+  - [Adding a Cluster User](#adding-a-cluster-user)
+    - [Enabling Access to Cluster Resources](#enabling-access-to-cluster-resources)
+  - [Service and Log Setup](#service-and-log-setup)
+  - [Configuring an HA Control Plane](#configuring-an-ha-control-plane)
+    - [Requirements](#requirements)
+        - [Load Balancer](#load-balancer)
+        - [Cluster configuration](#cluster-configuration)
+  - [Enabling Shell Completion](#enabling-shell-completion)
+    - [Bash](#bash)
+    - [Zsh](#zsh)
+    - [Fish](#fish)
+
+
 # Creating a multi-node cluster
 
 As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
 
 ## Prerequisites
 
-Install k0s as documented in the [installation instructions](k0s-install.md)
+Install k0s as documented in the [installation instructions](install.md)
 
 
 ## Bootstrapping a controller node
@@ -101,6 +121,31 @@ $ k0s kubectl create clusterrolebinding --kubeconfig k0s.config testUser-admin-b
 ## Service and Log Setup
 [k0s install](cli/k0s_install.md) sub-command was created as a helper command to allow users to easily install k0s as a service.
 For more information, read [here](install.md).
+
+## Configuring an HA Control Plane
+
+The following pre-requisites are required in order to configure an HA control plane:
+ 
+### Requirements
+##### Load Balancer
+A load balancer with a single external address should be configured as the IP gateway for the controllers.
+The load balancer should allow traffic to each controller on the following ports:
+
+- 6443
+- 8132
+- 8133
+- 9443
+
+##### Cluster configuration
+On each controller node, a k0s.yaml configuration file should be configured.
+The following options need to match on each node, otherwise the control plane components will end up in very unknown states:
+
+- `network`
+- `storage`: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.
+- `externalAddress`
+
+[Full configuration file refrence](configuration.md)
+  
 
 ## Enabling Shell Completion
 The k0s completion script for Bash, zsh, fish and powershell can be generated with the command `k0s completion < shell >`. Sourcing the completion script in your shell enables k0s autocompletion.

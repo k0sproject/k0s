@@ -11,16 +11,15 @@ edit_uri: ""
 nav:
   - Overview: README.md
   - Creating a Cluster:
-      - Running k0s as a service: install.md
+      - Install k0s:             install.md
       - Multi-Node Cluster:      k0s-multi-node.md
       - Single-Node Cluster:     k0s-single-node.md
       - Docker:                  k0s-in-docker.md
       - Windows (experimental):  experimental-windows.md
-      - Worker node configuration: worker-node-config.md
       - Install with k0sctl:     k0sctl-install.md 
   - Architecture:
-      - Overview: architecture.md
-      - Networking:   networking.md
+      - Overview:                architecture.md
+      - Networking:              networking.md
       - System Requirements:     system-requirements.md
   - Configuration:
       - Configuration Options:            configuration.md
