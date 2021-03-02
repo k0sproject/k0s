@@ -966,27 +966,7 @@
               
                 
                 
-                <ul>
-<li><a href="#download-the-k0s-binary">Download the k0s binary</a></li>
-<li><a href="#prerequisites">Prerequisites</a></li>
-<li><a href="#k0s-download-script">K0s Download Script</a></li>
-<li><a href="#installing-k0s-as-a-service-on-the-local-system">Installing k0s as a service on the local system</a></li>
-<li><a href="#run-k0s-as-a-service">Run k0s as a service</a><ul>
-<li><a href="#check-service-status">Check service status</a></li>
-<li><a href="#query-cluster-status">Query cluster status</a></li>
-<li><a href="#fetch-nodes">Fetch nodes</a></li>
-</ul>
-</li>
-<li><a href="#enabling-shell-completion">Enabling Shell Completion</a><ul>
-<li><a href="#bash">Bash</a></li>
-<li><a href="#zsh">Zsh</a></li>
-<li><a href="#fish">Fish</a></li>
-</ul>
-</li>
-<li><a href="#under-the-hood">Under the hood</a></li>
-<li><a href="#additional-documentation">Additional Documentation</a></li>
-</ul>
-<h1 id="download-the-k0s-binary">Download the k0s binary<a class="headerlink" href="#download-the-k0s-binary" title="Permanent link">#</a></h1>
+                <h1 id="download-the-k0s-binary">Download the k0s binary<a class="headerlink" href="#download-the-k0s-binary" title="Permanent link">#</a></h1>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="https://curl.se/">cURL</a> </li>
@@ -1097,10 +1077,7 @@ $ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
 </code></pre></div></p>
 <h2 id="under-the-hood">Under the hood<a class="headerlink" href="#under-the-hood" title="Permanent link">#</a></h2>
 <p>Workers are always run as root. For controllers, the command will create the following system users:
-* <code>etcd</code>
-* <code>kube-apiserver</code>
-* <code>konnectivity-server</code>
-* <code>kube-scheduler</code></p>
+  <code>etcd</code>, <code>kube-apiserver</code>, <code>konnectivity-server</code>, <code>kube-scheduler</code></p>
 <h2 id="additional-documentation">Additional Documentation<a class="headerlink" href="#additional-documentation" title="Permanent link">#</a></h2>
 <p>see: <a href="../cli/k0s_install/">k0s install</a></p>
                 
