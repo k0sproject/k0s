@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#configuration-options" class="md-skip">
+        <a href="#configuration-file-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -258,7 +258,19 @@
 
 
   <li class="md-nav__item">
-    <a href="../create-cluster/" class="md-nav__link">
+    <a href="../install/" class="md-nav__link">
+      Install k0s
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../k0s-multi-node/" class="md-nav__link">
       Multi-Node Cluster
     </a>
   </li>
@@ -306,20 +318,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../system-requirements/" class="md-nav__link">
-      System Requirements
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../worker-node-config/" class="md-nav__link">
-      Worker node configuration
+    <a href="../k0sctl-install/" class="md-nav__link">
+      Install with k0sctl
     </a>
   </li>
 
@@ -357,7 +357,7 @@
 
   <li class="md-nav__item">
     <a href="../architecture/" class="md-nav__link">
-      Architecture
+      Overview
     </a>
   </li>
 
@@ -370,6 +370,18 @@
   <li class="md-nav__item">
     <a href="../networking/" class="md-nav__link">
       Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../system-requirements/" class="md-nav__link">
+      System Requirements
     </a>
   </li>
 
@@ -413,8 +425,6 @@
     
     <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
     
-      
-    
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         Configuration Options
@@ -429,8 +439,6 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -439,69 +447,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#control-plane" class="md-nav__link">
-    Control plane
+  <a href="#configuration-file-reference" class="md-nav__link">
+    Configuration file reference
   </a>
   
-    <nav class="md-nav" aria-label="Control plane">
+    <nav class="md-nav" aria-label="Configuration file reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#specapi" class="md-nav__link">
-    spec.api
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#specnetwork" class="md-nav__link">
-    spec.network
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extensionshelm" class="md-nav__link">
-    extensions.helm
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-an-ha-control-plane" class="md-nav__link">
-    Configuring an HA Control Plane
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuring an HA Control Plane">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#full-config-reference" class="md-nav__link">
-    Full config reference
-  </a>
-  
-    <nav class="md-nav" aria-label="Full config reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#specapi_1" class="md-nav__link">
     spec.api
   </a>
   
@@ -529,7 +483,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#specnetwork_1" class="md-nav__link">
+  <a href="#specnetwork" class="md-nav__link">
     spec.network
   </a>
   
@@ -557,8 +511,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#extensions" class="md-nav__link">
-    Extensions
+  <a href="#extensionshelm" class="md-nav__link">
+    extensions.helm
   </a>
   
 </li>
@@ -575,10 +529,29 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#configuration-validation" class="md-nav__link">
+    Configuration Validation
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
     
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../worker-node-config/" class="md-nav__link">
+      Worker node configuration
+    </a>
   </li>
 
         
@@ -624,8 +597,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../install/" class="md-nav__link">
-      Running k0s as a service
+    <a href="../dual-stack/" class="md-nav__link">
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -636,8 +609,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 dual-stack networking
+    <a href="../k0s-reset/" class="md-nav__link">
+      Uninstall the k0s cluster
     </a>
   </li>
 
@@ -840,8 +813,6 @@
             
               
               
-                
-              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -849,8 +820,6 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
-  
-    
   
   
     <label class="md-nav__title" for="__toc">
@@ -860,69 +829,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#control-plane" class="md-nav__link">
-    Control plane
+  <a href="#configuration-file-reference" class="md-nav__link">
+    Configuration file reference
   </a>
   
-    <nav class="md-nav" aria-label="Control plane">
+    <nav class="md-nav" aria-label="Configuration file reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#specapi" class="md-nav__link">
-    spec.api
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#specnetwork" class="md-nav__link">
-    spec.network
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extensionshelm" class="md-nav__link">
-    extensions.helm
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-an-ha-control-plane" class="md-nav__link">
-    Configuring an HA Control Plane
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuring an HA Control Plane">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#full-config-reference" class="md-nav__link">
-    Full config reference
-  </a>
-  
-    <nav class="md-nav" aria-label="Full config reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#specapi_1" class="md-nav__link">
     spec.api
   </a>
   
@@ -950,7 +865,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#specnetwork_1" class="md-nav__link">
+  <a href="#specnetwork" class="md-nav__link">
     spec.network
   </a>
   
@@ -978,8 +893,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#extensions" class="md-nav__link">
-    Extensions
+  <a href="#extensionshelm" class="md-nav__link">
+    extensions.helm
   </a>
   
 </li>
@@ -993,6 +908,13 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-validation" class="md-nav__link">
+    Configuration Validation
+  </a>
   
 </li>
       
@@ -1010,66 +932,27 @@
               
                 
                 
-                <h1 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h1>
-<h2 id="control-plane">Control plane<a class="headerlink" href="#control-plane" title="Permanent link">#</a></h2>
-<p>k0s Control plane can be configured via a YAML config file. By default <code>k0s server</code> command reads a file called <code>k0s.yaml</code> but can be told to read any yaml file via <code>--config</code> option.</p>
-<p>An example config file with the most common options users should configure:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span>
-    <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
-    <span class="nt">sans</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">my-k0s-control.my-domain.com</span>
-  <span class="nt">network</span><span class="p">:</span>
-    <span class="nt">podCIDR</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
-    <span class="nt">serviceCIDR</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
-<span class="nt">extensions</span><span class="p">:</span>
-  <span class="nt">helm</span><span class="p">:</span>
-    <span class="nt">repositories</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community</span>
-      <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
-    <span class="nt">charts</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
-      <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
-      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
-</code></pre></div>
-<h3 id="specapi"><code>spec.api</code><a class="headerlink" href="#specapi" title="Permanent link">#</a></h3>
-<ul>
-<li><code>address</code>: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</li>
-<li><code>sans</code>: List of additional addresses to push to API servers serving certificate</li>
+                  <h1>Configuration Options</h1>
+                
+                <ul>
+<li><a href="#configuration-file-reference">Configuration file reference</a></li>
+<li><a href="#specapi"><code>spec.api</code></a></li>
+<li><a href="#speccontrollermanager"><code>spec.controllerManager</code></a></li>
+<li><a href="#specscheduler"><code>spec.scheduler</code></a></li>
+<li><a href="#specstorage"><code>spec.storage</code></a></li>
+<li><a href="#specnetwork"><code>spec.network</code></a><ul>
+<li><a href="#specnetworkcalico"><code>spec.network.calico</code></a></li>
 </ul>
-<h3 id="specnetwork"><code>spec.network</code><a class="headerlink" href="#specnetwork" title="Permanent link">#</a></h3>
-<ul>
-<li><code>podCIDR</code>: Pod network CIDR to be used in the cluster</li>
-<li><code>serviceCIDR</code>: Network CIDR to be used for cluster VIP services.</li>
+</li>
+<li><a href="#specpodsecuritypolicy"><code>spec.podSecurityPolicy</code></a></li>
+<li><a href="#specworkerprofiles"><code>spec.workerProfiles</code></a></li>
+<li><a href="#images"><code>images</code></a></li>
+<li><a href="#extensionshelm"><code>extensions.helm</code></a></li>
+<li><a href="#telemetry">Telemetry</a></li>
+<li><a href="#configuration-validation">Configuration Validation</a></li>
 </ul>
-<h3 id="extensionshelm"><code>extensions.helm</code><a class="headerlink" href="#extensionshelm" title="Permanent link">#</a></h3>
-<p>List of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.</p>
-<h2 id="configuring-an-ha-control-plane">Configuring an HA Control Plane<a class="headerlink" href="#configuring-an-ha-control-plane" title="Permanent link">#</a></h2>
-<p>The following pre-requisites are required in order to configure an HA control plane:</p>
-<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
-<h5 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h5>
-<p>A load balancer with a single external address should be configured as the IP gateway for the controllers.
-The load balancer should allow traffic to each controller on the following ports:</p>
-<ul>
-<li>6443</li>
-<li>8132</li>
-<li>8133</li>
-<li>9443</li>
-</ul>
-<h5 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h5>
-<p>On each controller node, a k0s.yaml configuration file should be configured.
-The following options need to match on each node, otherwise the control plane components will end up in very unknown states:</p>
-<ul>
-<li><code>network</code></li>
-<li><code>storage</code>: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.</li>
-<li><code>externalAddress</code></li>
-</ul>
-<h2 id="full-config-reference">Full config reference<a class="headerlink" href="#full-config-reference" title="Permanent link">#</a></h2>
+<p>k0s Control plane can be configured via a YAML config file. By default <code>k0s controller</code> command reads a file called <code>k0s.yaml</code> but can be told to read any yaml file via <code>--config</code> option.</p>
+<h2 id="configuration-file-reference">Configuration file reference<a class="headerlink" href="#configuration-file-reference" title="Permanent link">#</a></h2>
 <p><strong>Note:</strong> Many of the options configure things deep down in the "stack" on various components. So please make sure you understand what is being configured and whether or not it works in your specific environment.</p>
 <p>A full config file with defaults generated by the <code>k0s default-config</code> command:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
@@ -1153,7 +1036,7 @@ The following options need to match on each node, otherwise the control plane co
             <span class="no">enabled: false</span>
       <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
-<h3 id="specapi_1"><code>spec.api</code><a class="headerlink" href="#specapi_1" title="Permanent link">#</a></h3>
+<h3 id="specapi"><code>spec.api</code><a class="headerlink" href="#specapi" title="Permanent link">#</a></h3>
 <ul>
 <li><code>externalAddress</code>: If k0s controllers are running behind a loadbalancer provide the loadbalancer address here. This will configure all cluster components to connect to this address and also configures this address to be used when joining new nodes into the cluster.</li>
 <li><code>address</code>: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</li>
@@ -1175,7 +1058,7 @@ The following options need to match on each node, otherwise the control plane co
 <li><code>kine.dataSource</code>: <a href="https://github.com/rancher/kine/">kine</a> datasource URL.</li>
 </ul>
 <p>Using type <code>etcd</code> will make k0s to create and manage an elastic etcd cluster within the controller nodes.</p>
-<h3 id="specnetwork_1"><code>spec.network</code><a class="headerlink" href="#specnetwork_1" title="Permanent link">#</a></h3>
+<h3 id="specnetwork"><code>spec.network</code><a class="headerlink" href="#specnetwork" title="Permanent link">#</a></h3>
 <ul>
 <li><code>provider</code>: Network provider, either <code>calico</code> or <code>custom</code>. In case of <code>custom</code> user can push any network provider.</li>
 <li><code>podCIDR</code>: Pod network CIDR to be used in the cluster</li>
@@ -1232,8 +1115,8 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
     konnectivity:
       image: calico/kube-controllers
       version: v3.16.2
-</code></pre></div>
-Following keys are available:</p>
+</code></pre></div></p>
+<p>Following keys are available:</p>
 <ul>
 <li><code>images.konnectivity</code></li>
 <li><code>images.metricsserver</code></li>
@@ -1246,6 +1129,8 @@ Following keys are available:</p>
 <li><code>images.repository</code></li>
 </ul>
 <p>If <code>images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
+<h3 id="extensionshelm"><code>extensions.helm</code><a class="headerlink" href="#extensionshelm" title="Permanent link">#</a></h3>
+<p>List of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.</p>
 <p>Example:
 <div class="highlight"><pre><span></span><code>images:
   repository: &quot;my.own.repo&quot;
@@ -1258,8 +1143,7 @@ Following keys are available:</p>
 </code></pre></div></p>
 <p>In the runtime the image names will be calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/k8s-staging-metrics-server/metrics-server</code>.</p>
 <p>This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.</p>
-<h3 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">#</a></h3>
-<p>As stated in the <a href="https://github.com/k0sproject/k0s#scope">project scope</a> we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.</p>
+<p>As stated in the <a href="https://github.com/k0sproject/k0s#scope">project scope</a> we intends to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.</p>
 <p>To run k0s easily with your preferred extensions you have two options.</p>
 <ol>
 <li>Dump all needed extension manifest under <code>/var/lib/k0s/manifests/my-extension</code>. Read more on this approach <a href="../manifests/">here</a>.</li>
@@ -1295,6 +1179,17 @@ Example
   interval: 2m0s
   enabled: true
 </code></pre></div></p>
+<h2 id="configuration-validation">Configuration Validation<a class="headerlink" href="#configuration-validation" title="Permanent link">#</a></h2>
+<p>k0s command-line interface has the ability to validate config syntax:</p>
+<div class="highlight"><pre><span></span><code>$ k0s validate config --config path/to/config/file
+</code></pre></div>
+<p><code>validate config</code> sub-command can validate the following:</p>
+<ol>
+<li>YAML formatting</li>
+<li><a href="#specapi-1">SANs addresses</a></li>
+<li><a href="#specnetwork-1">Network providers</a></li>
+<li><a href="#specworkerprofiles">Worker profiles</a> </li>
+</ol>
                 
               
               
@@ -1313,7 +1208,7 @@ Example
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../networking/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../system-requirements/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1322,19 +1217,19 @@ Example
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Networking
+                System Requirements
               </div>
             </div>
           </a>
         
         
-          <a href="../containerd_config/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../worker-node-config/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Containerd Configuration
+                Worker node configuration
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

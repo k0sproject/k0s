@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/manifests/">
+        <link rel="canonical" href="https://docs.k0sproject.io/k0s-multi-node/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Deploying Manifests - Documentation</title>
+        <title>Multi-Node Cluster - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manifest-deployer" class="md-skip">
+        <a href="#creating-a-multi-node-cluster" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Deploying Manifests
+              Multi-Node Cluster
             
           </span>
         </div>
@@ -235,10 +235,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Creating a Cluster
@@ -268,11 +270,165 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../k0s-multi-node/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Multi-Node Cluster
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Multi-Node Cluster
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bootstrapping-a-controller-node" class="md-nav__link">
+    Bootstrapping a controller node
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-join-token" class="md-nav__link">
+    Create a join token
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-workers-to-a-cluster" class="md-nav__link">
+    Adding Workers to a Cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tokens" class="md-nav__link">
+    Tokens
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-controller-node" class="md-nav__link">
+    Adding a Controller Node
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-cluster-user" class="md-nav__link">
+    Adding a Cluster User
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a Cluster User">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-an-ha-control-plane" class="md-nav__link">
+    Configuring an HA Control Plane
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring an HA Control Plane">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-shell-completion" class="md-nav__link">
+    Enabling Shell Completion
+  </a>
+  
+    <nav class="md-nav" aria-label="Enabling Shell Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -579,49 +735,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Deploying Manifests
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../manifests/" class="md-nav__link">
       Deploying Manifests
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#future" class="md-nav__link">
-    Future
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -752,9 +870,125 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#future" class="md-nav__link">
-    Future
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bootstrapping-a-controller-node" class="md-nav__link">
+    Bootstrapping a controller node
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-join-token" class="md-nav__link">
+    Create a join token
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-workers-to-a-cluster" class="md-nav__link">
+    Adding Workers to a Cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tokens" class="md-nav__link">
+    Tokens
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-controller-node" class="md-nav__link">
+    Adding a Controller Node
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-cluster-user" class="md-nav__link">
+    Adding a Cluster User
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a Cluster User">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-and-log-setup" class="md-nav__link">
+    Service and Log Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-an-ha-control-plane" class="md-nav__link">
+    Configuring an HA Control Plane
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring an HA Control Plane">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-shell-completion" class="md-nav__link">
+    Enabling Shell Completion
+  </a>
+  
+    <nav class="md-nav" aria-label="Enabling Shell Completion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -772,15 +1006,137 @@
               
                 
                 
-                <h1 id="manifest-deployer">Manifest deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>k0s embeds a manifest deployer on controllers which provides an easy way to deploy manifests automatically.</p>
-<p>By default k0s reads all manifests under <code>${DATADIR}/manifests</code> (default: <code>/var/lib/k0s/manifests</code>) and ensures their state matches the cluster state. When you remove a manifest file, k0s will automatically prune all the resources associated with it.</p>
-<p>Each directory that is a <strong>direct descendant</strong> of <code>${DATADIR}/manifests</code> is considered
-as its own "stack", but nested directories will be excluded from the stack mechanism.</p>
-<p><strong>Note:</strong> k0s uses this mechanism for some of its internal in-cluster components and other resources. Make sure you only touch the manifests not managed by k0s.</p>
-<h2 id="future">Future<a class="headerlink" href="#future" title="Permanent link">#</a></h2>
-<p>We may in the future support nested directories, but those will not be considered
-<em>stacks</em>, but rather sub-resources of a parent stacks. Stacks are exclusively top-level.</p>
+                <ul>
+<li><a href="#creating-a-multi-node-cluster">Creating a multi-node cluster</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#bootstrapping-a-controller-node">Bootstrapping a controller node</a></li>
+<li><a href="#create-a-join-token">Create a join token</a></li>
+<li><a href="#adding-workers-to-a-cluster">Adding Workers to a Cluster</a></li>
+<li><a href="#tokens">Tokens</a></li>
+<li><a href="#adding-a-controller-node">Adding a Controller Node</a></li>
+<li><a href="#adding-a-cluster-user">Adding a Cluster User</a><ul>
+<li><a href="#enabling-access-to-cluster-resources">Enabling Access to Cluster Resources</a></li>
+</ul>
+</li>
+<li><a href="#service-and-log-setup">Service and Log Setup</a></li>
+<li><a href="#configuring-an-ha-control-plane">Configuring an HA Control Plane</a><ul>
+<li><a href="#requirements">Requirements</a><ul>
+<li><a href="#load-balancer">Load Balancer</a></li>
+<li><a href="#cluster-configuration">Cluster configuration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#enabling-shell-completion">Enabling Shell Completion</a><ul>
+<li><a href="#bash">Bash</a></li>
+<li><a href="#zsh">Zsh</a></li>
+<li><a href="#fish">Fish</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="creating-a-multi-node-cluster">Creating a multi-node cluster<a class="headerlink" href="#creating-a-multi-node-cluster" title="Permanent link">#</a></h1>
+<p>As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>Install k0s as documented in the <a href="../install/">installation instructions</a></p>
+<h2 id="bootstrapping-a-controller-node">Bootstrapping a controller node<a class="headerlink" href="#bootstrapping-a-controller-node" title="Permanent link">#</a></h2>
+<p>Create a configuration file:</p>
+<p><div class="highlight"><pre><span></span><code>$ k0s default-config &gt; k0s.yaml
+</code></pre></div>
+If you wish to modify some of the settings, please check out the <a href="../configuration/">configuration</a> documentation.</p>
+<div class="highlight"><pre><span></span><code>$ k0s install controller 
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:34:59<span class="o">]</span> Installing k0s service
+$ systemctl start k0scontroller
+</code></pre></div>
+<p>k0s process will act as a "supervisor" for all of the control plane components. 
+In a few seconds you'll have the control plane up-and-running.</p>
+<h2 id="create-a-join-token">Create a join token<a class="headerlink" href="#create-a-join-token" title="Permanent link">#</a></h2>
+<p>To be able to join workers into the cluster we need a token. The token embeds information with which we can enable mutual trust between the worker and controller(s) and allow the node to join the cluster as worker.</p>
+<p>To get a token run the following on one of the existing controller nodes:
+<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>worker
+</code></pre></div></p>
+<p>This will output a long <a href="#tokens">token</a> string, which we will then use to add a worker to the cluster. For enhanced security, we can also set an expiration time for the token by using:
+<div class="highlight"><pre><span></span><code>$ k0s token create --role<span class="o">=</span>worker --expiry<span class="o">=</span>100h &gt; token-file
+</code></pre></div></p>
+<h2 id="adding-workers-to-a-cluster">Adding Workers to a Cluster<a class="headerlink" href="#adding-workers-to-a-cluster" title="Permanent link">#</a></h2>
+<p>To join the worker we need to run k0s in worker mode with the token from the previous step:
+<div class="highlight"><pre><span></span><code>$ k0s install worker --token-file /path/to/token/file
+</code></pre></div></p>
+<p>That's it, really.</p>
+<h2 id="tokens">Tokens<a class="headerlink" href="#tokens" title="Permanent link">#</a></h2>
+<p>The tokens are actually base64 encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a>. </p>
+<p>Why:
+- well defined structure
+- can be used directly as bootstrap auth configs for kubelet
+- embeds CA info for mutual trust</p>
+<p>The actual bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join token and for worker join token we use different usage attributes so we can make sure we can validate the token role on the controller side.</p>
+<h2 id="adding-a-controller-node">Adding a Controller Node<a class="headerlink" href="#adding-a-controller-node" title="Permanent link">#</a></h2>
+<p>To  add new controller nodes to the cluster, you must be using either etcd or an external data store (MySQL or Postgres) via kine. Please pay extra attention to the <a href="../configuration/#configuring-an-ha-control-plane">HA Configuration</a> section in the configuration documentation, and make sure this configuration is identical for all controller nodes.</p>
+<p>To create a join token for the new controller, run the following on an existing controller node:
+<div class="highlight"><pre><span></span><code>$ k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h &gt; token-file
+</code></pre></div></p>
+<p>On the new controller, run:
+<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --token-file /path/to/token/file
+</code></pre></div></p>
+<h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
+<p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.
+This will output a kubeconfig for the user, which can be used for authentication.</p>
+<p>On the controller, run the following to generate a kubeconfig for a user:</p>
+<div class="highlight"><pre><span></span><code>$ k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span>
+</code></pre></div>
+<h3 id="enabling-access-to-cluster-resources">Enabling Access to Cluster Resources<a class="headerlink" href="#enabling-access-to-cluster-resources" title="Permanent link">#</a></h3>
+<p>To allow the user access to the cluster, the user needs to be created with the <code>system:masters</code> group:
+<div class="highlight"><pre><span></span><code>$ k0s kubeconfig create --groups <span class="s2">&quot;system:masters&quot;</span> testUser &gt; k0s.config
+</code></pre></div></p>
+<p>Create a <code>roleBinding</code> to grant the user access to the resources:
+<div class="highlight"><pre><span></span><code>$ k0s kubectl create clusterrolebinding --kubeconfig k0s.config testUser-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span>testUser
+</code></pre></div></p>
+<h2 id="service-and-log-setup">Service and Log Setup<a class="headerlink" href="#service-and-log-setup" title="Permanent link">#</a></h2>
+<p><a href="../cli/k0s_install/">k0s install</a> sub-command was created as a helper command to allow users to easily install k0s as a service.
+For more information, read <a href="../install/">here</a>.</p>
+<h2 id="configuring-an-ha-control-plane">Configuring an HA Control Plane<a class="headerlink" href="#configuring-an-ha-control-plane" title="Permanent link">#</a></h2>
+<p>The following pre-requisites are required in order to configure an HA control plane:</p>
+<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
+<h5 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h5>
+<p>A load balancer with a single external address should be configured as the IP gateway for the controllers.
+The load balancer should allow traffic to each controller on the following ports:</p>
+<ul>
+<li>6443</li>
+<li>8132</li>
+<li>8133</li>
+<li>9443</li>
+</ul>
+<h5 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h5>
+<p>On each controller node, a k0s.yaml configuration file should be configured.
+The following options need to match on each node, otherwise the control plane components will end up in very unknown states:</p>
+<ul>
+<li><code>network</code></li>
+<li><code>storage</code>: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.</li>
+<li><code>externalAddress</code></li>
+</ul>
+<p><a href="../configuration/">Full configuration file refrence</a></p>
+<h2 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h2>
+<p>The k0s completion script for Bash, zsh, fish and powershell can be generated with the command <code>k0s completion &lt; shell &gt;</code>. Sourcing the completion script in your shell enables k0s autocompletion.</p>
+<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span> &gt;&gt;~/.bashrc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion bash &gt; /etc/bash_completion.d/k0s
+</code></pre></div>
+<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
+<p>If shell completion is not already enabled in your environment you will need
+to enable it.  You can execute the following once:
+<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
+</code></pre></div>
+You will need to start a new shell for this setup to take effect.</p>
+<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
+<p><div class="highlight"><pre><span></span><code>$ k0s completion fish <span class="p">|</span> <span class="nb">source</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
+</code></pre></div></p>
                 
               
               
@@ -799,7 +1155,7 @@ as its own "stack", but nested directories will be excluded from the stack mecha
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../examples/ansible-playbook/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -808,19 +1164,19 @@ as its own "stack", but nested directories will be excluded from the stack mecha
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Creating a cluster with Ansible Playbook
+                Install k0s
               </div>
             </div>
           </a>
         
         
-          <a href="../FAQ/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../k0s-single-node/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                FAQ
+                Single-Node Cluster
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

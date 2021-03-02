@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/manifests/">
+        <link rel="canonical" href="https://docs.k0sproject.io/k0s-reset/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Deploying Manifests - Documentation</title>
+        <title>Uninstall the k0s cluster - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manifest-deployer" class="md-skip">
+        <a href="#k0s-reset" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Deploying Manifests
+              Uninstall the k0s cluster
             
           </span>
         </div>
@@ -395,10 +395,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -488,11 +490,20 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../k0s-reset/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Uninstall the k0s cluster
     </a>
+    
   </li>
 
         
@@ -579,49 +590,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Deploying Manifests
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../manifests/" class="md-nav__link">
       Deploying Manifests
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#future" class="md-nav__link">
-    Future
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -735,36 +708,6 @@
                 
               
               
-                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                  <div class="md-sidebar__scrollwrap">
-                    <div class="md-sidebar__inner">
-                      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#future" class="md-nav__link">
-    Future
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                    </div>
-                  </div>
-                </div>
-              
             
           
           <div class="md-content">
@@ -772,15 +715,35 @@
               
                 
                 
-                <h1 id="manifest-deployer">Manifest deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>k0s embeds a manifest deployer on controllers which provides an easy way to deploy manifests automatically.</p>
-<p>By default k0s reads all manifests under <code>${DATADIR}/manifests</code> (default: <code>/var/lib/k0s/manifests</code>) and ensures their state matches the cluster state. When you remove a manifest file, k0s will automatically prune all the resources associated with it.</p>
-<p>Each directory that is a <strong>direct descendant</strong> of <code>${DATADIR}/manifests</code> is considered
-as its own "stack", but nested directories will be excluded from the stack mechanism.</p>
-<p><strong>Note:</strong> k0s uses this mechanism for some of its internal in-cluster components and other resources. Make sure you only touch the manifests not managed by k0s.</p>
-<h2 id="future">Future<a class="headerlink" href="#future" title="Permanent link">#</a></h2>
-<p>We may in the future support nested directories, but those will not be considered
-<em>stacks</em>, but rather sub-resources of a parent stacks. Stacks are exclusively top-level.</p>
+                <h1 id="k0s-reset">k0s reset<a class="headerlink" href="#k0s-reset" title="Permanent link">#</a></h1>
+<p>k0s Command-Line interface allows users to remove all k0s related files from the host.</p>
+<p>The reset command operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, it will not run if the k0s service is running. So first, we need to stop the service:</p>
+<p>For controller nodes:</p>
+<div class="highlight"><pre><span></span><code>$ systemctl stop k0scontroller
+</code></pre></div>
+<p>If the service is not stopped k0s will return an error message:</p>
+<div class="highlight"><pre><span></span><code>$ k0s reset
+FATA k0s seems to be running! please stop k0s before reset. 
+</code></pre></div>
+<p>If k0s has been stopped, the reset operation will proceed:</p>
+<div class="highlight"><pre><span></span><code>$ k0s reset
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:41<span class="o">]</span> Uninstalling the k0s service                 
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> no config file given, using defaults         
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: etcd                          
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-apiserver                
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: konnectivity-server           
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-scheduler                
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> starting containerd <span class="k">for</span> cleanup operations... 
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> containerd succesfully started               
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up kubelet volumes...    
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed kubelet mounts!         
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up network namespaces... 
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed network namespaces!     
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to stop containers...             
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> successfully removed k0s containers!         
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> deleting k0s generated data-dir <span class="o">(</span>/var/lib/k0s<span class="o">)</span> and run-dir <span class="o">(</span>/run/k0s<span class="o">)</span> 
+ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:50<span class="o">]</span> k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended. 
+</code></pre></div>
                 
               
               
@@ -799,7 +762,7 @@ as its own "stack", but nested directories will be excluded from the stack mecha
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../examples/ansible-playbook/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../dual-stack/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -808,19 +771,19 @@ as its own "stack", but nested directories will be excluded from the stack mecha
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Creating a cluster with Ansible Playbook
+                IPv4/IPv6 dual-stack networking
               </div>
             </div>
           </a>
         
         
-          <a href="../FAQ/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../examples/traefik-ingress/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                FAQ
+                Installing the Traefik Ingress Controller
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

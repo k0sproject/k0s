@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/create-cluster/">
+        <link rel="canonical" href="https://docs.k0sproject.io/k0sctl-install/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Multi-Node Cluster - Documentation</title>
+        <title>Install with k0sctl - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#creating-a-multi-node-cluster" class="md-skip">
+        <a href="#deploying-a-k0s-cluster-using-k0sctl" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Multi-Node Cluster
+              Install with k0sctl
             
           </span>
         </div>
@@ -258,145 +258,23 @@
           
           
 
-  
+
+  <li class="md-nav__item">
+    <a href="../install/" class="md-nav__link">
+      Install k0s
+    </a>
+  </li>
+
+        
+          
+          
+          
 
 
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Multi-Node Cluster
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../k0s-multi-node/" class="md-nav__link">
       Multi-Node Cluster
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pre-requisites" class="md-nav__link">
-    Pre-requisites
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bootstrapping-controller-node" class="md-nav__link">
-    Bootstrapping controller node
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-join-token" class="md-nav__link">
-    Create join token
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#joining-workers-to-cluster" class="md-nav__link">
-    Joining worker(s) to cluster
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tokens" class="md-nav__link">
-    Tokens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#join-controller-node" class="md-nav__link">
-    Join controller node
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-cluster-user" class="md-nav__link">
-    Adding a Cluster User
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding a Cluster User">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
-    Enabling Access to Cluster Resources
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#service-and-log-setup" class="md-nav__link">
-    Service and Log Setup
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#enabling-shell-completion" class="md-nav__link">
-    Enabling Shell Completion
-  </a>
-  
-    <nav class="md-nav" aria-label="Enabling Shell Completion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bash" class="md-nav__link">
-    Bash
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zsh" class="md-nav__link">
-    Zsh
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fish" class="md-nav__link">
-    Fish
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -440,23 +318,69 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../system-requirements/" class="md-nav__link">
-      System Requirements
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Install with k0sctl
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      Install with k0sctl
     </a>
-  </li>
-
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#using-k0sctl" class="md-nav__link">
+    Using k0sctl
+  </a>
+  
+    <nav class="md-nav" aria-label="Using k0sctl">
+      <ul class="md-nav__list">
         
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../worker-node-config/" class="md-nav__link">
-      Worker node configuration
-    </a>
+          <li class="md-nav__item">
+  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Upgrade a k0s cluster using k0sctl
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    Known limitations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -493,7 +417,7 @@
 
   <li class="md-nav__item">
     <a href="../architecture/" class="md-nav__link">
-      Architecture
+      Overview
     </a>
   </li>
 
@@ -506,6 +430,18 @@
   <li class="md-nav__item">
     <a href="../networking/" class="md-nav__link">
       Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../system-requirements/" class="md-nav__link">
+      System Requirements
     </a>
   </li>
 
@@ -554,6 +490,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../worker-node-config/" class="md-nav__link">
+      Worker node configuration
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../containerd_config/" class="md-nav__link">
       Containerd Configuration
     </a>
@@ -590,8 +538,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../install/" class="md-nav__link">
-      Running k0s as a service
+    <a href="../dual-stack/" class="md-nav__link">
+      IPv4/IPv6 dual-stack networking
     </a>
   </li>
 
@@ -602,8 +550,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 dual-stack networking
+    <a href="../k0s-reset/" class="md-nav__link">
+      Uninstall the k0s cluster
     </a>
   </li>
 
@@ -826,99 +774,23 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pre-requisites" class="md-nav__link">
-    Pre-requisites
+  <a href="#using-k0sctl" class="md-nav__link">
+    Using k0sctl
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bootstrapping-controller-node" class="md-nav__link">
-    Bootstrapping controller node
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-join-token" class="md-nav__link">
-    Create join token
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#joining-workers-to-cluster" class="md-nav__link">
-    Joining worker(s) to cluster
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tokens" class="md-nav__link">
-    Tokens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#join-controller-node" class="md-nav__link">
-    Join controller node
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-cluster-user" class="md-nav__link">
-    Adding a Cluster User
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding a Cluster User">
+    <nav class="md-nav" aria-label="Using k0sctl">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
-    Enabling Access to Cluster Resources
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#service-and-log-setup" class="md-nav__link">
-    Service and Log Setup
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#enabling-shell-completion" class="md-nav__link">
-    Enabling Shell Completion
-  </a>
-  
-    <nav class="md-nav" aria-label="Enabling Shell Completion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bash" class="md-nav__link">
-    Bash
+  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Upgrade a k0s cluster using k0sctl
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#zsh" class="md-nav__link">
-    Zsh
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fish" class="md-nav__link">
-    Fish
+  <a href="#known-limitations" class="md-nav__link">
+    Known limitations
   </a>
   
 </li>
@@ -942,86 +814,132 @@
               
                 
                 
-                <h1 id="creating-a-multi-node-cluster">Creating a multi-node cluster<a class="headerlink" href="#creating-a-multi-node-cluster" title="Permanent link">#</a></h1>
-<p>As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.</p>
-<h2 id="pre-requisites">Pre-requisites<a class="headerlink" href="#pre-requisites" title="Permanent link">#</a></h2>
-<p>Download k0s binary from <a href="https://github.com/k0sproject/k0s/releases/latest">releases</a> and push it to all the nodes you wish to connect to the cluster.</p>
-<p>That's it, really.</p>
-<h2 id="bootstrapping-controller-node">Bootstrapping controller node<a class="headerlink" href="#bootstrapping-controller-node" title="Permanent link">#</a></h2>
-<p>Create a <a href="../configuration/">configuration</a> file if you wish to tune some of the settings.</p>
-<div class="highlight"><pre><span></span><code>$ k0s controller -c k0s.yaml
+                <h1 id="deploying-a-k0s-cluster-using-k0sctl">Deploying a k0s cluster using k0sctl<a class="headerlink" href="#deploying-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h1>
+<p>k0sctl is a command-line tool for bootstrapping and management of k0s clusters. Installation instructions can be found in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>.</p>
+<p>k0sctl will connect to provided host using ssh and gather information about the host. Based on the finding it will proceed to configure the host in question and install k0s binary.  </p>
+<h2 id="using-k0sctl">Using k0sctl<a class="headerlink" href="#using-k0sctl" title="Permanent link">#</a></h2>
+<p>First create a k0sctl configuration file:
+<div class="highlight"><pre><span></span><code>$ k0sctl init &gt; k0sctl.yaml
+</code></pre></div></p>
+<p>A <code>k0sctl.yaml</code> file will be created in the current directory:</p>
+<p><div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">hosts</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">role</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">controller</span>
+    <span class="nt">ssh</span><span class="p">:</span>
+      <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.0.0.1</span> <span class="c1"># replace with the controller&#39;s IP address</span>
+      <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
+      <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+  <span class="p p-Indicator">-</span> <span class="nt">role</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">worker</span>
+    <span class="nt">ssh</span><span class="p">:</span>
+      <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.0.0.2</span> <span class="c1"># replace with the worker&#39;s IP address</span>
+      <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
+      <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
 </code></pre></div>
-<p>That's it, really. k0s process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.</p>
-<p>Naturally, to make k0s boot up the control plane when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.</p>
-<h2 id="create-join-token">Create join token<a class="headerlink" href="#create-join-token" title="Permanent link">#</a></h2>
-<p>To be able to join workers into the cluster we need a token. The token embeds information with which we can enable mutual trust between the worker and controller(s) and allow the node to join the cluster as worker.</p>
-<p>To get a token run the following on one of the existing controller nodes:
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>worker
+k0sctl configuration specifications can be found in <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a></p>
+<p>Next step is to run <code>k0sctl apply</code> to perform the cluster deployment:
+<div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml 
+
+⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
+⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
+⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
+⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
+⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
+
+INFO k0sctl <span class="m">0</span>.0.0 Copyright <span class="m">2021</span>, Mirantis Inc.   
+INFO Anonymized telemetry will be sent to Mirantis. 
+INFO By continuing to use k0sctl you agree to these terms: 
+INFO https://k0sproject.io/licenses/eula          
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: connected              
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: connected              
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: is running Ubuntu <span class="m">20</span>.10 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: is running Ubuntu <span class="m">20</span>.10 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts    
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing kubectl     
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather host facts 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: discovered <span class="m">10</span>.12.18.133 as private address 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Validate hosts   
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Download K0s on the hosts 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: downloading k0s <span class="m">0</span>.11.0 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: downloading k0s <span class="m">0</span>.11.0 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Configure K0s    
+WARN <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating default configuration 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: validating configuration 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: configuration was changed 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Initialize K0s Cluster 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing k0s controller 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> the k0s service to start 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> kubernetes api to respond 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Install workers  
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating token       
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: writing join token     
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: installing k0s worker  
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: starting service       
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: waiting <span class="k">for</span> node to become ready 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 2m2s                
+INFO k0s cluster version <span class="m">0</span>.11.0 is now installed  
+INFO Tip: To access the cluster you can now fetch the admin kubeconfig using: 
+INFO      k0sctl kubeconfig              
 </code></pre></div></p>
-<p>This will output a long <a href="#tokens">token</a> which we will use to join the worker. To enhance security, we can also set an expiration time on the tokens by using:
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>worker --expiry<span class="o">=</span><span class="s2">&quot;100h&quot;</span>
+<p>And -- presto! Your k0s cluster is up and running.</p>
+<p>Get kubeconfig:
+<div class="highlight"><pre><span></span><code>$ k0sctl kubeconfig &gt; kubeconfig
+$ kubectl get pods --kubeconfig kubeconfig -A
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
+kube-system   calico-node-vd7lx                          <span class="m">1</span>/1     Running   <span class="m">0</span>          3m44s
+kube-system   coredns-5c98d7d4d8-tmrwv                   <span class="m">1</span>/1     Running   <span class="m">0</span>          4m10s
+kube-system   konnectivity-agent-d9xv2                   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m31s
+kube-system   kube-proxy-xp9r9                           <span class="m">1</span>/1     Running   <span class="m">0</span>          4m4s
+kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span>/1     Running   <span class="m">0</span>          3m51s
 </code></pre></div></p>
-<h2 id="joining-workers-to-cluster">Joining worker(s) to cluster<a class="headerlink" href="#joining-workers-to-cluster" title="Permanent link">#</a></h2>
-<p>To join the worker we need to run k0s in worker mode with the token from previous step:
-<div class="highlight"><pre><span></span><code>$ k0s worker <span class="s2">&quot;long-join-token&quot;</span>
+<h3 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h3>
+<p>There's no dedicated upgrade sub-command in k0sctl, the configuration file describes the desired state of the cluster and when passed to <code>k0sctl apply</code>, it will perform a discovery of the current state and do what ever is needed to bring the cluster to the desired state, by for example performing an upgrade.</p>
+<h4 id="k0sctl-cluster-upgrade-process">K0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h4>
+<p>The following steps will be performed during a k0sctl cluster upgrade:</p>
+<ol>
+<li>Upgrade each controller one-by-one; As long as there’s multiple controllers configured there’s no downtime</li>
+<li>Upgrade workers in batches; 10% of the worker nodes are upgraded at a time</li>
+<li>Each worker is first drained allowing the workload to “move” to other nodes before the actual upgrade of the worker node components</li>
+<li>The process continues after we see the upgraded nodes back in “Ready” state</li>
+<li>Drain can be skipped with a --no-drain option</li>
+</ol>
+<p>The desired cluster version can be configured In the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">k0s</span><span class="p">:</span>
+    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.11.0</span>
 </code></pre></div></p>
-<p>That's it, really.</p>
-<p>Naturally, to make k0s boot up the worker components when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.</p>
-<h2 id="tokens">Tokens<a class="headerlink" href="#tokens" title="Permanent link">#</a></h2>
-<p>The tokens are actually base64 encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a>. </p>
-<p>Why:
-- well defined structure
-- can be used directly as bootstrap auth configs for kubelet
-- embeds CA info for mutual trust</p>
-<p>The actual bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join token and for worker join token we use different usage attributes so we can make sure we can validate the token role on the controller side.</p>
-<h2 id="join-controller-node">Join controller node<a class="headerlink" href="#join-controller-node" title="Permanent link">#</a></h2>
-<p>To be able to join a new controller node into the cluster you must be using either etcd or some externalized data store (MySQL or Postgres) via kine. Also make sure the <a href="../configuration/">configurations</a> match for the data storage on all controller nodes.</p>
-<p>To create a join token for the new controller, run the following on existing controller node:
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h
-</code></pre></div></p>
-<p>On the new controller, run:
-<div class="highlight"><pre><span></span><code>k0s controller <span class="s2">&quot;long-join-token&quot;</span>
-</code></pre></div></p>
-<h2 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h2>
-<p>To add a user to cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command.
-This will output a kubeconfig for the user, which can be used for authentication.</p>
-<p>On the controller, run the following to generate a kubeconfig for a user:</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span>
+<p>When a version has not been specified, k0sctl will check online for the latest version and default to using that.</p>
+<div class="highlight"><pre><span></span><code>$ k0sctl apply
+...
+...
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers 
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: starting upgrade
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating... 
+INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start 
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers  
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel              
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting  
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again 
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful   
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s                 
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">0</span>.11.0 is now installed 
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using: 
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig 
 </code></pre></div>
-<h3 id="enabling-access-to-cluster-resources">Enabling Access to Cluster Resources<a class="headerlink" href="#enabling-access-to-cluster-resources" title="Permanent link">#</a></h3>
-<p>To allow the user access to the cluster, the user needs to be created with the <code>system:masters</code> group:
-<div class="highlight"><pre><span></span><code><span class="nv">clusterUser</span><span class="o">=</span><span class="s2">&quot;testUser&quot;</span>
-k0s kubeconfig create --groups <span class="s2">&quot;system:masters&quot;</span> <span class="nv">$clusterUser</span> &gt; ~/.kube/config
-</code></pre></div></p>
-<p>Create the proper roleBinding, to allow the user access to the resources:
-<div class="highlight"><pre><span></span><code>kubectl create clusterrolebinding <span class="nv">$clusterUser</span>-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span><span class="nv">$clusterUser</span>
-</code></pre></div></p>
-<h2 id="service-and-log-setup">Service and Log Setup<a class="headerlink" href="#service-and-log-setup" title="Permanent link">#</a></h2>
-<p><a href="../cli/k0s_install/">k0s install</a> sub-command was created as a helper command to allow users to easily install k0s as a service.
-For more information, read <a href="../install/">here</a>.</p>
-<h2 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h2>
-<p>The k0s completion script for Bash, zsh, fish and powershell can be generated with the command <code>k0s completion &lt; shell &gt;</code>. Sourcing the completion script in your shell enables k0s autocompletion.</p>
-<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span> &gt;&gt;~/.bashrc
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion bash &gt; /etc/bash_completion.d/k0s
-</code></pre></div>
-<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
-<p>If shell completion is not already enabled in your environment you will need
-to enable it.  You can execute the following once:
-<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
-</code></pre></div>
-You will need to start a new shell for this setup to take effect.</p>
-<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
-<p><div class="highlight"><pre><span></span><code>$ k0s completion fish <span class="p">|</span> <span class="nb">source</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
-</code></pre></div></p>
+<h3 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h3>
+<ul>
+<li>k0sctl will not perform any discovery of hosts, it only operates on the hosts listed in the provided configuration</li>
+<li>k0sctl can currently only add more nodes to the cluster but cannot remove existing ones</li>
+</ul>
                 
               
               
@@ -1040,7 +958,7 @@ $ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href=".." class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../experimental-windows/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1049,19 +967,19 @@ $ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Overview
+                Windows (experimental)
               </div>
             </div>
           </a>
         
         
-          <a href="../k0s-single-node/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Single-Node Cluster
+                Overview
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
