@@ -1,17 +1,3 @@
-- [Download the k0s binary](#download-the-k0s-binary)
-  - [Prerequisites](#prerequisites)
-  - [K0s Download Script](#k0s-download-script)
-  - [Installing k0s as a service on the local system](#installing-k0s-as-a-service-on-the-local-system)
-  - [Run k0s as a service](#run-k0s-as-a-service)
-    - [Check service status](#check-service-status)
-    - [Query cluster status](#query-cluster-status)
-    - [Fetch nodes](#fetch-nodes)
-  - [Enabling Shell Completion](#enabling-shell-completion)
-    - [Bash](#bash)
-    - [Zsh](#zsh)
-    - [Fish](#fish)
-  - [Under the hood](#under-the-hood)
-  - [Additional Documentation](#additional-documentation)
 # Download the k0s binary
 
 ## Prerequisites
@@ -162,10 +148,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 ## Under the hood
 
 Workers are always run as root. For controllers, the command will create the following system users:
-* `etcd`
-* `kube-apiserver`
-* `konnectivity-server`
-* `kube-scheduler`
+  `etcd`, `kube-apiserver`, `konnectivity-server`, `kube-scheduler`
 
 
 ## Additional Documentation

@@ -1,11 +1,3 @@
-- [Creating a single-node cluster](#creating-a-single-node-cluster)
-  - [Prerequisites](#prerequisites)
-  - [Start k0s](#start-k0s)
-      - [1. Generate a default cluster configuration](#1-generate-a-default-cluster-configuration)
-      - [2. Start k0s](#2-start-k0s)
-  - [Use k0s to access the cluster](#use-k0s-to-access-the-cluster)
-
-
 # Creating a single-node cluster
 These instructions outline a quick method for running a local k0s master and worker in a single node.
 
