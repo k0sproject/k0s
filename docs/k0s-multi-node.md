@@ -1,23 +1,3 @@
-- [Creating a multi-node cluster](#creating-a-multi-node-cluster)
-  - [Prerequisites](#prerequisites)
-  - [Bootstrapping a controller node](#bootstrapping-a-controller-node)
-  - [Create a join token](#create-a-join-token)
-  - [Adding Workers to a Cluster](#adding-workers-to-a-cluster)
-  - [Tokens](#tokens)
-  - [Adding a Controller Node](#adding-a-controller-node)
-  - [Adding a Cluster User](#adding-a-cluster-user)
-    - [Enabling Access to Cluster Resources](#enabling-access-to-cluster-resources)
-  - [Service and Log Setup](#service-and-log-setup)
-  - [Configuring an HA Control Plane](#configuring-an-ha-control-plane)
-    - [Requirements](#requirements)
-        - [Load Balancer](#load-balancer)
-        - [Cluster configuration](#cluster-configuration)
-  - [Enabling Shell Completion](#enabling-shell-completion)
-    - [Bash](#bash)
-    - [Zsh](#zsh)
-    - [Fish](#fish)
-
-
 # Creating a multi-node cluster
 
 As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.

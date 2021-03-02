@@ -1,18 +1,3 @@
-- [Configuration file reference](#configuration-file-reference)
-  - [`spec.api`](#specapi)
-  - [`spec.controllerManager`](#speccontrollermanager)
-  - [`spec.scheduler`](#specscheduler)
-  - [`spec.storage`](#specstorage)
-  - [`spec.network`](#specnetwork)
-    - [`spec.network.calico`](#specnetworkcalico)
-  - [`spec.podSecurityPolicy`](#specpodsecuritypolicy)
-  - [`spec.workerProfiles`](#specworkerprofiles)
-  - [`images`](#images)
-  - [`extensions.helm`](#extensionshelm)
-  - [Telemetry](#telemetry)
-- [Configuration Validation](#configuration-validation)
-
-
 k0s Control plane can be configured via a YAML config file. By default `k0s controller` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
 
 ## Configuration file reference
