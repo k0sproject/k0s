@@ -104,9 +104,5 @@ func setup(role string, args []string) error {
 }
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
-	err := validateConfig(cfgFile)
-	if err != nil {
-		return err
-	}
-	return nil
+	return validateConfig(cfgFile)
 }
