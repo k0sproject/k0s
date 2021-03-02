@@ -1,8 +1,30 @@
+- [Configuration options](#configuration-options)
+    - [Configuration Validation](#configuration-validation)
+  - [Configuration Keys](#configuration-keys)
+    - [`spec.api`](#specapi)
+    - [`spec.network`](#specnetwork)
+    - [`extensions.helm`](#extensionshelm)
+  - [Configuring an HA Control Plane](#configuring-an-ha-control-plane)
+    - [Requirements](#requirements)
+        - [Load Balancer](#load-balancer)
+        - [Cluster configuration](#cluster-configuration)
+  - [Full config reference](#full-config-reference)
+    - [`spec.api`](#specapi-1)
+    - [`spec.controllerManager`](#speccontrollermanager)
+    - [`spec.scheduler`](#specscheduler)
+    - [`spec.storage`](#specstorage)
+    - [`spec.network`](#specnetwork-1)
+      - [`spec.network.calico`](#specnetworkcalico)
+    - [`spec.podSecurityPolicy`](#specpodsecuritypolicy)
+    - [`spec.workerProfiles`](#specworkerprofiles)
+    - [`images`](#images)
+    - [Extensions](#extensions)
+    - [Telemetry](#telemetry)
+
+
 # Configuration options
 
-## Control plane
-
-k0s Control plane can be configured via a YAML config file. By default `k0s server` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
+k0s Control plane can be configured via a YAML config file. By default `k0s controller` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
 
 An example config file with the most common options users should configure:
 
@@ -30,6 +52,24 @@ extensions:
       version: "11.16.8"
       namespace: default
 ```
+
+### Configuration Validation
+
+k0s command-line interface has the ability to validate config syntax:
+
+```
+$ k0s validate config --config path/to/config/file
+```
+
+`validate config` sub-command can validate the following:
+
+1. YAML formatting
+2. [SANs addresses](#specapi-1)
+3. [Network providers](#specnetwork-1)
+4. [Worker profiles](#specworkerprofiles) 
+
+
+## Configuration Keys
 
 ### `spec.api`
 
