@@ -11,27 +11,30 @@ edit_uri: ""
 nav:
   - Overview: README.md
   - Creating a Cluster:
-      - Multi-Node Cluster:      create-cluster.md
+      - Running k0s as a service: install.md
+      - Multi-Node Cluster:      k0s-multi-node.md
       - Single-Node Cluster:     k0s-single-node.md
       - Docker:                  k0s-in-docker.md
       - Windows (experimental):  experimental-windows.md
-      - System Requirements:     system-requirements.md
       - Worker node configuration: worker-node-config.md
+      - Install with k0sctl:     k0sctl-install.md 
   - Architecture:
-      - Architecture: architecture.md
+      - Overview: architecture.md
       - Networking:   networking.md
+      - System Requirements:     system-requirements.md
   - Configuration:
-      - Configuration Options: configuration.md
-      - Containerd Configuration: containerd_config.md
-      - Using a Custom CRI: custom-cri-runtime.md
-      - Using Cloud Providers: cloud-providers.md
-      - Running k0s as a service: install.md
-      - IPv4/IPv6 dual-stack networking: dual-stack.md
+      - Configuration Options:            configuration.md
+      - Worker node configuration:        worker-node-config.md
+      - Containerd Configuration:         containerd_config.md
+      - Using a Custom CRI:               custom-cri-runtime.md
+      - Using Cloud Providers:            cloud-providers.md
+      - IPv4/IPv6 dual-stack networking:  dual-stack.md
+      - Uninstall the k0s cluster:        k0s-reset.md
   - Examples:
-      - Installing the Traefik Ingress Controller: examples/traefik-ingress.md
-      - Installing the Ambassador Gateway: examples/ambassador-ingress.md
-      - Creating Raspberry Pi 4 Cluster: raspberry-pi4.md
-      - Creating a cluster with Ansible Playbook: examples/ansible-playbook.md
+      - Installing the Traefik Ingress Controller:  examples/traefik-ingress.md
+      - Installing the Ambassador Gateway:          examples/ambassador-ingress.md
+      - Creating Raspberry Pi 4 Cluster:            raspberry-pi4.md
+      - Creating a cluster with Ansible Playbook:   examples/ansible-playbook.md
   - Deploying Manifests: manifests.md
   - FAQ: FAQ.md
   - Troubleshooting: troubleshooting.md

@@ -2,25 +2,31 @@
 
 As k0s binary has everything it needs packaged into a single binary, it makes it super easy to spin up Kubernetes clusters.
 
-## Pre-requisites
+## Prerequisites
 
-Download k0s binary from [releases](https://github.com/k0sproject/k0s/releases/latest) and push it to all the nodes you wish to connect to the cluster.
+Install k0s as documented in the [installation instructions](k0s-install.md)
 
-That's it, really.
 
-## Bootstrapping controller node
+## Bootstrapping a controller node
 
-Create a [configuration](configuration.md) file if you wish to tune some of the settings.
+Create a configuration file:
+
+```sh
+$ k0s default-config > k0s.yaml
 
 ```
-$ k0s controller -c k0s.yaml
+If you wish to modify some of the settings, please check out the [configuration](configuration.md) documentation.
+
+```sh
+$ k0s install controller 
+INFO[2021-02-25 15:34:59] Installing k0s service
+$ systemctl start k0scontroller
 ```
 
-That's it, really. k0s process will act as a "supervisor" for all the control plane components. In few seconds you'll have the control plane up-and-running.
+k0s process will act as a "supervisor" for all of the control plane components. 
+In a few seconds you'll have the control plane up-and-running.
 
-Naturally, to make k0s boot up the control plane when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.
-
-## Create join token
+## Create a join token
 
 To be able to join workers into the cluster we need a token. The token embeds information with which we can enable mutual trust between the worker and controller(s) and allow the node to join the cluster as worker.
 
@@ -29,22 +35,20 @@ To get a token run the following on one of the existing controller nodes:
 k0s token create --role=worker
 ```
 
-This will output a long [token](#tokens) which we will use to join the worker. To enhance security, we can also set an expiration time on the tokens by using:
+This will output a long [token](#tokens) string, which we will then use to add a worker to the cluster. For enhanced security, we can also set an expiration time for the token by using:
 ```sh
-k0s token create --role=worker --expiry="100h"
+$ k0s token create --role=worker --expiry=100h > token-file
 ```
 
 
-## Joining worker(s) to cluster
+## Adding Workers to a Cluster
 
-To join the worker we need to run k0s in worker mode with the token from previous step:
+To join the worker we need to run k0s in worker mode with the token from the previous step:
 ```sh
-$ k0s worker "long-join-token"
+$ k0s install worker --token-file /path/to/token/file
 ```
 
 That's it, really.
-
-Naturally, to make k0s boot up the worker components when the node itself reboots you should really make the k0s process to be supervised by systemd or some other init system.
 
 ## Tokens
 
@@ -58,18 +62,18 @@ Why:
 The actual bearer token embedded in the kubeconfig is a [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/). For controller join token and for worker join token we use different usage attributes so we can make sure we can validate the token role on the controller side.
 
 
-## Join controller node
+## Adding a Controller Node
 
-To be able to join a new controller node into the cluster you must be using either etcd or some externalized data store (MySQL or Postgres) via kine. Also make sure the [configurations](configuration.md) match for the data storage on all controller nodes.
+To  add new controller nodes to the cluster, you must be using either etcd or an external data store (MySQL or Postgres) via kine. Please pay extra attention to the [HA Configuration](configuration.md#configuring-an-ha-control-plane) section in the configuration documentation, and make sure this configuration is identical for all controller nodes.
 
-To create a join token for the new controller, run the following on existing controller node:
+To create a join token for the new controller, run the following on an existing controller node:
 ```sh
-k0s token create --role=controller --expiry=1h
+$ k0s token create --role=controller --expiry=1h > token-file
 ```
 
 On the new controller, run:
 ```sh
-k0s controller "long-join-token"
+$ sudo k0s install controller --token-file /path/to/token/file
 ```
 
 ## Adding a Cluster User
@@ -80,19 +84,18 @@ This will output a kubeconfig for the user, which can be used for authentication
 On the controller, run the following to generate a kubeconfig for a user:
 
 ```sh
-k0s kubeconfig create [username]
+$ k0s kubeconfig create [username]
 ```
 
 ### Enabling Access to Cluster Resources
 To allow the user access to the cluster, the user needs to be created with the `system:masters` group:
 ```sh
-clusterUser="testUser"
-k0s kubeconfig create --groups "system:masters" $clusterUser > ~/.kube/config
+$ k0s kubeconfig create --groups "system:masters" testUser > k0s.config
 ```
 
-Create the proper roleBinding, to allow the user access to the resources:
+Create a `roleBinding` to grant the user access to the resources:
 ```sh
-kubectl create clusterrolebinding $clusterUser-admin-binding --clusterrole=admin --user=$clusterUser
+$ k0s kubectl create clusterrolebinding --kubeconfig k0s.config testUser-admin-binding --clusterrole=admin --user=testUser
 ```
 
 ## Service and Log Setup
