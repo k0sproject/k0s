@@ -23,4 +23,4 @@ If you'd like to help build k0s, please check out our guide to [Contributing](co
 [Download k0s](https://github.com/k0sproject/k0s/releases) for linux amd64 and arm64 architectures.
 
 ## Quick start
-[Creating A k0s Cluster](create-cluster.md)
+[Creating A k0s Cluster](k0s-multi-node.md)

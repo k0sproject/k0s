@@ -1,74 +1,21 @@
-# Configuration options
-
-## Control plane
-
-k0s Control plane can be configured via a YAML config file. By default `k0s server` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
-
-An example config file with the most common options users should configure:
-
-```yaml
-apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
-metadata:
-  name: k0s
-spec:
-  api:
-    address: 192.168.68.106
-    sans:
-    - my-k0s-control.my-domain.com
-  network:
-    podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12
-extensions:
-  helm:
-    repositories:
-    - name: prometheus-community
-      url: https://prometheus-community.github.io/helm-charts
-    charts:
-    - name: prometheus-stack
-      chartname: prometheus-community/prometheus
-      version: "11.16.8"
-      namespace: default
-```
-
-### `spec.api`
-
-- `address`: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.
-- `sans`: List of additional addresses to push to API servers serving certificate
-
-### `spec.network`
-
-- `podCIDR`: Pod network CIDR to be used in the cluster
-- `serviceCIDR`: Network CIDR to be used for cluster VIP services.
-
-### `extensions.helm`
-
-List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
+- [Configuration file reference](#configuration-file-reference)
+  - [`spec.api`](#specapi)
+  - [`spec.controllerManager`](#speccontrollermanager)
+  - [`spec.scheduler`](#specscheduler)
+  - [`spec.storage`](#specstorage)
+  - [`spec.network`](#specnetwork)
+    - [`spec.network.calico`](#specnetworkcalico)
+  - [`spec.podSecurityPolicy`](#specpodsecuritypolicy)
+  - [`spec.workerProfiles`](#specworkerprofiles)
+  - [`images`](#images)
+  - [`extensions.helm`](#extensionshelm)
+  - [Telemetry](#telemetry)
+- [Configuration Validation](#configuration-validation)
 
 
-## Configuring an HA Control Plane
+k0s Control plane can be configured via a YAML config file. By default `k0s controller` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
 
-The following pre-requisites are required in order to configure an HA control plane:
- 
-### Requirements
-##### Load Balancer
-A load balancer with a single external address should be configured as the IP gateway for the controllers.
-The load balancer should allow traffic to each controller on the following ports:
-
-- 6443
-- 8132
-- 8133
-- 9443
-
-##### Cluster configuration
-On each controller node, a k0s.yaml configuration file should be configured.
-The following options need to match on each node, otherwise the control plane components will end up in very unknown states:
-
-- `network`
-- `storage`: Needless to say, one cannot create a clustered controlplane with each node only storing data locally on SQLite.
-- `externalAddress`
-
-## Full config reference
+## Configuration file reference
 
 **Note:** Many of the options configure things deep down in the "stack" on various components. So please make sure you understand what is being configured and whether or not it works in your specific environment.
 
@@ -253,6 +200,7 @@ images:
       image: calico/kube-controllers
       version: v3.16.2
 ```
+
 Following keys are available:
 
 - `images.konnectivity`
@@ -266,6 +214,10 @@ Following keys are available:
 - `images.repository`
 
 If `images.repository` is set and not empty, every image will be pulled from `images.repository`
+
+### `extensions.helm`
+
+List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
 
 Example:
 ```
@@ -283,10 +235,7 @@ In the runtime the image names will be calculated as `my.own.repo/calico/kube-co
 
 This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.
 
-
-### Extensions
-
-As stated in the [project scope](https://github.com/k0sproject/k0s#scope) we intent to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
+As stated in the [project scope](https://github.com/k0sproject/k0s#scope) we intends to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
 
 To run k0s easily with your preferred extensions you have two options.
 
@@ -319,7 +268,6 @@ Some examples what you could use as extension charts:
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
 
-
 ### Telemetry
 
 To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as `false`
@@ -330,3 +278,20 @@ telemetry:
   interval: 2m0s
   enabled: true
 ```
+
+
+
+## Configuration Validation
+
+k0s command-line interface has the ability to validate config syntax:
+
+```
+$ k0s validate config --config path/to/config/file
+```
+
+`validate config` sub-command can validate the following:
+
+1. YAML formatting
+2. [SANs addresses](#specapi-1)
+3. [Network providers](#specnetwork-1)
+4. [Worker profiles](#specworkerprofiles) 
