@@ -5,4 +5,4 @@ services:
     volumes:
       - ../:/docs
     ports:
-      - 8081:8000
+      - 80:8000
