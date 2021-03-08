@@ -241,13 +241,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
     
     <label class="md-nav__link" for="nav-2">
-      Creating a Cluster
+      Install
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Install" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating a Cluster
+        Install
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -259,7 +259,19 @@
 
   <li class="md-nav__item">
     <a href="../install/" class="md-nav__link">
-      Install k0s
+      Quick Start Guide
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../k0sctl-install/" class="md-nav__link">
+      Automated Cluster Setup
     </a>
   </li>
 
@@ -271,7 +283,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-multi-node/" class="md-nav__link">
-      Multi-Node Cluster
+      Manual Install
     </a>
   </li>
 
@@ -281,12 +293,21 @@
           
 
 
-  <li class="md-nav__item">
-    <a href="../k0s-single-node/" class="md-nav__link">
-      Single-Node Cluster
-    </a>
-  </li>
-
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-4" type="checkbox" id="nav-2-4">
+    
+    <label class="md-nav__link" for="nav-2-4">
+      Alternative Install Methods
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-4">
+        <span class="md-nav__icon md-icon"></span>
+        Alternative Install Methods
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -312,15 +333,8 @@
   </li>
 
         
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../k0sctl-install/" class="md-nav__link">
-      Install with k0sctl
-    </a>
+      </ul>
+    </nav>
   </li>
 
         
@@ -550,7 +564,7 @@
 
   <li class="md-nav__item">
     <a href="../worker-node-config/" class="md-nav__link">
-      Worker node configuration
+      Worker Node Configuration
     </a>
   </li>
 
@@ -598,7 +612,43 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 dual-stack networking
+      IPv4/IPv6 Dual-Stack Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../high-availability/" class="md-nav__link">
+      Control Plane High Availability
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../shell-completion/" class="md-nav__link">
+      Shell Completion
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user-management/" class="md-nav__link">
+      User Management
     </a>
   </li>
 
@@ -610,7 +660,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
-      Uninstall the k0s cluster
+      Uninstall the k0s Cluster
     </a>
   </li>
 
@@ -1150,10 +1200,12 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
       namespace: default
 </code></pre></div>
 <p>This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.</p>
-<p>Some examples what you could use as extension charts:
-- Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (<a href="../examples/traefik-ingress/">tutorial</a>),
-- Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a>
-- Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></p>
+<p>Some examples what you could use as extension charts:</p>
+<ul>
+<li>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (<a href="../examples/traefik-ingress/">tutorial</a>),</li>
+<li>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></li>
+<li>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></li>
+</ul>
 <h3 id="telemetry">Telemetry<a class="headerlink" href="#telemetry" title="Permanent link">#</a></h3>
 <p>To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as <code>false</code>
 The default interval is 10 minutes, any valid value for <code>time.Duration</code> string representation can be used as a value.
@@ -1212,7 +1264,7 @@ Example
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Worker node configuration
+                Worker Node Configuration
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/CODE_OF_CONDUCT/">
+        <link rel="canonical" href="https://docs.k0sproject.io/user-management/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s Community Code Of Conduct - Documentation</title>
+        <title>User Management - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-community-code-of-conduct" class="md-skip">
+        <a href="#user-management" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s Community Code Of Conduct
+              User Management
             
           </span>
         </div>
@@ -409,10 +409,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -526,11 +528,56 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../user-management/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        User Management
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       User Management
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-cluster-user" class="md-nav__link">
+    Adding a Cluster User
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -747,6 +794,43 @@
                 
               
               
+                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                  <div class="md-sidebar__scrollwrap">
+                    <div class="md-sidebar__inner">
+                      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-cluster-user" class="md-nav__link">
+    Adding a Cluster User
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-access-to-cluster-resources" class="md-nav__link">
+    Enabling Access to Cluster Resources
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                    </div>
+                  </div>
+                </div>
+              
             
           
           <div class="md-content">
@@ -754,8 +838,19 @@
               
                 
                 
-                <h1 id="k0s-community-code-of-conduct">K0s Community Code Of Conduct<a class="headerlink" href="#k0s-community-code-of-conduct" title="Permanent link">#</a></h1>
-<p>Please refer to our <a href="docs/contributors/CODE_OF_CONDUCT.md">contributor code of conduct</a>.</p>
+                <h1 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">#</a></h1>
+<h3 id="adding-a-cluster-user">Adding a Cluster User<a class="headerlink" href="#adding-a-cluster-user" title="Permanent link">#</a></h3>
+<p>To add a user to the cluster, use the <a href="../cli/k0s_kubeconfig_create/">kubeconfig create</a> command. This will output a kubeconfig for the user, which can be used for authentication.</p>
+<p>On the controller, run the following to generate a kubeconfig for a user:</p>
+<div class="highlight"><pre><span></span><code>$ k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span>
+</code></pre></div>
+<h3 id="enabling-access-to-cluster-resources">Enabling Access to Cluster Resources<a class="headerlink" href="#enabling-access-to-cluster-resources" title="Permanent link">#</a></h3>
+<p>To allow the user access to the cluster, the user needs to be created with the <code>system:masters</code> group:
+<div class="highlight"><pre><span></span><code>$ k0s kubeconfig create --groups <span class="s2">&quot;system:masters&quot;</span> testUser &gt; k0s.config
+</code></pre></div></p>
+<p>Create a <code>roleBinding</code> to grant the user access to the resources:
+<div class="highlight"><pre><span></span><code>$ k0s kubectl create clusterrolebinding --kubeconfig k0s.config testUser-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span>testUser
+</code></pre></div></p>
                 
               
               
@@ -770,6 +865,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../shell-completion/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Shell Completion
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../k0s-reset/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Uninstall the k0s Cluster
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

@@ -19,7 +19,7 @@
     
     
       
-        <title>Install k0s - Documentation</title>
+        <title>Quick Start Guide - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#download-the-k0s-binary" class="md-skip">
+        <a href="#quick-start-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Install k0s
+              Quick Start Guide
             
           </span>
         </div>
@@ -243,13 +243,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
-      Creating a Cluster
+      Install
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Install" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating a Cluster
+        Install
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -269,12 +269,12 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        Install k0s
+        Quick Start Guide
         <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      Install k0s
+      Quick Start Guide
     </a>
     
       
@@ -298,97 +298,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#k0s-download-script" class="md-nav__link">
-    K0s Download Script
+  <a href="#installation-steps" class="md-nav__link">
+    Installation steps
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#installing-k0s-as-a-service-on-the-local-system" class="md-nav__link">
-    Installing k0s as a service on the local system
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-k0s-as-a-service" class="md-nav__link">
-    Run k0s as a service
-  </a>
-  
-    <nav class="md-nav" aria-label="Run k0s as a service">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check-service-status" class="md-nav__link">
-    Check service status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-cluster-status" class="md-nav__link">
-    Query cluster status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fetch-nodes" class="md-nav__link">
-    Fetch nodes
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#enabling-shell-completion" class="md-nav__link">
-    Enabling Shell Completion
-  </a>
-  
-    <nav class="md-nav" aria-label="Enabling Shell Completion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bash" class="md-nav__link">
-    Bash
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zsh" class="md-nav__link">
-    Zsh
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fish" class="md-nav__link">
-    Fish
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#under-the-hood" class="md-nav__link">
-    Under the hood
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-documentation" class="md-nav__link">
-    Additional Documentation
+  <a href="#next-steps" class="md-nav__link">
+    Next Steps
   </a>
   
 </li>
@@ -406,8 +324,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../k0s-multi-node/" class="md-nav__link">
-      Multi-Node Cluster
+    <a href="../k0sctl-install/" class="md-nav__link">
+      Automated Cluster Setup
     </a>
   </li>
 
@@ -418,11 +336,32 @@
 
 
   <li class="md-nav__item">
-    <a href="../k0s-single-node/" class="md-nav__link">
-      Single-Node Cluster
+    <a href="../k0s-multi-node/" class="md-nav__link">
+      Manual Install
     </a>
   </li>
 
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-4" type="checkbox" id="nav-2-4">
+    
+    <label class="md-nav__link" for="nav-2-4">
+      Alternative Install Methods
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-4">
+        <span class="md-nav__icon md-icon"></span>
+        Alternative Install Methods
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -448,15 +387,8 @@
   </li>
 
         
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../k0sctl-install/" class="md-nav__link">
-      Install with k0sctl
-    </a>
+      </ul>
+    </nav>
   </li>
 
         
@@ -567,7 +499,7 @@
 
   <li class="md-nav__item">
     <a href="../worker-node-config/" class="md-nav__link">
-      Worker node configuration
+      Worker Node Configuration
     </a>
   </li>
 
@@ -615,7 +547,43 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 dual-stack networking
+      IPv4/IPv6 Dual-Stack Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../high-availability/" class="md-nav__link">
+      Control Plane High Availability
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../shell-completion/" class="md-nav__link">
+      Shell Completion
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user-management/" class="md-nav__link">
+      User Management
     </a>
   </li>
 
@@ -627,7 +595,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
-      Uninstall the k0s cluster
+      Uninstall the k0s Cluster
     </a>
   </li>
 
@@ -857,97 +825,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#k0s-download-script" class="md-nav__link">
-    K0s Download Script
+  <a href="#installation-steps" class="md-nav__link">
+    Installation steps
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#installing-k0s-as-a-service-on-the-local-system" class="md-nav__link">
-    Installing k0s as a service on the local system
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-k0s-as-a-service" class="md-nav__link">
-    Run k0s as a service
-  </a>
-  
-    <nav class="md-nav" aria-label="Run k0s as a service">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check-service-status" class="md-nav__link">
-    Check service status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-cluster-status" class="md-nav__link">
-    Query cluster status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fetch-nodes" class="md-nav__link">
-    Fetch nodes
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#enabling-shell-completion" class="md-nav__link">
-    Enabling Shell Completion
-  </a>
-  
-    <nav class="md-nav" aria-label="Enabling Shell Completion">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bash" class="md-nav__link">
-    Bash
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zsh" class="md-nav__link">
-    Zsh
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fish" class="md-nav__link">
-    Fish
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#under-the-hood" class="md-nav__link">
-    Under the hood
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-documentation" class="md-nav__link">
-    Additional Documentation
+  <a href="#next-steps" class="md-nav__link">
+    Next Steps
   </a>
   
 </li>
@@ -966,120 +852,71 @@
               
                 
                 
-                <h1 id="download-the-k0s-binary">Download the k0s binary<a class="headerlink" href="#download-the-k0s-binary" title="Permanent link">#</a></h1>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<ul>
-<li><a href="https://curl.se/">cURL</a> </li>
-</ul>
-<p>Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a></p>
-<h2 id="k0s-download-script">K0s Download Script<a class="headerlink" href="#k0s-download-script" title="Permanent link">#</a></h2>
-<p><div class="highlight"><pre><span></span><code>$ curl -sSLf https://get.k0s.sh | sudo sh
+                <h1 id="quick-start-guide">Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Permanent link">#</a></h1>
+<p>In this tutorial you'll create a full Kubernetes cluster with just one node including both the controller and the worker. This is well suited for environments where the high-availability and multiple nodes are not needed. This is the easiest install method to start experimenting k0s.</p>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
+<p>Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
+<h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
+<h4 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h4>
+<p>The k0s download script downloads the latest stable k0s and makes it executable from /usr/bin/k0s.
+<div class="highlight"><pre><span></span><code>$ curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+</code></pre></div></p>
+<h4 id="2-install-k0s-as-a-service">2. Install k0s as a service<a class="headerlink" href="#2-install-k0s-as-a-service" title="Permanent link">#</a></h4>
+<p>The <code>k0s install</code> sub-command will install k0s as a system service on the local host running one of the supported init systems: Systemd or OpenRC. Install can be executed for workers, controllers or single node (controller+worker) instances.</p>
+<p>This command will install a single node k0s including the controller and worker functions with the default configuration:</p>
+<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --enable-worker
 </code></pre></div>
-The download script accepts the following environment variables:</p>
-<ol>
-<li><code>K0S_VERSION=v0.11.0</code> - select the version of k0s to be installed</li>
-<li><code>DEBUG=true</code> - outputs commands and their arguments as they are executed.</li>
-</ol>
-<h2 id="installing-k0s-as-a-service-on-the-local-system">Installing k0s as a service on the local system<a class="headerlink" href="#installing-k0s-as-a-service-on-the-local-system" title="Permanent link">#</a></h2>
-<p>The <code>k0s install</code> sub-command will install k0s as a system service on hosts running one of the supported init systems: Systemd or OpenRC.</p>
-<p>Install can be executed for workers, controllers or single node (controller+worker) instances.</p>
-<p>The <code>install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code> sub-command does.</p>
-<div class="highlight"><pre><span></span><code>$ k0s install controller --help
-
-Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)
-
-Usage:
-  k0s install controller [flags]
-
-Aliases:
-  controller, server
-
-Examples:
-All default values of controller command will be passed to the service stub unless overriden. 
-
-With controller subcommand you can setup a single node cluster by running:
-
-        k0s install controller --enable-worker
-
-
-Flags:
-  -c, --config string            config file (default: ./k0s.yaml)
-      --cri-socket string        contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-  -d, --debug                    Debug logging (default: false)
-      --enable-worker            enable worker (default false)
-  -h, --help                     help for controller
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
-      --profile string           worker profile to use on the node (default &quot;default&quot;)
-      --token-file string        Path to the file containing join-token.
-
-Global Flags:
-      --data-dir string        Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-      --debugListenOn string   Http listenOn for debug pprof handler (default &quot;:6060&quot;)
+<p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. See <a href="../k0s-multi-node/#installation-steps">manual install</a> for an example for entering a custom config file.</p>
+<h4 id="3-start-k0s-as-a-service">3. Start k0s as a service<a class="headerlink" href="#3-start-k0s-as-a-service" title="Permanent link">#</a></h4>
+<p>To start the k0s service, run
+<div class="highlight"><pre><span></span><code>$ sudo systemctl start k0scontroller
 </code></pre></div>
-<p>For example, the command below will install a single node k0s service on Ubuntu 20.10:</p>
-<div class="highlight"><pre><span></span><code>$ k0s install controller --enable-worker
-INFO[2021-02-24 11:05:42] no config file given, using defaults         
-INFO[2021-02-24 11:05:42] creating user: etcd                          
-INFO[2021-02-24 11:05:42] creating user: kube-apiserver                
-INFO[2021-02-24 11:05:42] creating user: konnectivity-server           
-INFO[2021-02-24 11:05:42] creating user: kube-scheduler                
-INFO[2021-02-24 11:05:42] Installing k0s service
-</code></pre></div>
-<h2 id="run-k0s-as-a-service">Run k0s as a service<a class="headerlink" href="#run-k0s-as-a-service" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>$ systemctl start k0scontroller
-</code></pre></div>
-<h3 id="check-service-status">Check service status<a class="headerlink" href="#check-service-status" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>$ systemctl status k0scontroller
-     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)
-     Active: active (running) since Fri 2021-02-26 08:37:23 UTC; 1min 25s ago
+It usually takes 1-2 minutes until the node is ready for deploying applications.</p>
+<p>If you want to enable the k0s service to be started always after the node restart, enable the service. This command is optional. 
+<div class="highlight"><pre><span></span><code>$ sudo systemctl <span class="nb">enable</span> k0scontroller
+</code></pre></div></p>
+<h4 id="4-check-service-logs-and-k0s-status">4. Check service, logs and k0s status<a class="headerlink" href="#4-check-service-logs-and-k0s-status" title="Permanent link">#</a></h4>
+<p>You can check the service status and logs like this:
+<div class="highlight"><pre><span></span><code>$ sudo systemctl status k0scontroller
+     Loaded: loaded <span class="o">(</span>/etc/systemd/system/k0scontroller.service<span class="p">;</span> enabled<span class="p">;</span> vendor preset: enabled<span class="o">)</span>
+     Active: active <span class="o">(</span>running<span class="o">)</span> since Fri <span class="m">2021</span>-02-26 <span class="m">08</span>:37:23 UTC<span class="p">;</span> 1min 25s ago
        Docs: https://docs.k0sproject.io
-   Main PID: 1408647 (k0s)
-      Tasks: 96
-     Memory: 1.2G
+   Main PID: <span class="m">1408647</span> <span class="o">(</span>k0s<span class="o">)</span>
+      Tasks: <span class="m">96</span>
+     Memory: <span class="m">1</span>.2G
      CGroup: /system.slice/k0scontroller.service
      ....
-</code></pre></div>
-<h3 id="query-cluster-status">Query cluster status<a class="headerlink" href="#query-cluster-status" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>$ k0s status
-Version: v0.11.0-beta.2-16-g02cddab
-Process ID: 9322
-Parent Process ID: 1
+</code></pre></div></p>
+<p>To get general information about your k0s instance:
+<div class="highlight"><pre><span></span><code>$ sudo k0s status
+Version: v0.11.0
+Process ID: <span class="m">436</span>
+Parent Process ID: <span class="m">1</span>
 Role: controller+worker
 Init System: linux-systemd
-</code></pre></div>
-<h3 id="fetch-nodes">Fetch nodes<a class="headerlink" href="#fetch-nodes" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>$ k0s kubectl get nodes
+</code></pre></div></p>
+<h4 id="5-access-your-cluster-using-kubectl">5. Access your cluster using kubectl<a class="headerlink" href="#5-access-your-cluster-using-kubectl" title="Permanent link">#</a></h4>
+<p>The Kubernetes command-line tool 'kubectl' is included into k0s. You can use it for example to deploy your application or check your node status like this:
+<div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    &lt;none&gt;   4m6s   v1.20.4-k0s1
-</code></pre></div>
-<h2 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h2>
-<p>The k0s completion script for Bash, zsh, fish and powershell can be generated with the command <code>k0s completion &lt; shell &gt;</code>. Sourcing the completion script in your shell enables k0s autocompletion.</p>
-<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>echo &#39;source &lt;(k0s completion bash)&#39; &gt;&gt;~/.bashrc
-</code></pre></div>
-<div class="highlight"><pre><span></span><code># To load completions for each session, execute once:
-$ k0s completion bash &gt; /etc/bash_completion.d/k0s
-</code></pre></div>
-<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
-<p>If shell completion is not already enabled in your environment you will need
-to enable it.  You can execute the following once:
-<div class="highlight"><pre><span></span><code>$ echo &quot;autoload -U compinit; compinit&quot; &gt;&gt; ~/.zshrc
-</code></pre></div>
-<div class="highlight"><pre><span></span><code># To load completions for each session, execute once:
-$ k0s completion zsh &gt; &quot;${fpath[1]}/_k0s&quot;
-</code></pre></div>
-You will need to start a new shell for this setup to take effect.</p>
-<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
-<p><div class="highlight"><pre><span></span><code>$ k0s completion fish | source
-</code></pre></div>
-<div class="highlight"><pre><span></span><code># To load completions for each session, execute once:
-$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
 </code></pre></div></p>
-<h2 id="under-the-hood">Under the hood<a class="headerlink" href="#under-the-hood" title="Permanent link">#</a></h2>
-<p>Workers are always run as root. For controllers, the command will create the following system users:
-  <code>etcd</code>, <code>kube-apiserver</code>, <code>konnectivity-server</code>, <code>kube-scheduler</code></p>
-<h2 id="additional-documentation">Additional Documentation<a class="headerlink" href="#additional-documentation" title="Permanent link">#</a></h2>
-<p>see: <a href="../cli/k0s_install/">k0s install</a></p>
+<h4 id="6-clean-up">6. Clean-up<a class="headerlink" href="#6-clean-up" title="Permanent link">#</a></h4>
+<p>If you want to remove the k0s installation you should first stop the service:
+<div class="highlight"><pre><span></span><code>$ sudo systemctl stop k0scontroller
+</code></pre></div></p>
+<p>Then you can execute <code>k0s reset</code>, which cleans up the installed system service, data directories, containers, mounts and network namespaces. There are still few bits (e.g. iptables) that cannot be easily cleaned up and thus a reboot after the reset is highly recommended.
+<div class="highlight"><pre><span></span><code>$ sudo k0s reset
+</code></pre></div></p>
+<h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
+<ul>
+<li><a href="../k0sctl-install/">Automated Cluster Setup</a> for deploying and upgrading multi-node clusters with k0sctl</li>
+<li><a href="../k0s-multi-node/">Manual Install</a> for advanced users for manually deploying multi-node clusters</li>
+<li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
+<li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
+<li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>, a tutorial for ingress deployment</li>
+</ul>
                 
               
               
@@ -1113,13 +950,13 @@ $ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
           </a>
         
         
-          <a href="../k0s-multi-node/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../k0sctl-install/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Multi-Node Cluster
+                Automated Cluster Setup
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

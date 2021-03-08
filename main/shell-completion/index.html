@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/CODE_OF_CONDUCT/">
+        <link rel="canonical" href="https://docs.k0sproject.io/shell-completion/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>K0s Community Code Of Conduct - Documentation</title>
+        <title>Shell Completion - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-community-code-of-conduct" class="md-skip">
+        <a href="#enabling-shell-completion" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s Community Code Of Conduct
+              Shell Completion
             
           </span>
         </div>
@@ -409,10 +409,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Configuration
@@ -514,11 +516,63 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../shell-completion/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Shell Completion
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Shell Completion
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -747,6 +801,50 @@
                 
               
               
+                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                  <div class="md-sidebar__scrollwrap">
+                    <div class="md-sidebar__inner">
+                      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bash" class="md-nav__link">
+    Bash
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zsh" class="md-nav__link">
+    Zsh
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    Fish
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                    </div>
+                  </div>
+                </div>
+              
             
           
           <div class="md-content">
@@ -754,8 +852,30 @@
               
                 
                 
-                <h1 id="k0s-community-code-of-conduct">K0s Community Code Of Conduct<a class="headerlink" href="#k0s-community-code-of-conduct" title="Permanent link">#</a></h1>
-<p>Please refer to our <a href="docs/contributors/CODE_OF_CONDUCT.md">contributor code of conduct</a>.</p>
+                <h1 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h1>
+<p>The k0s completion script for Bash, zsh, fish and powershell can be generated with the command
+<code>k0s completion &lt; shell &gt;</code>. </p>
+<p>Sourcing the completion script in your shell enables k0s autocompletion.</p>
+<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span> &gt;&gt;~/.bashrc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion bash &gt; /etc/bash_completion.d/k0s
+</code></pre></div>
+<h3 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h3>
+<p>If shell completion is not already enabled in your environment you will need to enable it. You can execute the following once:
+<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
+</code></pre></div>
+You will need to start a new shell for this setup to take effect.</p>
+<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h3>
+<p><div class="highlight"><pre><span></span><code>$ k0s completion fish <span class="p">|</span> <span class="nb">source</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
+$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
+</code></pre></div></p>
                 
               
               
@@ -770,6 +890,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../high-availability/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Control Plane High Availability
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../user-management/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                User Management
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

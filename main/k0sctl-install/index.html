@@ -19,7 +19,7 @@
     
     
       
-        <title>Install with k0sctl - Documentation</title>
+        <title>Automated Cluster Setup - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploying-a-k0s-cluster-using-k0sctl" class="md-skip">
+        <a href="#automated-cluster-setup-using-k0sctl" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Install with k0sctl
+              Automated Cluster Setup
             
           </span>
         </div>
@@ -243,13 +243,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
-      Creating a Cluster
+      Install
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Creating a Cluster" data-md-level="1">
+    <nav class="md-nav" aria-label="Install" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Creating a Cluster
+        Install
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -261,8 +261,86 @@
 
   <li class="md-nav__item">
     <a href="../install/" class="md-nav__link">
-      Install k0s
+      Quick Start Guide
     </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Automated Cluster Setup
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      Automated Cluster Setup
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-steps" class="md-nav__link">
+    Installation steps
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Upgrade a k0s cluster using k0sctl
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    Known limitations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    Next Steps
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -273,7 +351,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-multi-node/" class="md-nav__link">
-      Multi-Node Cluster
+      Manual Install
     </a>
   </li>
 
@@ -283,12 +361,21 @@
           
 
 
-  <li class="md-nav__item">
-    <a href="../k0s-single-node/" class="md-nav__link">
-      Single-Node Cluster
-    </a>
-  </li>
-
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-4" type="checkbox" id="nav-2-4">
+    
+    <label class="md-nav__link" for="nav-2-4">
+      Alternative Install Methods
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-4">
+        <span class="md-nav__icon md-icon"></span>
+        Alternative Install Methods
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -314,73 +401,8 @@
   </li>
 
         
-          
-          
-          
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Install with k0sctl
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      Install with k0sctl
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#using-k0sctl" class="md-nav__link">
-    Using k0sctl
-  </a>
-  
-    <nav class="md-nav" aria-label="Using k0sctl">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
-    Upgrade a k0s cluster using k0sctl
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#known-limitations" class="md-nav__link">
-    Known limitations
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -491,7 +513,7 @@
 
   <li class="md-nav__item">
     <a href="../worker-node-config/" class="md-nav__link">
-      Worker node configuration
+      Worker Node Configuration
     </a>
   </li>
 
@@ -539,7 +561,43 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 dual-stack networking
+      IPv4/IPv6 Dual-Stack Networking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../high-availability/" class="md-nav__link">
+      Control Plane High Availability
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../shell-completion/" class="md-nav__link">
+      Shell Completion
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user-management/" class="md-nav__link">
+      User Management
     </a>
   </li>
 
@@ -551,7 +609,7 @@
 
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
-      Uninstall the k0s cluster
+      Uninstall the k0s Cluster
     </a>
   </li>
 
@@ -774,29 +832,37 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#using-k0sctl" class="md-nav__link">
-    Using k0sctl
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
   </a>
   
-    <nav class="md-nav" aria-label="Using k0sctl">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-steps" class="md-nav__link">
+    Installation steps
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
     Upgrade a k0s cluster using k0sctl
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    Next Steps
+  </a>
   
 </li>
       
@@ -814,15 +880,21 @@
               
                 
                 
-                <h1 id="deploying-a-k0s-cluster-using-k0sctl">Deploying a k0s cluster using k0sctl<a class="headerlink" href="#deploying-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h1>
-<p>k0sctl is a command-line tool for bootstrapping and management of k0s clusters. Installation instructions can be found in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>.</p>
-<p>k0sctl will connect to provided host using ssh and gather information about the host. Based on the finding it will proceed to configure the host in question and install k0s binary.  </p>
-<h2 id="using-k0sctl">Using k0sctl<a class="headerlink" href="#using-k0sctl" title="Permanent link">#</a></h2>
+                <h1 id="automated-cluster-setup-using-k0sctl">Automated Cluster Setup Using k0sctl<a class="headerlink" href="#automated-cluster-setup-using-k0sctl" title="Permanent link">#</a></h1>
+<p>This tutorial is based on k0sctl tool and it's targeted for creating a multi-node cluster for remote hosts. It describes an install method, which is automatic and easily repeatable. This is recommended for production clusters and the automatic upgrade requires using this install method. The automatic upgrade process is also described in this tutorial.</p>
+<p>k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information about the hosts. Based on the findings it proceeds to configure the hosts, deploys k0s and connects the k0s nodes together to form a cluster.</p>
+<p><img alt="k0sctl deployment" src="../img/k0sctl_deployment.png" /></p>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
+<p>k0sctl can be executed on Linux, MacOS and Windows. See more details from the <a href="https://github.com/k0sproject/k0sctl">k0sctl github repository</a>. For hosts running k0s, see the <a href="../system-requirements/">System Requirements</a>.</p>
+<h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
+<h4 id="1-install-k0sctl-tool">1. Install k0sctl tool<a class="headerlink" href="#1-install-k0sctl-tool" title="Permanent link">#</a></h4>
+<p>k0sctl is a single binary and the installation and download instructions can be found in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>.</p>
+<h4 id="2-configure-the-cluster">2. Configure the cluster<a class="headerlink" href="#2-configure-the-cluster" title="Permanent link">#</a></h4>
 <p>First create a k0sctl configuration file:
 <div class="highlight"><pre><span></span><code>$ k0sctl init &gt; k0sctl.yaml
 </code></pre></div></p>
 <p>A <code>k0sctl.yaml</code> file will be created in the current directory:</p>
-<p><div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
 <span class="nt">metadata</span><span class="p">:</span>
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
@@ -839,7 +911,8 @@
       <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
       <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
 </code></pre></div>
-k0sctl configuration specifications can be found in <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a></p>
+<p>As a mandatory step, each host must be given a valid IP address (which is reachable by k0sctl) and the connection details for an SSH connection. k0sctl configuration specifications can be found in <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a>.</p>
+<h4 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h4>
 <p>Next step is to run <code>k0sctl apply</code> to perform the cluster deployment:
 <div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml 
 
@@ -889,9 +962,12 @@ INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
 INFO      k0sctl kubeconfig              
 </code></pre></div></p>
 <p>And -- presto! Your k0s cluster is up and running.</p>
-<p>Get kubeconfig:
+<h4 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h4>
+<p>To access your k0s cluster, you first need to get the kubeconfig. k0sctl does this for you like this:
 <div class="highlight"><pre><span></span><code>$ k0sctl kubeconfig &gt; kubeconfig
-$ kubectl get pods --kubeconfig kubeconfig -A
+</code></pre></div></p>
+<p>Then you can access your cluster for example by using kubectl or <a href="https://k8slens.dev/">LENS</a>.
+<div class="highlight"><pre><span></span><code>$ kubectl get pods --kubeconfig kubeconfig -A
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
 kube-system   calico-node-vd7lx                          <span class="m">1</span>/1     Running   <span class="m">0</span>          3m44s
@@ -940,6 +1016,14 @@ INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> 
 <li>k0sctl will not perform any discovery of hosts, it only operates on the hosts listed in the provided configuration</li>
 <li>k0sctl can currently only add more nodes to the cluster but cannot remove existing ones</li>
 </ul>
+<h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
+<ul>
+<li><a href="../k0s-multi-node/">Manual Install</a> for advanced users for manually deploying multi-node clusters</li>
+<li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
+<li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
+<li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>, a tutorial for ingress deployment</li>
+</ul>
                 
               
               
@@ -958,7 +1042,7 @@ INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> 
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../experimental-windows/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -967,19 +1051,19 @@ INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> 
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Windows (experimental)
+                Quick Start Guide
               </div>
             </div>
           </a>
         
         
-          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../k0s-multi-node/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Overview
+                Manual Install
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
