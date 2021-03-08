@@ -249,6 +249,7 @@ extensions:
 This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
 
 Some examples what you could use as extension charts:
+
 - Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) ([tutorial](examples/traefik-ingress.md)),
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
