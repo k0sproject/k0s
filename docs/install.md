@@ -1,84 +1,50 @@
-# Download the k0s binary
+# Quick Start Guide
 
-## Prerequisites
+ In this tutorial you'll create a full Kubernetes cluster with just one node including both the controller and the worker. This is well suited for environments where the high-availability and multiple nodes are not needed. This is the easiest install method to start experimenting k0s.
 
-* [cURL](https://curl.se/) 
+### Prerequisites
 
-Before proceeding, make sure to review the [System Requirements](system-requirements.md)
+Before proceeding, make sure to review the [System Requirements](system-requirements.md).
 
-## K0s Download Script
-```
+### Installation steps
+
+#### 1. Download k0s
+
+The k0s download script downloads the latest stable k0s and makes it executable from /usr/bin/k0s.
+```sh
 $ curl -sSLf https://get.k0s.sh | sudo sh
 ```
-The download script accepts the following environment variables:
 
-1. `K0S_VERSION=v0.11.0` - select the version of k0s to be installed
-2. `DEBUG=true` - outputs commands and their arguments as they are executed.
+#### 2. Install k0s as a service
 
-## Installing k0s as a service on the local system
+The `k0s install` sub-command will install k0s as a system service on the local host running one of the supported init systems: Systemd or OpenRC. Install can be executed for workers, controllers or single node (controller+worker) instances.
 
-The `k0s install` sub-command will install k0s as a system service on hosts running one of the supported init systems: Systemd or OpenRC.
+This command will install a single node k0s including the controller and worker functions with the default configuration:
 
-Install can be executed for workers, controllers or single node (controller+worker) instances.
-
-The `install controller` sub-command accepts the same flags and parameters as the `k0s controller` sub-command does.
-
-```
-$ k0s install controller --help
-
-Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)
-
-Usage:
-  k0s install controller [flags]
-
-Aliases:
-  controller, server
-
-Examples:
-All default values of controller command will be passed to the service stub unless overriden. 
-
-With controller subcommand you can setup a single node cluster by running:
-
-        k0s install controller --enable-worker
-
-
-Flags:
-  -c, --config string            config file (default: ./k0s.yaml)
-      --cri-socket string        contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-  -d, --debug                    Debug logging (default: false)
-      --enable-worker            enable worker (default false)
-  -h, --help                     help for controller
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
-      --profile string           worker profile to use on the node (default "default")
-      --token-file string        Path to the file containing join-token.
-
-Global Flags:
-      --data-dir string        Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-      --debugListenOn string   Http listenOn for debug pprof handler (default ":6060")
+```sh
+$ sudo k0s install controller --enable-worker
 ```
 
-For example, the command below will install a single node k0s service on Ubuntu 20.10:
+The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. See [manual install](k0s-multi-node.md#installation-steps) for an example for entering a custom config file.
 
-```
-$ k0s install controller --enable-worker
-INFO[2021-02-24 11:05:42] no config file given, using defaults         
-INFO[2021-02-24 11:05:42] creating user: etcd                          
-INFO[2021-02-24 11:05:42] creating user: kube-apiserver                
-INFO[2021-02-24 11:05:42] creating user: konnectivity-server           
-INFO[2021-02-24 11:05:42] creating user: kube-scheduler                
-INFO[2021-02-24 11:05:42] Installing k0s service
-```
+#### 3. Start k0s as a service
 
-## Run k0s as a service
-
+To start the k0s service, run
+```sh
+$ sudo systemctl start k0scontroller
 ```
-$ systemctl start k0scontroller
+It usually takes 1-2 minutes until the node is ready for deploying applications.
+
+If you want to enable the k0s service to be started always after the node restart, enable the service. This command is optional. 
+```sh
+$ sudo systemctl enable k0scontroller
 ```
 
-### Check service status
+#### 4. Check service, logs and k0s status
 
-```
-$ systemctl status k0scontroller
+You can check the service status and logs like this:
+```sh
+$ sudo systemctl status k0scontroller
      Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)
      Active: active (running) since Fri 2021-02-26 08:37:23 UTC; 1min 25s ago
        Docs: https://docs.k0sproject.io
@@ -89,67 +55,42 @@ $ systemctl status k0scontroller
      ....
 ```
 
-### Query cluster status
-
-```
-$ k0s status
-Version: v0.11.0-beta.2-16-g02cddab
-Process ID: 9322
+To get general information about your k0s instance:
+```sh
+$ sudo k0s status
+Version: v0.11.0
+Process ID: 436
 Parent Process ID: 1
 Role: controller+worker
 Init System: linux-systemd
 ```
 
-### Fetch nodes
+#### 5. Access your cluster using kubectl
 
-```
-$ k0s kubectl get nodes
+The Kubernetes command-line tool 'kubectl' is included into k0s. You can use it for example to deploy your application or check your node status like this:
+```sh
+$ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    <none>   4m6s   v1.20.4-k0s1
 ```
 
+#### 6. Clean-up
 
-## Enabling Shell Completion
-The k0s completion script for Bash, zsh, fish and powershell can be generated with the command `k0s completion < shell >`. Sourcing the completion script in your shell enables k0s autocompletion.
-
-### Bash
-
-```
-echo 'source <(k0s completion bash)' >>~/.bashrc
+If you want to remove the k0s installation you should first stop the service:
+```sh
+$ sudo systemctl stop k0scontroller
 ```
 
-```
-# To load completions for each session, execute once:
-$ k0s completion bash > /etc/bash_completion.d/k0s
-```
-### Zsh
-
-If shell completion is not already enabled in your environment you will need
-to enable it.  You can execute the following once:
-```
-$ echo "autoload -U compinit; compinit" >> ~/.zshrc
-```
-```
-# To load completions for each session, execute once:
-$ k0s completion zsh > "${fpath[1]}/_k0s"
-```
-You will need to start a new shell for this setup to take effect.
-
-### Fish
-
-```
-$ k0s completion fish | source
-```
-```
-# To load completions for each session, execute once:
-$ k0s completion fish > ~/.config/fish/completions/k0s.fish
+Then you can execute `k0s reset`, which cleans up the installed system service, data directories, containers, mounts and network namespaces. There are still few bits (e.g. iptables) that cannot be easily cleaned up and thus a reboot after the reset is highly recommended.
+```sh
+$ sudo k0s reset
 ```
 
-## Under the hood
+### Next Steps
 
-Workers are always run as root. For controllers, the command will create the following system users:
-  `etcd`, `kube-apiserver`, `konnectivity-server`, `kube-scheduler`
-
-
-## Additional Documentation
-see: [k0s install](cli/k0s_install.md)
+- [Automated Cluster Setup](k0sctl-install.md) for deploying and upgrading multi-node clusters with k0sctl
+- [Manual Install](k0s-multi-node.md) for advanced users for manually deploying multi-node clusters
+- [Control plane configuration options](configuration.md) for example for networking and datastore configuration
+- [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
+- [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration
+- [Installing the Traefik Ingress Controller](examples/traefik-ingress.md), a tutorial for ingress deployment
