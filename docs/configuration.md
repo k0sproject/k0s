@@ -14,18 +14,13 @@ metadata:
 spec:
   api:
     externalAddress: my-lb-address.example.com
-    address: 192.168.68.106
+    address: 192.168.68.104
     sans:
-    - 192.168.68.106
-    extraArgs: {}
-  controllerManager:
-    extraArgs: {}
-  scheduler:
-    extraArgs: {}
+      - 192.168.68.104
   storage:
     type: etcd
     etcd:
-      peerAddress: 192.168.68.106
+      peerAddress: 192.168.68.104
   network:
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
@@ -37,56 +32,46 @@ spec:
       mtu: 1450
       wireguard: false
       flexVolumeDriverPath: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds
-      ipAutodetectionMethod: ""
+      withWindowsNodes: false
+      overlay: Always
   podSecurityPolicy:
     defaultPolicy: 00-k0s-privileged
-  workerProfiles: []
-images:
-  konnectivity:
-    image: us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent
-    version: v0.0.13
-  metricsserver:
-    image: gcr.io/k8s-staging-metrics-server/metrics-server
-    version: v0.3.7
-  kubeproxy:
-    image: k8s.gcr.io/kube-proxy
-    version: v1.20.4
-  coredns:
-    image: docker.io/coredns/coredns
-    version: 1.7.0
-  calico:
-    cni:
-      image: calico/cni
-      version: v3.16.2
-    flexvolume:
-      image: calico/pod2daemon-flexvol
-      version: v3.16.2
-    node:
-      image: calico/node
-      version: v3.16.2
-    kubecontrollers:
-      image: calico/kube-controllers
-      version: v3.16.2
-  repository: ""
-telemetry:
-  interval: 10m0s
-  enabled: true
-extensions:
-  helm:
-    repositories:
-    - name: stable
-      url: https://charts.helm.sh/stable
-    - name: prometheus-community
-      url: https://prometheus-community.github.io/helm-charts
-    charts:
-    - name: prometheus-stack
-      chartname: prometheus-community/prometheus
-      version: "11.16.8"
-      values: |
-        server:
-          podDisruptionBudget:
-            enabled: false
-      namespace: default
+  telemetry:
+    interval: 10m0s
+    enabled: true
+  installConfig:
+    users:
+      etcdUser: etcd
+      kineUser: kube-apiserver
+      konnectivityUser: konnectivity-server
+      kubeAPIserverUser: kube-apiserver
+      kubeSchedulerUser: kube-scheduler
+  images:
+    konnectivity:
+      image: us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent
+      version: v0.0.13
+    metricsserver:
+      image: gcr.io/k8s-staging-metrics-server/metrics-server
+      version: v0.3.7
+    kubeproxy:
+      image: k8s.gcr.io/kube-proxy
+      version: v1.20.4
+    coredns:
+      image: docker.io/coredns/coredns
+      version: 1.7.0
+    calico:
+      cni:
+        image: calico/cni
+        version: v3.16.2
+      flexvolume:
+        image: calico/pod2daemon-flexvol
+        version: v3.16.2
+      node:
+        image: calico/node
+        version: v3.16.2
+      kubecontrollers:
+        image: calico/kube-controllers
+        version: v3.16.2
 ```
 
 ### `spec.api`
@@ -159,6 +144,7 @@ There are a few fields that cannot be overridden:
 Example:
 
 ```
+spec:
   workerProfiles:
     - name: custom-role
       values:
@@ -171,16 +157,18 @@ Example:
 Custom volumePluginDir:
 
 ```
+spec:
   workerProfiles:
     - name: custom-role
       values:
          volumePluginDir: /var/libexec/k0s/kubelet-plugins/volume/exec
 ```
 
-### `images`
+### `spec.images`
 Each node under the `images` key has the same structure
 ```
-images:
+spec:
+  images:
     konnectivity:
       image: calico/kube-controllers
       version: v3.16.2
@@ -188,21 +176,17 @@ images:
 
 Following keys are available:
 
-- `images.konnectivity`
-- `images.metricsserver`
-- `images.kubeproxy`
-- `images.coredns`
-- `images.calico.cni`
-- `images.calico.flexvolume`
-- `images.calico.node`
-- `images.calico.kubecontrollers`
-- `images.repository`
+- `spec.images.konnectivity`
+- `spec.images.metricsserver`
+- `spec.images.kubeproxy`
+- `spec.images.coredns`
+- `spec.images.calico.cni`
+- `spec.images.calico.flexvolume`
+- `spec.images.calico.node`
+- `spec.images.calico.kubecontrollers`
+- `spec.images.repository`
 
-If `images.repository` is set and not empty, every image will be pulled from `images.repository`
-
-### `extensions.helm`
-
-List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
+If `spec.images.repository` is set and not empty, every image will be pulled from `images.repository`
 
 Example:
 ```
@@ -220,6 +204,11 @@ In the runtime the image names will be calculated as `my.own.repo/calico/kube-co
 
 This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.
 
+### `spec.extensions.helm`
+
+List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
+
+
 As stated in the [project scope](https://github.com/k0sproject/k0s#scope) we intends to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
 
 To run k0s easily with your preferred extensions you have two options.
@@ -228,22 +217,23 @@ To run k0s easily with your preferred extensions you have two options.
 2. Define your extensions as [Helm charts](https://helm.sh/):
 
 ```
-extensions:
-  helm:
-    repositories:
-    - name: stable
-      url: https://charts.helm.sh/stable
-    - name: prometheus-community
-      url: https://prometheus-community.github.io/helm-charts
-    charts:
-    - name: prometheus-stack
-      chartname: prometheus-community/prometheus
-      version: "11.16.8"
-      values: |
-        storageSpec:
-          emptyDir:
-            medium: Memory
-      namespace: default
+spec:
+    extensions:
+      helm:
+        repositories:
+        - name: stable
+          url: https://charts.helm.sh/stable
+        - name: prometheus-community
+          url: https://prometheus-community.github.io/helm-charts
+        charts:
+        - name: prometheus-stack
+          chartname: prometheus-community/prometheus
+          version: "11.16.8"
+          values: |
+            storageSpec:
+              emptyDir:
+                medium: Memory
+          namespace: default
 ```
 
 This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
@@ -259,9 +249,10 @@ To build better end user experience we collect and send telemetry data from clus
 The default interval is 10 minutes, any valid value for `time.Duration` string representation can be used as a value.
 Example
 ```
-telemetry:
-  interval: 2m0s
-  enabled: true
+spec:
+    telemetry:
+      interval: 2m0s
+      enabled: true
 ```
 
 

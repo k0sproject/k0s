@@ -318,7 +318,7 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		Replicas:      1,
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
-		Image:         c.clusterConfig.Images.CoreDNS.URI(),
+		Image:         c.clusterConfig.Spec.Images.CoreDNS.URI(),
 	}
 
 	return config, nil

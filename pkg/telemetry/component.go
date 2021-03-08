@@ -35,7 +35,7 @@ func (c *Component) Init() error {
 		return nil
 	}
 
-	c.interval = c.ClusterConfig.Telemetry.Interval
+	c.interval = c.ClusterConfig.Spec.Telemetry.Interval
 	c.stopCh = make(chan struct{})
 	c.log.Info("kube client has been init")
 	c.analyticsClient = newSegmentClient(segmentToken)

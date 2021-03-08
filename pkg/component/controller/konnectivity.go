@@ -191,7 +191,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.APIAddress(),
-			Image:      k.ClusterConfig.Images.Konnectivity.URI(),
+			Image:      k.ClusterConfig.Spec.Images.Konnectivity.URI(),
 		},
 		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}

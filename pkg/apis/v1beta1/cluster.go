@@ -25,14 +25,10 @@ import (
 
 // ClusterConfig cluster manifest
 type ClusterConfig struct {
-	APIVersion string             `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
-	Extensions *ClusterExtensions `yaml:"extensions,omitempty"`
-	Images     *ClusterImages     `yaml:"images"`
-	Install    *InstallSpec       `yaml:"installConfig,omitempty"`
-	Kind       string             `yaml:"kind" validate:"eq=Cluster"`
-	Metadata   *ClusterMeta       `yaml:"metadata"`
-	Spec       *ClusterSpec       `yaml:"spec"`
-	Telemetry  *ClusterTelemetry  `yaml:"telemetry"`
+	APIVersion string       `yaml:"apiVersion" validate:"eq=k0s.k0sproject.io/v1beta1"`
+	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
+	Metadata   *ClusterMeta `yaml:"metadata"`
+	Spec       *ClusterSpec `yaml:"spec"`
 }
 
 // ClusterMeta ...
@@ -49,6 +45,10 @@ type ClusterSpec struct {
 	Network           *Network               `yaml:"network"`
 	PodSecurityPolicy *PodSecurityPolicy     `yaml:"podSecurityPolicy"`
 	WorkerProfiles    WorkerProfiles         `yaml:"workerProfiles,omitempty"`
+	Telemetry         *ClusterTelemetry      `yaml:"telemetry"`
+	Install           *InstallSpec           `yaml:"installConfig,omitempty"`
+	Images            *ClusterImages         `yaml:"images"`
+	Extensions        *ClusterExtensions     `yaml:"extensions,omitempty"`
 }
 
 // ControllerManagerSpec ...
@@ -132,10 +132,7 @@ func DefaultClusterConfig() *ClusterConfig {
 		Metadata: &ClusterMeta{
 			Name: "k0s",
 		},
-		Install:   DefaultInstallSpec(),
-		Spec:      DefaultClusterSpec(),
-		Images:    DefaultClusterImages(),
-		Telemetry: DefaultClusterTelemetry(),
+		Spec: DefaultClusterSpec(),
 	}
 }
 
@@ -146,8 +143,6 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Name: "k0s",
 	}
 	c.Spec = DefaultClusterSpec()
-	c.Images = DefaultClusterImages()
-	c.Telemetry = DefaultClusterTelemetry()
 
 	type yclusterconfig ClusterConfig
 	yc := (*yclusterconfig)(c)
@@ -172,5 +167,8 @@ func DefaultClusterSpec() *ClusterSpec {
 			ExtraArgs: make(map[string]string),
 		},
 		PodSecurityPolicy: DefaultPodSecurityPolicy(),
+		Install:           DefaultInstallSpec(),
+		Images:            DefaultClusterImages(),
+		Telemetry:         DefaultClusterTelemetry(),
 	}
 }

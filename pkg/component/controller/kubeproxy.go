@@ -114,7 +114,7 @@ func (k *KubeProxy) getConfig() (proxyConfig, error) {
 		// FIXME get this from somewhere
 		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
-		Image:                k.clusterConf.Images.KubeProxy.URI(),
+		Image:                k.clusterConf.Spec.Images.KubeProxy.URI(),
 		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
 	}
 
