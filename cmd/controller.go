@@ -224,10 +224,12 @@ func startController(token string) error {
 	componentManager.Add(leaderElector)
 
 	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
-	componentManager.Add(&controller.K0SControlAPI{
-		ConfigPath: cfgFile,
-		K0sVars:    k0sVars,
-	})
+	if !singleNode {
+		componentManager.Add(&controller.K0SControlAPI{
+			ConfigPath: cfgFile,
+			K0sVars:    k0sVars,
+		})
+	}
 
 	if clusterConfig.Spec.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{
