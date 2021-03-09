@@ -48,7 +48,6 @@ func init() {
 	workerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
 	workerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
 	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
-	workerCmd.Flags().StringVar(&airGapBundle, "airgap-bundle", "", "OCI bundle for airgap install")
 	workerCmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
@@ -66,7 +65,6 @@ var (
 	tokenFile        string
 	workerProfile    string
 	kubeletExtraArgs string
-	airGapBundle     string
 
 	workerCmd = &cobra.Command{
 		Use:   "worker [join-token]",
@@ -129,9 +127,9 @@ func startWorker(token string) error {
 		})
 	}
 
-	if airGapBundle != "" {
-		componentManager.Add(worker.NewAirgapReconciler(airGapBundle, k0sVars))
-	}
+
+	componentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
+
 
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"

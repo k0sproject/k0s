@@ -53,22 +53,20 @@ const (
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
-	KonnectivityImage              = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
-	KonnectivityImageVersion       = "v0.0.13"
-	MetricsImage                   = "gcr.io/k8s-staging-metrics-server/metrics-server"
-	MetricsImageVersion            = "v0.3.7"
-	KubeProxyImage                 = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion          = "v1.20.4"
-	CoreDNSImage                   = "docker.io/coredns/coredns"
-	CoreDNSImageVersion            = "1.7.0"
-	CalicoImage                    = "docker.io/calico/cni"
-	CalicoImageVersion             = "v3.16.2"
-	CalicoNodeImage                = "docker.io/calico/node"
-	CalicoNodeImageVersion         = "v3.16.2"
-	KubeControllerImage            = "docker.io/calico/kube-controllers"
-	KubeControllerImageVersion     = "v3.16.2"
-	KubePauseContainerImage        = "k8s.gcr.io/pause"
-	KubePauseContainerImageVersion = "3.2"
+	KonnectivityImage          = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
+	KonnectivityImageVersion   = "v0.0.13"
+	MetricsImage               = "gcr.io/k8s-staging-metrics-server/metrics-server"
+	MetricsImageVersion        = "v0.3.7"
+	KubeProxyImage             = "k8s.gcr.io/kube-proxy"
+	KubeProxyImageVersion      = "v1.20.4"
+	CoreDNSImage               = "docker.io/coredns/coredns"
+	CoreDNSImageVersion        = "1.7.0"
+	CalicoImage                = "docker.io/calico/cni"
+	CalicoImageVersion         = "v3.16.2"
+	CalicoNodeImage            = "docker.io/calico/node"
+	CalicoNodeImageVersion     = "v3.16.2"
+	KubeControllerImage        = "docker.io/calico/kube-controllers"
+	KubeControllerImageVersion = "v3.16.2"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s
@@ -88,7 +86,7 @@ type CfgVars struct {
 	ManifestsDir               string // location for all stack manifests
 	RunDir                     string // location of supervised pid files and sockets
 	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
-
+	OCIBundleDir               string // location for OCI bundles
 	// Helm config
 	HelmHome             string
 	HelmRepositoryCache  string
@@ -119,6 +117,7 @@ func GetConfig(dataDir string) CfgVars {
 	return CfgVars{
 		AdminKubeConfigPath:        formatPath(certDir, "admin.conf"),
 		BinDir:                     formatPath(dataDir, "bin"),
+		OCIBundleDir:               formatPath(dataDir, "images"),
 		CertRootDir:                certDir,
 		WindowsCertRootDir:         winCertDir,
 		DataDir:                    dataDir,

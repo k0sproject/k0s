@@ -9,18 +9,19 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.4.1 // indirect
+	github.com/containerd/containerd v1.4.1
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.10.0 // indirect
+	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/kardianos/service v1.2.1-0.20201211143537-ef35c563203c
-	github.com/kevinburke/go-bindata v3.22.0+incompatible // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.4 // indirect
@@ -30,6 +31,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.2
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
+	github.com/opencontainers/selinux v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/segmentio/analytics-go v3.1.0+incompatible
@@ -47,7 +49,6 @@ require (
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	helm.sh/helm/v3 v3.4.0
@@ -71,5 +72,17 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/libnetwork => github.com/moby/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
+)
 
+// backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
+replace (
+	github.com/containerd/cgroups => github.com/containerd/cgroups v0.0.0-20200531161412-0dbf7f05ba59
+	github.com/containerd/console => github.com/containerd/console v1.0.0
+	github.com/containerd/containerd => github.com/containerd/containerd v1.4.1
+	github.com/containerd/continuity => github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc
+	github.com/containerd/fifo => github.com/containerd/fifo v0.0.0-20190226154929-a9fb20d87448
+	github.com/containerd/go-runc => github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
+	github.com/containerd/ttrpc => github.com/containerd/ttrpc v1.0.2
+	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
+	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 )

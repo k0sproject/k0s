@@ -69,7 +69,6 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(&ci.KubeProxy)
 	override(&ci.CoreDNS)
 	override(&ci.Calico.CNI)
-	override(&ci.Calico.FlexVolume)
 	override(&ci.Calico.Node)
 	override(&ci.Calico.KubeControllers)
 }
@@ -77,7 +76,6 @@ func (ci *ClusterImages) overrideImageRepositories() {
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
 	CNI             ImageSpec `yaml:"cni"`
-	FlexVolume      ImageSpec `yaml:"flexvolume"`
 	Node            ImageSpec `yaml:"node"`
 	KubeControllers ImageSpec `yaml:"kubecontrollers"`
 }

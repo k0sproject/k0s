@@ -81,10 +81,13 @@ veth_mtu: "{{ .MTU }}"
 Instead of hardcoded image names and versions use placeholders to support configuration level settings. Following placeholders are used:
 
 - `CalicoCNIImage` for calico/cni
-- `CalicoFlexVolumeImage` for calico/pod2daemon-flexvol
 - `CalicoNodeImage` for calico/node
 - `CalicoKubeControllersImage` for calico/kube-controllers
 
+Also, all containers in manifests were modified to have 'imagePullPolicy' field:
+```
+imagePullPolicy: {{ .PullPolicy }}
+```
 
 Example: 
 ```

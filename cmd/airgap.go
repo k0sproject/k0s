@@ -18,12 +18,13 @@ package cmd
 import (
 	"fmt"
 	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	airgapCmd.AddCommand(listImagesCmd)
-	addPersistentFlags(airgapCmd)
+	addPersistentFlags(listImagesCmd)
 }
 
 var (
@@ -38,7 +39,13 @@ var (
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			uris := airgap.GetImageURIs()
+			// we don't need warning messages in case of default config
+			logrus.SetLevel(logrus.ErrorLevel)
+			cfg, err := ConfigFromYaml(cfgFile)
+			if err != nil {
+				return err
+			}
+			uris := airgap.GetImageURIs(cfg.Spec.Images)
 			for _, uri := range uris {
 				fmt.Println(uri)
 			}
