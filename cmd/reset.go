@@ -41,6 +41,7 @@ var (
 			}
 			return reset()
 		},
+		PreRunE: preRunValidateConfig,
 	}
 )
 
