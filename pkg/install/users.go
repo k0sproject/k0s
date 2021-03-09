@@ -32,7 +32,7 @@ import (
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) error {
-	users := getUserList(*clusterConfig.Install.SystemUsers)
+	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range users {
 		if err := EnsureUser(v, k0sVars.DataDir); err != nil {
@@ -47,7 +47,7 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constan
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	users := getUserList(*clusterConfig.Install.SystemUsers)
+	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range users {
 		if err := DeleteUser(v); err != nil {

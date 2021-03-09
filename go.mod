@@ -20,6 +20,7 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/kardianos/service v1.2.1-0.20201211143537-ef35c563203c
+	github.com/kevinburke/go-bindata v3.22.0+incompatible // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.4 // indirect
@@ -32,7 +33,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/segmentio/analytics-go v3.1.0+incompatible
-	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
@@ -41,7 +41,6 @@ require (
 	github.com/vishvananda/netlink v1.1.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
-	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76

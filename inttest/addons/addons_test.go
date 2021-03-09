@@ -227,19 +227,20 @@ func (as *AddonsSuite) putFile(path string, content string) {
 }
 
 const k0sConfigWithAddon = `
-extensions:
-    helm:
-      repositories:
-      - name: stable
-        url: https://charts.helm.sh/stable
-      - name: prometheus-community
-        url: https://prometheus-community.github.io/helm-charts
-      charts:
-      - name: %s
-        chartname: prometheus-community/prometheus
-        version: "11.16.8"
-        values: ""
-        namespace: default
+spec:
+    extensions:
+        helm:
+          repositories:
+          - name: stable
+            url: https://charts.helm.sh/stable
+          - name: prometheus-community
+            url: https://prometheus-community.github.io/helm-charts
+          charts:
+          - name: %s
+            chartname: prometheus-community/prometheus
+            version: "11.16.8"
+            values: ""
+            namespace: default
 `
 
 const chartCrdTemplate = `

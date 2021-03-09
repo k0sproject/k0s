@@ -221,7 +221,7 @@ func startController(token string) error {
 		K0sVars:    k0sVars,
 	})
 
-	if clusterConfig.Telemetry.Enabled {
+	if clusterConfig.Spec.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{
 			ClusterConfig:     clusterConfig,
 			Version:           build.Version,

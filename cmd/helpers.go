@@ -51,8 +51,8 @@ func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err er
 	if clusterConfig.Spec.Storage.Type == config.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
 		clusterConfig.Spec.Storage.Kine = config.DefaultKineConfig(k0sVars.DataDir)
 	}
-	if clusterConfig.Install == nil {
-		clusterConfig.Install = config.DefaultInstallSpec()
+	if clusterConfig.Spec.Install == nil {
+		clusterConfig.Spec.Install = config.DefaultInstallSpec()
 	}
 	return clusterConfig, nil
 }

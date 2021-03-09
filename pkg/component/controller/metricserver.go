@@ -297,7 +297,7 @@ func (m *MetricServer) Healthy() error { return nil }
 // So that's 10m CPU and 30MiB mem per 10 nodes
 func (m *MetricServer) getConfig() (metricsConfig, error) {
 	cfg := metricsConfig{
-		Image: m.clusterConfig.Images.MetricsServer.URI(),
+		Image: m.clusterConfig.Spec.Images.MetricsServer.URI(),
 	}
 
 	kubeClient, err := m.kubeClientFactory.GetClient()
