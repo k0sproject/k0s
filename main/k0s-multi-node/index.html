@@ -261,7 +261,7 @@
 
   <li class="md-nav__item">
     <a href="../install/" class="md-nav__link">
-      Quick Start Guide
+      Getting Started
     </a>
   </li>
 
@@ -273,10 +273,33 @@
 
   <li class="md-nav__item">
     <a href="../k0sctl-install/" class="md-nav__link">
-      Automated Cluster Setup
+      Installing with k0sctl
     </a>
   </li>
 
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3" checked>
+    
+    <label class="md-nav__link" for="nav-2-3">
+      Alternative Install Methods
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        <span class="md-nav__icon md-icon"></span>
+        Alternative Install Methods
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -341,27 +364,6 @@
     
   </li>
 
-        
-          
-          
-          
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-4" type="checkbox" id="nav-2-4">
-    
-    <label class="md-nav__link" for="nav-2-4">
-      Alternative Install Methods
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
-      <label class="md-nav__title" for="nav-2-4">
-        <span class="md-nav__icon md-icon"></span>
-        Alternative Install Methods
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
         
           
           
@@ -855,6 +857,7 @@
                 <h1 id="manual-install-for-advanced-users">Manual Install (for advanced users)<a class="headerlink" href="#manual-install-for-advanced-users" title="Permanent link">#</a></h1>
 <p>In this tutorial you'll create a multi-node cluster, which is locally managed in each node. It requires several steps to install each node separately and connect the nodes together with the access tokens. This tutorial is targeted for advanced users who want to setup their k0s nodes manually.</p>
 <h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
+<p>This tutorial has been written for Debian/Ubuntu, but it can be used for any Linux running one of the supported init systems: Systemd or OpenRC.</p>
 <p>Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
 <p>To speed-up the usage of <code>k0s</code> command, you may want to enable <a href="../shell-completion/">shell completion</a>.</p>
 <h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
@@ -945,7 +948,7 @@ k0s    Ready    &lt;none&gt;   4m6s   v1.20.4-k0s1
 and paste it to LENS. Note that in the kubeconfig you need add your controller's host ip address to the server field (replacing localhost) in order to access the cluster from an external network.</p>
 <h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0sctl-install/">Automated Cluster Setup</a> for deploying and upgrading multi-node clusters with k0sctl</li>
+<li><a href="../k0sctl-install/">Installing with k0sctl</a> for deploying and upgrading multi-node clusters with one command</li>
 <li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
@@ -978,7 +981,7 @@ and paste it to LENS. Note that in the kubeconfig you need add your controller's
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Automated Cluster Setup
+                Installing with k0sctl
               </div>
             </div>
           </a>

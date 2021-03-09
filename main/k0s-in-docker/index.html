@@ -261,7 +261,7 @@
 
   <li class="md-nav__item">
     <a href="../install/" class="md-nav__link">
-      Quick Start Guide
+      Getting Started
     </a>
   </li>
 
@@ -273,19 +273,7 @@
 
   <li class="md-nav__item">
     <a href="../k0sctl-install/" class="md-nav__link">
-      Automated Cluster Setup
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../k0s-multi-node/" class="md-nav__link">
-      Manual Install
+      Installing with k0sctl
     </a>
   </li>
 
@@ -299,19 +287,31 @@
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-4" type="checkbox" id="nav-2-4" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3" checked>
     
-    <label class="md-nav__link" for="nav-2-4">
+    <label class="md-nav__link" for="nav-2-3">
       Alternative Install Methods
       <span class="md-nav__icon md-icon"></span>
     </label>
     <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
-      <label class="md-nav__title" for="nav-2-4">
+      <label class="md-nav__title" for="nav-2-3">
         <span class="md-nav__icon md-icon"></span>
         Alternative Install Methods
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../k0s-multi-node/" class="md-nav__link">
+      Manual Install
+    </a>
+  </li>
+
         
           
           
@@ -899,7 +899,7 @@
                 <h1 id="running-k0s-in-docker">Running k0s in Docker<a class="headerlink" href="#running-k0s-in-docker" title="Permanent link">#</a></h1>
 <p>In this tutorial you'll create a k0s cluster on top of docker. By default, both controller and worker are run in the same container to provide an easy local testing "cluster". The tutorial also shows how to add additional worker nodes to the cluster.</p>
 <h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
-<p>Docker environment on top of Mac, Windows or Linux. <a href="https://docs.docker.com/get-docker/">Get Docker</a>.</p>
+<p>Docker environment on Mac, Windows or Linux. <a href="https://docs.docker.com/get-docker/">Get Docker</a>.</p>
 <h3 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h3>
 <p>The k0s containers are published both on Docker Hub and GitHub. The examples in this page show Docker Hub, because it's more simple to use. Using GitHub requires a separate authentication (not covered here). Alternative links:</p>
 <ul>
@@ -956,8 +956,7 @@
 <p>Currently, we cannot run k0s nodes if the containers are configured to use custom networks e.g. with <code>--net my-net</code>. This is caused by the fact that Docker sets up a custom DNS service within the network and that messes up CoreDNS. We know that there are some workarounds possible, but they are bit hackish. And on the other hand, running k0s cluster(s) in bridge network should not cause issues.</p>
 <h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0sctl-install/">Automated Cluster Setup</a> for deploying and upgrading multi-node clusters with k0sctl</li>
-<li><a href="../k0s-multi-node/">Manual Install</a> for advanced users for manually deploying multi-node clusters</li>
+<li><a href="../k0sctl-install/">Installing with k0sctl</a> for deploying and upgrading multi-node clusters with one command</li>
 <li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
