@@ -518,15 +518,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#images" class="md-nav__link">
-    images
+  <a href="#specimages" class="md-nav__link">
+    spec.images
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#extensionshelm" class="md-nav__link">
-    extensions.helm
+  <a href="#specextensionshelm" class="md-nav__link">
+    spec.extensions.helm
   </a>
   
 </li>
@@ -936,15 +936,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#images" class="md-nav__link">
-    images
+  <a href="#specimages" class="md-nav__link">
+    spec.images
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#extensionshelm" class="md-nav__link">
-    extensions.helm
+  <a href="#specextensionshelm" class="md-nav__link">
+    spec.extensions.helm
   </a>
   
 </li>
@@ -995,18 +995,13 @@
 <span class="nt">spec</span><span class="p">:</span>
   <span class="nt">api</span><span class="p">:</span>
     <span class="nt">externalAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-lb-address.example.com</span>
-    <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
+    <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
     <span class="nt">sans</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
-    <span class="nt">extraArgs</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">controllerManager</span><span class="p">:</span>
-    <span class="nt">extraArgs</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">scheduler</span><span class="p">:</span>
-    <span class="nt">extraArgs</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
   <span class="nt">storage</span><span class="p">:</span>
     <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">etcd</span>
     <span class="nt">etcd</span><span class="p">:</span>
-      <span class="nt">peerAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.106</span>
+      <span class="nt">peerAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
   <span class="nt">network</span><span class="p">:</span>
     <span class="nt">podCIDR</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
     <span class="nt">serviceCIDR</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
@@ -1018,56 +1013,46 @@
       <span class="nt">mtu</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
       <span class="nt">wireguard</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
       <span class="nt">flexVolumeDriverPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
-      <span class="nt">ipAutodetectionMethod</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
+      <span class="nt">withWindowsNodes</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+      <span class="nt">overlay</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Always</span>
   <span class="nt">podSecurityPolicy</span><span class="p">:</span>
     <span class="nt">defaultPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span>
-  <span class="nt">workerProfiles</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-<span class="nt">images</span><span class="p">:</span>
-  <span class="nt">konnectivity</span><span class="p">:</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v0.0.13</span>
-  <span class="nt">metricsserver</span><span class="p">:</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gcr.io/k8s-staging-metrics-server/metrics-server</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v0.3.7</span>
-  <span class="nt">kubeproxy</span><span class="p">:</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k8s.gcr.io/kube-proxy</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.20.4</span>
-  <span class="nt">coredns</span><span class="p">:</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.io/coredns/coredns</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.7.0</span>
-  <span class="nt">calico</span><span class="p">:</span>
-    <span class="nt">cni</span><span class="p">:</span>
-      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/cni</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
-    <span class="nt">flexvolume</span><span class="p">:</span>
-      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/pod2daemon-flexvol</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
-    <span class="nt">node</span><span class="p">:</span>
-      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/node</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
-    <span class="nt">kubecontrollers</span><span class="p">:</span>
-      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/kube-controllers</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
-  <span class="nt">repository</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
-<span class="nt">telemetry</span><span class="p">:</span>
-  <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10m0s</span>
-  <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="nt">extensions</span><span class="p">:</span>
-  <span class="nt">helm</span><span class="p">:</span>
-    <span class="nt">repositories</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">stable</span>
-      <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://charts.helm.sh/stable</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community</span>
-      <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
-    <span class="nt">charts</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
-      <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
-      <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
-        <span class="no">server:</span>
-          <span class="no">podDisruptionBudget:</span>
-            <span class="no">enabled: false</span>
-      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="nt">telemetry</span><span class="p">:</span>
+    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10m0s</span>
+    <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="nt">installConfig</span><span class="p">:</span>
+    <span class="nt">users</span><span class="p">:</span>
+      <span class="nt">etcdUser</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">etcd</span>
+      <span class="nt">kineUser</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kube-apiserver</span>
+      <span class="nt">konnectivityUser</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">konnectivity-server</span>
+      <span class="nt">kubeAPIserverUser</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kube-apiserver</span>
+      <span class="nt">kubeSchedulerUser</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kube-scheduler</span>
+  <span class="nt">images</span><span class="p">:</span>
+    <span class="nt">konnectivity</span><span class="p">:</span>
+      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v0.0.13</span>
+    <span class="nt">metricsserver</span><span class="p">:</span>
+      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gcr.io/k8s-staging-metrics-server/metrics-server</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v0.3.7</span>
+    <span class="nt">kubeproxy</span><span class="p">:</span>
+      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k8s.gcr.io/kube-proxy</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1.20.4</span>
+    <span class="nt">coredns</span><span class="p">:</span>
+      <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.io/coredns/coredns</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.7.0</span>
+    <span class="nt">calico</span><span class="p">:</span>
+      <span class="nt">cni</span><span class="p">:</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/cni</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
+      <span class="nt">flexvolume</span><span class="p">:</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/pod2daemon-flexvol</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
+      <span class="nt">node</span><span class="p">:</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/node</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
+      <span class="nt">kubecontrollers</span><span class="p">:</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/kube-controllers</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
 </code></pre></div>
 <h3 id="specapi"><code>spec.api</code><a class="headerlink" href="#specapi" title="Permanent link">#</a></h3>
 <ul>
@@ -1129,7 +1114,8 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
 - <code>apiVersion</code>
 - <code>kind</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code>  workerProfiles:
+<div class="highlight"><pre><span></span><code>spec:
+  workerProfiles:
     - name: custom-role
       values:
          key: value
@@ -1137,33 +1123,33 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
              innerKey: innerValue
 </code></pre></div>
 <p>Custom volumePluginDir:</p>
-<div class="highlight"><pre><span></span><code>  workerProfiles:
+<div class="highlight"><pre><span></span><code>spec:
+  workerProfiles:
     - name: custom-role
       values:
          volumePluginDir: /var/libexec/k0s/kubelet-plugins/volume/exec
 </code></pre></div>
-<h3 id="images"><code>images</code><a class="headerlink" href="#images" title="Permanent link">#</a></h3>
+<h3 id="specimages"><code>spec.images</code><a class="headerlink" href="#specimages" title="Permanent link">#</a></h3>
 <p>Each node under the <code>images</code> key has the same structure
-<div class="highlight"><pre><span></span><code>images:
+<div class="highlight"><pre><span></span><code>spec:
+  images:
     konnectivity:
       image: calico/kube-controllers
       version: v3.16.2
 </code></pre></div></p>
 <p>Following keys are available:</p>
 <ul>
-<li><code>images.konnectivity</code></li>
-<li><code>images.metricsserver</code></li>
-<li><code>images.kubeproxy</code></li>
-<li><code>images.coredns</code></li>
-<li><code>images.calico.cni</code></li>
-<li><code>images.calico.flexvolume</code></li>
-<li><code>images.calico.node</code></li>
-<li><code>images.calico.kubecontrollers</code></li>
-<li><code>images.repository</code></li>
+<li><code>spec.images.konnectivity</code></li>
+<li><code>spec.images.metricsserver</code></li>
+<li><code>spec.images.kubeproxy</code></li>
+<li><code>spec.images.coredns</code></li>
+<li><code>spec.images.calico.cni</code></li>
+<li><code>spec.images.calico.flexvolume</code></li>
+<li><code>spec.images.calico.node</code></li>
+<li><code>spec.images.calico.kubecontrollers</code></li>
+<li><code>spec.images.repository</code></li>
 </ul>
-<p>If <code>images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
-<h3 id="extensionshelm"><code>extensions.helm</code><a class="headerlink" href="#extensionshelm" title="Permanent link">#</a></h3>
-<p>List of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.</p>
+<p>If <code>spec.images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
 <p>Example:
 <div class="highlight"><pre><span></span><code>images:
   repository: &quot;my.own.repo&quot;
@@ -1176,28 +1162,31 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
 </code></pre></div></p>
 <p>In the runtime the image names will be calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/k8s-staging-metrics-server/metrics-server</code>.</p>
 <p>This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.</p>
+<h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
+<p>List of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.</p>
 <p>As stated in the <a href="https://github.com/k0sproject/k0s#scope">project scope</a> we intends to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.</p>
 <p>To run k0s easily with your preferred extensions you have two options.</p>
 <ol>
 <li>Dump all needed extension manifest under <code>/var/lib/k0s/manifests/my-extension</code>. Read more on this approach <a href="../manifests/">here</a>.</li>
 <li>Define your extensions as <a href="https://helm.sh/">Helm charts</a>:</li>
 </ol>
-<div class="highlight"><pre><span></span><code>extensions:
-  helm:
-    repositories:
-    - name: stable
-      url: https://charts.helm.sh/stable
-    - name: prometheus-community
-      url: https://prometheus-community.github.io/helm-charts
-    charts:
-    - name: prometheus-stack
-      chartname: prometheus-community/prometheus
-      version: &quot;11.16.8&quot;
-      values: |
-        storageSpec:
-          emptyDir:
-            medium: Memory
-      namespace: default
+<div class="highlight"><pre><span></span><code>spec:
+    extensions:
+      helm:
+        repositories:
+        - name: stable
+          url: https://charts.helm.sh/stable
+        - name: prometheus-community
+          url: https://prometheus-community.github.io/helm-charts
+        charts:
+        - name: prometheus-stack
+          chartname: prometheus-community/prometheus
+          version: &quot;11.16.8&quot;
+          values: |
+            storageSpec:
+              emptyDir:
+                medium: Memory
+          namespace: default
 </code></pre></div>
 <p>This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.</p>
 <p>Some examples what you could use as extension charts:</p>
@@ -1210,9 +1199,10 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
 <p>To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as <code>false</code>
 The default interval is 10 minutes, any valid value for <code>time.Duration</code> string representation can be used as a value.
 Example
-<div class="highlight"><pre><span></span><code>telemetry:
-  interval: 2m0s
-  enabled: true
+<div class="highlight"><pre><span></span><code>spec:
+    telemetry:
+      interval: 2m0s
+      enabled: true
 </code></pre></div></p>
 <h2 id="configuration-validation">Configuration Validation<a class="headerlink" href="#configuration-validation" title="Permanent link">#</a></h2>
 <p>k0s command-line interface has the ability to validate config syntax:</p>
