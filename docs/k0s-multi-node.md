@@ -4,6 +4,8 @@ In this tutorial you'll create a multi-node cluster, which is locally managed in
 
 ### Prerequisites
 
+This tutorial has been written for Debian/Ubuntu, but it can be used for any Linux running one of the supported init systems: Systemd or OpenRC.
+
 Before proceeding, make sure to review the [System Requirements](system-requirements.md).
 
 To speed-up the usage of `k0s` command, you may want to enable [shell completion](shell-completion.md).
@@ -140,7 +142,7 @@ and paste it to LENS. Note that in the kubeconfig you need add your controller's
 
 ### Next Steps
 
-- [Automated Cluster Setup](k0sctl-install.md) for deploying and upgrading multi-node clusters with k0sctl
+- [Installing with k0sctl](k0sctl-install.md) for deploying and upgrading multi-node clusters with one command
 - [Control plane configuration options](configuration.md) for example for networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration

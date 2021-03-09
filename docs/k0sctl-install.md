@@ -1,4 +1,4 @@
-# Automated Cluster Setup Using k0sctl
+# Installing with k0sctl
 
 This tutorial is based on k0sctl tool and it's targeted for creating a multi-node cluster for remote hosts. It describes an install method, which is automatic and easily repeatable. This is recommended for production clusters and the automatic upgrade requires using this install method. The automatic upgrade process is also described in this tutorial.
 
@@ -170,7 +170,6 @@ INFO[0027]      k0sctl kubeconfig
 
 ### Next Steps
 
-- [Manual Install](k0s-multi-node.md) for advanced users for manually deploying multi-node clusters
 - [Control plane configuration options](configuration.md) for example for networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration

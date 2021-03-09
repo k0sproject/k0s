@@ -4,7 +4,7 @@ In this tutorial you'll create a k0s cluster on top of docker. By default, both 
 
 ### Prerequisites
 
-Docker environment on top of Mac, Windows or Linux. [Get Docker](https://docs.docker.com/get-docker/).
+Docker environment on Mac, Windows or Linux. [Get Docker](https://docs.docker.com/get-docker/).
 
 ### Container images
 
@@ -84,8 +84,7 @@ Currently, we cannot run k0s nodes if the containers are configured to use custo
 
 ### Next Steps
 
-- [Automated Cluster Setup](k0sctl-install.md) for deploying and upgrading multi-node clusters with k0sctl
-- [Manual Install](k0s-multi-node.md) for advanced users for manually deploying multi-node clusters
+- [Installing with k0sctl](k0sctl-install.md) for deploying and upgrading multi-node clusters with one command
 - [Control plane configuration options](configuration.md) for example for networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration

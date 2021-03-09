@@ -11,10 +11,10 @@ edit_uri: ""
 nav:
   - Overview: README.md
   - Install:
-      - Quick Start Guide:                install.md
-      - Automated Cluster Setup:          k0sctl-install.md
-      - Manual Install:                   k0s-multi-node.md
+      - Getting Started:                  install.md
+      - Installing with k0sctl:           k0sctl-install.md
       - Alternative Install Methods:
+          - Manual Install:               k0s-multi-node.md
           - Docker:                       k0s-in-docker.md
           - Windows (experimental):       experimental-windows.md
   - Architecture:
