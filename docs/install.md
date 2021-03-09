@@ -1,8 +1,10 @@
-# Quick Start Guide
+# Getting Started
 
  In this tutorial you'll create a full Kubernetes cluster with just one node including both the controller and the worker. This is well suited for environments where the high-availability and multiple nodes are not needed. This is the easiest install method to start experimenting k0s.
 
 ### Prerequisites
+
+This tutorial has been written for Debian/Ubuntu, but it can be used for any Linux running one of the supported init systems: Systemd or OpenRC.
 
 Before proceeding, make sure to review the [System Requirements](system-requirements.md).
 
@@ -88,7 +90,7 @@ $ sudo k0s reset
 
 ### Next Steps
 
-- [Automated Cluster Setup](k0sctl-install.md) for deploying and upgrading multi-node clusters with k0sctl
+- [Installing with k0sctl](k0sctl-install.md) for deploying and upgrading multi-node clusters with one command
 - [Manual Install](k0s-multi-node.md) for advanced users for manually deploying multi-node clusters
 - [Control plane configuration options](configuration.md) for example for networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
