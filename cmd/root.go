@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -149,8 +148,7 @@ func addPersistentFlags(cmd *cobra.Command) {
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		log.Fatal(err)
-	}
+	// just a hack to trick linter which requires to check for errors
+	// cobra itself already prints out all errors that happen in subcommands
+	_ = rootCmd.Execute()
 }
