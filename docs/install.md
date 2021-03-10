@@ -96,3 +96,4 @@ $ sudo k0s reset
 - [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md), a tutorial for ingress deployment
+- [Airgap/Offline installation](airgap-install.md), a tutorial for airgap deployment

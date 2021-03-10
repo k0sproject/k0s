@@ -1,69 +1,72 @@
-# Air-gap installation
+# Airgap install
 
-Air-gap or offline setup is now possible with k0s.
+In this tutorial we are going to cover k0s deployment in the environment with restricted internet access. 
+As usually in the k0sproject we aim to give you the best user experience with the least possible amount of frictions.
 
-To engage it we use OCI bundle for containerd to provide images to the cluster before even starting kubelet.
+## Prerequisites
+No specific prerequisites are required.
 
-There are few ways to achieve offline setup:
+### Prerequisites for exporting images bundle from running cluster
 
-- Use OCI bundle with default images
-- Use custom OCI bundle and [override image names](https://docs.k0sproject.io/latest/configuration/#images)
-  through `k0s.yaml`
-- Setup private registry and override image names (not covered by this document)
+Working cluster with at least one controller (this cluster will be used to build images bundle).
+Please, refer to the [getting started guide](install.md).
+You also need to have containerd CLI management tool `ctr` installed on the worker machine. Please refer to the ContainerD [getting-started](https://containerd.io/docs/getting-started/) guide.
 
-## Bundle preparation
+## Steps
 
-You need following images in the bundle:
-
+#### 1. Create OCI bundle
+##### 1.1 Using Docker
+Use following commands to build OCI bundle by utilizing your docker environment. 
 ```
-us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.13
-gcr.io/k8s-staging-metrics-server/metrics-server:v0.3.7
-k8s.gcr.io/kube-proxy:v1.20.4
-docker.io/coredns/coredns:1.7.0
-docker.io/calico/cni:v3.16.2
-docker.io/calico/pod2daemon-flexvol:v3.16.2
-docker.io/calico/node:v3.16.2
-docker.io/calico/kube-controllers:v3.16.2
-k8s.gcr.io/pause:3.2
-``` 
+## Pull images
+# k0s airgap list-images | xargs -I{} docker pull {}
 
-To generate images list you can use k0s command:
-```k0s airgap list-images```
-
-You need to install containerd cli tool [ctr](https://containerd.io/downloads/)
-
-### Default bundle
-
-Manually setup k0s cluster with at least one worker and use the following command to export images from the cluster:
-
-```
-export IMAGES=$(k0s airgap list-images | xargs)
-ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle.tgz $IMAGES
+## Create bundle
+# docker image save $(k0s airgap list-images | xargs) -o bundle_file
 ```
 
-### Custom bundle
+##### 1.2 Using previously set up k0s worker
+To build OCI bundle with images we can utilize the fact that containerd pulls all images during the k0s worker normal bootstrap.
+Use following commands on the machine with previously installed k0s worker:
 
-Custom bundle could be useful in case if you need to pre-install any helm based extensions or apply custom kubernetes
-manifests. Just extend the images list received from k0s command with any custom images.
+```
+## The command k0s airgap list-images prints images used by the current setup
+## It respects the k0s.yaml values
 
-## Starting up worker with a bundle
+# export IMAGES=`k0s airgap list-images | xargs`
+# ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle_file $IMAGES 
+```
 
-During the boot process k0s project will import any "tgz" file found under the `/var/lib/k0s/images` directory.
+Pay attention to the `address` and `namespace` arguments given to the `ctr` tool.
 
-## Fully offline mode
+#### 2. Sync bundle file with airgapped machine
 
-To ensure that kubelet uses only images from the bundle use corresponding k0s.yaml:
+Copy the `bundle_file` from the previous step to the target machine. Place the file under the `images` directory in the k0s data directory.
+Use following commands to place bundle into the default location:
 
+```
+# mkdir -p /var/lib/k0s/images
+# cp bundle_file /var/lib/k0s/images/bundle_file
+```
+
+#### 3. Ensure pull policy in the k0s.yaml (optional)
+
+Use the following k0s.yaml to force containerd to never pull images for the k0s components. Otherwise containerd pulls the images, which are not found from the bundle, from the internet.
 ```
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
-images:
-  default_pull_policy: Never
+metadata:
+  name: k0s
+spec:
+  images:
+    default_pull_policy: Never
 ```
 
-Important notification here is that `default_pull_policy` affects only images installed by the k0s itself, not images
-from the helm extensions or any other manually installed images.
 
-## Private registry
+#### 4. Controller
+Set up the controller node as usual. Please refer to the [getting started guide](install.md).
 
-Private registry is not covered by this documentation.
+#### 5. Run worker
+
+Do the worker set up as usually on the airgapped machine.
+During the start up k0s worker will import all bundles from the `$K0S_DATA_DIR/images` before even starting `kubelet`

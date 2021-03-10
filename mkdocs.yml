@@ -19,6 +19,7 @@ nav:
           - Windows (experimental):       experimental-windows.md
           - Raspberry Pi 4:               raspberry-pi4.md
           - Ansible Playbook:             examples/ansible-playbook.md
+          - Airgap installation:          airgap-install.md
   - Extensions:
       - Manifest Bundles:                 manifests.md
       - Helm Charts:                      helm-charts.md
