@@ -14,6 +14,7 @@ There are few ways to achieve offline setup:
 ## Bundle preparation
 
 You need following images in the bundle:
+
 ```
 us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent:v0.0.13
 gcr.io/k8s-staging-metrics-server/metrics-server:v0.3.7
@@ -32,6 +33,7 @@ To generate images list you can use k0s command:
 You need to install containerd cli tool [ctr](https://containerd.io/downloads/)
 
 ### Default bundle
+
 Manually setup k0s cluster with at least one worker and use the following command to export images from the cluster:
 
 ```
@@ -41,11 +43,13 @@ ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle.t
 
 ### Custom bundle
 
-Custom bundle could be useful in case if you need to pre-install any helm based extensions or apply custom kubernetes manifests.
-Just extend the images list received from k0s command with any custom images.
+Custom bundle could be useful in case if you need to pre-install any helm based extensions or apply custom kubernetes
+manifests. Just extend the images list received from k0s command with any custom images.
 
 ## Starting up worker with a bundle
-```k0s worker --airgap-bundle=<path/to> <token>```
+
+During the boot process k0s project will import any "tgz" file found under the `/var/lib/k0s/images` directory.
+
 ## Fully offline mode
 
 To ensure that kubelet uses only images from the bundle use corresponding k0s.yaml:
@@ -57,7 +61,8 @@ images:
   default_pull_policy: Never
 ```
 
-Important notification here is that `default_pull_policy` affects only images installed by the k0s itself, not images from the helm extenstions or any other manually installed images.
+Important notification here is that `default_pull_policy` affects only images installed by the k0s itself, not images
+from the helm extensions or any other manually installed images.
 
 ## Private registry
 

@@ -294,7 +294,7 @@ func startController(token string) error {
 
 	if err == nil && enableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		err = enableControllerWorker(clusterConfig, k0sVars, componentManager, controllerWorkerProfile)
+		err = startControllerWorker(ctx, clusterConfig, k0sVars, controllerWorkerProfile)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			if err := componentManager.Stop(); err != nil {
@@ -408,7 +408,12 @@ func initNetwork(reconcilers map[string]component.Component, conf *config.Cluste
 
 }
 
-func enableControllerWorker(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, componentManager *component.Manager, profile string) error {
+func startControllerWorker(ctx context.Context, clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, profile string) error {
+	// we use separate controllerManager here
+	// because we need to have controllers components
+	// be fully initialized and running before running worker components
+
+	workerComponentManager := component.NewManager()
 	if !util.FileExists(k0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
 		err := retry.Do(func() error {
@@ -446,37 +451,33 @@ func enableControllerWorker(clusterConfig *config.ClusterConfig, k0sVars constan
 		return err
 	}
 
-	containerd := &worker.ContainerD{
+	workerComponentManager.Add(&worker.ContainerD{
 		LogLevel: logging["containerd"],
 		K0sVars:  k0sVars,
-	}
-	kubelet := &worker.Kubelet{
+	})
+	workerComponentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
+	workerComponentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
 		LogLevel:            logging["kubelet"],
 		K0sVars:             k0sVars,
+	})
+
+	if err := workerComponentManager.Init(); err != nil {
+		return fmt.Errorf("can't init worker components: %w", err)
 	}
 
-	if criSocket == "" {
-		if err := containerd.Init(); err != nil {
-			logrus.Errorf("failed to init containerd: %s", err)
+	go func() {
+		<-ctx.Done()
+		if err := workerComponentManager.Stop(); err != nil {
+			logrus.WithError(err).Error("can't properly stop worker components")
 		}
-		if err := containerd.Run(); err != nil {
-			logrus.Errorf("failed to run containerd: %s", err)
-		}
-		componentManager.Add(containerd)
-	}
+	}()
 
-	if err := kubelet.Init(); err != nil {
-		logrus.Errorf("failed to init kubelet: %s", err)
+	if err := workerComponentManager.Start(ctx); err != nil {
+		return fmt.Errorf("can't start worker components: %w", err)
 	}
-
-	if err := kubelet.Run(); err != nil {
-		logrus.Errorf("failed to run kubelet: %s", err)
-	}
-
-	componentManager.Add(kubelet)
 
 	return nil
 }

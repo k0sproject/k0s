@@ -127,9 +127,7 @@ func startWorker(token string) error {
 		})
 	}
 
-
 	componentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
-
 
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"
