@@ -16,11 +16,13 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/install"
 )
 
@@ -55,9 +57,17 @@ With controller subcommand you can setup a single node cluster by running:
 	k0s install controller --enable-worker
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := convertFileParamsToAbsolute(); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
 			flagsAndVals := []string{"controller"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
-			return setup("controller", flagsAndVals)
+			if err := setup("controller", flagsAndVals); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
+			return nil
 		},
 		PreRunE: preRunValidateConfig,
 	}
@@ -70,9 +80,19 @@ All default values of worker command will be passed to the service stub unless o
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := convertFileParamsToAbsolute(); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
+
 			flagsAndVals := []string{"worker"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
-			return setup("worker", flagsAndVals)
+			if err := setup("worker", flagsAndVals); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
+
+			return nil
 		},
 		PreRunE: preRunValidateConfig,
 	}
@@ -83,23 +103,57 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 // * sets up startup and logging for k0s
 func setup(role string, args []string) error {
 	if os.Geteuid() != 0 {
-		logrus.Fatal("this command must be run as root!")
+		return fmt.Errorf("this command must be run as root")
+	}
+
+	// if cfgFile is not provided k0s will handle this so no need to check if the file exists.
+	if cfgFile != "" && !util.IsDirectory(cfgFile) && !util.FileExists(cfgFile) {
+		return fmt.Errorf("file %s does not exist", cfgFile)
 	}
 
 	if role == "controller" {
 		clusterConfig, err := ConfigFromYaml(cfgFile)
 		if err != nil {
-			logrus.Errorf("failed to get cluster setup: %v", err)
+			return fmt.Errorf("failed to get cluster setup: %v", err)
 		}
 		if err := install.CreateControllerUsers(clusterConfig, k0sVars); err != nil {
-			logrus.Errorf("failed to create controller users: %v", err)
+			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
 
 	err := install.EnsureService(args)
 	if err != nil {
-		logrus.Errorf("failed to install k0s service: %v", err)
+		return fmt.Errorf("failed to install k0s service: %v", err)
 	}
+	return nil
+}
+
+func convertFileParamsToAbsolute() (err error) {
+	// don't convert if cfgFile is empty
+	if cfgFile != "" {
+		cfgFile, err = filepath.Abs(cfgFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	if dataDir != "" {
+		dataDir, err = filepath.Abs(dataDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	if tokenFile != "" {
+		tokenFile, err = filepath.Abs(tokenFile)
+		if err != nil {
+			return err
+		}
+		if !util.FileExists(tokenFile) {
+			return fmt.Errorf("%s does not exist", tokenFile)
+		}
+	}
+
 	return nil
 }
 
