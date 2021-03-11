@@ -18,6 +18,7 @@ package install
 
 import (
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/crictl"
 	"os/exec"
 	"strings"
 	"time"
@@ -32,6 +33,7 @@ type CleanUpConfig struct {
 	containerdSockerPath string
 	criSocketPath        string
 	crictlBinPath        string
+	criCtl	             *crictl.CriCtl
 	dataDir              string
 	runDir               string
 }

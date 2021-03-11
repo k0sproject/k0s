@@ -17,6 +17,7 @@ package install
 
 import (
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/crictl"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,6 +38,9 @@ func NewCleanUpConfig(dataDir string) *CleanUpConfig {
 		criSocketPath:        fmt.Sprintf("unix:///%s/containerd.sock", runDir),
 		crictlBinPath:        fmt.Sprintf("%s/%s", dataDir, "bin/crictl"),
 		containerdBinPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
+		criCtl:				  &crictl.CriCtl{
+			Addr: fmt.Sprintf("unix:///%s/containerd.sock", runDir),
+		},
 	}
 }
 
@@ -100,16 +104,10 @@ func (c *CleanUpConfig) stopAllContainers() error {
 
 	for _, container := range containers {
 		logrus.Debugf("stopping container: %v", container)
-		out, err := exec.Command(c.crictlBinPath, "-r", c.criSocketPath, "stopp", container).CombinedOutput()
+		err := c.criCtl.StopPod(container)
 		if err != nil {
-			if strings.Contains(string(out), "443: connect: connection refused") {
-				// on a single node instance, we will see "connection refused" error. this is to be expected
-				// since we're deleting the API pod itself. so we're ignoring this error
-				logrus.Debugf("ignoring container stop err: %v", string(out))
-			} else {
-				fmtError := fmt.Errorf("failed to stop running pod %v: output: %v, err: %v", container, string(out), err)
-				msg = append(msg, fmtError.Error())
-			}
+			fmtError := fmt.Errorf("failed to stop running pod %v: err: %v", container, err)
+			msg = append(msg, fmtError.Error())
 		}
 	}
 	if len(msg) > 0 {
