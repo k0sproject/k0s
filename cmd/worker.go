@@ -222,13 +222,14 @@ func loadKubeletConfigClient(k0svars constant.CfgVars) (*worker.KubeletConfigCli
 }
 
 func handleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {
-	kubeconfig, err := token.JoinDecode(encodedToken)
+	kubeconfig, err := token.DecodeJoinToken(encodedToken)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode token")
 	}
 
 	// Load the bootstrap kubeconfig to validate it
 	clientCfg, err := clientcmd.Load(kubeconfig)
+
 	if err != nil {
 		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
 	}

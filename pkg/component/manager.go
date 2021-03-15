@@ -121,13 +121,12 @@ func waitForHealthy(ctx context.Context, comp Component, name string) error {
 		select {
 		case <-ticker.C:
 			logrus.Debugf("checking %s for health", name)
-			err := comp.Healthy()
-			if err != nil {
+			if err := comp.Healthy(); err != nil {
 				logrus.Errorf("health-check: %s might be down: %v", name, err)
-			} else {
-				logrus.Debugf("%s is healthy. closing check", name)
-				return nil
+				continue
 			}
+			logrus.Debugf("%s is healthy. closing check", name)
+			return nil
 		case <-ctx.Done():
 			return fmt.Errorf("%s health-check timed out", name)
 		}

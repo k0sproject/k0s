@@ -428,7 +428,12 @@ func startControllerWorker(ctx context.Context, clusterConfig *config.ClusterCon
 
 		var bootstrapConfig string
 		err = retry.Do(func() error {
-			config, err := createKubeletBootstrapConfig(clusterConfig, "worker", time.Minute)
+			// five minutes here are coming from maximum theoretical duration of kubelet bootstrap process
+			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
+			// 225 seconds here
+			tokenAge := time.Second * 225
+			config, err := createKubeletBootstrapConfig(clusterConfig, "worker", tokenAge)
+
 			if err != nil {
 				return err
 			}

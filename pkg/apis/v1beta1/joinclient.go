@@ -40,7 +40,7 @@ type JoinClient struct {
 
 // JoinClientFromToken creates a new join api client from a token
 func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
-	tokenBytes, err := token.JoinDecode(encodedToken)
+	tokenBytes, err := token.DecodeJoinToken(encodedToken)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode token")
 	}

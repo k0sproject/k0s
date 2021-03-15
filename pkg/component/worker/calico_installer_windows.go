@@ -47,7 +47,7 @@ func (c CalicoInstaller) Init() error {
 }
 
 func (c CalicoInstaller) SaveKubeConfig(path string) error {
-	tokenBytes, err := token.JoinDecode(c.Token)
+	tokenBytes, err := token.DecodeJoinToken(c.Token)
 	if err != nil {
 		return fmt.Errorf("failed to decode token: %v", err)
 	}
