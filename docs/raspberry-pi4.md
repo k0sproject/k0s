@@ -1,6 +1,6 @@
 # Creating Raspberry Pi 4 Cluster
 
-This is a highly opinionated example of deploying the [K0s](https://github.com/k0sproject/k0s) distribution of [Kubernetes](https://kubernetes.io) to a cluster comprised of [Raspberry Pi 4 Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with [Ubuntu 20.04 LTS](https://ubuntu.com) as the operating system.
+This is a highly opinionated example of deploying the [k0s](https://github.com/k0sproject/k0s) distribution of [Kubernetes](https://kubernetes.io) to a cluster comprised of [Raspberry Pi 4 Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with [Ubuntu 20.04 LTS](https://ubuntu.com) as the operating system.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ The following tools should be installed on your local workstation to use this ex
 
 ## Walkthrough
 
-In order to deploy K0s on your Raspberry Pi systems we'll follow these steps:
+In order to deploy k0s on your Raspberry Pi systems we'll follow these steps:
 
 1. Hardware & Operating System Setup
 2. Networking Configurations
@@ -46,7 +46,7 @@ Note that the default login credentials for the systems once [cloud-init](https:
 
 For this example it's assumed that you have all computers connected to eachother on the same subnet, but the rest is pretty much open ended.
 
-Make sure that you review the [K0s required ports documentation](https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols) to ensure that your network and firewall configurations will allow necessary traffic for the cluster.
+Make sure that you review the [k0s required ports documentation](https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols) to ensure that your network and firewall configurations will allow necessary traffic for the cluster.
 
 Review the [Ubuntu Server Networking Configuration Documentation](https://ubuntu.com/server/docs/network-configuration) and ensure that all systems get a static IP address on the network, or that the network is providing a static DHCP lease for the nodes.
 
@@ -64,7 +64,7 @@ Where `${HOST}` is any node and the login will succeed with no further prompts.
 
 ## Setup Nodes
 
-Each node (whether control plane or not) will need some additional setup to prepare for K0s deployment.
+Each node (whether control plane or not) will need some additional setup to prepare for k0s deployment.
 
 ### CGroup Configuration
 
@@ -86,7 +86,7 @@ Make sure you `reboot` each node to ensure the `memory` cgroup is loaded.
 
 ### Swap (Optional)
 
-While this is _technical optional_ if you don't have the 8GB RAM Raspberry PI for your nodes and instead have the 4GB it can be helpful to enable swap to ease some memory pressure.
+While this is _technical optional_ if you have limited RAM (like < 2GB) it can be helpful to enable swap to ease some memory pressure.
 
 You can create a swapfile by running the following:
 
@@ -117,18 +117,21 @@ $ modprobe br_netfilter
 
 Add each of these modules to your `/etc/modules-load.d/modules.conf` file as well to ensure they persist after reboot.
 
-### Download K0s
+### Download k0s
 
-Download a [K0s release](https://github.com/k0sproject/k0s/releases/tag/v0.9.1), for example:
+Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest), for example:
 
 ```shell
 $ wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0s-v0.9.1-arm64
 $ chmod a+x /tmp/k0s
 $ sudo mv /tmp/k0s /usr/bin/k0s
 ```
+or use the k0s download script (as one command) to download the latest stable k0s and make it executable in /usr/bin/k0s.
+```sh
+$ curl -sSLf https://get.k0s.sh | sudo sh
+```
 
 Now you'll be able to run `k0s`:
-
 ```shell
 $ k0s version
 v0.9.1
@@ -144,36 +147,19 @@ For this demonstration, we'll use a non-ha control plane with a single node.
 
 #### Systemd Service
 
-Create a systemd service file for `k0s`:
+Create a systemd service:
 
-```shell
-$ cat << EOF > /etc/systemd/system/k0s.service
-[Unit]
-Description=k0s - Kubernetes Control Plane & Worker
-ConditionFileIsExecutable=/usr/bin/k0s
-After=network.target
-
-[Service]
-EnvironmentFile=/etc/sysconfig/k0s
-ExecStart=/usr/bin/k0s controller
-KillMode=process
-Restart=always
-RestartSec=120
-StartLimitBurst=10
-StartLimitInterval=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+```sh
+$ sudo k0s install controller
 ```
 
 Enable and start the service:
 
 ```shell
-$ systemctl enable --now k0s
+$ systemctl enable --now k0scontroller
 ```
 
-Run `systemctl status k0s` to verify the service status.
+Run `systemctl status k0scontroller` to verify the service status.
 
 #### Worker Tokens
 
@@ -200,34 +186,17 @@ Where `${TOKEN_CONTENT}` is one of the join tokens you created in the control pl
 
 Then deploy the systemd service for the worker:
 
-```shell
-$ cat << EOF > /etc/systemd/system/k0s.service
-[Unit]
-Description=k0s - Kubernetes Worker
-ConditionFileIsExecutable=/usr/bin/k0s
-After=network.target
-
-[Service]
-EnvironmentFile=-/etc/sysconfig/k0s
-ExecStart=/usr/bin/k0s worker --token-file /var/lib/k0s/join-token
-KillMode=process
-Restart=always
-RestartSec=120
-StartLimitBurst=10
-StartLimitInterval=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+```sh
+$ sudo k0s install worker --token-file /var/lib/k0s/join-token
 ```
 
 Enable and start the service:
 
 ```shell
-$ systemctl enable --now k0s
+$ systemctl enable --now k0sworker
 ```
 
-Run `systemctl status k0s` to verify the service status.
+Run `systemctl status k0sworker` to verify the service status.
 
 ## Connecting To Your Cluster
 
@@ -269,4 +238,3 @@ kube-system   pod/kube-proxy-vghs9                           1/1     Running    
 ```
 
 Enjoy!
-

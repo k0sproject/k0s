@@ -206,43 +206,7 @@ This only affects the location where images are getting pulled, omitting an imag
 
 ### `spec.extensions.helm`
 
-List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. This example configures Prometheus from "stable" Helms chart repository.
-
-
-As stated in the [project scope](https://github.com/k0sproject/k0s#scope) we intends to keep the scope of k0s quite small and not build gazillions of extensions into the product itself.
-
-To run k0s easily with your preferred extensions you have two options.
-
-1. Dump all needed extension manifest under `/var/lib/k0s/manifests/my-extension`. Read more on this approach [here](manifests.md).
-2. Define your extensions as [Helm charts](https://helm.sh/):
-
-```
-spec:
-    extensions:
-      helm:
-        repositories:
-        - name: stable
-          url: https://charts.helm.sh/stable
-        - name: prometheus-community
-          url: https://prometheus-community.github.io/helm-charts
-        charts:
-        - name: prometheus-stack
-          chartname: prometheus-community/prometheus
-          version: "11.16.8"
-          values: |
-            storageSpec:
-              emptyDir:
-                medium: Memory
-          namespace: default
-```
-
-This way you get a declarative way to configure the cluster and k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
-
-Some examples what you could use as extension charts:
-
-- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) ([tutorial](examples/traefik-ingress.md)),
-- Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
-- Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
+List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. For more information, see [Helm Charts](helm-charts.md).
 
 ### Telemetry
 
