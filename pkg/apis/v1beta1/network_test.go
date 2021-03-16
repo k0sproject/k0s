@@ -136,6 +136,10 @@ spec:
 	s.NotNil(n.KubeRouter)
 	s.Nil(n.Calico)
 
+	s.True(n.KubeRouter.AutoMTU)
+	s.Equal(0, n.KubeRouter.MTU)
+	s.Empty(n.KubeRouter.PeerRouterASNs)
+	s.Empty(n.KubeRouter.PeerRouterIPs)
 }
 
 func (s *NetworkSuite) TestValidation() {

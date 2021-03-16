@@ -137,8 +137,10 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if n.Provider == "calico" && n.Calico == nil {
 		n.Calico = DefaultCalico()
+		n.KubeRouter = nil
 	} else if n.Provider == "kuberouter" && n.KubeRouter == nil {
 		n.KubeRouter = DefaultKubeRouter()
+		n.Calico = nil
 	}
 
 	return nil

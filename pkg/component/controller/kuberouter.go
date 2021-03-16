@@ -95,7 +95,10 @@ data:
           {
              "name":"kubernetes",
              "type":"bridge",
+             {{- if not .AutoMTU }}
              "mtu": {{ .MTU }},
+             {{- end }}
+             "auto-mtu": {{ .AutoMTU }},
              "bridge":"kube-bridge",
              "isDefaultGateway":true,
              "ipam":{
@@ -201,12 +204,12 @@ spec:
         - "--run-service-proxy=false"
         - "--bgp-graceful-restart=true"
         - "--metrics-port=8080"
-        {{- if .PeerRouterIPs -}}
-        - "--peer-router-ips={{ list .PeerRouterIPs | join "," }}"
-        {{- end -}}
-        {{- if .PeerRouterASNs -}}
-        - "--peer-router-asns={{ list .PeerRouterASNs | join "," }}"
-        {{ end }}
+        {{- if .PeerRouterIPs }}
+        - "--peer-router-ips={{ .PeerRouterIPs }}"
+        {{- end }}
+        {{- if .PeerRouterASNs }}
+        - "--peer-router-asns={{ .PeerRouterASNs }}"
+        {{- end }}
         env:
         - name: NODE_NAME
           valueFrom:

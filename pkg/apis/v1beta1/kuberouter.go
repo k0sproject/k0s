@@ -17,12 +17,16 @@ package v1beta1
 
 // KubeRouter defines the kube-router related config options
 type KubeRouter struct {
-	MTU            int      `yaml:"mtu"`
-	PeerRouterIPs  []string `yaml:"peerRouterIPs"`
-	PeerRouterASNs []string `yaml:"peerRouterASNs"`
+	MTU            int    `yaml:"mtu"`
+	PeerRouterIPs  string `yaml:"peerRouterIPs"`
+	PeerRouterASNs string `yaml:"peerRouterASNs"`
+	AutoMTU        bool   `yaml:"autoMTU"`
 }
 
 // DefaultKubeRouter returns the default config for kube-router
 func DefaultKubeRouter() *KubeRouter {
-	return &KubeRouter{}
+	return &KubeRouter{
+		MTU:     0,
+		AutoMTU: true,
+	}
 }
