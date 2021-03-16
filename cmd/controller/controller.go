@@ -110,6 +110,13 @@ func (c *CmdOpts) needToJoin() bool {
 func (c *CmdOpts) startController() error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
+	// FIXME REMOVE - JUST FOR DEBUG PURPOSES
+	if clusterConfig.Spec.Network.Provider != "kuberouter" {
+		logrus.Infof("parsed config from %s", cfgFile)
+		logrus.Infof("network config: %+v", clusterConfig.Spec.Network)
+		return fmt.Errorf("expected kuberouter to be configured")
+	}
+
 	// create directories early with the proper permissions
 	if err := util.InitDirectory(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
@@ -290,7 +297,8 @@ func (c *CmdOpts) startController() error {
 		perfTimer.Checkpoint("starting-reconcilers")
 
 		// Start all reconcilers
-		for _, reconciler := range reconcilers {
+		for name, reconciler := range reconcilers {
+			logrus.Infof("running reconciler: %s", name)
 			if err := reconciler.Run(); err != nil {
 				logrus.Errorf("failed to start reconciler: %s", err.Error())
 			}
@@ -357,7 +365,15 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		reconcilers["coredns"] = coreDNS
 	}
 
-	c.initNetwork(reconcilers)
+	logrus.Infof("initializing network reconciler for provider %s", clusterConf.Spec.Network.Provider)
+	switch clusterConf.Spec.Network.Provider {
+	case "custom":
+		logrus.Warnf("network provider set to custom, k0s will not manage it")
+	case "calico":
+		initCalico(reconcilers, clusterConf, k0sVars.DataDir)
+	case "kuberouter":
+		initKubeRouter(reconcilers, clusterConf, k0sVars.DataDir)
+	}
 
 	manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
 	if err != nil {
@@ -390,12 +406,8 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 	return reconcilers
 }
 
-func (c *CmdOpts) initNetwork(reconcilers map[string]component.Component) {
-	if c.ClusterConfig.Spec.Network.Provider != "calico" {
-		logrus.Warnf("network provider set to custom, k0s will not manage it")
-		return
-	}
-	calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
+func initCalico(reconcilers map[string]component.Component, conf *config.ClusterConfig, dataDir string) {
+	calicoSaver, err := controller.NewManifestsSaver("calico", dataDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
@@ -410,6 +422,19 @@ func (c *CmdOpts) initNetwork(reconcilers map[string]component.Component) {
 		return
 	}
 	reconcilers["calico"] = calico
+}
+
+func initKubeRouter(reconcilers map[string]component.Component, conf *config.ClusterConfig, dataDir string) {
+	mfSaver, err := controller.NewManifestsSaver("kuberouter", dataDir)
+	if err != nil {
+		logrus.Warnf("failed to initialize kube-router manifests saver: %s", err.Error())
+	}
+	kubeRouter, err := controller.NewKubeRouter(conf, mfSaver)
+	if err != nil {
+		logrus.Warnf("failed to initialize kube-router reconciler: %s", err.Error())
+		return
+	}
+	reconcilers["kube-router"] = kubeRouter
 }
 
 func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {

@@ -105,7 +105,7 @@ spec:
     calico:
 `
 
-	c, err := fromYaml(s.T(), yamlData)
+	c, err := FromYamlString(yamlData)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -114,6 +114,28 @@ spec:
 	s.Equal(4789, n.Calico.VxlanPort)
 	s.Equal(1450, n.Calico.MTU)
 	s.Equal("vxlan", n.Calico.Mode)
+}
+
+func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: foobar
+spec:
+  network:
+    provider: kuberouter
+    kuberouter:
+`
+
+	c, err := FromYamlString(yamlData)
+	s.NoError(err)
+	n := c.Spec.Network
+
+	s.Equal("kuberouter", n.Provider)
+	s.NotNil(n.KubeRouter)
+	s.Nil(n.Calico)
+
 }
 
 func (s *NetworkSuite) TestValidation() {

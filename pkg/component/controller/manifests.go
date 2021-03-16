@@ -24,6 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
 )
 
 // FsManifestsSaver saves all given manifests under the specified root dir
@@ -33,18 +34,20 @@ type FsManifestsSaver struct {
 
 // Save saves given manifest under the given path
 func (f FsManifestsSaver) Save(dst string, content []byte) error {
-	if err := ioutil.WriteFile(filepath.Join(f.dir, dst), content, constant.ManifestsDirMode); err != nil {
-		return fmt.Errorf("can't write calico manifest configuration config map%s: %v", dst, err)
+	target := filepath.Join(f.dir, dst)
+	if err := ioutil.WriteFile(target, content, constant.ManifestsDirMode); err != nil {
+		return fmt.Errorf("can't write manifest %s: %v", target, err)
 	}
+	logrus.WithField("component", "manifest-saver").Debugf("succesfully wrote %s", target)
 	return nil
 }
 
 // NewManifestsSaver builds new filesystem manifests saver
 func NewManifestsSaver(dir string, dataDir string) (*FsManifestsSaver, error) {
-	calicoDir := path.Join(dataDir, "manifests", dir)
-	err := util.InitDirectory(calicoDir, constant.ManifestsDirMode)
+	manifestDir := path.Join(dataDir, "manifests", dir)
+	err := util.InitDirectory(manifestDir, constant.ManifestsDirMode)
 	if err != nil {
 		return nil, err
 	}
-	return &FsManifestsSaver{dir: calicoDir}, nil
+	return &FsManifestsSaver{dir: manifestDir}, nil
 }

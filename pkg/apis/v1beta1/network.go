@@ -25,11 +25,12 @@ import (
 
 // Network defines the network related config options
 type Network struct {
-	PodCIDR     string    `yaml:"podCIDR"`
-	ServiceCIDR string    `yaml:"serviceCIDR"`
-	Provider    string    `yaml:"provider"`
-	Calico      *Calico   `yaml:"calico"`
-	DualStack   DualStack `yaml:"dualStack,omitempty"`
+	PodCIDR     string      `yaml:"podCIDR"`
+	ServiceCIDR string      `yaml:"serviceCIDR"`
+	Provider    string      `yaml:"provider"`
+	Calico      *Calico     `yaml:"calico"`
+	KubeRouter  *KubeRouter `yaml:"kuberouter"`
+	DualStack   DualStack   `yaml:"dualStack,omitempty"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
@@ -46,7 +47,7 @@ func DefaultNetwork() *Network {
 // Validate validates all the settings make sense and should work
 func (n *Network) Validate() []error {
 	var errors []error
-	if n.Provider != "calico" && n.Provider != "custom" {
+	if n.Provider != "calico" && n.Provider != "custom" && n.Provider != "kuberouter" {
 		errors = append(errors, fmt.Errorf("unsupported network provider: %s", n.Provider))
 	}
 
@@ -136,6 +137,8 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if n.Provider == "calico" && n.Calico == nil {
 		n.Calico = DefaultCalico()
+	} else if n.Provider == "kuberouter" && n.KubeRouter == nil {
+		n.KubeRouter = DefaultKubeRouter()
 	}
 
 	return nil
