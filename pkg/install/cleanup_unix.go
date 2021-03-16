@@ -30,17 +30,16 @@ import (
 
 func NewCleanUpConfig(dataDir string) *CleanUpConfig {
 	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
+	criSocketPath := fmt.Sprintf("unix:///%s/containerd.sock", runDir)
 
 	return &CleanUpConfig{
 		dataDir:              dataDir,
 		runDir:               runDir,
 		containerdSockerPath: fmt.Sprintf("%s/containerd.sock", runDir),
-		criSocketPath:        fmt.Sprintf("unix:///%s/containerd.sock", runDir),
+		criSocketPath:        criSocketPath,
 		crictlBinPath:        fmt.Sprintf("%s/%s", dataDir, "bin/crictl"),
 		containerdBinPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
-		criCtl: &crictl.CriCtl{
-			Addr: fmt.Sprintf("unix:///%s/containerd.sock", runDir),
-		},
+		criCtl:               crictl.NewCriCtl(criSocketPath),
 	}
 }
 

@@ -11,11 +11,15 @@ import (
 )
 
 type CriCtl struct {
-	Addr string
+	addr string
+}
+
+func NewCriCtl(addr string) *CriCtl {
+	return &CriCtl{addr}
 }
 
 func (c *CriCtl) StopPod(id string) error {
-	client, conn, err := getRuntimeClient(c.Addr)
+	client, conn, err := getRuntimeClient(c.addr)
 	defer closeConnection(conn)
 	if client == nil {
 		return errors.Errorf("failed to create CRI runtime client")
