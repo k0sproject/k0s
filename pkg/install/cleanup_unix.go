@@ -38,7 +38,7 @@ func NewCleanUpConfig(dataDir string) *CleanUpConfig {
 		criSocketPath:        fmt.Sprintf("unix:///%s/containerd.sock", runDir),
 		crictlBinPath:        fmt.Sprintf("%s/%s", dataDir, "bin/crictl"),
 		containerdBinPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
-		criCtl:				  &crictl.CriCtl{
+		criCtl: &crictl.CriCtl{
 			Addr: fmt.Sprintf("unix:///%s/containerd.sock", runDir),
 		},
 	}
