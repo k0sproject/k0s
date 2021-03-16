@@ -14,8 +14,8 @@ type CriCtl struct {
 	Addr string
 }
 
-func (criCtl *CriCtl) StopPod(id string) error {
-	client, conn, err := getRuntimeClient(criCtl.Addr)
+func (c *CriCtl) StopPod(id string) error {
+	client, conn, err := getRuntimeClient(c.Addr)
 	defer closeConnection(conn)
 	if client == nil {
 		return errors.Errorf("failed to create CRI runtime client")

@@ -106,8 +106,14 @@ func (c *CleanUpConfig) stopAllContainers() error {
 		logrus.Debugf("stopping container: %v", container)
 		err := c.criCtl.StopPod(container)
 		if err != nil {
-			fmtError := fmt.Errorf("failed to stop running pod %v: err: %v", container, err)
-			msg = append(msg, fmtError.Error())
+			if strings.Contains(err.Error(), "443: connect: connection refused") {
+				// on a single node instance, we will see "connection refused" error. this is to be expected
+				// since we're deleting the API pod itself. so we're ignoring this error
+				logrus.Debugf("ignoring container stop err: %v", err.Error())
+			} else {
+				fmtError := fmt.Errorf("failed to stop running pod %v: err: %v", container, err)
+				msg = append(msg, fmtError.Error())
+			}
 		}
 	}
 	if len(msg) > 0 {
