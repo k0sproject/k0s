@@ -110,13 +110,6 @@ func (c *CmdOpts) needToJoin() bool {
 func (c *CmdOpts) startController() error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
-	// FIXME REMOVE - JUST FOR DEBUG PURPOSES
-	if clusterConfig.Spec.Network.Provider != "kuberouter" {
-		logrus.Infof("parsed config from %s", cfgFile)
-		logrus.Infof("network config: %+v", clusterConfig.Spec.Network)
-		return fmt.Errorf("expected kuberouter to be configured")
-	}
-
 	// create directories early with the proper permissions
 	if err := util.InitDirectory(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err

@@ -72,5 +72,4 @@ spec:
   network:
     provider: kuberouter
     kuberouter:
-      mtu: 1450
 `
