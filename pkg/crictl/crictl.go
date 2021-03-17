@@ -2,8 +2,6 @@ package crictl
 
 import (
 	"context"
-	"time"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -24,12 +22,15 @@ func (c *CriCtl) StopPod(id string) error {
 	if client == nil {
 		return errors.Errorf("failed to create CRI runtime client")
 	}
+	if err != nil {
+		return errors.Wrapf(err, "failed to create CRI runtime client")
+	}
 	request := &pb.StopPodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("StopPodSandboxRequest: %v", request)
 	r, err := client.StopPodSandbox(context.Background(), request)
 	logrus.Debugf("StopPodSandboxResponse: %v", r)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to stop pod sandbox")
 	}
 	logrus.Debugf("Stopped pod sandbox %s\n", id)
 	return nil
@@ -45,7 +46,7 @@ func getRuntimeClient(addr string) (pb.RuntimeServiceClient, *grpc.ClientConn, e
 }
 
 func getRuntimeClientConnection(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTimeout(1*time.Second), grpc.WithInsecure())
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		errMsg := errors.Wrapf(err, "connect endpoint %s, make sure you are running as root and the endpoint has been started", addr)
 		logrus.Error(errMsg)
