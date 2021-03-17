@@ -2,11 +2,16 @@
 
 ## In-cluster networking
 
-k0s uses Calico as the default, built-in network provider. Calico is a container networking solution making use of layer 3 to route packets to pods. It supports for example pod specific network policies helping to secure kubernetes clusters in demanding use cases. Calico uses vxlan overlay network by default. Also ipip (IP-in-IP) is supported by configuration.
+k0s support two CNI providers out-of-box plus the ability to bring your own CNI config.
+
+k0s uses [Calico](https://www.projectcalico.org/) as the default, built-in network provider. Calico is a container networking solution making use of layer 3 to route packets to pods. It supports for example pod specific network policies helping to secure kubernetes clusters in demanding use cases. Calico uses vxlan overlay network by default. Also ipip (IP-in-IP) is supported by configuration.
+
+[Kube-router](https://github.com/cloudnativelabs/kube-router) allows setting up CNI networking without any overlays by utilizing BGP as the main mechanism for in-cluster networking:
+> A key design tenet of Kube-router is to use standard Linux networking stack and toolset. There is no overlays or SDN pixie dust, but just plain good old networking.
 
 When deploying k0s with the default settings, all pods on a node can communicate with all pods on all nodes. No configuration changes are needed to get started.
 
-It is possible for a user to opt-out of Calico and k0s managing the network. Users are able to utilize any network plugin following the CNI specification. By configuring `custom` as the network provider (in k0s.yaml) it is expected that the user sets up the networking. This can be achieved e.g. by pushing network provider manifests into `/var/lib/k0s/manifests` from where k0s controllers will pick them up and deploy into the cluster. More on the automatic manifest handling [here](manifests.md).
+It is possible for a user to opt-out of k0s managing the network setup. Users are able to utilize any network plugin following the CNI specification. By configuring `custom` as the network provider (in k0s.yaml) it is expected that the user sets up the networking. This can be achieved e.g. by pushing network provider manifests into `/var/lib/k0s/manifests` from where k0s controllers will pick them up and deploy into the cluster. More on the automatic manifest handling [here](manifests.md).
 
 ## Controller(s) - Worker communication
 
@@ -24,4 +29,5 @@ As one of the goals of k0s is to allow deployment of totally isolated control pl
 | TCP       | 10250     | kubelet                   | Master, Worker => Host `*`  | authenticated kubelet API for the master node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs 
 | TCP       | 9443      | k0s-api                   | controller <-> controller   | k0s controller join API, TLS with token auth
 | TCP       | 8132,8133 | konnectivity server       | worker <-> controller       | konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+| TCP       | 179       | kube-router               | worker <-> worker           | BGP routing sessions between peers
 

@@ -105,7 +105,7 @@ spec:
     calico:
 `
 
-	c, err := FromYamlString(yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -128,7 +128,7 @@ spec:
     kuberouter:
 `
 
-	c, err := FromYamlString(yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	s.NoError(err)
 	n := c.Spec.Network
 
