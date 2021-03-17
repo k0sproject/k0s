@@ -32,15 +32,7 @@ func (a *OCIBundleReconciler) Init() error {
 	return util.InitDirectory(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
-func (a OCIBundleReconciler) unpackBundle(bundlePath string) error {
-
-	sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
-	client, err := containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"))
-
-	if err != nil {
-		return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
-	}
-	defer client.Close()
+func (a OCIBundleReconciler) unpackBundle(client *containerd.Client, bundlePath string) error {
 	r, err := os.Open(bundlePath)
 	if err != nil {
 		return fmt.Errorf("can't open bundle file %s: %v", bundlePath, err)
@@ -61,9 +53,19 @@ func (a *OCIBundleReconciler) Run() error {
 	if err != nil {
 		return fmt.Errorf("can't read bundles directory")
 	}
+	if len(files) == 0 {
+		return nil
+	}
 	return retry.Do(func() error {
+		sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
+		client, err := containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"))
+
+		if err != nil {
+			return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
+		}
+		defer client.Close()
 		for _, file := range files {
-			if err := a.unpackBundle(a.k0sVars.OCIBundleDir + "/" + file.Name()); err != nil {
+			if err := a.unpackBundle(client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
 				return fmt.Errorf("can't unpack bundle %s: %w", file.Name(), err)
 			}
 		}
