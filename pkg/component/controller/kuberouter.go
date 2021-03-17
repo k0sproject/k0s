@@ -32,6 +32,15 @@ type KubeRouter struct {
 	saver manifestsSaver
 }
 
+type kubeRouterConfig struct {
+	MTU               int
+	AutoMTU           bool
+	CNIInstallerImage string
+	CNIImage          string
+	PeerRouterIPs     string
+	PeerRouterASNs    string
+}
+
 // NewKubeRouter creates new KubeRouter reconciler component
 func NewKubeRouter(clusterConf *config.ClusterConfig, manifestsSaver manifestsSaver) (*KubeRouter, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kube-router"})
@@ -55,11 +64,20 @@ func (c *KubeRouter) Stop() error { return nil }
 func (c *KubeRouter) Run() error {
 	c.log.Info("starting to dump manifests")
 
+	cfg := kubeRouterConfig{
+		AutoMTU:           c.clusterConf.Spec.Network.KubeRouter.AutoMTU,
+		MTU:               c.clusterConf.Spec.Network.KubeRouter.MTU,
+		PeerRouterIPs:     c.clusterConf.Spec.Network.KubeRouter.PeerRouterIPs,
+		PeerRouterASNs:    c.clusterConf.Spec.Network.KubeRouter.PeerRouterASNs,
+		CNIImage:          c.clusterConf.Spec.Images.KubeRouter.CNI.URI(),
+		CNIInstallerImage: c.clusterConf.Spec.Images.KubeRouter.CNIInstaller.URI(),
+	}
+
 	output := bytes.NewBuffer([]byte{})
 	tw := util.TemplateWriter{
 		Name:     "kube-router",
 		Template: kubeRouterTemplate,
-		Data:     c.clusterConf.Spec.Network.KubeRouter,
+		Data:     cfg,
 	}
 
 	err := tw.WriteToBuffer(output)
@@ -76,7 +94,6 @@ func (c *KubeRouter) Run() error {
 	return nil
 }
 
-// TODO Make images configurable
 const kubeRouterTemplate = `---
 apiVersion: v1
 kind: ConfigMap
@@ -141,7 +158,7 @@ spec:
       serviceAccountName: kube-router
       initContainers:
         - name: install-cni-bins
-          image: quay.io/k0sproject/cni-node:latest
+          image: {{ .CNIInstallerImage }}
           imagePullPolicy: Always
           args:
             - install
@@ -149,7 +166,7 @@ spec:
           - name: cni-bin
             mountPath: /host/opt/cni/bin
         - name: install-cniconf
-          image: docker.io/cloudnativelabs/kube-router
+          image: {{ .CNIImage }}
           imagePullPolicy: Always
           command:
           - /bin/sh
@@ -196,7 +213,7 @@ spec:
           type: FileOrCreate
       containers:
       - name: kube-router
-        image: docker.io/cloudnativelabs/kube-router
+        image: {{ .CNIImage }}
         imagePullPolicy: Always
         args:
         - "--run-router=true"

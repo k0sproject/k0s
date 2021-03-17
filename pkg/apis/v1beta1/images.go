@@ -40,7 +40,8 @@ type ClusterImages struct {
 	KubeProxy     ImageSpec `yaml:"kubeproxy"`
 	CoreDNS       ImageSpec `yaml:"coredns"`
 
-	Calico CalicoImageSpec `yaml:"calico"`
+	Calico     CalicoImageSpec     `yaml:"calico"`
+	KubeRouter KubeRouterImageSpec `yaml:"kuberouter"`
 
 	Repository        string `yaml:"repository,omitempty"`
 	DefaultPullPolicy string `yaml:"default_pull_policy,omitempty"`
@@ -71,6 +72,8 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(&ci.Calico.CNI)
 	override(&ci.Calico.Node)
 	override(&ci.Calico.KubeControllers)
+	override(&ci.KubeRouter.CNI)
+	override(&ci.KubeRouter.CNIInstaller)
 }
 
 // CalicoImageSpec config group for calico related image settings
@@ -78,6 +81,12 @@ type CalicoImageSpec struct {
 	CNI             ImageSpec `yaml:"cni"`
 	Node            ImageSpec `yaml:"node"`
 	KubeControllers ImageSpec `yaml:"kubecontrollers"`
+}
+
+// KubeRouterImageSpec config group for kube-router related images
+type KubeRouterImageSpec struct {
+	CNI          ImageSpec `yaml:"cni"`
+	CNIInstaller ImageSpec `yaml:"cniInstaller"`
 }
 
 // DefaultClusterImages default image settings
@@ -112,6 +121,16 @@ func DefaultClusterImages() *ClusterImages {
 			KubeControllers: ImageSpec{
 				Image:   constant.KubeControllerImage,
 				Version: constant.KubeControllerImageVersion,
+			},
+		},
+		KubeRouter: KubeRouterImageSpec{
+			CNI: ImageSpec{
+				Image:   constant.KubeRouterCNIImage,
+				Version: constant.KubeRouterCNIImageVersion,
+			},
+			CNIInstaller: ImageSpec{
+				Image:   constant.KubeRouterCNIInstallerImage,
+				Version: constant.KubeRouterCNIInstallerImageVersion,
 			},
 		},
 	}
