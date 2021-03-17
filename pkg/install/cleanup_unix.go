@@ -130,9 +130,9 @@ func (c *CleanUpConfig) removeAllContainers() error {
 	}
 
 	for _, container := range containers {
-		out, err := exec.Command(c.crictlBinPath, "-r", c.criSocketPath, "rmp", container).CombinedOutput()
+		err := c.criCtl.RemovePod(container)
 		if err != nil {
-			fmtError := fmt.Errorf("failed to stop running pod %v: output: %v, err: %v", container, string(out), err)
+			fmtError := fmt.Errorf("failed to remove pod %v: err: %v", container, err)
 			msg = append(msg, fmtError.Error())
 		}
 	}
