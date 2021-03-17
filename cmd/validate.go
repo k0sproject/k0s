@@ -20,8 +20,9 @@ import (
 	"os"
 	"strings"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/spf13/cobra"
+
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 var (
@@ -49,10 +50,15 @@ func init() {
 	addPersistentFlags(validateConfigCmd)
 }
 
+// XXX: This is a duplication of the code under cmd/helpers.go ConfigFromYaml function.
+// XXX: we should fix this and remove the duplication
 func validateConfig(cfgPath string) (err error) {
 	var clusterConfig *config.ClusterConfig
 
-	if isInputFromPipe() {
+	if cfgPath == "" {
+		// no config file exists, using defaults
+		clusterConfig = config.DefaultClusterConfig()
+	} else if isInputFromPipe() {
 		clusterConfig, err = config.FromYamlPipe(os.Stdin)
 	} else {
 		clusterConfig, err = config.FromYamlFile(cfgPath)
