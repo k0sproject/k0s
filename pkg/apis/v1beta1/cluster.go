@@ -51,6 +51,7 @@ type ClusterSpec struct {
 	Install           *InstallSpec           `yaml:"installConfig,omitempty"`
 	Images            *ClusterImages         `yaml:"images"`
 	Extensions        *ClusterExtensions     `yaml:"extensions,omitempty"`
+	Konnectivity      *KonnectivitySpec      `yaml:"konnectivity,omitempty"`
 }
 
 // ControllerManagerSpec ...
@@ -172,5 +173,6 @@ func DefaultClusterSpec(k0sVars constant.CfgVars) *ClusterSpec {
 		Install:           DefaultInstallSpec(),
 		Images:            DefaultClusterImages(),
 		Telemetry:         DefaultClusterTelemetry(),
+		Konnectivity:      DefaultKonnectivitySpec(),
 	}
 }

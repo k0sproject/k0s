@@ -106,7 +106,7 @@ func (m *Manager) Create(valid time.Duration, role string) (string, error) {
 	return token, nil
 }
 
-// List returna all the join tokens for given role. If role == "" then it returns all join tokens
+// List returns all the join tokens for given role. If role == "" then it returns all join tokens
 func (m *Manager) List(role string) ([]Token, error) {
 	tokenList, err := m.client.CoreV1().Secrets("kube-system").List(context.TODO(), metav1.ListOptions{
 		FieldSelector: "type=bootstrap.kubernetes.io/token",

@@ -22,10 +22,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"strings"
 
 	"github.com/cloudflare/cfssl/log"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -80,6 +82,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			var username = args[0]
 			c := CmdOpts(config.GetCmdOpts())
 			clusterAPIURL, err := c.getAPIURL()
+
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
 			}

@@ -86,6 +86,7 @@ func (a *APIServer) Run() error {
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
+		"secure-port":                      fmt.Sprintf("%d", a.ClusterConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
 		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"enable-bootstrap-token-auth":      "true",
