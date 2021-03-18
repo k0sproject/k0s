@@ -142,11 +142,18 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // BuildServiceCIDR returns actual argument value for service cidr
-func (n *Network) BuildServiceCIDR() string {
-	if n.DualStack.Enabled {
+func (n *Network) BuildServiceCIDR(addr string) string {
+	if !n.DualStack.Enabled {
+		return n.ServiceCIDR
+	}
+	// because in the dual-stack mode k8s
+	// relies on the ordering of the given CIDRs
+	// we need to first give family on which
+	// api server listens
+	if IsIPv6String(addr) {
 		return n.DualStack.IPv6ServiceCIDR + "," + n.ServiceCIDR
 	}
-	return n.ServiceCIDR
+	return n.ServiceCIDR + "," + n.DualStack.IPv6ServiceCIDR
 }
 
 // BuildPodCIDR returns actual argument value for pod cidr

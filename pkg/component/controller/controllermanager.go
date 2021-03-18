@@ -83,7 +83,7 @@ func (a *Manager) Run() error {
 		"root-ca-file":                     path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"cluster-cidr":                     a.ClusterConfig.Spec.Network.BuildPodCIDR(),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(),
+		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.Address),
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 	}
