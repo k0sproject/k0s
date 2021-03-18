@@ -17,12 +17,43 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"html/template"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/token"
 )
+
+var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
+apiVersion: v1
+clusters:
+- cluster:
+    server: {{.JoinURL}}
+    certificate-authority-data: {{.CACert}}
+  name: k0s
+contexts:
+- context:
+    cluster: k0s
+    user: {{.User}}
+  name: k0s
+current-context: k0s
+kind: Config
+preferences: {}
+users:
+- name: {{.User}}
+  user:
+    token: {{.Token}}
+`))
 
 func cmdFlagsToArgs(cmd *cobra.Command) []string {
 	flagsAndVals := []string{}
@@ -37,4 +68,45 @@ func cmdFlagsToArgs(cmd *cobra.Command) []string {
 		}
 	})
 	return flagsAndVals
+}
+
+func createKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, role string, expiry time.Duration) (string, error) {
+	caCert, err := ioutil.ReadFile(filepath.Join(k0sVars.CertRootDir, "ca.crt"))
+	if err != nil {
+		msg := fmt.Sprintf("failed to read cluster ca certificate from %s. is the control plane initialized on this node?", filepath.Join(k0sVars.CertRootDir, "ca.crt"))
+		return "", errors.Wrapf(err, msg)
+	}
+	manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
+	if err != nil {
+		return "", err
+	}
+	tokenString, err := manager.Create(expiry, role)
+	if err != nil {
+		return "", err
+	}
+	data := struct {
+		CACert  string
+		Token   string
+		User    string
+		JoinURL string
+		APIUrl  string
+	}{
+		CACert: base64.StdEncoding.EncodeToString(caCert),
+		Token:  tokenString,
+	}
+	if role == "worker" {
+		data.User = "kubelet-bootstrap"
+		data.JoinURL = clusterConfig.Spec.API.APIAddressURL()
+	} else {
+		data.User = "controller-bootstrap"
+		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()
+	}
+
+	var buf bytes.Buffer
+
+	err = kubeconfigTemplate.Execute(&buf, &data)
+	if err != nil {
+		return "", err
+	}
+	return token.JoinEncode(&buf)
 }
