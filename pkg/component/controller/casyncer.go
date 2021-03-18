@@ -25,11 +25,12 @@ import (
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
 // CASyncer is the Component implementation to sync CAs between multiple controllers
 type CASyncer struct {
-	JoinClient *v1beta1.JoinClient
+	JoinClient *token.JoinClient
 	K0sVars    constant.CfgVars
 }
 

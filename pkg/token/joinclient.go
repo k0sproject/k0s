@@ -1,19 +1,4 @@
-/*
-Copyright 2021 k0s authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-package v1beta1
+package token
 
 import (
 	"bytes"
@@ -25,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/token"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
@@ -40,7 +25,7 @@ type JoinClient struct {
 
 // JoinClientFromToken creates a new join api client from a token
 func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
-	tokenBytes, err := token.DecodeJoinToken(encodedToken)
+	tokenBytes, err := DecodeJoinToken(encodedToken)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode token")
 	}
@@ -71,8 +56,8 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 }
 
 // GetCA calls the CA sync API
-func (j *JoinClient) GetCA() (CaResponse, error) {
-	var caData CaResponse
+func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
+	var caData v1beta1.CaResponse
 	req, err := http.NewRequest(http.MethodGet, j.joinAddress+"/v1beta1/ca", nil)
 	if err != nil {
 		return caData, err
@@ -104,9 +89,9 @@ func (j *JoinClient) GetCA() (CaResponse, error) {
 }
 
 // JoinEtcd calls the etcd join API
-func (j *JoinClient) JoinEtcd(peerAddress string) (EtcdResponse, error) {
-	var etcdResponse EtcdResponse
-	etcdRequest := EtcdRequest{
+func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) {
+	var etcdResponse v1beta1.EtcdResponse
+	etcdRequest := v1beta1.EtcdRequest{
 		PeerAddress: peerAddress,
 	}
 	name, err := os.Hostname()

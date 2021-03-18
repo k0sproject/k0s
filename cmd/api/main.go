@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package api
 
 import (
 	"context"
@@ -28,67 +28,77 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/util"
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8s "k8s.io/client-go/kubernetes"
 
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
-func init() {
-	addPersistentFlags(APICmd)
+type CmdOpts config.CLIOptions
+
+const (
+	workerRole     = "worker"
+	controllerRole = "controller"
+)
+
+var allowedUsageByRole = map[string]string{
+	workerRole:     "usage-bootstrap-api-worker-calls",
+	controllerRole: "usage-controller-join",
 }
 
-var (
-	kubeClient    k8s.Interface
-	clusterConfig *v1beta1.ClusterConfig
-
-	APICmd = &cobra.Command{
+func NewAPICmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "api",
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return startAPI()
+			c := getCmdOpts()
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			if err != nil {
+				return err
+			}
+			c.ClusterConfig = cfg
+			return c.startAPI()
 		},
 	}
-)
+	cmd.SilenceUsage = true
+	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	return cmd
+}
 
-func startAPI() error {
-	var err error
-	clusterConfig, err = ConfigFromYaml(cfgFile)
-	if err != nil {
-		return err
-	}
+func (c *CmdOpts) startAPI() error {
 	// Single kube client for whole lifetime of the API
-	kubeClient, err = kubernetes.NewClient(k0sVars.AdminKubeConfigPath)
+	kc, err := kubernetes.NewClient(c.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}
+	c.KubeClient = kc
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
 
-	if clusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
+	if c.ClusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
-			controllerHandler(etcdHandler()),
+			c.controllerHandler(c.etcdHandler()),
 		)
 	}
 
-	if clusterConfig.Spec.Storage.IsJoinable() {
+	if c.ClusterConfig.Spec.Storage.IsJoinable() {
 		router.Path(prefix + "/ca").Methods("GET").Handler(
-			controllerHandler(caHandler()),
+			c.controllerHandler(c.caHandler()),
 		)
 
 	}
 	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
-		workerHandler(kubeConfigHandler()),
+		c.workerHandler(c.kubeConfigHandler()),
 	)
 
 	srv := &http.Server{
@@ -99,14 +109,14 @@ func startAPI() error {
 	}
 
 	log.Fatal(srv.ListenAndServeTLS(
-		filepath.Join(k0sVars.CertRootDir, "k0s-api.crt"),
-		filepath.Join(k0sVars.CertRootDir, "k0s-api.key"),
+		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.crt"),
+		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.key"),
 	))
 
 	return nil
 }
 
-func etcdHandler() http.Handler {
+func (c *CmdOpts) etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
@@ -122,7 +132,7 @@ func etcdHandler() http.Handler {
 			return
 		}
 
-		etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
+		etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -138,7 +148,7 @@ func etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(k0sVars.EtcdCertDir, "ca.crt"), filepath.Join(k0sVars.EtcdCertDir, "ca.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "cc.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "cc.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
@@ -163,7 +173,7 @@ func etcdHandler() http.Handler {
 	})
 }
 
-func kubeConfigHandler() http.Handler {
+func (c *CmdOpts) kubeConfigHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		tpl := `apiVersion: v1
 kind: Config
@@ -184,7 +194,7 @@ users:
   user:
     token: {{ .Token }}
 `
-		l, err := kubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
+		l, err := c.KubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -213,8 +223,8 @@ users:
 				Token     string
 				Namespace string
 			}{
-				Server:    clusterConfig.Spec.API.APIAddressURL(),
-				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
+				Server:    c.ClusterConfig.Spec.API.APIAddressURL(),
+				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["cc.crt"]),
 				Token:     string(secretWithToken.Data["token"]),
 				Namespace: string(secretWithToken.Data["namespace"]),
 			},
@@ -227,31 +237,31 @@ users:
 
 }
 
-func caHandler() http.Handler {
+func (c *CmdOpts) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		caResp := v1beta1.CaResponse{}
-		key, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.key"))
+		key, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "cc.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "ca.crt"))
+		crt, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "cc.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "sa.key"))
+		saKey, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sc.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := ioutil.ReadFile(path.Join(k0sVars.CertRootDir, "sa.pub"))
+		saPub, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sc.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -266,61 +276,6 @@ func caHandler() http.Handler {
 	})
 }
 
-func sendError(err error, resp http.ResponseWriter, status ...int) {
-	code := http.StatusInternalServerError
-	if len(status) == 1 {
-		code = status[0]
-	}
-
-	logrus.Error(err)
-	resp.Header().Set("Content-Type", "text/plain")
-	resp.WriteHeader(code)
-	if _, err := resp.Write([]byte(err.Error())); err != nil {
-		sendError(err, resp)
-		return
-	}
-}
-
-func authMiddleware(next http.Handler, role string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization")
-		if auth == "" {
-			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
-			return
-		}
-
-		parts := strings.Split(auth, "Bearer ")
-		if len(parts) == 2 {
-			token := parts[1]
-			if !isValidToken(token, role) {
-				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
-				return
-			}
-		} else {
-			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func controllerHandler(next http.Handler) http.Handler {
-	return authMiddleware(next, controllerRole)
-}
-
-func workerHandler(next http.Handler) http.Handler {
-	return authMiddleware(next, workerRole)
-}
-
-const workerRole = "worker"
-const controllerRole = "controller"
-
-var allowedUsageByRole = map[string]string{
-	workerRole:     "usage-bootstrap-api-worker-calls",
-	controllerRole: "usage-controller-join",
-}
-
 /** The token is in form of xyz.foobar where:
 - xyz: the token "ID" in kube api
 - foobar: the token itself
@@ -328,7 +283,7 @@ We need to validate:
 - that we find a secret with the ID
 - that the token matches whats inside the secret
 */
-func isValidToken(token string, role string) bool {
+func (c *CmdOpts) isValidToken(token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -336,7 +291,7 @@ func isValidToken(token string, role string) bool {
 	}
 
 	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
-	secret, err := kubeClient.CoreV1().Secrets("kube-system").Get(context.TODO(), secretName, v1.GetOptions{})
+	secret, err := c.KubeClient.CoreV1().Secrets("kube-system").Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
 		return false
@@ -352,4 +307,36 @@ func isValidToken(token string, role string) bool {
 	}
 
 	return true
+}
+
+func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth == "" {
+			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+			return
+		}
+
+		parts := strings.Split(auth, "Bearer ")
+		if len(parts) == 2 {
+			token := parts[1]
+			if !c.isValidToken(token, role) {
+				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+				return
+			}
+		} else {
+			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (c *CmdOpts) controllerHandler(next http.Handler) http.Handler {
+	return c.authMiddleware(next, controllerRole)
+}
+
+func (c *CmdOpts) workerHandler(next http.Handler) http.Handler {
+	return c.authMiddleware(next, workerRole)
 }

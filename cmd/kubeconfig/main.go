@@ -13,29 +13,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package kubeconfig
 
 import (
-	"fmt"
-
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
-var configCmd = &cobra.Command{
-	Use:   "default-config",
-	Short: "Output the default k0s configuration yaml to stdout",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := buildConfig(); err != nil {
-			return err
-		}
-		return nil
-	},
-}
+type CmdOpts config.CLIOptions
 
-func buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(k0sVars))
-	fmt.Print(string(conf))
-	return nil
+func NewKubeConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "kubeconfig [command]",
+		Short: "Create a kubeconfig file for a specified user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return kubeconfigCreateCmd().Usage()
+		},
+	}
+	cmd.SilenceUsage = true
+	cmd.AddCommand(kubeconfigCreateCmd())
+	cmd.AddCommand(kubeConfigAdminCmd())
+	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	return cmd
 }

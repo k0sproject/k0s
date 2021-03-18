@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package token
 
 import (
 	"fmt"
@@ -23,20 +23,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-
-}
-
-var (
-	tokenInvalidateCmd = &cobra.Command{
+func tokenInvalidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:     "invalidate",
 		Short:   "Invalidates existing join token",
 		Example: "k0s token invalidate xyz123",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			c := getCmdOpts()
 			if len(args) < 1 {
 				return fmt.Errorf("invalidate requires at least one token Id to invalidate")
 			}
-			manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
+			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
 			if err != nil {
 				return err
 			}
@@ -51,4 +48,6 @@ var (
 			return nil
 		},
 	}
-)
+	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	return cmd
+}

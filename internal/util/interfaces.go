@@ -74,3 +74,11 @@ func FirstPublicAddress() (string, error) {
 	logrus.Warn("failed to find any non-local, non podnetwork addresses on host, defaulting public address to 127.0.0.1")
 	return "127.0.0.1", nil
 }
+
+// MapMerge merges the input from one map with an existing map, so that we can override entries entry in the existing map
+func MapMerge(intpuMap map[string]string, existingMap map[string]string) map[string]string {
+	for k := range intpuMap {
+		existingMap[k] = intpuMap[k]
+	}
+	return existingMap
+}

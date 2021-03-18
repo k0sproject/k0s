@@ -13,31 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package kubeconfig
 
 import (
 	"bytes"
 	"encoding/base64"
-	"strings"
-
-	"github.com/cloudflare/cfssl/log"
-	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
-)
 
-func init() {
-	kubeconfigCreateCmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
-	kubeconfigCmd.AddCommand(kubeconfigCreateCmd)
-	kubeconfigCmd.AddCommand(kubeConfigAdminCmd)
-}
+	"github.com/cloudflare/cfssl/log"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
+	"github.com/k0sproject/k0s/pkg/certificate"
+	"github.com/k0sproject/k0s/pkg/config"
+)
 
 var (
 	groups string
@@ -63,17 +56,10 @@ users:
     client-certificate-data: {{.ClientCert}}
     client-key-data: {{.ClientKey}}
 `))
+)
 
-	// kubeconfigCmd creates new certs and kubeConfig for a user
-	kubeconfigCmd = &cobra.Command{
-		Use:   "kubeconfig [command]",
-		Short: "Create a kubeconfig file for a specified user",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return kubeconfigCreateCmd.Usage()
-		},
-	}
-
-	kubeconfigCreateCmd = &cobra.Command{
+func kubeconfigCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "create [username]",
 		Short: "Create a kubeconfig for a user",
 		Long: `Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
@@ -92,23 +78,16 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return errors.New("Username is mandatory")
 			}
 			var username = args[0]
-			var config = k0sVars
-
-			clusterAPIURL, err := getAPIURL()
+			c := getCmdOpts()
+			clusterAPIURL, err := c.getAPIURL()
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
 			}
-			caCert, err := ioutil.ReadFile(path.Join(config.CertRootDir, "ca.crt"))
+			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
 				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
 			}
-
-			caCertPath, caCertKey := path.Join(config.CertRootDir, "ca.crt"), path.Join(config.CertRootDir, "ca.key")
-
-			if err != nil {
-				return err
-			}
-
+			caCertPath, caCertKey := path.Join(c.K0sVars.CertRootDir, "ca.crt"), path.Join(c.K0sVars.CertRootDir, "ca.key")
 			userReq := certificate.Request{
 				Name:   username,
 				CN:     username,
@@ -117,7 +96,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				CAKey:  caCertKey,
 			}
 			certManager := certificate.Manager{
-				K0sVars: config,
+				K0sVars: c.K0sVars,
 			}
 			userCert, err := certManager.EnsureCertificate(userReq, "root")
 			if err != nil {
@@ -144,44 +123,23 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			if err != nil {
 				return err
 			}
-			os.Stdout.Write(buf.Bytes())
-			return nil
-		},
-	}
-
-	kubeConfigAdminCmd = &cobra.Command{
-		Use:   "admin [command]",
-		Short: "Display Admin's Kubeconfig file",
-		Long:  "Print kubeconfig for the Admin user to stdout",
-		Example: `	$ k0s kubeconfig admin > ~/.kube/config
-	$ export KUBECONFIG=~/.kube/config
-	$ kubectl get nodes`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if util.FileExists(k0sVars.AdminKubeConfigPath) {
-				content, err := ioutil.ReadFile(k0sVars.AdminKubeConfigPath)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				clusterAPIURL, err := getAPIURL()
-				if err != nil {
-					return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
-				}
-				newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
-				os.Stdout.Write([]byte(newContent))
-			} else {
-				return errors.Errorf("failed to read admin config, is the control plane initialized on this node?")
+			_, err = os.Stdout.Write(buf.Bytes())
+			if err != nil {
+				return err
 			}
 			return nil
 		},
 	}
-)
+	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
+	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	return cmd
+}
 
-func getAPIURL() (string, error) {
+func (c *CmdOpts) getAPIURL() (string, error) {
 	// Disable logrus
 	logrus.SetLevel(logrus.FatalLevel)
 
-	clusterConfig, err := ConfigFromYaml(cfgFile)
+	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return "", err
 	}

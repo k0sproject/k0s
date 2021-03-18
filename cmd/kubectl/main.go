@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package kubectl
 
 import (
 	"os"
@@ -21,17 +21,18 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	kubectl "k8s.io/kubectl/pkg/cmd"
+
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var (
-	kubectlCmd = kubectl.NewKubectlCommand(os.Stdin, os.Stdout, os.Stderr)
-)
+type CmdOpts config.CLIOptions
 
-func init() {
-	kubectlCmd.Aliases = []string{"kc"}
+func NewK0sKubectlCmd() *cobra.Command {
+	cmd := kubectl.NewKubectlCommand(os.Stdin, os.Stdout, os.Stderr)
+	cmd.Aliases = []string{"kc"}
 	// Get handle on the original kubectl prerun so we can call it later
-	originalPreRunE := kubectlCmd.PersistentPreRunE
-	kubectlCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+	originalPreRunE := cmd.PersistentPreRunE
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Call parents pre-run if exists, cobra does not do this automatically
 		// See: https://github.com/spf13/cobra/issues/216
 		if parent := cmd.Parent(); parent != nil {
@@ -45,17 +46,20 @@ func init() {
 				}
 			}
 		}
+		c := getCmdOpts()
 		kubenv := os.Getenv("KUBECONFIG")
 		if kubenv == "" {
 			// Verify we can read the config before pushing it to env
-			file, err := os.OpenFile(k0sVars.AdminKubeConfigPath, os.O_RDONLY, 0600)
+			file, err := os.OpenFile(c.K0sVars.AdminKubeConfigPath, os.O_RDONLY, 0600)
 			if err != nil {
-				logrus.Errorf("cannot read admin kubeconfig at %s, is the server running?", k0sVars.AdminKubeConfigPath)
+				logrus.Errorf("cannot read admin kubeconfig at %s, is the server running?", c.K0sVars.AdminKubeConfigPath)
 				return err
 			}
 			defer file.Close()
-			os.Setenv("KUBECONFIG", k0sVars.AdminKubeConfigPath)
+			os.Setenv("KUBECONFIG", c.K0sVars.AdminKubeConfigPath)
 		}
 		return originalPreRunE(cmd, args)
 	}
+	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	return cmd
 }

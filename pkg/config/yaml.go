@@ -13,33 +13,51 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package config
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/sirupsen/logrus"
 )
 
-// ConfigFromYaml returns given k0s config or default config
-func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err error) {
+func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	if cfgPath == "" {
+		// no config file exists, using defaults
 		logrus.Info("no config file given, using defaults")
-		clusterConfig = config.DefaultClusterConfig(k0sVars)
-	} else if isInputFromPipe() {
-		clusterConfig, err = config.FromYamlPipe(os.Stdin, k0sVars)
-	} else {
-		clusterConfig, err = config.FromYamlFile(cfgPath, k0sVars)
 	}
-
+	cfg, err := ValidateYaml(cfgPath, k0sVars)
 	if err != nil {
 		return nil, err
 	}
-	// validate
+	return cfg, nil
+}
+
+func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
+	if cfgPath == "" {
+		// no config file exists, using defaults
+		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
+	} else if isInputFromPipe() {
+		clusterConfig, err = v1beta1.FromYamlPipe(os.Stdin, k0sVars)
+	} else {
+		clusterConfig, err = v1beta1.FromYamlFile(cfgPath, k0sVars)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
+		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
+	}
+	if clusterConfig.Spec.Install == nil {
+		clusterConfig.Spec.Install = v1beta1.DefaultInstallSpec()
+	}
+
 	errors := clusterConfig.Validate()
 	if len(errors) > 0 {
 		messages := make([]string, len(errors))
@@ -47,12 +65,6 @@ func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err er
 			messages = append(messages, e.Error())
 		}
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	if clusterConfig.Spec.Storage.Type == config.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
-		clusterConfig.Spec.Storage.Kine = config.DefaultKineConfig(k0sVars.DataDir)
-	}
-	if clusterConfig.Spec.Install == nil {
-		clusterConfig.Spec.Install = config.DefaultInstallSpec()
 	}
 	return clusterConfig, nil
 }
