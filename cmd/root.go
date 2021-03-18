@@ -148,7 +148,8 @@ func addPersistentFlags(cmd *cobra.Command) {
 }
 
 func Execute() {
-	// just a hack to trick linter which requires to check for errors
-	// cobra itself already prints out all errors that happen in subcommands
-	_ = rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
