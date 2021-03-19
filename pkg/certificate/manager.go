@@ -16,6 +16,10 @@ limitations under the License.
 package certificate
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -216,4 +220,66 @@ func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile strin
 	}
 	// no changes are detected. continue
 	return false
+}
+
+func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner string) error {
+	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
+	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
+
+	if util.FileExists(keyFile) && util.FileExists(pubFile) {
+		return util.ChownFile(keyFile, owner, constant.CertSecureMode)
+	}
+
+	reader := rand.Reader
+	bitSize := 2048
+
+	key, err := rsa.GenerateKey(reader, bitSize)
+	if err != nil {
+		return err
+	}
+
+	var privateKey = &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	}
+
+	outFile, err := os.OpenFile(keyFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertSecureMode)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	err = util.ChownFile(keyFile, owner, constant.CertSecureMode)
+	if err != nil {
+		return err
+	}
+
+	err = pem.Encode(outFile, privateKey)
+	if err != nil {
+		return err
+	}
+
+	// note to the next reader: key.Public() != key.PublicKey
+	pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())
+	if err != nil {
+		return err
+	}
+
+	var pemkey = &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	}
+
+	pemfile, err := os.Create(pubFile)
+	if err != nil {
+		return err
+	}
+	defer pemfile.Close()
+
+	err = pem.Encode(pemfile, pemkey)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

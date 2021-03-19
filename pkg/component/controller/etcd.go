@@ -94,6 +94,8 @@ func (e *Etcd) Run() error {
 	etcdServerKey := filepath.Join(e.K0sVars.EtcdCertDir, "server.key")
 	etcdPeerCert := filepath.Join(e.K0sVars.EtcdCertDir, "peer.crt")
 	etcdPeerKey := filepath.Join(e.K0sVars.EtcdCertDir, "peer.key")
+	etcdSignKey := filepath.Join(e.K0sVars.EtcdCertDir, "jwt.key")
+	etcdSignPub := filepath.Join(e.K0sVars.EtcdCertDir, "jwt.pub")
 
 	logrus.Info("Starting etcd")
 
@@ -103,23 +105,24 @@ func (e *Etcd) Run() error {
 	}
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
-	args := []string{
-		fmt.Sprintf("--data-dir=%s", e.K0sVars.EtcdDataDir),
-		"--listen-client-urls=https://127.0.0.1:2379",
-		"--advertise-client-urls=https://127.0.0.1:2379",
-		"--client-cert-auth=true",
-		fmt.Sprintf("--listen-peer-urls=%s", peerURL),
-		fmt.Sprintf("--initial-advertise-peer-urls=%s", peerURL),
-		fmt.Sprintf("--name=%s", name),
-		fmt.Sprintf("--trusted-ca-file=%s", etcdCaCert),
-		fmt.Sprintf("--cert-file=%s", etcdServerCert),
-		fmt.Sprintf("--key-file=%s", etcdServerKey),
-		fmt.Sprintf("--peer-trusted-ca-file=%s", etcdCaCert),
-		fmt.Sprintf("--peer-key-file=%s", etcdPeerKey),
-		fmt.Sprintf("--peer-cert-file=%s", etcdPeerCert),
-		fmt.Sprintf("--log-level=%s", e.LogLevel),
-		"--peer-client-cert-auth=true",
-		"--enable-pprof=false",
+
+	args := util.MappedArgs{
+		"--data-dir":                    e.K0sVars.EtcdDataDir,
+		"--listen-client-urls":          "https://127.0.0.1:2379",
+		"--advertise-client-urls":       "https://127.0.0.1:2379",
+		"--client-cert-auth":            "true",
+		"--listen-peer-urls":            peerURL,
+		"--initial-advertise-peer-urls": peerURL,
+		"--name":                        name,
+		"--trusted-ca-file":             etcdCaCert,
+		"--cert-file":                   etcdServerCert,
+		"--key-file":                    etcdServerKey,
+		"--peer-trusted-ca-file":        etcdCaCert,
+		"--peer-key-file":               etcdPeerKey,
+		"--peer-cert-file":              etcdPeerCert,
+		"--log-level":                   e.LogLevel,
+		"--peer-client-cert-auth":       "true",
+		"--enable-pprof":                "false",
 	}
 
 	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
@@ -163,12 +166,18 @@ func (e *Etcd) Run() error {
 			}
 		}
 
-		args = append(args, fmt.Sprintf("--initial-cluster=%s", strings.Join(etcdResponse.InitialCluster, ",")))
-		args = append(args, "--initial-cluster-state=existing")
+		args["--initial-cluster"] = strings.Join(etcdResponse.InitialCluster, ",")
+		args["--initial-cluster-state"] = "existing"
 	}
 
 	if err := e.setupCerts(); err != nil {
 		return errors.Wrap(err, "failed to create etcd certs")
+	}
+
+	// In case this is upgrade/restart, the sign key is not created
+	if util.FileExists(etcdSignKey) && util.FileExists(etcdSignPub) {
+		auth := fmt.Sprintf("jwt,pub-key=%s,priv-key=%s,sign-method=RS512,ttl=10m", etcdSignPub, etcdSignKey)
+		args["--auth-token"] = auth
 	}
 
 	logrus.Infof("starting etcd with args: %v", args)
@@ -178,7 +187,7 @@ func (e *Etcd) Run() error {
 		BinPath: assets.BinPath("etcd", e.K0sVars.BinDir),
 		RunDir:  e.K0sVars.RunDir,
 		DataDir: e.K0sVars.DataDir,
-		Args:    args,
+		Args:    args.ToArgs(),
 		UID:     e.uid,
 		GID:     e.gid,
 	}
@@ -248,6 +257,10 @@ func (e *Etcd) setupCerts() error {
 		}
 		_, err := e.CertManager.EnsureCertificate(etcdPeerCertReq, constant.EtcdUser)
 		return err
+	})
+
+	eg.Go(func() error {
+		return e.CertManager.CreateKeyPair("etcd/jwt", e.K0sVars, constant.EtcdUser)
 	})
 
 	return eg.Wait()
