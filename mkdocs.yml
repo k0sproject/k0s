@@ -17,10 +17,18 @@ nav:
           - Manual Install:               k0s-multi-node.md
           - Docker:                       k0s-in-docker.md
           - Windows (experimental):       experimental-windows.md
+          - Raspberry Pi 4:               raspberry-pi4.md
+          - Ansible Playbook:             examples/ansible-playbook.md
+  - Extensions:
+      - Manifest Bundles:                 manifests.md
+      - Helm Charts:                      helm-charts.md
+      - Examples:
+          - Installing the Traefik Ingress Controller:  examples/traefik-ingress.md
+          - Installing the Ambassador Gateway:          examples/ambassador-ingress.md
   - Architecture:
-      - Overview:                architecture.md
-      - Networking:              networking.md
-      - System Requirements:     system-requirements.md
+      - Overview:                         architecture.md
+      - Networking:                       networking.md
+      - System Requirements:              system-requirements.md
   - Configuration:
       - Configuration Options:            configuration.md
       - Worker Node Configuration:        worker-node-config.md
@@ -32,12 +40,6 @@ nav:
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
       - Uninstall the k0s Cluster:        k0s-reset.md
-  - Examples:
-      - Installing the Traefik Ingress Controller:  examples/traefik-ingress.md
-      - Installing the Ambassador Gateway:          examples/ambassador-ingress.md
-      - Creating Raspberry Pi 4 Cluster:            raspberry-pi4.md
-      - Creating a cluster with Ansible Playbook:   examples/ansible-playbook.md
-  - Deploying Manifests: manifests.md
   - FAQ: FAQ.md
   - Troubleshooting: troubleshooting.md
   - Contributing:
