@@ -202,47 +202,22 @@ func getDataDir(args []string) string {
 	return dataDir
 }
 
-// InitMainController inits first controller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController(k0sArgs ...string) error {
-	controllerNode := fmt.Sprintf("controller%d", 0)
-	ssh, err := s.SSH(controllerNode)
-	if err != nil {
-		return err
-	}
-	defer ssh.Disconnect()
-
-	opts := strings.Join(k0sArgs, " ")
-
-	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s install controller --debug %s", opts)
-	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", opts)
-
-	_, err = ssh.ExecWithOutput(installCmd)
-	if err != nil {
-		s.T().Logf("failed to execute '%s' on %s", installCmd, controllerNode)
-		return err
-	}
-
-	_, err = ssh.ExecWithOutput(startCmd)
-	if err != nil {
-		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
-		return err
-	}
-	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
-}
-
-// JoinController joins the cluster with a given token
-func (s *FootlooseSuite) JoinController(idx int, token string, dataDir string) error {
+// InitController initializes a controller
+func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	controllerNode := fmt.Sprintf("controller%d", idx)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", token))
+
+	startCmd := fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", strings.Join(k0sArgs, " "))
+	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
+		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode, dataDir)
+	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
 }
 
 // GetJoinToken generates join token for the asked role
