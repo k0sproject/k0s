@@ -65,7 +65,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 }
 
 func (as *AddonsSuite) doPrometheusDelete(chartName string) {
-	cfg := as.getKubeConfig("controller0")
+	cfg := as.getKubeConfig(as.ControllerNode(0))
 	chartClient, err := clientset.New(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(chartClient.Charts("kube-system").Delete(context.Background(), chartName, v1.DeleteOptions{}))
@@ -86,7 +86,7 @@ func (as *AddonsSuite) doPrometheusDelete(chartName string) {
 
 func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (string, string) {
 	as.T().Logf("waiting to see prometheus release ready in kube API, generation %d", rev)
-	cfg := as.getKubeConfig("controller0")
+	cfg := as.getKubeConfig(as.ControllerNode(0))
 	chartClient, err := clientset.New(cfg)
 	as.Require().NoError(err)
 	var chartName string
@@ -135,7 +135,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (st
 
 func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
 	as.T().Logf("waiting to see prometheus release to have envs set from values yaml")
-	kc, err := as.KubeClient("controller0", "")
+	kc, err := as.KubeClient(as.ControllerNode(0), "")
 	if err != nil {
 		return err
 	}
@@ -217,8 +217,7 @@ func TestAddonsSuite(t *testing.T) {
 }
 
 func (as *AddonsSuite) putFile(path string, content string) {
-	controllerNode := fmt.Sprintf("controller%d", 0)
-	ssh, err := as.SSH(controllerNode)
+	ssh, err := as.SSH(as.ControllerNode(0))
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))

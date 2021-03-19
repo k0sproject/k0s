@@ -32,10 +32,10 @@ type SingleNodeSuite struct {
 func (s *SingleNodeSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--single"))
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0), "")
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("controller0", kc)
+	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{

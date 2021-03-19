@@ -103,18 +103,28 @@ func (s *FootlooseSuite) SetupSuite() {
 
 	// SSH through cluster should wait until we actually can get it through, but it doesn't
 	for i := 0; i < 20; i++ {
-		err = s.Cluster.SSH("controller0", "root", "hostname")
+		err = s.Cluster.SSH(s.ControllerNode(0), "root", "hostname")
 		if err == nil {
 			break
 		}
-		s.T().Logf("retrying ssh to controller0")
+		s.T().Logf("retrying ssh to %s", s.ControllerNode(0))
 		time.Sleep(300 * time.Millisecond)
 	}
 	if err != nil {
-		s.FailNowf("failed to ssh to controller0: %s", err.Error())
+		s.FailNowf("failed to ssh to %s: %s", s.ControllerNode(0), err.Error())
 		s.T().FailNow()
 		return
 	}
+}
+
+// ControllerNode gets the node name of given controller index
+func (s *FootlooseSuite) ControllerNode(idx int) string {
+	return fmt.Sprintf(s.footlooseConfig.Machines[0].Spec.Name, idx)
+}
+
+// WorkerNode gets the node name of given worker index
+func (s *FootlooseSuite) WorkerNode(idx int) string {
+	return fmt.Sprintf(s.footlooseConfig.Machines[1].Spec.Name, idx)
 }
 
 // TearDownSuite does the cleanup work, namely destroy the footloose boxes
@@ -204,7 +214,7 @@ func getDataDir(args []string) string {
 
 // InitController initializes a controller
 func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
-	controllerNode := fmt.Sprintf("controller%d", idx)
+	controllerNode := s.ControllerNode(idx)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
 		return err
@@ -222,8 +232,8 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 
 // GetJoinToken generates join token for the asked role
 func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, error) {
-	// assume we have main on 1 node always
-	controllerNode := fmt.Sprintf("controller%d", 0)
+	// assume we have main on node 0 always
+	controllerNode := s.ControllerNode(0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
@@ -243,7 +253,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, erro
 
 // RunWorkers joins all the workers to the cluster
 func (s *FootlooseSuite) RunWorkers(args ...string) error {
-	ssh, err := s.SSH("controller0")
+	ssh, err := s.SSH(s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -258,8 +268,7 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 	workerCommand := fmt.Sprintf(`nohup k0s --debug worker %s "%s" >/tmp/k0s-worker.log 2>&1 &`, strings.Join(args, " "), token)
 
 	for i := 0; i < s.WorkerCount; i++ {
-		workerNode := fmt.Sprintf("worker%d", i)
-		sshWorker, err := s.SSH(workerNode)
+		sshWorker, err := s.SSH(s.WorkerNode(i))
 		if err != nil {
 			return err
 		}

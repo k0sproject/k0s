@@ -33,8 +33,7 @@ type HAControlplaneSuite struct {
 func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
-	node := fmt.Sprintf("controller%d", fromControllerIdx)
-	sshCon, err := s.SSH(node)
+	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
 	s.NoError(err)
 	output, err := sshCon.ExecWithOutput("k0s etcd member-list")
 	output = lastLine(output)
@@ -49,8 +48,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 }
 
 func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
-	node := fmt.Sprintf("controller%d", executeOnControllerIdx)
-	sshCon, err := s.SSH(node)
+	sshCon, err := s.SSH(s.ControllerNode(executeOnControllerIdx))
 	s.NoError(err)
 	for i := 0; i < 20; i++ {
 		_, err = sshCon.ExecWithOutput(fmt.Sprintf("k0s etcd leave %s", peerAddress))
@@ -64,8 +62,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 }
 
 func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
-	node := fmt.Sprintf("controller%d", controllerIdx)
-	sshCon, err := s.SSH(node)
+	sshCon, err := s.SSH(s.ControllerNode(controllerIdx))
 	s.NoError(err)
 	ca, err := sshCon.ExecWithOutput("cat /var/lib/k0s/pki/ca.crt")
 	s.NoError(err)
@@ -103,17 +100,17 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 
 	// Restart the second controller with a token to see it comes up
 	// It should just ignore the token as there's CA etc already in place
-	sshC1, err := s.SSH("controller1")
+	sshC1, err := s.SSH(s.ControllerNode(1))
 	s.Require().NoError(err)
 	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 	s.NoError(s.InitController(1, token))
 
 	// Make one member leave the etcd cluster
-	s.makeNodeLeave(1, membersFromJoined["controller1"])
+	s.makeNodeLeave(1, membersFromJoined[s.ControllerNode(1)])
 	refreshedMembers := s.getMembers(0)
 	s.Len(refreshedMembers, 1)
-	s.Contains(refreshedMembers, "controller0")
+	s.Contains(refreshedMembers, s.ControllerNode(0))
 
 }
 

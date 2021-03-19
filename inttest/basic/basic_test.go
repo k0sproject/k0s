@@ -40,17 +40,17 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, dataDirOpt))
 	s.NoError(s.RunWorkers(dataDirOpt, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
-	kc, err := s.KubeClient("controller0", customDataDir)
+	kc, err := s.KubeClient(s.ControllerNode(0), customDataDir)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	labels, err := s.GetNodeLabels("worker0", kc)
+	labels, err := s.GetNodeLabels(s.WorkerNode(0), kc)
 	s.NoError(err)
 	s.Equal("bar", labels["k0sproject.io/foo"])
 
-	err = s.WaitForNodeReady("worker1", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
@@ -66,14 +66,14 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
 
-	s.Require().NoError(s.checkCertPerms("controller0"))
-	s.Require().NoError(s.checkCSRs("worker0", kc))
-	s.Require().NoError(s.checkCSRs("worker1", kc))
+	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
+	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))
+	s.Require().NoError(s.checkCSRs(s.WorkerNode(1), kc))
 
-	s.Require().NoError(s.verifyKubeletAddressFlag("worker0"))
-	s.Require().NoError(s.verifyKubeletAddressFlag("worker1"))
+	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(0)))
+	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
 
-	s.Require().NoError(common.WaitForMetricsReady(s.getKubeConfig("controller0")))
+	s.Require().NoError(common.WaitForMetricsReady(s.getKubeConfig(s.ControllerNode(0))))
 }
 
 func (s *BasicSuite) getKubeConfig(node string) *restclient.Config {
