@@ -61,6 +61,26 @@ func (s *NetworkSuite) TestAddresses() {
 		s.NoError(err)
 		s.Equal([]string{"10.96.0.249", "fd00::1"}, api)
 	})
+
+	s.T().Run("BuildServiceCIDR ordering", func(t *testing.T) {
+		t.Run("single_stack_default", func(t *testing.T) {
+			n := DefaultNetwork()
+			s.Equal(n.ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
+
+		})
+		t.Run("dual_stack_api_listens_on_ipv4", func(t *testing.T) {
+			n := DefaultNetwork()
+			n.DualStack.Enabled = true
+			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
+			s.Equal(n.ServiceCIDR+","+n.DualStack.IPv6ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
+		})
+		t.Run("dual_stack_api_listens_on_ipv6", func(t *testing.T) {
+			n := DefaultNetwork()
+			n.DualStack.Enabled = true
+			n.DualStack.IPv6ServiceCIDR = "fd00::/108"
+			s.Equal(n.DualStack.IPv6ServiceCIDR+","+n.ServiceCIDR, n.BuildServiceCIDR("fe80::cf8:3cff:fef2:c5ca"))
+		})
+	})
 }
 
 func (s *NetworkSuite) TestCalicoDefaults() {
