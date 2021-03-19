@@ -267,21 +267,18 @@ func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, erro
 }
 
 // RunWorkers joins all the workers to the cluster
-func (s *FootlooseSuite) RunWorkers(dataDir string, args ...string) error {
+func (s *FootlooseSuite) RunWorkers(args ...string) error {
 	ssh, err := s.SSH("controller0")
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
-	token, err := s.GetJoinToken("worker", dataDir)
+	token, err := s.GetJoinToken("worker", getDataDir(args))
 	if err != nil {
 		return err
 	}
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
-	}
-	if dataDir != "" {
-		args = append(args, fmt.Sprintf("--data-dir=%s", dataDir))
 	}
 	workerCommand := fmt.Sprintf(`nohup k0s --debug worker %s "%s" >/tmp/k0s-worker.log 2>&1 &`, strings.Join(args, " "), token)
 
