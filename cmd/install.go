@@ -63,6 +63,7 @@ With controller subcommand you can setup a single node cluster by running:
 			}
 			flagsAndVals := []string{"controller"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			flagsAndVals = append(flagsAndVals, args...)
 			if err := setup("controller", flagsAndVals); err != nil {
 				cmd.SilenceUsage = true
 				return err
@@ -87,6 +88,7 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 
 			flagsAndVals := []string{"worker"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
+			flagsAndVals = append(flagsAndVals, args...)
 			if err := setup("worker", flagsAndVals); err != nil {
 				cmd.SilenceUsage = true
 				return err
