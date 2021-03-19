@@ -45,15 +45,15 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.T().Logf("ip address: %s", ipAddress)
 
 	s.putFile("controller0", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
-	s.NoError(s.InitMainController("--config=/tmp/k0s.yaml"))
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)
 	s.putFile("controller1", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
-	s.NoError(s.JoinController(1, token, ""))
+	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", token))
 
 	s.putFile("controller2", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
-	s.NoError(s.JoinController(2, token, ""))
+	s.NoError(s.InitController(2, "--config=/tmp/k0s.yaml", token))
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")

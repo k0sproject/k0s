@@ -71,7 +71,7 @@ func (ds *DualstackSuite) getKubeConfig(node string) *restclient.Config {
 func (ds *DualstackSuite) SetupSuite() {
 	ds.FootlooseSuite.SetupSuite()
 	ds.putFile("/tmp/k0s.yaml", k0sConfigWithAddon)
-	ds.Require().NoError(ds.InitMainController("--config=/tmp/k0s.yaml"))
+	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.RunWorkers())
 	client, err := k8s.NewForConfig(ds.getKubeConfig("controller0"))
 	ds.Require().NoError(err)

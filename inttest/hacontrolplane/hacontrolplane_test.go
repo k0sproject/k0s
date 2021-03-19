@@ -74,10 +74,10 @@ func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 }
 
 func (s *HAControlplaneSuite) TestDeregistration() {
-	s.NoError(s.InitMainController())
+	s.NoError(s.InitController(0))
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)
-	s.NoError(s.JoinController(1, token, ""))
+	s.NoError(s.InitController(1, token))
 
 	ca0 := s.getCa(0)
 	s.Contains(ca0, "-----BEGIN CERTIFICATE-----")
@@ -107,7 +107,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.Require().NoError(err)
 	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
-	s.NoError(s.JoinController(1, token, ""))
+	s.NoError(s.InitController(1, token))
 
 	// Make one member leave the etcd cluster
 	s.makeNodeLeave(1, membersFromJoined["controller1"])

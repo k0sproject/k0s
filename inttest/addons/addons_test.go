@@ -45,7 +45,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
 	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
-	as.Require().NoError(as.InitMainController("--config=/tmp/k0s.yaml"))
+	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
 	as.waitForPrometheusRelease(addonName, 1)
 
 	values := map[string]interface{}{
