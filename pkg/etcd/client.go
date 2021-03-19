@@ -23,24 +23,26 @@ import (
 	"github.com/pkg/errors"
 
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/pkg/transport"
 )
 
 // Client is our internal helper to access some of the etcd APIs
 type Client struct {
-	client *clientv3.Client
+	client  *clientv3.Client
+	tlsInfo transport.TLSInfo
 }
 
 // NewClient creates new Client
 func NewClient(certDir string, etcdCertDir string) (*Client, error) {
 	client := &Client{}
-	tlsInfo := transport.TLSInfo{
+	client.tlsInfo = transport.TLSInfo{
 		CertFile:      filepath.Join(certDir, "apiserver-etcd-client.crt"),
 		KeyFile:       filepath.Join(certDir, "apiserver-etcd-client.key"),
 		TrustedCAFile: filepath.Join(etcdCertDir, "ca.crt"),
 	}
 
-	tlsConfig, err := tlsInfo.ClientConfig()
+	tlsConfig, err := client.tlsInfo.ClientConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -119,4 +121,18 @@ func (c *Client) DeleteMember(ctx context.Context, peerID uint64) error {
 // Close closes the etcd client
 func (c *Client) Close() {
 	c.client.Close()
+}
+
+// Health return err if the etcd peer is not reported as healthy
+// ref: https://github.com/etcd-io/etcd/blob/3ead91ca3edf66112d56c453169343515bba71c3/etcdctl/ctlv3/command/ep_command.go#L89
+func (c *Client) Health(ctx context.Context) error {
+	_, err := c.client.Get(ctx, "health")
+
+	// permission denied is OK since proposal goes through consensus to get it
+	if err == nil || err == rpctypes.ErrPermissionDenied {
+		return nil
+	}
+
+	return err
+
 }

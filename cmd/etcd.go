@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,6 +32,8 @@ func init() {
 
 	etcdCmd.AddCommand(etcdLeaveCmd)
 	etcdCmd.AddCommand(etcdListCmd)
+	etcdCmd.AddCommand(etcdHealthCmd)
+
 	addPersistentFlags(etcdCmd)
 }
 
@@ -119,6 +122,31 @@ var (
 
 			l.WithField("members", members).
 				Info("done")
+			return nil
+		},
+	}
+)
+
+var (
+	etcdHealthCmd = &cobra.Command{
+		Use:   "health",
+		Short: "Returns etcd cluster members health status",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			etcdClient, err := etcd.NewClient(k0sVars.CertRootDir, k0sVars.EtcdCertDir)
+			if err != nil {
+				return fmt.Errorf("can't create etcd client: %v", err)
+			}
+
+			context, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			err = etcdClient.Health(context)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("etcd healthy")
+
 			return nil
 		},
 	}
