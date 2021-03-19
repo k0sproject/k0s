@@ -105,7 +105,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	// It should just ignore the token as there's CA etc already in place
 	sshC1, err := s.SSH("controller1")
 	s.Require().NoError(err)
-	_, err = sshC1.ExecWithOutput("kill $(pidof k0s)")
+	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 	s.NoError(s.JoinController(1, token, ""))
 
