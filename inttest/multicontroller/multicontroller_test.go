@@ -31,7 +31,7 @@ type MultiControllerSuite struct {
 }
 
 func (s *MultiControllerSuite) getMainIPAddress() string {
-	ssh, err := s.SSH("controller0")
+	ssh, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
@@ -44,22 +44,22 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	ipAddress := s.getMainIPAddress()
 	s.T().Logf("ip address: %s", ipAddress)
 
-	s.putFile("controller0", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.putFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)
-	s.putFile("controller1", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.putFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", token))
 
-	s.putFile("controller2", "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.putFile(s.ControllerNode(2), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(2, "--config=/tmp/k0s.yaml", token))
 	s.NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0), "")
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{

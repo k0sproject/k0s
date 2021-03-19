@@ -31,17 +31,17 @@ type KineSuite struct {
 }
 
 func (s *KineSuite) TestK0sGetsUp() {
-	s.putFile("controller0", "/tmp/k0s.yaml", k0sConfigWithKine)
+	s.putFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKine)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0), "")
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker1", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{

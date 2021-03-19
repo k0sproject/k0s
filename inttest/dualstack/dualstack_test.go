@@ -73,12 +73,12 @@ func (ds *DualstackSuite) SetupSuite() {
 	ds.putFile("/tmp/k0s.yaml", k0sConfigWithAddon)
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.RunWorkers())
-	client, err := k8s.NewForConfig(ds.getKubeConfig("controller0"))
+	client, err := k8s.NewForConfig(ds.getKubeConfig(ds.ControllerNode(0)))
 	ds.Require().NoError(err)
-	err = ds.WaitForNodeReady("worker0", client)
+	err = ds.WaitForNodeReady(ds.WorkerNode(0), client)
 	ds.Require().NoError(err)
 
-	err = ds.WaitForNodeReady("worker1", client)
+	err = ds.WaitForNodeReady(ds.WorkerNode(1), client)
 	ds.Require().NoError(err)
 
 	ds.client = client
@@ -100,8 +100,7 @@ func TestDualStack(t *testing.T) {
 }
 
 func (ds *DualstackSuite) putFile(path string, content string) {
-	controllerNode := fmt.Sprintf("controller%d", 0)
-	ssh, err := ds.SSH(controllerNode)
+	ssh, err := ds.SSH(ds.ControllerNode(0))
 	ds.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
