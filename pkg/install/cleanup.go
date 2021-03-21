@@ -32,7 +32,6 @@ type CleanUpConfig struct {
 	containerdCmd        *exec.Cmd
 	containerdSockerPath string
 	criSocketPath        string
-	crictlBinPath        string
 	criCtl               *crictl.CriCtl
 	dataDir              string
 	runDir               string
@@ -107,9 +106,6 @@ func GetRoleByStagedKubelet(binPath string) string {
 func (c *CleanUpConfig) workerPreFlightChecks() error {
 	if !util.IsDirectory(c.dataDir) {
 		return fmt.Errorf("failed to find %v. was this node provisioned?", c.dataDir)
-	}
-	if !util.FileExists(c.crictlBinPath) {
-		return fmt.Errorf("failed to find %v. was this node provisioned correctly?", c.crictlBinPath)
 	}
 	return nil
 }
