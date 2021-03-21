@@ -5,7 +5,6 @@ kubernetes_version = 1.20.4
 kine_version = 0.6.0
 etcd_version = 3.4.15
 konnectivity_version = 0.0.14
-crictl_version = 1.20.0
 
 GOOS ?= linux
 export GOOS
@@ -14,7 +13,7 @@ TARGET_OS ?= linux
 export TARGET_OS
 
 bindir = staging/${TARGET_OS}/bin
-posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server crictl
+posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server
 windows_bins = kubelet.exe kube-proxy.exe
 buildmode = docker
 
@@ -61,7 +60,6 @@ $(bindir)/etcd: .container.etcd
 $(bindir)/kine: .container.kine
 $(bindir)/konnectivity-server: .container.konnectivity
 $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
-$(bindir)/crictl: .container.crictl
 
 $(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 
@@ -101,8 +99,6 @@ etcd_url = https://github.com/etcd-io/etcd/releases/download/v$(etcd_version)/et
 
 containerd_extract = bin/containerd bin/containerd-shim bin/containerd-shim-runc-v1 bin/containerd-shim-runc-v2
 etcd_extract = etcd-v$(etcd_version)-linux-$(arch)/etcd
-
-crictl_url = https://github.com/kubernetes-sigs/cri-tools/releases/download/v$(crictl_version)/crictl-v$(crictl_version)-linux-amd64.tar.gz
 
 tmpdir ?= .tmp
 arch = amd64

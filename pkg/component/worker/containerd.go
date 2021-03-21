@@ -39,7 +39,7 @@ type ContainerD struct {
 // Init extracts the needed binaries
 func (c *ContainerD) Init() error {
 	g := new(errgroup.Group)
-	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc", "crictl"} {
+	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
 		b := bin
 		g.Go(func() error {
 			return assets.Stage(c.K0sVars.BinDir, b, constant.BinDirMode)
