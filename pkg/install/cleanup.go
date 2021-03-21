@@ -76,7 +76,7 @@ func (c *CleanUpConfig) WorkerCleanup() error {
 		msg = append(msg, err.Error())
 	}
 
-	containers, err := c.listContainers()
+	containers, err := c.criCtl.ListPods()
 	if err == nil && len(containers) == 0 {
 		logrus.Info("successfully removed k0s containers!")
 	}

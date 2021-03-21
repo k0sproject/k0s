@@ -96,7 +96,7 @@ func (c *CleanUpConfig) cleanupNetworkNamespace() error {
 func (c *CleanUpConfig) stopAllContainers() error {
 	var msg []string
 
-	containers, err := c.listContainers()
+	containers, err := c.criCtl.ListPods()
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (c *CleanUpConfig) stopAllContainers() error {
 func (c *CleanUpConfig) removeAllContainers() error {
 	var msg []string
 
-	containers, err := c.listContainers()
+	containers, err := c.criCtl.ListPods()
 	if err != nil {
 		return err
 	}
@@ -173,18 +173,6 @@ func (c *CleanUpConfig) stopContainerd() {
 		}
 	}
 	logrus.Debug("successfully stopped containerd")
-}
-
-func (c *CleanUpConfig) listContainers() ([]string, error) {
-	out, err := exec.Command(c.crictlBinPath, "-r", c.criSocketPath, "pods", "-q").CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("output: %s, error: %v", string(out), err)
-	}
-	pods := []string{}
-	pods = append(pods, strings.Fields(string(out))...)
-
-	logrus.Debugf("got pod list: %+v", pods)
-	return pods, nil
 }
 
 func (c *CleanUpConfig) RemoveAllDirectories() error {

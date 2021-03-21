@@ -16,14 +16,37 @@ func NewCriCtl(addr string) *CriCtl {
 	return &CriCtl{addr}
 }
 
+func (c *CriCtl) ListPods() ([]string, error) {
+	client, conn, err := getRuntimeClient(c.addr)
+	defer closeConnection(conn)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create CRI runtime client")
+	}
+	if client == nil {
+		return nil, errors.Errorf("failed to create CRI runtime client")
+	}
+	request := &pb.ListPodSandboxRequest{}
+	logrus.Debugf("ListPodSandboxRequest: %v", request)
+	r, err := client.ListPodSandbox(context.Background(), request)
+	logrus.Debugf("ListPodSandboxResponse: %v", r)
+	if err != nil {
+		return nil, err
+	}
+	var pods []string
+	for _, p := range r.GetItems() {
+		pods = append(pods, p.Id)
+	}
+	return pods, nil
+}
+
 func (c *CriCtl) RemovePod(id string) error {
 	client, conn, err := getRuntimeClient(c.addr)
 	defer closeConnection(conn)
-	if client == nil {
-		return errors.Errorf("failed to create CRI runtime client")
-	}
 	if err != nil {
 		return errors.Wrapf(err, "failed to create CRI runtime client")
+	}
+	if client == nil {
+		return errors.Errorf("failed to create CRI runtime client")
 	}
 	request := &pb.RemovePodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("RemovePodSandboxRequest: %v", request)
@@ -39,11 +62,11 @@ func (c *CriCtl) RemovePod(id string) error {
 func (c *CriCtl) StopPod(id string) error {
 	client, conn, err := getRuntimeClient(c.addr)
 	defer closeConnection(conn)
-	if client == nil {
-		return errors.Errorf("failed to create CRI runtime client")
-	}
 	if err != nil {
 		return errors.Wrapf(err, "failed to create CRI runtime client")
+	}
+	if client == nil {
+		return errors.Errorf("failed to create CRI runtime client")
 	}
 	request := &pb.StopPodSandboxRequest{PodSandboxId: id}
 	logrus.Debugf("StopPodSandboxRequest: %v", request)
