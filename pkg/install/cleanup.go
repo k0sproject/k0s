@@ -31,7 +31,6 @@ type CleanUpConfig struct {
 	containerdBinPath    string
 	containerdCmd        *exec.Cmd
 	containerdSockerPath string
-	criSocketPath        string
 	criCtl               *crictl.CriCtl
 	dataDir              string
 	runDir               string
