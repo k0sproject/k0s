@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/avast/retry-go"
 	"github.com/docker/libnetwork/resolvconf"
@@ -179,7 +180,9 @@ func (k *Kubelet) Run() error {
 		}
 
 		return nil
-	})
+	},
+		retry.Delay(time.Millisecond*500),
+		retry.DelayType(retry.BackOffDelay))
 	if err != nil {
 		return err
 	}

@@ -42,7 +42,8 @@ type ClusterImages struct {
 
 	Calico CalicoImageSpec `yaml:"calico"`
 
-	Repository string `yaml:"repository,omitempty"`
+	Repository        string `yaml:"repository,omitempty"`
+	DefaultPullPolicy string `yaml:"default_pull_policy,omitempty"`
 }
 
 func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -52,7 +53,7 @@ func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		return err
 	}
 	ci.overrideImageRepositories()
-
+	ci.DefaultPullPolicy = "IfNotPresent"
 	return nil
 }
 
@@ -68,7 +69,6 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(&ci.KubeProxy)
 	override(&ci.CoreDNS)
 	override(&ci.Calico.CNI)
-	override(&ci.Calico.FlexVolume)
 	override(&ci.Calico.Node)
 	override(&ci.Calico.KubeControllers)
 }
@@ -76,7 +76,6 @@ func (ci *ClusterImages) overrideImageRepositories() {
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
 	CNI             ImageSpec `yaml:"cni"`
-	FlexVolume      ImageSpec `yaml:"flexvolume"`
 	Node            ImageSpec `yaml:"node"`
 	KubeControllers ImageSpec `yaml:"kubecontrollers"`
 }
@@ -84,6 +83,7 @@ type CalicoImageSpec struct {
 // DefaultClusterImages default image settings
 func DefaultClusterImages() *ClusterImages {
 	return &ClusterImages{
+		DefaultPullPolicy: "IfNotPresent",
 		Konnectivity: ImageSpec{
 			Image:   constant.KonnectivityImage,
 			Version: constant.KonnectivityImageVersion,
@@ -104,10 +104,6 @@ func DefaultClusterImages() *ClusterImages {
 			CNI: ImageSpec{
 				Image:   constant.CalicoImage,
 				Version: constant.CalicoImageVersion,
-			},
-			FlexVolume: ImageSpec{
-				Image:   constant.FlexVolumeImage,
-				Version: constant.FlexVolumeImageVersion,
 			},
 			Node: ImageSpec{
 				Image:   constant.CalicoNodeImage,

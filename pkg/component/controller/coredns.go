@@ -135,7 +135,7 @@ spec:
       containers:
       - name: coredns
         image: {{ .Image }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .PullPolicy }}
         resources:
           limits:
             memory: 170Mi
@@ -236,6 +236,7 @@ type coreDNSConfig struct {
 	ClusterDNSIP  string
 	ClusterDomain string
 	Image         string
+	PullPolicy    string
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
@@ -319,6 +320,7 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
 		Image:         c.clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:    c.clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	return config, nil

@@ -58,11 +58,11 @@ type calicoConfig struct {
 	DualStack            bool
 
 	CalicoCNIImage             string
-	CalicoFlexVolumeImage      string
 	CalicoNodeImage            string
 	CalicoKubeControllersImage string
 	Overlay                    string
 	IPAutodetectionMethod      string
+	PullPolicy                 string
 }
 
 // NewCalico creates new Calico reconciler component
@@ -208,12 +208,12 @@ func (c *Calico) getConfig() (calicoConfig, error) {
 		ClusterCIDRIPv4:            c.clusterConf.Spec.Network.PodCIDR,
 		ClusterCIDRIPv6:            c.clusterConf.Spec.Network.DualStack.IPv6PodCIDR,
 		CalicoCNIImage:             c.clusterConf.Spec.Images.Calico.CNI.URI(),
-		CalicoFlexVolumeImage:      c.clusterConf.Spec.Images.Calico.FlexVolume.URI(),
 		CalicoNodeImage:            c.clusterConf.Spec.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: c.clusterConf.Spec.Images.Calico.KubeControllers.URI(),
 		WithWindowsNodes:           c.clusterConf.Spec.Network.Calico.WithWindowsNodes,
 		Overlay:                    c.clusterConf.Spec.Network.Calico.Overlay,
 		IPAutodetectionMethod:      c.clusterConf.Spec.Network.Calico.IPAutodetectionMethod,
+		PullPolicy:                 c.clusterConf.Spec.Images.DefaultPullPolicy,
 	}
 
 	return config, nil

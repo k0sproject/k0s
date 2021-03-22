@@ -61,13 +61,11 @@ const (
 	KubeProxyImageVersion      = "v1.20.4"
 	CoreDNSImage               = "docker.io/coredns/coredns"
 	CoreDNSImageVersion        = "1.7.0"
-	CalicoImage                = "calico/cni"
+	CalicoImage                = "docker.io/calico/cni"
 	CalicoImageVersion         = "v3.16.2"
-	FlexVolumeImage            = "calico/pod2daemon-flexvol"
-	FlexVolumeImageVersion     = "v3.16.2"
-	CalicoNodeImage            = "calico/node"
+	CalicoNodeImage            = "docker.io/calico/node"
 	CalicoNodeImageVersion     = "v3.16.2"
-	KubeControllerImage        = "calico/kube-controllers"
+	KubeControllerImage        = "docker.io/calico/kube-controllers"
 	KubeControllerImageVersion = "v3.16.2"
 )
 
@@ -88,7 +86,7 @@ type CfgVars struct {
 	ManifestsDir               string // location for all stack manifests
 	RunDir                     string // location of supervised pid files and sockets
 	KonnectivityKubeConfigPath string // location for konnectivity kubeconfig
-
+	OCIBundleDir               string // location for OCI bundles
 	// Helm config
 	HelmHome             string
 	HelmRepositoryCache  string
@@ -119,6 +117,7 @@ func GetConfig(dataDir string) CfgVars {
 	return CfgVars{
 		AdminKubeConfigPath:        formatPath(certDir, "admin.conf"),
 		BinDir:                     formatPath(dataDir, "bin"),
+		OCIBundleDir:               formatPath(dataDir, "images"),
 		CertRootDir:                certDir,
 		WindowsCertRootDir:         winCertDir,
 		DataDir:                    dataDir,

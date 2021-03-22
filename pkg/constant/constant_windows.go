@@ -34,7 +34,9 @@ const (
 	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables
 	KubeletVolumePluginDir = "C:\\usr\\libexec\\k0s\\kubelet-plugins\\volume\\exec"
 
-	KineSocket = "kine\\kine.sock:2379"
+	KineSocket                     = "kine\\kine.sock:2379"
+	KubePauseContainerImage        = "mcr.microsoft.com/oss/kubernetes/pause"
+	KubePauseContainerImageVersion = "1.4.1"
 )
 
 func formatPath(dir string, file string) string {

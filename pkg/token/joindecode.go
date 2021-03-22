@@ -22,8 +22,8 @@ import (
 	"io"
 )
 
-// JoinDecode decodes an token string that is encoded with JoinEncode
-func JoinDecode(token string) ([]byte, error) {
+// DecodeJoinToken decodes an token string that is encoded with JoinEncode
+func DecodeJoinToken(token string) ([]byte, error) {
 	gzData, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		return nil, err

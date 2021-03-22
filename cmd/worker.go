@@ -127,6 +127,8 @@ func startWorker(token string) error {
 		})
 	}
 
+	componentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
+
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"
 	}
@@ -188,7 +190,7 @@ func startWorker(token string) error {
 
 	err = componentManager.Start(ctx)
 	if err != nil {
-		logrus.Errorf("failed to start some of the worker components: %s", err.Error())
+		logrus.WithError(err).Error("failed to start some of the worker components")
 		c <- syscall.SIGTERM
 	}
 	// Wait for k0s process termination
@@ -197,8 +199,9 @@ func startWorker(token string) error {
 
 	// Stop components
 	if err := componentManager.Stop(); err != nil {
-		logrus.Errorf("error while stoping component manager %s", err)
+		logrus.WithError(err).Error("error while stoping component manager")
 	}
+
 	return nil
 
 }
@@ -219,13 +222,14 @@ func loadKubeletConfigClient(k0svars constant.CfgVars) (*worker.KubeletConfigCli
 }
 
 func handleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {
-	kubeconfig, err := token.JoinDecode(encodedToken)
+	kubeconfig, err := token.DecodeJoinToken(encodedToken)
 	if err != nil {
 		return errors.Wrap(err, "failed to decode token")
 	}
 
 	// Load the bootstrap kubeconfig to validate it
 	clientCfg, err := clientcmd.Load(kubeconfig)
+
 	if err != nil {
 		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
 	}

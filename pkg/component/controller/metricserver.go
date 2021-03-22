@@ -154,7 +154,7 @@ spec:
       containers:
       - name: metrics-server
         image: {{ .Image }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .PullPolicy }}
         args:
           - --cert-dir=/tmp
           - --secure-port=4443
@@ -213,6 +213,7 @@ type MetricServer struct {
 
 type metricsConfig struct {
 	Image      string
+	PullPolicy string
 	CPURequest string
 	MEMRequest string
 }
@@ -297,7 +298,8 @@ func (m *MetricServer) Healthy() error { return nil }
 // So that's 10m CPU and 30MiB mem per 10 nodes
 func (m *MetricServer) getConfig() (metricsConfig, error) {
 	cfg := metricsConfig{
-		Image: m.clusterConfig.Spec.Images.MetricsServer.URI(),
+		Image:      m.clusterConfig.Spec.Images.MetricsServer.URI(),
+		PullPolicy: m.clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	kubeClient, err := m.kubeClientFactory.GetClient()

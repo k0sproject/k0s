@@ -22,9 +22,11 @@ import "fmt"
 
 const (
 	// DataDirDefault is the default data directory containing k0s state
-	DataDirDefault         = "/var/lib/k0s"
-	KubeletVolumePluginDir = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
-	KineSocket             = "kine/kine.sock:2379"
+	DataDirDefault                 = "/var/lib/k0s"
+	KubeletVolumePluginDir         = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
+	KineSocket                     = "kine/kine.sock:2379"
+	KubePauseContainerImage        = "k8s.gcr.io/pause"
+	KubePauseContainerImageVersion = "3.2"
 )
 
 func formatPath(dir string, file string) string {

@@ -45,6 +45,7 @@ spec:
         # and CNI network config file on each node.
         - name: install-cni
           image: {{ .CalicoCNIImage }}
+          imagePullPolicy: {{ .PullPolicy }}
           command: ["/opt/cni/bin/install"]
           envFrom:
           - configMapRef:
@@ -88,6 +89,7 @@ spec:
         # host.
         - name: calico-node
           image: {{ .CalicoNodeImage }}
+          imagePullPolicy: {{ .PullPolicy }}
           envFrom:
           - configMapRef:
               # Allow KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT to be overridden for eBPF mode.

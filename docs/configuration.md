@@ -187,6 +187,7 @@ Following keys are available:
 - `spec.images.repository`
 
 If `spec.images.repository` is set and not empty, every image will be pulled from `images.repository`
+If `spec.images.default_pull_policy` is set ant not empty, it will be used as a pull policy for each bundled image.
 
 Example:
 ```

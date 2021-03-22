@@ -115,6 +115,7 @@ func (k *KubeProxy) getConfig() (proxyConfig, error) {
 		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
 		Image:                k.clusterConf.Spec.Images.KubeProxy.URI(),
+		PullPolicy:           k.clusterConf.Spec.Images.DefaultPullPolicy,
 		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
 	}
 
@@ -126,6 +127,7 @@ type proxyConfig struct {
 	ControlPlaneEndpoint string
 	ClusterCIDR          string
 	Image                string
+	PullPolicy           string
 }
 
 const proxyTemplate = `
@@ -285,7 +287,7 @@ spec:
       containers:
       - name: kube-proxy
         image: {{ .Image }}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .PullPolicy }}
         command:
         - /usr/local/bin/kube-proxy
         - --config=/var/lib/kube-proxy/config.conf
