@@ -70,7 +70,7 @@ func (ds *DualstackSuite) getKubeConfig(node string) *restclient.Config {
 
 func (ds *DualstackSuite) SetupSuite() {
 	ds.FootlooseSuite.SetupSuite()
-	ds.putFile("/tmp/k0s.yaml", k0sConfigWithAddon)
+	ds.PutFile(ds.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithAddon)
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.RunWorkers())
 	client, err := k8s.NewForConfig(ds.getKubeConfig(ds.ControllerNode(0)))
@@ -96,16 +96,6 @@ func TestDualStack(t *testing.T) {
 	}
 
 	suite.Run(t, &s)
-
-}
-
-func (ds *DualstackSuite) putFile(path string, content string) {
-	ssh, err := ds.SSH(ds.ControllerNode(0))
-	ds.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
-
-	ds.Require().NoError(err)
 
 }
 

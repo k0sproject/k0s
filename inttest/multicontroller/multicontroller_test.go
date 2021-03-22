@@ -44,15 +44,15 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	ipAddress := s.getMainIPAddress()
 	s.T().Logf("ip address: %s", ipAddress)
 
-	s.putFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)
-	s.putFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.PutFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", token))
 
-	s.putFile(s.ControllerNode(2), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
+	s.PutFile(s.ControllerNode(2), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(2, "--config=/tmp/k0s.yaml", token))
 	s.NoError(s.RunWorkers())
 
@@ -84,15 +84,6 @@ func TestMultiControllerSuite(t *testing.T) {
 		},
 	}
 	suite.Run(t, &s)
-}
-
-func (s *MultiControllerSuite) putFile(node string, path string, content string) {
-	ssh, err := s.SSH(node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
-
-	s.Require().NoError(err)
 }
 
 const k0sConfigWithMultiController = `
