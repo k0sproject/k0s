@@ -39,16 +39,12 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 }
 
 func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	if cfgPath == "" {
-		// no config file exists, using defaults
-		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
+	if cfgPath != "" {
+		clusterConfig, err = v1beta1.FromYamlFile(cfgPath, k0sVars)
 	} else if isInputFromPipe() {
 		clusterConfig, err = v1beta1.FromYamlPipe(os.Stdin, k0sVars)
 	} else {
-		clusterConfig, err = v1beta1.FromYamlFile(cfgPath, k0sVars)
-	}
-	if err != nil {
-		return nil, err
+		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
 	}
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {

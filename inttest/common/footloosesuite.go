@@ -21,9 +21,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -238,6 +241,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	controllerNode := s.ControllerNode(0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
 	ssh, err := s.SSH(controllerNode)
+
 	if err != nil {
 		return "", err
 	}
@@ -248,6 +252,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	}
 	outputParts := strings.Split(token, "\n")
 	// in case of no k0s.conf given, there might be warnings on the first few lines
+
 	token = outputParts[len(outputParts)-1]
 	return token, nil
 
@@ -255,15 +260,21 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 
 // RunWorkers joins all the workers to the cluster
 func (s *FootlooseSuite) RunWorkers(args ...string) error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	token, err := s.GetJoinToken("worker", dataDir)
 	if err != nil {
 		return err
 	}
+	return s.RunWorkersWithToken(token, args...)
+}
+
+func (s *FootlooseSuite) RunWorkersWithToken(dataDir string, token string, args ...string) error {
+	ssh, err := s.SSH("controller0")
 	defer ssh.Disconnect()
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
 	if err != nil {
 		return err
 	}
+	defer ssh.Disconnect()
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
@@ -343,10 +354,19 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 		return nil, err
 	}
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
+
+	url, err := url.Parse(cfg.Host)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Host, err)
+	}
+	port, err := strconv.ParseInt(url.Port(), 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse port value `%s`: %w", url.Port(), err)
+	}
 	if err != nil {
 		return nil, err
 	}
-	hostPort, err := machine.HostPort(6443)
+	hostPort, err := machine.HostPort(int(port))
 	if err != nil {
 		return nil, errors.Wrap(err, "footloose machine has to have 6443 port mapped")
 	}
@@ -399,10 +419,12 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
+			fmt.Println("get kubeclient", err)
 			return false, nil
 		}
 		v, err := kc.ServerVersion()
 		if err != nil {
+			fmt.Println("sv", err)
 			return false, nil
 		}
 		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
@@ -501,6 +523,9 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		},
 		{
 			ContainerPort: 9443, // k0s join API
+		},
+		{
+			ContainerPort: 7443,
 		},
 	}
 

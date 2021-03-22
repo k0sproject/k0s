@@ -82,13 +82,11 @@ k0s.exe k0s: $(GO_SRCS)
 lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run ./...
 
-smoketests := check-addons check-basic check-byocri check-dualstack check-hacontrolplane check-install check-kine check-multicontroller check-network check-singlenode
+smoketests := check-addons check-basic check-byocri check-dualstack check-hacontrolplane check-install check-kine check-multicontroller check-network check-singlenode check-customports
 .PHONY: $(smoketests)
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
 
-.PHONY: smoketests
-smoketests: $(smoketests)
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go
