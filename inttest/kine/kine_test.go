@@ -17,7 +17,6 @@ package kine
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -31,7 +30,7 @@ type KineSuite struct {
 }
 
 func (s *KineSuite) TestK0sGetsUp() {
-	s.putFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKine)
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKine)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers())
 
@@ -66,15 +65,6 @@ func TestKineSuite(t *testing.T) {
 		},
 	}
 	suite.Run(t, &s)
-}
-
-func (s *KineSuite) putFile(node string, path string, content string) {
-	ssh, err := s.SSH(node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
-
-	s.Require().NoError(err)
 }
 
 const k0sConfigWithKine = `

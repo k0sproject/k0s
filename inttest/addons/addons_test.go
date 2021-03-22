@@ -43,7 +43,7 @@ type AddonsSuite struct {
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
-	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
+	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
 	as.waitForPrometheusRelease(addonName, 1)
@@ -186,7 +186,7 @@ func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]in
 	buf := bytes.NewBuffer([]byte{})
 	as.Require().NoError(tw.WriteToBuffer(buf))
 
-	as.putFile(path, buf.String())
+	as.PutFile(as.ControllerNode(0), path, buf.String())
 }
 
 func (as *AddonsSuite) getKubeConfig(node string) *restclient.Config {
@@ -214,15 +214,6 @@ func TestAddonsSuite(t *testing.T) {
 
 	suite.Run(t, &s)
 
-}
-
-func (as *AddonsSuite) putFile(path string, content string) {
-	ssh, err := as.SSH(as.ControllerNode(0))
-	as.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
-
-	as.Require().NoError(err)
 }
 
 const k0sConfigWithAddon = `
