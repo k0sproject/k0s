@@ -47,6 +47,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
+	google.golang.org/grpc v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.3.0
@@ -57,6 +58,7 @@ require (
 	k8s.io/apimachinery v0.20.2
 	k8s.io/cli-runtime v0.20.2
 	k8s.io/client-go v0.20.2
+	k8s.io/cri-api v0.20.4
 	k8s.io/kubectl v0.20.2
 	k8s.io/mount-utils v0.20.4
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
