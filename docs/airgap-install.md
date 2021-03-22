@@ -1,12 +1,9 @@
 # Airgap install
 
 In this tutorial we are going to cover k0s deployment in the environment with restricted internet access. 
-As usually in the k0sproject we aim to give you the best user experience with the least possible amount of frictions.
+As usually in the k0sproject we aim to give you the best user experience with the least possible amount of friction.
 
-## Prerequisites
-No specific prerequisites are required.
-
-### Prerequisites for exporting images bundle from running cluster
+## Prerequisites for exporting images bundle from running cluster
 
 Working cluster with at least one controller (this cluster will be used to build images bundle).
 Please, refer to the [getting started guide](install.md).
