@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/high-availability/">
+        <link rel="canonical" href="https://docs.k0sproject.io/airgap-install/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Control Plane High Availability - Documentation</title>
+        <title>Airgap installation - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#control-plane-high-availability" class="md-skip">
+        <a href="#airgap-install" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Control Plane High Availability
+              Airgap installation
             
           </span>
         </div>
@@ -235,10 +235,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Install
@@ -280,10 +282,12 @@
           
           
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3" checked>
     
     <label class="md-nav__link" for="nav-2-3">
       Alternative Install Methods
@@ -361,11 +365,56 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../airgap-install/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Airgap installation
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Airgap installation
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites-for-exporting-images-bundle-from-running-cluster" class="md-nav__link">
+    Prerequisites for exporting images bundle from running cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#steps" class="md-nav__link">
+    Steps
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -545,12 +594,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
     
     <label class="md-nav__link" for="nav-5">
       Configuration
@@ -640,58 +687,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Control Plane High Availability
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../high-availability/" class="md-nav__link">
       Control Plane High Availability
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#control-plane-high-availability" class="md-nav__link">
-    Control Plane High Availability
-  </a>
-  
-    <nav class="md-nav" aria-label="Control Plane High Availability">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -843,6 +843,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -850,6 +852,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -859,22 +863,16 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#control-plane-high-availability" class="md-nav__link">
-    Control Plane High Availability
-  </a>
-  
-    <nav class="md-nav" aria-label="Control Plane High Availability">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
+  <a href="#prerequisites-for-exporting-images-bundle-from-running-cluster" class="md-nav__link">
+    Prerequisites for exporting images bundle from running cluster
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#steps" class="md-nav__link">
+    Steps
+  </a>
   
 </li>
       
@@ -892,29 +890,54 @@
               
                 
                 
-                  <h1>Control Plane High Availability</h1>
-                
-                <h2 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h2>
-<p>The following pre-requisites are required in order to configure an HA control plane:</p>
-<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
-<h5 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h5>
-<p>A load balancer with a single external address should be configured as the IP gateway for the controllers.
-The load balancer should allow traffic to each controller on the following ports:</p>
-<ul>
-<li>6443</li>
-<li>8132</li>
-<li>8133</li>
-<li>9443</li>
-</ul>
-<h5 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h5>
-<p>On each controller node, a k0s.yaml configuration file should be configured.
-The following options need to match on each node, otherwise the control plane components will end up in very unknown states:</p>
-<ul>
-<li><code>network</code></li>
-<li><code>storage</code>: Needless to say, one cannot create a clustered control plane with each node only storing data locally on SQLite.</li>
-<li><code>externalAddress</code></li>
-</ul>
-<p><a href="../configuration/">Full configuration file refrence</a></p>
+                <h1 id="airgap-install">Airgap install<a class="headerlink" href="#airgap-install" title="Permanent link">#</a></h1>
+<p>In this tutorial we are going to cover k0s deployment in the environment with restricted internet access. 
+As usually in the k0sproject we aim to give you the best user experience with the least possible amount of friction.</p>
+<h2 id="prerequisites-for-exporting-images-bundle-from-running-cluster">Prerequisites for exporting images bundle from running cluster<a class="headerlink" href="#prerequisites-for-exporting-images-bundle-from-running-cluster" title="Permanent link">#</a></h2>
+<p>Working cluster with at least one controller (this cluster will be used to build images bundle).
+Please, refer to the <a href="../install/">getting started guide</a>.
+You also need to have containerd CLI management tool <code>ctr</code> installed on the worker machine. Please refer to the ContainerD <a href="https://containerd.io/docs/getting-started/">getting-started</a> guide.</p>
+<h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">#</a></h2>
+<h4 id="1-create-oci-bundle">1. Create OCI bundle<a class="headerlink" href="#1-create-oci-bundle" title="Permanent link">#</a></h4>
+<h5 id="11-using-docker">1.1 Using Docker<a class="headerlink" href="#11-using-docker" title="Permanent link">#</a></h5>
+<p>Use following commands to build OCI bundle by utilizing your docker environment. 
+<div class="highlight"><pre><span></span><code>## Pull images
+# k0s airgap list-images | xargs -I{} docker pull {}
+
+## Create bundle
+# docker image save $(k0s airgap list-images | xargs) -o bundle_file
+</code></pre></div></p>
+<h5 id="12-using-previously-set-up-k0s-worker">1.2 Using previously set up k0s worker<a class="headerlink" href="#12-using-previously-set-up-k0s-worker" title="Permanent link">#</a></h5>
+<p>To build OCI bundle with images we can utilize the fact that containerd pulls all images during the k0s worker normal bootstrap.
+Use following commands on the machine with previously installed k0s worker:</p>
+<div class="highlight"><pre><span></span><code>## The command k0s airgap list-images prints images used by the current setup
+## It respects the k0s.yaml values
+
+# export IMAGES=`k0s airgap list-images | xargs`
+# ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle_file $IMAGES 
+</code></pre></div>
+<p>Pay attention to the <code>address</code> and <code>namespace</code> arguments given to the <code>ctr</code> tool.</p>
+<h4 id="2-sync-bundle-file-with-airgapped-machine">2. Sync bundle file with airgapped machine<a class="headerlink" href="#2-sync-bundle-file-with-airgapped-machine" title="Permanent link">#</a></h4>
+<p>Copy the <code>bundle_file</code> from the previous step to the target machine. Place the file under the <code>images</code> directory in the k0s data directory.
+Use following commands to place bundle into the default location:</p>
+<div class="highlight"><pre><span></span><code># mkdir -p /var/lib/k0s/images
+# cp bundle_file /var/lib/k0s/images/bundle_file
+</code></pre></div>
+<h4 id="3-ensure-pull-policy-in-the-k0syaml-optional">3. Ensure pull policy in the k0s.yaml (optional)<a class="headerlink" href="#3-ensure-pull-policy-in-the-k0syaml-optional" title="Permanent link">#</a></h4>
+<p>Use the following k0s.yaml to force containerd to never pull images for the k0s components. Otherwise containerd pulls the images, which are not found from the bundle, from the internet.
+<div class="highlight"><pre><span></span><code>apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: k0s
+spec:
+  images:
+    default_pull_policy: Never
+</code></pre></div></p>
+<h4 id="4-controller">4. Controller<a class="headerlink" href="#4-controller" title="Permanent link">#</a></h4>
+<p>Set up the controller node as usual. Please refer to the <a href="../install/">getting started guide</a>.</p>
+<h4 id="5-run-worker">5. Run worker<a class="headerlink" href="#5-run-worker" title="Permanent link">#</a></h4>
+<p>Do the worker set up as usually on the airgapped machine.
+During the start up k0s worker will import all bundles from the <code>$K0S_DATA_DIR/images</code> before even starting <code>kubelet</code></p>
                 
               
               
@@ -933,7 +956,7 @@ The following options need to match on each node, otherwise the control plane co
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../dual-stack/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../examples/ansible-playbook/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -942,19 +965,19 @@ The following options need to match on each node, otherwise the control plane co
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                IPv4/IPv6 Dual-Stack Networking
+                Ansible Playbook
               </div>
             </div>
           </a>
         
         
-          <a href="../shell-completion/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../manifests/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Shell Completion
+                Manifest Bundles
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

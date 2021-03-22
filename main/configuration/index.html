@@ -357,6 +357,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../airgap-install/" class="md-nav__link">
+      Airgap installation
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -1187,7 +1199,8 @@ Based on the <code>--profile</code> argument given to the <code>k0s worker</code
 <li><code>spec.images.calico.kubecontrollers</code></li>
 <li><code>spec.images.repository</code></li>
 </ul>
-<p>If <code>spec.images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code></p>
+<p>If <code>spec.images.repository</code> is set and not empty, every image will be pulled from <code>images.repository</code>
+If <code>spec.images.default_pull_policy</code> is set ant not empty, it will be used as a pull policy for each bundled image.</p>
 <p>Example:
 <div class="highlight"><pre><span></span><code>images:
   repository: &quot;my.own.repo&quot;

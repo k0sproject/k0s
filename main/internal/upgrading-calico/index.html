@@ -357,6 +357,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../airgap-install/" class="md-nav__link">
+      Airgap installation
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -907,10 +919,12 @@ veth_mtu: &quot;{{ .MTU }}&quot;
 <p>Instead of hardcoded image names and versions use placeholders to support configuration level settings. Following placeholders are used:</p>
 <ul>
 <li><code>CalicoCNIImage</code> for calico/cni</li>
-<li><code>CalicoFlexVolumeImage</code> for calico/pod2daemon-flexvol</li>
 <li><code>CalicoNodeImage</code> for calico/node</li>
 <li><code>CalicoKubeControllersImage</code> for calico/kube-controllers</li>
 </ul>
+<p>Also, all containers in manifests were modified to have 'imagePullPolicy' field:
+<div class="highlight"><pre><span></span><code>imagePullPolicy: {{ .PullPolicy }}
+</code></pre></div></p>
 <p>Example: 
 <div class="highlight"><pre><span></span><code># calico-node.yaml
 image: {{ .CalicoCNIImage }}
