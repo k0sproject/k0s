@@ -65,7 +65,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 
 func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitController(0))
-	token, err := s.GetJoinToken("controller", "")
+	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
 	s.NoError(s.InitController(1, token))
 
