@@ -64,6 +64,12 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 }
 
 func (s *HAControlplaneSuite) TestDeregistration() {
+	// Verify that k0s return failure (https://github.com/k0sproject/k0s/issues/790)
+	sshC0, err := s.SSH(s.ControllerNode(0))
+	s.Require().NoError(err)
+	_, err = sshC0.ExecWithOutput("k0s etcd member-list")
+	s.Require().Error(err)
+
 	s.NoError(s.InitController(0))
 	token, err := s.GetJoinToken("controller")
 	s.NoError(err)
