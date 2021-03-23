@@ -211,10 +211,6 @@ func getDataDirOpt(args []string) string {
 	return ""
 }
 
-func getDataDir(args []string) string {
-	return strings.TrimPrefix(getDataDirOpt(args), "--data-dir=")
-}
-
 // InitController initializes a controller
 func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	controllerNode := s.ControllerNode(idx)
@@ -235,7 +231,7 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 }
 
 // GetJoinToken generates join token for the asked role
-func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, error) {
+func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
 	controllerNode := s.ControllerNode(0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
@@ -244,7 +240,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, erro
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s --data-dir=%s", role, dataDir))
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s %s", role, strings.Join(extraArgs, " ")))
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
@@ -262,7 +258,7 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	token, err := s.GetJoinToken("worker", getDataDir(args))
+	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
 	if err != nil {
 		return err
 	}

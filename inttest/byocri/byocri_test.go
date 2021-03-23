@@ -57,7 +57,7 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {
-	token, err := s.GetJoinToken("worker", "")
+	token, err := s.GetJoinToken("worker")
 	if err != nil {
 		return err
 	}
