@@ -933,7 +933,7 @@
 <p>kay-zero-ess</p>
 <h3 id="how-do-i-run-a-single-node-cluster">How do I run a single node cluster?<a class="headerlink" href="#how-do-i-run-a-single-node-cluster" title="Permanent link">#</a></h3>
 <p>The cluster can be started with:
-<code>k0s controller --enable-worker</code></p>
+`k0s controller --single</p>
 <p>See also the <a href="https://docs.k0sproject.io/latest/install/">Getting Started</a> tutorial.</p>
 <h3 id="how-do-i-connect-to-the-cluster">How do I connect to the cluster?<a class="headerlink" href="#how-do-i-connect-to-the-cluster" title="Permanent link">#</a></h3>
 <p>You find the config in <code>${DATADIR}/pki/admin.conf</code> (default: <code>/var/lib/k0s/pki/admin.conf</code>). Copy this file, and change the <code>localhost</code> entry to the public ip of the controller. Use the modified config to connect with kubectl:

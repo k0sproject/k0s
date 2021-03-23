@@ -915,7 +915,7 @@
 <h4 id="2-install-k0s-as-a-service">2. Install k0s as a service<a class="headerlink" href="#2-install-k0s-as-a-service" title="Permanent link">#</a></h4>
 <p>The <code>k0s install</code> sub-command will install k0s as a system service on the local host running one of the supported init systems: Systemd or OpenRC. Install can be executed for workers, controllers or single node (controller+worker) instances.</p>
 <p>This command will install a single node k0s including the controller and worker functions with the default configuration:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --enable-worker
+<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --single
 </code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. See <a href="../k0s-multi-node/#installation-steps">manual install</a> for an example for entering a custom config file.</p>
 <h4 id="3-start-k0s-as-a-service">3. Start k0s as a service<a class="headerlink" href="#3-start-k0s-as-a-service" title="Permanent link">#</a></h4>
