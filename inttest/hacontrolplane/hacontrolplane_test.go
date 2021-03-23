@@ -63,26 +63,16 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	s.NoError(err)
 }
 
-func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
-	sshCon, err := s.SSH(s.ControllerNode(controllerIdx))
-	s.NoError(err)
-	defer sshCon.Disconnect()
-	ca, err := sshCon.ExecWithOutput("cat /var/lib/k0s/pki/ca.crt")
-	s.NoError(err)
-
-	return ca
-}
-
 func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitController(0))
 	token, err := s.GetJoinToken("controller", "")
 	s.NoError(err)
 	s.NoError(s.InitController(1, token))
 
-	ca0 := s.getCa(0)
+	ca0 := s.GetFileFromController(0, "/var/lib/k0s/pki/ca.crt")
 	s.Contains(ca0, "-----BEGIN CERTIFICATE-----")
 
-	ca1 := s.getCa(1)
+	ca1 := s.GetFileFromController(1, "/var/lib/k0s/pki/ca.crt")
 	s.Contains(ca1, "-----BEGIN CERTIFICATE-----")
 
 	s.Equal(ca0, ca1)
