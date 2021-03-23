@@ -25,7 +25,6 @@ package dualstack
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/stretchr/testify/suite"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,8 +33,6 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	k8s "k8s.io/client-go/kubernetes"
-	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type DualstackSuite struct {
@@ -53,27 +50,12 @@ func (ds *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 
 }
 
-func (ds *DualstackSuite) getKubeConfig(node string) *restclient.Config {
-	machine, err := ds.MachineForName(node)
-	ds.Require().NoError(err)
-	ssh, err := ds.SSH(node)
-	ds.Require().NoError(err)
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/pki/admin.conf")
-	ds.Require().NoError(err)
-	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
-	ds.Require().NoError(err)
-	hostPort, err := machine.HostPort(6443)
-	ds.Require().NoError(err)
-	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
-	return cfg
-}
-
 func (ds *DualstackSuite) SetupSuite() {
 	ds.FootlooseSuite.SetupSuite()
 	ds.PutFile(ds.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithAddon)
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.RunWorkers())
-	client, err := k8s.NewForConfig(ds.getKubeConfig(ds.ControllerNode(0)))
+	client, err := ds.KubeClient(ds.ControllerNode(0))
 	ds.Require().NoError(err)
 	err = ds.WaitForNodeReady(ds.WorkerNode(0), client)
 	ds.Require().NoError(err)
