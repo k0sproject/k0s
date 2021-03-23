@@ -39,10 +39,10 @@ func (s *InstallSuite) TestK0sGetsUp() {
 	_, err = ssh.ExecWithOutput("rc-service k0scontroller start")
 	s.Require().NoError(err)
 
-	err = s.WaitForKubeAPI(s.ControllerNode(0), "")
+	err = s.WaitForKubeAPI(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	kc, err := s.KubeClient(s.ControllerNode(0), "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)

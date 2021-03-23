@@ -56,7 +56,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(2, "--config=/tmp/k0s.yaml", token))
 	s.NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient(s.ControllerNode(0), "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)

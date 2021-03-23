@@ -32,7 +32,7 @@ type SingleNodeSuite struct {
 func (s *SingleNodeSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--single"))
 
-	kc, err := s.KubeClient(s.ControllerNode(0), "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
