@@ -156,6 +156,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 		}
 
 		s.T().Logf("wrote log of node %s to %s", m.Hostname(), logPath)
+		ssh.Disconnect()
 	}
 
 	if s.keepEnvironment() {
@@ -336,6 +337,8 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	if err != nil {
 		return nil, err
 	}
+	defer ssh.Disconnect()
+
 	kubeConfigCmd := fmt.Sprintf("k0s kubeconfig admin %s", strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {

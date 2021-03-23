@@ -35,6 +35,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 	// which in general even makes sense, we can test tooling as well
 	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
 	s.NoError(err)
+	defer sshCon.Disconnect()
 	output, err := sshCon.ExecWithOutput("k0s etcd member-list")
 	output = lastLine(output)
 	s.NoError(err)
@@ -50,6 +51,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
 	sshCon, err := s.SSH(s.ControllerNode(executeOnControllerIdx))
 	s.NoError(err)
+	defer sshCon.Disconnect()
 	for i := 0; i < 20; i++ {
 		_, err = sshCon.ExecWithOutput(fmt.Sprintf("k0s etcd leave %s", peerAddress))
 		if err == nil {
@@ -64,6 +66,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 func (s *HAControlplaneSuite) getCa(controllerIdx int) string {
 	sshCon, err := s.SSH(s.ControllerNode(controllerIdx))
 	s.NoError(err)
+	defer sshCon.Disconnect()
 	ca, err := sshCon.ExecWithOutput("cat /var/lib/k0s/pki/ca.crt")
 	s.NoError(err)
 
@@ -102,6 +105,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	// It should just ignore the token as there's CA etc already in place
 	sshC1, err := s.SSH(s.ControllerNode(1))
 	s.Require().NoError(err)
+	defer sshC1.Disconnect()
 	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 	s.NoError(s.InitController(1, token))
