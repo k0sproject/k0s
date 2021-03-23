@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -34,7 +33,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
@@ -202,14 +200,17 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
-func getDataDir(args []string) string {
-	dataDir := ""
+func getDataDirOpt(args []string) string {
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--data-dir=") {
-			dataDir = strings.TrimPrefix(arg, "--data-dir=")
+			return arg
 		}
 	}
-	return dataDir
+	return ""
+}
+
+func getDataDir(args []string) string {
+	return strings.TrimPrefix(getDataDirOpt(args), "--data-dir=")
 }
 
 // InitController initializes a controller
@@ -227,7 +228,8 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
+
+	return s.WaitForKubeAPI(controllerNode, getDataDirOpt(k0sArgs))
 }
 
 // GetJoinToken generates join token for the asked role
@@ -323,11 +325,8 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	return nil, fmt.Errorf("no machine found with name %s", name)
 }
 
-// WaitForKubeAPI return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Clientset, error) {
-	if dataDir == "" {
-		dataDir = constant.DataDirDefault
-	}
+// KubeClient return kube client by loading the admin access config from given node
+func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -336,7 +335,7 @@ func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Cl
 	if err != nil {
 		return nil, err
 	}
-	kubeConfigCmd := fmt.Sprintf("cat %s", filepath.Join(dataDir, "pki/admin.conf"))
+	kubeConfigCmd := fmt.Sprintf("k0s kubeconfig admin %s", strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err
@@ -384,10 +383,10 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
-func (s *FootlooseSuite) WaitForKubeAPI(node string, dataDir string) error {
+func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
 	s.T().Log("starting to poll kube api")
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		kc, err := s.KubeClient(node, dataDir)
+		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
 			return false, nil
 		}

@@ -40,7 +40,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, dataDirOpt))
 	s.NoError(s.RunWorkers(dataDirOpt, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
-	kc, err := s.KubeClient(s.ControllerNode(0), customDataDir)
+	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)

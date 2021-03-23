@@ -34,7 +34,7 @@ func (s *KineSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient(s.ControllerNode(0), "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)

@@ -135,7 +135,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (st
 
 func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
 	as.T().Logf("waiting to see prometheus release to have envs set from values yaml")
-	kc, err := as.KubeClient(as.ControllerNode(0), "")
+	kc, err := as.KubeClient(as.ControllerNode(0))
 	if err != nil {
 		return err
 	}
