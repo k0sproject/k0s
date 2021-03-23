@@ -51,6 +51,7 @@ import (
 func init() {
 	controllerCmd.Flags().StringVar(&controllerWorkerProfile, "profile", "default", "worker profile to use on the node")
 	controllerCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
+	controllerCmd.Flags().BoolVar(&singleNode, "single", false, "enable single node (implies --enable-worker, default false)")
 	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
@@ -61,6 +62,7 @@ func init() {
 var (
 	controllerWorkerProfile string
 	enableWorker            bool
+	singleNode              bool
 	controllerToken         string
 	controllerCmd           = &cobra.Command{
 		Use:     "controller [join-token]",
@@ -88,6 +90,10 @@ var (
 				}
 				controllerToken = string(bytes)
 			}
+			if singleNode {
+				enableWorker = true
+				k0sVars.DefaultStorageType = "kine"
+			}
 
 			return startController(controllerToken)
 		},
@@ -95,7 +101,7 @@ var (
 )
 
 // If we've got CA in place we assume the node has already joined previously
-func needToJoin(k0sVars constant.CfgVars) bool {
+func needToJoin() bool {
 	if util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.key")) &&
 		util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.crt")) {
 		return false
@@ -124,7 +130,7 @@ func startController(token string) error {
 	var join = false
 
 	var joinClient *v1beta1.JoinClient
-	if token != "" && needToJoin(k0sVars) {
+	if token != "" && needToJoin() {
 		join = true
 		joinClient, err = v1beta1.JoinClientFromToken(token)
 		if err != nil {
@@ -152,7 +158,7 @@ func startController(token string) error {
 	var storageBackend component.Component
 
 	switch clusterConfig.Spec.Storage.Type {
-	case v1beta1.KineStorageType, "":
+	case v1beta1.KineStorageType:
 		storageBackend = &controller.Kine{
 			Config:  clusterConfig.Spec.Storage.Kine,
 			K0sVars: k0sVars,
@@ -189,12 +195,14 @@ func startController(token string) error {
 		})
 	}
 
-	componentManager.Add(&controller.Konnectivity{
-		ClusterConfig:     clusterConfig,
-		LogLevel:          logging["konnectivity-server"],
-		K0sVars:           k0sVars,
-		KubeClientFactory: adminClientFactory,
-	})
+	if !singleNode {
+		componentManager.Add(&controller.Konnectivity{
+			ClusterConfig:     clusterConfig,
+			LogLevel:          logging["konnectivity-server"],
+			K0sVars:           k0sVars,
+			KubeClientFactory: adminClientFactory,
+		})
+	}
 	componentManager.Add(&controller.Scheduler{
 		ClusterConfig: clusterConfig,
 		LogLevel:      logging["kube-scheduler"],
@@ -216,10 +224,12 @@ func startController(token string) error {
 	componentManager.Add(leaderElector)
 
 	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
-	componentManager.Add(&controller.K0SControlAPI{
-		ConfigPath: cfgFile,
-		K0sVars:    k0sVars,
-	})
+	if !singleNode {
+		componentManager.Add(&controller.K0SControlAPI{
+			ConfigPath: cfgFile,
+			K0sVars:    k0sVars,
+		})
+	}
 
 	if clusterConfig.Spec.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{

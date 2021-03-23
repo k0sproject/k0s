@@ -36,7 +36,7 @@ func Test_KubeletConfig(t *testing.T) {
 	clientCAFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, k0sVars)
+		k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
 		require.NoError(t, err)
 		buf, err := k.run(dnsAddr)
 		require.NoError(t, err)
@@ -108,7 +108,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig().Spec, k0sVars)
+	k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
 	require.NoError(t, err)
 
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,

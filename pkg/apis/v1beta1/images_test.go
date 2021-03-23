@@ -33,8 +33,9 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
+		k0sVars := constant.GetConfig("")
 		t.Run("default_config", func(t *testing.T) {
-			cfg := DefaultClusterConfig()
+			cfg := DefaultClusterConfig(k0sVars)
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
@@ -47,7 +48,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("my.repo/calico/kube-controllers:%s", constant.KubeControllerImageVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
 		})
 		t.Run("config_with_custom_images", func(t *testing.T) {
-			cfg := DefaultClusterConfig()
+			cfg := DefaultClusterConfig(k0sVars)
 			cfg.Spec.Images.Konnectivity.Image = "my-custom-image"
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig

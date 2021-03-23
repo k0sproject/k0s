@@ -29,11 +29,11 @@ import (
 func ConfigFromYaml(cfgPath string) (clusterConfig *config.ClusterConfig, err error) {
 	if cfgPath == "" {
 		logrus.Info("no config file given, using defaults")
-		clusterConfig = config.DefaultClusterConfig()
+		clusterConfig = config.DefaultClusterConfig(k0sVars)
 	} else if isInputFromPipe() {
-		clusterConfig, err = config.FromYamlPipe(os.Stdin)
+		clusterConfig, err = config.FromYamlPipe(os.Stdin, k0sVars)
 	} else {
-		clusterConfig, err = config.FromYamlFile(cfgPath)
+		clusterConfig, err = config.FromYamlFile(cfgPath, k0sVars)
 	}
 
 	if err != nil {

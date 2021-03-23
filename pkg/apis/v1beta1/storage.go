@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // supported storage types
@@ -42,7 +43,13 @@ type KineConfig struct {
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
-func DefaultStorageSpec() *StorageSpec {
+func DefaultStorageSpec(k0sVars constant.CfgVars) *StorageSpec {
+	if k0sVars.DefaultStorageType == KineStorageType {
+		return &StorageSpec{
+			Type: KineStorageType,
+			Kine: DefaultKineConfig(k0sVars.DataDir),
+		}
+	}
 	return &StorageSpec{
 		Type: EtcdStorageType,
 		Etcd: DefaultEtcdConfig(),

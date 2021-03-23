@@ -19,6 +19,7 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -29,6 +30,7 @@ type ClusterConfig struct {
 	Kind       string       `yaml:"kind" validate:"eq=Cluster"`
 	Metadata   *ClusterMeta `yaml:"metadata"`
 	Spec       *ClusterSpec `yaml:"spec"`
+	k0sVars    constant.CfgVars
 }
 
 // ClusterMeta ...
@@ -90,49 +92,49 @@ func (c *ClusterConfig) Validate() []error {
 }
 
 // FromYamlFile ...
-func FromYamlFile(filename string) (*ClusterConfig, error) {
+func FromYamlFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read config file at %s", filename)
 	}
 
-	return FromYamlString(string(buf))
+	return FromYamlString(string(buf), k0sVars)
 }
 
 // FromYamlPipe
-func FromYamlPipe(r io.Reader) (*ClusterConfig, error) {
+func FromYamlPipe(r io.Reader, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	input, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, nil
 	}
-	return FromYamlString(string(input))
+	return FromYamlString(string(input), k0sVars)
 
 }
 
 // FromYamlString
-func FromYamlString(yml string) (*ClusterConfig, error) {
-	config := &ClusterConfig{}
+func FromYamlString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
+	config := &ClusterConfig{k0sVars: k0sVars}
 	err := yaml.Unmarshal([]byte(yml), &config)
 	if err != nil {
 		return config, err
 	}
 
 	if config.Spec == nil {
-		config.Spec = DefaultClusterSpec()
+		config.Spec = DefaultClusterSpec(k0sVars)
 	}
 
 	return config, nil
 }
 
 // DefaultClusterConfig ...
-func DefaultClusterConfig() *ClusterConfig {
+func DefaultClusterConfig(k0sVars constant.CfgVars) *ClusterConfig {
 	return &ClusterConfig{
 		APIVersion: "k0s.k0sproject.io/v1beta1",
 		Kind:       "Cluster",
 		Metadata: &ClusterMeta{
 			Name: "k0s",
 		},
-		Spec: DefaultClusterSpec(),
+		Spec: DefaultClusterSpec(k0sVars),
 	}
 }
 
@@ -142,7 +144,7 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Metadata = &ClusterMeta{
 		Name: "k0s",
 	}
-	c.Spec = DefaultClusterSpec()
+	c.Spec = DefaultClusterSpec(c.k0sVars)
 
 	type yclusterconfig ClusterConfig
 	yc := (*yclusterconfig)(c)
@@ -155,9 +157,9 @@ func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // DefaultClusterSpec default settings
-func DefaultClusterSpec() *ClusterSpec {
+func DefaultClusterSpec(k0sVars constant.CfgVars) *ClusterSpec {
 	return &ClusterSpec{
-		Storage: DefaultStorageSpec(),
+		Storage: DefaultStorageSpec(k0sVars),
 		Network: DefaultNetwork(),
 		API:     DefaultAPISpec(),
 		ControllerManager: &ControllerManagerSpec{

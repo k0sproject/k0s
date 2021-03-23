@@ -35,7 +35,7 @@ var configCmd = &cobra.Command{
 }
 
 func buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig())
+	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(k0sVars))
 	fmt.Print(string(conf))
 	return nil
 }

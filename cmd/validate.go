@@ -57,11 +57,11 @@ func validateConfig(cfgPath string) (err error) {
 
 	if cfgPath == "" {
 		// no config file exists, using defaults
-		clusterConfig = config.DefaultClusterConfig()
+		clusterConfig = config.DefaultClusterConfig(k0sVars)
 	} else if isInputFromPipe() {
-		clusterConfig, err = config.FromYamlPipe(os.Stdin)
+		clusterConfig, err = config.FromYamlPipe(os.Stdin, k0sVars)
 	} else {
-		clusterConfig, err = config.FromYamlFile(cfgPath)
+		clusterConfig, err = config.FromYamlFile(cfgPath, k0sVars)
 	}
 	if err != nil {
 		return err
