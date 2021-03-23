@@ -131,7 +131,7 @@ The Kubernetes command-line tool 'kubectl' is included into k0s binary. You can 
 ```
 $ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    <none>   4m6s   v1.20.4-k0s1
+k0s    Ready    <none>   4m6s   v1.20.5-k0s1
 ```
 
 You can also access your cluster easily with [LENS](https://k8slens.dev/). Just copy the kubeconfig 
