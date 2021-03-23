@@ -24,7 +24,7 @@ The `k0s install` sub-command will install k0s as a system service on the local 
 This command will install a single node k0s including the controller and worker functions with the default configuration:
 
 ```sh
-$ sudo k0s install controller --enable-worker
+$ sudo k0s install controller --single
 ```
 
 The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. See [manual install](k0s-multi-node.md#installation-steps) for an example for entering a custom config file.

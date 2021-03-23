@@ -8,14 +8,9 @@ These instructions outline a quick method for running a local k0s master and wor
 Install k0s as documented in the [installation instructions](install.md).
 
 ## Start k0s
-#### 1. Generate a default cluster configuration
-```sh
-k0s default-config > k0s.yaml
-```
 
-#### 2. Start k0s
 ```sh
-$ sudo k0s install controller -c /full/path/to/k0s.yaml --enable-worker
+$ sudo k0s install controller --single
 INFO[2021-02-25 15:34:59] Installing k0s service
 $ sudo systemctl start k0scontroller.service
 ```

@@ -7,7 +7,7 @@ kay-zero-ess
 ### How do I run a single node cluster?
 
 The cluster can be started with:
-`k0s controller --enable-worker`
+`k0s controller --single
 
 See also the [Getting Started](https://docs.k0sproject.io/latest/install/) tutorial.
 
