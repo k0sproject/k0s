@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -326,7 +327,7 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 }
 
 // KubeClient return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
+func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -349,6 +350,15 @@ func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*
 		return nil, errors.Wrap(err, "footloose machine has to have 6443 port mapped")
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
+	return cfg, nil
+}
+
+// KubeClient return kube client by loading the admin access config from given node
+func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
+	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+	if err != nil {
+		return nil, err
+	}
 	return kubernetes.NewForConfig(cfg)
 }
 
