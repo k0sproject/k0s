@@ -12,6 +12,9 @@ You also need to have containerd CLI management tool `ctr` installed on the work
 ## Steps
 
 #### 1. Create OCI bundle
+
+k0s supports only uncompressed image bundles.
+
 ##### 1.1 Using Docker
 Use following commands to build OCI bundle by utilizing your docker environment. 
 ```
