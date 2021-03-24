@@ -28,7 +28,7 @@ import (
 type APISpec struct {
 	Address         string            `yaml:"address"`
 	Port            int               `yaml:"port"`
-	K0sApiPort      int               `yaml:"k0s_api_port,omitempty"`
+	K0sAPIPort      int               `yaml:"k0s_api_port,omitempty"`
 	ExternalAddress string            `yaml:"externalAddress,omitempty"`
 	SANs            []string          `yaml:"sans"`
 	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`
@@ -41,7 +41,7 @@ func DefaultAPISpec() *APISpec {
 	publicAddress, _ := util.FirstPublicAddress()
 	return &APISpec{
 		Port:       6443,
-		K0sApiPort: 9443,
+		K0sAPIPort: 9443,
 		SANs:       addresses,
 		Address:    publicAddress,
 		ExtraArgs:  make(map[string]string),
@@ -69,7 +69,7 @@ func IsIPv6String(ip string) bool {
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
-	return a.getExternalURIForPort(a.K0sApiPort)
+	return a.getExternalURIForPort(a.K0sAPIPort)
 }
 
 func (a *APISpec) getExternalURIForPort(port int) string {

@@ -136,10 +136,6 @@ spec:
 	assert.Equal(t, "unsupported network provider: invalidProvider", errors[0].Error())
 }
 
-func TestApiAddress(t *testing.T) {
-
-}
-
 func TestApiExternalAddress(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
@@ -157,8 +153,6 @@ spec:
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
 }
-
-
 
 func TestApiNoExternalAddress(t *testing.T) {
 	yamlData := `
