@@ -43,7 +43,7 @@ require (
 	github.com/vishvananda/netlink v1.1.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
@@ -54,11 +54,12 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	helm.sh/helm/v3 v3.4.0
 	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
+	k8s.io/api v0.20.5
+	k8s.io/apimachinery v0.20.5
 	k8s.io/cli-runtime v0.20.2
-	k8s.io/client-go v0.20.2
 	k8s.io/cri-api v0.20.4
+	k8s.io/client-go v0.20.5
+	k8s.io/kube-aggregator v0.20.5
 	k8s.io/kubectl v0.20.2
 	k8s.io/mount-utils v0.20.4
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920

@@ -26,6 +26,8 @@ import (
 	capi "k8s.io/api/certificates/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type BasicSuite struct {
@@ -69,6 +71,23 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(s.verifyKubeletAddressFlag("worker0"))
 	s.Require().NoError(s.verifyKubeletAddressFlag("worker1"))
+
+	s.Require().NoError(common.WaitForMetricsReady(s.getKubeConfig("controller0")))
+}
+
+func (s *BasicSuite) getKubeConfig(node string) *restclient.Config {
+	machine, err := s.MachineForName(node)
+	s.Require().NoError(err)
+	ssh, err := s.SSH(node)
+	s.Require().NoError(err)
+	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/custom-data-dir/pki/admin.conf")
+	s.Require().NoError(err)
+	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
+	s.Require().NoError(err)
+	hostPort, err := machine.HostPort(6443)
+	s.Require().NoError(err)
+	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
+	return cfg
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
