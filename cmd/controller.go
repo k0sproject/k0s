@@ -182,10 +182,11 @@ func startController(token string) error {
 	adminClientFactory := kubernetes.NewAdminClientFactory(k0sVars)
 
 	componentManager.Add(&controller.APIServer{
-		ClusterConfig: clusterConfig,
-		K0sVars:       k0sVars,
-		LogLevel:      logging["kube-apiserver"],
-		Storage:       storageBackend,
+		ClusterConfig:      clusterConfig,
+		K0sVars:            k0sVars,
+		LogLevel:           logging["kube-apiserver"],
+		Storage:            storageBackend,
+		EnableKonnectivity: !singleNode,
 	})
 
 	if clusterConfig.Spec.API.ExternalAddress != "" {
