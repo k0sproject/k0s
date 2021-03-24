@@ -61,17 +61,18 @@ func (a *OCIBundleReconciler) Run() error {
 		client, err := containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"))
 
 		if err != nil {
+			logrus.WithError(err).Errorf("can't connect to containerd socket %s", sock)
 			return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
 		}
 		defer client.Close()
 		for _, file := range files {
 			if err := a.unpackBundle(client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
+				logrus.WithError(err).Errorf("can't unpack bundle %s", file.Name())
 				return fmt.Errorf("can't unpack bundle %s: %w", file.Name(), err)
 			}
 		}
 		return nil
-	}, retry.Delay(time.Second*5),
-		retry.Attempts(50))
+	}, retry.Delay(time.Second*5))
 
 }
 
