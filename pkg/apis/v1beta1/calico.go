@@ -35,7 +35,7 @@ func DefaultCalico() *Calico {
 		Mode:                    "vxlan",
 		VxlanPort:               4789,
 		VxlanVNI:                4096,
-		MTU:                     1450,
+		MTU:                     0,
 		EnableWireguard:         false,
 		FlexVolumeDriverPath:    "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
 		WithWindowsNodes:        false,

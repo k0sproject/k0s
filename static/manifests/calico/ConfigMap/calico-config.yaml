@@ -11,11 +11,10 @@ data:
   typha_service_name: "none"
   # Configure the backend to use.
   calico_backend: "{{ .Mode }}"
+
   # Configure the MTU to use for workload interfaces and tunnels.
-  # - If Wireguard is enabled, set to your network MTU - 60
-  # - Otherwise, if VXLAN or BPF mode is enabled, set to your network MTU - 50
-  # - Otherwise, if IPIP is enabled, set to your network MTU - 20
-  # - Otherwise, if not using any encapsulation, set to your network MTU.
+  # By default, MTU is auto-detected, and explicitly setting this field should not be required.
+  # You can override auto-detection by providing a non-zero value.
   veth_mtu: "{{ .MTU }}"
 
   # The CNI network configuration to install on each node. The special
