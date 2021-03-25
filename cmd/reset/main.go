@@ -38,13 +38,13 @@ func NewResetCmd() *cobra.Command {
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			return c.reset()
 		},
 		PreRunE: preRunValidateConfig,
 	}
 	cmd.SilenceUsage = true
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -99,7 +99,7 @@ func (c *CmdOpts) reset() error {
 }
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
-	c := getCmdOpts()
+	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err

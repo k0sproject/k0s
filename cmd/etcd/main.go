@@ -31,7 +31,7 @@ func NewEtcdCmd() *cobra.Command {
 		Use:   "etcd",
 		Short: "Manage etcd cluster",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -46,6 +46,6 @@ func NewEtcdCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

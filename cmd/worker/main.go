@@ -64,7 +64,7 @@ func NewWorkerCmd() *cobra.Command {
 			if len(args) > 0 {
 				tokenArg = args[0]
 			}
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			c.Logging = util.MapMerge(cmdLogLevels, c.DefaultLogLevels)
 			if len(tokenArg) > 0 && len(tokenFile) > 0 {
 				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
@@ -94,7 +94,7 @@ func NewWorkerCmd() *cobra.Command {
 	cmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 
 	// append flags
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -127,8 +127,7 @@ func (c *CmdOpts) startWorker(token string) error {
 		})
 	}
 
-	componentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
-
+	componentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
 	if workerProfile == "default" && runtime.GOOS == "windows" {
 		workerProfile = "default-windows"
 	}

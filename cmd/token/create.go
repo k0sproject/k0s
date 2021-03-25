@@ -38,7 +38,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -76,6 +76,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
 	// append flags
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

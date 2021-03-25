@@ -41,7 +41,7 @@ func validateConfigCmd() *cobra.Command {
 		Long: `Example:
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			_, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				fmt.Println(err)
@@ -51,6 +51,6 @@ func validateConfigCmd() *cobra.Command {
 	}
 
 	// append flags
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

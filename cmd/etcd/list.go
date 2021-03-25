@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 )
 
@@ -30,9 +31,9 @@ func etcdListCmd() *cobra.Command {
 		Use:   "member-list",
 		Short: "Returns etcd cluster members list",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			ctx := context.Background()
-			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, k0sVars.EtcdCertDir)
+			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
@@ -48,6 +49,6 @@ func etcdListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

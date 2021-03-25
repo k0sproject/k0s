@@ -21,14 +21,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/spf13/pflag"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
+	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
 	"github.com/k0sproject/k0s/cmd/controller"
 	"github.com/k0sproject/k0s/cmd/etcd"
@@ -42,29 +41,27 @@ import (
 	"github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 var (
-	cfgFile       string
-	dataDir       string
-	debug         bool
-	debugListenOn string
-	k0sVars       constant.CfgVars
-	longDesc      string
+	longDesc string
 )
+
+type cliOpts config.CLIOptions
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "k0s",
 		Short: "k0s - Zero Friction Kubernetes",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			c := cliOpts(config.GetCmdOpts())
 			// set DEBUG from env, or from command flag
-			if viper.GetString("debug") != "" || debug {
+			if viper.GetString("debug") != "" || c.Debug {
 				logrus.SetLevel(logrus.DebugLevel)
 				go func() {
-					log.Println("starting debug server under", debugListenOn)
-					log.Println(http.ListenAndServe(debugListenOn, nil))
+					log.Println("starting debug server under", c.DebugListenOn)
+					log.Println(http.ListenAndServe(c.DebugListenOn, nil))
 				}()
 			}
 		},
@@ -80,6 +77,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(validate.NewValidateCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
+	cmd.AddCommand(airgap.NewAirgapCmd())
 
 	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newDocsCmd())
@@ -92,7 +90,7 @@ func NewRootCmd() *cobra.Command {
 		longDesc = longDesc + "\n" + build.EulaNotice
 	}
 	cmd.Long = longDesc
-	cmd.PersistentFlags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -126,14 +124,14 @@ func newDefaultConfigCmd() *cobra.Command {
 		Use:   "default-config",
 		Short: "Output the default k0s configuration yaml to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			k0sVars = constant.GetConfig(dataDir)
-			if err := buildConfig(); err != nil {
+			c := cliOpts(config.GetCmdOpts())
+			if err := c.buildConfig(); err != nil {
 				return err
 			}
 			return nil
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -188,8 +186,8 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 	}
 }
 
-func buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(k0sVars))
+func (c *cliOpts) buildConfig() error {
+	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(c.K0sVars))
 	fmt.Print(string(conf))
 	return nil
 }
@@ -199,15 +197,6 @@ func generateDocs() error {
 		return err
 	}
 	return nil
-}
-
-func getPersistentFlagSet() *pflag.FlagSet {
-	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&cfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
-	flagset.BoolVarP(&debug, "debug", "d", false, "Debug logging (default: false)")
-	flagset.StringVar(&dataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
-	flagset.StringVar(&debugListenOn, "debugListenOn", ":6060", "Http listenOn for debug pprof handler")
-	return flagset
 }
 
 func Execute() {

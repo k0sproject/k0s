@@ -41,7 +41,7 @@ func NewInstallCmd() *cobra.Command {
 
 	cmd.AddCommand(installControllerCmd())
 	cmd.AddCommand(installWorkerCmd())
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -95,7 +95,7 @@ func (c *CmdOpts) setup(role string, args []string) error {
 }
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
-	c := getCmdOpts()
+	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err

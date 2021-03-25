@@ -18,6 +18,8 @@ package hacontrolplane
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -53,7 +55,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	s.NoError(err)
 	defer sshCon.Disconnect()
 	for i := 0; i < 20; i++ {
-		_, err = sshCon.ExecWithOutput(fmt.Sprintf("k0s etcd leave %s", peerAddress))
+		_, err := sshCon.ExecWithOutput(fmt.Sprintf("k0s etcd leave --peer-address %s", peerAddress))
 		if err == nil {
 			break
 		}
@@ -107,7 +109,8 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitController(1, token))
 
 	// Make one member leave the etcd cluster
-	s.makeNodeLeave(1, membersFromJoined[s.ControllerNode(1)])
+	peerURL := membersFromJoined[s.ControllerNode(1)]
+	s.makeNodeLeave(1, getHostnameFromURL(peerURL))
 	refreshedMembers := s.getMembers(0)
 	s.Len(refreshedMembers, 1)
 	s.Contains(refreshedMembers, s.ControllerNode(0))
@@ -115,7 +118,6 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 }
 
 func TestHAControlplaneSuite(t *testing.T) {
-
 	s := HAControlplaneSuite{
 		common.FootlooseSuite{
 			ControllerCount: 2,
@@ -124,6 +126,15 @@ func TestHAControlplaneSuite(t *testing.T) {
 
 	suite.Run(t, &s)
 
+}
+
+func getHostnameFromURL(s string) string {
+	u, err := url.Parse(s)
+	if err != nil {
+		return ""
+	}
+	hostName, _, _ := net.SplitHostPort(u.Host)
+	return hostName
 }
 
 func lastLine(text string) string {

@@ -78,7 +78,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return errors.New("Username is mandatory")
 			}
 			var username = args[0]
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			clusterAPIURL, err := c.getAPIURL()
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
@@ -131,7 +131,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 		},
 	}
 	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 

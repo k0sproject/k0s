@@ -84,7 +84,7 @@ func NewControllerCmd() *cobra.Command {
 				}
 				controllerToken = string(bytes)
 			}
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			if singleNode {
 				enableWorker = true
 				c.K0sVars.DefaultStorageType = "kine"
@@ -101,7 +101,7 @@ func NewControllerCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().StringVar(&controllerWorkerProfile, "profile", "default", "worker profile to use on the node")
 	cmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
 	cmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
@@ -138,9 +138,11 @@ func (c *CmdOpts) startController(tokenString string) error {
 	var join = false
 
 	var joinClient *token.JoinClient
+	var err error
+
 	if tokenString != "" && c.needToJoin() {
 		join = true
-		joinClient, err := token.JoinClientFromToken(tokenString)
+		joinClient, err = token.JoinClientFromToken(tokenString)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}

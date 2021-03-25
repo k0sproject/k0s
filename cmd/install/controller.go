@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/k0sproject/k0s/cmd/controller"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 func installControllerCmd() *cobra.Command {
@@ -34,7 +35,7 @@ With controller subcommand you can setup a single node cluster by running:
 	k0s install controller --enable-worker
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			if err := c.convertFileParamsToAbsolute(); err != nil {
 				cmd.SilenceUsage = true
 				return err
@@ -50,7 +51,7 @@ With controller subcommand you can setup a single node cluster by running:
 		PreRunE: preRunValidateConfig,
 	}
 	// append flags
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	controllerFlagSet := getControllerFlags()
 	cmd.Flags().AddFlagSet(controllerFlagSet)
 

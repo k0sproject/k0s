@@ -46,7 +46,7 @@ func NewK0sKubectlCmd() *cobra.Command {
 				}
 			}
 		}
-		c := getCmdOpts()
+		c := CmdOpts(config.GetCmdOpts())
 		kubenv := os.Getenv("KUBECONFIG")
 		if kubenv == "" {
 			// Verify we can read the config before pushing it to env
@@ -60,6 +60,6 @@ func NewK0sKubectlCmd() *cobra.Command {
 		}
 		return originalPreRunE(cmd, args)
 	}
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

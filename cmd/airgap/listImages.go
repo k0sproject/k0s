@@ -13,35 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package airgap
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/airgap"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func init() {
-	airgapCmd.AddCommand(listImagesCmd)
-	addPersistentFlags(listImagesCmd)
-}
+type CmdOpts config.CLIOptions
 
-var (
-	// tokenCmd creates new token management command
-	airgapCmd = &cobra.Command{
-		Use:   "airgap",
-		Short: "Manage airgap setup",
-	}
-
-	listImagesCmd = &cobra.Command{
+func NewAirgapListImagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:     "list-images",
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// we don't need warning messages in case of default config
 			logrus.SetLevel(logrus.ErrorLevel)
-			cfg, err := ConfigFromYaml(cfgFile)
+			c := CmdOpts(config.GetCmdOpts())
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}
@@ -52,4 +47,6 @@ var (
 			return nil
 		},
 	}
-)
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	return cmd
+}

@@ -16,10 +16,19 @@ limitations under the License.
 package config
 
 import (
+	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+)
+
+var (
+	CfgFile       string
+	DataDir       string
+	Debug         bool
+	DebugListenOn string
+	K0sVars       constant.CfgVars
 )
 
 // This struct holds all the CLI options & settings required by the
@@ -28,6 +37,7 @@ type CLIOptions struct {
 	CfgFile          string
 	ClusterConfig    *v1beta1.ClusterConfig
 	Debug            bool
+	DebugListenOn    string
 	DefaultLogLevels map[string]string
 	K0sVars          constant.CfgVars
 	KubeClient       k8s.Interface
@@ -47,6 +57,24 @@ func DefaultLogLevels() map[string]string {
 	}
 }
 
-func GetBool(b bool) bool {
-	return b
+func GetPersistentFlagSet() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVarP(&CfgFile, "config", "c", "", "config file (default: ./k0s.yaml)")
+	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
+	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
+	return flagset
+}
+
+func GetCmdOpts() CLIOptions {
+	K0sVars = constant.GetConfig(DataDir)
+
+	opts := CLIOptions{
+		CfgFile:          CfgFile,
+		Debug:            Debug,
+		DefaultLogLevels: DefaultLogLevels(),
+		K0sVars:          K0sVars,
+		DebugListenOn:    DebugListenOn,
+	}
+	return opts
 }

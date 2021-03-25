@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package token
+package airgap
 
 import (
 	"github.com/spf13/cobra"
@@ -21,24 +21,14 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-type CmdOpts config.CLIOptions
-
-var (
-	tokenExpiry string
-	tokenRole   string
-	waitCreate  bool
-)
-
-func NewTokenCmd() *cobra.Command {
+func NewAirgapCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token",
-		Short: "Manage join tokens",
+		Use:   "airgap",
+		Short: "Manage airgap setup",
 	}
 
 	cmd.SilenceUsage = true
-	cmd.AddCommand(tokenCreateCmd())
-	cmd.AddCommand(tokenListCmd())
-	cmd.AddCommand(tokenInvalidateCmd())
+	cmd.AddCommand(NewAirgapListImagesCmd())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ func tokenListCmd() *cobra.Command {
 		Short:   "List join tokens",
 		Example: `k0s token list --role worker // list worker tokens`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
 			if err != nil {
 				return err
@@ -70,6 +71,6 @@ func tokenListCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&tokenRole, "role", "", "Either worker, controller or empty for all roles")
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

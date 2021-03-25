@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/k0sproject/k0s/cmd/worker"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 func installWorkerCmd() *cobra.Command {
@@ -31,7 +32,7 @@ All default values of worker command will be passed to the service stub unless o
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			if err := c.convertFileParamsToAbsolute(); err != nil {
 				cmd.SilenceUsage = true
 				return err
@@ -49,7 +50,7 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 		PreRunE: preRunValidateConfig,
 	}
 	// append flags
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	workerFlagset := getWorkerFlags()
 	cmd.Flags().AddFlagSet(workerFlagset)
 

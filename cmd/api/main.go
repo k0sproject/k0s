@@ -59,7 +59,7 @@ func NewAPICmd() *cobra.Command {
 		Use:   "api",
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -69,7 +69,7 @@ func NewAPICmd() *cobra.Command {
 		},
 	}
 	cmd.SilenceUsage = true
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
@@ -148,7 +148,7 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 			InitialCluster: memberList,
 		}
 
-		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "cc.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "cc.key")
+		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "ca.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
@@ -224,7 +224,7 @@ users:
 				Namespace string
 			}{
 				Server:    c.ClusterConfig.Spec.API.APIAddressURL(),
-				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["cc.crt"]),
+				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
 				Token:     string(secretWithToken.Data["token"]),
 				Namespace: string(secretWithToken.Data["namespace"]),
 			},
@@ -241,27 +241,27 @@ func (c *CmdOpts) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		caResp := v1beta1.CaResponse{}
-		key, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "cc.key"))
+		key, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "cc.crt"))
+		crt, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sc.key"))
+		saKey, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sc.pub"))
+		saPub, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return

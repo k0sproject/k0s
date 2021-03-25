@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,7 +32,12 @@ func etcdLeaveCmd() *cobra.Command {
 		Use:   "leave",
 		Short: "Sign off a given etc node from etcd cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			if err != nil {
+				return err
+			}
+			c.ClusterConfig = cfg
 			ctx := context.Background()
 			if etcdPeerAddress == "" {
 				etcdPeerAddress = c.ClusterConfig.Spec.Storage.Etcd.PeerAddress
@@ -68,6 +74,6 @@ func etcdLeaveCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&etcdPeerAddress, "peer-address", "", "etcd peer address")
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

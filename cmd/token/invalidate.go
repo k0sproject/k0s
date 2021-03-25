@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,7 @@ func tokenInvalidateCmd() *cobra.Command {
 		Short:   "Invalidates existing join token",
 		Example: "k0s token invalidate xyz123",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getCmdOpts()
+			c := CmdOpts(config.GetCmdOpts())
 			if len(args) < 1 {
 				return fmt.Errorf("invalidate requires at least one token Id to invalidate")
 			}
@@ -48,6 +49,6 @@ func tokenInvalidateCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().AddFlagSet(getPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
