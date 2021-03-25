@@ -16,7 +16,10 @@ limitations under the License.
 package controller
 
 import (
+	"crypto/tls"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"path"
 
 	"github.com/pkg/errors"
@@ -183,4 +186,24 @@ func (a *APIServer) Stop() error {
 }
 
 // Health-check interface
-func (a *APIServer) Healthy() error { return nil }
+func (a *APIServer) Healthy() error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Get("https://localhost:6443/readyz?verbose")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			logrus.Debugf("api server readyz output:\n %s", string(body))
+		}
+		return fmt.Errorf("expected 200 for api server ready check, got %d", resp.StatusCode)
+	}
+
+	return nil
+}
