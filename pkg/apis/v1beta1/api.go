@@ -28,7 +28,7 @@ import (
 type APISpec struct {
 	Address         string            `yaml:"address"`
 	Port            int               `yaml:"port"`
-	K0sAPIPort      int               `yaml:"k0s_api_port,omitempty"`
+	K0sAPIPort      int               `yaml:"k0sApiPort,omitempty"`
 	ExternalAddress string            `yaml:"externalAddress,omitempty"`
 	SANs            []string          `yaml:"sans"`
 	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`

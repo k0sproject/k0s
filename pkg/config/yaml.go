@@ -47,6 +47,10 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
 		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
 	}

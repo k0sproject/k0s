@@ -18,17 +18,15 @@ package kubeconfig
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
+	"github.com/cloudflare/cfssl/log"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
-	"fmt"
-	"github.com/sirupsen/logrus"
-	"strings"
-
-	"github.com/cloudflare/cfssl/log"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"

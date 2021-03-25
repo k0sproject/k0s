@@ -18,8 +18,8 @@ package v1beta1
 
 // KonnectivitySpec ...
 type KonnectivitySpec struct {
-	AgentPort int64 `yaml:"agent_port,omitempty"`
-	AdminPort int64 `yaml:"admin_port,omitempty"`
+	AgentPort int64 `yaml:"agentPort,omitempty"`
+	AdminPort int64 `yaml:"adminPort,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec

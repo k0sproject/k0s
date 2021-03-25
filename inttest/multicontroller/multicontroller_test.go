@@ -30,18 +30,8 @@ type MultiControllerSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *MultiControllerSuite) getMainIPAddress() string {
-	ssh, err := s.SSH(s.ControllerNode(0))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	ipAddress, err := ssh.ExecWithOutput("hostname -i")
-	s.Require().NoError(err)
-	return ipAddress
-}
-
 func (s *MultiControllerSuite) TestK0sGetsUp() {
-	ipAddress := s.getMainIPAddress()
+	ipAddress := s.GetControllerIPAddress(0)
 	s.T().Logf("ip address: %s", ipAddress)
 
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))

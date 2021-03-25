@@ -13,14 +13,7 @@ import (
 
 // WaitForCalicoReady waits to see all calico pods healthy
 func WaitForCalicoReady(kc *kubernetes.Clientset) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		ds, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", v1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-
-		return ds.Status.NumberReady == ds.Status.DesiredNumberScheduled, nil
-	})
+	return WaitForDaemonSet(kc, "calico-node")
 }
 
 func WaitForMetricsReady(c *rest.Config) error {
@@ -42,5 +35,29 @@ func WaitForMetricsReady(c *rest.Config) error {
 		}
 
 		return false, nil
+	})
+}
+
+// WaitForDaemonSet waits for daemon set be ready
+func WaitForDaemonSet(kc *kubernetes.Clientset, name string) error {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		ds, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		return ds.Status.NumberAvailable == ds.Status.DesiredNumberScheduled, nil
+	})
+}
+
+// WaitForPod waits for pod be running
+func WaitForPod(kc *kubernetes.Clientset, name string) error {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		ds, err := kc.CoreV1().Pods("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		return ds.Status.Phase == "Running", nil
 	})
 }

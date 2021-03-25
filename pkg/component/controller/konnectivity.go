@@ -176,6 +176,7 @@ func (k *Konnectivity) Stop() error {
 
 type konnectivityAgentConfig struct {
 	APIAddress string
+	AgentPort  int64
 	Image      string
 	PullPolicy string
 }
@@ -192,6 +193,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
 			APIAddress: k.ClusterConfig.Spec.API.APIAddress(),
+			AgentPort:  k.ClusterConfig.Spec.Konnectivity.AgentPort,
 			Image:      k.ClusterConfig.Spec.Images.Konnectivity.URI(),
 			PullPolicy: k.ClusterConfig.Spec.Images.DefaultPullPolicy,
 		},
@@ -309,7 +311,7 @@ spec:
                   # Since the konnectivity server runs with hostNetwork=true,
                   # this is the IP address of the master machine.
                   "--proxy-server-host={{ .APIAddress }}",
-                  "--proxy-server-port=8132",
+                  "--proxy-server-port={{ .AgentPort }}",
                   "--service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token"
                   ]
           volumeMounts:

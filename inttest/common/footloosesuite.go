@@ -53,10 +53,13 @@ type FootlooseSuite struct {
 
 	Cluster *cluster.Cluster
 
-	ControllerCount     int
-	WorkerCount         int
-	KubeAPIExternalPort int
-	K0sAPIExternalPort  int
+	ControllerCount       int
+	WorkerCount           int
+	KubeAPIExternalPort   int
+	K0sAPIExternalPort    int
+	KonnectivityAgentPort int
+	KonnectivityAdminPort int
+	WithLB                bool
 
 	ExtraVolumes  []config.Volume
 	tearDownTimer *time.Timer
@@ -68,6 +71,18 @@ type FootlooseSuite struct {
 
 // SetupSuite does all the setup work, namely boots up footloose cluster
 func (s *FootlooseSuite) SetupSuite() {
+	if s.KubeAPIExternalPort == 0 {
+		s.KubeAPIExternalPort = 6443
+	}
+	if s.K0sAPIExternalPort == 0 {
+		s.K0sAPIExternalPort = 9443
+	}
+	if s.KonnectivityAdminPort == 0 {
+		s.KonnectivityAdminPort = 8133
+	}
+	if s.KonnectivityAgentPort == 0 {
+		s.KonnectivityAgentPort = 8132
+	}
 	dir, err := ioutil.TempDir("", "footloose-keys")
 	if err != nil {
 		s.T().Logf("ERROR: failed to load footloose config: %s", err.Error())
@@ -84,7 +99,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		return
 	}
 
-	// XXX: why do we create, delete and create again?
+	// we first try to delete instances from previous runs, if they happen to exists
 	_ = cluster.Delete()
 	err = cluster.Create()
 	if err != nil {
@@ -93,7 +108,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		return
 	}
 	s.Cluster = cluster
-	if s.hasLB() {
+	if s.WithLB {
 		go s.startHAProxy()
 	}
 	timeout := getTestTimeout()
@@ -261,6 +276,16 @@ frontend k0sapi
     bind :{{ .K0sAPIExternalPort }}
     default_backend k0sapi
 
+frontend konnectivityAdmin
+    bind :{{ .KonnectivityAdminPort }}
+    default_backend admin
+
+
+frontend konnectivityAgent
+    bind :{{ .KonnectivityAgentPort }}
+    default_backend agent
+
+
 {{ $OUT := .}}
 
 backend kubeapi
@@ -272,16 +297,31 @@ backend k0sapi
 {{ range $addr := .IPAddresses }}
 	server {{ $addr }} {{ $addr }}:{{ $OUT.K0sAPIExternalPort }}
 {{ end }}
+
+backend admin
+{{ range $addr := .IPAddresses }}
+	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAdminPort }}
+{{ end }}
+
+backend agent
+{{ range $addr := .IPAddresses }}
+	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAgentPort }}
+{{ end }}
 `
 	content := bytes.NewBuffer([]byte{})
 	s.Assert().NoError(template.Must(template.New("haproxy").Parse(tpl)).Execute(content, struct {
-		KubeAPIExternalPort int
-		K0sAPIExternalPort  int
-		IPAddresses         []string
+		KubeAPIExternalPort   int
+		K0sAPIExternalPort    int
+		KonnectivityAgentPort int
+		KonnectivityAdminPort int
+
+		IPAddresses []string
 	}{
-		KubeAPIExternalPort: s.KubeAPIExternalPort,
-		K0sAPIExternalPort:  s.K0sAPIExternalPort,
-		IPAddresses:         adresses,
+		KubeAPIExternalPort:   s.KubeAPIExternalPort,
+		K0sAPIExternalPort:    s.K0sAPIExternalPort,
+		KonnectivityAdminPort: s.KonnectivityAdminPort,
+		KonnectivityAgentPort: s.KonnectivityAgentPort,
+		IPAddresses:           adresses,
 	}))
 
 	return content.String()
@@ -505,12 +545,10 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
-			fmt.Println("get kubeclient", err)
 			return false, nil
 		}
 		v, err := kc.ServerVersion()
 		if err != nil {
-			fmt.Println("sv", err)
 			return false, nil
 		}
 		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
@@ -536,7 +574,7 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 func (s *FootlooseSuite) WaitJoinAPI(node string) error {
 	s.T().Logf("waiting for join api to start on node %s", node)
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		joinAPIStatus, err := s.GetHTTPStatus(node, 9443, "/v1beta1/ca")
+		joinAPIStatus, err := s.GetHTTPStatus(node, s.K0sAPIExternalPort, "/v1beta1/ca")
 		if err != nil {
 			return false, nil
 		}
@@ -557,7 +595,7 @@ func (s *FootlooseSuite) GetHTTPStatus(node string, port int, path string) (int,
 	if err != nil {
 		return 0, err
 	}
-	joinPort, err := m.HostPort(9443)
+	joinPort, err := m.HostPort(s.K0sAPIExternalPort)
 	if err != nil {
 		return 0, err
 	}
@@ -573,10 +611,6 @@ func (s *FootlooseSuite) GetHTTPStatus(node string, port int, path string) (int,
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode, nil
-}
-
-func (s *FootlooseSuite) hasLB() bool {
-	return s.KubeAPIExternalPort != 0 && s.K0sAPIExternalPort != 0
 }
 
 func (s *FootlooseSuite) createConfig() config.Config {
@@ -609,27 +643,14 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			ContainerPort: 22, // SSH
 		},
 		{
-			ContainerPort: 6443, // kube API
+			ContainerPort: 10250, // kubelet logs
 		},
-	}
-
-	if !s.hasLB() {
-		portMaps = append(portMaps,
-			config.PortMapping{
-				ContainerPort: 6443,
-			},
-			config.PortMapping{
-				ContainerPort:
-				9443, // k0s join API
-			},
-			config.PortMapping{
-				ContainerPort:
-				7443,
-			},
-		)
-	} else {
-		portMaps = append(portMaps,
-			config.PortMapping{ContainerPort: uint16(s.KubeAPIExternalPort)})
+		{
+			ContainerPort: uint16(s.K0sAPIExternalPort), // kube API
+		},
+		{
+			ContainerPort: uint16(s.KubeAPIExternalPort), // kube API
+		},
 	}
 
 	cfg := config.Config{
@@ -661,7 +682,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		},
 	}
 
-	if s.hasLB() {
+	if s.WithLB {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         "lb%d",
@@ -694,4 +715,15 @@ func getTestTimeout() time.Duration {
 		}
 	}
 	return DefaultTimeout
+}
+
+// GetMainIPAddress returns controller ip address
+func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
+	ssh, err := s.SSH(s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput("hostname -i")
+	s.Require().NoError(err)
+	return ipAddress
 }
