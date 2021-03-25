@@ -17,8 +17,10 @@ package common
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -393,7 +395,7 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
 func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
-	s.T().Log("starting to poll kube api")
+	s.T().Logf("waiting for kube api to start on node %s", node)
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
@@ -403,9 +405,66 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 		if err != nil {
 			return false, nil
 		}
-		s.T().Logf("kube api seems to be up-and-running, version: %s", v.String())
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancel()
+		res := kc.RESTClient().Get().RequestURI("/readyz").Do(ctx)
+		if res.Error() != nil {
+			return false, nil
+		}
+		var statusCode int
+		res.StatusCode(&statusCode)
+		if statusCode != http.StatusOK {
+			return false, nil
+		}
+
+		s.T().Logf("kube api up-and-running, version: %s", v.String())
+
 		return true, nil
 	})
+}
+
+// WaitJoinApi waits untill we see k0s join api up-and-running on a given node
+// Timeouts with error return in 5 mins
+func (s *FootlooseSuite) WaitJoinAPI(node string) error {
+	s.T().Logf("waiting for join api to start on node %s", node)
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		joinAPIStatus, err := s.GetHTTPStatus(node, 9443, "/v1beta1/ca")
+		if err != nil {
+			return false, nil
+		}
+		// JoinAPI returns always un-authorized when called with no token, but it's a signal that it properly up-and-running still
+		if joinAPIStatus != http.StatusUnauthorized {
+			return false, nil
+		}
+
+		s.T().Logf("join api up-and-running")
+
+		return true, nil
+
+	})
+}
+
+func (s *FootlooseSuite) GetHTTPStatus(node string, port int, path string) (int, error) {
+	m, err := s.MachineForName(node)
+	if err != nil {
+		return 0, err
+	}
+	joinPort, err := m.HostPort(9443)
+	if err != nil {
+		return 0, err
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	url := fmt.Sprintf("https://localhost:%d/%s", joinPort, path)
+	resp, err := client.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode, nil
 }
 
 func (s *FootlooseSuite) createConfig() config.Config {
@@ -435,10 +494,13 @@ func (s *FootlooseSuite) createConfig() config.Config {
 
 	portMaps := []config.PortMapping{
 		{
-			ContainerPort: 22,
+			ContainerPort: 22, // SSH
 		},
 		{
-			ContainerPort: 6443,
+			ContainerPort: 6443, // kube API
+		},
+		{
+			ContainerPort: 9443, // k0s join API
 		},
 	}
 
