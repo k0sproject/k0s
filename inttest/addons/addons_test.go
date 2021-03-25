@@ -28,8 +28,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
-	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/inttest/common"
@@ -43,9 +41,9 @@ type AddonsSuite struct {
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
-	as.putFile("/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
+	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
-	as.Require().NoError(as.InitMainController([]string{"--config=/tmp/k0s.yaml"}))
+	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
 	as.waitForPrometheusRelease(addonName, 1)
 
 	values := map[string]interface{}{
@@ -65,7 +63,8 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 }
 
 func (as *AddonsSuite) doPrometheusDelete(chartName string) {
-	cfg := as.getKubeConfig("controller0")
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
 	chartClient, err := clientset.New(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(chartClient.Charts("kube-system").Delete(context.Background(), chartName, v1.DeleteOptions{}))
@@ -86,7 +85,8 @@ func (as *AddonsSuite) doPrometheusDelete(chartName string) {
 
 func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (string, string) {
 	as.T().Logf("waiting to see prometheus release ready in kube API, generation %d", rev)
-	cfg := as.getKubeConfig("controller0")
+	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
+	as.Require().NoError(err)
 	chartClient, err := clientset.New(cfg)
 	as.Require().NoError(err)
 	var chartName string
@@ -135,7 +135,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (st
 
 func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
 	as.T().Logf("waiting to see prometheus release to have envs set from values yaml")
-	kc, err := as.KubeClient("controller0", "")
+	kc, err := as.KubeClient(as.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -186,22 +186,7 @@ func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]in
 	buf := bytes.NewBuffer([]byte{})
 	as.Require().NoError(tw.WriteToBuffer(buf))
 
-	as.putFile(path, buf.String())
-}
-
-func (as *AddonsSuite) getKubeConfig(node string) *restclient.Config {
-	machine, err := as.MachineForName(node)
-	as.Require().NoError(err)
-	ssh, err := as.SSH(node)
-	as.Require().NoError(err)
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/pki/admin.conf")
-	as.Require().NoError(err)
-	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
-	as.Require().NoError(err)
-	hostPort, err := machine.HostPort(6443)
-	as.Require().NoError(err)
-	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
-	return cfg
+	as.PutFile(as.ControllerNode(0), path, buf.String())
 }
 
 func TestAddonsSuite(t *testing.T) {
@@ -214,16 +199,6 @@ func TestAddonsSuite(t *testing.T) {
 
 	suite.Run(t, &s)
 
-}
-
-func (as *AddonsSuite) putFile(path string, content string) {
-	controllerNode := fmt.Sprintf("controller%d", 0)
-	ssh, err := as.SSH(controllerNode)
-	as.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
-
-	as.Require().NoError(err)
 }
 
 const k0sConfigWithAddon = `

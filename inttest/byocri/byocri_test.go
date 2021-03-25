@@ -33,13 +33,13 @@ type BYOCRISuite struct {
 
 func (s *BYOCRISuite) TestK0sGetsUp() {
 
-	s.NoError(s.InitMainController([]string{}))
+	s.NoError(s.InitController(0))
 	s.Require().NoError(s.runDockerWorker())
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
@@ -57,14 +57,14 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {
-	token, err := s.GetJoinToken("worker", "")
+	token, err := s.GetJoinToken("worker")
 	if err != nil {
 		return err
 	}
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	sshWorker, err := s.SSH("worker0")
+	sshWorker, err := s.SSH(s.WorkerNode(0))
 	if err != nil {
 		return err
 	}

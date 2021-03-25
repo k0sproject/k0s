@@ -26,8 +26,6 @@ import (
 	capi "k8s.io/api/certificates/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type BasicSuite struct {
@@ -36,20 +34,21 @@ type BasicSuite struct {
 
 func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
-	s.NoError(s.InitMainController([]string{fmt.Sprintf("--data-dir=%s", customDataDir)}))
-	s.NoError(s.RunWorkers(customDataDir, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
+	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
+	s.NoError(s.InitController(0, dataDirOpt))
+	s.NoError(s.RunWorkers(dataDirOpt, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
-	kc, err := s.KubeClient("controller0", customDataDir)
+	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("worker0", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	labels, err := s.GetNodeLabels("worker0", kc)
+	labels, err := s.GetNodeLabels(s.WorkerNode(0), kc)
 	s.NoError(err)
 	s.Equal("bar", labels["k0sproject.io/foo"])
 
-	err = s.WaitForNodeReady("worker1", kc)
+	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
@@ -65,29 +64,16 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
 
-	s.Require().NoError(s.checkCertPerms("controller0"))
-	s.Require().NoError(s.checkCSRs("worker0", kc))
-	s.Require().NoError(s.checkCSRs("worker1", kc))
+	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
+	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))
+	s.Require().NoError(s.checkCSRs(s.WorkerNode(1), kc))
 
-	s.Require().NoError(s.verifyKubeletAddressFlag("worker0"))
-	s.Require().NoError(s.verifyKubeletAddressFlag("worker1"))
+	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(0)))
+	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
 
-	s.Require().NoError(common.WaitForMetricsReady(s.getKubeConfig("controller0")))
-}
-
-func (s *BasicSuite) getKubeConfig(node string) *restclient.Config {
-	machine, err := s.MachineForName(node)
-	s.Require().NoError(err)
-	ssh, err := s.SSH(node)
-	s.Require().NoError(err)
-	kubeConf, err := ssh.ExecWithOutput("cat /var/lib/k0s/custom-data-dir/pki/admin.conf")
-	s.Require().NoError(err)
-	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
-	s.Require().NoError(err)
-	hostPort, err := machine.HostPort(6443)
-	s.Require().NoError(err)
-	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
-	return cfg
+	cfg, err := s.GetKubeConfig(s.ControllerNode(0), dataDirOpt)
+	s.NoError(err)
+	s.Require().NoError(common.WaitForMetricsReady(cfg))
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {

@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -31,10 +30,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
@@ -103,18 +102,28 @@ func (s *FootlooseSuite) SetupSuite() {
 
 	// SSH through cluster should wait until we actually can get it through, but it doesn't
 	for i := 0; i < 20; i++ {
-		err = s.Cluster.SSH("controller0", "root", "hostname")
+		err = s.Cluster.SSH(s.ControllerNode(0), "root", "hostname")
 		if err == nil {
 			break
 		}
-		s.T().Logf("retrying ssh to controller0")
+		s.T().Logf("retrying ssh to %s", s.ControllerNode(0))
 		time.Sleep(300 * time.Millisecond)
 	}
 	if err != nil {
-		s.FailNowf("failed to ssh to controller0: %s", err.Error())
+		s.FailNowf("failed to ssh to %s: %s", s.ControllerNode(0), err.Error())
 		s.T().FailNow()
 		return
 	}
+}
+
+// ControllerNode gets the node name of given controller index
+func (s *FootlooseSuite) ControllerNode(idx int) string {
+	return fmt.Sprintf(s.footlooseConfig.Machines[0].Spec.Name, idx)
+}
+
+// WorkerNode gets the node name of given worker index
+func (s *FootlooseSuite) WorkerNode(idx int) string {
+	return fmt.Sprintf(s.footlooseConfig.Machines[1].Spec.Name, idx)
 }
 
 // TearDownSuite does the cleanup work, namely destroy the footloose boxes
@@ -147,6 +156,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 		}
 
 		s.T().Logf("wrote log of node %s to %s", m.Hostname(), logPath)
+		ssh.Disconnect()
 	}
 
 	if s.keepEnvironment() {
@@ -192,73 +202,45 @@ func (s *FootlooseSuite) keepEnvironment() bool {
 	}
 }
 
-func getDataDir(args []string) string {
-	dataDir := ""
+func getDataDirOpt(args []string) string {
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--data-dir=") {
-			dataDir = strings.TrimPrefix(arg, "--data-dir=")
+			return arg
 		}
 	}
-	return dataDir
+	return ""
 }
 
-// InitMainController inits first controller assuming it's first controller in the cluster
-func (s *FootlooseSuite) InitMainController(k0sArgs []string) error {
-	controllerNode := fmt.Sprintf("controller%d", 0)
+// InitController initializes a controller
+func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
+	controllerNode := s.ControllerNode(idx)
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
 
-	opts := ""
-	for _, arg := range k0sArgs {
-		opts = fmt.Sprintf("%s %s", opts, arg)
-	}
-
-	installCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 k0s install controller --debug %s", opts)
-	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", opts)
-
-	_, err = ssh.ExecWithOutput(installCmd)
-	if err != nil {
-		s.T().Logf("failed to execute '%s' on %s", installCmd, controllerNode)
-		return err
-	}
-
+	startCmd := fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", strings.Join(k0sArgs, " "))
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
 		return err
 	}
-	return s.WaitForKubeAPI(controllerNode, getDataDir(k0sArgs))
-}
 
-// JoinController joins the cluster with a given token
-func (s *FootlooseSuite) JoinController(idx int, token string, dataDir string) error {
-	controllerNode := fmt.Sprintf("controller%d", idx)
-	ssh, err := s.SSH(controllerNode)
-	if err != nil {
-		return err
-	}
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", token))
-	if err != nil {
-		return err
-	}
-	return s.WaitForKubeAPI(controllerNode, dataDir)
+	return s.WaitForKubeAPI(controllerNode, getDataDirOpt(k0sArgs))
 }
 
 // GetJoinToken generates join token for the asked role
-func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, error) {
-	// assume we have main on 1 node always
-	controllerNode := fmt.Sprintf("controller%d", 0)
+func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
+	// assume we have main on node 0 always
+	controllerNode := s.ControllerNode(0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
 	ssh, err := s.SSH(controllerNode)
 	if err != nil {
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s --data-dir=%s", role, dataDir))
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("k0s token create --role=%s %s", role, strings.Join(extraArgs, " ")))
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
@@ -270,27 +252,23 @@ func (s *FootlooseSuite) GetJoinToken(role string, dataDir string) (string, erro
 }
 
 // RunWorkers joins all the workers to the cluster
-func (s *FootlooseSuite) RunWorkers(dataDir string, args ...string) error {
-	ssh, err := s.SSH("controller0")
+func (s *FootlooseSuite) RunWorkers(args ...string) error {
+	ssh, err := s.SSH(s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
-	token, err := s.GetJoinToken("worker", dataDir)
+	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
 	if err != nil {
 		return err
 	}
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	if dataDir != "" {
-		args = append(args, fmt.Sprintf("--data-dir=%s", dataDir))
-	}
 	workerCommand := fmt.Sprintf(`nohup k0s --debug worker %s "%s" >/tmp/k0s-worker.log 2>&1 &`, strings.Join(args, " "), token)
 
 	for i := 0; i < s.WorkerCount; i++ {
-		workerNode := fmt.Sprintf("worker%d", i)
-		sshWorker, err := s.SSH(workerNode)
+		sshWorker, err := s.SSH(s.WorkerNode(i))
 		if err != nil {
 			return err
 		}
@@ -345,11 +323,8 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	return nil, fmt.Errorf("no machine found with name %s", name)
 }
 
-// WaitForKubeAPI return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Clientset, error) {
-	if dataDir == "" {
-		dataDir = constant.DataDirDefault
-	}
+// KubeClient return kube client by loading the admin access config from given node
+func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -358,7 +333,9 @@ func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Cl
 	if err != nil {
 		return nil, err
 	}
-	kubeConfigCmd := fmt.Sprintf("cat %s", filepath.Join(dataDir, "pki/admin.conf"))
+	defer ssh.Disconnect()
+
+	kubeConfigCmd := fmt.Sprintf("k0s kubeconfig admin %s", strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err
@@ -372,6 +349,15 @@ func (s *FootlooseSuite) KubeClient(node string, dataDir string) (*kubernetes.Cl
 		return nil, errors.Wrap(err, "footloose machine has to have 6443 port mapped")
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
+	return cfg, nil
+}
+
+// KubeClient return kube client by loading the admin access config from given node
+func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
+	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+	if err != nil {
+		return nil, err
+	}
 	return kubernetes.NewForConfig(cfg)
 }
 
@@ -406,10 +392,10 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
-func (s *FootlooseSuite) WaitForKubeAPI(node string, dataDir string) error {
+func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
 	s.T().Log("starting to poll kube api")
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		kc, err := s.KubeClient(node, dataDir)
+		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
 			return false, nil
 		}
