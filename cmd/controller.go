@@ -55,10 +55,10 @@ func init() {
 	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
+	controllerCmd.Flags().AddFlagSet(workerCmd.Flags())
 
-	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
-	installControllerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	addPersistentFlags(controllerCmd)
+	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
 }
 
 var (

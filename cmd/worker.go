@@ -50,8 +50,9 @@ func init() {
 	workerCmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
 	workerCmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 
-	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	addPersistentFlags(workerCmd)
+	controllerCmd.Flags().AddFlagSet(workerCmd.Flags())
+	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 }
 
 var (
