@@ -55,8 +55,10 @@ func init() {
 	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
 	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
-	addPersistentFlags(controllerCmd)
+
 	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
+	installControllerCmd.Flags().AddFlagSet(workerCmd.Flags())
+	addPersistentFlags(controllerCmd)
 }
 
 var (
@@ -474,10 +476,13 @@ func startControllerWorker(ctx context.Context, clusterConfig *config.ClusterCon
 	workerComponentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
 	workerComponentManager.Add(&worker.Kubelet{
 		CRISocket:           criSocket,
-		KubeletConfigClient: kubeletConfigClient,
-		Profile:             profile,
-		LogLevel:            logging["kubelet"],
+		EnableCloudProvider: cloudProvider,
 		K0sVars:             k0sVars,
+		KubeletConfigClient: kubeletConfigClient,
+		LogLevel:            logging["kubelet"],
+		Profile:             workerProfile,
+		Labels:              labels,
+		ExtraArgs:           kubeletExtraArgs,
 	})
 
 	if err := workerComponentManager.Init(); err != nil {

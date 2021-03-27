@@ -34,6 +34,7 @@ func init() {
 	addPersistentFlags(installWorkerCmd)
 
 	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
+	installControllerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	addPersistentFlags(installCmd)
 }
