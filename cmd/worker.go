@@ -53,6 +53,7 @@ func init() {
 	addPersistentFlags(workerCmd)
 	controllerCmd.Flags().AddFlagSet(workerCmd.Flags())
 	installWorkerCmd.Flags().AddFlagSet(workerCmd.Flags())
+	installControllerCmd.Flags().AddFlagSet(workerCmd.Flags())
 }
 
 var (
