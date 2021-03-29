@@ -17,9 +17,11 @@ package install
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+
 	"github.com/spf13/pflag"
 )
 
@@ -27,12 +29,15 @@ func cmdFlagsToArgs(cmd *cobra.Command) []string {
 	flagsAndVals := []string{}
 	// Use visitor to collect all flags and vals into slice
 	cmd.Flags().Visit(func(f *pflag.Flag) {
+		val := f.Value.String()
 		switch f.Value.Type() {
 		case "stringSlice", "stringToString":
-			val := f.Value.String()
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s="%s"`, f.Name, strings.Trim(val, "[]")))
 		default:
-			flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
+			if f.Name == "data-dir" || f.Name == "token-file" || f.Name == "config-file" {
+				val, _ = filepath.Abs(val)
+			}
+			flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, val))
 		}
 	})
 	return flagsAndVals

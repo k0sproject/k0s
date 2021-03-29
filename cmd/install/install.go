@@ -27,10 +27,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/install"
 )
 
-var (
-	tokenFile string
-)
-
 type CmdOpts config.CLIOptions
 
 func NewInstallCmd() *cobra.Command {
@@ -43,26 +39,6 @@ func NewInstallCmd() *cobra.Command {
 	cmd.AddCommand(installWorkerCmd())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
-}
-
-func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
-	// don't convert if cfgFile is empty
-	if c.CfgFile != "" {
-		c.CfgFile, err = filepath.Abs(c.CfgFile)
-		if err != nil {
-			return err
-		}
-	}
-	if tokenFile != "" {
-		tokenFile, err = filepath.Abs(tokenFile)
-		if err != nil {
-			return err
-		}
-		if !util.FileExists(tokenFile) {
-			return fmt.Errorf("%s does not exist", tokenFile)
-		}
-	}
-	return nil
 }
 
 // the setup functions:
@@ -90,6 +66,35 @@ func (c *CmdOpts) setup(role string, args []string) error {
 	err := install.EnsureService(args)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %v", err)
+	}
+	return nil
+}
+
+// this command converts the file paths in the Cmd Opts struct to Absolute Paths
+// for flags passed to service init file, see the cmdFlagsToArgs func
+func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
+	// don't convert if cfgFile is empty
+
+	if c.CfgFile != "" {
+		c.CfgFile, err = filepath.Abs(c.CfgFile)
+		if err != nil {
+			return err
+		}
+	}
+	if c.K0sVars.DataDir != "" {
+		c.K0sVars.DataDir, err = filepath.Abs(c.K0sVars.DataDir)
+		if err != nil {
+			return err
+		}
+	}
+	if c.TokenFile != "" {
+		c.TokenFile, err = filepath.Abs(c.TokenFile)
+		if err != nil {
+			return err
+		}
+		if !util.FileExists(c.TokenFile) {
+			return fmt.Errorf("%s does not exist", c.TokenFile)
+		}
 	}
 	return nil
 }

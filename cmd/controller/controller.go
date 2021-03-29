@@ -48,16 +48,6 @@ import (
 
 type CmdOpts config.CLIOptions
 
-var (
-	enableWorker            bool
-	singleNode              bool
-	cmdLogLevels            map[string]string
-	controllerToken         string
-	controllerWorkerProfile string
-	criSocket               string
-	tokenFile               string
-)
-
 func NewControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "controller [join-token]",
@@ -71,25 +61,25 @@ func NewControllerCmd() *cobra.Command {
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			c := CmdOpts(config.GetCmdOpts())
 			if len(args) > 0 {
-				controllerToken = args[0]
+				c.TokenArg = args[0]
 			}
-			if len(controllerToken) > 0 && len(tokenFile) > 0 {
+			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
 				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
-			if len(tokenFile) > 0 {
-				bytes, err := ioutil.ReadFile(tokenFile)
+			if len(c.TokenFile) > 0 {
+				bytes, err := ioutil.ReadFile(c.TokenFile)
 				if err != nil {
 					return err
 				}
-				controllerToken = string(bytes)
+				c.TokenArg = string(bytes)
 			}
-			c := CmdOpts(config.GetCmdOpts())
-			if singleNode {
-				enableWorker = true
+			if c.SingleNode {
+				c.EnableWorker = true
 				c.K0sVars.DefaultStorageType = "kine"
 			}
-			c.Logging = util.MapMerge(cmdLogLevels, c.DefaultLogLevels)
+			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
 			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -97,18 +87,13 @@ func NewControllerCmd() *cobra.Command {
 
 			c.ClusterConfig = cfg
 			cmd.SilenceUsage = true
-			return c.startController(controllerToken)
+			return c.startController()
 		},
 	}
 
+	// append flags
 	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().StringVar(&controllerWorkerProfile, "profile", "default", "worker profile to use on the node")
-	cmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
-	cmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
-	cmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
-	cmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", config.DefaultLogLevels(), "Logging Levels for the different components")
-	cmd.Flags().BoolVar(&singleNode, "single", false, "enable single node (implies --enable-worker, default false)")
-
+	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
 	return cmd
 }
 
@@ -121,7 +106,7 @@ func (c *CmdOpts) needToJoin() bool {
 	return true
 }
 
-func (c *CmdOpts) startController(tokenString string) error {
+func (c *CmdOpts) startController() error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	// create directories early with the proper permissions
@@ -140,9 +125,9 @@ func (c *CmdOpts) startController(tokenString string) error {
 	var joinClient *token.JoinClient
 	var err error
 
-	if tokenString != "" && c.needToJoin() {
+	if c.TokenArg != "" && c.needToJoin() {
 		join = true
-		joinClient, err = token.JoinClientFromToken(tokenString)
+		joinClient, err = token.JoinClientFromToken(c.TokenArg)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}
@@ -196,7 +181,7 @@ func (c *CmdOpts) startController(tokenString string) error {
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.Logging["kube-apiserver"],
 		Storage:            storageBackend,
-		EnableKonnectivity: !singleNode,
+		EnableKonnectivity: !c.SingleNode,
 	})
 
 	if c.ClusterConfig.Spec.API.ExternalAddress != "" {
@@ -205,7 +190,7 @@ func (c *CmdOpts) startController(tokenString string) error {
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-	if !singleNode {
+	if !c.SingleNode {
 		componentManager.Add(&controller.Konnectivity{
 			ClusterConfig:     c.ClusterConfig,
 			LogLevel:          c.Logging["konnectivity-server"],
@@ -234,7 +219,7 @@ func (c *CmdOpts) startController(tokenString string) error {
 	componentManager.Add(leaderElector)
 
 	componentManager.Add(&applier.Manager{K0sVars: c.K0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
-	if !singleNode {
+	if !c.SingleNode {
 		componentManager.Add(&controller.K0SControlAPI{
 			ConfigPath: c.CfgFile,
 			K0sVars:    c.K0sVars,
@@ -311,10 +296,10 @@ func (c *CmdOpts) startController(tokenString string) error {
 	}
 	perfTimer.Checkpoint("started-reconcilers")
 
-	if err == nil && enableWorker {
+	if err == nil && c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
 
-		err = c.startControllerWorker(ctx, controllerWorkerProfile)
+		err = c.startControllerWorker(ctx, c.WorkerProfile)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			if err := componentManager.Stop(); err != nil {
@@ -476,7 +461,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	})
 	workerComponentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
 	workerComponentManager.Add(&worker.Kubelet{
-		CRISocket:           criSocket,
+		CRISocket:           c.CriSocket,
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
 		LogLevel:            c.Logging["kubelet"],

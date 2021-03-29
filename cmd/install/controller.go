@@ -17,9 +17,7 @@ package install
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
-	"github.com/k0sproject/k0s/cmd/controller"
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
@@ -52,12 +50,6 @@ With controller subcommand you can setup a single node cluster by running:
 	}
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	controllerFlagSet := getControllerFlags()
-	cmd.Flags().AddFlagSet(controllerFlagSet)
-
+	cmd.Flags().AddFlagSet(config.GetControllerFlags())
 	return cmd
-}
-
-func getControllerFlags() *pflag.FlagSet {
-	return controller.NewControllerCmd().Flags()
 }

@@ -35,20 +35,6 @@ import (
 
 type CmdOpts config.CLIOptions
 
-var (
-	apiServer        string
-	cidrRange        string
-	cloudProvider    bool
-	clusterDNS       string
-	cmdLogLevels     map[string]string
-	criSocket        string
-	kubeletExtraArgs string
-	labels           []string
-	tokenFile        string
-	tokenArg         string
-	workerProfile    string
-)
-
 func NewWorkerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "worker [join-token]",
@@ -61,52 +47,43 @@ func NewWorkerCmd() *cobra.Command {
 	$ k0s worker --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				tokenArg = args[0]
-			}
 			c := CmdOpts(config.GetCmdOpts())
-			c.Logging = util.MapMerge(cmdLogLevels, c.DefaultLogLevels)
-			if len(tokenArg) > 0 && len(tokenFile) > 0 {
+			if len(args) > 0 {
+				c.TokenArg = args[0]
+			}
+
+			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
+			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
 				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
 
-			if len(tokenFile) > 0 {
-				bytes, err := ioutil.ReadFile(tokenFile)
+			if len(c.TokenFile) > 0 {
+				bytes, err := ioutil.ReadFile(c.TokenFile)
 				if err != nil {
 					return err
 				}
-				tokenArg = string(bytes)
+				c.TokenArg = string(bytes)
 			}
 			cmd.SilenceUsage = true
-			return c.startWorker(tokenArg)
+			return c.startWorker()
 		},
 	}
 
-	cmd.Flags().StringVar(&workerProfile, "profile", "default", "worker profile to use on the node")
-	cmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
-	cmd.Flags().StringVar(&apiServer, "api-server", "", "HACK: api-server for the windows worker node")
-	cmd.Flags().StringVar(&cidrRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
-	cmd.Flags().StringVar(&clusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
-	cmd.Flags().BoolVar(&cloudProvider, "enable-cloud-provider", false, "Whether or not to enable cloud provider support in kubelet")
-	cmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing token.")
-	cmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", config.DefaultLogLevels(), "Logging Levels for the different components")
-	cmd.Flags().StringSliceVarP(&labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
-	cmd.Flags().StringVar(&kubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
-
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
 	return cmd
 }
 
-func (c *CmdOpts) startWorker(token string) error {
+func (c *CmdOpts) startWorker() error {
 	worker.KernelSetup()
-	if token == "" && !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
+	if c.TokenArg == "" && !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 
 	// Dump join token into kubelet-bootstrap kubeconfig if it does not already exist
-	if token != "" && !util.FileExists(c.K0sVars.KubeletBootstrapConfigPath) {
-		if err := worker.HandleKubeletBootstrapToken(token, c.K0sVars); err != nil {
+	if c.TokenArg != "" && !util.FileExists(c.K0sVars.KubeletBootstrapConfigPath) {
+		if err := worker.HandleKubeletBootstrapToken(c.TokenArg, c.K0sVars); err != nil {
 			return err
 		}
 	}
@@ -117,10 +94,10 @@ func (c *CmdOpts) startWorker(token string) error {
 	}
 
 	componentManager := component.NewManager()
-	if runtime.GOOS == "windows" && criSocket == "" {
+	if runtime.GOOS == "windows" && c.CriSocket == "" {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}
-	if criSocket == "" {
+	if c.CriSocket == "" {
 		componentManager.Add(&worker.ContainerD{
 			LogLevel: c.Logging["containerd"],
 			K0sVars:  c.K0sVars,
@@ -128,35 +105,35 @@ func (c *CmdOpts) startWorker(token string) error {
 	}
 
 	componentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
-	if workerProfile == "default" && runtime.GOOS == "windows" {
-		workerProfile = "default-windows"
+	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
+		c.WorkerProfile = "default-windows"
 	}
 
 	componentManager.Add(&worker.Kubelet{
-		CRISocket:           criSocket,
-		EnableCloudProvider: cloudProvider,
+		CRISocket:           c.CriSocket,
+		EnableCloudProvider: c.CloudProvider,
 		K0sVars:             c.K0sVars,
 		KubeletConfigClient: kubeletConfigClient,
 		LogLevel:            c.Logging["kubelet"],
-		Profile:             workerProfile,
-		Labels:              labels,
-		ExtraArgs:           kubeletExtraArgs,
+		Profile:             c.WorkerProfile,
+		Labels:              c.Labels,
+		ExtraArgs:           c.KubeletExtraArgs,
 	})
 
 	if runtime.GOOS == "windows" {
-		if token == "" {
+		if c.TokenArg == "" {
 			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
 		}
 		componentManager.Add(&worker.KubeProxy{
 			K0sVars:   c.K0sVars,
 			LogLevel:  c.Logging["kube-proxy"],
-			CIDRRange: cidrRange,
+			CIDRRange: c.CIDRRange,
 		})
 		componentManager.Add(&worker.CalicoInstaller{
-			Token:      token,
-			APIAddress: apiServer,
-			CIDRRange:  cidrRange,
-			ClusterDNS: clusterDNS,
+			Token:      c.TokenArg,
+			APIAddress: c.APIServer,
+			CIDRRange:  c.CIDRRange,
+			ClusterDNS: c.ClusterDNS,
 		})
 	}
 
