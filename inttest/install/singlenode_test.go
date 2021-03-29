@@ -29,7 +29,7 @@ type InstallSuite struct {
 }
 
 func (s *InstallSuite) TestK0sGetsUp() {
-	ssh, err := s.SSH("controller0")
+	ssh, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
@@ -39,13 +39,13 @@ func (s *InstallSuite) TestK0sGetsUp() {
 	_, err = ssh.ExecWithOutput("rc-service k0scontroller start")
 	s.Require().NoError(err)
 
-	err = s.WaitForKubeAPI("controller0", "")
+	err = s.WaitForKubeAPI(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	kc, err := s.KubeClient("controller0", "")
+	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
-	err = s.WaitForNodeReady("controller0", kc)
+	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
