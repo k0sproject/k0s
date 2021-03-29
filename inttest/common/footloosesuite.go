@@ -222,7 +222,7 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	}
 	defer ssh.Disconnect()
 
-	startCmd := fmt.Sprintf("nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", strings.Join(k0sArgs, " "))
+	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", strings.Join(k0sArgs, " "))
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
