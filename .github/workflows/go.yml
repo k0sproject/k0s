@@ -471,6 +471,55 @@ jobs:
         with:
           path: |
             /tmp/*.log
+  
+  smoketest-armv7:
+    name: Smoke test on armv7
+    runs-on: [self-hosted,linux,arm,lxc] 
+    steps:
+      # Try again with system go
+      # - name: Install GoLang for 32bit ARM
+      #   run: |
+      #     mkdir -p /usr/local/go
+      #     curl -s -L https://golang.org/dl/go1.15.linux-armv6l.tar.gz | tar -C /usr/local -xz
+      #     echo "/usr/local/go/bin" >> $GITHUB_PATH
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Bindata
+        uses: actions/cache@v2
+        id: generated-bindata
+        with:
+          path: |
+            .bins.linux.stamp
+            embedded-bins/staging/linux/bin/
+            bindata_linux
+            pkg/assets/zz_generated_offsets_linux.go
+
+          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+      
+      - name: Build
+        run: make build
+
+      - name: Run test .
+        run: TIMEOUT=15m make -C inttest check-kuberouter
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
 
   lint:
     name: Lint
