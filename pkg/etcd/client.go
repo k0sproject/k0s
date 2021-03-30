@@ -27,6 +27,7 @@ import (
 
 // Client is our internal helper to access some of the etcd APIs
 type Client struct {
+	Config  *clientv3.Config
 	client  *clientv3.Client
 	tlsInfo transport.TLSInfo
 }
@@ -45,13 +46,14 @@ func NewClient(certDir string, etcdCertDir string) (*Client, error) {
 		return nil, err
 	}
 
-	cli, _ := clientv3.New(clientv3.Config{
+	cfg := clientv3.Config{
 		Endpoints: []string{"https://127.0.0.1:2379"},
 		TLS:       tlsConfig,
-	})
+	}
+	cli, _ := clientv3.New(cfg)
 
 	client.client = cli
-
+	client.Config = &cfg
 	return client, nil
 }
 

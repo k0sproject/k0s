@@ -17,6 +17,7 @@ package util
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -32,6 +33,15 @@ func FileExists(fileName string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+// DirExists checks if a directory exists before we try using it
+func DirExists(dirName string) bool {
+	_, err := os.Stat(dirName)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 // CheckPathPermissions checks the correct permissions are for a path (file or directory)
@@ -72,6 +82,27 @@ func ChownFile(file, owner string, permissions os.FileMode) error {
 	if err != nil && os.Geteuid() == 0 {
 		return err
 	}
+	return nil
+}
 
+func FileCopy(src, dst string) error {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file", src)
+	}
+
+	input, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("error reading source file (%v): %v", src, err)
+	}
+
+	err = ioutil.WriteFile(dst, input, sourceFileStat.Mode())
+	if err != nil {
+		return fmt.Errorf("error writing destination file (%v): %v", dst, err)
+	}
 	return nil
 }

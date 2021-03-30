@@ -29,6 +29,7 @@ import (
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
+	"github.com/k0sproject/k0s/cmd/backup"
 	"github.com/k0sproject/k0s/cmd/controller"
 	"github.com/k0sproject/k0s/cmd/etcd"
 	"github.com/k0sproject/k0s/cmd/install"
@@ -67,23 +68,25 @@ func NewRootCmd() *cobra.Command {
 			}
 		},
 	}
+
+	cmd.AddCommand(airgap.NewAirgapCmd())
 	cmd.AddCommand(api.NewAPICmd())
+	cmd.AddCommand(backup.NewBackupCmd())
 	cmd.AddCommand(controller.NewControllerCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
-	cmd.AddCommand(token.NewTokenCmd())
-	cmd.AddCommand(worker.NewWorkerCmd())
-	cmd.AddCommand(reset.NewResetCmd())
-	cmd.AddCommand(status.NewStatusCmd())
-	cmd.AddCommand(validate.NewValidateCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
-	cmd.AddCommand(airgap.NewAirgapCmd())
+	cmd.AddCommand(reset.NewResetCmd())
+	cmd.AddCommand(status.NewStatusCmd())
+	cmd.AddCommand(token.NewTokenCmd())
+	cmd.AddCommand(validate.NewValidateCmd())
 	cmd.AddCommand(version.NewVersionCmd())
+	cmd.AddCommand(worker.NewWorkerCmd())
 
-	cmd.AddCommand(newDocsCmd())
-	cmd.AddCommand(newDefaultConfigCmd())
 	cmd.AddCommand(newCompletionCmd())
+	cmd.AddCommand(newDefaultConfigCmd())
+	cmd.AddCommand(newDocsCmd())
 
 	cmd.DisableAutoGenTag = true
 	longDesc = "k0s - The zero friction Kubernetes - https://k0sproject.io"
