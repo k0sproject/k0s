@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -102,15 +101,6 @@ var (
 
 			// Get relevant Vars from constant package
 			k0sVars = constant.GetConfig(dataDir)
-		},
-	}
-
-	versionCmd = &cobra.Command{
-		Use:   "version",
-		Short: "Print the k0s version",
-
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(build.Version)
 		},
 	}
 
