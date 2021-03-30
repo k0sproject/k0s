@@ -30,9 +30,9 @@ type KubeRouterSuite struct {
 }
 
 func (s *KubeRouterSuite) TestK0sGetsUp() {
-	s.PutFile("/tmp/k0s.yaml", k0sConfig, "controller0")
-	s.Require().NoError(s.InitMainController([]string{"--config=/tmp/k0s.yaml"}))
-	s.Require().NoError(s.RunWorkers("/var/lib/k0s"))
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)
