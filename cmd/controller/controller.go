@@ -94,6 +94,7 @@ func NewControllerCmd() *cobra.Command {
 	// append flags
 	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
+	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
 	return cmd
 }
 
@@ -462,10 +463,13 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	workerComponentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
 	workerComponentManager.Add(&worker.Kubelet{
 		CRISocket:           c.CriSocket,
-		KubeletConfigClient: kubeletConfigClient,
-		Profile:             profile,
-		LogLevel:            c.Logging["kubelet"],
+		EnableCloudProvider: c.CloudProvider,
 		K0sVars:             c.K0sVars,
+		KubeletConfigClient: kubeletConfigClient,
+		LogLevel:            c.Logging["kubelet"],
+		Profile:             c.WorkerProfile,
+		Labels:              c.Labels,
+		ExtraArgs:           c.KubeletExtraArgs,
 	})
 
 	if err := workerComponentManager.Init(); err != nil {

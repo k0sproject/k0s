@@ -51,5 +51,6 @@ With controller subcommand you can setup a single node cluster by running:
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.GetControllerFlags())
+	cmd.Flags().AddFlagSet(config.GetWorkerFlags())
 	return cmd
 }
