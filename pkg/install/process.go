@@ -16,15 +16,40 @@ limitations under the License.
 package install
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"runtime"
 	"strings"
 
 	"github.com/mitchellh/go-ps"
+	"gopkg.in/yaml.v2"
 )
 
-func GetProcessID() (pid *int, ppid *int, err error) {
+type K0sStatus struct {
+	Version  string
+	Pid      int
+	PPid     int
+	Role     string
+	SysInit  string
+	StubFile string
+	Output   string
+}
+
+func GetPid() (status *K0sStatus, err error) {
+	pid, ppid, err := getProcessID()
+	if err == nil && pid != nil {
+		status = &K0sStatus{
+			Pid:  *pid,
+			PPid: *ppid,
+		}
+		return status, nil
+	}
+	return &K0sStatus{}, nil
+}
+
+func getProcessID() (pid *int, ppid *int, err error) {
 	processList, err := ps.Processes()
 	if err != nil {
 		return nil, nil, err
@@ -69,4 +94,42 @@ func GetRoleByPID(pid int) (role string, err error) {
 		return "controller", nil
 	}
 	return "", fmt.Errorf("k0s role is not found")
+}
+
+func (s K0sStatus) GetK0sVersion() (string, error) {
+	cmd := fmt.Sprintf("/proc/%d/exe", s.Pid)
+	stdout, err := exec.Command(cmd, "version").Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(string(stdout), "\n"), nil
+}
+
+func (s K0sStatus) String() {
+	switch s.Output {
+	case "json":
+		jsn, _ := json.MarshalIndent(s, "", "   ")
+		fmt.Println(string(jsn))
+	case "yaml":
+		ym, _ := yaml.Marshal(s)
+		fmt.Println(string(ym))
+	default:
+		if s.Pid == 0 {
+			fmt.Println("K0s not running")
+			return
+		}
+
+		fmt.Println("Version:", s.Version)
+		fmt.Println("Process ID:", s.Pid)
+		fmt.Println("Parent Process ID:", s.PPid)
+		fmt.Println("Role:", s.Role)
+
+		if s.SysInit != "" {
+			fmt.Println("Init System:", s.SysInit)
+
+		}
+		if s.StubFile != "" {
+			fmt.Println("Service file:", s.StubFile)
+		}
+	}
 }

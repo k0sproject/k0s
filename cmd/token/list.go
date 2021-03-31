@@ -13,29 +13,27 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package token
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	tokenListCmd.Flags().StringVar(&tokenRole, "role", "", "Either worker,controller or empty for all roles")
-}
-
-var (
-	tokenListCmd = &cobra.Command{
+func tokenListCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List join tokens",
 		Example: `k0s token list --role worker // list worker tokens`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			manager, err := token.NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
+			c := CmdOpts(config.GetCmdOpts())
+			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
 			if err != nil {
 				return err
 			}
@@ -72,4 +70,7 @@ var (
 			return nil
 		},
 	}
-)
+	cmd.Flags().StringVar(&tokenRole, "role", "", "Either worker, controller or empty for all roles")
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	return cmd
+}

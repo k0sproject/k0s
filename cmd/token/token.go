@@ -13,34 +13,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package token
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func init() {
-	tokenCmd.Flags().StringVar(&kubeConfig, "kubeconfig", k0sVars.AdminKubeConfigPath, "path to kubeconfig file [$KUBECONFIG]")
-	if kubeConfig == "" {
-		kubeConfig = viper.GetString("KUBECONFIG")
-	}
-
-	tokenCmd.AddCommand(tokenCreateCmd)
-	tokenCmd.AddCommand(tokenListCmd)
-	tokenCmd.AddCommand(tokenInvalidateCmd)
-	addPersistentFlags(tokenCmd)
-}
+type CmdOpts config.CLIOptions
 
 var (
-	kubeConfig  string
 	tokenExpiry string
 	tokenRole   string
 	waitCreate  bool
+)
 
-	// tokenCmd creates new token management command
-	tokenCmd = &cobra.Command{
+func NewTokenCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Manage join tokens",
 	}
-)
+
+	cmd.SilenceUsage = true
+	cmd.AddCommand(tokenCreateCmd())
+	cmd.AddCommand(tokenListCmd())
+	cmd.AddCommand(tokenInvalidateCmd())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	return cmd
+}

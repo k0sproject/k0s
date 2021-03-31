@@ -13,29 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package airgap
 
 import (
-	"fmt"
-
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var configCmd = &cobra.Command{
-	Use:   "default-config",
-	Short: "Output the default k0s configuration yaml to stdout",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := buildConfig(); err != nil {
-			return err
-		}
-		return nil
-	},
-}
+func NewAirgapCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "airgap",
+		Short: "Manage airgap setup",
+	}
 
-func buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(k0sVars))
-	fmt.Print(string(conf))
-	return nil
+	cmd.SilenceUsage = true
+	cmd.AddCommand(NewAirgapListImagesCmd())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	return cmd
 }

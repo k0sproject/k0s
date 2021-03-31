@@ -30,13 +30,13 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
 // Etcd implement the component interface to run etcd
@@ -44,7 +44,7 @@ type Etcd struct {
 	CertManager certificate.Manager
 	Config      *config.EtcdConfig
 	Join        bool
-	JoinClient  *v1beta1.JoinClient
+	JoinClient  *token.JoinClient
 	K0sVars     constant.CfgVars
 	LogLevel    string
 

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package controller
 
 import (
 	"context"
@@ -25,46 +25,31 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
-
-	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/pkg/telemetry"
-
 	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
-
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/telemetry"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
-func init() {
-	controllerCmd.Flags().StringVar(&controllerWorkerProfile, "profile", "default", "worker profile to use on the node")
-	controllerCmd.Flags().BoolVar(&enableWorker, "enable-worker", false, "enable worker (default false)")
-	controllerCmd.Flags().BoolVar(&singleNode, "single", false, "enable single node (implies --enable-worker, default false)")
-	controllerCmd.Flags().StringVar(&tokenFile, "token-file", "", "Path to the file containing join-token.")
-	controllerCmd.Flags().StringVar(&criSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
-	controllerCmd.Flags().StringToStringVarP(&cmdLogLevels, "logging", "l", defaultLogLevels, "Logging Levels for the different components")
-	addPersistentFlags(controllerCmd)
-	installControllerCmd.Flags().AddFlagSet(controllerCmd.Flags())
-}
+type CmdOpts config.CLIOptions
 
-var (
-	controllerWorkerProfile string
-	enableWorker            bool
-	singleNode              bool
-	controllerToken         string
-	controllerCmd           = &cobra.Command{
+func NewControllerCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:     "controller [join-token]",
 		Short:   "Run controller",
 		Aliases: []string{"server"},
@@ -76,180 +61,188 @@ var (
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			c := CmdOpts(config.GetCmdOpts())
 			if len(args) > 0 {
-				controllerToken = args[0]
+				c.TokenArg = args[0]
 			}
-			if len(controllerToken) > 0 && len(tokenFile) > 0 {
+			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
 				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
-
-			if len(tokenFile) > 0 {
-				bytes, err := ioutil.ReadFile(tokenFile)
+			if len(c.TokenFile) > 0 {
+				bytes, err := ioutil.ReadFile(c.TokenFile)
 				if err != nil {
 					return err
 				}
-				controllerToken = string(bytes)
+				c.TokenArg = string(bytes)
 			}
-			if singleNode {
-				enableWorker = true
-				k0sVars.DefaultStorageType = "kine"
+			if c.SingleNode {
+				c.EnableWorker = true
+				c.K0sVars.DefaultStorageType = "kine"
+			}
+			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			if err != nil {
+				return err
 			}
 
-			return startController(controllerToken)
+			c.ClusterConfig = cfg
+			cmd.SilenceUsage = true
+			return c.startController()
 		},
 	}
-)
+
+	// append flags
+	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
+	return cmd
+}
 
 // If we've got CA in place we assume the node has already joined previously
-func needToJoin() bool {
-	if util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.key")) &&
-		util.FileExists(filepath.Join(k0sVars.CertRootDir, "ca.crt")) {
+func (c *CmdOpts) needToJoin() bool {
+	if util.FileExists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
+		util.FileExists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
 		return false
 	}
 	return true
 }
 
-func startController(token string) error {
+func (c *CmdOpts) startController() error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
-	clusterConfig, err := ConfigFromYaml(cfgFile)
-	if err != nil {
-		return err
-	}
 
 	// create directories early with the proper permissions
-	if err = util.InitDirectory(k0sVars.DataDir, constant.DataDirMode); err != nil {
+	if err := util.InitDirectory(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
 	}
-	if err := util.InitDirectory(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+	if err := util.InitDirectory(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 		return err
 	}
 
 	componentManager := component.NewManager()
-	certificateManager := certificate.Manager{K0sVars: k0sVars}
+	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
 	var join = false
 
-	var joinClient *v1beta1.JoinClient
-	if token != "" && needToJoin() {
+	var joinClient *token.JoinClient
+	var err error
+
+	if c.TokenArg != "" && c.needToJoin() {
 		join = true
-		joinClient, err = v1beta1.JoinClientFromToken(token)
+		joinClient, err = token.JoinClientFromToken(c.TokenArg)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create join client")
 		}
 
 		componentManager.AddSync(&controller.CASyncer{
 			JoinClient: joinClient,
-			K0sVars:    k0sVars,
+			K0sVars:    c.K0sVars,
 		})
 	}
 	componentManager.AddSync(&controller.Certificates{
-		ClusterSpec: clusterConfig.Spec,
+		ClusterSpec: c.ClusterConfig.Spec,
 		CertManager: certificateManager,
-		K0sVars:     k0sVars,
+		K0sVars:     c.K0sVars,
 	})
 
-	logrus.Infof("using public address: %s", clusterConfig.Spec.API.Address)
-	logrus.Infof("using sans: %s", clusterConfig.Spec.API.SANs)
-	dnsAddress, err := clusterConfig.Spec.Network.DNSAddress()
+	logrus.Infof("using public address: %s", c.ClusterConfig.Spec.API.Address)
+	logrus.Infof("using sans: %s", c.ClusterConfig.Spec.API.SANs)
+	dnsAddress, err := c.ClusterConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
 	var storageBackend component.Component
 
-	switch clusterConfig.Spec.Storage.Type {
+	switch c.ClusterConfig.Spec.Storage.Type {
 	case v1beta1.KineStorageType:
 		storageBackend = &controller.Kine{
-			Config:  clusterConfig.Spec.Storage.Kine,
-			K0sVars: k0sVars,
+			Config:  c.ClusterConfig.Spec.Storage.Kine,
+			K0sVars: c.K0sVars,
 		}
 	case v1beta1.EtcdStorageType:
 		storageBackend = &controller.Etcd{
 			CertManager: certificateManager,
-			Config:      clusterConfig.Spec.Storage.Etcd,
+			Config:      c.ClusterConfig.Spec.Storage.Etcd,
 			Join:        join,
 			JoinClient:  joinClient,
-			K0sVars:     k0sVars,
-			LogLevel:    logging["etcd"],
+			K0sVars:     c.K0sVars,
+			LogLevel:    c.Logging["etcd"],
 		}
 	default:
-		return errors.New(fmt.Sprintf("Invalid storage type: %s", clusterConfig.Spec.Storage.Type))
+		return errors.New(fmt.Sprintf("Invalid storage type: %s", c.ClusterConfig.Spec.Storage.Type))
 	}
-	logrus.Infof("Using storage backend %s", clusterConfig.Spec.Storage.Type)
+	logrus.Infof("Using storage backend %s", c.ClusterConfig.Spec.Storage.Type)
 	componentManager.Add(storageBackend)
 
 	// common factory to get the admin kube client that's needed in many components
-	adminClientFactory := kubernetes.NewAdminClientFactory(k0sVars)
+	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars)
 
 	componentManager.Add(&controller.APIServer{
-		ClusterConfig:      clusterConfig,
-		K0sVars:            k0sVars,
-		LogLevel:           logging["kube-apiserver"],
+		ClusterConfig:      c.ClusterConfig,
+		K0sVars:            c.K0sVars,
+		LogLevel:           c.Logging["kube-apiserver"],
 		Storage:            storageBackend,
-		EnableKonnectivity: !singleNode,
+		EnableKonnectivity: !c.SingleNode,
 	})
 
-	if clusterConfig.Spec.API.ExternalAddress != "" {
+	if c.ClusterConfig.Spec.API.ExternalAddress != "" {
 		componentManager.Add(&controller.K0sLease{
-			ClusterConfig:     clusterConfig,
+			ClusterConfig:     c.ClusterConfig,
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-
-	if !singleNode {
+	if !c.SingleNode {
 		componentManager.Add(&controller.Konnectivity{
-			ClusterConfig:     clusterConfig,
-			LogLevel:          logging["konnectivity-server"],
-			K0sVars:           k0sVars,
+			ClusterConfig:     c.ClusterConfig,
+			LogLevel:          c.Logging["konnectivity-server"],
+			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 		})
 	}
 	componentManager.Add(&controller.Scheduler{
-		ClusterConfig: clusterConfig,
-		LogLevel:      logging["kube-scheduler"],
-		K0sVars:       k0sVars,
+		ClusterConfig: c.ClusterConfig,
+		LogLevel:      c.Logging["kube-scheduler"],
+		K0sVars:       c.K0sVars,
 	})
 	componentManager.Add(&controller.Manager{
-		ClusterConfig: clusterConfig,
-		LogLevel:      logging["kube-controller-manager"],
-		K0sVars:       k0sVars,
+		ClusterConfig: c.ClusterConfig,
+		LogLevel:      c.Logging["kube-controller-manager"],
+		K0sVars:       c.K0sVars,
 	})
 
 	// One leader elector per controller
 	var leaderElector controller.LeaderElector
-	if clusterConfig.Spec.API.ExternalAddress != "" {
-		leaderElector = controller.NewLeaderElector(clusterConfig, adminClientFactory)
+	if c.ClusterConfig.Spec.API.ExternalAddress != "" {
+		leaderElector = controller.NewLeaderElector(c.ClusterConfig, adminClientFactory)
 	} else {
 		leaderElector = &controller.DummyLeaderElector{Leader: true}
 	}
 	componentManager.Add(leaderElector)
 
-	componentManager.Add(&applier.Manager{K0sVars: k0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
-	if !singleNode {
+	componentManager.Add(&applier.Manager{K0sVars: c.K0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
+	if !c.SingleNode {
 		componentManager.Add(&controller.K0SControlAPI{
-			ConfigPath: cfgFile,
-			K0sVars:    k0sVars,
+			ConfigPath: c.CfgFile,
+			K0sVars:    c.K0sVars,
 		})
 	}
-
-	if clusterConfig.Spec.Telemetry.Enabled {
+	if c.ClusterConfig.Spec.Telemetry.Enabled {
 		componentManager.Add(&telemetry.Component{
-			ClusterConfig:     clusterConfig,
+			ClusterConfig:     c.ClusterConfig,
 			Version:           build.Version,
-			K0sVars:           k0sVars,
+			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 		})
 	}
 
-	if clusterConfig.Spec.API.ExternalAddress != "" {
+	if c.ClusterConfig.Spec.API.ExternalAddress != "" {
 		componentManager.Add(controller.NewEndpointReconciler(
-			clusterConfig,
+			c.ClusterConfig,
 			leaderElector,
 			adminClientFactory,
 		))
 	}
 
-	componentManager.Add(controller.NewCSRApprover(clusterConfig,
+	componentManager.Add(controller.NewCSRApprover(c.ClusterConfig,
 		leaderElector,
 		adminClientFactory))
 
@@ -263,16 +256,16 @@ func startController(token string) error {
 	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
 	ctx, cancel := context.WithCancel(context.Background())
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer func() {
-		signal.Stop(c)
+		signal.Stop(ch)
 		cancel()
 	}()
 
 	go func() {
 		select {
-		case <-c:
+		case <-ch:
 			logrus.Info("Shutting down k0s controller")
 			cancel()
 		case <-ctx.Done():
@@ -286,11 +279,11 @@ func startController(token string) error {
 	perfTimer.Checkpoint("finished-starting-components")
 	if err != nil {
 		logrus.Errorf("failed to start controller components: %s", err)
-		c <- syscall.SIGTERM
+		ch <- syscall.SIGTERM
 	}
 
 	// in-cluster component reconcilers
-	reconcilers := createClusterReconcilers(clusterConfig, k0sVars, adminClientFactory, leaderElector)
+	reconcilers := c.createClusterReconcilers(adminClientFactory, leaderElector)
 	if err == nil {
 		perfTimer.Checkpoint("starting-reconcilers")
 
@@ -303,9 +296,10 @@ func startController(token string) error {
 	}
 	perfTimer.Checkpoint("started-reconcilers")
 
-	if err == nil && enableWorker {
+	if err == nil && c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		err = startControllerWorker(ctx, clusterConfig, k0sVars, controllerWorkerProfile)
+
+		err = c.startControllerWorker(ctx, c.WorkerProfile)
 		if err != nil {
 			logrus.Errorf("failed to start worker components: %s", err)
 			if err := componentManager.Stop(); err != nil {
@@ -336,55 +330,55 @@ func startController(token string) error {
 	return nil
 }
 
-func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constant.CfgVars, cf kubernetes.ClientFactory, leaderElector controller.LeaderElector) map[string]component.Component {
+func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderElector controller.LeaderElector) map[string]component.Component {
 	reconcilers := make(map[string]component.Component)
-	clusterSpec := clusterConf.Spec
+	clusterSpec := c.ClusterConfig.Spec
 
-	defaultPSP, err := controller.NewDefaultPSP(clusterSpec, k0sVars)
+	defaultPSP, err := controller.NewDefaultPSP(clusterSpec, c.K0sVars)
 	if err != nil {
 		logrus.Warnf("failed to initialize default PSP reconciler: %s", err.Error())
 	} else {
 		reconcilers["default-psp"] = defaultPSP
 	}
 
-	proxy, err := controller.NewKubeProxy(clusterConf, k0sVars)
+	proxy, err := controller.NewKubeProxy(c.ClusterConfig, c.K0sVars)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())
 	} else {
 		reconcilers["kube-proxy"] = proxy
 	}
 
-	coreDNS, err := controller.NewCoreDNS(clusterConf, k0sVars, cf)
+	coreDNS, err := controller.NewCoreDNS(c.ClusterConfig, c.K0sVars, cf)
 	if err != nil {
 		logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
 	} else {
 		reconcilers["coredns"] = coreDNS
 	}
 
-	initNetwork(reconcilers, clusterConf, k0sVars.DataDir)
+	c.initNetwork(reconcilers)
 
-	manifestsSaver, err := controller.NewManifestsSaver("helm", k0sVars.DataDir)
+	manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
 	reconcilers["crd"] = controller.NewCRD(manifestsSaver)
-	reconcilers["helmAddons"] = controller.NewHelmAddons(clusterConf, manifestsSaver, k0sVars, cf, leaderElector)
+	reconcilers["helmAddons"] = controller.NewHelmAddons(c.ClusterConfig, manifestsSaver, c.K0sVars, cf, leaderElector)
 
-	metricServer, err := controller.NewMetricServer(clusterConf, k0sVars, cf)
+	metricServer, err := controller.NewMetricServer(c.ClusterConfig, c.K0sVars, cf)
 	if err != nil {
 		logrus.Warnf("failed to initialize metric controller reconciler: %s", err.Error())
 	} else {
 		reconcilers["metricServer"] = metricServer
 	}
 
-	kubeletConfig, err := controller.NewKubeletConfig(clusterSpec, k0sVars)
+	kubeletConfig, err := controller.NewKubeletConfig(clusterSpec, c.K0sVars)
 	if err != nil {
 		logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
 	} else {
 		reconcilers["kubeletConfig"] = kubeletConfig
 	}
 
-	systemRBAC, err := controller.NewSystemRBAC(k0sVars.ManifestsDir)
+	systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
 	} else {
@@ -394,42 +388,39 @@ func createClusterReconcilers(clusterConf *config.ClusterConfig, k0sVars constan
 	return reconcilers
 }
 
-func initNetwork(reconcilers map[string]component.Component, conf *config.ClusterConfig, dataDir string) {
-
-	if conf.Spec.Network.Provider != "calico" {
+func (c *CmdOpts) initNetwork(reconcilers map[string]component.Component) {
+	if c.ClusterConfig.Spec.Network.Provider != "calico" {
 		logrus.Warnf("network provider set to custom, k0s will not manage it")
 		return
 	}
-	calicoSaver, err := controller.NewManifestsSaver("calico", dataDir)
+	calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
-	calicoInitSaver, err := controller.NewManifestsSaver("calico_init", dataDir)
+	calicoInitSaver, err := controller.NewManifestsSaver("calico_init", c.K0sVars.DataDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 	}
-	calico, err := controller.NewCalico(conf, calicoInitSaver, calicoSaver)
+	calico, err := controller.NewCalico(c.ClusterConfig, calicoInitSaver, calicoSaver)
 
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 		return
 	}
-
 	reconcilers["calico"] = calico
-
 }
 
-func startControllerWorker(ctx context.Context, clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, profile string) error {
+func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
 	// we use separate controllerManager here
 	// because we need to have controllers components
 	// be fully initialized and running before running worker components
 
 	workerComponentManager := component.NewManager()
-	if !util.FileExists(k0sVars.KubeletAuthConfigPath) {
+	if !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
 		err := retry.Do(func() error {
-			if !util.FileExists(k0sVars.AdminKubeConfigPath) {
-				return fmt.Errorf("file does not exist: %s", k0sVars.AdminKubeConfigPath)
+			if !util.FileExists(c.K0sVars.AdminKubeConfigPath) {
+				return fmt.Errorf("file does not exist: %s", c.K0sVars.AdminKubeConfigPath)
 			}
 			return nil
 		})
@@ -443,57 +434,51 @@ func startControllerWorker(ctx context.Context, clusterConfig *config.ClusterCon
 			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
 			// 225 seconds here
 			tokenAge := time.Second * 225
-			config, err := createKubeletBootstrapConfig(clusterConfig, "worker", tokenAge)
+			config, err := token.CreateKubeletBootstrapConfig(c.ClusterConfig, c.K0sVars, "worker", tokenAge)
 
 			if err != nil {
 				return err
 			}
 			bootstrapConfig = config
-
 			return nil
 		})
-
 		if err != nil {
 			return err
 		}
-		if err := handleKubeletBootstrapToken(bootstrapConfig, k0sVars); err != nil {
+		if err := worker.HandleKubeletBootstrapToken(bootstrapConfig, c.K0sVars); err != nil {
 			return err
 		}
 	}
 	worker.KernelSetup()
-
-	kubeletConfigClient, err := loadKubeletConfigClient(k0sVars)
+	kubeletConfigClient, err := worker.LoadKubeletConfigClient(c.K0sVars)
 	if err != nil {
 		return err
 	}
 
 	workerComponentManager.Add(&worker.ContainerD{
-		LogLevel: logging["containerd"],
-		K0sVars:  k0sVars,
+		LogLevel: c.Logging["containerd"],
+		K0sVars:  c.K0sVars,
 	})
-	workerComponentManager.Add(worker.NewOCIBundleReconciler(k0sVars))
+	workerComponentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
 	workerComponentManager.Add(&worker.Kubelet{
-		CRISocket:           criSocket,
+		CRISocket:           c.CriSocket,
 		KubeletConfigClient: kubeletConfigClient,
 		Profile:             profile,
-		LogLevel:            logging["kubelet"],
-		K0sVars:             k0sVars,
+		LogLevel:            c.Logging["kubelet"],
+		K0sVars:             c.K0sVars,
 	})
 
 	if err := workerComponentManager.Init(); err != nil {
 		return fmt.Errorf("can't init worker components: %w", err)
 	}
-
 	go func() {
 		<-ctx.Done()
 		if err := workerComponentManager.Stop(); err != nil {
 			logrus.WithError(err).Error("can't properly stop worker components")
 		}
 	}()
-
 	if err := workerComponentManager.Start(ctx); err != nil {
 		return fmt.Errorf("can't start worker components: %w", err)
 	}
-
 	return nil
 }

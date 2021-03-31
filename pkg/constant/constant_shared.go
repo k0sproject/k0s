@@ -2,6 +2,7 @@ package constant
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -105,6 +106,9 @@ func GetConfig(dataDir string) CfgVars {
 			dataDir = DataDirDefault
 		}
 	}
+
+	// fetch absolute path for dataDir
+	dataDir, _ = filepath.Abs(dataDir)
 
 	var runDir string
 	if os.Geteuid() == 0 {
