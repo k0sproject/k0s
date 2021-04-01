@@ -371,9 +371,13 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 	case "custom":
 		logrus.Warnf("network provider set to custom, k0s will not manage it")
 	case "calico":
-		c.initCalico(reconcilers)
+		err = c.initCalico(reconcilers)
 	case "kuberouter":
-		c.initKubeRouter(reconcilers)
+		err = c.initKubeRouter(reconcilers)
+	}
+	if err != nil {
+		logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
+		return reconcilers, err
 	}
 
 	manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
@@ -388,25 +392,22 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 	if err != nil {
 		logrus.Warnf("failed to initialize metric controller reconciler: %s", err.Error())
 		return reconcilers, err
-	} else {
-		reconcilers["metricServer"] = metricServer
 	}
+	reconcilers["metricServer"] = metricServer
 
 	kubeletConfig, err := controller.NewKubeletConfig(clusterSpec, c.K0sVars)
 	if err != nil {
 		logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
 		return reconcilers, err
-	} else {
-		reconcilers["kubeletConfig"] = kubeletConfig
 	}
+	reconcilers["kubeletConfig"] = kubeletConfig
 
 	systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
 	if err != nil {
 		logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
 		return reconcilers, err
-	} else {
-		reconcilers["systemRBAC"] = systemRBAC
 	}
+	reconcilers["systemRBAC"] = systemRBAC
 
 	return reconcilers, nil
 }
