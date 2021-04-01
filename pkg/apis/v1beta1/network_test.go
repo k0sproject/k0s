@@ -83,14 +83,12 @@ func (s *NetworkSuite) TestAddresses() {
 	})
 }
 
-func (s *NetworkSuite) TestCalicoDefaults() {
+func (s *NetworkSuite) TestNetworkDefaults() {
 	n := DefaultNetwork()
 
-	s.Equal("calico", n.Provider)
-	s.NotNil(n.Calico)
-	s.Equal(4789, n.Calico.VxlanPort)
-	s.Equal(1450, n.Calico.MTU)
-	s.Equal("vxlan", n.Calico.Mode)
+	s.Equal("kuberouter", n.Provider)
+	s.NotNil(n.KubeRouter)
+
 }
 
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
@@ -180,6 +178,7 @@ func (s *NetworkSuite) TestValidation() {
 
 	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
 		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
 		n.Calico.Mode = "bird"
 		n.DualStack = DefaultDualStack()
 		n.DualStack.Enabled = true
@@ -194,6 +193,7 @@ func (s *NetworkSuite) TestValidation() {
 
 	s.T().Run("invalid_ipv6_pod_cidr", func(t *testing.T) {
 		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
 		n.Calico.Mode = "bird"
 		n.DualStack = DefaultDualStack()
 		n.DualStack.IPv6PodCIDR = "foobar"

@@ -61,8 +61,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
+	s.T().Log("waiting to see kube-router pods ready")
+	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
 
 	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
 	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))
@@ -73,6 +73,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	cfg, err := s.GetKubeConfig(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
+	s.T().Log("waiting to see metrics ready")
 	s.Require().NoError(common.WaitForMetricsReady(cfg))
 }
 

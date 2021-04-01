@@ -38,8 +38,8 @@ func DefaultNetwork() *Network {
 	return &Network{
 		PodCIDR:     "10.244.0.0/16",
 		ServiceCIDR: "10.96.0.0/12",
-		Provider:    "calico",
-		Calico:      DefaultCalico(),
+		Provider:    "kuberouter",
+		KubeRouter:  DefaultKubeRouter(),
 		DualStack:   DefaultDualStack(),
 	}
 }
