@@ -25,11 +25,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type KubeRouterSuite struct {
+type CalicoSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *KubeRouterSuite) TestK0sGetsUp() {
+func (s *CalicoSuite) TestK0sGetsUp() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.Require().NoError(s.RunWorkers())
@@ -57,8 +57,8 @@ func (s *KubeRouterSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
 }
 
-func TestKubeRouterSuite(t *testing.T) {
-	s := KubeRouterSuite{
+func TestCalicoSuite(t *testing.T) {
+	s := CalicoSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
