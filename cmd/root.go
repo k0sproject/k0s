@@ -38,6 +38,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/status"
 	"github.com/k0sproject/k0s/cmd/token"
 	"github.com/k0sproject/k0s/cmd/validate"
+	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -78,8 +79,8 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
 	cmd.AddCommand(airgap.NewAirgapCmd())
+	cmd.AddCommand(version.NewVersionCmd())
 
-	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newDocsCmd())
 	cmd.AddCommand(newDefaultConfigCmd())
 	cmd.AddCommand(newCompletionCmd())
@@ -92,17 +93,6 @@ func NewRootCmd() *cobra.Command {
 	cmd.Long = longDesc
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
-}
-
-func newVersionCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "Print the k0s version",
-
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(build.Version)
-		},
-	}
 }
 
 func newDocsCmd() *cobra.Command {

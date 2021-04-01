@@ -1,3 +1,4 @@
+include embedded-bins/Makefile.variables
 
 GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
 
@@ -69,7 +70,7 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS) -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" \
+	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS) -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version) -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version) -X github.com/k0sproject/k0s/pkg/build.KubernetesVersion=$(kubernetes_version) -X github.com/k0sproject/k0s/pkg/build.KineVersion=$(kine_version) -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version) -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version) -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" \
 		    -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
