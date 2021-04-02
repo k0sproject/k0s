@@ -91,6 +91,15 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 	return flagset
 }
 
+// XX: not a pretty hack, but we need the data-dir flag for the kubectl subcommand
+// XX: when other global flags cannot be used (specifically -d and -c)
+func GetKubeCtlFlagSet() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	flagset.BoolVar(&Debug, "debug", false, "Debug logging (default: false)")
+	return flagset
+}
+
 func GetWorkerFlags() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 

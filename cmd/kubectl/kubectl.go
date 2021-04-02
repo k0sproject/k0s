@@ -60,6 +60,5 @@ func NewK0sKubectlCmd() *cobra.Command {
 		}
 		return originalPreRunE(cmd, args)
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
