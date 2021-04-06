@@ -1,0 +1,14 @@
+smoketests := \
+	check-addons \
+	check-basic \
+	check-byocri \
+	check-calico \
+	check-cnichange \
+	check-customports \
+	check-dualstack \
+	check-hacontrolplane \
+	check-install \
+	check-kine \
+	check-multicontroller \
+	check-singlenode
+
