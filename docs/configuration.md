@@ -13,6 +13,8 @@ metadata:
   name: k0s
 spec:
   api:
+    port: 6443
+    k0sApiPort: 9443
     externalAddress: my-lb-address.example.com
     address: 192.168.68.104
     sans:
@@ -72,6 +74,9 @@ spec:
       kubecontrollers:
         image: calico/kube-controllers
         version: v3.16.2
+  konnectivity:
+    agentPort: 8132
+    adminPort: 8133
 ```
 
 ### `spec.api`
@@ -80,6 +85,10 @@ spec:
 - `address`: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.
 - `sans`: List of additional addresses to push to API servers serving certificate
 - `extraArgs`: Map of key-values (strings) for any extra arguments you wish to pass down to Kubernetes api-server process
+- `port`: custom port for kube-api server to listen on (default value 6443)
+- `k0sApiPort`: custom port for k0s-api server to listen on (default value 9443)
+
+Keep in mind, in case if `port` and `k0sApiPort` are used with `externalAddress` setting, the LB serving at `externalAddress` must listen on the same ports.  
 
 ### `spec.controllerManager`
 
@@ -209,6 +218,12 @@ This only affects the location where images are getting pulled, omitting an imag
 
 List of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap. For more information, see [Helm Charts](helm-charts.md).
 
+### `spec.konnectivity`
+
+Konnectivity related settings
+
+- `agentPort` agent port to listen on (default 8132)
+- `adminPort` admin port to listen on (default 8133)
 ### Telemetry
 
 To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as `false`

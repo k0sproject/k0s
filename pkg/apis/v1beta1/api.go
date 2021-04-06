@@ -27,6 +27,8 @@ import (
 // APISpec ...
 type APISpec struct {
 	Address         string            `yaml:"address"`
+	Port            int               `yaml:"port"`
+	K0sAPIPort      int               `yaml:"k0sApiPort,omitempty"`
 	ExternalAddress string            `yaml:"externalAddress,omitempty"`
 	SANs            []string          `yaml:"sans"`
 	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`
@@ -38,9 +40,11 @@ func DefaultAPISpec() *APISpec {
 	addresses, _ := util.AllAddresses()
 	publicAddress, _ := util.FirstPublicAddress()
 	return &APISpec{
-		SANs:      addresses,
-		Address:   publicAddress,
-		ExtraArgs: make(map[string]string),
+		Port:       6443,
+		K0sAPIPort: 9443,
+		SANs:       addresses,
+		Address:    publicAddress,
+		ExtraArgs:  make(map[string]string),
 	}
 }
 
@@ -52,8 +56,9 @@ func (a *APISpec) APIAddress() string {
 	return a.Address
 }
 
+// APIAddressURL returns kube-apiserver external URI
 func (a *APISpec) APIAddressURL() string {
-	return a.getExternalURIForPort(6443)
+	return a.getExternalURIForPort(a.Port)
 }
 
 // IsIPv6String returns if ip is IPv6.
@@ -64,7 +69,7 @@ func IsIPv6String(ip string) bool {
 
 // K0sControlPlaneAPIAddress returns the controller join APIs address
 func (a *APISpec) K0sControlPlaneAPIAddress() string {
-	return a.getExternalURIForPort(9443)
+	return a.getExternalURIForPort(a.K0sAPIPort)
 }
 
 func (a *APISpec) getExternalURIForPort(port int) string {

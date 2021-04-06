@@ -103,7 +103,7 @@ func (c *CmdOpts) startAPI() error {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":9443",
+		Addr:         fmt.Sprintf(":%d", c.ClusterConfig.Spec.API.K0sAPIPort),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

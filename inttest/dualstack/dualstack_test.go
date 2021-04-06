@@ -47,7 +47,6 @@ func (ds *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 	for _, n := range nl.Items {
 		ds.Require().Len(n.Spec.PodCIDRs, 2, "Each node must have ipv4 and ipv6 pod cidr")
 	}
-
 }
 
 func (ds *DualstackSuite) SetupSuite() {

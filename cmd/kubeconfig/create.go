@@ -18,15 +18,15 @@ package kubeconfig
 import (
 	"bytes"
 	"encoding/base64"
-	"html/template"
-	"io/ioutil"
-	"os"
-	"path"
-
+	"fmt"
 	"github.com/cloudflare/cfssl/log"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"html/template"
+	"io/ioutil"
+	"os"
+	"path"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -80,8 +80,9 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			var username = args[0]
 			c := CmdOpts(config.GetCmdOpts())
 			clusterAPIURL, err := c.getAPIURL()
+
 			if err != nil {
-				return errors.Wrap(err, "failed to fetch cluster's API Address: %v.")
+				return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
 			}
 			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {

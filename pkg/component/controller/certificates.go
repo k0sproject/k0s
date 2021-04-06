@@ -92,7 +92,7 @@ func (c *Certificates) Init() error {
 		return errors.Wrapf(err, "failed to read ca cert")
 	}
 	c.CACert = string(cert)
-
+	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)
 	eg.Go(func() error {
 		// Front proxy CA
 		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
@@ -126,7 +126,8 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, "https://localhost:6443", c.CACert, adminCert.Cert, adminCert.Key, "root"); err != nil {
+
+		if err := kubeConfig(c.K0sVars.AdminKubeConfigPath, kubeConfigAPIUrl, c.CACert, adminCert.Cert, adminCert.Key, "root"); err != nil {
 			return err
 		}
 
@@ -146,7 +147,7 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, "https://localhost:6443", c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
+		if err := kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
 			return err
 		}
 
@@ -167,7 +168,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), "https://localhost:6443", c.CACert, ccmCert.Cert, ccmCert.Key, constant.ApiserverUser)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "ccm.conf"), kubeConfigAPIUrl, c.CACert, ccmCert.Cert, ccmCert.Key, constant.ApiserverUser)
 	})
 
 	eg.Go(func() error {
@@ -183,7 +184,7 @@ func (c *Certificates) Init() error {
 			return err
 		}
 
-		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), "https://localhost:6443", c.CACert, schedulerCert.Cert, schedulerCert.Key, constant.SchedulerUser)
+		return kubeConfig(filepath.Join(c.K0sVars.CertRootDir, "scheduler.conf"), kubeConfigAPIUrl, c.CACert, schedulerCert.Cert, schedulerCert.Key, constant.SchedulerUser)
 	})
 
 	eg.Go(func() error {

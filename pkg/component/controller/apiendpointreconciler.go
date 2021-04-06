@@ -100,6 +100,7 @@ func (a *APIEndpointReconciler) Stop() error {
 func (a *APIEndpointReconciler) Healthy() error { return nil }
 
 func (a *APIEndpointReconciler) reconcileEndpoints() error {
+
 	if !a.leaderElector.IsLeader() {
 		a.L.Debug("we're not the leader, not reconciling api endpoints")
 		return nil
@@ -142,7 +143,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints() error {
 					corev1.EndpointPort{
 						Name:     "https",
 						Protocol: "TCP",
-						Port:     6443,
+						Port:     int32(a.ClusterConfig.Spec.API.Port),
 					},
 				},
 			},
@@ -174,7 +175,7 @@ func (a *APIEndpointReconciler) createEndpoint(addresses []string) error {
 					corev1.EndpointPort{
 						Name:     "https",
 						Protocol: "TCP",
-						Port:     6443,
+						Port:     int32(a.ClusterConfig.Spec.API.Port),
 					},
 				},
 			},
