@@ -74,7 +74,7 @@ k0s.exe k0s: $(GO_SRCS)
 		    -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
-.bins.windows.stamp .bins.linux.stamp:
+.bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
