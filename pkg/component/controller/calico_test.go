@@ -86,15 +86,15 @@ func TestCalicoManifests(t *testing.T) {
 
 	t.Run("ip_autodetection", func(t *testing.T) {
 		t.Run("use_IPAutodetectionMethod_for_both_families_by_default", func(t *testing.T) {
-			cfg := v1beta1.DefaultClusterConfig(k0sVars)
-			cfg.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
+
+			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
-			calico, err := NewCalico(cfg, crdSaver, saver)
+			calico, err := NewCalico(clusterConfig, crdSaver, saver)
 			require.NoError(t, err)
 			templateContext, err := calico.getConfig()
 			require.NoError(t, err)
-			require.Equal(t, cfg.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
+			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
 			require.Equal(t, templateContext.IPV6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
 			_ = calico.processConfigChanges(calicoConfig{})
 			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
@@ -106,17 +106,17 @@ func TestCalicoManifests(t *testing.T) {
 			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
 		})
 		t.Run("use_IPV6AutodetectionMethod_for_ipv6_if_specified", func(t *testing.T) {
-			cfg := v1beta1.DefaultClusterConfig(k0sVars)
-			cfg.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
-			cfg.Spec.Network.Calico.IPv6AutodetectionMethod = "anothermethod"
+
+			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
+			clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod = "anothermethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
-			calico, err := NewCalico(cfg, crdSaver, saver)
+			calico, err := NewCalico(clusterConfig, crdSaver, saver)
 			require.NoError(t, err)
 			templateContext, err := calico.getConfig()
 			require.NoError(t, err)
-			require.Equal(t, cfg.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
-			require.Equal(t, cfg.Spec.Network.Calico.IPv6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
+			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
+			require.Equal(t, clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
 			_ = calico.processConfigChanges(calicoConfig{})
 			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 
