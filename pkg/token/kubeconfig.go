@@ -26,8 +26,6 @@ import (
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-
-	"github.com/pkg/errors"
 )
 
 var (
@@ -54,10 +52,10 @@ users:
 )
 
 func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
-	caCert, err := ioutil.ReadFile(filepath.Join(k0sVars.CertRootDir, "ca.crt"))
+	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
+	caCert, err := ioutil.ReadFile(crtFile)
 	if err != nil {
-		msg := fmt.Sprintf("failed to read cluster ca certificate from %s. is the control plane initialized on this node?", filepath.Join(k0sVars.CertRootDir, "ca.crt"))
-		return "", errors.Wrapf(err, msg)
+		return "", fmt.Errorf("failed to read cluster ca certificate from %s: %w. is the control plane initialized on this node?", crtFile, err)
 	}
 	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
 	if err != nil {

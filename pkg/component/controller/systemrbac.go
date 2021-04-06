@@ -16,10 +16,9 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -57,7 +56,7 @@ func (s *SystemRBAC) Run() error {
 	}
 	err = tw.Write()
 	if err != nil {
-		return errors.Wrap(err, "error writing bootstrap-rbac manifests, will NOT retry")
+		return fmt.Errorf("error writing bootstrap-rbac manifests, will NOT retry: %w", err)
 
 	}
 	return nil

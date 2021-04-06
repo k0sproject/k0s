@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
@@ -58,23 +57,23 @@ func (e *Etcd) Init() error {
 	var err error
 
 	if err = detectUnsupportedEtcdArch(); err != nil {
-		logrus.Error(errors.Wrap(err, "Missing environment variable"))
+		logrus.Error(fmt.Errorf("Missing environment variable: %w", err))
 		return err
 	}
 
 	e.uid, err = util.GetUID(constant.EtcdUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running etcd as root"))
+		logrus.Warning(fmt.Errorf("Running etcd as root: %w", err))
 	}
 
 	err = util.InitDirectory(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", e.K0sVars.EtcdDataDir)
+		return fmt.Errorf("failed to create %s: %w", e.K0sVars.EtcdDataDir, err)
 	}
 
 	err = util.InitDirectory(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 	if err != nil {
-		return errors.Wrapf(err, "failed to create etcd cert dir")
+		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
@@ -168,7 +167,7 @@ func (e *Etcd) Run() error {
 	}
 
 	if err := e.setupCerts(); err != nil {
-		return errors.Wrap(err, "failed to create etcd certs")
+		return fmt.Errorf("failed to create etcd certs: %w", err)
 	}
 
 	logrus.Infof("starting etcd with args: %v", args)
@@ -196,7 +195,7 @@ func (e *Etcd) setupCerts() error {
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 
 	if err := e.CertManager.EnsureCA("etcd/ca", "etcd-ca"); err != nil {
-		return errors.Wrap(err, "failed to create etcd ca")
+		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
 	eg, _ := errgroup.WithContext(context.Background())

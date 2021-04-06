@@ -17,12 +17,12 @@ package assets
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -71,7 +71,7 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 
 	err := util.InitDirectory(filepath.Dir(p), filemode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(p))
+		return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(p), err)
 	}
 
 	if ExecutableIsOlder(p) {
@@ -101,11 +101,11 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return errors.Wrapf(err, "Failed to find embedded file position for %s", name)
+		return fmt.Errorf("Failed to find embedded file position for %s: %w", name, err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return errors.Wrapf(err, "Failed to create gzip reader for %s", name)
+		return fmt.Errorf("Failed to create gzip reader for %s: %w", name, err)
 	}
 
 	logrus.Debug("Writing static file: ", p)
@@ -114,7 +114,7 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 		return err
 	}
 	if err := os.Chmod(p, 0550); err != nil {
-		return errors.Wrapf(err, "Failed to chmod %s", name)
+		return fmt.Errorf("Failed to chmod %s: %w", name, err)
 	}
 	return nil
 }
@@ -123,15 +123,15 @@ func copyTo(p string, gz io.Reader) error {
 	_ = os.Remove(p)
 	f, err := os.Create(p)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", p)
+		return fmt.Errorf("failed to create %s: %w", p, err)
 	}
 	defer f.Close()
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", p)
+		return fmt.Errorf("failed to create %s: %w", p, err)
 	}
 	_, err = io.Copy(f, gz)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write to %s", p)
+		return fmt.Errorf("failed to write to %s: %w", p, err)
 	}
 	return nil
 }

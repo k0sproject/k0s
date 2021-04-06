@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -130,7 +129,7 @@ func (c *CmdOpts) startController() error {
 		join = true
 		joinClient, err = token.JoinClientFromToken(c.TokenArg)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create join client")
+			return fmt.Errorf("failed to create join client: %w", err)
 		}
 
 		componentManager.AddSync(&controller.CASyncer{
@@ -170,7 +169,7 @@ func (c *CmdOpts) startController() error {
 			LogLevel:    c.Logging["etcd"],
 		}
 	default:
-		return errors.New(fmt.Sprintf("Invalid storage type: %s", c.ClusterConfig.Spec.Storage.Type))
+		return fmt.Errorf("Invalid storage type: %s", c.ClusterConfig.Spec.Storage.Type)
 	}
 	logrus.Infof("Using storage backend %s", c.ClusterConfig.Spec.Storage.Type)
 	componentManager.Add(storageBackend)

@@ -16,11 +16,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -96,7 +96,7 @@ func (c *ClusterConfig) Validate() []error {
 func FromYamlFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read config file at %s", filename)
+		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
 
 	return FromYamlString(string(buf), k0sVars)

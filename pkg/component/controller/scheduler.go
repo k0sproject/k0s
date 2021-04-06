@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -44,7 +43,7 @@ func (a *Scheduler) Init() error {
 	var err error
 	a.uid, err = util.GetUID(constant.SchedulerUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running kube-scheduler as root"))
+		logrus.Warning(fmt.Errorf("Running kube-scheduler as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, "kube-scheduler", constant.BinDirMode)
 }

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path"
 
-	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -16,27 +15,27 @@ import (
 func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {
 	kubeconfig, err := token.DecodeJoinToken(encodedToken)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode token")
+		return fmt.Errorf("failed to decode token: %w", err)
 	}
 
 	// Load the bootstrap kubeconfig to validate it
 	clientCfg, err := clientcmd.Load(kubeconfig)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse kubelet bootstrap auth from token")
+		return fmt.Errorf("failed to parse kubelet bootstrap auth from token: %w", err)
 	}
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
 	if !util.FileExists(kubeletCAPath) {
 		if err := util.InitDirectory(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("failed to initialize dir: %v", k0sVars.CertRootDir))
+			return fmt.Errorf("failed to initialize directory '%s': %w", k0sVars.CertRootDir, err)
 		}
 		err = ioutil.WriteFile(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
-			return errors.Wrap(err, "failed to write ca client cert")
+			return fmt.Errorf("failed to write ca client cert: %w", err)
 		}
 	}
 	err = ioutil.WriteFile(k0sVars.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
 	if err != nil {
-		return errors.Wrap(err, "failed writing kubelet bootstrap auth config")
+		return fmt.Errorf("failed writing kubelet bootstrap auth config: %w", err)
 	}
 
 	return nil

@@ -30,8 +30,6 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/pkg/errors"
-
 	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -89,7 +87,7 @@ func (c *Certificates) Init() error {
 	logrus.Debugf("CA key and cert exists, loading")
 	cert, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read ca cert")
+		return fmt.Errorf("failed to read ca cert: %w", err)
 	}
 	c.CACert = string(cert)
 	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)

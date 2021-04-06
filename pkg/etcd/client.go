@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/pkg/transport"
@@ -100,7 +98,7 @@ func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]str
 func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (uint64, error) {
 	resp, err := c.client.MemberList(ctx)
 	if err != nil {
-		return 0, errors.Wrap(err, "etcd member list failed")
+		return 0, fmt.Errorf("etcd member list failed: %w", err)
 	}
 	for _, m := range resp.Members {
 		for _, peerURL := range m.PeerURLs {
@@ -109,7 +107,7 @@ func (c *Client) GetPeerIDByAddress(ctx context.Context, peerAddress string) (ui
 			}
 		}
 	}
-	return 0, errors.Errorf("peer not found: %s", peerAddress)
+	return 0, fmt.Errorf("peer not found: %s", peerAddress)
 }
 
 // DeleteMember deletes member by peer name

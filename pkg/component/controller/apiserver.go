@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -76,7 +75,7 @@ func (a *APIServer) Init() error {
 	var err error
 	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running kube-apiserver as root"))
+		logrus.Warning(fmt.Errorf("Running kube-apiserver as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, "kube-apiserver", constant.BinDirMode)
 }
@@ -159,7 +158,7 @@ func (a *APIServer) Run() error {
 			fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
 			fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
 	default:
-		return errors.New(fmt.Sprintf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type))
+		return fmt.Errorf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type)
 	}
 	return a.supervisor.Supervise()
 }
@@ -175,7 +174,7 @@ func (a *APIServer) writeKonnectivityConfig() error {
 	}
 	err := tw.Write()
 	if err != nil {
-		return errors.Wrap(err, "failed to write konnectivity config")
+		return fmt.Errorf("failed to write konnectivity config: %w", err)
 	}
 
 	return nil

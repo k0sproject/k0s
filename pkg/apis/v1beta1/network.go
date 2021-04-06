@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/pkg/errors"
 	utilnet "k8s.io/utils/net"
 )
 
@@ -81,7 +80,7 @@ func (n *Network) Validate() []error {
 func (n *Network) DNSAddress() (string, error) {
 	_, ipnet, err := net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse service CIDR %s: %s", n.ServiceCIDR, err.Error())
+		return "", fmt.Errorf("failed to parse service CIDR %s: %w", n.ServiceCIDR, err)
 	}
 
 	address := ipnet.IP.To4()
@@ -93,7 +92,7 @@ func (n *Network) DNSAddress() (string, error) {
 	}
 
 	if !ipnet.Contains(address) {
-		return "", errors.Wrapf(err, "failed to calculate a valid DNS address: %s", address.String())
+		return "", fmt.Errorf("failed to calculate a valid DNS address: %s", address.String())
 	}
 
 	return address.String(), nil
@@ -109,7 +108,7 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 
 	parsedCIDRs, err := utilnet.ParseCIDRs(cidrs)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse service cidr to build internal API address: %v", err)
+		return nil, fmt.Errorf("can't parse service cidr to build internal API address: %w", err)
 	}
 
 	stringifiedAddresses := make([]string, len(parsedCIDRs))

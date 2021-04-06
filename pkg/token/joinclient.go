@@ -23,7 +23,6 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -39,7 +38,7 @@ type JoinClient struct {
 func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 	tokenBytes, err := DecodeJoinToken(encodedToken)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode token")
+		return nil, fmt.Errorf("failed to decode token: %w", err)
 	}
 
 	clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)

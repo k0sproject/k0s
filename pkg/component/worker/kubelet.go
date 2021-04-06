@@ -28,7 +28,6 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/docker/libnetwork/resolvconf"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -66,7 +65,7 @@ func (k *Kubelet) Init() error {
 	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
 	err = util.InitDirectory(k.dataDir, constant.DataDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", k.dataDir)
+		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)
 	}
 
 	return nil
@@ -176,7 +175,7 @@ func (k *Kubelet) Run() error {
 
 		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertSecureMode)
 		if err != nil {
-			return errors.Wrap(err, "failed to write kubelet config to disk")
+			return fmt.Errorf("failed to write kubelet config to disk: %w", err)
 		}
 
 		return nil

@@ -16,9 +16,9 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
 	"net"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,7 +28,7 @@ func AllAddresses() ([]string, error) {
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list network interfaces")
+		return nil, fmt.Errorf("failed to list network interfaces: %w", err)
 	}
 
 	for _, a := range addrs {
@@ -49,7 +49,7 @@ func AllAddresses() ([]string, error) {
 func FirstPublicAddress() (string, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		return "127.0.0.1", errors.Wrap(err, "failed to list network interfaces")
+		return "127.0.0.1", fmt.Errorf("failed to list network interfaces: %w", err)
 	}
 	for _, i := range ifs {
 		if i.Name == "vxlan.calico" {
