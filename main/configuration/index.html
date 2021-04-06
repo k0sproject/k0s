@@ -668,6 +668,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#speckonnectivity" class="md-nav__link">
+    spec.konnectivity
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#telemetry" class="md-nav__link">
     Telemetry
   </a>
@@ -1000,6 +1007,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#speckonnectivity" class="md-nav__link">
+    spec.konnectivity
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#telemetry" class="md-nav__link">
     Telemetry
   </a>
@@ -1044,6 +1058,8 @@
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
 <span class="nt">spec</span><span class="p">:</span>
   <span class="nt">api</span><span class="p">:</span>
+    <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">6443</span>
+    <span class="nt">k0sApiPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9443</span>
     <span class="nt">externalAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-lb-address.example.com</span>
     <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span>
     <span class="nt">sans</span><span class="p">:</span>
@@ -1103,6 +1119,9 @@
       <span class="nt">kubecontrollers</span><span class="p">:</span>
         <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">calico/kube-controllers</span>
         <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v3.16.2</span>
+  <span class="nt">konnectivity</span><span class="p">:</span>
+    <span class="nt">agentPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">8132</span>
+    <span class="nt">adminPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">8133</span>
 </code></pre></div>
 <h3 id="specapi"><code>spec.api</code><a class="headerlink" href="#specapi" title="Permanent link">#</a></h3>
 <ul>
@@ -1110,7 +1129,10 @@
 <li><code>address</code>: The local address to bind API on. Also used as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.</li>
 <li><code>sans</code>: List of additional addresses to push to API servers serving certificate</li>
 <li><code>extraArgs</code>: Map of key-values (strings) for any extra arguments you wish to pass down to Kubernetes api-server process</li>
+<li><code>port</code>: custom port for kube-api server to listen on (default value 6443)</li>
+<li><code>k0sApiPort</code>: custom port for k0s-api server to listen on (default value 9443)</li>
 </ul>
+<p>Keep in mind, in case if <code>port</code> and <code>k0sApiPort</code> are used with <code>externalAddress</code> setting, the LB serving at <code>externalAddress</code> must listen on the same ports.  </p>
 <h3 id="speccontrollermanager"><code>spec.controllerManager</code><a class="headerlink" href="#speccontrollermanager" title="Permanent link">#</a></h3>
 <ul>
 <li><code>extraArgs</code>: Map of key-values (strings) for any extra arguments you wish to pass down to Kubernetes controller manager process</li>
@@ -1215,6 +1237,12 @@ If <code>spec.images.default_pull_policy</code> is set ant not empty, it will be
 <p>This only affects the location where images are getting pulled, omitting an image specification here will not disable the component from being deployed.</p>
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p>List of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap. For more information, see <a href="../helm-charts/">Helm Charts</a>.</p>
+<h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
+<p>Konnectivity related settings</p>
+<ul>
+<li><code>agentPort</code> agent port to listen on (default 8132)</li>
+<li><code>adminPort</code> admin port to listen on (default 8133)</li>
+</ul>
 <h3 id="telemetry">Telemetry<a class="headerlink" href="#telemetry" title="Permanent link">#</a></h3>
 <p>To build better end user experience we collect and send telemetry data from clusters. It is enabled by default and can be disabled by settings corresponding option as <code>false</code>
 The default interval is 10 minutes, any valid value for <code>time.Duration</code> string representation can be used as a value.
