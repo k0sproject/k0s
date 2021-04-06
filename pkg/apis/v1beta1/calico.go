@@ -17,29 +17,31 @@ package v1beta1
 
 // Calico defines the calico related config options
 type Calico struct {
-	Mode                  string `yaml:"mode"`
-	VxlanPort             int    `yaml:"vxlanPort"`
-	VxlanVNI              int    `yaml:"vxlanVNI"`
-	MTU                   int    `yaml:"mtu"`
-	EnableWireguard       bool   `yaml:"wireguard"`
-	FlexVolumeDriverPath  string `yaml:"flexVolumeDriverPath"`
-	WithWindowsNodes      bool   `yaml:"withWindowsNodes"`
-	Overlay               string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
-	IPAutodetectionMethod string `yaml:"ipAutodetectionMethod,omitempty"`
+	Mode                    string `yaml:"mode"`
+	VxlanPort               int    `yaml:"vxlanPort"`
+	VxlanVNI                int    `yaml:"vxlanVNI"`
+	MTU                     int    `yaml:"mtu"`
+	EnableWireguard         bool   `yaml:"wireguard"`
+	FlexVolumeDriverPath    string `yaml:"flexVolumeDriverPath"`
+	WithWindowsNodes        bool   `yaml:"withWindowsNodes"`
+	Overlay                 string `yaml:"overlay" validate:"oneof=Always Never CrossSubnet"`
+	IPAutodetectionMethod   string `yaml:"ipAutodetectionMethod,omitempty"`
+	IPv6AutodetectionMethod string `yaml:"ipV6AutodetectionMethod,omitempty"`
 }
 
 // DefaultCalico returns sane defaults for calico
 func DefaultCalico() *Calico {
 	return &Calico{
-		Mode:                  "vxlan",
-		VxlanPort:             4789,
-		VxlanVNI:              4096,
-		MTU:                   1450,
-		EnableWireguard:       false,
-		FlexVolumeDriverPath:  "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		WithWindowsNodes:      false,
-		Overlay:               "Always",
-		IPAutodetectionMethod: "",
+		Mode:                    "vxlan",
+		VxlanPort:               4789,
+		VxlanVNI:                4096,
+		MTU:                     1450,
+		EnableWireguard:         false,
+		FlexVolumeDriverPath:    "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
+		WithWindowsNodes:        false,
+		Overlay:                 "Always",
+		IPAutodetectionMethod:   "",
+		IPv6AutodetectionMethod: "",
 	}
 }
 
@@ -54,6 +56,7 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
 	c.IPAutodetectionMethod = ""
+	c.IPv6AutodetectionMethod = ""
 
 	type ycalico Calico
 	yc := (*ycalico)(c)
