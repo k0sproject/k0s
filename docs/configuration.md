@@ -108,12 +108,13 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 
 ### `spec.network`
 
-- `provider`: Network provider, either `calico`, `kuberouter` or `custom`. In case of `custom` user can push any network provider. (default `calico`)
+- `provider`: Network provider, either `calico`, `kuberouter` or `custom`. In case of `custom` user can push any network provider. (default `kuberouter`)
 - `podCIDR`: Pod network CIDR to be used in the cluster
 - `serviceCIDR`: Network CIDR to be used for cluster VIP services.
 
 **Note:** In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.
 
+**Note:** After the cluster has been initialized with one network provider, it is not currently supported to change the network provider.
 #### `spec.network.calico`
 
 - `mode`: `vxlan` (default) or `ipip`
