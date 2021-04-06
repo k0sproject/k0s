@@ -180,4 +180,39 @@ jobs:
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
       
+  armv7:
+    needs: release
+    runs-on: [self-hosted,linux,arm,lxc]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      
+      - name: Build
+        run: make EMBEDDED_BINS_BUILDMODE=docker
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+
+      - name: Run basic smoke test
+        run: make check-basic
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
+
+      - name: Upload Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
+          asset_content_type: application/octet-stream
       
