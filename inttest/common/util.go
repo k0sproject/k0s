@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,15 +18,7 @@ func WaitForCalicoReady(kc *kubernetes.Clientset) error {
 
 // WaitForKubeRouterReady waits to see all kube-router pods healthy
 func WaitForKubeRouterReady(kc *kubernetes.Clientset) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		ds, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "kube-router", v1.GetOptions{})
-		if err != nil {
-			fmt.Printf("error while getting kube-router DS: %s\n", err.Error())
-			return false, nil
-		}
-
-		return ds.Status.NumberReady == ds.Status.DesiredNumberScheduled, nil
-	})
+	return WaitForDaemonSet(kc, "kube-router")
 }
 
 func WaitForMetricsReady(c *rest.Config) error {

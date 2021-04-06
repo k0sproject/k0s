@@ -112,7 +112,7 @@ jobs:
             /tmp/*.log
 
   smoketest-custom-ports:
-    name: Smoke test for custom pors (k0s api, kube-api, LB + external address)
+    name: Smoke test for custom ports (k0s api, kube-api, LB + external address)
     needs: build
     runs-on: ubuntu-latest
 
