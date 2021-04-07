@@ -109,3 +109,6 @@ static/gen_manifests.go: $(shell find static/manifests -type f)
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
+.PHONY:
+bundle:
+	./bundle.sh
