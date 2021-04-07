@@ -21,7 +21,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -57,13 +56,13 @@ func (a *Manager) Init() error {
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running kube-controller-manager as root"))
+		logrus.Warning(fmt.Errorf("Running kube-controller-manager as root: %w", err))
 	}
 
 	// controller manager should be the only component that needs access to
 	// ca.key so let it own it.
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
-		logrus.Warning(errors.Wrap(err, "Can't change permissions for the ca.key"))
+		logrus.Warning(fmt.Errorf("Can't change permissions for the ca.key: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, "kube-controller-manager", constant.BinDirMode)
 }

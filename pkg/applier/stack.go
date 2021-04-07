@@ -23,7 +23,6 @@ import (
 	"sync"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -206,7 +205,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		if discovery.IsGroupDiscoveryFailedError(err) {
 			log.Debugf("error in api discovery for pruning: %s", err.Error())
 		} else {
-			return nil, errors.Wrapf(err, "failed to list api groups for pruning")
+			return nil, fmt.Errorf("failed to list api groups for pruning: %w", err)
 		}
 	}
 
@@ -251,13 +250,13 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	propagationPolicy := metav1.DeletePropagationForeground
 	drClient, err := s.clientForResource(mapper, resource)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get dynamic client for resource %s", resource.GetSelfLink())
+		return fmt.Errorf("failed to get dynamic client for resource %s: %w", resource.GetSelfLink(), err)
 	}
 	err = drClient.Delete(ctx, resource.GetName(), metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
-		return errors.Wrapf(err, "deleting resource failed")
+		return fmt.Errorf("deleting resource failed: %w", err)
 	}
 	return nil
 }
@@ -347,11 +346,11 @@ func (s *Stack) patchResource(ctx context.Context, drClient dynamic.ResourceInte
 
 	patch, err := jsonpatch.CreateMergePatch([]byte(original), modified)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create jsonpatch data")
+		return fmt.Errorf("failed to create jsonpatch data: %w", err)
 	}
 	_, err = drClient.Patch(ctx, localResource.GetName(), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return errors.Wrapf(err, "failed to patch resource")
+		return fmt.Errorf("failed to patch resource: %w", err)
 	}
 
 	return nil

@@ -16,10 +16,9 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 
 	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -67,7 +66,7 @@ func (d *DefaultPSP) Run() error {
 	}
 	err = tw.Write()
 	if err != nil {
-		return errors.Wrap(err, "error writing default PSP manifests, will NOT retry")
+		return fmt.Errorf("error writing default PSP manifests, will NOT retry: %w", err)
 	}
 	return nil
 }

@@ -16,10 +16,10 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -38,7 +38,7 @@ type CASyncer struct {
 func (c *CASyncer) Init() error {
 	caData, err := c.JoinClient.GetCA()
 	if err != nil {
-		return errors.Wrapf(err, "failed to sync CA")
+		return fmt.Errorf("failed to sync CA: %w", err)
 	}
 	// Dump certs into files
 	return writeCerts(caData, c.K0sVars)

@@ -21,7 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -46,13 +45,13 @@ func (k *Kine) Init() error {
 	var err error
 	k.uid, err = util.GetUID(constant.KineUser)
 	if err != nil {
-		logrus.Warning(errors.Wrap(err, "Running kine as root"))
+		logrus.Warning(fmt.Errorf("Running kine as root: %w", err))
 	}
 
 	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)
 	err = util.InitDirectory(kineSocketDir, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create %s", kineSocketDir)
+		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
 	if err := os.Chown(kineSocketDir, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
 		logrus.Warningf("failed to chown %s", kineSocketDir)
@@ -66,11 +65,11 @@ func (k *Kine) Init() error {
 		// Make sure the db basedir exists
 		err = util.InitDirectory(filepath.Dir(dsURL.Path), 0750)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create dir %s", filepath.Dir(dsURL.Path))
+			return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}
 		err = os.Chown(filepath.Dir(dsURL.Path), k.uid, k.gid)
 		if err != nil && os.Geteuid() == 0 {
-			return errors.Wrapf(err, "failed to chown dir %s", filepath.Dir(dsURL.Path))
+			return fmt.Errorf("failed to chown dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}
 		if err := os.Chown(dsURL.Path, k.uid, k.gid); err != nil && os.Geteuid() == 0 {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)

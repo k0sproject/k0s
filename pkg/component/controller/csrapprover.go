@@ -29,7 +29,6 @@ import (
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	authorization "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/certificates/v1"
@@ -269,7 +268,7 @@ func parseCSR(obj *v1.CertificateSigningRequest) (*x509.CertificateRequest, erro
 	pemBytes := obj.Spec.Request
 	block, _ := pem.Decode(pemBytes)
 	if block == nil || block.Type != "CERTIFICATE REQUEST" {
-		return nil, errors.New("PEM block type must be CERTIFICATE REQUEST")
+		return nil, fmt.Errorf("PEM block type must be CERTIFICATE REQUEST")
 	}
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {

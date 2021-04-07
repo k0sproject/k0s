@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/cloudflare/cfssl/cli"
 	"github.com/cloudflare/cfssl/cli/genkey"
@@ -171,11 +169,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 
 	cert, err := ioutil.ReadFile(certFile)
 	if err != nil {
-		return Certificate{}, errors.Wrapf(err, "failed to read ca cert %s for %s", certFile, certReq.Name)
+		return Certificate{}, fmt.Errorf("failed to read ca cert %s for %s: %w", certFile, certReq.Name, err)
 	}
 	key, err := ioutil.ReadFile(keyFile)
 	if err != nil {
-		return Certificate{}, errors.Wrapf(err, "failed to read ca key %s for %s", keyFile, certReq.Name)
+		return Certificate{}, fmt.Errorf("failed to read ca key %s for %s: %w", keyFile, certReq.Name, err)
 	}
 
 	return Certificate{

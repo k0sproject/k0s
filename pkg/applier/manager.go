@@ -17,9 +17,9 @@ package applier
 
 import (
 	"context"
+	"fmt"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 
@@ -48,7 +48,7 @@ type Manager struct {
 func (m *Manager) Init() error {
 	err := util.InitDirectory(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create manifest bundle dir %s", m.K0sVars.ManifestsDir)
+		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
 	m.log = logrus.WithField("component", "applier-manager")
 	m.stacks = make(map[string]*StackApplier)

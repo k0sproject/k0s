@@ -24,7 +24,6 @@ import (
 
 	"github.com/k0sproject/k0s/static"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -102,7 +101,7 @@ func (c *Calico) Run() error {
 		contents, err := static.Asset(fmt.Sprintf("manifests/calico/CustomResourceDefinition/%s", filename))
 
 		if err != nil {
-			return errors.Wrapf(err, "failed to fetch crd %s", filename)
+			return fmt.Errorf("failed to fetch crd %s: %w", filename, err)
 		}
 
 		tw := util.TemplateWriter{

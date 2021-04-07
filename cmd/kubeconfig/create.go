@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/cloudflare/cfssl/log"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"html/template"
@@ -75,7 +75,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			log.Level = log.LevelFatal
 
 			if len(args) == 0 {
-				return errors.New("Username is mandatory")
+				return fmt.Errorf("Username is mandatory")
 			}
 			var username = args[0]
 			c := CmdOpts(config.GetCmdOpts())
@@ -86,7 +86,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
-				return errors.Wrapf(err, "failed to read cluster ca certificate, is the control plane initialized on this node?")
+				return fmt.Errorf("failed to read cluster ca certificate: %w, is the control plane initialized on this node?", err)
 			}
 			caCertPath, caCertKey := path.Join(c.K0sVars.CertRootDir, "ca.crt"), path.Join(c.K0sVars.CertRootDir, "ca.key")
 			userReq := certificate.Request{

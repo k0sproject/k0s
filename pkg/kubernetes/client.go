@@ -16,10 +16,10 @@ limitations under the License.
 package kubernetes
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/pkg/errors"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -64,7 +64,7 @@ func (c *clientFactory) GetClient() (kubernetes.Interface, error) {
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 		}
 	}
 
@@ -90,7 +90,7 @@ func (c *clientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 		}
 	}
 
@@ -115,7 +115,7 @@ func (c *clientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to load kubeconfig")
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 		}
 	}
 
@@ -139,12 +139,12 @@ func NewClient(kubeconfig string) (kubernetes.Interface, error) {
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load kubeconfig")
+		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create k8s client")
+		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
 
 	return clientset, nil

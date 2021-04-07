@@ -16,12 +16,12 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"os"
 
 	"github.com/Masterminds/sprig"
-	"github.com/pkg/errors"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -38,7 +38,7 @@ type TemplateWriter struct {
 func (p *TemplateWriter) Write() error {
 	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertMode)
 	if err != nil {
-		return errors.Wrapf(err, "failed to open pod file for %s", p.Name)
+		return fmt.Errorf("failed to open pod file for %s: %w", p.Name, err)
 	}
 	return p.WriteToBuffer(podFile)
 }
@@ -47,11 +47,11 @@ func (p *TemplateWriter) Write() error {
 func (p *TemplateWriter) WriteToBuffer(w io.Writer) error {
 	t, err := template.New(p.Name).Funcs(sprig.FuncMap()).Parse(p.Template)
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse template for %s", p.Name)
+		return fmt.Errorf("failed to parse template for %s: %w", p.Name, err)
 	}
 	err = t.Execute(w, p.Data)
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute template for %s", p.Name)
+		return fmt.Errorf("failed to execute template for %s: %w", p.Name, err)
 	}
 
 	return nil

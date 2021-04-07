@@ -21,7 +21,6 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -48,7 +47,7 @@ func (k *KubeletConfigClient) Get(profile string) (string, error) {
 	cmName := fmt.Sprintf("kubelet-config-%s-%s", profile, constant.KubernetesMajorMinorVersion)
 	cm, err := k.kubeClient.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), cmName, v1.GetOptions{})
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get kubelet config from API")
+		return "", fmt.Errorf("failed to get kubelet config from API: %w", err)
 	}
 	config := cm.Data["kubelet"]
 	if config == "" {
