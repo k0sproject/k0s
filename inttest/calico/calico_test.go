@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package kine
+package calico
 
 import (
 	"context"
@@ -25,22 +25,22 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type KineSuite struct {
+type CalicoSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *KineSuite) TestK0sGetsUp() {
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKine)
-	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
-	s.NoError(s.RunWorkers())
+func (s *CalicoSuite) TestK0sGetsUp() {
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.RunWorkers())
 
-	kc, err := s.KubeClient(s.ControllerNode(0))
+	kc, err := s.KubeClient("controller0", "")
 	s.NoError(err)
 
-	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
+	err = s.WaitForNodeReady("worker0", kc)
 	s.NoError(err)
 
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
+	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
@@ -53,12 +53,12 @@ func (s *KineSuite) TestK0sGetsUp() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
+	s.T().Log("waiting to see calico pods ready")
+	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
 }
 
-func TestKineSuite(t *testing.T) {
-	s := KineSuite{
+func TestCalicoSuite(t *testing.T) {
+	s := CalicoSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
@@ -67,8 +67,9 @@ func TestKineSuite(t *testing.T) {
 	suite.Run(t, &s)
 }
 
-const k0sConfigWithKine = `
+const k0sConfig = `
 spec:
-  storage:
-    type: kine
+  network:
+    provider: calico
+    calico:
 `

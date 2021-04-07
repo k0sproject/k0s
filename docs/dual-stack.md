@@ -1,5 +1,7 @@
 # Dual-stack networking
 
+**Note:** Dual stack networking setup requires Calico or a custom CNI to be configured as the CNI provider.
+
 To enable dual-stack networking use the following k0s.yaml as an example.
 This settings will set up bundled calico cni, enable feature gates for the Kubernetes components and set up kubernetes-controller-manager.
 ```

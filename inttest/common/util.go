@@ -16,6 +16,11 @@ func WaitForCalicoReady(kc *kubernetes.Clientset) error {
 	return WaitForDaemonSet(kc, "calico-node")
 }
 
+// WaitForKubeRouterReady waits to see all kube-router pods healthy
+func WaitForKubeRouterReady(kc *kubernetes.Clientset) error {
+	return WaitForDaemonSet(kc, "kube-router")
+}
+
 func WaitForMetricsReady(c *rest.Config) error {
 	apiServiceClientset, err := clientset.NewForConfig(c)
 	if err != nil {

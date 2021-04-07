@@ -52,8 +52,8 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
+	s.T().Log("waiting to see CNI pods ready")
+	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {

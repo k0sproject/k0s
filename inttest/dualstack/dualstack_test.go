@@ -83,6 +83,7 @@ func TestDualStack(t *testing.T) {
 const k0sConfigWithAddon = `
 spec:
   network:
+    provider: calico
     calico:
       mode: "bird"
     dualStack:

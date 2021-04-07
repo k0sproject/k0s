@@ -19,13 +19,14 @@ package customports
 import (
 	"bytes"
 	"context"
+	"html/template"
+	"testing"
+
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
-	"html/template"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
-	"testing"
 )
 
 type Suite struct {
@@ -129,7 +130,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	ds.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 	//
 	ds.T().Log("waiting to see calico pods ready")
-	ds.Require().NoError(common.WaitForCalicoReady(kc), "calico did not start")
+	ds.Require().NoError(common.WaitForKubeRouterReady(kc), "calico did not start")
 	ds.Require().NoError(common.WaitForDaemonSet(kc, "konnectivity-agent"), "konnectivity-agent did not start")
 	ds.Require().NoError(common.WaitForPod(kc, pods.Items[0].Name), "Pod %s did not start", pods.Items[0].Name)
 

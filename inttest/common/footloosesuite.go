@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -352,8 +353,8 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-
-	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=arm64 nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", strings.Join(k0sArgs, " "))
+	// Allow any arch for etcd in smokes
+	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=%s nohup k0s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", runtime.GOARCH, strings.Join(k0sArgs, " "))
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)

@@ -46,6 +46,8 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("my.repo/calico/cni:%s", constant.CalicoImageVersion), testingConfig.Spec.Images.Calico.CNI.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/calico/node:%s", constant.CalicoNodeImageVersion), testingConfig.Spec.Images.Calico.Node.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/calico/kube-controllers:%s", constant.KubeControllerImageVersion), testingConfig.Spec.Images.Calico.KubeControllers.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/cloudnativelabs/kube-router:%s", constant.KubeRouterCNIImageVersion), testingConfig.Spec.Images.KubeRouter.CNI.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/cni-node:%s", constant.KubeRouterCNIInstallerImageVersion), testingConfig.Spec.Images.KubeRouter.CNIInstaller.URI())
 		})
 		t.Run("config_with_custom_images", func(t *testing.T) {
 			cfg := DefaultClusterConfig(k0sVars)

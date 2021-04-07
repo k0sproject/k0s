@@ -108,12 +108,13 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 
 ### `spec.network`
 
-- `provider`: Network provider, either `calico` or `custom`. In case of `custom` user can push any network provider.
+- `provider`: Network provider, either `calico`, `kuberouter` or `custom`. In case of `custom` user can push any network provider. (default `kuberouter`)
 - `podCIDR`: Pod network CIDR to be used in the cluster
 - `serviceCIDR`: Network CIDR to be used for cluster VIP services.
 
 **Note:** In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.
 
+**Note:** After the cluster has been initialized with one network provider, it is not currently supported to change the network provider.
 #### `spec.network.calico`
 
 - `mode`: `vxlan` (default) or `ipip`
@@ -123,6 +124,15 @@ Using type `etcd` will make k0s to create and manage an elastic etcd cluster wit
 - `wireguard`: enable wireguard based encryption (default `false`). Your host system must be wireguard ready. See https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic for details.
 - `flexVolumeDriverPath`: The host path to use for Calicos flex-volume-driver (default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.
 - `ipAutodetectionMethod`: To force non-default behaviour for Calico to pick up the interface for pod network inter-node routing. (default `""`, i.e. not set so Calico will use it's own defaults) See more at: https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods
+
+#### `spec.network.kuberouter`
+
+- `autoMTU`: Autodetection of used MTU (default `true`)
+- `mtu`: Override MTU setting, if set `autoMTU` needs to be set to `false`
+- `peerRouterIPs`: comma separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers)
+- `peerRouterASNs`: comma separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers)
+
+Kube-router allows many aspects of the networking to be configured per node, service and pod. For further details see [kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)
 
 ### `spec.podSecurityPolicy`
 

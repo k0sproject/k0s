@@ -19,14 +19,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
+var (
+	k0sVars = constant.CfgVars{}
+)
+
 func TestClusterDefaults(t *testing.T) {
-	c, err := fromYaml(t, "apiVersion: k0s.k0sproject.io/v1beta1")
+	c, err := FromYamlString("apiVersion: k0s.k0sproject.io/v1beta1", k0sVars)
 	assert.NoError(t, err)
 	assert.NotNil(t, c.Metadata)
 	assert.Equal(t, "k0s", c.Metadata.Name)
@@ -41,7 +44,7 @@ metadata:
   name: foobar
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := util.FirstPublicAddress()
@@ -60,22 +63,12 @@ spec:
     type: etcd
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := util.FirstPublicAddress()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
-}
-
-func fromYaml(t *testing.T, yamlData string) (*ClusterConfig, error) {
-	config := &ClusterConfig{}
-	err := yaml.Unmarshal([]byte(yamlData), &config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
 }
 
 func TestNetworkValidation_Custom(t *testing.T) {
@@ -91,7 +84,7 @@ spec:
     type: etcd
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -110,7 +103,7 @@ spec:
     type: etcd
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -129,7 +122,7 @@ spec:
     type: etcd
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 1, len(errors))
@@ -148,7 +141,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -165,7 +158,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := fromYaml(t, yamlData)
+	c, err := FromYamlString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
