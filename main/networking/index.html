@@ -555,6 +555,19 @@
     In-cluster networking
   </a>
   
+    <nav class="md-nav" aria-label="In-cluster networking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-for-network-provider-selection" class="md-nav__link">
+    Notes for network provider selection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -872,6 +885,19 @@
     In-cluster networking
   </a>
   
+    <nav class="md-nav" aria-label="In-cluster networking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-for-network-provider-selection" class="md-nav__link">
+    Notes for network provider selection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -904,11 +930,30 @@
                 
                 <h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h1>
 <h2 id="in-cluster-networking">In-cluster networking<a class="headerlink" href="#in-cluster-networking" title="Permanent link">#</a></h2>
-<p>k0s uses Calico as the default, built-in network provider. Calico is a container networking solution making use of layer 3 to route packets to pods. It supports for example pod specific network policies helping to secure kubernetes clusters in demanding use cases. Calico uses vxlan overlay network by default. Also ipip (IP-in-IP) is supported by configuration.</p>
+<p>k0s supports two CNI providers out-of-box plus the ability to bring your own CNI config.</p>
+<p>k0s uses <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> as the default, built-in network provider. It allows setting up CNI networking without any overlays by utilizing BGP as the main mechanism for in-cluster networking:</p>
+<blockquote>
+<p>A key design tenet of Kube-router is to use standard Linux networking stack and toolset. There is no overlays or SDN pixie dust, but just plain good old networking.</p>
+</blockquote>
+<p>k0s also supports <a href="https://www.projectcalico.org/">Calico</a> as alternative, built-in network provider. Calico is a container networking solution making use of layer 3 to route packets to pods. It supports for example pod specific network policies helping to secure kubernetes clusters in demanding use cases. Calico uses vxlan overlay network by default. Also ipip (IP-in-IP) is supported by configuration.</p>
 <p>When deploying k0s with the default settings, all pods on a node can communicate with all pods on all nodes. No configuration changes are needed to get started.</p>
-<p>It is possible for a user to opt-out of Calico and k0s managing the network. Users are able to utilize any network plugin following the CNI specification. By configuring <code>custom</code> as the network provider (in k0s.yaml) it is expected that the user sets up the networking. This can be achieved e.g. by pushing network provider manifests into <code>/var/lib/k0s/manifests</code> from where k0s controllers will pick them up and deploy into the cluster. More on the automatic manifest handling <a href="../manifests/">here</a>.</p>
+<p>It is possible for a user to opt-out of k0s managing the network setup. Users are able to utilize any network plugin following the CNI specification. By configuring <code>custom</code> as the network provider (in k0s.yaml) it is expected that the user sets up the networking. This can be achieved e.g. by pushing network provider manifests into <code>/var/lib/k0s/manifests</code> from where k0s controllers will pick them up and deploy into the cluster. More on the automatic manifest handling <a href="../manifests/">here</a>.</p>
+<h3 id="notes-for-network-provider-selection">Notes for network provider selection<a class="headerlink" href="#notes-for-network-provider-selection" title="Permanent link">#</a></h3>
+<p>The main difference between Kube-Router and Calico network providers is the layer they operate on. In short, kube-router operates on Layer 2 where Calico operates on Layer 3.</p>
+<p>Few points for each providers to take into consideration.</p>
+<p><strong>Kube-router:</strong>
+- supports armv7 (among many other archs)
+- uses bit less resources (~15%)
+- does NOT support dual-stack (IPv4/IPv6) networking
+- does NOT support Windows nodes</p>
+<p><strong>Calico:</strong>
+- does NOT support armv7
+- uses bit more resources
+- does support dual-stack (IPv4/IPv6) networking
+- does support Windows nodes</p>
+<p><strong>Note:</strong> After the cluster has been initialized with one network provider, it is not currently supported to change the network provider. Changing network provider requires full re-deployment of the cluster.</p>
 <h2 id="controllers-worker-communication">Controller(s) - Worker communication<a class="headerlink" href="#controllers-worker-communication" title="Permanent link">#</a></h2>
-<p>As one of the goals of k0s is to allow deployment of totally isolated control plane we cannot rely on the fact that there is an IP route between controller nodes and the pod overlay network. To enable this communication path, which is mandated by conformance tests, we use <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/">Konnectivity service</a> to proxy the traffic from API server (control plane) into the worker nodes. Possible firewalls should be configured with outbound access so that Konnectivity agents running on the worker nodes can establish the connection. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.</p>
+<p>As one of the goals of k0s is to allow deployment of totally isolated control plane we cannot rely on the fact that there is an IP route between controller nodes and the pod network. To enable this communication path, which is mandated by conformance tests, we use <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/">Konnectivity service</a> to proxy the traffic from API server (control plane) into the worker nodes. Possible firewalls should be configured with outbound access so that Konnectivity agents running on the worker nodes can establish the connection. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.</p>
 <p><img alt="k0s controller_worker_networking" src="../img/k0s_controller_worker_networking.png" /></p>
 <h2 id="needed-open-ports-protocols">Needed open ports &amp; protocols<a class="headerlink" href="#needed-open-ports-protocols" title="Permanent link">#</a></h2>
 <table>
@@ -935,6 +980,13 @@
 <td>kube-apiserver</td>
 <td>Worker, CLI =&gt; controller</td>
 <td>authenticated kube API using kube TLS client certs, ServiceAccount tokens with RBAC</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>179</td>
+<td>kube-router</td>
+<td>worker &lt;-&gt; worker</td>
+<td>BGP routing sessions between peers</td>
 </tr>
 <tr>
 <td>UDP</td>

@@ -1150,11 +1150,12 @@
 <p>Using type <code>etcd</code> will make k0s to create and manage an elastic etcd cluster within the controller nodes.</p>
 <h3 id="specnetwork"><code>spec.network</code><a class="headerlink" href="#specnetwork" title="Permanent link">#</a></h3>
 <ul>
-<li><code>provider</code>: Network provider, either <code>calico</code> or <code>custom</code>. In case of <code>custom</code> user can push any network provider.</li>
+<li><code>provider</code>: Network provider, either <code>calico</code>, <code>kuberouter</code> or <code>custom</code>. In case of <code>custom</code> user can push any network provider. (default <code>kuberouter</code>)</li>
 <li><code>podCIDR</code>: Pod network CIDR to be used in the cluster</li>
 <li><code>serviceCIDR</code>: Network CIDR to be used for cluster VIP services.</li>
 </ul>
 <p><strong>Note:</strong> In case of custom network it's fully in users responsibility to configure ALL the CNI related setups. This includes the CNI provider itself plus all the host levels setups it might need such as CNI binaries.</p>
+<p><strong>Note:</strong> After the cluster has been initialized with one network provider, it is not currently supported to change the network provider.</p>
 <h4 id="specnetworkcalico"><code>spec.network.calico</code><a class="headerlink" href="#specnetworkcalico" title="Permanent link">#</a></h4>
 <ul>
 <li><code>mode</code>: <code>vxlan</code> (default) or <code>ipip</code></li>
@@ -1165,6 +1166,14 @@
 <li><code>flexVolumeDriverPath</code>: The host path to use for Calicos flex-volume-driver (default: <code>/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds</code>). This should only need to be changed if the default path is unwriteable. See https://github.com/projectcalico/calico/issues/2712 for details. This option should ideally be paired with a custom volumePluginDir in the profile used on your worker nodes.</li>
 <li><code>ipAutodetectionMethod</code>: To force non-default behaviour for Calico to pick up the interface for pod network inter-node routing. (default <code>""</code>, i.e. not set so Calico will use it's own defaults) See more at: https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods</li>
 </ul>
+<h4 id="specnetworkkuberouter"><code>spec.network.kuberouter</code><a class="headerlink" href="#specnetworkkuberouter" title="Permanent link">#</a></h4>
+<ul>
+<li><code>autoMTU</code>: Autodetection of used MTU (default <code>true</code>)</li>
+<li><code>mtu</code>: Override MTU setting, if set <code>autoMTU</code> needs to be set to <code>false</code></li>
+<li><code>peerRouterIPs</code>: comma separated list of <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers">global peer addresses</a></li>
+<li><code>peerRouterASNs</code>: comma separated list of <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers">global peer ASNs</a></li>
+</ul>
+<p>Kube-router allows many aspects of the networking to be configured per node, service and pod. For further details see <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md">kube-router user guide</a></p>
 <h3 id="specpodsecuritypolicy"><code>spec.podSecurityPolicy</code><a class="headerlink" href="#specpodsecuritypolicy" title="Permanent link">#</a></h3>
 <p>Configures the default <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">psp</a> to be set. k0s creates two PSPs out of box:</p>
 <ul>
