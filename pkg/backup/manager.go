@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -30,16 +31,21 @@ import (
 
 type Config struct {
 	k0sVars     constant.CfgVars
-	storageType string
+	storageSpec *v1beta1.StorageSpec
 	savePath    string
 	savedAssets []string
 	tmpDir      string
 }
 
-func NewBackupConfig(k0sVars constant.CfgVars, storageType string, savePath string) *Config {
+const (
+	etcdBackup = "etcd-snapshot.db"
+	kineBackup = "kine-state-backup.db"
+)
+
+func NewBackupConfig(k0sVars constant.CfgVars, storageSpec *v1beta1.StorageSpec, savePath string) *Config {
 	return &Config{
 		k0sVars:     k0sVars,
-		storageType: storageType,
+		storageSpec: storageSpec,
 		savePath:    savePath,
 	}
 }
@@ -63,16 +69,26 @@ func (c *Config) RunBackup() error {
 	}
 	defer out.Close()
 
-	if c.storageType == v1beta1.KineStorageType {
-		// run SaveSQLiteDB Backup
+	if c.storageSpec.Type == v1beta1.KineStorageType {
+		if strings.HasPrefix(c.storageSpec.Kine.DataSource, "sqlite://") {
+			// run SaveSQLiteDB Backup
+			logrus.Debug("running kine backup for sqlite DBs")
+			err = c.saveSQLiteDB()
+			if err != nil {
+				return fmt.Errorf("failed to run sqlite db backup: %v", err)
+			}
+		}
 	} else {
 		// take Etcd snapshot
-		c.saveEtcdSnapshot()
+		err := c.saveEtcdSnapshot()
+		if err != nil {
+			return fmt.Errorf("failed to create etcd snapshot: %v", err)
+		}
 	}
 	// back-up PKI Dir contents
 	err = c.saveCerts()
 	if err != nil {
-		return fmt.Errorf("failed to save certificated: %v", err)
+		return fmt.Errorf("failed to save certificates: %v", err)
 	}
 
 	// Create the archive and write the output to the "out" Writer
@@ -98,10 +114,5 @@ func (c *Config) saveCerts() error {
 	if err != nil {
 		return fmt.Errorf("failed to list certificates in %v: %v", c.k0sVars.CertRootDir, err)
 	}
-	return nil
-}
-func (c *Config) SaveSQLiteDB() error {
-	// sqlite3 my_database.sq3 ".backup 'backup_file.sq3'"
-	// https://github.com/mattn/go-sqlite3
 	return nil
 }

@@ -77,7 +77,7 @@ func (c *CmdOpts) backup() error {
 			logger.Errorf("failed to get cluster setup: %v", err)
 		}
 		// Get backup Config
-		cfg := backup.NewBackupConfig(c.K0sVars, clusterConfig.Spec.Storage.Type, savePath)
+		cfg := backup.NewBackupConfig(c.K0sVars, clusterConfig.Spec.Storage, savePath)
 
 		// Run backup
 		return cfg.RunBackup()

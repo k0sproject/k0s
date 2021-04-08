@@ -31,7 +31,7 @@ func (c *Config) saveEtcdSnapshot() error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(c.tmpDir, "etcd-snapshot.db")
+	path := filepath.Join(c.tmpDir, etcdBackup)
 
 	// disable etcd's logging
 	lg := zap.NewNop()
