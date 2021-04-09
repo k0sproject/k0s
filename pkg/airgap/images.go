@@ -21,5 +21,7 @@ func GetImageURIs(spec *v1beta1.ClusterImages) []string {
 		spec.KubeProxy.URI(),
 		spec.MetricsServer.URI(),
 		pauseImage.URI(),
+		spec.KubeRouter.CNI.URI(),
+		spec.KubeRouter.CNIInstaller.URI(),
 	}
 }
