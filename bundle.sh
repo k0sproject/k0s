@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -Eeuo pipefail
-set -x
+
 OUTPUT=${OUTPUT:-"bundle"}
 K0S_BINARY=${K0S_BINARY:-"./k0s"}
 CTR_BIN=${CTR_BIN:-"ctr"}
@@ -19,7 +19,8 @@ function ensure_images() {
 }
 
 function pack_images() {
-  ${CTR_CMD} images export $OUTPUT $(get_images)
+  IMAGES=$(get_images)
+  ${CTR_CMD} images export $OUTPUT $IMAGES
 }
 
 function build_bundle() {

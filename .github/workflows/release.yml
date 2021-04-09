@@ -55,13 +55,30 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
+      - name: Build bundle for air gap installation, environment preparation
+        env:
+          tag: ${{ needs.release.outputs.tag_name }}
+        run: |
+          docker run -d --name k0s --hostname bundlebuilder  -v $(pwd):/hostdir -v /var/lib/containerd --privileged alpine tail -f /dev/null
+          docker exec k0s apk add containerd
+          docker exec -d k0s containerd
+
+      - name: Build bundle for air gap installation
+        env:
+          OUTPUT: "/hostdir/bundle"
+          K0S_BINARY: "docker exec k0s /hostdir/k0s"
+          CTR_BIN: "docker exec k0s ctr"
+          CONTAINERD_RUN_SOCKET: "/run/containerd/containerd.sock"
+        run: ./bundle.sh
+
       - name: Collect smoke test logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
           name: logs
           path: tests/*.log
-      - name: Upload Release Assets
+
+      - name: Upload Release Assets - Binary
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
@@ -70,6 +87,17 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./bundle
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
       
       - name: Build image and push to GitHub image registry
@@ -163,13 +191,30 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
+      - name: Build bundle for air gap installation, environment preparation
+        env:
+          tag: ${{ needs.release.outputs.tag_name }}
+        run: |
+          docker run -d --name k0s --hostname bundlebuilder  -v $(pwd):/hostdir -v /var/lib/containerd --privileged alpine tail -f /dev/null
+          docker exec k0s apk add containerd
+          docker exec -d k0s containerd
+
+      - name: Build bundle for air gap installation
+        env:
+          OUTPUT: "/hostdir/bundle"
+          K0S_BINARY: "docker exec k0s /hostdir/k0s"
+          CTR_BIN: "docker exec k0s ctr"
+          CONTAINERD_RUN_SOCKET: "/run/containerd/containerd.sock"
+        run: ./bundle.sh
+
       - name: Collect smoke test logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
           name: logs
           path: tests/*.log
-      - name: Upload Release Assets
+
+      - name: Upload Release Assets - Binary
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
@@ -179,6 +224,18 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./bundle
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
+          asset_content_type: application/octet-stream
+
       
   armv7:
     needs: release
@@ -198,6 +255,22 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
+      - name: Build bundle for air gap installation, environment preparation
+        env:
+          tag: ${{ needs.release.outputs.tag_name }}
+        run: |
+          docker run -d --name k0s --hostname bundlebuilder  -v $(pwd):/hostdir -v /var/lib/containerd --privileged alpine tail -f /dev/null
+          docker exec k0s apk add containerd
+          docker exec -d k0s containerd
+
+      - name: Build bundle for air gap installation
+        env:
+          OUTPUT: "/hostdir/bundle"
+          K0S_BINARY: "docker exec k0s /hostdir/k0s"
+          CTR_BIN: "docker exec k0s ctr"
+          CONTAINERD_RUN_SOCKET: "/run/containerd/containerd.sock"
+        run: ./bundle.sh
+
       - name: Collect smoke test logs
         if: failure()
         uses: actions/upload-artifact@v2
@@ -205,7 +278,7 @@ jobs:
           name: logs
           path: tests/*.log
 
-      - name: Upload Release Assets
+      - name: Upload Release Assets - Binary
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
@@ -215,4 +288,14 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
-      
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./bundle
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
+          asset_content_type: application/octet-stream
