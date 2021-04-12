@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/k0sproject/k0s/internal/util"
-
 	"github.com/asaskevich/govalidator"
+	"github.com/k0sproject/k0s/internal/util"
 )
+
+var _ Validateable = (*APISpec)(nil)
 
 // APISpec ...
 type APISpec struct {
@@ -107,6 +108,10 @@ func (a *APISpec) Validate() []error {
 			continue
 		}
 		errors = append(errors, fmt.Errorf("%s is not a valid address for sans", a))
+	}
+
+	if !govalidator.IsIP(a.Address) {
+		errors = append(errors, fmt.Errorf("spec.api.address: %q is not IP address", a.Address))
 	}
 
 	return errors

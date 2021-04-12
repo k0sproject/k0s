@@ -48,7 +48,7 @@ func (s *APISuite) TestValidation() {
 
 		errors := a.Validate()
 		s.NotNil(errors)
-		s.Len(errors, 1)
+		s.Len(errors, 2)
 		s.Contains(errors[0].Error(), "is not a valid address for sans")
 	})
 

@@ -54,6 +54,8 @@ type ClusterSpec struct {
 	Konnectivity      *KonnectivitySpec      `yaml:"konnectivity,omitempty"`
 }
 
+var _ Validateable = (*ControllerManagerSpec)(nil)
+
 // ControllerManagerSpec ...
 type ControllerManagerSpec struct {
 	ExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
@@ -63,6 +65,12 @@ type ControllerManagerSpec struct {
 func (c *ControllerManagerSpec) IsZero() bool {
 	return len(c.ExtraArgs) == 0
 }
+
+func (c *ControllerManagerSpec) Validate() []error {
+	return nil
+}
+
+var _ Validateable = (*SchedulerSpec)(nil)
 
 // SchedulerSpec ...
 type SchedulerSpec struct {
@@ -74,22 +82,49 @@ func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
 
+func (s *SchedulerSpec) Validate() []error {
+	return nil
+}
+
+var _ Validateable = (*InstallSpec)(nil)
+
 // InstallSpec defines the required fields for the `k0s install` command
 type InstallSpec struct {
 	SystemUsers *SystemUser `yaml:"users,omitempty"`
+}
+
+// Validate stub for Validateable interface
+func (i *InstallSpec) Validate() []error {
+	return nil
+}
+
+// Validateable interface to ensure that all config components implement Validate function
+type Validateable interface {
+	Validate() []error
 }
 
 // Validate validates cluster config
 func (c *ClusterConfig) Validate() []error {
 	var errors []error
 
-	errors = append(errors, c.Spec.API.Validate()...)
-	errors = append(errors, c.Spec.Storage.Validate()...)
-	errors = append(errors, c.Spec.Network.Validate()...)
-	errors = append(errors, c.Spec.WorkerProfiles.Validate()...)
-	errors = append(errors, c.Spec.PodSecurityPolicy.Validate()...)
+	errors = append(errors, validateSpecs(c.Spec.API)...)
+	errors = append(errors, validateSpecs(c.Spec.ControllerManager)...)
+	errors = append(errors, validateSpecs(c.Spec.Scheduler)...)
+	errors = append(errors, validateSpecs(c.Spec.Storage)...)
+	errors = append(errors, validateSpecs(c.Spec.Network)...)
+	errors = append(errors, validateSpecs(c.Spec.PodSecurityPolicy)...)
+	errors = append(errors, validateSpecs(c.Spec.WorkerProfiles)...)
+	errors = append(errors, validateSpecs(c.Spec.Telemetry)...)
+	errors = append(errors, validateSpecs(c.Spec.Install)...)
+	errors = append(errors, validateSpecs(c.Spec.Extensions)...)
+	errors = append(errors, validateSpecs(c.Spec.Konnectivity)...)
 
 	return errors
+}
+
+// validateSpecs invokes validator Validate function
+func validateSpecs(v Validateable) []error {
+	return v.Validate()
 }
 
 // FromYamlFile ...
@@ -115,7 +150,7 @@ func FromYamlPipe(r io.Reader, k0sVars constant.CfgVars) (*ClusterConfig, error)
 // FromYamlString
 func FromYamlString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	config := &ClusterConfig{k0sVars: k0sVars}
-	err := yaml.Unmarshal([]byte(yml), &config)
+	err := yaml.UnmarshalStrict([]byte(yml), &config)
 	if err != nil {
 		return config, err
 	}

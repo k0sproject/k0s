@@ -19,6 +19,8 @@ import (
 	"fmt"
 )
 
+var _ Validateable = (*WorkerProfiles)(nil)
+
 // WorkerProfiles profiles collection
 type WorkerProfiles []WorkerProfile
 
