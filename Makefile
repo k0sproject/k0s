@@ -16,12 +16,21 @@ GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 DEBUG ?= false
 
+VERSION ?= $(shell git describe --tags)
 ifeq ($(DEBUG), false)
 LD_FLAGS ?= -w -s
 endif
 
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KubernetesVersion=$(kubernetes_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KineVersion=$(kine_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
+LD_FLAGS += -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\"
+LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
 
-VERSION ?= $(shell git describe --tags)
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
 golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && "${GOPATH}/bin/golangci-lint"
@@ -31,7 +40,6 @@ go_bindata := $(shell which go-bindata)
 ifeq ($(go_bindata),)
 go_bindata := go get github.com/kevinburke/go-bindata/...@v3.22.0 && "${GOPATH}/bin/go-bindata"
 endif
-
 
 
 .PHONY: build
@@ -71,8 +79,7 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS) -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION) -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version) -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version) -X github.com/k0sproject/k0s/pkg/build.KubernetesVersion=$(kubernetes_version) -X github.com/k0sproject/k0s/pkg/build.KineVersion=$(kine_version) -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version) -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version) -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)" \
-		    -o $@.code main.go
+	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS)" -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
