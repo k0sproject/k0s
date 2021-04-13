@@ -44,11 +44,17 @@ func (s *NetworkSuite) TestSigNetwork() {
 	kc, err := s.KubeClient(s.ControllerIP)
 	s.NoError(err)
 
+	kubeConfig, err := s.GetKubeConfig(s.ControllerIP)
+	s.NoError(err)
+
 	err = s.WaitForNodeReady("worker-0", kc)
 	s.NoError(err)
 
 	err = s.WaitForNodeReady("worker-1", kc)
 	s.NoError(err)
+
+	s.T().Log("waiting to see metrics ready")
+	s.Require().NoError(common.WaitForMetricsReady(kubeConfig))
 
 	kubeconfigPath := s.dumpKubeConfig()
 	s.T().Logf("kubeconfig at: %s", kubeconfigPath)

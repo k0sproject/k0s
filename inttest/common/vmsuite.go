@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/stretchr/testify/suite"
@@ -200,6 +201,15 @@ func (s *VMSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset) error 
 
 // KubeClient return kube client by loading the admin access config from given node
 func (s *VMSuite) KubeClient(node string) (*kubernetes.Clientset, error) {
+	cfg, err := s.GetKubeConfig(node)
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(cfg)
+}
+
+// KubeClient return kube client by loading the admin access config from given node
+func (s *VMSuite) GetKubeConfig(node string) (*rest.Config, error) {
 	ssh, err := s.SSH(node)
 	if err != nil {
 		return nil, err
@@ -220,6 +230,5 @@ func (s *VMSuite) KubeClient(node string) (*kubernetes.Clientset, error) {
 	// Our CA data is valid for localhost, but we need to change that in order to connect from outside
 	cfg.Insecure = true
 	cfg.TLSClientConfig.CAData = nil
-
-	return kubernetes.NewForConfig(cfg)
+	return cfg, nil
 }
