@@ -86,8 +86,11 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build -ldflags="$(LD_FLAGS)" -o $@.code main.go
-	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
+	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build -v -ldflags="$(LD_FLAGS)" -o $@.code main.go
+	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
+		&& rm -f $@.code \
+		&& chmod +x $@.tmp \
+		&& mv $@.tmp $@
 
 .bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
