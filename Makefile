@@ -41,6 +41,13 @@ ifeq ($(go_bindata),)
 go_bindata := go get github.com/kevinburke/go-bindata/...@v3.22.0 && "${GOPATH}/bin/go-bindata"
 endif
 
+GOLANG_IMAGE = golang:1.16-alpine
+GO = docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
+	-w /go/src/github.com/k0sproject/k0s \
+	-e GOOS \
+	-e CGO_ENABLED \
+	-e GOARCH \
+	$(GOLANG_IMAGE) go
 
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
@@ -65,7 +72,7 @@ else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: gen_bindata.go
-	GOOS=${GOHOSTOS} go run gen_bindata.go -o bindata_$(zz_os) -pkg assets \
+	GOOS=${GOHOSTOS} $(GO) run gen_bindata.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
@@ -79,7 +86,7 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) go build -ldflags="$(LD_FLAGS)" -o $@.code main.go
+	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build -ldflags="$(LD_FLAGS)" -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp && chmod +x $@.tmp && mv $@.tmp $@
 
 .bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
