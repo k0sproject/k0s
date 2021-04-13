@@ -27,7 +27,7 @@ check-network: bin/sonobuoy .footloose-alpine.stamp
 
 check-network-vm: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
+		go test -count=1 -v -timeout 30m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
 
 TIMEOUT ?= 4m
 smoketests := check-addons check-basic check-byocri check-dualstack check-hacontrolplane check-install check-kine check-multicontroller check-singlenode check-customports check-calico check-cnichange
