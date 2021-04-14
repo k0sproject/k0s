@@ -507,10 +507,12 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 		return err
 	}
 
-	workerComponentManager.Add(&worker.ContainerD{
-		LogLevel: c.Logging["containerd"],
-		K0sVars:  c.K0sVars,
-	})
+	if c.CriSocket == "" {
+		workerComponentManager.Add(&worker.ContainerD{
+			LogLevel: c.Logging["containerd"],
+			K0sVars:  c.K0sVars,
+		})
+	}
 	workerComponentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
 	workerComponentManager.Add(&worker.Kubelet{
 		CRISocket:           c.CriSocket,
