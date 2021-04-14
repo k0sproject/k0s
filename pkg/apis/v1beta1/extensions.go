@@ -15,6 +15,8 @@ limitations under the License.
 */
 package v1beta1
 
+var _ Validateable = (*ClusterExtensions)(nil)
+
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
 	Helm *HelmExtensions `yaml:"helm"`
@@ -45,4 +47,9 @@ type Repository struct {
 	KeyFile  string `yaml:"keyfile"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+}
+
+// Validate stub for Validateable interface
+func (e *ClusterExtensions) Validate() []error {
+	return nil
 }

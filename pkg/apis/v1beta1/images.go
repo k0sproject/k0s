@@ -151,3 +151,8 @@ func overrideRepository(repository string, originalImage string) string {
 	}
 	return fmt.Sprintf("%s/%s", repository, originalImage)
 }
+
+// Validate stub for Validateable interface
+func (ci *ClusterImages) Validate() []error {
+	return nil
+}

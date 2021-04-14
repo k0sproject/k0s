@@ -16,6 +16,8 @@ limitations under the License.
 
 package v1beta1
 
+var _ Validateable = (*KonnectivitySpec)(nil)
+
 // KonnectivitySpec ...
 type KonnectivitySpec struct {
 	AgentPort int64 `yaml:"agentPort,omitempty"`
@@ -28,4 +30,9 @@ func DefaultKonnectivitySpec() *KonnectivitySpec {
 		AdminPort: 8133,
 		AgentPort: 8132,
 	}
+}
+
+// Validate stub for Validateable interface
+func (k *KonnectivitySpec) Validate() []error {
+	return nil
 }
