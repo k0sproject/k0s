@@ -71,7 +71,7 @@ const (
 	KubeControllerImage                = "docker.io/calico/kube-controllers"
 	KubeControllerImageVersion         = "v3.16.2"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
-	KubeRouterCNIImageVersion          = "v1.1.1"
+	KubeRouterCNIImageVersion          = "v1.2.1"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
 )
