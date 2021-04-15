@@ -54,7 +54,7 @@ func NewWorkerCmd() *cobra.Command {
 
 			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
 			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
-				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
+				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
 
 			if len(c.TokenFile) > 0 {
@@ -65,7 +65,7 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = string(bytes)
 			}
 			cmd.SilenceUsage = true
-			return c.startWorker()
+			return c.StartWorker()
 		},
 	}
 
@@ -75,7 +75,9 @@ func NewWorkerCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *CmdOpts) startWorker() error {
+// StartWorker starts the worker components based on the CmdOpts config
+func (c *CmdOpts) StartWorker() error {
+
 	worker.KernelSetup()
 	if c.TokenArg == "" && !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
@@ -157,7 +159,7 @@ func (c *CmdOpts) startWorker() error {
 	go func() {
 		select {
 		case <-ch:
-			logrus.Info("Shutting down k0s controller")
+			logrus.Info("Shutting down k0s worker")
 			cancel()
 		case <-ctx.Done():
 			logrus.Debug("Context done in go-routine")
