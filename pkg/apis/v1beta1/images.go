@@ -112,15 +112,15 @@ func DefaultClusterImages() *ClusterImages {
 		Calico: CalicoImageSpec{
 			CNI: ImageSpec{
 				Image:   constant.CalicoImage,
-				Version: constant.CalicoImageVersion,
+				Version: constant.CalicoComponentImagesVersion,
 			},
 			Node: ImageSpec{
 				Image:   constant.CalicoNodeImage,
-				Version: constant.CalicoNodeImageVersion,
+				Version: constant.CalicoComponentImagesVersion,
 			},
 			KubeControllers: ImageSpec{
 				Image:   constant.KubeControllerImage,
-				Version: constant.KubeControllerImageVersion,
+				Version: constant.CalicoComponentImagesVersion,
 			},
 		},
 		KubeRouter: KubeRouterImageSpec{

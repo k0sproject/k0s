@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 CSPLIT_BINARY="csplit"
 
 # on MacOS, we need to use the homebrew coreutils (gnu-utils) version of csplit, named gcsplit by default
@@ -24,14 +25,14 @@ do
         continue
     fi
 
-    filename=$(yq r $f 'metadata.name')
-    kind=$(yq r $f 'kind')
+    filename=$(yq eval '.metadata.name' $f)
+    kind=$(yq eval '.kind' $f)
 
-    if [[ $filename == "" || $kind == "" ]]; then
+    if [[ $filename == "null" || $kind == "null" ]]; then
         rm $f
         continue
     fi
-    echo "Processing $kind $filename"
+    echo "Processing $kind $filename $f"
     mkdir -p $DIR/$kind
     mv $f $DIR/$kind/$filename.yaml
 done

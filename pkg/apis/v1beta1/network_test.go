@@ -110,7 +110,7 @@ spec:
 	s.Equal("calico", n.Provider)
 	s.NotNil(n.Calico)
 	s.Equal(4789, n.Calico.VxlanPort)
-	s.Equal(1450, n.Calico.MTU)
+	s.Equal(0, n.Calico.MTU)
 	s.Equal("vxlan", n.Calico.Mode)
 }
 
