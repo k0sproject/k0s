@@ -39,6 +39,7 @@ type kubeRouterConfig struct {
 	CNIImage          string
 	PeerRouterIPs     string
 	PeerRouterASNs    string
+	PullPolicy        string
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
@@ -71,6 +72,7 @@ func (c *KubeRouter) Run() error {
 		PeerRouterASNs:    c.clusterConf.Spec.Network.KubeRouter.PeerRouterASNs,
 		CNIImage:          c.clusterConf.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: c.clusterConf.Spec.Images.KubeRouter.CNIInstaller.URI(),
+		PullPolicy:        c.clusterConf.Spec.Images.DefaultPullPolicy,
 	}
 
 	output := bytes.NewBuffer([]byte{})
@@ -159,7 +161,7 @@ spec:
       initContainers:
         - name: install-cni-bins
           image: {{ .CNIInstallerImage }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .PullPolicy }}
           args:
             - install
           volumeMounts:
@@ -167,7 +169,7 @@ spec:
             mountPath: /host/opt/cni/bin
         - name: install-cniconf
           image: {{ .CNIImage }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .PullPolicy }}
           command:
           - /bin/sh
           - -c
@@ -214,7 +216,7 @@ spec:
       containers:
       - name: kube-router
         image: {{ .CNIImage }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .PullPolicy }}
         args:
         - "--run-router=true"
         - "--run-firewall=true"
