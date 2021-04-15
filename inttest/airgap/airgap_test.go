@@ -57,12 +57,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
-
-	cfg, err := s.GetKubeConfig(s.ControllerNode(0))
-	s.NoError(err)
-	s.T().Log("waiting to see metrics ready")
-	s.Require().NoError(common.WaitForMetricsReady(cfg))
-
+	
 	// at that moment we can assume that all pods has at least started
 	events, err := kc.CoreV1().Events("kube-system").List(context.TODO(), v1.ListOptions{
 		Limit: 100,

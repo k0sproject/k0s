@@ -90,7 +90,7 @@ $(smoketests): k0s
 .PHONY: smoketests
 smoketests:  $(smoketests)
 
-check-airgap: image-bundle/bundle.tar
+check-airgap: image-bundle/bundle.tar k0s
 	$(MAKE) -C inttest check-airgap
 
 .PHONY: check-unit
@@ -113,8 +113,8 @@ static/gen_manifests.go: $(shell find static/manifests -type f)
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
-image-bundle/image.list:
-	go run main.go airgap list-images > image-bundle/image.list
+image-bundle/image.list: k0s
+	./k0s airgap list-images > image-bundle/image.list
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar

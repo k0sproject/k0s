@@ -19,12 +19,9 @@ import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	ssh "golang.org/x/crypto/ssh"
-	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"strings"
-	"sync"
 )
 
 // SSHConnection describes an SSH connection
@@ -87,41 +84,6 @@ func (c *SSHConnection) ExecWithOutput(cmd string) (string, error) {
 	}
 
 	return trimOutput(output), nil
-}
-
-func (c *SSHConnection) UploadFile(localPath string, remotePath string) error {
-	session, err := c.client.NewSession()
-	if err != nil {
-		return fmt.Errorf("can't open ssh session: %v",  err)
-	}
-	stat, err := os.Stat(localPath)
-	if err != nil {
-		return fmt.Errorf("can't stat local file %s: %v", localPath, err)
-	}
-
-	srcFile, err := os.Open(localPath)
-	if err != nil {
-		return fmt.Errorf("can't open local file %s: %v", localPath, err)
-	}
-	defer srcFile.Close()
-
-	dir, filename := path.Split(remotePath)
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-
-		hostIn, _ := session.StdinPipe()
-		defer hostIn.Close()
-		fmt.Fprintf(hostIn, "C0664 %d %s\n", stat.Size(), filename)
-		io.Copy(hostIn, srcFile)
-		fmt.Fprint(hostIn, "\x00")
-		wg.Done()
-	}()
-	if output, err := session.Output(fmt.Sprintf("/usr/bin/scp -t %s", dir)); err != nil {
-		return fmt.Errorf("can't execute scp: %s %v", string(output), err)
-	}
-	wg.Wait()
-	return nil
 }
 
 func trimOutput(output []byte) string {
