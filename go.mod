@@ -37,6 +37,7 @@ require (
 	github.com/onsi/gomega v1.10.2 // indirect
 	github.com/opencontainers/selinux v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/sftp v1.13.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/segmentio/analytics-go v3.1.0+incompatible
 	github.com/sirupsen/logrus v1.7.0
@@ -48,7 +49,7 @@ require (
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
 	google.golang.org/grpc v1.27.1

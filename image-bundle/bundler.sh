@@ -1,5 +1,5 @@
 #!/bin/sh
-
+set -x
 
 OUTPUT=${OUTPUT:-"/hostdir/bundle.tar"}
 K0S_BINARY=${K0S_BINARY:-"k0s"}
@@ -19,6 +19,7 @@ function ensure_images() {
 
 function pack_images() {
   IMAGES=$(get_images)
+
   ${CTR_CMD} images export $OUTPUT $IMAGES
 }
 
