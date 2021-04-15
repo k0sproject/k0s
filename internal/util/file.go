@@ -60,3 +60,18 @@ func GetExecPath(fileName string) (*string, error) {
 
 	return &path, nil
 }
+
+func ChownFile(file, owner string, permissions os.FileMode) error {
+	// Chown the file properly for the owner
+	uid, _ := GetUID(owner)
+	err := os.Chown(file, uid, -1)
+	if err != nil && os.Geteuid() == 0 {
+		return err
+	}
+	err = os.Chmod(file, permissions)
+	if err != nil && os.Geteuid() == 0 {
+		return err
+	}
+
+	return nil
+}
