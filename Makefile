@@ -112,3 +112,9 @@ generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 .PHONY:
 bundle:
 	./bundle.sh
+
+image-bundle/image.list: k0s
+	./k0s airgap list-images > image-bundle/image.list
+
+image-bundle.tar: image-bundle/image.list
+	$(MAKE) -C image-bundle image-bundle.tar
