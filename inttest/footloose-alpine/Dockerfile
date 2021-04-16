@@ -1,6 +1,6 @@
 FROM alpine:3.13
 
-RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils iptables curl haproxy openssh-client
+RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils iptables curl haproxy
 # enable syslog and sshd
 RUN rc-update add cgroups boot
 RUN rc-update add syslog boot
