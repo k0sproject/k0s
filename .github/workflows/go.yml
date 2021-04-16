@@ -495,7 +495,7 @@ jobs:
 
       - name: Cache images bundle
         uses: actions/cache@v2
-        id: restore-compiled-binary
+        id: restore-bundle
         with:
           path: |
             image-bundle/bundle.tar
