@@ -30,6 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
@@ -37,7 +38,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
-	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -463,11 +463,7 @@ func (c *CmdOpts) existingCNIProvider() string {
 }
 
 func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
-	// we use separate controllerManager here
-	// because we need to have controllers components
-	// be fully initialized and running before running worker components
-
-	workerComponentManager := component.NewManager()
+	var bootstrapConfig string
 	if !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
 		err := retry.Do(func() error {
@@ -480,7 +476,6 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			return err
 		}
 
-		var bootstrapConfig string
 		err = retry.Do(func() error {
 			// five minutes here are coming from maximum theoretical duration of kubelet bootstrap process
 			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
@@ -497,43 +492,12 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 		if err != nil {
 			return err
 		}
-		if err := worker.HandleKubeletBootstrapToken(bootstrapConfig, c.K0sVars); err != nil {
-			return err
-		}
 	}
-	worker.KernelSetup()
-	kubeletConfigClient, err := worker.LoadKubeletConfigClient(c.K0sVars)
-	if err != nil {
-		return err
-	}
-
-	workerComponentManager.Add(&worker.ContainerD{
-		LogLevel: c.Logging["containerd"],
-		K0sVars:  c.K0sVars,
-	})
-	workerComponentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
-	workerComponentManager.Add(&worker.Kubelet{
-		CRISocket:           c.CriSocket,
-		EnableCloudProvider: c.CloudProvider,
-		K0sVars:             c.K0sVars,
-		KubeletConfigClient: kubeletConfigClient,
-		LogLevel:            c.Logging["kubelet"],
-		Profile:             c.WorkerProfile,
-		Labels:              c.Labels,
-		ExtraArgs:           c.KubeletExtraArgs,
-	})
-
-	if err := workerComponentManager.Init(); err != nil {
-		return fmt.Errorf("can't init worker components: %w", err)
-	}
-	go func() {
-		<-ctx.Done()
-		if err := workerComponentManager.Stop(); err != nil {
-			logrus.WithError(err).Error("can't properly stop worker components")
-		}
-	}()
-	if err := workerComponentManager.Start(ctx); err != nil {
-		return fmt.Errorf("can't start worker components: %w", err)
-	}
-	return nil
+	// cast and make a copy of the controller cmdOpts
+	// so we can use the same opts to start the worker
+	// Needs to be a copy so we don't mess up the original
+	// token and possibly other args
+	workerCmdOpts := *(*workercmd.CmdOpts)(c)
+	workerCmdOpts.TokenArg = bootstrapConfig
+	return workerCmdOpts.StartWorker()
 }
