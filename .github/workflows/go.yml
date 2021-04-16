@@ -53,7 +53,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Bindata
+      - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
         with:
@@ -62,15 +62,19 @@ jobs:
             embedded-bins/staging/linux/bin/
             bindata_linux
             pkg/assets/zz_generated_offsets_linux.go
+            embedded-bins/Makefile.variables
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
           restore-keys: |
             ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-      - name: Run unit tests
-        run: make check-unit
 
       - name: Build
         run: make build
+  
+  
+      
+      - name: Run unit tests
+        run: make check-unit
 
       - name: Cache compiled binary for further testing
         uses: actions/cache@v2
@@ -79,7 +83,6 @@ jobs:
           path: |
             k0s
           key: build-${{env.cachePrefix}}
-
   smoketest:
     name: Smoke test
     needs: build
@@ -477,7 +480,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Bindata
+      - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
         with:
@@ -486,6 +489,7 @@ jobs:
             embedded-bins/staging/linux/bin/
             bindata_linux
             pkg/assets/zz_generated_offsets_linux.go
+            embedded-bins/Makefile.variables
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
           restore-keys: |
@@ -508,13 +512,6 @@ jobs:
     name: Smoke test on armv7
     runs-on: [self-hosted,linux,arm,lxc] 
     steps:
-      # Try again with system go
-      # - name: Install GoLang for 32bit ARM
-      #   run: |
-      #     mkdir -p /usr/local/go
-      #     curl -s -L https://golang.org/dl/go1.15.linux-armv6l.tar.gz | tar -C /usr/local -xz
-      #     echo "/usr/local/go/bin" >> $GITHUB_PATH
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
@@ -526,7 +523,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Bindata
+      - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
         with:
@@ -535,6 +532,7 @@ jobs:
             embedded-bins/staging/linux/bin/
             bindata_linux
             pkg/assets/zz_generated_offsets_linux.go
+            embedded-bins/Makefile.variables
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
           restore-keys: |
