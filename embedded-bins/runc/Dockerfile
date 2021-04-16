@@ -1,4 +1,5 @@
-FROM golang:1.15-alpine AS build
+ARG BUILDIMAGE=golang:1.15-alpine
+FROM $BUILDIMAGE AS build
 
 ARG VERSION
 ARG LIBSECCOMP_VERSION=2.5.1

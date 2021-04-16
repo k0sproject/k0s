@@ -68,12 +68,18 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker create k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
-.docker-image.%.stamp: %/Dockerfile Makefile
-	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) -f $< .
+.docker-image.%.stamp: %/Dockerfile Makefile.variables
+	docker build -t k0sbuild$(basename $@) \
+		--build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
+		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
+		-f $< .
 	touch $@
 
-.docker-image.%.windows.stamp: %/Dockerfile.windows
-	docker build -t k0sbuild$(basename $@) --build-arg VERSION=$($(patsubst %/Dockerfile.windows,%,$<)_version) -f $< .
+.docker-image.%.windows.stamp: %/Dockerfile.windows Makefile.variables
+	docker build -t k0sbuild$(basename $@) \
+		--build-arg VERSION=$($(patsubst %/Dockerfile.windows,%,$<)_version) \
+		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile.windows,%,$<)_buildimage) \
+		-f $< .
 	touch $@
 
 else

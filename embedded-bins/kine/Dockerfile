@@ -1,4 +1,6 @@
-FROM golang:1.15-alpine AS build
+ARG BUILDIMAGE=golang:1.15-alpine
+FROM $BUILDIMAGE AS build
+
 ARG VERSION
 
 RUN apk add build-base git
