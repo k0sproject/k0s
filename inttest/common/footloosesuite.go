@@ -128,6 +128,11 @@ func (s *FootlooseSuite) SetupSuite() {
 		os.Exit(1)
 	}()
 
+	s.waitForSSH()
+}
+
+func (s *FootlooseSuite) waitForSSH() {
+	var err error
 	// SSH through cluster should wait until we actually can get it through, but it doesn't
 	for i := 0; i < 20; i++ {
 		err = s.Cluster.SSH(s.ControllerNode(0), "root", "hostname")
@@ -135,7 +140,7 @@ func (s *FootlooseSuite) SetupSuite() {
 			break
 		}
 		s.T().Logf("retrying ssh to %s", s.ControllerNode(0))
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 	if err != nil {
 		s.FailNowf("failed to ssh to %s: %s", s.ControllerNode(0), err.Error())
