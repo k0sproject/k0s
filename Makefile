@@ -42,11 +42,13 @@ go_bindata := go get github.com/kevinburke/go-bindata/...@v3.22.0 && "${GOPATH}/
 endif
 
 GOLANG_IMAGE = golang:1.16-alpine
-GO = docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
+GO = GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
 	-e GOARCH \
+	-e GOCACHE \
+	--user $$(id -u) \
 	$(GOLANG_IMAGE) go
 
 .PHONY: build
