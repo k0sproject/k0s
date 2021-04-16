@@ -3,7 +3,7 @@
 	touch $@
 
 bundle.tar: .docker-bundler.stamp
-	docker run -t -i --rm -v $(shell pwd):/hostdir -v /var/lib/containerd --privileged k0sbuild.docker-bundler
+	docker run --rm -v $(shell pwd):/hostdir -v /var/lib/containerd --privileged k0sbuild.docker-bundler
 
 
 clean:
