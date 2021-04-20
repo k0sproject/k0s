@@ -36,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/kubeconfig"
 	"github.com/k0sproject/k0s/cmd/kubectl"
 	"github.com/k0sproject/k0s/cmd/reset"
+	"github.com/k0sproject/k0s/cmd/restore"
 	"github.com/k0sproject/k0s/cmd/status"
 	"github.com/k0sproject/k0s/cmd/token"
 	"github.com/k0sproject/k0s/cmd/validate"
@@ -72,6 +73,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(airgap.NewAirgapCmd())
 	cmd.AddCommand(api.NewAPICmd())
 	cmd.AddCommand(backup.NewBackupCmd())
+	cmd.AddCommand(restore.NewRestoreCmd())
 	cmd.AddCommand(controller.NewControllerCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())

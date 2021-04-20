@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -70,14 +69,8 @@ func (c *Config) RunBackup() error {
 	defer out.Close()
 
 	if c.storageSpec.Type == v1beta1.KineStorageType {
-		if strings.HasPrefix(c.storageSpec.Kine.DataSource, "sqlite://") {
-			// run SaveSQLiteDB Backup
-			logrus.Debug("running kine backup for sqlite DBs")
-			err = c.saveSQLiteDB()
-			if err != nil {
-				return fmt.Errorf("failed to run sqlite db backup: %v", err)
-			}
-		}
+		// Kine backup not supported, yet
+		logrus.Warnf("non-etcd data storage backup not supported. You must take the database backup manually")
 	} else {
 		// take Etcd snapshot
 		err := c.saveEtcdSnapshot()

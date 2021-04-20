@@ -37,11 +37,11 @@ func FileExists(fileName string) bool {
 
 // DirExists checks if a directory exists before we try using it
 func DirExists(dirName string) bool {
-	_, err := os.Stat(dirName)
+	info, err := os.Stat(dirName)
 	if os.IsNotExist(err) {
 		return false
 	}
-	return true
+	return info.IsDir()
 }
 
 // CheckPathPermissions checks the correct permissions are for a path (file or directory)

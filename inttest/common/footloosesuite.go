@@ -466,6 +466,23 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	return nil, fmt.Errorf("no machine found with name %s", name)
 }
 
+func (s *FootlooseSuite) StopController(name string) error {
+	ssh, err := s.SSH(name)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	s.T().Log("killing k0s")
+	_, err = ssh.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+	return err
+}
+
+func (s *FootlooseSuite) Reset(name string) error {
+	ssh, err := s.SSH(name)
+	s.NoError(err)
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput("k0s reset --debug")
+	return err
+}
+
 // KubeClient return kube client by loading the admin access config from given node
 func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)

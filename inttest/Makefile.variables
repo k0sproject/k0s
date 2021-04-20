@@ -11,5 +11,6 @@ smoketests := \
 	check-kine \
 	check-multicontroller \
 	check-singlenode \
+	check-backup \
 	check-airgap
 
