@@ -83,380 +83,381 @@ jobs:
           path: |
             k0s
           key: build-${{env.cachePrefix}}
-  smoketest:
-    name: Smoke test
-    needs: build
-    runs-on: ubuntu-latest
+  
+  # smoketest:
+  #   name: Smoke test
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run test .
-        run: make -C inttest check-basic
+  #     - name: Run test .
+  #       run: make -C inttest check-basic
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  smoketest-custom-ports:
-    name: Smoke test for custom ports (k0s api, kube-api, LB + external address)
-    needs: build
-    runs-on: ubuntu-latest
+  # smoketest-custom-ports:
+  #   name: Smoke test for custom ports (k0s api, kube-api, LB + external address)
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run test .
-        run: make -C inttest check-customports
+  #     - name: Run test .
+  #       run: make -C inttest check-customports
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  smoketest-calico:
-    name: Smoke test for calico setup
-    needs: build
-    runs-on: ubuntu-latest
+  # smoketest-calico:
+  #   name: Smoke test for calico setup
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run test .
-        run: make -C inttest check-calico
+  #     - name: Run test .
+  #       run: make -C inttest check-calico
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  smoketest-cni-change:
-    name: Smoke test for preventing CNI change
-    needs: build
-    runs-on: ubuntu-latest
+  # smoketest-cni-change:
+  #   name: Smoke test for preventing CNI change
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run test .
-        run: make -C inttest check-cnichange
+  #     - name: Run test .
+  #       run: make -C inttest check-cnichange
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
-
-
-  smoketest-hacontrolplane:
-    name: Smoke test for HA controlplane operations
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
-
-      - name: Run hacontrolplane test .
-        run: make -C inttest check-hacontrolplane
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
-
-  smoketest-byocri:
-    name: Smoke test for BYO CRI feature
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
-
-      - name: Run BYO CRI test .
-        run: make -C inttest check-byocri
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
-
-  smoketest-addons:
-    name: Smoke test for helm based addons
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
-
-      - name: Run Helm addon test
-        run: make -C inttest check-addons
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
-
-  smoketest-singlenode:
-    name: Smoke test for single node k0s
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
-
-      - name: Run singlenode test
-        run: make -C inttest check-singlenode
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
-
-  smoketest-kine:
-    name: Smoke test for kine backed
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
-
-      - name: Run kine test
-        run: make -C inttest check-kine
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
 
-  smoketest-network:
-    name: Smoke test for network
-    needs: build
-    runs-on: ubuntu-latest
-    if: false
+  # smoketest-hacontrolplane:
+  #   name: Smoke test for HA controlplane operations
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run smoke test .
-        run: make -C inttest check-etcd
+  #     - name: Run hacontrolplane test .
+  #       run: make -C inttest check-hacontrolplane
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  smoketest-dualstack:
-    name: Smoke test for IPv6 dualstack
-    needs: build
-    runs-on: ubuntu-latest
+  # smoketest-byocri:
+  #   name: Smoke test for BYO CRI feature
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run smoke test .
-        run: make -C inttest check-dualstack
+  #     - name: Run BYO CRI test .
+  #       run: make -C inttest check-byocri
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  smoketest-multicontroller:
-    name: Smoke test for multi controller
-    needs: build
-    runs-on: ubuntu-latest
+  # smoketest-addons:
+  #   name: Smoke test for helm based addons
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
-        with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
 
-      - name: Run multicontroller test
-        run: make -C inttest check-multicontroller
+  #     - name: Run Helm addon test
+  #       run: make -C inttest check-addons
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
+
+  # smoketest-singlenode:
+  #   name: Smoke test for single node k0s
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
+
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
+
+  #     - name: Run singlenode test
+  #       run: make -C inttest check-singlenode
+
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
+
+  # smoketest-kine:
+  #   name: Smoke test for kine backed
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
+
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
+
+  #     - name: Run kine test
+  #       run: make -C inttest check-kine
+
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
+
+
+  # smoketest-network:
+  #   name: Smoke test for network
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: false
+
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
+
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
+
+  #     - name: Run smoke test .
+  #       run: make -C inttest check-etcd
+
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
+
+  # smoketest-dualstack:
+  #   name: Smoke test for IPv6 dualstack
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
+
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
+
+  #     - name: Run smoke test .
+  #       run: make -C inttest check-dualstack
+
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
+
+  # smoketest-multicontroller:
+  #   name: Smoke test for multi controller
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get PR Reference and Set Cache Name
+  #       run: |
+  #         PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+  #         echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
+
+  #     - name: Cache compiled binary for smoke testing
+  #       uses: actions/cache@v2
+  #       id: restore-compiled-binary
+  #       with:
+  #         path: |
+  #           k0s
+  #         key: build-${{env.cachePrefix}}
+
+  #     - name: Run multicontroller test
+  #       run: make -C inttest check-multicontroller
+
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
   smoketest-airgap:
     name: Smoke test for airgap install
@@ -488,7 +489,7 @@ jobs:
           key: build-image-bundle-${{env.cachePrefix}}
 
       - name: Run test
-        run: make check-airgap
+        run: make --debug check-airgap
 
       - name: Cache images bundle
         uses: actions/cache@v2
@@ -505,113 +506,113 @@ jobs:
           path: |
             /tmp/*.log
 
-  smoketest-arm:
-    name: Smoke test on arm64
-    runs-on: [self-hosted,linux,arm64]
+  # smoketest-arm:
+  #   name: Smoke test on arm64
+  #   runs-on: [self-hosted,linux,arm64]
 
-    steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.13
-        id: go
+  #   steps:
+  #     - name: Set up Go 1.x
+  #       uses: actions/setup-go@v2
+  #       with:
+  #         go-version: ^1.13
+  #       id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+  #     - uses: actions/cache@v2
+  #       name: Go modules cache
+  #       with:
+  #         path: ~/go/pkg/mod
+  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-go-
 
-      - name: Bindata cache
-        uses: actions/cache@v2
-        id: generated-bindata
-        with:
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
-            embedded-bins/Makefile.variables
+  #     - name: Bindata cache
+  #       uses: actions/cache@v2
+  #       id: generated-bindata
+  #       with:
+  #         path: |
+  #           .bins.linux.stamp
+  #           embedded-bins/staging/linux/bin/
+  #           bindata_linux
+  #           pkg/assets/zz_generated_offsets_linux.go
+  #           embedded-bins/Makefile.variables
 
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
-          restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
+  #         key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
+  #         restore-keys: |
+  #           ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
       
-      - name: Build
-        run: make build
+  #     - name: Build
+  #       run: make build
 
-      - name: Run test .
-        run: make -C inttest check-basic
+  #     - name: Run test .
+  #       run: make -C inttest check-basic
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
   
-  smoketest-armv7:
-    name: Smoke test on armv7
-    runs-on: [self-hosted,linux,arm,lxc] 
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+  # smoketest-armv7:
+  #   name: Smoke test on armv7
+  #   runs-on: [self-hosted,linux,arm,lxc] 
+  #   steps:
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+  #     - uses: actions/cache@v2
+  #       name: Go modules cache
+  #       with:
+  #         path: ~/go/pkg/mod
+  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-go-
 
-      - name: Bindata cache
-        uses: actions/cache@v2
-        id: generated-bindata
-        with:
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
-            embedded-bins/Makefile.variables
+  #     - name: Bindata cache
+  #       uses: actions/cache@v2
+  #       id: generated-bindata
+  #       with:
+  #         path: |
+  #           .bins.linux.stamp
+  #           embedded-bins/staging/linux/bin/
+  #           bindata_linux
+  #           pkg/assets/zz_generated_offsets_linux.go
+  #           embedded-bins/Makefile.variables
 
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
-          restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+  #         key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+  #         restore-keys: |
+  #           ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
       
-      - name: Build
-        run: make build
+  #     - name: Build
+  #       run: make build
 
-      - name: Run test .
-        run: TIMEOUT=15m make -C inttest check-basic
+  #     - name: Run test .
+  #       run: TIMEOUT=15m make -C inttest check-basic
 
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            /tmp/*.log
+  #     - name: Collect test logs
+  #       if: failure()
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: |
+  #           /tmp/*.log
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v2
-      - name: codegen
-        run: |
-          make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
+  # lint:
+  #   name: Lint
+  #   runs-on: ubuntu-latest
+  #   if: github.ref != 'refs/heads/main'
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: codegen
+  #       run: |
+  #         make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
+  #       env:
+  #         EMBEDDED_BINS_BUILDMODE: none
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
-          config: .golangci.yml
+  #     - name: golangci-lint
+  #       uses: golangci/golangci-lint-action@v2
+  #       with:
+  #         version: v1.29
+  #         config: .golangci.yml

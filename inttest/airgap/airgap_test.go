@@ -17,22 +17,30 @@ package airgap
 
 import (
 	"context"
-	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/config"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+	"github.com/weaveworks/footloose/pkg/config"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/k0sproject/k0s/inttest/common"
 )
+
+const k0sConfig = `
+spec:
+  images:
+    default_pull_policy: Never
+`
 
 type AirgapSuite struct {
 	common.FootlooseSuite
 }
 
 func (s *AirgapSuite) TestK0sGetsUp() {
-	s.NoError(s.InitController(0))
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -65,24 +73,28 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	imagesUsed := 0
 	imagesPulled := 0
-	pulledImagesMessages := []string{}
+	// pulledImagesMessages := []string{}
 	for _, event := range events.Items {
-		if strings.Contains(event.Message, "already present on machine") {
-			imagesUsed++
-		}
-		if strings.Contains(event.Message, "Pulling image") {
-			pulledImagesMessages = append(pulledImagesMessages, event.Message)
-			imagesPulled++
+		if event.Source.Component == "kubelet" && event.Reason == "Pulled" {
+			// We're interested only in image pull events
+			s.T().Logf(event.Message)
+			if strings.Contains(event.Message, "already present on machine") {
+				imagesUsed++
+			}
+			if strings.Contains(event.Message, "Pulling image") {
+				// pulledImagesMessages = append(pulledImagesMessages, event.Message)
+				imagesPulled++
+			}
 		}
 	}
 	s.T().Logf("Used %d images from airgap bundle", imagesUsed)
-	if len(pulledImagesMessages) > 0 {
-		s.T().Logf("Image pulls messages")
-		for _, message := range pulledImagesMessages {
-			s.T().Logf(message)
-		}
-	}
-	s.Require().Equal(imagesPulled, 0)
+	// if len(pulledImagesMessages) > 0 {
+	// 	s.T().Logf("Image pulls messages")
+	// 	for _, message := range pulledImagesMessages {
+	// 		s.T().Logf(message)
+	// 	}
+	// }
+	s.Require().Zero(imagesPulled)
 
 }
 
