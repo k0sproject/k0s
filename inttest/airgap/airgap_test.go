@@ -41,7 +41,7 @@ type AirgapSuite struct {
 func (s *AirgapSuite) TestK0sGetsUp() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
-	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
+	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10 --image-gc-high-threshold=100"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
