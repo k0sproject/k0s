@@ -1,4 +1,5 @@
-FROM golang:1.16-alpine AS build
+ARG BUILDIMAGE=golang:1.16-alpine
+FROM $BUILDIMAGE AS build
 
 ARG VERSION
 ENV GOPATH=/go
