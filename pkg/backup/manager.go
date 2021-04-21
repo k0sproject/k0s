@@ -38,7 +38,7 @@ type Config struct {
 
 const (
 	etcdBackup = "etcd-snapshot.db"
-	kineBackup = "kine-state-backup.db"
+	// kineBackup = "kine-state-backup.db"
 )
 
 func NewBackupConfig(k0sVars constant.CfgVars, storageSpec *v1beta1.StorageSpec, savePath string) *Config {

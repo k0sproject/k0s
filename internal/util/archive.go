@@ -72,7 +72,7 @@ func ExtractArchive(path, dst string) error {
 			}
 
 		default:
-			logrus.Warnf("unknown type %s for archive file %s", header.Typeflag, header.Name)
+			logrus.Warnf("unknown type %b for archive file %s", header.Typeflag, header.Name)
 		}
 	}
 

@@ -67,7 +67,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.NoError(s.takeBackup())
 
 	s.NoError(s.StopController(s.ControllerNode(0)))
-	s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
+	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
 
 	s.NoError(s.Reset(s.ControllerNode(0)))
 	s.NoError(s.Reset(s.ControllerNode(1)))
