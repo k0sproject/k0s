@@ -57,7 +57,7 @@ into the `images` directory in the k0s data directory.
 # cp bundle_file /var/lib/k0s/images/bundle_file
 ```
 
-#### 3. Ensure pull policy in the k0s.yaml (Optional)
+### 3. Ensure pull policy in the k0s.yaml (Optional)
 
 Use the following `k0s.yaml` to ensure that containerd does not pull images
 for k0s components from the Internet at any time.
@@ -72,12 +72,12 @@ spec:
     default_pull_policy: Never
 ```
 
-#### 4. Set up the Controller
+### 4. Set up the Controller
 
 Refer to the [Quick Start Guide](install.md) for information on setting up the
 controller node.
 
-#### 5. Run worker
+### 5. Run worker
 
 Perform the worker set up on the airgapped machine.
 
