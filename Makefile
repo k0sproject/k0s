@@ -109,6 +109,9 @@ $(smoketests): k0s
 .PHONY: smoketests
 smoketests:  $(smoketests)
 
+check-airgap: image-bundle/bundle.tar k0s
+	$(MAKE) -C inttest check-airgap
+
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go
 	go test -race ./pkg/... ./internal/...
@@ -117,6 +120,7 @@ check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests
 clean:
 	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
 	$(MAKE) -C embedded-bins clean
+	$(MAKE) -C image-bundle clean
 
 .PHONY: manifests
 manifests:
@@ -128,3 +132,8 @@ static/gen_manifests.go: $(shell find static/manifests -type f)
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
+image-bundle/image.list: k0s
+	./k0s airgap list-images > image-bundle/image.list
+
+image-bundle/bundle.tar: image-bundle/image.list
+	$(MAKE) -C image-bundle bundle.tar

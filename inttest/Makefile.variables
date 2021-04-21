@@ -10,5 +10,6 @@ smoketests := \
 	check-install \
 	check-kine \
 	check-multicontroller \
-	check-singlenode
+	check-singlenode \
+	check-airgap
 

@@ -17,13 +17,11 @@ package common
 
 import (
 	"fmt"
+	"github.com/mitchellh/go-homedir"
+	ssh "golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	ssh "golang.org/x/crypto/ssh"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 // SSHConnection describes an SSH connection

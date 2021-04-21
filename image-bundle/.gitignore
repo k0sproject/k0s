@@ -1,0 +1,4 @@
+bundle.tar
+.container.bundler
+.docker-bundler.stamp
+image.list
