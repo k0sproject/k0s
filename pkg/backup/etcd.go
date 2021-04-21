@@ -17,6 +17,9 @@ package backup
 
 import (
 	"context"
+	"fmt"
+	"github.com/k0sproject/k0s/internal/util"
+	"os"
 	"path/filepath"
 
 	"go.etcd.io/etcd/clientv3/snapshot"
@@ -25,13 +28,31 @@ import (
 	"github.com/k0sproject/k0s/pkg/etcd"
 )
 
-func (c *Config) saveEtcdSnapshot() error {
+const etcdBackup = "etcd-snapshot.db"
+
+type etcdStep struct {
+	certRootDir string
+	etcdCertDir string
+
+	peerAddress string
+	etcdDataDir string
+}
+
+func newEtcdStep(certRootDir string, etcdCertDir string, peerAddress string, etcdDataDir string) *etcdStep {
+	return &etcdStep{certRootDir: certRootDir, etcdCertDir: etcdCertDir, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
+}
+
+func (e etcdStep) Name() string {
+	return "etcd"
+}
+
+func (e etcdStep) Backup(tmpDir string) (StepResult, error) {
 	ctx := context.TODO()
-	etcdClient, err := etcd.NewClient(c.k0sVars.CertRootDir, c.k0sVars.EtcdCertDir)
+	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir)
 	if err != nil {
-		return err
+		return StepResult{}, err
 	}
-	path := filepath.Join(c.tmpDir, etcdBackup)
+	path := filepath.Join(tmpDir, etcdBackup)
 
 	// disable etcd's logging
 	lg := zap.NewNop()
@@ -39,9 +60,38 @@ func (c *Config) saveEtcdSnapshot() error {
 
 	// save snapshot
 	if err = m.Save(ctx, *etcdClient.Config, path); err != nil {
-		return err
+		return StepResult{}, err
 	}
 	// add snapshot's path to assets
-	c.savedAssets = append(c.savedAssets, path)
+	return StepResult{filesForBackup: []string{path}}, nil
+}
+
+func (e etcdStep) Restore(dataDir string) error {
+	snapshotPath := filepath.Join(dataDir, "etcd-snapshot.db")
+	if !util.FileExists(snapshotPath) {
+		return fmt.Errorf("etcd snapshot not found at %s", snapshotPath)
+	}
+
+	// disable etcd's logging
+	lg := zap.NewNop()
+	m := snapshot.NewV3(lg)
+	name, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	peerURL := fmt.Sprintf("https://%s:2380", e.peerAddress)
+	restoreConfig := snapshot.RestoreConfig{
+		SnapshotPath:   snapshotPath,
+		OutputDataDir:  e.etcdDataDir,
+		PeerURLs:       []string{peerURL},
+		Name:           name,
+		InitialCluster: fmt.Sprintf("%s=%s", name, peerURL),
+	}
+
+	err = m.Restore(restoreConfig)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

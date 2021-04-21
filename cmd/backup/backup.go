@@ -16,6 +16,7 @@ limitations under the License.
 package backup
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -76,13 +77,13 @@ func (c *CmdOpts) backup() error {
 		if err != nil {
 			logger.Errorf("failed to get cluster setup: %v", err)
 		}
-		// Get backup Config
-		cfg := backup.NewBackupConfig(c.K0sVars, clusterConfig.Spec.Storage, savePath)
-
-		// Run backup
-		return cfg.RunBackup()
+		mgr, err := backup.NewBackupManager(clusterConfig.Spec, c.K0sVars)
+		if err != nil {
+			return err
+		}
+		return mgr.RunBackup(savePath)
 	}
-	return nil
+	return fmt.Errorf("backup command must be run on the controller node, have `%s`", role)
 }
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {

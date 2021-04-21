@@ -13,84 +13,60 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package backup
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
-type Config struct {
-	k0sVars     constant.CfgVars
-	storageSpec *v1beta1.StorageSpec
-	savePath    string
-	savedAssets []string
-	tmpDir      string
+// Manager hold configuration for particular backup-restore process
+type Manager struct {
+	steps            []Backuper
+	backupWorkingDir string
+	dataDir          string
 }
 
-const (
-	etcdBackup = "etcd-snapshot.db"
-	// kineBackup = "kine-state-backup.db"
-)
+// RunBackup backups cluster
+func (bm Manager) RunBackup(backupsDirectory string) error {
+	defer os.RemoveAll(bm.backupWorkingDir)
+	assets := make([]string, 0, len(bm.steps))
 
-func NewBackupConfig(k0sVars constant.CfgVars, storageSpec *v1beta1.StorageSpec, savePath string) *Config {
-	return &Config{
-		k0sVars:     k0sVars,
-		storageSpec: storageSpec,
-		savePath:    savePath,
+	logrus.Info("Starting backup")
+	for _, step := range bm.steps {
+		logrus.Info("Backup step: ", step.Name())
+		result, err := step.Backup(bm.backupWorkingDir)
+		if err != nil {
+			return fmt.Errorf("failed to create backup on step `%s`: %v", step.Name(), err)
+		}
+		assets = append(assets, result.filesForBackup...)
 	}
-}
-
-func (c *Config) RunBackup() error {
 	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
+	return bm.save(backupFileName, assets, backupsDirectory)
+}
 
-	logrus.Info("starting backup")
-	tmpDir, err := ioutil.TempDir("", "k0s-backup")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tmpDir)
-
-	c.tmpDir = tmpDir
-	archiveFile := filepath.Join(tmpDir, backupFileName)
+func (bm Manager) save(backupFileName string, assets []string, backupsDirectory string) error {
+	archiveFile := filepath.Join(bm.backupWorkingDir, backupFileName)
 	logrus.Infof("creating temporary archive file: %v", archiveFile)
 	out, err := os.Create(archiveFile)
 	if err != nil {
 		return fmt.Errorf("error creating archive file: %v", err)
 	}
 	defer out.Close()
-
-	if c.storageSpec.Type == v1beta1.KineStorageType {
-		// Kine backup not supported, yet
-		logrus.Warnf("non-etcd data storage backup not supported. You must take the database backup manually")
-	} else {
-		// take Etcd snapshot
-		err := c.saveEtcdSnapshot()
-		if err != nil {
-			return fmt.Errorf("failed to create etcd snapshot: %v", err)
-		}
-	}
-	// back-up PKI Dir contents
-	err = c.saveCerts()
-	if err != nil {
-		return fmt.Errorf("failed to save certificates: %v", err)
-	}
-
 	// Create the archive and write the output to the "out" Writer
-	err = createArchive(out, c.savedAssets, c.k0sVars.DataDir)
+	err = createArchive(out, assets, bm.dataDir)
 	if err != nil {
 		logrus.Fatalf("error creating archive: %v", err)
 	}
 
-	destinationFile := filepath.Join(c.savePath, backupFileName)
+	destinationFile := filepath.Join(backupsDirectory, backupFileName)
 	err = util.FileCopy(archiveFile, destinationFile)
 	if err != nil {
 		return fmt.Errorf("failed to copy archive file from temporary directory: %v", err)
@@ -99,13 +75,51 @@ func (c *Config) RunBackup() error {
 	return nil
 }
 
-func (c *Config) saveCerts() error {
-	err := filepath.Walk(c.k0sVars.CertRootDir, func(path string, info os.FileInfo, err error) error {
-		c.savedAssets = append(c.savedAssets, path)
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to list certificates in %v: %v", c.k0sVars.CertRootDir, err)
+// RunRestore restores cluster
+func (bm Manager) RunRestore(archivePath string) error {
+	if err := util.ExtractArchive(archivePath, bm.dataDir); err != nil {
+		return err
+	}
+	for _, step := range bm.steps {
+		if err := step.Restore(bm.dataDir); err != nil {
+			return fmt.Errorf("failed to restore on step `%s`: %v", step.Name(), err)
+		}
 	}
 	return nil
+}
+
+// NewBackupManager builds new manager
+func NewBackupManager(clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars) (*Manager, error) {
+	var steps []Backuper
+
+	if clusterSpec.Storage.Type != v1beta1.EtcdStorageType {
+		logrus.Warnf("non-etcd data storage backup not supported. You must take the database backup manually")
+	} else {
+		steps = append(steps, newEtcdStep(vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+	}
+
+	steps = append(steps, newCertsStep(vars.CertRootDir))
+
+	tmpDir, err := ioutil.TempDir("", "k0s-backup")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary directory: %v", err)
+	}
+
+	return &Manager{
+		steps:            steps,
+		backupWorkingDir: tmpDir,
+		dataDir:          vars.DataDir,
+	}, nil
+}
+
+// Backuper defines interface for backup-restore step
+type Backuper interface {
+	Name() string
+	Backup(workingDir string) (StepResult, error)
+	Restore(restoreTo string) error
+}
+
+// StepResult backup result for the particular step
+type StepResult struct {
+	filesForBackup []string
 }

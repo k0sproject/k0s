@@ -22,9 +22,18 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
+
+func sanitizeExtractPath(dstDir string, filePath string) (string, error) {
+	dstFile := filepath.Join(dstDir, filePath)
+	if !strings.HasPrefix(dstFile, filepath.Clean(dstDir)+string(os.PathSeparator)) {
+		return "", fmt.Errorf("%s: illegal file path", filePath)
+	}
+	return dstFile, nil
+}
 
 // ExtractArchive extracts the given tar.gz archive to given dst path
 func ExtractArchive(path, dst string) error {
@@ -51,18 +60,18 @@ func ExtractArchive(path, dst string) error {
 		if err != nil {
 			return err
 		}
-
-		// TODO we need to validate that there's no path travelsal attempts
-
-		target := filepath.Join(dst, header.Name)
+		targetPath, err := sanitizeExtractPath(dst, header.Name)
+		if err != nil {
+			return err
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.Mkdir(target, header.FileInfo().Mode()); err != nil {
+			if err := os.Mkdir(targetPath, header.FileInfo().Mode()); err != nil {
 				return fmt.Errorf("failed to decompress %s from archive: %w", header.Name, err)
 			}
 		case tar.TypeReg:
-			outFile, err := os.OpenFile(target, os.O_RDWR|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
+			outFile, err := os.OpenFile(targetPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
 			if err != nil {
 				return fmt.Errorf("failed to decompress %s from archive: %w", header.Name, err)
 			}

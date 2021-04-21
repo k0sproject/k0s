@@ -116,6 +116,7 @@ func (s *BackupSuite) restoreBackup() error {
 
 	out, err := ssh.ExecWithOutput("k0s restore $(ls /root/k0s_backup_*.tar.gz)")
 	if err != nil {
+		s.T().Errorf("restored failed with output:\n%s", out)
 		return err
 	}
 	s.T().Logf("restored succesfully with output:\n%s", out)

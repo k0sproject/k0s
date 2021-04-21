@@ -17,17 +17,13 @@ package restore
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"go.etcd.io/etcd/clientv3/snapshot"
-	"go.uber.org/zap"
+	"os"
 )
 
 type CmdOpts config.CLIOptions
@@ -58,6 +54,13 @@ func NewRestoreCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) restore(path string) error {
+	logger := logrus.New()
+	textFormatter := new(logrus.TextFormatter)
+	textFormatter.ForceColors = true
+	textFormatter.DisableTimestamp = true
+
+	logger.SetFormatter(textFormatter)
+
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -72,51 +75,15 @@ func (c *CmdOpts) restore(path string) error {
 		}
 	}
 
-	if err := util.ExtractArchive(path, c.K0sVars.DataDir); err != nil {
-		return err
+	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+	if err != nil {
+		logger.Errorf("failed to get cluster setup: %v", err)
 	}
-
-	// TODO check if the config actually says we're using etcd
-	if c.ClusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
-		if err := c.restoreEtcd(); err != nil {
-			return err
-		}
-	} else {
-		logrus.Warnf("database is NOT restored automatically, you must restore it manually")
-	}
-
-	logrus.Infof("k0s restored succesfully from %s", path)
-	return nil
-}
-
-func (c *CmdOpts) restoreEtcd() error {
-	snapshotPath := filepath.Join(c.K0sVars.DataDir, "etcd-snapshot.db")
-	if !util.FileExists(snapshotPath) {
-		return fmt.Errorf("etcd snapshot not found at %s", snapshotPath)
-	}
-
-	// disable etcd's logging
-	lg := zap.NewNop()
-	m := snapshot.NewV3(lg)
-	name, err := os.Hostname()
+	mgr, err := backup.NewBackupManager(clusterConfig.Spec, c.K0sVars)
 	if err != nil {
 		return err
 	}
-	peerURL := fmt.Sprintf("https://%s:2380", c.ClusterConfig.Spec.Storage.Etcd.PeerAddress)
-	restoreConfig := snapshot.RestoreConfig{
-		SnapshotPath:   snapshotPath,
-		OutputDataDir:  c.K0sVars.EtcdDataDir,
-		PeerURLs:       []string{peerURL},
-		Name:           name,
-		InitialCluster: fmt.Sprintf("%s=%s", name, peerURL),
-	}
-
-	err = m.Restore(restoreConfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return mgr.RunRestore(path)
 }
 
 // TODO Need to move to some common place, now just copied multiple times :(
