@@ -17,12 +17,13 @@ package install
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/crictl"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/k0sproject/k0s/pkg/crictl"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -206,6 +207,29 @@ func (c *CleanUpConfig) RemoveAllDirectories() error {
 		fmtError := fmt.Errorf("failed to delete %v. err: %v", c.runDir, err)
 		msg = append(msg, fmtError.Error())
 	}
+	if len(msg) > 0 {
+		return fmt.Errorf("%v", strings.Join(msg, ", "))
+	}
+	return removeCNILeftovers()
+}
+
+func removeCNILeftovers() error {
+	var msg []string
+
+	calico10Conflist := "/etc/cni/net.d/10-calico.conflist"
+	calicoKubeconfig := "/etc/cni/net.d/calico-kubeconfig"
+	kuberouter10Conflist := "/etc/cni/net.d/10-kuberouter.conflist"
+
+	if err := os.RemoveAll(calico10Conflist); err != nil {
+		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", calico10Conflist, err))
+	}
+	if err := os.RemoveAll(calicoKubeconfig); err != nil {
+		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", calicoKubeconfig, err))
+	}
+	if err := os.RemoveAll(kuberouter10Conflist); err != nil {
+		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", kuberouter10Conflist, err))
+	}
+
 	if len(msg) > 0 {
 		return fmt.Errorf("%v", strings.Join(msg, ", "))
 	}
