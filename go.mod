@@ -16,7 +16,6 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/golangci/golangci-lint v1.31.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
