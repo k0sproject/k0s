@@ -198,6 +198,8 @@ func (c *CleanUpConfig) RemoveAllDirectories() error {
 		}
 	}
 
+	msg = append(msg, removeCNILeftovers())
+
 	logrus.Infof("deleting k0s generated data-dir (%v) and run-dir (%v)", c.dataDir, c.runDir)
 	if err := os.RemoveAll(c.dataDir); err != nil {
 		fmtError := fmt.Errorf("failed to delete %v. err: %v", c.dataDir, err)
@@ -210,10 +212,11 @@ func (c *CleanUpConfig) RemoveAllDirectories() error {
 	if len(msg) > 0 {
 		return fmt.Errorf("%v", strings.Join(msg, ", "))
 	}
-	return removeCNILeftovers()
+
+	return nil
 }
 
-func removeCNILeftovers() error {
+func removeCNILeftovers() string {
 	var msg []string
 
 	calico10Conflist := "/etc/cni/net.d/10-calico.conflist"
@@ -231,7 +234,7 @@ func removeCNILeftovers() error {
 	}
 
 	if len(msg) > 0 {
-		return fmt.Errorf("%v", strings.Join(msg, ", "))
+		return strings.Join(msg, ", ")
 	}
-	return nil
+	return ""
 }
