@@ -36,7 +36,10 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
 	s.NoError(s.InitController(0, dataDirOpt))
-	s.NoError(s.RunWorkers(dataDirOpt, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
+
+	token, err := s.GetJoinToken("worker", dataDirOpt)
+	s.NoError(err)
+	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
