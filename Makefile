@@ -103,14 +103,13 @@ lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run ./...
 
 .PHONY: $(smoketests)
+check-airgap: image-bundle/bundle.tar
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
 
 .PHONY: smoketests
 smoketests:  $(smoketests)
 
-check-airgap: image-bundle/bundle.tar k0s
-	$(MAKE) -C inttest check-airgap
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go
