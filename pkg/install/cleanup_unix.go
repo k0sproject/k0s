@@ -198,7 +198,7 @@ func (c *CleanUpConfig) RemoveAllDirectories() error {
 		}
 	}
 
-	msg = append(msg, removeCNILeftovers())
+	removeCNILeftovers()
 
 	logrus.Infof("deleting k0s generated data-dir (%v) and run-dir (%v)", c.dataDir, c.runDir)
 	if err := os.RemoveAll(c.dataDir); err != nil {
@@ -216,25 +216,24 @@ func (c *CleanUpConfig) RemoveAllDirectories() error {
 	return nil
 }
 
-func removeCNILeftovers() string {
+func removeCNILeftovers() {
 	var msg []string
 
 	calico10Conflist := "/etc/cni/net.d/10-calico.conflist"
 	calicoKubeconfig := "/etc/cni/net.d/calico-kubeconfig"
 	kuberouter10Conflist := "/etc/cni/net.d/10-kuberouter.conflist"
 
-	if err := os.RemoveAll(calico10Conflist); err != nil {
+	if err := os.Remove(calico10Conflist); err != nil {
 		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", calico10Conflist, err))
 	}
-	if err := os.RemoveAll(calicoKubeconfig); err != nil {
+	if err := os.Remove(calicoKubeconfig); err != nil {
 		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", calicoKubeconfig, err))
 	}
-	if err := os.RemoveAll(kuberouter10Conflist); err != nil {
+	if err := os.Remove(kuberouter10Conflist); err != nil {
 		msg = append(msg, fmt.Sprintf("failed to delete %v. err: %v", kuberouter10Conflist, err))
 	}
 
 	if len(msg) > 0 {
-		return strings.Join(msg, ", ")
+		logrus.Debugf(strings.Join(msg, ", "))
 	}
-	return ""
 }
