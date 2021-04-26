@@ -24,6 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	capi "k8s.io/api/certificates/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -78,6 +79,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	s.T().Log("waiting to see metrics ready")
 	s.Require().NoError(common.WaitForMetricsReady(cfg))
+
+	_, err = kc.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{}).Stream(context.Background())
+	s.Require().NoError(err)
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
