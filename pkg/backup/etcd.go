@@ -36,23 +36,24 @@ type etcdStep struct {
 
 	peerAddress string
 	etcdDataDir string
+	tmpDir      string
 }
 
-func newEtcdStep(certRootDir string, etcdCertDir string, peerAddress string, etcdDataDir string) *etcdStep {
-	return &etcdStep{certRootDir: certRootDir, etcdCertDir: etcdCertDir, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
+func newEtcdStep(tmpDir string, certRootDir string, etcdCertDir string, peerAddress string, etcdDataDir string) *etcdStep {
+	return &etcdStep{tmpDir: tmpDir, certRootDir: certRootDir, etcdCertDir: etcdCertDir, peerAddress: peerAddress, etcdDataDir: etcdDataDir}
 }
 
 func (e etcdStep) Name() string {
 	return "etcd"
 }
 
-func (e etcdStep) Backup(tmpDir string) (StepResult, error) {
+func (e etcdStep) Backup() (StepResult, error) {
 	ctx := context.TODO()
 	etcdClient, err := etcd.NewClient(e.certRootDir, e.etcdCertDir)
 	if err != nil {
 		return StepResult{}, err
 	}
-	path := filepath.Join(tmpDir, etcdBackup)
+	path := filepath.Join(e.tmpDir, etcdBackup)
 
 	// disable etcd's logging
 	lg := zap.NewNop()
@@ -66,8 +67,8 @@ func (e etcdStep) Backup(tmpDir string) (StepResult, error) {
 	return StepResult{filesForBackup: []string{path}}, nil
 }
 
-func (e etcdStep) Restore(dataDir string) error {
-	snapshotPath := filepath.Join(dataDir, "etcd-snapshot.db")
+func (e etcdStep) Restore(restoreFrom, _ string) error {
+	snapshotPath := filepath.Join(restoreFrom, "etcd-snapshot.db")
 	if !util.FileExists(snapshotPath) {
 		return fmt.Errorf("etcd snapshot not found at %s", snapshotPath)
 	}

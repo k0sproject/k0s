@@ -66,7 +66,6 @@ func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create tar header: %v", err)
 	}
-
 	if strings.Contains(filename, baseDir) {
 		// calculate relative path of items inside the archive
 		rel, err := filepath.Rel(baseDir, filename)

@@ -39,6 +39,11 @@ func NewBackupCmd() *cobra.Command {
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			if err != nil {
+				return err
+			}
+			c.ClusterConfig = cfg
 			return c.backup()
 		},
 		PreRunE: preRunValidateConfig,
@@ -73,15 +78,11 @@ func (c *CmdOpts) backup() error {
 	logrus.Debugf("detected role for backup operations: %v", role)
 
 	if strings.Contains(role, "controller") {
-		clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-		if err != nil {
-			logger.Errorf("failed to get cluster setup: %v", err)
-		}
-		mgr, err := backup.NewBackupManager(clusterConfig.Spec, c.K0sVars)
+		mgr, err := backup.NewBackupManager()
 		if err != nil {
 			return err
 		}
-		return mgr.RunBackup(savePath)
+		return mgr.RunBackup(c.CfgFile, c.ClusterConfig.Spec, c.K0sVars, savePath)
 	}
 	return fmt.Errorf("backup command must be run on the controller node, have `%s`", role)
 }

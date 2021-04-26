@@ -75,15 +75,12 @@ func (c *CmdOpts) restore(path string) error {
 		}
 	}
 
-	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-	if err != nil {
-		logger.Errorf("failed to get cluster setup: %v", err)
-	}
-	mgr, err := backup.NewBackupManager(clusterConfig.Spec, c.K0sVars)
+	mgr, err := backup.NewBackupManager()
 	if err != nil {
 		return err
 	}
-	return mgr.RunRestore(path)
+	// c.CfgFile, c.ClusterConfig.Spec, c.K0sVars
+	return mgr.RunRestore(path, c.K0sVars)
 }
 
 // TODO Need to move to some common place, now just copied multiple times :(
