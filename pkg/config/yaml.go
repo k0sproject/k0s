@@ -17,7 +17,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -39,14 +38,14 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 }
 
 func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	if cfgPath != "" {
-		clusterConfig, err = v1beta1.FromYamlFile(cfgPath, k0sVars)
-	} else if isInputFromPipe() {
-		clusterConfig, err = v1beta1.FromYamlPipe(os.Stdin, k0sVars)
-	} else {
+	switch cfgPath {
+	case "-":
+		clusterConfig, err = v1beta1.ConfigFromStdin(k0sVars)
+	case "":
 		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
+	default:
+		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, k0sVars)
 	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +66,4 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
 	}
 	return clusterConfig, nil
-}
-
-func isInputFromPipe() bool {
-	fi, _ := os.Stdin.Stat()
-	return fi.Mode()&os.ModeCharDevice == 0
 }
