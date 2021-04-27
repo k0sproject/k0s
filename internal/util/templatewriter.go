@@ -17,9 +17,9 @@ package util
 
 import (
 	"fmt"
-	"html/template"
 	"io"
 	"os"
+	"text/template"
 
 	"github.com/Masterminds/sprig"
 
@@ -46,7 +46,7 @@ func (p *TemplateWriter) Write() error {
 
 // WriteToBuffer writes executed template tot he given writer
 func (p *TemplateWriter) WriteToBuffer(w io.Writer) error {
-	t, err := template.New(p.Name).Funcs(sprig.FuncMap()).Parse(p.Template)
+	t, err := template.New(p.Name).Funcs(sprig.TxtFuncMap()).Parse(p.Template)
 	if err != nil {
 		return fmt.Errorf("failed to parse template for %s: %w", p.Name, err)
 	}
