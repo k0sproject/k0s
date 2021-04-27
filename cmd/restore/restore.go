@@ -83,7 +83,7 @@ func (c *CmdOpts) restore(path string) error {
 	return mgr.RunRestore(path, c.K0sVars)
 }
 
-// TODO Need to move to some common place, now just copied multiple times :(
+// TODO Need to move to some common place, now it's defined in restore and backup commands
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)

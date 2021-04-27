@@ -68,7 +68,7 @@ func (e etcdStep) Backup() (StepResult, error) {
 }
 
 func (e etcdStep) Restore(restoreFrom, _ string) error {
-	snapshotPath := filepath.Join(restoreFrom, "etcd-snapshot.db")
+	snapshotPath := filepath.Join(restoreFrom, etcdBackup)
 	if !util.FileExists(snapshotPath) {
 		return fmt.Errorf("etcd snapshot not found at %s", snapshotPath)
 	}

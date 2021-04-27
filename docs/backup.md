@@ -11,8 +11,8 @@ The backups created by `k0s backup` command have following pieces of your cluste
 - any image bundles located under the `<data-dir>/images`
 - any helm configuration
 
-Parts not covered by the backup utility:
-- content for any persistence volume
+Parts **NOT** covered by the backup utility:
+- PersistentVolumes of any running application  
 - database content, in case if the `kine` is used as a storage driver
 - any configuration to the cluster introduced by manual changes (e.g. changes that weren't saved under the `<data-dir>/manifests`)
 
@@ -40,3 +40,10 @@ To restore cluster state from the archive use the following command on the contr
 
 The command would fail if the data directory for the current controller has overlapping data with the backup archive content.
 The command would use the archived `k0s.yaml` as the cluster configuration description.
+
+In case if your cluster is HA, after restoring single controller node, join the rest of the controller nodes to the cluster.
+E.g. steps for N nodes cluster would be:
+- Restore backup on fresh machine
+- Run controller there
+- Join N-1 new machines to the cluster the same way as for the first setup.
+

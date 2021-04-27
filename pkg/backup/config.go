@@ -37,7 +37,7 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		logrus.Info("No k0s.yaml in the backup archive")
 		return nil
 	}
-	logrus.Info("Previously used k0s.yaml saved under the data directory")
+	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
 	objectPathInArchive := path.Join(restoreFrom, "k0s.yaml")
 	objectPathInRestored := path.Join(restoreTo, "k0s.yaml")
 	return util.FileCopy(objectPathInArchive, objectPathInRestored)
