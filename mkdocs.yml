@@ -20,6 +20,7 @@ nav:
           - Raspberry Pi 4:               raspberry-pi4.md
           - Ansible Playbook:             examples/ansible-playbook.md
           - Airgap installation:          airgap-install.md
+      - System Requirements:              system-requirements.md
   - Extensions:
       - Manifest Bundles:                 manifests.md
       - Helm Charts:                      helm-charts.md
@@ -29,7 +30,6 @@ nav:
   - Architecture:
       - Overview:                         architecture.md
       - Networking:                       networking.md
-      - System Requirements:              system-requirements.md
   - Configuration:
       - Configuration Options:            configuration.md
       - Worker Node Configuration:        worker-node-config.md

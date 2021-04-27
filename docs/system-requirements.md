@@ -30,8 +30,9 @@ k0s part of the storage consumption is presented in the following table. Note th
 
 ## Architecture
 
-- Intel (x86-64)
-- ARM (ARM64)
+- x86-64
+- ARM64
+- ARMv7
 
 ## Networking
 

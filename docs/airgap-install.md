@@ -13,6 +13,8 @@ You also need to have containerd CLI management tool `ctr` installed on the work
 
 #### 1. Create OCI bundle
 
+To create an OCI bundle, use the same computer architecture (x86-64, ARM64, ARMv7) as you'll have in the target system, because the OCI bundles are build specifically for certain architecture.
+
 k0s supports only uncompressed image bundles.
 
 ##### 1.1 Using Docker
@@ -24,6 +26,9 @@ Use following commands to build OCI bundle by utilizing your docker environment.
 ## Create bundle
 # docker image save $(k0s airgap list-images | xargs) -o bundle_file
 ```
+
+**Note:**
+This Docker method doesn't currently work for the ARM architectures due to [kube-proxy image multiarch manifest problem](https://github.com/kubernetes/kubernetes/issues/98229). So, for the ARM architectures, use the method in step 1.2.
 
 ##### 1.2 Using previously set up k0s worker
 To build OCI bundle with images we can utilize the fact that containerd pulls all images during the k0s worker normal bootstrap.
@@ -61,7 +66,6 @@ spec:
   images:
     default_pull_policy: Never
 ```
-
 
 #### 4. Controller
 Set up the controller node as usual. Please refer to the [getting started guide](install.md).
