@@ -3,6 +3,8 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime"
 
 	analytics "github.com/segmentio/analytics-go"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -11,12 +13,13 @@ import (
 	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
+
+	"github.com/zcalusic/sysinfo"
 )
 
 type telemetryData struct {
 	StorageType            string
 	ClusterID              string
-	Version                string
 	WorkerNodesCount       int
 	ControlPlaneNodesCount int
 	WorkerData             []workerData
@@ -38,7 +41,6 @@ func (td telemetryData) asProperties() analytics.Properties {
 		"clusterID":              td.ClusterID,
 		"workerNodesCount":       td.WorkerNodesCount,
 		"controlPlaneNodesCount": td.ControlPlaneNodesCount,
-		"version":                td.Version,
 		"workerData":             td.WorkerData,
 		"memTotal":               td.MEMTotal,
 		"cpuTotal":               td.CPUTotal,
@@ -49,7 +51,6 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
-	data.Version = c.Version
 	data.StorageType = c.getStorageType()
 	data.ClusterID, err = c.getClusterID()
 
@@ -140,14 +141,37 @@ func (c Component) sendTelemetry() {
 		c.log.WithError(err).Warning("can't prepare telemetry data")
 		return
 	}
-	c.log.WithField("data", data).Info("sending telemetry")
+
+	hostData := analytics.Context{
+		Direct: true,
+	}
+
+	hostData.App.Version = c.Version
+	hostData.App.Name = "k0s"
+	hostData.App.Namespace = "k0s"
+	hostData.Extra["cpuArch"] = runtime.GOARCH
+
+	if runtime.GOOS == "linux" {
+		var si sysinfo.SysInfo
+		si.GetSysInfo()
+
+		hostData.OS.Name = si.OS.Name
+		hostData.OS.Version = si.OS.Version
+
+		hostData.Extra["cpuCount"] = si.CPU.Cpus
+		hostData.Extra["cpuCores"] = si.CPU.Cores
+		hostData.Extra["memTotal"] = si.Memory.Size
+		hostData.Extra["haveProxy"] = os.Getenv("HTTP_PROXY") != "" || os.Getenv("HTTPS_PROXY") != ""
+	} else {
+		hostData.OS.Name = runtime.GOOS
+	}
+
+	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
 	if err := c.analyticsClient.Enqueue(analytics.Track{
 		AnonymousId: machineID(),
 		Event:       heartbeatEvent,
 		Properties:  data.asProperties(),
-		Context: &analytics.Context{
-			Direct: true,
-		},
+		Context:     &hostData,
 	}); err != nil {
 		c.log.WithError(err).Warning("can't send telemetry data")
 	}
