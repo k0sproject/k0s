@@ -16,11 +16,14 @@ limitations under the License.
 package controller
 
 import (
+	"context"
+	"math"
 	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -132,6 +135,15 @@ spec:
           effect: "NoSchedule"
       nodeSelector:
         beta.kubernetes.io/os: linux
+      # Prefer running coredns replicas on different nodes
+      affinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchExpressions:
+            - key: k8s-app
+              operator: In
+              values: ['kube-dns']
       containers:
       - name: coredns
         image: {{ .Image }}
@@ -222,6 +234,8 @@ spec:
     protocol: TCP
 `
 
+const HostsPerExtraReplica = 10.0
+
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
 	client        kubernetes.Interface
@@ -269,8 +283,6 @@ func (c *CoreDNS) Run() error {
 
 	c.tickerDone = make(chan struct{})
 
-	// TODO calculate replicas, max-surge etc. based on amount of nodes
-
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -315,8 +327,16 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		return coreDNSConfig{}, err
 	}
 
+	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		return coreDNSConfig{}, err
+	}
+
+	nodeCount := len(nodes.Items)
+	replicas := replicaCount(nodeCount)
+
 	config := coreDNSConfig{
-		Replicas:      1,
+		Replicas:      replicas,
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
 		Image:         c.clusterConfig.Spec.Images.CoreDNS.URI(),
@@ -324,6 +344,16 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 	}
 
 	return config, nil
+}
+
+// calculates an extra replica per 10 hosts
+func replicaCount(nodeCount int) int {
+	// always at least one so we get the coreDNS up-and running fast with the first node joining the cluster
+	if nodeCount <= 1 {
+		return 1
+	}
+	extraReplicas := int(math.Ceil(float64(nodeCount) / HostsPerExtraReplica))
+	return 1 + extraReplicas
 }
 
 // Stop stops the CoreDNS reconciler
