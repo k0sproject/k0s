@@ -1,7 +1,7 @@
 # Backup/Restore overview
 
-K0s has integrated support for backing up cluster state and configuration.
-The k0s backup utility is aiming to back up and restore k0s related parts of the cluster.
+k0s has integrated support for backing up cluster state and configuration.
+The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.
 
 The backups created by `k0s backup` command have following pieces of your cluster:
 - certificates (the content of the `<data-dir>/pki` directory)
@@ -29,7 +29,7 @@ The command provides backup archive using following naming convention:
 
 ```k0s_backup_<ISODatetimeString>.tar.gz```
 
-Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwrote.
+Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwritten.
 
 ## Restore
 
