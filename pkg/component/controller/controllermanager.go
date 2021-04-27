@@ -84,6 +84,7 @@ func (a *Manager) Run() error {
 		"cluster-cidr":                     a.ClusterConfig.Spec.Network.BuildPodCIDR(),
 		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.Address),
 		"profiling":                        "false",
+		"terminated-pod-gc-threshold":      "12500",
 		"v":                                a.LogLevel,
 	}
 

@@ -17,6 +17,7 @@ package controller
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -45,13 +46,13 @@ type APIServer struct {
 }
 
 var apiDefaultArgs = map[string]string{
-
 	"allow-privileged":                   "true",
-	"enable-admission-plugins":           "NodeRestriction",
 	"requestheader-extra-headers-prefix": "X-Remote-Extra-",
 	"requestheader-group-headers":        "X-Remote-Group",
 	"requestheader-username-headers":     "X-Remote-User",
 	"secure-port":                        "6443",
+	"anonymous-auth":                     "false",
+	"tls-cipher-suites":                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
 }
 
 const egressSelectorConfigTemplate = `
@@ -106,6 +107,7 @@ func (a *APIServer) Run() error {
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
+		"enable-admission-plugins":         "NodeRestriction,PodSecurityPolicy",
 	}
 
 	if a.EnableKonnectivity {
@@ -187,8 +189,27 @@ func (a *APIServer) Stop() error {
 
 // Health-check interface
 func (a *APIServer) Healthy() error {
+	// Load client cert so the api can authenitcate the request.
+	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
+	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+	// Load CA cert
+	caCert, err := ioutil.ReadFile(path.Join(a.K0sVars.CertRootDir, "ca.crt"))
+	if err != nil {
+		return err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	// Setup HTTPS client
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      caCertPool,
+	}
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get(fmt.Sprintf("https://localhost:%d/readyz?verbose", a.ClusterConfig.Spec.API.Port))
@@ -196,7 +217,6 @@ func (a *APIServer) Healthy() error {
 		return err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
@@ -204,6 +224,5 @@ func (a *APIServer) Healthy() error {
 		}
 		return fmt.Errorf("expected 200 for api server ready check, got %d", resp.StatusCode)
 	}
-
 	return nil
 }
