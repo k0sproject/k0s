@@ -40,6 +40,7 @@ func (p *TemplateWriter) Write() error {
 	if err != nil {
 		return fmt.Errorf("failed to open pod file for %s: %w", p.Name, err)
 	}
+	defer podFile.Close()
 	return p.WriteToBuffer(podFile)
 }
 
