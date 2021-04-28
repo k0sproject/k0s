@@ -79,8 +79,6 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see metrics ready")
 	s.Require().NoError(common.WaitForMetricsReady(cfg))
 
-	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(kc, pods.Items))
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
