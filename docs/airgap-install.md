@@ -13,7 +13,7 @@ You also need to have containerd CLI management tool `ctr` installed on the work
 
 #### 1. Create OCI bundle
 
-To create an OCI bundle, use the same computer architecture (x86-64, ARM64, ARMv7) as you'll have in the target system, because the OCI bundles are build specifically for certain architecture.
+To create an OCI bundle, use the same processor architecture (x86-64, ARM64, ARMv7) as on the target system, because the OCI bundles are built specifically for each architecture.
 
 k0s supports only uncompressed image bundles.
 
