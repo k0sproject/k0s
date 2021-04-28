@@ -423,6 +423,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../system-requirements/" class="md-nav__link">
+      System Requirements
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -569,18 +581,6 @@
   <li class="md-nav__item">
     <a href="../networking/" class="md-nav__link">
       Networking
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../system-requirements/" class="md-nav__link">
-      System Requirements
     </a>
   </li>
 
@@ -899,6 +899,7 @@ Please, refer to the <a href="../install/">getting started guide</a>.
 You also need to have containerd CLI management tool <code>ctr</code> installed on the worker machine. Please refer to the ContainerD <a href="https://containerd.io/docs/getting-started/">getting-started</a> guide.</p>
 <h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">#</a></h2>
 <h4 id="1-create-oci-bundle">1. Create OCI bundle<a class="headerlink" href="#1-create-oci-bundle" title="Permanent link">#</a></h4>
+<p>To create an OCI bundle, use the same processor architecture (x86-64, ARM64, ARMv7) as on the target system, because the OCI bundles are built specifically for each architecture.</p>
 <p>k0s supports only uncompressed image bundles.</p>
 <h5 id="11-using-docker">1.1 Using Docker<a class="headerlink" href="#11-using-docker" title="Permanent link">#</a></h5>
 <p>Use following commands to build OCI bundle by utilizing your docker environment. 
@@ -908,6 +909,8 @@ You also need to have containerd CLI management tool <code>ctr</code> installed 
 ## Create bundle
 # docker image save $(k0s airgap list-images | xargs) -o bundle_file
 </code></pre></div></p>
+<p><strong>Note:</strong>
+This Docker method doesn't currently work for the ARM architectures due to <a href="https://github.com/kubernetes/kubernetes/issues/98229">kube-proxy image multiarch manifest problem</a>. So, for the ARM architectures, use the method in step 1.2.</p>
 <h5 id="12-using-previously-set-up-k0s-worker">1.2 Using previously set up k0s worker<a class="headerlink" href="#12-using-previously-set-up-k0s-worker" title="Permanent link">#</a></h5>
 <p>To build OCI bundle with images we can utilize the fact that containerd pulls all images during the k0s worker normal bootstrap.
 Use following commands on the machine with previously installed k0s worker:</p>
@@ -972,13 +975,13 @@ During the start up k0s worker will import all bundles from the <code>$K0S_DATA_
           </a>
         
         
-          <a href="../manifests/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../system-requirements/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Manifest Bundles
+                System Requirements
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

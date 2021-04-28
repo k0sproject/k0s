@@ -36,6 +36,10 @@
      <lastmod>2021-04-28</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
+     <loc>https://docs.k0sproject.io/main/system-requirements/</loc>
+     <lastmod>2021-04-28</lastmod>
+     <changefreq>daily</changefreq>
+    </url><url>
      <loc>https://docs.k0sproject.io/main/manifests/</loc>
      <lastmod>2021-04-28</lastmod>
      <changefreq>daily</changefreq>
@@ -57,10 +61,6 @@
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.k0sproject.io/main/networking/</loc>
-     <lastmod>2021-04-28</lastmod>
-     <changefreq>daily</changefreq>
-    </url><url>
-     <loc>https://docs.k0sproject.io/main/system-requirements/</loc>
      <lastmod>2021-04-28</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
