@@ -147,18 +147,18 @@ func (h *HelmAddons) CrdControlLoop() {
 		},
 
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			old := oldObj.(*v1beta1.Chart)
-			new := newObj.(*v1beta1.Chart)
+			oldChart := oldObj.(*v1beta1.Chart)
+			newChart := newObj.(*v1beta1.Chart)
 
-			if old.Generation == new.Generation {
+			if oldChart.Generation == newChart.Generation {
 				return
 			}
 
-			if old.ObjectMeta.ResourceVersion == new.ObjectMeta.ResourceVersion {
+			if oldChart.ObjectMeta.ResourceVersion == newChart.ObjectMeta.ResourceVersion {
 				return
 			}
 
-			key, err := cache.MetaNamespaceKeyFunc(new)
+			key, err := cache.MetaNamespaceKeyFunc(newChart)
 			if err != nil {
 				h.L.WithError(err).Warning("can't build cache key for queue object")
 				return
@@ -256,10 +256,10 @@ func (h *HelmAddons) reconcile(objectID string) error {
 	if err != nil {
 		return fmt.Errorf("can't reconcile chart `%s`: %v", objectID, err)
 	}
-	var release *release.Release
+	var chartRelease *release.Release
 	if chart.Status.ReleaseName == "" {
-		// new release
-		release, err = h.helm.InstallChart(chart.Spec.ChartName,
+		// new chartRelease
+		chartRelease, err = h.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues())
@@ -268,7 +268,7 @@ func (h *HelmAddons) reconcile(objectID string) error {
 		}
 	} else {
 		// update
-		release, err = h.helm.UpgradeChart(chart.Spec.ChartName,
+		chartRelease, err = h.helm.UpgradeChart(chart.Spec.ChartName,
 			chart.Status.Version,
 			chart.Status.ReleaseName,
 			chart.Status.Namespace,
@@ -279,12 +279,12 @@ func (h *HelmAddons) reconcile(objectID string) error {
 		}
 	}
 
-	chart.Status.ReleaseName = release.Name
-	chart.Status.Version = release.Chart.Metadata.Version
-	chart.Status.AppVersion = release.Chart.AppVersion()
+	chart.Status.ReleaseName = chartRelease.Name
+	chart.Status.Version = chartRelease.Chart.Metadata.Version
+	chart.Status.AppVersion = chartRelease.Chart.AppVersion()
 	chart.Status.Updated = time.Now().String()
-	chart.Status.Revision = int64(release.Version)
-	chart.Status.Namespace = release.Namespace
+	chart.Status.Revision = int64(chartRelease.Version)
+	chart.Status.Namespace = chartRelease.Namespace
 	chart.Status.Error = ""
 	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(context.Background(), chart, metav1.UpdateOptions{})
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	analytics "github.com/segmentio/analytics-go"
+	"github.com/segmentio/analytics-go"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

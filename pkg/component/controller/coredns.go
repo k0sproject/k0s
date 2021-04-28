@@ -290,19 +290,19 @@ func (c *CoreDNS) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				config, err := c.getConfig()
+				cfg, err := c.getConfig()
 				if err != nil {
 					c.log.Errorf("error calculating coredns configs: %s. will retry", err.Error())
 					continue
 				}
-				if config == previousConfig {
-					c.log.Infof("current config matches existing, not gonna do anything")
+				if cfg == previousConfig {
+					c.log.Infof("current cfg matches existing, not gonna do anything")
 					continue
 				}
 				tw := util.TemplateWriter{
 					Name:     "coredns",
 					Template: coreDNSTemplate,
-					Data:     config,
+					Data:     cfg,
 					Path:     filepath.Join(corednsDir, "coredns.yaml"),
 				}
 				err = tw.Write()
@@ -310,7 +310,7 @@ func (c *CoreDNS) Run() error {
 					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error())
 					continue
 				}
-				previousConfig = config
+				previousConfig = cfg
 			case <-c.tickerDone:
 				c.log.Info("coredns reconciler done")
 				return

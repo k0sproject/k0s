@@ -26,7 +26,7 @@ import (
 )
 
 func cmdFlagsToArgs(cmd *cobra.Command) []string {
-	flagsAndVals := []string{}
+	var flagsAndVals []string
 	// Use visitor to collect all flags and vals into slice
 	cmd.Flags().Visit(func(f *pflag.Flag) {
 		val := f.Value.String()

@@ -43,7 +43,7 @@ func (a *Scheduler) Init() error {
 	var err error
 	a.uid, err = util.GetUID(constant.SchedulerUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("Running kube-scheduler as root: %w", err))
+		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, "kube-scheduler", constant.BinDirMode)
 }
@@ -67,7 +67,7 @@ func (a *Scheduler) Run() error {
 		}
 		args[name] = value
 	}
-	schedulerArgs := []string{}
+	var schedulerArgs []string
 	for name, value := range args {
 		schedulerArgs = append(schedulerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}

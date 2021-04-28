@@ -313,7 +313,7 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
 			return
 		}
 
@@ -321,11 +321,11 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 		if len(parts) == 2 {
 			token := parts[1]
 			if !c.isValidToken(token, role) {
-				sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+				sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
 				return
 			}
 		} else {
-			sendError(fmt.Errorf("Go away"), w, http.StatusUnauthorized)
+			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
 			return
 		}
 

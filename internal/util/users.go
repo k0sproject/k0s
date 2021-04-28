@@ -29,15 +29,6 @@ func GetUID(name string) (int, error) {
 	return strconv.Atoi(entry.Uid)
 }
 
-// GetGID returns gid of given groupname and logs a warning if its missing
-func GetGID(name string) (int, error) {
-	entry, err := user.LookupGroup(name)
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(entry.Gid)
-}
-
 func CheckIfUserExists(name string) (bool, error) {
 	_, err := user.Lookup(name)
 	if _, ok := err.(user.UnknownUserError); ok {

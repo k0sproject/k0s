@@ -126,7 +126,7 @@ func (a *Applier) Delete() error {
 }
 
 func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, error) {
-	resources := []*unstructured.Unstructured{}
+	var resources []*unstructured.Unstructured
 	for _, file := range files {
 		// TODO Probably better to pass in the file stream into decoder and not to read it fully to mem first
 		source, err := ioutil.ReadFile(file)

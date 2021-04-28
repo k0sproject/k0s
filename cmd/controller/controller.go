@@ -66,7 +66,7 @@ func NewControllerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
-				return fmt.Errorf("You can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
+				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
 			if len(c.TokenFile) > 0 {
 				bytes, err := ioutil.ReadFile(c.TokenFile)
@@ -174,7 +174,7 @@ func (c *CmdOpts) startController() error {
 			LogLevel:    c.Logging["etcd"],
 		}
 	default:
-		return fmt.Errorf("Invalid storage type: %s", c.ClusterConfig.Spec.Storage.Type)
+		return fmt.Errorf("invalid storage type: %s", c.ClusterConfig.Spec.Storage.Type)
 	}
 	logrus.Infof("Using storage backend %s", c.ClusterConfig.Spec.Storage.Type)
 	componentManager.Add(storageBackend)
@@ -293,17 +293,18 @@ func (c *CmdOpts) startController() error {
 	if err != nil {
 		return err
 	}
-	if err == nil {
-		perfTimer.Checkpoint("starting-reconcilers")
 
-		// Start all reconcilers
-		for name, reconciler := range reconcilers {
-			logrus.Infof("running reconciler: %s", name)
-			if err := reconciler.Run(); err != nil {
-				logrus.Errorf("failed to start reconciler: %s", err.Error())
-			}
+	perfTimer.Checkpoint("starting-reconcilers")
+
+	// Start all reconcilers
+	for name, reconciler := range reconcilers {
+		logrus.Infof("running reconciler: %s", name)
+		// TODO: check shadowing
+		if err = reconciler.Run(); err != nil {
+			logrus.Errorf("failed to start reconciler: %s", err.Error())
 		}
 	}
+
 	perfTimer.Checkpoint("started-reconcilers")
 
 	if err == nil && c.EnableWorker {
@@ -462,7 +463,7 @@ func (c *CmdOpts) existingCNIProvider() string {
 	return ""
 }
 
-func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
+func (c *CmdOpts) startControllerWorker(_ context.Context, profile string) error {
 	var bootstrapConfig string
 	if !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
@@ -481,12 +482,12 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
 			// 225 seconds here
 			tokenAge := time.Second * 225
-			config, err := token.CreateKubeletBootstrapConfig(c.ClusterConfig, c.K0sVars, "worker", tokenAge)
+			cfg, err := token.CreateKubeletBootstrapConfig(c.ClusterConfig, c.K0sVars, "worker", tokenAge)
 
 			if err != nil {
 				return err
 			}
-			bootstrapConfig = config
+			bootstrapConfig = cfg
 			return nil
 		})
 		if err != nil {
@@ -499,5 +500,6 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	// token and possibly other args
 	workerCmdOpts := *(*workercmd.CmdOpts)(c)
 	workerCmdOpts.TokenArg = bootstrapConfig
+	workerCmdOpts.WorkerProfile = profile
 	return workerCmdOpts.StartWorker()
 }

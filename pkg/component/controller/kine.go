@@ -45,7 +45,7 @@ func (k *Kine) Init() error {
 	var err error
 	k.uid, err = util.GetUID(constant.KineUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("Running kine as root: %w", err))
+		logrus.Warning(fmt.Errorf("running kine as root: %w", err))
 	}
 
 	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)

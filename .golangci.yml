@@ -18,3 +18,5 @@ linters-settings:
   gofmt:
     # simplify code: gofmt with `-s` option, true by default
     simplify: false
+  golint:
+    min-confidence: 0

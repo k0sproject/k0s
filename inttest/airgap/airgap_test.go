@@ -72,7 +72,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	})
 	s.NoError(err)
 	imagesUsed := 0
-	pulledImagesMessages := []string{}
+	var pulledImagesMessages []string
 	for _, event := range events.Items {
 		if event.Source.Component == "kubelet" && event.Reason == "Pulled" {
 			// We're interested only in image pull events

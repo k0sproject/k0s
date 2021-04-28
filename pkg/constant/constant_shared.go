@@ -6,9 +6,8 @@ import (
 	"runtime"
 )
 
-// WinCertCA defines the CA.crt location.
+// WinDataDirDefault default data-dir for windows
 // this one is defined here because it is used not only on windows worker but also during the control plane bootstrap
-const WinCertCA = "C:\\var\\lib\\k0s\\pki\\ca.crt"
 const WinDataDirDefault = "C:\\var\\lib\\k0s"
 
 const (
@@ -34,8 +33,6 @@ const (
 	PidFileMode = 0644
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0755
-	// KubeletVolumePlugindDirMode is the expected directory permissions for KubeleteVolumePluginDir
-	KubeletVolumePluginDirMode = 0700
 
 	// User accounts for services
 

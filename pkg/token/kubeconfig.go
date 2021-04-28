@@ -55,7 +55,7 @@ func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars c
 	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 	caCert, err := ioutil.ReadFile(crtFile)
 	if err != nil {
-		return "", fmt.Errorf("failed to read cluster ca certificate from %s: %w. is the control plane initialized on this node?", crtFile, err)
+		return "", fmt.Errorf("failed to read cluster ca certificate from %s: %w. check if the control plane is initialized on this node", crtFile, err)
 	}
 	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
 	if err != nil {

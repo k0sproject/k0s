@@ -18,7 +18,7 @@ package common
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
-	ssh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"os"
 	"strings"

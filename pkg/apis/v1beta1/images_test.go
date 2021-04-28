@@ -22,7 +22,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {

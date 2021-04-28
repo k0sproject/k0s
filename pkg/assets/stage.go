@@ -101,11 +101,11 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("Failed to find embedded file position for %s: %w", name, err)
+		return fmt.Errorf("failed to find embedded file position for %s: %w", name, err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return fmt.Errorf("Failed to create gzip reader for %s: %w", name, err)
+		return fmt.Errorf("failed to create gzip reader for %s: %w", name, err)
 	}
 
 	logrus.Debug("Writing static file: ", p)
@@ -114,7 +114,7 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 		return err
 	}
 	if err := os.Chmod(p, 0550); err != nil {
-		return fmt.Errorf("Failed to chmod %s: %w", name, err)
+		return fmt.Errorf("failed to chmod %s: %w", name, err)
 	}
 	return nil
 }
@@ -126,9 +126,6 @@ func copyTo(p string, gz io.Reader) error {
 		return fmt.Errorf("failed to create %s: %w", p, err)
 	}
 	defer f.Close()
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", p, err)
-	}
 	_, err = io.Copy(f, gz)
 	if err != nil {
 		return fmt.Errorf("failed to write to %s: %w", p, err)

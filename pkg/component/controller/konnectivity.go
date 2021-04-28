@@ -62,7 +62,7 @@ func (k *Konnectivity) Init() error {
 	var err error
 	k.uid, err = util.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("Running konnectivity as root: %v", err))
+		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
 	}
 	err = util.InitDirectory(k.K0sVars.KonnectivitySocketDir, 0755)
 	if err != nil {

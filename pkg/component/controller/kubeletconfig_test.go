@@ -66,7 +66,7 @@ func Test_KubeletConfig(t *testing.T) {
 
 		t.Run("final_output_must_have_manifests_for_profiles", func(t *testing.T) {
 			// check that each profile has config map, role and role binding
-			resourceNamesForRole := []string{}
+			var resourceNamesForRole []string
 			for idx, profileName := range []string{"default", "default-windows", "profile_XXX", "profile_YYY"} {
 				fullName := "kubelet-config-" + profileName + "-1.21"
 				resourceNamesForRole = append(resourceNamesForRole, formatProfileName(profileName))
@@ -154,7 +154,7 @@ func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 	dst = v1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "Role", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
-	currentResourceNames := []string{}
+	var currentResourceNames []string
 	for _, el := range dst["rules"].([]interface{})[0].(map[string]interface{})["resourceNames"].([]interface{}) {
 		currentResourceNames = append(currentResourceNames, el.(string))
 	}

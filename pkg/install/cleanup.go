@@ -104,7 +104,7 @@ func GetRoleByStagedKubelet(binPath string) string {
 
 func (c *CleanUpConfig) workerPreFlightChecks() error {
 	if !util.IsDirectory(c.dataDir) {
-		return fmt.Errorf("failed to find %v. was this node provisioned?", c.dataDir)
+		return fmt.Errorf("failed to find directory `%v`, check if the node is provisioned", c.dataDir)
 	}
 	return nil
 }

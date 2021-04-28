@@ -206,7 +206,7 @@ func getDefaultProfile(dnsAddress string, volumePluginDir string, dualStack bool
 			"TLS_RSA_WITH_AES_128_GCM_SHA256",
 		},
 		"volumeStatsAggPeriod": "0s",
-		"volumePluginDir":      "{{.VolumePluginDir}}",
+		"volumePluginDir":      volumePluginDir,
 		"failSwapOn":           false,
 		"rotateCertificates":   true,
 		"serverTLSBootstrap":   true,

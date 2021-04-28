@@ -84,7 +84,7 @@ func (c *Client) AddMember(ctx context.Context, name, peerAddress string) ([]str
 
 	newID := addResp.Member.ID
 
-	memberList := []string{}
+	var memberList []string
 	for _, m := range addResp.Members {
 		memberName := m.Name
 		if m.ID == newID {

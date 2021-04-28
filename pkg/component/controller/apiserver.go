@@ -76,7 +76,7 @@ func (a *APIServer) Init() error {
 	var err error
 	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("Running kube-apiserver as root: %w", err))
+		logrus.Warning(fmt.Errorf("running kube-apiserver as root: %w", err))
 	}
 	return assets.Stage(a.K0sVars.BinDir, "kube-apiserver", constant.BinDirMode)
 }
@@ -135,7 +135,7 @@ func (a *APIServer) Run() error {
 	if a.ClusterConfig.Spec.API.ExternalAddress != "" {
 		args["endpoint-reconciler-type"] = "none"
 	}
-	apiServerArgs := []string{}
+	var apiServerArgs []string
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
 	}

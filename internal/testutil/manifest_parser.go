@@ -8,7 +8,7 @@ import (
 )
 
 func ParseManifests(data []byte) ([]*unstructured.Unstructured, error) {
-	resources := []*unstructured.Unstructured{}
+	var resources []*unstructured.Unstructured
 
 	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), 4096)
 	var resource map[string]interface{}
