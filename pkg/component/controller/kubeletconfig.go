@@ -81,9 +81,8 @@ func (k *KubeletConfig) Run() error {
 
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
-	volumePluginDir := k.k0sVars.KubeletVolumePluginDir
-	defaultProfile := getDefaultProfile(dnsAddress, volumePluginDir, k.clusterSpec.Network.DualStack.Enabled)
-	winDefaultProfile := getDefaultProfile(dnsAddress, volumePluginDir, k.clusterSpec.Network.DualStack.Enabled)
+	defaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
+	winDefaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
@@ -95,7 +94,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 		formatProfileName("default-windows"),
 	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress, volumePluginDir, false) // Do not add dualstack feature gate to the custom profiles
+		profileConfig := getDefaultProfile(dnsAddress, false) // Do not add dualstack feature gate to the custom profiles
 		merged, err := mergeProfiles(&profileConfig, profile.Values)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
@@ -167,10 +166,12 @@ func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []stri
 	return tw.WriteToBuffer(w)
 }
 
-func getDefaultProfile(dnsAddress string, volumePluginDir string, dualStack bool) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string, dualStack bool) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
+
+	// for the authentication.x509.clientCAFile and volumePluginDir we want to use later binding so we put template placeholder instead of actual value there
 	profile := unstructuredYamlObject{
 		"apiVersion": "kubelet.config.k8s.io/v1beta1",
 		"kind":       "KubeletConfiguration",
@@ -183,7 +184,7 @@ func getDefaultProfile(dnsAddress string, volumePluginDir string, dualStack bool
 				"enabled":  true,
 			},
 			"x509": map[string]interface{}{
-				"clientCAFile": "{{.ClientCAFile}}",
+				"clientCAFile": "{{.ClientCAFile}}", // see line 174 explanation
 			},
 		},
 		"authorization": map[string]interface{}{
@@ -206,7 +207,7 @@ func getDefaultProfile(dnsAddress string, volumePluginDir string, dualStack bool
 			"TLS_RSA_WITH_AES_128_GCM_SHA256",
 		},
 		"volumeStatsAggPeriod": "0s",
-		"volumePluginDir":      volumePluginDir,
+		"volumePluginDir":      "{{.VolumePluginDir}}", // see line 174 explanation
 		"failSwapOn":           false,
 		"rotateCertificates":   true,
 		"serverTLSBootstrap":   true,
