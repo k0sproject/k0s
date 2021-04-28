@@ -137,19 +137,11 @@ func ConfigFromFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, 
 	return configFromString(string(buf), k0sVars)
 }
 
-func isInputFromPipe() bool {
-	fi, _ := os.Stdin.Stat()
-	return fi.Mode()&os.ModeCharDevice == 0
-}
-
 // ConfigFromStdin tries to read k0s.yaml config from stdin
 func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
-	if !isInputFromPipe() {
-		return nil, fmt.Errorf("can't read configuration from stdin")
-	}
 	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}
 	return configFromString(string(input), k0sVars)
 
