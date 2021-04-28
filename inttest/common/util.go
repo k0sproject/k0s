@@ -2,8 +2,10 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -64,5 +66,26 @@ func WaitForPod(kc *kubernetes.Clientset, name string) error {
 		}
 
 		return ds.Status.Phase == "Running", nil
+	})
+}
+
+// WaitForPodLogs picks the first Ready pod from the list of pods and gets the logs of it
+func WaitForPodLogs(kc *kubernetes.Clientset, pods []corev1.Pod) error {
+	var readyPod *corev1.Pod
+	for _, p := range pods {
+		if p.Status.Phase == "Running" {
+			readyPod = &p
+		}
+	}
+	if readyPod == nil {
+		return fmt.Errorf("could not find ANY pod that is in Ready state")
+	}
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		_, err = kc.CoreV1().Pods(readyPod.Namespace).GetLogs(readyPod.Name, &corev1.PodLogOptions{Container: readyPod.Spec.Containers[0].Name}).Stream(context.Background())
+		if err != nil {
+			return false, nil
+		}
+
+		return true, nil
 	})
 }
