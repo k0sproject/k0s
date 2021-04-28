@@ -51,6 +51,11 @@ type Kubelet struct {
 	ExtraArgs           string
 }
 
+type kubeletConfig struct {
+	ClientCAFile    string
+	VolumePluginDir string
+}
+
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
 	cmd := "kubelet"
@@ -172,10 +177,18 @@ func (k *Kubelet) Run() error {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
 		}
-
-		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), constant.CertSecureMode)
+		tw := util.TemplateWriter{
+			Name:     "kubelet-config",
+			Template: kubeletconfig,
+			Data: kubeletConfig{
+				ClientCAFile:    filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
+				VolumePluginDir: k.K0sVars.KubeletVolumePluginDir,
+			},
+			Path: kubeletConfigPath,
+		}
+		err = tw.Write()
 		if err != nil {
-			return fmt.Errorf("failed to write kubelet config to disk: %w", err)
+			return fmt.Errorf("failed to write kubelet config: %w", err)
 		}
 
 		return nil

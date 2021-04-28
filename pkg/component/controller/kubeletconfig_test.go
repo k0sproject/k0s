@@ -16,7 +16,6 @@ limitations under the License.
 package controller
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -33,7 +32,6 @@ var k0sVars = constant.GetConfig("")
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
 	volumePluginDir := k0sVars.KubeletVolumePluginDir
-	clientCAFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 
 	t.Run("default_profile_only", func(t *testing.T) {
 		k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
@@ -43,8 +41,8 @@ func Test_KubeletConfig(t *testing.T) {
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		t.Run("output_must_have_3_manifests", func(t *testing.T) {
 			require.Len(t, manifestYamls, 4, "Must have exactly 4 generated manifests per profile")
-			requireConfigMap(t, manifestYamls[0], "kubelet-config-default-1.20")
-			requireConfigMap(t, manifestYamls[1], "kubelet-config-default-windows-1.20")
+			requireConfigMap(t, manifestYamls[0], "kubelet-config-default-1.21")
+			requireConfigMap(t, manifestYamls[1], "kubelet-config-default-windows-1.21")
 			requireRole(t, manifestYamls[2], []string{
 				formatProfileName("default"),
 				formatProfileName("default-windows"),
@@ -53,7 +51,7 @@ func Test_KubeletConfig(t *testing.T) {
 		})
 	})
 	t.Run("default_profile_must_have_feature_gates_if_dualstack_setup", func(t *testing.T) {
-		profile := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, true)
+		profile := getDefaultProfile(dnsAddr, volumePluginDir, true)
 		require.Equal(t, map[string]bool{
 			"IPv6DualStack": true,
 		}, profile["featureGates"])
@@ -70,7 +68,7 @@ func Test_KubeletConfig(t *testing.T) {
 			// check that each profile has config map, role and role binding
 			resourceNamesForRole := []string{}
 			for idx, profileName := range []string{"default", "default-windows", "profile_XXX", "profile_YYY"} {
-				fullName := "kubelet-config-" + profileName + "-1.20"
+				fullName := "kubelet-config-" + profileName + "-1.21"
 				resourceNamesForRole = append(resourceNamesForRole, formatProfileName(profileName))
 				requireConfigMap(t, manifestYamls[idx], fullName)
 			}
@@ -90,12 +88,12 @@ func Test_KubeletConfig(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal([]byte(manifestYamls[3]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, false)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, volumePluginDir, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, clientCAFile, volumePluginDir, false)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, volumePluginDir, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 

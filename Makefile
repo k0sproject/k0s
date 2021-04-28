@@ -42,7 +42,7 @@ go_bindata := go get github.com/kevinburke/go-bindata/...@v3.22.0 && "${GOPATH}/
 endif
 
 GOLANG_IMAGE = golang:1.16-alpine
-GO = GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
+GO ?= GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
@@ -103,14 +103,13 @@ lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run ./...
 
 .PHONY: $(smoketests)
+check-airgap: image-bundle/bundle.tar
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
 
 .PHONY: smoketests
 smoketests:  $(smoketests)
 
-check-airgap: image-bundle/bundle.tar k0s
-	$(MAKE) -C inttest check-airgap
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go

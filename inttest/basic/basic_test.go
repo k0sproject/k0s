@@ -24,6 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	capi "k8s.io/api/certificates/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -36,7 +37,10 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
 	s.NoError(s.InitController(0, dataDirOpt))
-	s.NoError(s.RunWorkers(dataDirOpt, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
+
+	token, err := s.GetJoinToken("worker", dataDirOpt)
+	s.NoError(err)
+	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
@@ -75,6 +79,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	s.T().Log("waiting to see metrics ready")
 	s.Require().NoError(common.WaitForMetricsReady(cfg))
+
+	_, err = kc.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{}).Stream(context.Background())
+	s.Require().NoError(err)
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
