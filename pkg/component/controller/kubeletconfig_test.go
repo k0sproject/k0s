@@ -31,7 +31,6 @@ var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
-	volumePluginDir := k0sVars.KubeletVolumePluginDir
 
 	t.Run("default_profile_only", func(t *testing.T) {
 		k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
@@ -51,7 +50,7 @@ func Test_KubeletConfig(t *testing.T) {
 		})
 	})
 	t.Run("default_profile_must_have_feature_gates_if_dualstack_setup", func(t *testing.T) {
-		profile := getDefaultProfile(dnsAddr, volumePluginDir, true)
+		profile := getDefaultProfile(dnsAddr, true)
 		require.Equal(t, map[string]bool{
 			"IPv6DualStack": true,
 		}, profile["featureGates"])
@@ -66,7 +65,7 @@ func Test_KubeletConfig(t *testing.T) {
 
 		t.Run("final_output_must_have_manifests_for_profiles", func(t *testing.T) {
 			// check that each profile has config map, role and role binding
-			resourceNamesForRole := []string{}
+			var resourceNamesForRole []string
 			for idx, profileName := range []string{"default", "default-windows", "profile_XXX", "profile_YYY"} {
 				fullName := "kubelet-config-" + profileName + "-1.21"
 				resourceNamesForRole = append(resourceNamesForRole, formatProfileName(profileName))
@@ -88,12 +87,12 @@ func Test_KubeletConfig(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal([]byte(manifestYamls[3]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, volumePluginDir, false)
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, volumePluginDir, false)
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, false)
 			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 
@@ -154,7 +153,7 @@ func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 	dst = v1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "Role", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
-	currentResourceNames := []string{}
+	var currentResourceNames []string
 	for _, el := range dst["rules"].([]interface{})[0].(map[string]interface{})["resourceNames"].([]interface{}) {
 		currentResourceNames = append(currentResourceNames, el.(string))
 	}

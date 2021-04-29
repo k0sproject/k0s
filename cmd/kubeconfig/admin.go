@@ -50,7 +50,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 				newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
 				os.Stdout.Write([]byte(newContent))
 			} else {
-				return fmt.Errorf("failed to read admin config, is the control plane initialized on this node?")
+				return fmt.Errorf("failed to read admin config, check if the control plane is initialized on this node")
 			}
 			return nil
 		},

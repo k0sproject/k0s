@@ -99,7 +99,7 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 	return nil
 }
 
-func preRunValidateConfig(cmd *cobra.Command, args []string) error {
+func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
 	if err != nil {

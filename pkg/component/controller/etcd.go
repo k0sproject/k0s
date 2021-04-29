@@ -57,13 +57,13 @@ func (e *Etcd) Init() error {
 	var err error
 
 	if err = detectUnsupportedEtcdArch(); err != nil {
-		logrus.Error(fmt.Errorf("Missing environment variable: %w", err))
+		logrus.Error(fmt.Errorf("missing environment variable: %w", err))
 		return err
 	}
 
 	e.uid, err = util.GetUID(constant.EtcdUser)
 	if err != nil {
-		logrus.Warning(fmt.Errorf("Running etcd as root: %w", err))
+		logrus.Warning(fmt.Errorf("running etcd as root: %w", err))
 	}
 
 	err = util.InitDirectory(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/

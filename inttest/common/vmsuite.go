@@ -58,6 +58,7 @@ func (s *VMSuite) GetConfig() {
 	tfDataFile, err := os.Open("../terraform/test-cluster/out.json")
 	if err != nil {
 		s.T().Logf("failed to read terraform output: %s", err.Error())
+		return
 	}
 	defer tfDataFile.Close()
 

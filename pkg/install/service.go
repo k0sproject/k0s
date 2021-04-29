@@ -30,12 +30,12 @@ var (
 
 type program struct{}
 
-func (p *program) Start(s service.Service) error {
+func (p *program) Start(service.Service) error {
 	// Start should not block. Do the actual work async.
 	return nil
 }
 
-func (p *program) Stop(s service.Service) error {
+func (p *program) Stop(service.Service) error {
 	// Stop should not block. Return with a few seconds.
 	return nil
 }

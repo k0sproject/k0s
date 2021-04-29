@@ -29,7 +29,7 @@ func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 	l.callbacks = append(l.callbacks, fn)
 }
 
-func (l *DummyLeaderElector) AddLostLeaseCallback(fn func()) {}
+func (l *DummyLeaderElector) AddLostLeaseCallback(func()) {}
 
 func (l *DummyLeaderElector) Run() error {
 	if !l.Leader {

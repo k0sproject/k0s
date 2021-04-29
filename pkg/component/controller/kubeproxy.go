@@ -70,19 +70,19 @@ func (k *KubeProxy) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				config, err := k.getConfig()
+				cfg, err := k.getConfig()
 				if err != nil {
 					k.log.Errorf("error calculating proxy configs: %s. will retry", err.Error())
 					continue
 				}
-				if config == previousConfig {
-					k.log.Infof("current config matches existing, not gonna do anything")
+				if cfg == previousConfig {
+					k.log.Infof("current cfg matches existing, not gonna do anything")
 					continue
 				}
 				tw := util.TemplateWriter{
 					Name:     "kube-proxy",
 					Template: proxyTemplate,
-					Data:     config,
+					Data:     cfg,
 					Path:     filepath.Join(proxyDir, "kube-proxy.yaml"),
 				}
 				err = tw.Write()
@@ -90,7 +90,7 @@ func (k *KubeProxy) Run() error {
 					k.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error())
 					continue
 				}
-				previousConfig = config
+				previousConfig = cfg
 			case <-k.tickerDone:
 				k.log.Info("proxy reconciler done")
 				return
@@ -110,7 +110,7 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) getConfig() (proxyConfig, error) {
-	config := proxyConfig{
+	cfg := proxyConfig{
 		// FIXME get this from somewhere
 		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
@@ -119,7 +119,7 @@ func (k *KubeProxy) getConfig() (proxyConfig, error) {
 		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 type proxyConfig struct {

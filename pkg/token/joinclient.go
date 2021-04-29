@@ -86,7 +86,7 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 	}
 	logrus.Info("got valid CA response")
 	if resp.Body == nil {
-		return caData, fmt.Errorf("response body was nil !?!?")
+		return caData, fmt.Errorf("response body is nil")
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

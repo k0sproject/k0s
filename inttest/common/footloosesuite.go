@@ -92,7 +92,7 @@ func (s *FootlooseSuite) SetupSuite() {
 	s.keyDir = dir
 	s.footlooseConfig = s.createConfig()
 
-	cluster, err := cluster.New(s.footlooseConfig)
+	suiteCluster, err := cluster.New(s.footlooseConfig)
 
 	if err != nil {
 		s.T().Logf("ERROR: failed to load footloose config: %s", err.Error())
@@ -101,14 +101,14 @@ func (s *FootlooseSuite) SetupSuite() {
 	}
 
 	// we first try to delete instances from previous runs, if they happen to exists
-	_ = cluster.Delete()
-	err = cluster.Create()
+	_ = suiteCluster.Delete()
+	err = suiteCluster.Create()
 	if err != nil {
-		s.FailNowf("failed to create footloose cluster: %s", err.Error())
+		s.FailNowf("failed to create footloose suiteCluster: %s", err.Error())
 		s.T().FailNow()
 		return
 	}
-	s.Cluster = cluster
+	s.Cluster = suiteCluster
 	if s.WithLB {
 		go s.startHAProxy()
 	}
@@ -503,17 +503,14 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
 	s.Require().NoError(err)
 
-	url, err := url.Parse(cfg.Host)
+	hostURL, err := url.Parse(cfg.Host)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Host, err)
 	}
-	port, err := strconv.ParseInt(url.Port(), 10, 32)
+	port, err := strconv.ParseInt(hostURL.Port(), 10, 32)
 
 	if err != nil {
-		return nil, fmt.Errorf("can't parse port value `%s`: %w", url.Port(), err)
-	}
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't parse port value `%s`: %w", hostURL.Port(), err)
 	}
 	hostPort, err := machine.HostPort(int(port))
 	if err != nil {
@@ -597,7 +594,7 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 func (s *FootlooseSuite) WaitJoinAPI(node string) error {
 	s.T().Logf("waiting for join api to start on node %s", node)
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		joinAPIStatus, err := s.GetHTTPStatus(node, s.K0sAPIExternalPort, "/v1beta1/ca")
+		joinAPIStatus, err := s.GetHTTPStatus(node, "/v1beta1/ca")
 		if err != nil {
 			return false, nil
 		}
@@ -613,7 +610,7 @@ func (s *FootlooseSuite) WaitJoinAPI(node string) error {
 	})
 }
 
-func (s *FootlooseSuite) GetHTTPStatus(node string, port int, path string) (int, error) {
+func (s *FootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
 	m, err := s.MachineForName(node)
 	if err != nil {
 		return 0, err
@@ -627,8 +624,8 @@ func (s *FootlooseSuite) GetHTTPStatus(node string, port int, path string) (int,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	url := fmt.Sprintf("https://localhost:%d/%s", joinPort, path)
-	resp, err := client.Get(url)
+	checkURL := fmt.Sprintf("https://localhost:%d/%s", joinPort, path)
+	resp, err := client.Get(checkURL)
 	if err != nil {
 		return 0, err
 	}

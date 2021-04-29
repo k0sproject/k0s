@@ -75,7 +75,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			log.Level = log.LevelFatal
 
 			if len(args) == 0 {
-				return fmt.Errorf("Username is mandatory")
+				return fmt.Errorf("username is mandatory")
 			}
 			var username = args[0]
 			c := CmdOpts(config.GetCmdOpts())
@@ -86,7 +86,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
-				return fmt.Errorf("failed to read cluster ca certificate: %w, is the control plane initialized on this node?", err)
+				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
 			}
 			caCertPath, caCertKey := path.Join(c.K0sVars.CertRootDir, "ca.crt"), path.Join(c.K0sVars.CertRootDir, "ca.key")
 			userReq := certificate.Request{

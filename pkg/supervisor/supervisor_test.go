@@ -47,13 +47,13 @@ func TestSupervisor(t *testing.T) {
 	for _, s := range testSupervisors {
 		err := s.proc.Supervise()
 		if err != nil && !s.shouldFail {
-			t.Errorf("Failed to start %s: %w", s.proc.Name, err)
+			t.Errorf("Failed to start %s: %v", s.proc.Name, err)
 		} else if err == nil && s.shouldFail {
 			t.Errorf("%s should fail but didn't", s.proc.Name)
 		}
 		err = s.proc.Stop()
 		if err != nil {
-			t.Errorf("Failed to stop %s: %w", s.proc.Name, err)
+			t.Errorf("Failed to stop %s: %v", s.proc.Name, err)
 		}
 	}
 }

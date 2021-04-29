@@ -164,7 +164,7 @@ func (a *CSRApprover) approveCSR() error {
 					return fmt.Errorf("error updating approval for csr: %v", err)
 				}
 			} else {
-				return fmt.Errorf("SubjectAccessReview failed")
+				return fmt.Errorf("failed to perform SubjectAccessReview")
 			}
 			return nil
 		}

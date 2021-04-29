@@ -135,7 +135,7 @@ func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
 			}
 		}
 	}
-	return fmt.Errorf("No CSRs have been approved")
+	return fmt.Errorf("no CSRs have been approved")
 }
 
 func isCSRApproved(csr capi.CertificateSigningRequest) bool {

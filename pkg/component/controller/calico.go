@@ -140,13 +140,13 @@ func (c *Calico) Run() error {
 }
 
 func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig {
-	config, err := c.getConfig()
+	cfg, err := c.getConfig()
 	if err != nil {
 		c.log.Errorf("error calculating calico configs: %s. will retry", err.Error())
 		return nil
 	}
-	if config == previousConfig {
-		c.log.Infof("current config matches existing, not gonna do anything")
+	if cfg == previousConfig {
+		c.log.Infof("current cfg matches existing, not gonna do anything")
 		return nil
 	}
 
@@ -186,14 +186,14 @@ func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig
 			tw := util.TemplateWriter{
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
-				Data:     config,
+				Data:     cfg,
 			}
 			tryAndLog(manifestName, tw.WriteToBuffer(output))
 			tryAndLog(manifestName, c.saver.Save(manifestName, output.Bytes()))
 		}
 	}
 
-	return &config
+	return &cfg
 }
 
 func (c *Calico) getConfig() (calicoConfig, error) {

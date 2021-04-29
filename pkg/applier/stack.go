@@ -64,7 +64,7 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 
 	log.Debugf("applying with %d resources", len(s.Resources))
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
-	sortedResources := []*unstructured.Unstructured{}
+	var sortedResources []*unstructured.Unstructured
 	for _, resource := range s.Resources {
 		if resource.GetNamespace() == "" {
 			sortedResources = append(sortedResources, resource)
@@ -133,7 +133,7 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 }
 
 func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
-	namespaces := []string{}
+	var namespaces []string
 	nsGroupVersionResource := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 	nsList, err := s.Client.Resource(nsGroupVersionResource).List(ctx, metav1.ListOptions{})
 	if apiErrors.IsForbidden(err) {
@@ -194,7 +194,7 @@ var ignoredResources = []string{"v1:Endpoints"}
 func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]*unstructured.Unstructured, error) {
 	log := logrus.WithField("stack", s.Name)
 
-	pruneableResources := []*unstructured.Unstructured{}
+	var pruneableResources []*unstructured.Unstructured
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
 		// Client-Go emits an error when an API service is registered but unimplemented.
@@ -278,7 +278,7 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 }
 
 func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind, namespaces []string) []*unstructured.Unstructured {
-	pruneableResources := []*unstructured.Unstructured{}
+	var pruneableResources []*unstructured.Unstructured
 	groupKind := schema.GroupKind{
 		Group: groupVersionKind.Group,
 		Kind:  groupVersionKind.Kind,
@@ -307,7 +307,7 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 }
 
 func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []*unstructured.Unstructured {
-	pruneableResources := []*unstructured.Unstructured{}
+	var pruneableResources []*unstructured.Unstructured
 	listOpts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", NameLabel, s.Name),
 	}
