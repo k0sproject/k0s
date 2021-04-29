@@ -141,7 +141,7 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 		return v1beta1.DefaultClusterConfig(k0sVars), nil
 	}
 	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
-	return v1beta1.FromYamlFile(configFromBackup, k0sVars)
+	return v1beta1.ConfigFromFile(configFromBackup, k0sVars)
 }
 
 // NewBackupManager builds new manager
