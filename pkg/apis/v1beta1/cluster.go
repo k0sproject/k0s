@@ -17,8 +17,8 @@ package v1beta1
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
+	"os"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	"gopkg.in/yaml.v2"
@@ -127,28 +127,27 @@ func validateSpecs(v Validateable) []error {
 	return v.Validate()
 }
 
-// FromYamlFile ...
-func FromYamlFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
+// ConfigFromFile ...
+func ConfigFromFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
 
-	return FromYamlString(string(buf), k0sVars)
+	return configFromString(string(buf), k0sVars)
 }
 
-// FromYamlPipe
-func FromYamlPipe(r io.Reader, k0sVars constant.CfgVars) (*ClusterConfig, error) {
-	input, err := ioutil.ReadAll(r)
+// ConfigFromStdin tries to read k0s.yaml config from stdin
+func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
+	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}
-	return FromYamlString(string(input), k0sVars)
+	return configFromString(string(input), k0sVars)
 
 }
 
-// FromYamlString
-func FromYamlString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
+func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	config := &ClusterConfig{k0sVars: k0sVars}
 	err := yaml.UnmarshalStrict([]byte(yml), &config)
 	if err != nil {
