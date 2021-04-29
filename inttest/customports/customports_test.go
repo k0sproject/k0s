@@ -24,7 +24,6 @@ import (
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 )
@@ -134,6 +133,6 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	ds.Require().NoError(common.WaitForDaemonSet(kc, "konnectivity-agent"), "konnectivity-agent did not start")
 	ds.Require().NoError(common.WaitForPod(kc, pods.Items[0].Name), "Pod %s did not start", pods.Items[0].Name)
 
-	_, err = kc.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{}).Stream(context.Background())
-	ds.Require().NoError(err)
+	ds.T().Log("waiting to get logs from pods")
+	ds.Require().NoError(common.WaitForPodLogs(kc, pods.Items))
 }
