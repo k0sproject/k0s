@@ -77,7 +77,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset
+        id: upload-release-asset-images
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
@@ -209,7 +209,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset
+        id: upload-release-asset-images
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
@@ -260,7 +260,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Bundle
-        id: upload-release-asset
+        id: upload-release-asset-images
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
