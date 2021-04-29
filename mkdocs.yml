@@ -41,6 +41,7 @@ nav:
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
       - Uninstall the k0s Cluster:        k0s-reset.md
+      - Backup/Restore:                   backup.md
       - CIS Benchmark:                    cis_benchmark.md
   - FAQ: FAQ.md
   - Troubleshooting: troubleshooting.md

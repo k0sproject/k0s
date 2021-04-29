@@ -13,15 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package util
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
-
-	"github.com/sirupsen/logrus"
 )
 
 // FileExists checks if a file exists and is not a directory before we
@@ -32,6 +33,15 @@ func FileExists(fileName string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+// DirExists checks if a directory exists before we try using it
+func DirExists(dirName string) bool {
+	info, err := os.Stat(dirName)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
 }
 
 // CheckPathPermissions checks the correct permissions are for a path (file or directory)
@@ -51,7 +61,7 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 	return nil
 }
 
-// Find the path for a given file (similar to `which`)
+// GetExecPath find the path for a given file (similar to `which`)
 func GetExecPath(fileName string) (*string, error) {
 	path, err := exec.LookPath(fileName)
 	if err != nil {
@@ -61,6 +71,7 @@ func GetExecPath(fileName string) (*string, error) {
 	return &path, nil
 }
 
+// ChownFile changes file mode
 func ChownFile(file, owner string, permissions os.FileMode) error {
 	// Chown the file properly for the owner
 	uid, _ := GetUID(owner)
@@ -72,6 +83,38 @@ func ChownFile(file, owner string, permissions os.FileMode) error {
 	if err != nil && os.Geteuid() == 0 {
 		return err
 	}
+	return nil
+}
 
+// FileCopy copies file from src to dst
+func FileCopy(src, dst string) error {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file", src)
+	}
+
+	input, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("error reading source file (%v): %v", src, err)
+	}
+
+	err = ioutil.WriteFile(dst, input, sourceFileStat.Mode())
+	if err != nil {
+		return fmt.Errorf("error writing destination file (%v): %v", dst, err)
+	}
+	return nil
+}
+
+// DirCopy copies the content of a folder
+func DirCopy(src string, dst string) error {
+	cmd := exec.Command("cp", "-r", src, dst)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 	return nil
 }
