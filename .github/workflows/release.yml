@@ -87,6 +87,14 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
       
+      - name: Prepare tags
+        id: prep
+        # Basically just replace the '+' with '-' as '+' is not allowed in tags
+        run: |
+          TAGS=${{ needs.release.outputs.tag_name }}
+          TAGS=${TAGS//+/-}
+          echo ::set-output name=tags::${TAGS}
+
       - name: Build image and push to GitHub image registry
         uses: docker/build-push-action@v1
         with:
@@ -94,7 +102,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: k0sproject/k0s/k0s
-          tag_with_ref: true
+          tags: ${{ steps.prep.outputs.tags }}
 
       - name: Build image and push to Docker hub
         uses: docker/build-push-action@v1
@@ -103,7 +111,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           registry: docker.io
           repository: k0sproject/k0s
-          tag_with_ref: true
+          tags: ${{ steps.prep.outputs.tags }}
 
       # Need to remove this from maintenance branches
       # Done as separate step for better control when we push latest
