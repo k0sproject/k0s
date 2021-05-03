@@ -18,7 +18,6 @@ package install
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/crictl"
 	"os/exec"
 	"strings"
 	"time"
@@ -31,7 +30,8 @@ type CleanUpConfig struct {
 	containerdBinPath    string
 	containerdCmd        *exec.Cmd
 	containerdSockerPath string
-	criCtl               *crictl.CriCtl
+	criSocketPath        string
+	crictlBinPath        string
 	dataDir              string
 	runDir               string
 }
@@ -74,7 +74,7 @@ func (c *CleanUpConfig) WorkerCleanup() error {
 		msg = append(msg, err.Error())
 	}
 
-	containers, err := c.criCtl.ListPods()
+	containers, err := c.listContainers()
 	if err == nil && len(containers) == 0 {
 		logrus.Info("successfully removed k0s containers!")
 	}
@@ -105,6 +105,9 @@ func GetRoleByStagedKubelet(binPath string) string {
 func (c *CleanUpConfig) workerPreFlightChecks() error {
 	if !util.IsDirectory(c.dataDir) {
 		return fmt.Errorf("failed to find directory `%v`, check if the node is provisioned", c.dataDir)
+	}
+	if !util.FileExists(c.crictlBinPath) {
+		return fmt.Errorf("failed to find %v. was this node provisioned correctly?", c.crictlBinPath)
 	}
 	return nil
 }
