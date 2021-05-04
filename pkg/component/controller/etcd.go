@@ -42,7 +42,6 @@ import (
 type Etcd struct {
 	CertManager certificate.Manager
 	Config      *config.EtcdConfig
-	Join        bool
 	JoinClient  *token.JoinClient
 	K0sVars     constant.CfgVars
 	LogLevel    string
@@ -126,10 +125,7 @@ func (e *Etcd) Run() error {
 
 	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
-		e.Join = false
-	}
-
-	if e.Join {
+	} else if e.JoinClient != nil {
 		var etcdResponse config.EtcdResponse
 		var err error
 		for i := 0; i < 20; i++ {
