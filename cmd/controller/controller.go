@@ -125,13 +125,10 @@ func (c *CmdOpts) startController() error {
 	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
-	var join = false
-
 	var joinClient *token.JoinClient
 	var err error
 
 	if c.TokenArg != "" && c.needToJoin() {
-		join = true
 		joinClient, err = token.JoinClientFromToken(c.TokenArg)
 		if err != nil {
 			return fmt.Errorf("failed to create join client: %w", err)
@@ -168,7 +165,6 @@ func (c *CmdOpts) startController() error {
 		storageBackend = &controller.Etcd{
 			CertManager: certificateManager,
 			Config:      c.ClusterConfig.Spec.Storage.Etcd,
-			Join:        join,
 			JoinClient:  joinClient,
 			K0sVars:     c.K0sVars,
 			LogLevel:    c.Logging["etcd"],
