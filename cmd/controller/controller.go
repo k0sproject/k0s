@@ -18,6 +18,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -108,26 +109,22 @@ func (c *CmdOpts) needToJoin() bool {
 }
 
 func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
-	err := ioutil.WriteFile(filepath.Join(certRootDir, "ca.key"), caData.Key, constant.CertSecureMode)
-	if err != nil {
-		return err
+	type fileData struct {
+		path string
+		data []byte
+		mode fs.FileMode
 	}
-
-	err = ioutil.WriteFile(filepath.Join(certRootDir, "ca.crt"), caData.Cert, constant.CertMode)
-	if err != nil {
-		return err
+	for _, f := range []fileData{
+		{path: filepath.Join(certRootDir, "ca.key"), data: caData.Key, mode: constant.CertSecureMode},
+		{path: filepath.Join(certRootDir, "ca.crt"), data: caData.Cert, mode: constant.CertMode},
+		{path: filepath.Join(certRootDir, "sa.key"), data: caData.SAKey, mode: constant.CertSecureMode},
+		{path: filepath.Join(certRootDir, "sa.pub"), data: caData.SAPub, mode: constant.CertMode},
+	} {
+		err := ioutil.WriteFile(f.path, f.data, f.mode)
+		if err != nil {
+			return fmt.Errorf("failed to write %s: %w", f.path, err)
+		}
 	}
-
-	err = ioutil.WriteFile(filepath.Join(certRootDir, "sa.key"), caData.SAKey, constant.CertSecureMode)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(certRootDir, "sa.pub"), caData.SAPub, constant.CertMode)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
