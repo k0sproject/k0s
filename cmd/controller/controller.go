@@ -107,6 +107,44 @@ func (c *CmdOpts) needToJoin() bool {
 	return true
 }
 
+func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
+	err := ioutil.WriteFile(filepath.Join(certRootDir, "ca.key"), caData.Key, constant.CertSecureMode)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(certRootDir, "ca.crt"), caData.Cert, constant.CertMode)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(certRootDir, "sa.key"), caData.SAKey, constant.CertSecureMode)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(certRootDir, "sa.pub"), caData.SAPub, constant.CertMode)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func joinController(tokenArg string, certRootDir string) (*token.JoinClient, error) {
+	joinClient, err := token.JoinClientFromToken(tokenArg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create join client: %w", err)
+	}
+
+	caData, err := joinClient.GetCA()
+	if err != nil {
+		return nil, fmt.Errorf("failed to sync CA: %w", err)
+	}
+
+	return joinClient, writeCerts(caData, certRootDir)
+}
+
 func (c *CmdOpts) startController() error {
 	existingCNI := c.existingCNIProvider()
 	if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
@@ -129,15 +167,10 @@ func (c *CmdOpts) startController() error {
 	var err error
 
 	if c.TokenArg != "" && c.needToJoin() {
-		joinClient, err = token.JoinClientFromToken(c.TokenArg)
+		joinClient, err = joinController(c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
-			return fmt.Errorf("failed to create join client: %w", err)
+			return fmt.Errorf("failed to join controller: %w", err)
 		}
-
-		componentManager.AddSync(&controller.CASyncer{
-			JoinClient: joinClient,
-			K0sVars:    c.K0sVars,
-		})
 	}
 	componentManager.AddSync(&controller.Certificates{
 		ClusterSpec: c.ClusterConfig.Spec,
