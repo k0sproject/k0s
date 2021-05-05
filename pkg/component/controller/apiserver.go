@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -102,7 +103,8 @@ func (a *APIServer) Run() error {
 		"tls-cert-file":                    path.Join(a.K0sVars.CertRootDir, "server.crt"),
 		"tls-private-key-file":             path.Join(a.K0sVars.CertRootDir, "server.key"),
 		"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
-		"service-account-issuer":           "api",
+		"service-account-issuer":           "https://kubernetes.default.svc",
+		"service-account-jwks-uri":         "https://kubernetes.default.svc/openid/v1/jwks",
 		"insecure-port":                    "0",
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
@@ -110,14 +112,18 @@ func (a *APIServer) Run() error {
 		"enable-admission-plugins":         "NodeRestriction,PodSecurityPolicy",
 	}
 
+	apiAudiences := []string{"https://kubernetes.default.svc"}
+
 	if a.EnableKonnectivity {
 		err := a.writeKonnectivityConfig()
 		if err != nil {
 			return err
 		}
 		args["egress-selector-config-file"] = path.Join(a.K0sVars.DataDir, "konnectivity.conf")
-		args["api-audiences"] = "system:konnectivity-server"
+		apiAudiences = append(apiAudiences, "system:konnectivity-server")
 	}
+
+	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
 		if args[name] != "" && name != "profiling" {
