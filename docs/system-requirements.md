@@ -6,11 +6,11 @@ These are the k0s system requirements.
 
 The following table shows the minimum HW requirements. All values are approximations and results may vary.
 
-| Role                | Virtual CPU (vCPU)     | Memory (RAM)           |
-|---------------------|------------------------|------------------------|
-| Controller node     | 1 vCPU (2 recommended) | 1 GB (2 recommended)   |
-| Worker node         | 1 vCPU (2 recommended) | 1 GB (2 recommended)   |
-| Controller + worker | 1 vCPU (2 recommended) | 1 GB (2 recommended)   |
+| Role                | Virtual CPU (vCPU)     | Memory (RAM)             |
+|---------------------|------------------------|--------------------------|
+| Controller node     | 1 vCPU (2 recommended) | 1 GB (2 recommended)     |
+| Worker node         | 1 vCPU (2 recommended) | 0.5 GB (1 recommended)   |
+| Controller + worker | 1 vCPU (2 recommended) | 1 GB (2 recommended)     |
 
 For optimal storage performance we recommend using an SSD disk. Cluster latency and throughput are sensitive to storage:
 [https://etcd.io/docs/current/op-guide/performance/](https://etcd.io/docs/current/op-guide/performance/)
