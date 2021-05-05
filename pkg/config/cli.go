@@ -84,7 +84,7 @@ func DefaultLogLevels() map[string]string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", "", "config file (default: ./k0s.yaml). Use '-' to read the config from stdin")
+	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
