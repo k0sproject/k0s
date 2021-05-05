@@ -143,7 +143,7 @@ func (c Component) sendTelemetry() {
 	}
 
 	hostData := analytics.Context{
-		Extra: map[string]interface{}{"Direct": true},
+		Extra: map[string]interface{}{"direct": true},
 	}
 
 	hostData.App.Version = c.Version
