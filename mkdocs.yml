@@ -24,8 +24,9 @@ nav:
       - Manifest Bundles:                 manifests.md
       - Helm Charts:                      helm-charts.md
       - Examples:
-          - Installing the Traefik Ingress Controller:  examples/traefik-ingress.md
-          - Installing the Ambassador Gateway:          examples/ambassador-ingress.md
+          - Traefik Ingress Controller:   examples/traefik-ingress.md
+          - Ambassador Gateway:           examples/ambassador-ingress.md
+          - Ceph Storage with Rook:       examples/rook-ceph.md
   - Architecture:
       - Overview:                         architecture.md
       - Networking:                       networking.md
