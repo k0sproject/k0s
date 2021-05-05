@@ -99,7 +99,7 @@ k0s.exe k0s: $(GO_SRCS)
 	touch $@
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go lint-gomod
 	$(golint) run ./...
 
 .PHONY: $(smoketests)
@@ -136,3 +136,25 @@ image-bundle/image.list: k0s
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
+
+SKIP_GOMOD_LINT ?= false
+ifeq ($(SKIP_GOMOD_LINT),false)
+GOMODTIDYLINT=sh -c '\
+if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
+	echo "Run \`go mod tidy\` and commit the result"; \
+	exit 1; \
+fi ; \
+if [ `go mod tidy -v 2>&1 | wc -c` -gt "0" ]; then \
+ git checkout go.mod go.sum 2> /dev/null; \
+ echo "Linter failure: go.mod and go.sum have unused deps. Run \`go mod tidy\` and commit the result"; \
+ exit 2; \
+fi \
+ ; ' GOMODTIDYLINT
+
+lint-gomod:
+	@${GOMODTIDYLINT}
+
+else
+lint-gomod:
+.SILENT:
+endif
