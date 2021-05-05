@@ -148,7 +148,7 @@ func (c *CmdOpts) startController() error {
 		K0sVars:     c.K0sVars,
 	})
 
-	logrus.Infof("using public address: %s", c.ClusterConfig.Spec.API.Address)
+	logrus.Infof("using api address: %s", c.ClusterConfig.Spec.API.Address)
 	logrus.Infof("using listen port: %d", c.ClusterConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", c.ClusterConfig.Spec.API.SANs)
 	dnsAddress, err := c.ClusterConfig.Spec.Network.DNSAddress()
