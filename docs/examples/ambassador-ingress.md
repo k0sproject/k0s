@@ -1,20 +1,12 @@
 # Install Ambassador Gateway on k0s
 
-You can configure k0s with the [Ambassador API
-Gateway](https://www.getambassador.io/products/api-gateway/) and a [MetalLB
-service loadbalancer](https://metallb.universe.tf/). With the extensible
-bootstrapping functionality Helm offers, this is as simple as adding the
-correct extensions to the `k0s.yaml` file during cluster configuration.
+You can configure k0s with the [Ambassador API Gateway](https://www.getambassador.io/products/api-gateway/) and a [MetalLB service loadbalancer](https://metallb.universe.tf/). To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration. 
 
 ## Use Docker for non-native k0s platforms
 
-With Docker you can run k0s on platforms that the distribution does not
-natively support (refer to [Run k0s in Docker](../k0s-in-docker.md)). Skip this
-section if you are on a platform that k0s natively supports.
+With Docker you can run k0s on platforms that the distribution does not natively support (refer to [Run k0s in Docker](../k0s-in-docker.md)). Skip this section if you are on a platform that k0s natively supports. 
 
-As you need to create a custom configuration file to install Ambassador
-Gateway, you will first need prepare to map that file into the k0s container
-and to expose the ports Ambassador needs for outside access.
+As you need to create a custom configuration file to install Ambassador Gateway, you will first need to map that file into the k0s container and to expose the ports Ambassador needs for outside access. 
 
 1. Run k0s under Docker:
 
@@ -34,9 +26,9 @@ and to expose the ports Ambassador needs for outside access.
     docker exec k0s cat /var/lib/k0s/pki/admin.conf > k0s-cluster.conf
     export KUBECONFIG=$KUBECONFIG:<absolute path to k0s-cluster.conf>
 
-## Configure k0s.yaml for Ambassador Gateway
+## Configure `k0s.yaml` for Ambassador Gateway
 
-1. Open the ``k0s.yml`` file and append the following extensions at the end:
+1. Open the `k0s.yml` file and append the following extensions at the end:
 
     ```yaml
     extensions:
@@ -70,7 +62,7 @@ and to expose the ports Ambassador needs for outside access.
 
     **Note**: It may be necessary to replace the 172.17.0.2 IP with your local IP address.
 
-    This action adds both Ambassador and Metallb (required for LoadBalancers) with the corresponding repositories and (minimal) configurations. Be aware that the provided example illustrates the use of your local network and that you will want to provide a range of IPs for MetalLB that are addressable on your LAN to access these services from anywhere on your network.
+    This action adds both Ambassador and MetalLB (required for LoadBalancers) with the corresponding repositories and (minimal) configurations. Be aware that the provided example illustrates the use of your local network and that you will want to provide a range of IPs for MetalLB that are addressable on your LAN to access these services from anywhere on your network.
 
 2. Stop/remove your k0s container:
 
@@ -88,25 +80,28 @@ and to expose the ports Ambassador needs for outside access.
     After some time, you will be able to list the Ambassador Services:
 
     ```shell
-    kubectl get services -n ambassador
+    $ kubectl get services -n ambassador
+    ```
+    *Output*:
+
+    ```
     NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
     ambassador-1611224811         LoadBalancer   10.99.84.151    172.17.0.2    80:30327/TCP,443:30355/TCP   2m11s
     ambassador-1611224811-admin   ClusterIP      10.96.79.130    <none>        8877/TCP                     2m11s
     ambassador-1611224811-redis   ClusterIP      10.110.33.229   <none>        6379/TCP                     2m11s
     ```
 
-4. Install the Ambassador [edgectl tool](https://www.getambassador.io/docs/latest/topics/using/edgectl/edge-control/) 
-and run the login command:
+4. Install the Ambassador [edgectl tool](https://www.getambassador.io/docs/latest/topics/using/edgectl/edge-control/) and run the login command: 
 
     ```shell
-    edgectl login --namespace=ambassador localhost
+    $ edgectl login --namespace=ambassador localhost
     ```
 
     Your browser will open and deeliver you to the [Ambassador Console](https://www.getambassador.io/docs/latest/topics/using/edge-policy-console/).
 
 ## Deploy / Map a Service
 
-   1. Create a yaml file for the service (for example purposes, create a [Swagger Petstore](https://petstore.swagger.io/) service using a petstore.yaml file):
+ 1. Create a YAML file for the service (for example purposes, create a [Swagger Petstore](https://petstore.swagger.io/) service using a petstore.YAML file): 
 
     ```yaml
     ---
@@ -157,25 +152,31 @@ and run the login command:
       service: petstore
     ```
 
-2. Apply the yaml file:
+2. Apply the YAML file:
 
     ```sh
     kubectl apply -f petstore.yaml
+    ```
+
+    *Output*:
+
+    ```
     service/petstore created
     deployment.apps/petstore created
     mapping.getambassador.io/petstore created
     ```
 
-3. Either curl the service:
+3. Validate that the service is running.
+
+   In the terminal using curl:
 
     ```shell
     curl -k 'https://localhost/petstore/api/v3/pet/findByStatus?status=available'
     [{"id":1,"category":{"id":2,"name":"Cats"},"name":"Cat 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":2,"category":{"id":2,"name":"Cats"},"name":"Cat 2","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag2"},{"id":2,"name":"tag3"}],"status":"available"},{"id":4,"category":{"id":1,"name":"Dogs"},"name":"Dog 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":7,"category":{"id":4,"name":"Lions"},"name":"Lion 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag1"},{"id":2,"name":"tag2"}],"status":"available"},{"id":8,"category":{"id":4,"name":"Lions"},"name":"Lion 2","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag2"},{"id":2,"name":"tag3"}],"status":"available"},{"id":9,"category":{"id":4,"name":"Lions"},"name":"Lion 3","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag3"},{"id":2,"name":"tag4"}],"status":"available"},{"id":10,"category":{"id":3,"name":"Rabbits"},"name":"Rabbit 1","photoUrls":["url1","url2"],"tags":[{"id":1,"name":"tag3"},{"id":2,"name":"tag4"}],"status":"available"}]
     ```
 
-    *— or —*
+    Or by way of your browser:
 
-    Open https://localhost/petstore/ in your browser and change the URL of the specification to
-    https://localhost/petstore/api/v3/openapi.json (as it is mapped to the /petstore prefix). 
+    Open https://localhost/petstore/ in your browser and change the URL in the field at the top of the page to https://localhost/petstore/api/v3/openapi.json (as it is mapped to the /petstore prefix) and click **Explore**.
 
 4. Navigate to the **Mappings** area in the Ambassador Console to view the corresponding PetStore mapping as configured.

@@ -1,6 +1,6 @@
 # Helm Charts
 
-Helm charts is one of two methods you can use to run k0s with your preferred extentions (the other being [Manifest Deployer](manifests.md), which is included with k0s).
+Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of [Manifest Deployer](manifests.md). 
 
 k0s supports two methods for deploying applications using Helm charts:
 
@@ -9,13 +9,11 @@ k0s supports two methods for deploying applications using Helm charts:
 
 ### Helm charts in k0s configuration
 
-Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.
+Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file. 
 
 ### Example
 
-In the example, Prometheus is configured from "stable" Helms chart repository.
-Add the following to ``k0s.yaml`` and restart k0s, after which Prometheus
-should start automatically with k0s.
+In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to `k0s.yaml` and restart k0s, after which Prometheus should start automatically with k0s. 
 
 ```sh
 spec:
@@ -39,9 +37,8 @@ spec:
 
 Example extensions that you can use with Helm charts include:
 
-- Ingress controllers: [Nginx
-  ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress),
-  [Traefix ingress](https://github.com/traefik/traefik-helm-chart) (refer
-  to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md))
+- Ingress controllers: [Nginx ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress), [Traefix ingress](https://github.com/traefik/traefik-helm-chart) (refer to the k0s documentation for [Installing the Traefik Ingress Controller](examples/traefik-ingress.md)) 
+
 - Volume storage providers: [OpenEBS](https://openebs.github.io/charts/), [Rook](https://github.com/rook/rook/blob/master/Documentation/helm-operator.md), [Longhorn](https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/)
+
 - Monitoring: [Prometheus](https://github.com/prometheus-community/helm-charts/), [Grafana](https://github.com/grafana/helm-charts)
