@@ -18,6 +18,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -107,6 +108,40 @@ func (c *CmdOpts) needToJoin() bool {
 	return true
 }
 
+func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
+	type fileData struct {
+		path string
+		data []byte
+		mode fs.FileMode
+	}
+	for _, f := range []fileData{
+		{path: filepath.Join(certRootDir, "ca.key"), data: caData.Key, mode: constant.CertSecureMode},
+		{path: filepath.Join(certRootDir, "ca.crt"), data: caData.Cert, mode: constant.CertMode},
+		{path: filepath.Join(certRootDir, "sa.key"), data: caData.SAKey, mode: constant.CertSecureMode},
+		{path: filepath.Join(certRootDir, "sa.pub"), data: caData.SAPub, mode: constant.CertMode},
+	} {
+		err := ioutil.WriteFile(f.path, f.data, f.mode)
+		if err != nil {
+			return fmt.Errorf("failed to write %s: %w", f.path, err)
+		}
+	}
+	return nil
+}
+
+func joinController(tokenArg string, certRootDir string) (*token.JoinClient, error) {
+	joinClient, err := token.JoinClientFromToken(tokenArg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create join client: %w", err)
+	}
+
+	caData, err := joinClient.GetCA()
+	if err != nil {
+		return nil, fmt.Errorf("failed to sync CA: %w", err)
+	}
+
+	return joinClient, writeCerts(caData, certRootDir)
+}
+
 func (c *CmdOpts) startController() error {
 	existingCNI := c.existingCNIProvider()
 	if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
@@ -125,22 +160,14 @@ func (c *CmdOpts) startController() error {
 	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
-	var join = false
-
 	var joinClient *token.JoinClient
 	var err error
 
 	if c.TokenArg != "" && c.needToJoin() {
-		join = true
-		joinClient, err = token.JoinClientFromToken(c.TokenArg)
+		joinClient, err = joinController(c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
-			return fmt.Errorf("failed to create join client: %w", err)
+			return fmt.Errorf("failed to join controller: %w", err)
 		}
-
-		componentManager.AddSync(&controller.CASyncer{
-			JoinClient: joinClient,
-			K0sVars:    c.K0sVars,
-		})
 	}
 	componentManager.AddSync(&controller.Certificates{
 		ClusterSpec: c.ClusterConfig.Spec,
@@ -168,7 +195,6 @@ func (c *CmdOpts) startController() error {
 		storageBackend = &controller.Etcd{
 			CertManager: certificateManager,
 			Config:      c.ClusterConfig.Spec.Storage.Etcd,
-			Join:        join,
 			JoinClient:  joinClient,
 			K0sVars:     c.K0sVars,
 			LogLevel:    c.Logging["etcd"],

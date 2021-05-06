@@ -42,7 +42,6 @@ import (
 type Etcd struct {
 	CertManager certificate.Manager
 	Config      *config.EtcdConfig
-	Join        bool
 	JoinClient  *token.JoinClient
 	K0sVars     constant.CfgVars
 	LogLevel    string
@@ -83,6 +82,44 @@ func (e *Etcd) Init() error {
 		}
 	}
 	return assets.Stage(e.K0sVars.BinDir, "etcd", constant.BinDirMode)
+}
+
+func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
+	var etcdResponse config.EtcdResponse
+	var err error
+	for i := 0; i < 20; i++ {
+		logrus.Infof("trying to sync etcd config")
+		etcdResponse, err = e.JoinClient.JoinEtcd(peerURL)
+		if err == nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
+	// Write etcd ca cert&key
+	if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
+		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
+	} else {
+		err = ioutil.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
+		if err != nil {
+			return nil, err
+		}
+
+		err = ioutil.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
+			if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
+				return nil, err
+			}
+		}
+	}
+	return etcdResponse.InitialCluster, nil
 }
 
 // Run runs etcd
@@ -126,46 +163,12 @@ func (e *Etcd) Run() error {
 
 	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
-		e.Join = false
-	}
-
-	if e.Join {
-		var etcdResponse config.EtcdResponse
-		var err error
-		for i := 0; i < 20; i++ {
-			logrus.Infof("trying to sync etcd config")
-			etcdResponse, err = e.JoinClient.JoinEtcd(peerURL)
-			if err == nil {
-				break
-			}
-			time.Sleep(500 * time.Millisecond)
-		}
+	} else if e.JoinClient != nil {
+		initialCluster, err := e.syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to sync etcd config: %w", err)
 		}
-
-		logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
-		// Write etcd ca cert&key
-		if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
-			logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
-		} else {
-			err = ioutil.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
-			if err != nil {
-				return err
-			}
-
-			err = ioutil.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
-			if err != nil {
-				return err
-			}
-			for _, f := range []string{filepath.Dir(etcdCaCertKey), etcdCaCertKey, etcdCaCert} {
-				if err := os.Chown(f, e.uid, e.gid); err != nil && os.Geteuid() == 0 {
-					return err
-				}
-			}
-		}
-
-		args["--initial-cluster"] = strings.Join(etcdResponse.InitialCluster, ",")
+		args["--initial-cluster"] = strings.Join(initialCluster, ",")
 		args["--initial-cluster-state"] = "existing"
 	}
 
