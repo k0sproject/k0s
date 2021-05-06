@@ -76,7 +76,7 @@ func (e *Etcd) Init() error {
 	}
 
 	for _, f := range []string{e.K0sVars.EtcdDataDir, e.K0sVars.EtcdCertDir} {
-		err = os.Chown(f, e.uid, e.gid)
+		err = chown(f, e.uid, e.gid)
 		if err != nil && os.Geteuid() == 0 {
 			return err
 		}
@@ -284,4 +284,23 @@ func detectUnsupportedEtcdArch() error {
 		}
 	}
 	return nil
+}
+
+// for the patch release purpose the solution is in-place to be as least intrusive as possible
+func chown(name string, uid int, gid int) error {
+	if uid == 0 {
+		return nil
+	}
+	if util.IsDirectory(name) {
+		if err := filepath.Walk(name, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			return os.Chown(path, uid, gid)
+		}); err != nil {
+			return fmt.Errorf("can't chmod file `%s`: %w", name, err)
+		}
+		return nil
+	}
+	return os.Chown(name, uid, gid)
 }
