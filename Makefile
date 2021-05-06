@@ -21,6 +21,9 @@ ifeq ($(DEBUG), false)
 LD_FLAGS ?= -w -s
 endif
 
+KUBECTL_VERSION = $(shell go mod graph |  grep "github.com/k0sproject/k0s" |  grep kubectl  | cut -d "@" -f 2)
+BUILD_DATE = $(shell date ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH:-}"} -u +'%Y-%m-%dT%H:%M:%SZ')
+
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version)
@@ -30,6 +33,10 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
 LD_FLAGS += -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
+LD_FLAGS += -X k8s.io/component-base/version.gitVersion=$(KUBECTL_VERSION)
+LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
+LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
+
 
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
