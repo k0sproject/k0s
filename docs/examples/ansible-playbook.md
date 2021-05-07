@@ -1,13 +1,8 @@
-# Creating a cluster with Ansible Playbook
+# Creating a cluster with an Ansible Playbook
 
-Ansible is a popular infrastructure as code tool that can use to automate tasks
-for the purpose of achieving the desired state in a system. With Ansible (and
-the k0s-Ansible playbook) you can quickly install a multi-node Kubernetes
-Cluster.
+Ansible is a popular infrastructure-as-code tool that can use to automate tasks for the purpose of achieving the desired state in a system. With Ansible (and the k0s-Ansible playbook) you can quickly install a multi-node Kubernetes Cluster. 
 
-**Note**: Before using Ansible to create a cluster, you should have a general
-understanding of Ansible (refer to the official [Ansible User
-Guide](https://docs.ansible.com/ansible/latest/user_guide/index.html).
+**Note**: Before using Ansible to create a cluster, you should have a general understanding of Ansible (refer to the official [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/index.html). 
 
 ## Prerequisites
 
@@ -35,10 +30,7 @@ $ cd k0s-ansible
 
 **Note**: Though multipass is the VM manager in use here, there is no interdependence.
 
-Create a number of virtual machines. For the automation to work, each instance
-must have passwordless SSH access. To achieve this, provision each instance
-with a cloud-init manifest that imports your current users' public SSH key and
-into a user `k0s` (refer to the bash script below):
+Create a number of virtual machines. For the automation to work, each instance must have passwordless SSH access. To achieve this, provision each instance with a cloud-init manifest that imports your current users' public SSH key and into a user `k0s` (refer to the bash script below): 
 
 `./tools/multipass_create_instances.sh 7` ◀️ this creates 7 virtual machines
 
@@ -73,14 +65,13 @@ k0s-7 Running 192.168.64.61 Ubuntu 20.04 LTS
 
 1. Copy the sample to create the inventory directory:
 
-```ShellSession
-$ cp -rfp inventory/sample inventory/multipass
-```
+    ```ShellSession
+    $ cp -rfp inventory/sample inventory/multipass
+    ```
 
 2. Create the inventory.
 
-   Assign the virtual machines to the different host groups, as required by the
-   playbook logic.
+    Assign the virtual machines to the different host groups, as required by the playbook logic. 
 
    | Host group            | Detail                                    |
    |:----------------------|:------------------------------------------|
@@ -88,9 +79,7 @@ $ cp -rfp inventory/sample inventory/multipass
    | `controller`          | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane |
    | `worker`              | Must contain at least one node, to allow for the deployment of Kubernetes objects |
 
-3. Fill in `inventory/multipass/inventory.yml`. This can be done by direct
-   entry using the metadata provided by `multipass list,`, or you can use the
-   following Python script `multipass_generate_inventory.py`:
+3. Fill in `inventory/multipass/inventory.yml`. This can be done by direct entry using the metadata provided by `multipass list,`, or you can use the following Python script `multipass_generate_inventory.py`: 
 
     ```
     $ ./tools/multipass_generate_inventory.py
@@ -157,13 +146,13 @@ If the test result indicates success, you can proceed.
 
 ### 5. Provision the cluster with Ansible
 
-Applying the playbook, k0s download and be set up on all nodes, tokens will be
-exchanged, and a kubeconfig will be dumped to your local deployment
-environment.
+Applying the playbook, k0s download and be set up on all nodes, tokens will be exchanged, and a kubeconfig will be dumped to your local deployment environment. 
 
 ```ShellSession
 $ ansible-playbook site.yml -i inventory/multipass/inventory.yml
-...
+```
+
+```
 TASK [k0s/initial_controller : print kubeconfig command] *******************************************************
 Tuesday 22 December 2020  17:43:20 +0100 (0:00:00.257)       0:00:41.287 ******
 ok: [k0s-1] => {
@@ -205,12 +194,14 @@ k0s/initial_controller : Copy k0s service file ---------------------------------
 
 ## Use the cluster with kubectl
 
-A kubeconfig was copied to your local machine while the playbook was running
-which you can use to gain access to your new Kubernetes cluster:
+A kubeconfig was copied to your local machine while the playbook was running which you can use to gain access to your new Kubernetes cluster: 
 
 ```ShellSession
 $ export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
 $ kubectl cluster-info
+```
+
+```
 Kubernetes control plane is running at https://192.168.64.32:6443
 CoreDNS is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 Metrics-server is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
@@ -223,10 +214,7 @@ k0s-6   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.60   <none>        U
 k0s-7   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.61   <none>        Ubuntu 20.04.1 LTS   5.4.0-54-generic   containerd://1.4.3
 ```
 
-**Note**: The first three control plane nodes will not display, as the control
-plane is fully isolated. To check on the distributed etcd cluster, you can use
-ssh to securely log a controller node, or you can run the following ad-hoc
-command:
+**Note**: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command: 
 
 ```ShellSession
 $ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
@@ -242,8 +230,7 @@ $ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/mult
 }
 ```
 
-Once all worker nodes are at `Ready` state you can use the cluster. You can
-test the cluster state by creating a simple nginx deployment.
+Once all worker nodes are at `Ready` state you can use the cluster. You can test the cluster state by creating a simple nginx deployment. 
 
 ```ShellSession
 $ kubectl create deployment nginx --image=gcr.io/google-containers/nginx --replicas=5
@@ -260,6 +247,4 @@ $ kubectl run hello-k0s --image=quay.io/prometheus/busybox --rm -it --restart=Ne
 ...
 pod "hello-k0s" deleted
 ```
-**Note**: k0s users are the developers of k0s-ansible. Please send your
-feedback, bug reports, and pull requests to
-[github.com/movd/k0s-ansible](https://github.com/movd/k0s-ansible)._
+**Note**: k0s users are the developers of k0s-ansible. Please send your feedback, bug reports, and pull requests to [github.com/movd/k0s-ansible](https://github.com/movd/k0s-ansible)._ 

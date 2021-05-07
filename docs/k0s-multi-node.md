@@ -1,27 +1,20 @@
 # Manual Install (Advanced)
 
-You can manually set up k0s nodes by creating a multi-node
-cluster that is locally managed on each node. This involves several steps, to
-first install each node separately, and to then connect the node together using
-access tokens.
+You can manually set up k0s nodes by creating a multi-node cluster that is locally managed on each node. This involves several steps, to first install each node separately, and to then connect the node together using access tokens. 
 
 ## Prerequisites
 
-**Note**: Before proceeding, make sure to review the [System
-Requirements](system-requirements.md).
+**Note**: Before proceeding, make sure to review the [System Requirements](system-requirements.md). 
 
-Though the Manual Install material is written for Debian/Ubuntu, you can use it
-for any Linux distro that is running either a Systemd or OpenRC init system.
+Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system. 
 
-You can speed up the use of the `k0s` command by enabling [shell
-completion](shell-completion.md).
+You can speed up the use of the `k0s` command by enabling [shell completion](shell-completion.md). 
 
 ## Install k0s
 
 ### 1. Download k0s
 
-Run the k0s download script to download the latest stable version of k0s and
-make it executable from /usr/bin/k0s.
+Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s. 
 
 ```
 $ curl -sSLf https://get.k0s.sh | sudo sh
@@ -48,8 +41,7 @@ Create a configuration file:
 $ k0s default-config > k0s.yaml
 
 ```
-**Note**: For information on settings modification, refer to the
-[configuration](configuration.md) documentation.
+**Note**: For information on settings modification, refer to the [configuration](configuration.md) documentation. 
 
 ```sh
 $ k0s install controller -c k0s.yaml
@@ -58,24 +50,19 @@ $ k0s install controller -c k0s.yaml
 $ systemctl start k0scontroller
 ```
 
-k0s process acts as a "supervisor" for all of the control plane components. In
-moments the control plane  will be up and running.
+k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running. 
 
 ### 3. Create a join token
 
-You need a token to join workers to the cluster. The token embeds information
-that enables mutual trust between the worker and controller(s) and which allows
-the node to join the cluster as worker.
+You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker. 
 
-To get a token, run the following command on one of the existing controller
-nodes:
+To get a token, run the following command on one of the existing controller nodes: 
 
 ```sh
 $ k0s token create --role=worker
 ```
 
-The resulting output is a long [token](#tokens) string, which you can use to
-add a worker to the cluster.
+The resulting output is a long [token](#tokens) string, which you can use to add a worker to the cluster. 
 
 For enhanced security, run the following command to set an expiration time for the token:
 
@@ -96,29 +83,19 @@ $ systemctl start k0sworker
 
 #### About tokens
 
-The join tokens are base64-encoded
-[kubeconfigs](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
-for several reasons:
+The join tokens are base64-encoded [kubeconfigs](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) for several reasons: 
 
 - Well-defined structure
 - Capable of direct use as bootstrap auth configs for kubelet
 - Embedding of CA info for mutual trust
 
-The bearer token embedded in the kubeconfig is a [bootstrap
-token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/).
-For controller join tokens and worker join tokens k0s uses different usage
-attributes to ensure that k0s can validate the token role on the controller
-side.
+The bearer token embedded in the kubeconfig is a [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/). For controller join tokens and worker join tokens k0s uses different usage attributes to ensure that k0s can validate the token role on the controller side. 
 
 ### 5. Add controllers to the cluster
 
-**Note**: Either etcd or an external data store (MySQL or Postgres) via kine
-must be in use to add new controller nodes to the cluster. Pay strict
-attention to the [high availability configuration](high-availability.md) and
-make sure the configuration is identical for all controller nodes.
+**Note**: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the [high availability configuration](high-availability.md) and make sure the configuration is identical for all controller nodes. 
 
-To create a join token for the new controller, run the following command on an
-existing controller:
+To create a join token for the new controller, run the following command on an existing controller: 
 
 ```sh
 $ k0s token create --role=controller --expiry=1h > token-file
@@ -168,14 +145,13 @@ NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    <none>   4m6s   v1.21.0-k0s1
 ```
 
-You can also access your cluster easily with [LENS](https://k8slens.dev/),
-simply by copying the kubeconfig and pasting it to LENS:
+You can also access your cluster easily with [Lens](https://k8slens.dev/), simply by copying the kubeconfig and pasting it to Lens: 
 
 ```sh
 sudo cat /var/lib/k0s/pki/admin.conf
 ```
 
-**Note**: To access the cluster from an external network in the kubeconfig, you must replace `localhost` with the host ip address for your controller.
+**Note**: To access the cluster from an external network you must replace `localhost` in the kubeconfig with the host ip address for your controller. 
 
 ## Next Steps
 

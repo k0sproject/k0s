@@ -1,26 +1,24 @@
 # Install using k0sctl
 
-k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information on
-the hosts, with which it forms a cluster by configuring the hosts, deploying k0s, and then connecting the k0s nodes together.
+k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information on the hosts, with which it forms a cluster by configuring the hosts, deploying k0s, and then connecting the k0s nodes together. 
 
 ![k0sctl deployment](img/k0sctl_deployment.png)
 
-With k0sctl, you can create multi-node clusters for remote hosts in a manner that is automatic and easily repeatable. This method is recommended for production cluster installation.
+With k0sctl, you can create multi-node clusters in a manner that is automatic and easily repeatable. This method is recommended for production cluster installation.
 
 **Note**: The k0sctl install method is necessary for automatic upgrade.
 
 ## Prerequisites
 
-k0sctl can be executed on Linux, MacOS, and Windows (for more detail, refer to the [k0sctl github repository](https://github.com/k0sproject/k0sctl)).
+You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are availble on the [k0sctl releases page](https://github.com/k0sproject/k0sctl)). 
 
-**Note**: For hosts running k0s, refer to the [System Requirements](system-requirements.md).
+**Note**: For target host prerequisites information, refer to the [k0s System Requirements](system-requirements.md).
 
 ## Install k0s
 
 ### 1. Install k0sctl tool
 
-k0sctl is a single binary, the instructions for downloading and installing of
-which are available in the [k0sctl github repository](https://github.com/k0sproject/k0sctl#installation).
+k0sctl is a single binary, the instructions for downloading and installing of which are available in the [k0sctl github repository](https://github.com/k0sproject/k0sctl#installation). 
 
 ### 2. Configure the cluster.
 
@@ -51,12 +49,9 @@ which are available in the [k0sctl github repository](https://github.com/k0sproj
           keyPath: ~/.ssh/id_rsa
     ```
 
-2. Provide each host with a valid IP address that is reachable by k0ctl, and
-   the connection details for an SSH connection.
+2. Provide each host with a valid IP address that is reachable by k0ctl, and the connection details for an SSH connection. 
 
-    **Note**: Refer to the [k0sctl
-    documentation](https://github.com/k0sproject/k0sctl#configuration-file-spec-fields)
-    for k0sctl configuration specifications.
+ **Note**: Refer to the [k0sctl documentation](https://github.com/k0sproject/k0sctl#configuration-file-spec-fields) for k0sctl configuration specifications. 
 
 ### 3. Deploy the cluster
 
@@ -113,14 +108,13 @@ INFO      k0sctl kubeconfig
 
 ### 4. Access the cluster
 
-You must have the `kubeconfig` to access your k0s cluster.
+To access your k0s cluster, use k0sctl to generate a `kubeconfig` for the purpose.
 
 ```sh
 $ k0sctl kubeconfig > kubeconfig
 ```
 
-With the `kubeconfig`, you can access your cluster using either kubectl or
-[LENS](https://k8slens.dev/).
+With the `kubeconfig`, you can access your cluster using either kubectl or [Lens](https://k8slens.dev/). 
 
 ```sh
 $ kubectl get pods --kubeconfig kubeconfig -A
@@ -135,31 +129,21 @@ kube-system   metrics-server-6fbcd86f7b-5frtn            1/1     Running   0    
 
 ## Upgrade a k0s cluster using k0sctl
 
-The upgrading of k0s clusters occurs not through a particular command (there is
-no ``upgrade`` sub-command in k0sctl) but by way of the configuration file. The
-configuration file describes the desired state of the cluster. and when that
-description passes to the `k0sctl apply` command a discovery of the current
-state is performed and the system does whatever is necessary to bring the
-cluster to the desired state (for example, perform an upgrade).
+The upgrading of k0s clusters occurs not through a particular command (there is no `upgrade` sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the `k0sctl apply` command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade). 
 
 ### k0sctl cluster upgrade process
 
 The following operations occur during a k0sctl upgrade:
 
-1. Upgrade of each controller, one at a time. There is no downtime if multiple
-   conrollers are configured.
+1. Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured. 
 
 2. Upgrade of workers, in batches of 10%.
 
-3. Draining of workers, which allows the workload to move to other nodes
-   prior to the actual upgrade of the worker node components. (To skip the
-   drain process, use the ``--no-drain`` option.)
+3. Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the ``--no-drain`` option.) 
 
-4. The upgrade process continues once the upgraded nodes return to **Ready**
-   state.
+4. The upgrade process continues once the upgraded nodes return to **Ready** state. 
 
-You can onfigure the desired cluster version in the k0sctl configuration by
-setting the value of `spec.k0s.version`:
+You can configure the desired cluster version in the k0sctl configuration by setting the value of `spec.k0s.version`: 
 
 ```yaml
 spec:
@@ -192,7 +176,7 @@ INFO[0027]      k0sctl kubeconfig
 ## Known limitations
 
 * k0sctl does not perform any discovery of hosts, and thus it only operates on
-  the hosts listed in the provided configuration
+  the hosts listed in the provided configuration 
 * k0sctl can only add more nodes to the cluster. It cannot remove
   existing nodes.
 

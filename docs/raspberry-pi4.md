@@ -9,11 +9,9 @@ Install the following tools on your local system:
 * [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) `v1.19.4`+
 * [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) `v1.5`+
 
-* [Raspberry Pi 4 Model B Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with
-  8GB of RAM and 64GB SD Cards.
+* [Raspberry Pi 4 Model B Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with 8GB of RAM and 64GB SD Cards. 
 
-  **Note:** If you use lower spec Raspberry Pi machines, it may be necessary to
-  manually edit the example code and k0s configuration.
+ **Note:** If you use lower spec Raspberry Pi machines, it may be necessary to manually edit the example code and k0s configuration. 
 
 ## Install k0s
 
@@ -21,16 +19,9 @@ Install the following tools on your local system:
 
 Download and install the [Ubuntu Server 20.04.1 LTS RASPI 4 Image](https://ubuntu.com/download/raspberry-pi/thank-you?version=20.04.1&architecture=server-arm64+raspi).
 
-**Note**: In addition to the documentation Ubuntu provides [documentation on
-installing Ubuntu on Raspberry Pi
-Computers](https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi),
-the [Raspberry Pi Foundation](https://raspberrypi.org) offers an[imaging
-tool](https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/)
-that you can use to write the Ubuntu image to your noe SD cards.
+**Note**: In addition to the documentation Ubuntu provides [documentation on installing Ubuntu on Raspberry Pi Computers](https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi), the [Raspberry Pi Foundation](https://raspberrypi.org) offers an[imaging tool](https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/) that you can use to write the Ubuntu image to your noe SD cards. 
 
-Once [cloud-init](https://cloud-init.io/) finishes bootstrapping the system,
-the default login credentials are set to user `ubuntu` with password `ubuntu`
-(which you will be prompted to change on first login).
+Once [cloud-init](https://cloud-init.io/) finishes bootstrapping the system, the default login credentials are set to user `ubuntu` with password `ubuntu` (which you will be prompted to change on first login). 
 
 ### 2. Network configurations
 
@@ -38,19 +29,11 @@ the default login credentials are set to user `ubuntu` with password `ubuntu`
 
 Review the [k0s required ports documentation](https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols) to ensure that your network and firewall configurations allow necessary traffic for the cluster.
 
-Review the [Ubuntu Server Networking Configuration
-Documentation](https://ubuntu.com/server/docs/network-configuration) to ensure
-that all systems have a static IP address on the network, or that the network
-is providing a static DHCP lease for the nodes.
+Review the [Ubuntu Server Networking Configuration Documentation](https://ubuntu.com/server/docs/network-configuration) to ensure that all systems have a static IP address on the network, or that the network is providing a static DHCP lease for the nodes. 
 
 #### OpenSSH
 
-Ubuntu Server deploys and enables [OpenSSH](https://www.openssh.com/) by
-default. Confirm, though, that for whichever user you will deploy the cluster with on the
-build system, their [SSH Key is copied to each node's root
-user](https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/).
-
-Before you start, the configuration should be such that the current user can run:
+Ubuntu Server deploys and enables [OpenSSH](https://www.openssh.com/) by default. Confirm, though, that for whichever user you will deploy the cluster with on the build system, their [SSH Key is copied to each node's root user](https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/). Before you start, the configuration should be such that the current user can run: 
 
 ```shell
 $ ssh root@${HOST}
@@ -60,8 +43,7 @@ Where `${HOST}` is any node and the login can succeed with no further prompts.
 
 ### 3. Set up Nodes
 
-Every node (whether control plane or not) requires additional configuration in
-preparation for k0s deployment.
+Every node (whether control plane or not) requires additional configuration in preparation for k0s deployment. 
 
 #### CGroup Configuration
 
@@ -71,12 +53,9 @@ preparation for k0s deployment.
     $ apt-get install cgroup-lite cgroup-tools cgroupfs-mount
     ```
 
-2. Enable the `memory` cgroup in the Kernel by adding it to the Kernel command
-   line.
+2. Enable the `memory` cgroup in the Kernel by adding it to the Kernel command line. 
 
-3. Open the file `/boot/firmware/cmdline.txt` (responsible for managing
-   the Kernel parameters), and confirm that the following parameters exist (and
-   add them as necessary):
+3. Open the file `/boot/firmware/cmdline.txt` (responsible for managing the Kernel parameters), and confirm that the following parameters exist (and add them as necessary): 
 
     ```shell
     cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
@@ -91,18 +70,15 @@ While swap is _technical optional_, enable it to ease memory pressure.
 1. To create a swapfile:
 
     ```shell
-    fallocate -l 2G /swapfile
-    chmod 0600 /swapfile
-    mkswap /swapfile
+    fallocate -l 2G /swapfile && \
+    chmod 0600 /swapfile && \
+    mkswap /swapfile && \
     swapon -a
     ```
 
-2. Ensure that the usage of swap is not too agressive by setting the `sudo
-   sysctl vm.swappiness=10` (the default is generally higher) and configuring
-   it to be persistent in `/etc/sysctl.d/*`.
+2. Ensure that the usage of swap is not too agressive by setting the `sudo sysctl vm.swappiness=10` (the default is generally higher) and configuring it to be persistent in `/etc/sysctl.d/*`. 
 
-4. Ensure that your swap is mounted after reboots by confirming that the
-   following line exists in your `/etc/fstab` configuration:
+3. Ensure that your swap is mounted after reboots by confirming that the following line exists in your `/etc/fstab` configuration: 
 
     ```shell
     /swapfile         none           swap sw       0 0
@@ -129,7 +105,12 @@ $ wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0
 $ chmod a+x /tmp/k0s
 $ sudo mv /tmp/k0s /usr/bin/k0s
 ```
-or use the k0s download script (as one command) to download the latest stable k0s and make it executable in /usr/bin/k0s.
+
+— or —
+
+Use the k0s download script (as one command) to download the latest stable
+k0s and make it executable in /usr/bin/k0s.
+
 ```sh
 $ curl -sSLf https://get.k0s.sh | sudo sh
 ```
@@ -181,8 +162,7 @@ You must deploy and start a worker service for each worker nodes for which you c
 
 ##### Systemd Service
 
-1. Create the join token for the worker (where `${TOKEN_CONTENT}` is one of the
-   join tokens created in the control plane setup):
+1. Create the join token for the worker (where `${TOKEN_CONTENT}` is one of the join tokens created in the control plane setup): 
 
     ```shell
     $ mkdir -p /var/lib/k0s/
@@ -205,8 +185,7 @@ You must deploy and start a worker service for each worker nodes for which you c
 
 ### 5. Connect To Your Cluster
 
-Generate a `kubeconfig` for the cluster and begin managing it with `kubectl`
-(where `${CONTROL_PLANE_NODE}` is the control plane node address):
+Generate a `kubeconfig` for the cluster and begin managing it with `kubectl` (where `${CONTROL_PLANE_NODE}` is the control plane node address): 
 
 ```shell
 ssh root@${CONTROL_PLANE_NODE} k0s kubeconfig create --groups "system:masters" k0s > config.yaml

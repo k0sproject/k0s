@@ -16,9 +16,7 @@ k0s is an all-inclusive Kubernetes distribution, configured with all of the feat
 - Supports x86_64 and arm64
 
 ## Join the Community
-We welcome your help in continuing the development of k0s! If you are
-interested, we invite you to check out the [k0s Contributing Guide](contributors/overview.md) and our [Code of
-Conduct](contributors/CODE_OF_CONDUCT.md).
+We welcome your help in building k0s! If you are interested, we invite you to check out the [k0s Contributing Guide](contributors/overview.md) and our [Code of Conduct](contributors/CODE_OF_CONDUCT.md). 
 
 ## Demo
 ![k0s demo](img/k0s_demo.gif)
