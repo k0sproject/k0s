@@ -1,4 +1,15 @@
-k0s Control plane can be configured via a YAML config file. By default `k0s controller` command reads a file called `k0s.yaml` but can be told to read any yaml file via `--config` option.
+## Using your own configuration file
+k0s controller nodes can be started without a config file. In that case the default configuration will be used. When you want to have a non-default configuration, you can first generate your own config file using the default settings:
+
+```
+k0s default-config > k0s.yaml
+```
+
+Then you can modify the file according to the guidance and reference on below. When you are ready and want to start k0s with your own config file, run
+
+```
+sudo k0s install controller -c /path/to/your/config/file 
+```
 
 ## Configuration file reference
 
@@ -245,8 +256,6 @@ spec:
       interval: 2m0s
       enabled: true
 ```
-
-
 
 ## Configuration Validation
 

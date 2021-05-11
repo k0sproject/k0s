@@ -37,6 +37,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/segmentio/analytics-go v3.1.0+incompatible
+	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
@@ -45,6 +46,8 @@ require (
 	github.com/vishvananda/netlink v1.1.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
+	github.com/zcalusic/sysinfo v0.0.0-20210226105846-b810d137e525
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
@@ -71,9 +74,6 @@ require (
 
 // We need to force to a git commit of 3.4.13 release, see https://github.com/etcd-io/etcd/issues/12109
 replace go.etcd.io/etcd => github.com/etcd-io/etcd v0.5.0-alpha.5.0.20200824191128-ae9734ed278b
-
-// Remove once https://github.com/segmentio/analytics-go/pull/172 is merged
-replace github.com/segmentio/analytics-go v3.1.0+incompatible => github.com/kke/analytics-go v1.2.1-0.20210209122110-10364370169e
 
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
