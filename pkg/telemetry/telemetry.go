@@ -3,7 +3,6 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
 
 	"github.com/segmentio/analytics-go"
@@ -13,8 +12,6 @@ import (
 	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
-
-	"github.com/zcalusic/sysinfo"
 )
 
 type telemetryData struct {
@@ -151,20 +148,7 @@ func (c Component) sendTelemetry() {
 	hostData.App.Namespace = "k0s"
 	hostData.Extra["cpuArch"] = runtime.GOARCH
 
-	if runtime.GOOS == "linux" {
-		var si sysinfo.SysInfo
-		si.GetSysInfo()
-
-		hostData.OS.Name = si.OS.Name
-		hostData.OS.Version = si.OS.Version
-
-		hostData.Extra["cpuCount"] = si.CPU.Cpus
-		hostData.Extra["cpuCores"] = si.CPU.Cores
-		hostData.Extra["memTotal"] = si.Memory.Size
-		hostData.Extra["haveProxy"] = os.Getenv("HTTP_PROXY") != "" || os.Getenv("HTTPS_PROXY") != ""
-	} else {
-		hostData.OS.Name = runtime.GOOS
-	}
+	addSysInfo(&hostData)
 
 	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
 	if err := c.analyticsClient.Enqueue(analytics.Track{
