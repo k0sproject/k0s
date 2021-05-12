@@ -70,9 +70,7 @@ jobs:
 
       - name: Build
         run: make build
-  
-  
-      
+
       - name: Run unit tests
         run: make check-unit
 
@@ -83,6 +81,53 @@ jobs:
           path: |
             k0s
           key: build-${{env.cachePrefix}}
+
+  build_windows:
+    name: Build windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=k0s-win-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-win-
+
+      - name: Bindata cache
+        uses: actions/cache@v2
+        id: generated-bindata
+        with:
+          path: |
+            .bins.windows.stamp
+            embedded-bins/staging/windows/bin/
+            bindata_windows
+            pkg/assets/zz_generated_offsets_windows.go
+            embedded-bins/Makefile.variables
+
+          key: ${{ runner.os }}-embedded-bins-win-${{ hashFiles('**/embedded-bins/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-win-${{ hashFiles('**/embedded-bins/**/*') }}
+
+      - name: Build
+        run: make k0s.exe
+
+      - name: Run unit tests
+        run: make check-unit
+
   smoketest:
     name: Smoke test
     needs: build
@@ -587,7 +632,7 @@ jobs:
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
           restore-keys: |
             ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
-      
+
       - name: Build
         run: make build
 
@@ -600,10 +645,10 @@ jobs:
         with:
           path: |
             /tmp/*.log
-  
+
   smoketest-armv7:
     name: Smoke test on armv7
-    runs-on: [self-hosted,linux,arm,lxc] 
+    runs-on: [self-hosted,linux,arm,lxc]
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
@@ -630,7 +675,7 @@ jobs:
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
           restore-keys: |
             ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
-      
+
       - name: Build
         run: make build
 
