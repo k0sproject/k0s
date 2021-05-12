@@ -125,9 +125,6 @@ jobs:
       - name: Build
         run: make k0s.exe
 
-      - name: Run unit tests
-        run: make check-unit
-
   smoketest:
     name: Smoke test
     needs: build
