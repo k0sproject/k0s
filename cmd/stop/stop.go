@@ -41,6 +41,7 @@ func NewStopCmd() *cobra.Command {
 				return err
 			}
 			if status == service.StatusStopped {
+				cmd.SilenceUsage = true
 				return fmt.Errorf("already stopped")
 			}
 			return svc.Stop()

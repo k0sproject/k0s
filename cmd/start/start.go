@@ -41,6 +41,7 @@ func NewStartCmd() *cobra.Command {
 				return err
 			}
 			if status == service.StatusRunning {
+				cmd.SilenceUsage = true
 				return fmt.Errorf("already running")
 			}
 			return svc.Start()
