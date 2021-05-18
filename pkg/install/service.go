@@ -43,13 +43,12 @@ func (p *program) Stop(service.Service) error {
 // InstalledService returns a k0s service if one has been installed on the host or an error otherwise.
 func InstalledService() (service.Service, error) {
 	prg := &program{}
-	for _, role := range []string{"controller", "worker", "controller+worker"} {
+	for _, role := range []string{"controller", "worker"} {
 		c := getServiceConfig(role)
 		s, err := service.New(prg, c)
-		if err != nil {
-			return s, err
+		if err == nil {
+			return s, nil
 		}
-		return s, nil
 	}
 	var s service.Service
 	return s, fmt.Errorf("k0s has not been installed as a service")
