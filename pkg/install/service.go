@@ -49,13 +49,7 @@ func InstalledService() (service.Service, error) {
 		if err != nil {
 			return s, err
 		}
-		status, err := s.Status()
-		if err != nil {
-			return s, err
-		}
-		if status != service.StatusUnknown {
-			return s, nil
-		}
+		return s, nil
 	}
 	var s service.Service
 	return s, fmt.Errorf("k0s has not been installed as a service")
