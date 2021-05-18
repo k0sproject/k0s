@@ -3,6 +3,11 @@ FROM $BUILDIMAGE AS build
 
 ARG VERSION
 ARG LIBSECCOMP_VERSION=2.5.1
+ARG BUILD_GO_TAGS
+ARG BUILD_GO_CGO_ENABLED
+ARG BUILD_GO_FLAGS
+ARG BUILD_GO_LDFLAGS
+ARG BUILD_GO_LDFLAGS_EXTRA
 
 ENV GOPATH=/go
 
@@ -21,7 +26,12 @@ RUN make -C /libseccomp-$LIBSECCOMP_VERSION install
 RUN mkdir -p $GOPATH/src/github.com/opencontainers/runc
 RUN git clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
 WORKDIR /go/src/github.com/opencontainers/runc
-RUN make EXTRA_LDFLAGS="-extldflags=-static -w -s"
+RUN go version
+RUN make \
+	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
+	BUILDTAGS="${BUILD_GO_TAGS}" \
+	EXTRA_FLAGS="${BUILD_GO_FLAGS}" \
+	EXTRA_LDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}"
 
 FROM scratch
 COPY --from=build /go/src/github.com/opencontainers/runc/runc /bin/runc
