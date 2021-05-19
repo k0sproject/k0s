@@ -56,7 +56,7 @@ const (
 	MetricsImage                       = "gcr.io/k8s-staging-metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.3.7"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.20.4"
+	KubeProxyImageVersion              = "v1.21.1"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.7.0"
 	CalicoImage                        = "docker.io/calico/cni"
