@@ -953,9 +953,10 @@
                 
                 
                 <h1 id="system-requirements">System requirements<a class="headerlink" href="#system-requirements" title="Permanent link">#</a></h1>
-<p>These are the k0s system requirements.</p>
+<p>Verify that your environment meets the system requirements for k0s.</p>
 <h2 id="hardware">Hardware<a class="headerlink" href="#hardware" title="Permanent link">#</a></h2>
-<p>The following table shows the minimum HW requirements. All values are approximations and results may vary.</p>
+<p>The minimum hardware requirements for k0s detailed below are approximations and
+thus results may vary.</p>
 <table>
 <thead>
 <tr>
@@ -982,9 +983,9 @@
 </tr>
 </tbody>
 </table>
-<p>For optimal storage performance we recommend using an SSD disk. Cluster latency and throughput are sensitive to storage:
-<a href="https://etcd.io/docs/current/op-guide/performance/">https://etcd.io/docs/current/op-guide/performance/</a></p>
-<p>k0s part of the storage consumption is presented in the following table. Note that the operating system and application requirements must be added on top.</p>
+<p><strong>Note</strong>: Use an SSD for <a href="https://etcd.io/docs/current/op-guide/performance/">optimal storage performance</a> (cluster
+latency and throughput are sensitive to storage).</p>
+<p>The specific storage consumption for k0s is as follows:</p>
 <table>
 <thead>
 <tr>
@@ -1007,9 +1008,11 @@
 </tr>
 </tbody>
 </table>
+<p><strong>Note</strong>: The operating system and application requirements must be considered
+in addition to the k0s part.</p>
 <h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
 <ul>
-<li>Linux (kernel v3.10 or newer)</li>
+<li>Linux (kernel v3.10 or later)</li>
 <li>Windows Server 2019</li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
@@ -1019,7 +1022,7 @@
 <li>ARMv7</li>
 </ul>
 <h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
-<p>See <a href="../networking/">networking</a> for the needed open ports.</p>
+<p>For information on the ports that k0s needs to function, refer to <a href="../networking/">networking</a>.</p>
                 
               
               
