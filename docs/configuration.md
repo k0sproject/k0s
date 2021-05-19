@@ -275,17 +275,11 @@ The `spec.konnectivity` key is the config file key in which you configure Konnec
 - `agentPort` agent port to listen on (default 8132)
 - `adminPort` admin port to listen on (default 8133)
 
-<<<<<<< HEAD
-## Configuration Validation
-
-k0s command-line interface has the ability to validate config syntax:
-=======
 ### `spec.telemetry`
 
 To improve the end-user experience k0s is configured by defaul to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the `enabled` setting to `false`. 
 
 The default `interval` setting is `10m0s` (10 minutes), though you can edit this to any valid value in `time.Duration` string representation. 
->>>>>>> Twriter edits to k0s Configuration content.
 
 ```
 spec:
