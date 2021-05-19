@@ -84,7 +84,7 @@ func GetRoleByPID(pid int) (role string, err error) {
 		return "", err
 	}
 	cmdln := string(raw)
-	if strings.Contains(cmdln, "enable-worker") {
+	if strings.Contains(cmdln, "enable-worker") || strings.Contains(cmdln, "single") {
 		return "controller+worker", nil
 	} else if strings.Contains(cmdln, "controller") {
 		return "controller", nil
