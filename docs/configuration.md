@@ -118,7 +118,7 @@ spec:
 | Element   | Description           |
 |-----------|---------------------------|
 | `type`      | Type of the data store (valid values:`etcd` or `kine`).<br><br>**Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes.|   
-| `etcd.peerAddress`      | Nodes address used for etcd cluster peering.|   
+| `etcd.peerAddress`      | Node address used for etcd cluster peering.|   
 | `kine.dataSource`      | [kine](https://github.com/rancher/kine/) datasource URL.|   
 
 ### `spec.network`
