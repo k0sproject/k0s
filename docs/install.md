@@ -73,7 +73,7 @@ The Kubernetes command-line tool 'kubectl' is included into k0s. You can use it 
 ```sh
 $ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    <none>   4m6s   v1.21.0-k0s1
+k0s    Ready    <none>   4m6s   v1.21.1-k0s1
 ```
 
 #### 6. Clean-up

@@ -1,9 +1,9 @@
-runc_version = 1.0.0-rc93
-containerd_version = 1.4.4
-kubernetes_version = 1.21.0
+runc_version = 1.0.0-rc95
+containerd_version = 1.4.5
+kubernetes_version = 1.21.1
 kine_version = 0.6.0
-etcd_version = 3.4.15
-konnectivity_version = 0.0.16
+etcd_version = 3.4.16
+konnectivity_version = 0.0.17
 
 containerd_buildimage = golang:1.15-alpine
 etcd_buildimage = golang:1.13-alpine
