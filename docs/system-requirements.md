@@ -1,10 +1,11 @@
 # System requirements
 
-These are the k0s system requirements.
+Verify that your environment meets the system requirements for k0s.
 
 ## Hardware
 
-The following table shows the minimum HW requirements. All values are approximations and results may vary.
+The minimum hardware requirements for k0s detailed below are approximations and
+thus results may vary.
 
 | Role                | Virtual CPU (vCPU)     | Memory (RAM)             |
 |---------------------|------------------------|--------------------------|
@@ -12,10 +13,10 @@ The following table shows the minimum HW requirements. All values are approximat
 | Worker node         | 1 vCPU (2 recommended) | 0.5 GB (1 recommended)   |
 | Controller + worker | 1 vCPU (2 recommended) | 1 GB (2 recommended)     |
 
-For optimal storage performance we recommend using an SSD disk. Cluster latency and throughput are sensitive to storage:
-[https://etcd.io/docs/current/op-guide/performance/](https://etcd.io/docs/current/op-guide/performance/)
+**Note**: Use an SSD for [optimal storage performance](https://etcd.io/docs/current/op-guide/performance/) (cluster
+latency and throughput are sensitive to storage).
 
-k0s part of the storage consumption is presented in the following table. Note that the operating system and application requirements must be added on top.
+The specific storage consumption for k0s is as follows:
 
 | Role                 | Storage (k0s part) |
 |----------------------|--------------------|
@@ -23,9 +24,12 @@ k0s part of the storage consumption is presented in the following table. Note th
 | Worker node          | ~1.3 GB            |
 | Controller + worker  | ~1.7 GB            |
 
+**Note**: The operating system and application requirements must be considered
+in addition to the k0s part.
+
 ## Host operating system
 
-- Linux (kernel v3.10 or newer)
+- Linux (kernel v3.10 or later)
 - Windows Server 2019
 
 ## Architecture
@@ -36,4 +40,4 @@ k0s part of the storage consumption is presented in the following table. Note th
 
 ## Networking
 
-See [networking](networking.md) for the needed open ports.
+For information on the ports that k0s needs to function, refer to [networking](networking.md).
