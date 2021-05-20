@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -58,9 +57,9 @@ func WaitForDaemonSet(kc *kubernetes.Clientset, name string) error {
 }
 
 // WaitForPod waits for pod be running
-func WaitForPod(kc *kubernetes.Clientset, name string) error {
+func WaitForPod(kc *kubernetes.Clientset, name, namespace string) error {
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		ds, err := kc.CoreV1().Pods("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+		ds, err := kc.CoreV1().Pods(namespace).Get(context.TODO(), name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -69,21 +68,27 @@ func WaitForPod(kc *kubernetes.Clientset, name string) error {
 	})
 }
 
-// WaitForPodLogs picks the first Ready pod from the list of pods and gets the logs of it
-func WaitForPodLogs(kc *kubernetes.Clientset, pods []corev1.Pod) error {
-	var readyPod *corev1.Pod
-	for _, p := range pods {
-		if p.Status.Phase == "Running" {
-			readyPod = &p
-		}
-	}
-	if readyPod == nil {
-		return fmt.Errorf("could not find ANY pod that is in Ready state")
-	}
+// WaitForPodLogs picks the first Ready pod from the list of pods in given namespace and gets the logs of it
+func WaitForPodLogs(kc *kubernetes.Clientset, namespace string) error {
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		pods, err := kc.CoreV1().Pods(namespace).List(context.TODO(), v1.ListOptions{
+			Limit: 100,
+		})
+		if err != nil {
+			return false, err // stop polling with error in case the pod listing fails
+		}
+		var readyPod *corev1.Pod
+		for _, p := range pods.Items {
+			if p.Status.Phase == "Running" {
+				readyPod = &p
+			}
+		}
+		if readyPod == nil {
+			return false, nil // do not return the error so we keep on polling
+		}
 		_, err = kc.CoreV1().Pods(readyPod.Namespace).GetLogs(readyPod.Name, &corev1.PodLogOptions{Container: readyPod.Spec.Containers[0].Name}).Stream(context.Background())
 		if err != nil {
-			return false, nil
+			return false, nil // do not return the error so we keep on polling
 		}
 
 		return true, nil
