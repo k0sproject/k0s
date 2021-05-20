@@ -925,15 +925,16 @@
                 
                 
                 <h1 id="helm-charts">Helm Charts<a class="headerlink" href="#helm-charts" title="Permanent link">#</a></h1>
-<p>k0s supports deploying applications with Helm charts in two ways:</p>
+<p>Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of <a href="../manifests/">Manifest Deployer</a>. </p>
+<p>k0s supports two methods for deploying applications using Helm charts:</p>
 <ul>
-<li>Helm command can be used in runtime to install applications like described in the <a href="https://helm.sh/docs/intro/quickstart/">Helm Quickstart Guide</a>.</li>
-<li>Helm charts can be inserted directly into the k0s configuration file (k0s.yaml). This way a separate install of <code>helm</code> tool is not needed and the charts are automatically deployed at the k0s bootstrap phase.</li>
+<li>Use Helm command in runtime to install applications. Refer to the <a href="https://helm.sh/docs/intro/quickstart/">Helm Quickstart Guide</a> for more information.</li>
+<li>Insert Helm charts directly into the k0s configuration file, <code>k0s.yaml</code>. This method does not require a separate install of <code>helm</code> tool and the charts automatically deploy at the k0s bootstrap phase.</li>
 </ul>
 <h3 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h3>
-<p>When Helm charts are added into k0s configuration file, you'll get a declarative way to configure the cluster. k0s controller manages the setup of the defined extension Helm charts as part of the cluster bootstrap process.</p>
+<p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file. </p>
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h3>
-<p>This example configures Prometheus from "stable" Helms chart repository. Just add the following to your k0s configuration file (k0s.yaml) and restart k0s. Prometheus should now start automatically with k0s.</p>
+<p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s. </p>
 <div class="highlight"><pre><span></span><code>spec:
     extensions:
       helm:
@@ -952,11 +953,17 @@
                 medium: Memory
           namespace: default
 </code></pre></div>
-<p>Some example extensions that you could use with Helm charts:</p>
+<p>Example extensions that you can use with Helm charts include:</p>
 <ul>
-<li>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (<a href="../examples/traefik-ingress/">tutorial</a>)</li>
-<li>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></li>
-<li>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></li>
+<li>
+<p>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (refer to the k0s documentation for <a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>) </p>
+</li>
+<li>
+<p>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></p>
+</li>
+<li>
+<p>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></p>
+</li>
 </ul>
                 
               

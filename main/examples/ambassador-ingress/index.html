@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installing-the-ambassador-gateway-on-k0s" class="md-skip">
+        <a href="#install-ambassador-gateway-on-k0s" class="md-skip">
           Skip to content
         </a>
       
@@ -510,29 +510,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#running-k0s-under-docker" class="md-nav__link">
-    Running k0s under docker
+  <a href="#use-docker-for-non-native-k0s-platforms" class="md-nav__link">
+    Use Docker for non-native k0s platforms
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuring-k0syaml" class="md-nav__link">
-    Configuring k0s.yaml
+  <a href="#configure-k0syaml-for-ambassador-gateway" class="md-nav__link">
+    Configure k0s.yaml for Ambassador Gateway
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#deploy-map-a-service" class="md-nav__link">
-    Deploy / map a service
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    Summary
+    Deploy / Map a Service
   </a>
   
 </li>
@@ -913,29 +906,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#running-k0s-under-docker" class="md-nav__link">
-    Running k0s under docker
+  <a href="#use-docker-for-non-native-k0s-platforms" class="md-nav__link">
+    Use Docker for non-native k0s platforms
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuring-k0syaml" class="md-nav__link">
-    Configuring k0s.yaml
+  <a href="#configure-k0syaml-for-ambassador-gateway" class="md-nav__link">
+    Configure k0s.yaml for Ambassador Gateway
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#deploy-map-a-service" class="md-nav__link">
-    Deploy / map a service
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    Summary
+    Deploy / Map a Service
   </a>
   
 </li>
@@ -954,33 +940,34 @@
               
                 
                 
-                <h1 id="installing-the-ambassador-gateway-on-k0s">Installing the Ambassador Gateway on k0s<a class="headerlink" href="#installing-the-ambassador-gateway-on-k0s" title="Permanent link">#</a></h1>
-<p>In this tutorial, you'll learn how to run k0s under Docker and configure it with the
-<a href="https://www.getambassador.io/products/api-gateway/">Ambassador API Gateway</a> and
-a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>. We'll also deploy a sample 
-service and expose it with an Ambassador mapping resource.</p>
-<p>Utilizing the extensible bootstrapping functionality with Helm, 
-it's as simple as adding the right extensions to the <code>k0s.yaml</code> file 
-when configuring your cluster.</p>
-<h2 id="running-k0s-under-docker">Running k0s under docker<a class="headerlink" href="#running-k0s-under-docker" title="Permanent link">#</a></h2>
-<p>If you're not on a platform natively supported by k0s, running under docker is a viable option 
-(see <a href="../../k0s-in-docker/">k0s in Docker</a>). Since we're going to create a custom configuration file we'll need
-to map that into the k0s container - and of course we'll need to expose the ports required by
-Ambassador for outside access.</p>
-<p>Start by running k0s under docker :</p>
+                <h1 id="install-ambassador-gateway-on-k0s">Install Ambassador Gateway on k0s<a class="headerlink" href="#install-ambassador-gateway-on-k0s" title="Permanent link">#</a></h1>
+<p>You can configure k0s with the <a href="https://www.getambassador.io/products/api-gateway/">Ambassador API Gateway</a> and a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration. </p>
+<h2 id="use-docker-for-non-native-k0s-platforms">Use Docker for non-native k0s platforms<a class="headerlink" href="#use-docker-for-non-native-k0s-platforms" title="Permanent link">#</a></h2>
+<p>With Docker you can run k0s on platforms that the distribution does not natively support (refer to <a href="../../k0s-in-docker/">Run k0s in Docker</a>). Skip this section if you are on a platform that k0s natively supports. </p>
+<p>As you need to create a custom configuration file to install Ambassador Gateway, you will first need to map that file into the k0s container and to expose the ports Ambassador needs for outside access. </p>
+<ol>
+<li>
+<p>Run k0s under Docker:</p>
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.io/k0sproject/k0s:latest
 </code></pre></div>
-<p>Once running, export the default k0s configuration file using</p>
+</li>
+<li>
+<p>Export the default k0s configuration file:</p>
 <div class="highlight"><pre><span></span><code>docker <span class="nb">exec</span> k0s k0s default-config &gt; k0s.yaml
 </code></pre></div>
-<p>and export the cluster config so you can access it with kubectl:</p>
-<p><div class="highlight"><pre><span></span><code>docker <span class="nb">exec</span> k0s cat /var/lib/k0s/pki/admin.conf &gt; k0s-cluster.conf
-<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$KUBECONFIG</span>:&lt;absolute path to k0s-cluster.conf&gt;
-</code></pre></div>
-(somewhat brute-force but gets the job done)</p>
-<h2 id="configuring-k0syaml">Configuring k0s.yaml<a class="headerlink" href="#configuring-k0syaml" title="Permanent link">#</a></h2>
-<p>Open the file in your favorite code editor and add the following extensions at the bottom:</p>
-<p><div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
+</li>
+<li>
+<p>Export the cluster config, so you can access it using kubectl:</p>
+<p>```sh
+docker exec k0s cat /var/lib/k0s/pki/admin.conf &gt; k0s-cluster.conf
+export KUBECONFIG=$KUBECONFIG:<absolute path to k0s-cluster.conf></p>
+</li>
+</ol>
+<h2 id="configure-k0syaml-for-ambassador-gateway">Configure <code>k0s.yaml</code> for Ambassador Gateway<a class="headerlink" href="#configure-k0syaml-for-ambassador-gateway" title="Permanent link">#</a></h2>
+<ol>
+<li>
+<p>Open the <code>k0s.yml</code> file and append the following extensions at the end:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
   <span class="nt">helm</span><span class="p">:</span>
     <span class="nt">repositories</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">datawire</span>
@@ -1008,30 +995,40 @@ Ambassador for outside access.</p>
               <span class="no">addresses:</span>
               <span class="no">- 172.17.0.2</span>
 </code></pre></div>
-(you might need to replace the 172.17.0.2 IP with your local IP which you can find higher up in the generated file
-under spec.api.address)</p>
-<p>As you can see it adds both Ambassador and Metallb (required for LoadBalancers) with corresponding repositories
-and (minimal) configurations. This example only uses your local network - providing a range of IPs for 
-MetalLB that are addressable on your LAN is suggested if you want to access these services from anywhere on 
-your network.</p>
-<p>Now stop/remove your k0s container with <code>docker stop k0s</code> and <code>docker rm k0s</code>, then start it again with additional ports and the above config file mapped into it:</p>
+<p><strong>Note</strong>: It may be necessary to replace the 172.17.0.2 IP with your local IP address.</p>
+<p>This action adds both Ambassador and MetalLB (required for LoadBalancers) with the corresponding repositories and (minimal) configurations. Be aware that the provided example illustrates the use of your local network and that you will want to provide a range of IPs for MetalLB that are addressable on your LAN to access these services from anywhere on your network.</p>
+</li>
+<li>
+<p>Stop/remove your k0s container:</p>
+<div class="highlight"><pre><span></span><code>docker stop k0s
+docker rm k0s
+</code></pre></div>
+</li>
+<li>
+<p>Retart your k0s container, this time with additional ports and the above config file mapped into it:</p>
 <div class="highlight"><pre><span></span><code>docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v &lt;path to k0s.yaml file&gt;:/k0s.yaml -p <span class="m">6443</span>:6443 -p <span class="m">80</span>:80 -p <span class="m">443</span>:443 -p <span class="m">8080</span>:8080 docker.io/k0sproject/k0s:latest
 </code></pre></div>
-<p>Let it start, and eventually (this can take some time) you'll be able to list the Ambassador Services:</p>
-<div class="highlight"><pre><span></span><code>kubectl get services -n ambassador
-NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT<span class="o">(</span>S<span class="o">)</span>                      AGE
-ambassador-1611224811         LoadBalancer   <span class="m">10</span>.99.84.151    <span class="m">172</span>.17.0.2    <span class="m">80</span>:30327/TCP,443:30355/TCP   2m11s
-ambassador-1611224811-admin   ClusterIP      <span class="m">10</span>.96.79.130    &lt;none&gt;        <span class="m">8877</span>/TCP                     2m11s
-ambassador-1611224811-redis   ClusterIP      <span class="m">10</span>.110.33.229   &lt;none&gt;        <span class="m">6379</span>/TCP                     2m11s
+<p>After some time, you will be able to list the Ambassador Services:</p>
+<p><div class="highlight"><pre><span></span><code>$ kubectl get services -n ambassador
 </code></pre></div>
-<p>Install the Ambassador <a href="https://www.getambassador.io/docs/latest/topics/using/edgectl/edge-control/">edgectl tool</a> 
-and run the login command:</p>
-<div class="highlight"><pre><span></span><code>edgectl login --namespace<span class="o">=</span>ambassador localhost
+<em>Output</em>:</p>
+<div class="highlight"><pre><span></span><code>NAME                          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+ambassador-1611224811         LoadBalancer   10.99.84.151    172.17.0.2    80:30327/TCP,443:30355/TCP   2m11s
+ambassador-1611224811-admin   ClusterIP      10.96.79.130    &lt;none&gt;        8877/TCP                     2m11s
+ambassador-1611224811-redis   ClusterIP      10.110.33.229   &lt;none&gt;        6379/TCP                     2m11s
 </code></pre></div>
-<p>This will open your browser and take you to the <a href="https://www.getambassador.io/docs/latest/topics/using/edge-policy-console/">Ambassador Console</a> - all ready to go.</p>
-<h2 id="deploy-map-a-service">Deploy / map a service<a class="headerlink" href="#deploy-map-a-service" title="Permanent link">#</a></h2>
-<p>Let's deploy and map the <a href="https://petstore.swagger.io/">Swagger Petstore</a> service; create a petstore.yaml file with
-the following content.</p>
+</li>
+<li>
+<p>Install the Ambassador <a href="https://www.getambassador.io/docs/latest/topics/using/edgectl/edge-control/">edgectl tool</a> and run the login command: </p>
+<div class="highlight"><pre><span></span><code>$ edgectl login --namespace<span class="o">=</span>ambassador localhost
+</code></pre></div>
+<p>Your browser will open and deeliver you to the <a href="https://www.getambassador.io/docs/latest/topics/using/edge-policy-console/">Ambassador Console</a>.</p>
+</li>
+</ol>
+<h2 id="deploy-map-a-service">Deploy / Map a Service<a class="headerlink" href="#deploy-map-a-service" title="Permanent link">#</a></h2>
+<ol>
+<li>
+<p>Create a YAML file for the service (for example purposes, create a <a href="https://petstore.swagger.io/">Swagger Petstore</a> service using a petstore.YAML file): </p>
 <div class="highlight"><pre><span></span><code><span class="nn">---</span>
 <span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Service</span>
@@ -1079,24 +1076,34 @@ the following content.</p>
   <span class="nt">prefix</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/petstore/</span>
   <span class="nt">service</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">petstore</span>
 </code></pre></div>
-<p>Once you've created this, apply it:</p>
+</li>
+<li>
+<p>Apply the YAML file:</p>
 <div class="highlight"><pre><span></span><code>kubectl apply -f petstore.yaml
-service/petstore created
+</code></pre></div>
+<p><em>Output</em>:</p>
+<div class="highlight"><pre><span></span><code>service/petstore created
 deployment.apps/petstore created
 mapping.getambassador.io/petstore created
 </code></pre></div>
-<p>and you should be able to curl the service:</p>
-<div class="highlight"><pre><span></span><code>curl -k <span class="s1">&#39;https://localhost/petstore/api/v3/pet/findByStatus?status=available&#39;</span>
-<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Cats&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Cat 1&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag1&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag2&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Cats&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Cat 2&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag2&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag3&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:4,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Dogs&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Dog 1&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag1&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag2&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:7,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:4,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lions&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lion 1&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag1&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag2&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:8,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:4,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lions&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lion 2&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag2&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag3&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:9,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:4,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lions&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Lion 3&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag3&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag4&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:10,<span class="s2">&quot;category&quot;</span>:<span class="o">{</span><span class="s2">&quot;id&quot;</span>:3,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Rabbits&quot;</span><span class="o">}</span>,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;Rabbit 1&quot;</span>,<span class="s2">&quot;photoUrls&quot;</span>:<span class="o">[</span><span class="s2">&quot;url1&quot;</span>,<span class="s2">&quot;url2&quot;</span><span class="o">]</span>,<span class="s2">&quot;tags&quot;</span>:<span class="o">[{</span><span class="s2">&quot;id&quot;</span>:1,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag3&quot;</span><span class="o">}</span>,<span class="o">{</span><span class="s2">&quot;id&quot;</span>:2,<span class="s2">&quot;name&quot;</span>:<span class="s2">&quot;tag4&quot;</span><span class="o">}]</span>,<span class="s2">&quot;status&quot;</span>:<span class="s2">&quot;available&quot;</span><span class="o">}]</span>
+</li>
+<li>
+<p>Validate that the service is running.</p>
+</li>
+</ol>
+<p>In the terminal using curl:</p>
+<div class="highlight"><pre><span></span><code>```shell
+curl -k &#39;https://localhost/petstore/api/v3/pet/findByStatus?status=available&#39;
+[{&quot;id&quot;:1,&quot;category&quot;:{&quot;id&quot;:2,&quot;name&quot;:&quot;Cats&quot;},&quot;name&quot;:&quot;Cat 1&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag1&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag2&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:2,&quot;category&quot;:{&quot;id&quot;:2,&quot;name&quot;:&quot;Cats&quot;},&quot;name&quot;:&quot;Cat 2&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag2&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag3&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:4,&quot;category&quot;:{&quot;id&quot;:1,&quot;name&quot;:&quot;Dogs&quot;},&quot;name&quot;:&quot;Dog 1&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag1&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag2&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:7,&quot;category&quot;:{&quot;id&quot;:4,&quot;name&quot;:&quot;Lions&quot;},&quot;name&quot;:&quot;Lion 1&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag1&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag2&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:8,&quot;category&quot;:{&quot;id&quot;:4,&quot;name&quot;:&quot;Lions&quot;},&quot;name&quot;:&quot;Lion 2&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag2&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag3&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:9,&quot;category&quot;:{&quot;id&quot;:4,&quot;name&quot;:&quot;Lions&quot;},&quot;name&quot;:&quot;Lion 3&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag3&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag4&quot;}],&quot;status&quot;:&quot;available&quot;},{&quot;id&quot;:10,&quot;category&quot;:{&quot;id&quot;:3,&quot;name&quot;:&quot;Rabbits&quot;},&quot;name&quot;:&quot;Rabbit 1&quot;,&quot;photoUrls&quot;:[&quot;url1&quot;,&quot;url2&quot;],&quot;tags&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;tag3&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;tag4&quot;}],&quot;status&quot;:&quot;available&quot;}]
+```
+
+Or by way of your browser:
+
+Open https://localhost/petstore/ in your browser and change the URL in the field at the top of the page to https://localhost/petstore/api/v3/openapi.json (as it is mapped to the /petstore prefix) and click **Explore**.
 </code></pre></div>
-<p>or you can open https://localhost/petstore/ in your browser and change the URL of the specification to
-https://localhost/petstore/api/v3/openapi.json (since we mapped it to the /petstore prefix). </p>
-<p>If you navigate to the Mappings part of the Ambassador Console (opened above) you will see the corresponding 
-PetStore mapping as configured.</p>
-<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">#</a></h2>
-<p>This should get you all set with running Ambassador under k0s. If you're not running under Docker just skip the docker-related
-steps above - but make sure that you have updated the k0s configuration in the same way as above. </p>
-<p>If you're stuck with or have any questions about Ambassador please try the <a href="http://d6e.co/slack">Ambassador Slack</a> to get help.</p>
+<ol>
+<li>Navigate to the <strong>Mappings</strong> area in the Ambassador Console to view the corresponding PetStore mapping as configured.</li>
+</ol>
                 
               
               

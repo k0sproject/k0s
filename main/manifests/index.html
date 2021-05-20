@@ -925,27 +925,25 @@
                 
                 
                 <h1 id="manifest-deployer">Manifest Deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>To run k0s with your preferred extensions you have two options.</p>
-<ol>
-<li>
-<p>Define your extensions as Helm charts as described <a href="../helm-charts/">in here</a>.</p>
-</li>
-<li>
-<p>Use Manifest Deployer, which is included into k0s. This option is described on below.</p>
-</li>
-</ol>
-<h3 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h3>
-<p>k0s embeds Manifest Deployer, which runs on the controller nodes and provides an easy way to deploy manifests automatically at runtime. </p>
-<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, when a manifest file is removed, k0s will automatically prune all the resources associated with it. </p>
-<p>For the most part, Manifest Deployer can be used like the <code>kubectl apply</code> command. The main difference is that Manifest Deployer constantly monitors the directory for changes. Thus, users don't need to manually apply the changes that are made to the manifest files.</p>
+<p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by <a href="../helm-charts/">defining your extensions as Helm charts</a>.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
+<p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
+<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
+<p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files. </p>
 <h5 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h5>
 <ul>
-<li>Each directory that is a <strong>direct descendant</strong> of <code>/var/lib/k0s/manifests</code> is considered as its own "stack", but nested directories (further subfolders) will be excluded from the stack mechanism and thus, they are not automatically deployed by the Manifest Deployer.</li>
-<li>k0s uses this mechanism for some of its internal in-cluster components and other resources. Make sure you only touch the manifests not managed by k0s.</li>
-<li>Namespace must be explicitly defined in the manifests. There's no default namespace used by Manifest Deployer.</li>
+<li>
+<p>Each directory that is a direct descendant of <code>/var/lib/k0s/manifests</code> is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.   </p>
+</li>
+<li>
+<p>k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s. </p>
+</li>
+<li>
+<p>Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace). </p>
+</li>
 </ul>
-<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h3>
-<p>You can try Manifest Deployer by creating a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file like <code>nginx.yaml</code> with the following content:</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
+<p>To try Manifest Deployer, create a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file (such as <code>nginx.yaml</code>) with the following content: </p>
 <div class="highlight"><pre><span></span><code>apiVersion: v1
 kind: Namespace
 metadata:
@@ -972,13 +970,13 @@ spec:
         ports:
         - containerPort: <span class="m">80</span>
 </code></pre></div>
-<p>You should soon see the new pods appearing:
+<p>New pods will appear soon thereafter.</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get pods --namespace nginx
 NAME                                READY   STATUS    RESTARTS   AGE
 nginx-deployment-66b6c48dd5-8zq7d   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
 nginx-deployment-66b6c48dd5-br4jv   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
 nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
-</code></pre></div></p>
+</code></pre></div>
                 
               
               

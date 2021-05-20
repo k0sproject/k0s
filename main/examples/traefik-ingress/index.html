@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installing-the-traefik-ingress-controller-on-k0s" class="md-skip">
+        <a href="#install-the-traefik-ingress-controller-on-k0s" class="md-skip">
           Skip to content
         </a>
       
@@ -498,29 +498,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#configuring-k0syaml" class="md-nav__link">
-    Configuring k0s.yaml
+  <a href="#1-configure-k0syaml" class="md-nav__link">
+    1. Configure k0s.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieving-the-load-balancer-ip" class="md-nav__link">
-    Retrieving the Load Balancer IP
+  <a href="#2-retrieve-the-load-balancer-ip" class="md-nav__link">
+    2. Retrieve the Load Balancer IP
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deploy-and-access-the-traefik-dashboard" class="md-nav__link">
-    Deploy and access the Traefik Dashboard
+  <a href="#3-deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+    3. Deploy and access the Traefik Dashboard
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    Summary
+  <a href="#further-details" class="md-nav__link">
+    Further details
   </a>
   
 </li>
@@ -913,29 +913,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#configuring-k0syaml" class="md-nav__link">
-    Configuring k0s.yaml
+  <a href="#1-configure-k0syaml" class="md-nav__link">
+    1. Configure k0s.yaml
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieving-the-load-balancer-ip" class="md-nav__link">
-    Retrieving the Load Balancer IP
+  <a href="#2-retrieve-the-load-balancer-ip" class="md-nav__link">
+    2. Retrieve the Load Balancer IP
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deploy-and-access-the-traefik-dashboard" class="md-nav__link">
-    Deploy and access the Traefik Dashboard
+  <a href="#3-deploy-and-access-the-traefik-dashboard" class="md-nav__link">
+    3. Deploy and access the Traefik Dashboard
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    Summary
+  <a href="#further-details" class="md-nav__link">
+    Further details
   </a>
   
 </li>
@@ -954,24 +954,12 @@
               
                 
                 
-                <h1 id="installing-the-traefik-ingress-controller-on-k0s">Installing the Traefik Ingress Controller on k0s<a class="headerlink" href="#installing-the-traefik-ingress-controller-on-k0s" title="Permanent link">#</a></h1>
-<p>In this tutorial, you'll learn how to configure k0s with the
-<a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik ingress controller</a>,
-a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>,
-and deploy the Traefik Dashboard along with a service example.
-Utilizing the extensible bootstrapping functionality with Helm, 
-it's as simple as adding the right extensions to the <code>k0s.yaml</code> file 
-when configuring your cluster.</p>
-<h2 id="configuring-k0syaml">Configuring k0s.yaml<a class="headerlink" href="#configuring-k0syaml" title="Permanent link">#</a></h2>
-<p>Modify your <code>k0s.yaml</code> file to include the Traefik and MetalLB helm charts as extensions,
-and these will install during the cluster's bootstrap.</p>
-<blockquote>
-<p>Note: You may want to have a small range of IP addresses that are addressable on your network,
-preferably outside the assignment pool allocated by your DHCP server.
-Providing an addressable range should allow you to access your LoadBalancer and Ingress services
-from anywhere on your local network.
-However, any valid IP range should work locally on your machine.</p>
-</blockquote>
+                <h1 id="install-the-traefik-ingress-controller-on-k0s">Install the Traefik Ingress Controller on k0s<a class="headerlink" href="#install-the-traefik-ingress-controller-on-k0s" title="Permanent link">#</a></h1>
+<p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik ingress controller</a>, a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration. </p>
+<h2 id="1-configure-k0syaml">1. Configure k0s.yaml<a class="headerlink" href="#1-configure-k0syaml" title="Permanent link">#</a></h2>
+<p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="helm-charts.md">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>). </p>
+<h5 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h5>
+<p>A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network. </p>
 <div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
   <span class="nt">helm</span><span class="p">:</span>
     <span class="nt">repositories</span><span class="p">:</span>
@@ -996,48 +984,43 @@ However, any valid IP range should work locally on your machine.</p>
             <span class="no">addresses:</span>
             <span class="no">- 192.168.0.5-192.168.0.10</span>
 </code></pre></div>
-<p>Providing a range of IPs for MetalLB that are addressable on your LAN is suggested 
-if you want to access LoadBalancer and Ingress services from anywhere on your local network.</p>
-<h2 id="retrieving-the-load-balancer-ip">Retrieving the Load Balancer IP<a class="headerlink" href="#retrieving-the-load-balancer-ip" title="Permanent link">#</a></h2>
-<p>Once you've started your cluster, you should confirm the deployment of Traefik and MetalLB.
-Executing a <code>kubectl get all</code> should include a response with the <code>metallb</code> and <code>traefik</code> resources, 
-along with a service loadbalancer that has an <code>EXTERNAL-IP</code> assigned to it. 
-See the example below:</p>
+<h2 id="2-retrieve-the-load-balancer-ip">2. Retrieve the Load Balancer IP<a class="headerlink" href="#2-retrieve-the-load-balancer-ip" title="Permanent link">#</a></h2>
+<p>After you start your cluster, run <code>kubectl get all</code> to confirm the deployment of Traefik and MetalLB. The command should return a response with the <code>metallb</code> and <code>traefik</code> resources, along with a service load balancer that has an assigned <code>EXTERNAL-IP</code>. </p>
 <div class="highlight"><pre><span></span><code>root@k0s-host ➜ kubectl get all
-NAME                                                 READY   STATUS    RESTARTS   AGE
-pod/metallb-1607085578-controller-864c9757f6-bpx6r   <span class="m">1</span>/1     Running   <span class="m">0</span>          81s
-pod/metallb-1607085578-speaker-245c2                 <span class="m">1</span>/1     Running   <span class="m">0</span>          60s
-pod/traefik-1607085579-77bbc57699-b2f2t              <span class="m">1</span>/1     Running   <span class="m">0</span>          81s
+</code></pre></div>
+<p><em>Output</em>:</p>
+<div class="highlight"><pre><span></span><code>NAME                                                 READY   STATUS    RESTARTS   AGE
+pod/metallb-1607085578-controller-864c9757f6-bpx6r   1/1     Running   0          81s
+pod/metallb-1607085578-speaker-245c2                 1/1     Running   0          60s
+pod/traefik-1607085579-77bbc57699-b2f2t              1/1     Running   0          81s
 
-NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                      AGE
-service/kubernetes           ClusterIP      <span class="m">10</span>.96.0.1        &lt;none&gt;           <span class="m">443</span>/TCP                      96s
-service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.102   <span class="m">192</span>.168.0.5      <span class="m">80</span>:32153/TCP,443:30791/TCP   84s
+NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
+service/kubernetes           ClusterIP      10.96.0.1        &lt;none&gt;           443/TCP                      96s
+service/traefik-1607085579   LoadBalancer   10.105.119.102   192.168.0.5      80:32153/TCP,443:30791/TCP   84s
 
 NAME                                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
-daemonset.apps/metallb-1607085578-speaker   <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       <span class="m">1</span>            <span class="m">1</span>           kubernetes.io/os<span class="o">=</span>linux   87s
+daemonset.apps/metallb-1607085578-speaker   1         1         1       1            1           kubernetes.io/os=linux   87s
 
 NAME                                            READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/metallb-1607085578-controller   <span class="m">1</span>/1     <span class="m">1</span>            <span class="m">1</span>           87s
-deployment.apps/traefik-1607085579              <span class="m">1</span>/1     <span class="m">1</span>            <span class="m">1</span>           84s
+deployment.apps/metallb-1607085578-controller   1/1     1            1           87s
+deployment.apps/traefik-1607085579              1/1     1            1           84s
 
 NAME                                                       DESIRED   CURRENT   READY   AGE
-replicaset.apps/metallb-1607085578-controller-864c9757f6   <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       81s
-replicaset.apps/traefik-1607085579-77bbc57699              <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       81s
+replicaset.apps/metallb-1607085578-controller-864c9757f6   1         1         1       81s
+replicaset.apps/traefik-1607085579-77bbc57699              1         1         1       81s
 </code></pre></div>
-<p>Take note of the <code>EXTERNAL-IP</code> given to the <code>service/traefik-n</code> LoadBalancer.
-In this example, <code>192.168.0.5</code> has been assigned and can be used to access services via the Ingress proxy:</p>
+<p>Take note of the <code>EXTERNAL-IP</code> given to the <code>service/traefik-n</code> load balancer. In this example, <code>192.168.0.5</code> has been assigned and can be used to access services via the Ingress proxy: </p>
 <div class="highlight"><pre><span></span><code>NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT<span class="o">(</span>S<span class="o">)</span>                      AGE
 service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.102   <span class="m">192</span>.168.0.5      <span class="m">80</span>:32153/TCP,443:30791/TCP   84s
 <span class="c1"># Receiving a 404 response here is normal, as you&#39;ve not configured any Ingress resources to respond yet</span>
 root@k0s-host ➜ curl http://192.168.0.5
 <span class="m">404</span> page not found
 </code></pre></div>
-<h2 id="deploy-and-access-the-traefik-dashboard">Deploy and access the Traefik Dashboard<a class="headerlink" href="#deploy-and-access-the-traefik-dashboard" title="Permanent link">#</a></h2>
-<p>Now that you have an available and addressable load balancer on your cluster, 
-you can quickly deploy the Traefik dashboard and access it from anywhere on your local network 
-(provided that you configured MetalLB with an addressable range).</p>
-<p>Create the Traefik Dashboard <a href="https://doc.traefik.io/traefik/providers/kubernetes-crd/">IngressRoute</a> 
-in a YAML file:</p>
+<h2 id="3-deploy-and-access-the-traefik-dashboard">3. Deploy and access the Traefik Dashboard<a class="headerlink" href="#3-deploy-and-access-the-traefik-dashboard" title="Permanent link">#</a></h2>
+<p>With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range). </p>
+<ol>
+<li>
+<p>Create the Traefik Dashboard <a href="https://doc.traefik.io/traefik/providers/kubernetes-crd/">IngressRoute</a> in a YAML file:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik.containo.us/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IngressRoute</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -1052,15 +1035,19 @@ in a YAML file:</p>
         <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">api@internal</span>
           <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TraefikService</span>
 </code></pre></div>
-<p>Next, deploy the resource:</p>
+</li>
+<li>
+<p>Deploy the resource:</p>
 <div class="highlight"><pre><span></span><code>root@k0s-host ➜ kubectl apply -f traefik-dashboard.yaml
-ingressroute.traefik.containo.us/dashboard created
 </code></pre></div>
-<p>Once deployed, you should be able to access the dashboard using the <code>EXTERNAL-IP</code> 
-that you noted above by visiting <code>http://192.168.0.5</code> in your browser:</p>
+<p><em>Output</em>:</p>
+<div class="highlight"><pre><span></span><code>ingressroute.traefik.containo.us/dashboard created
+</code></pre></div>
+<p>At this point you should be able to access the dashboard using the <code>EXTERNAL-IP</code> that you noted above by visiting <code>http://192.168.0.5</code> in your browser:</p>
 <p><img alt="Traefik Dashboard" src="../../img/traefik-dashboard.png" /></p>
-<p>Now, create a simple <code>whoami</code> Deployment, Service, 
-and <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a> manifest:</p>
+</li>
+<li>
+<p>Create a simple <code>whoami</code> Deployment, Service, and <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a> manifest:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -1107,40 +1094,44 @@ and <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">I
             <span class="nt">port</span><span class="p">:</span>
               <span class="nt">number</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
 </code></pre></div>
-<p>Once you've created this, apply and test it:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># apply the manifests</span>
-root@k0s-host ➜ kubectl apply -f whoami.yaml
+</li>
+<li>
+<p>Apply the manifests:</p>
+<div class="highlight"><pre><span></span><code>root@k0s-host ➜ kubectl apply -f whoami.yaml
+</code></pre></div>
+<p><em>Output</em>:</p>
+<p>```
 deployment.apps/whoami-deployment created
 service/whoami-service created
-ingress.networking.k8s.io/whoami-ingress created
-<span class="c1"># test the ingress and service</span>
-root@k0s-host ➜ curl http://192.168.0.5/whoami
-Hostname: whoami-deployment-85bfbd48f-7l77c
-IP: <span class="m">127</span>.0.0.1
+ingress.networking.k8s.io/whoami-ingress created</p>
+</li>
+<li>
+<p>Test the ingress and service:</p>
+<p><div class="highlight"><pre><span></span><code>curl http://192.168.0.5/whoami
+</code></pre></div>
+<em>Output</em>:</p>
+<div class="highlight"><pre><span></span><code>Hostname: whoami-deployment-85bfbd48f-7l77c
+IP: 127.0.0.1
 IP: ::1
-IP: <span class="m">10</span>.244.214.198
+IP: 10.244.214.198
 IP: fe80::b049:f8ff:fe77:3e64
-RemoteAddr: <span class="m">10</span>.244.214.196:34858
+RemoteAddr: 10.244.214.196:34858
 GET /whoami HTTP/1.1
-Host: <span class="m">192</span>.168.0.5
+Host: 192.168.0.5
 User-Agent: curl/7.68.0
 Accept: */*
 Accept-Encoding: gzip
-X-Forwarded-For: <span class="m">192</span>.168.0.82
-X-Forwarded-Host: <span class="m">192</span>.168.0.5
-X-Forwarded-Port: <span class="m">80</span>
+X-Forwarded-For: 192.168.0.82
+X-Forwarded-Host: 192.168.0.5
+X-Forwarded-Port: 80
 X-Forwarded-Proto: http
 X-Forwarded-Server: traefik-1607085579-77bbc57699-b2f2t
-X-Real-Ip: <span class="m">192</span>.168.0.82
+X-Real-Ip: 192.168.0.82
 </code></pre></div>
-<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">#</a></h2>
-<p>From here, it's possible to use 3rd party tools, such as <a href="https://ngrok.io">ngrok</a>,
-to go further and expose your LoadBalancer to the world.
-Doing so then enables dynamic certificate provisioning through <a href="https://letsencrypt.org/">Let's Encrypt</a>
-utilizing either <a href="https://cert-manager.io/docs/">cert-manager</a>
-or Traefik's own built-in <a href="https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/">ACME provider</a>.
-This guide should have given you a general idea of getting started with Ingress on k0s
-and exposing your applications and services quickly.</p>
+</li>
+</ol>
+<h2 id="further-details">Further details<a class="headerlink" href="#further-details" title="Permanent link">#</a></h2>
+<p>With the Traefik Ingress Controller it is possible to use 3rd party tools, such as <a href="https://ngrok.io">ngrok</a>, to go further and expose your load balancer to the world. In doing this you enable dynamic certificate provisioning through <a href="https://letsencrypt.org/">Let's Encrypt</a>, using either <a href="https://cert-manager.io/docs/">cert-manager</a> or Traefik's own built-in <a href="https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/">ACME provider</a>. </p>
                 
               
               
