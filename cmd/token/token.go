@@ -25,7 +25,6 @@ type CmdOpts config.CLIOptions
 
 var (
 	tokenExpiry string
-	tokenRole   string
 	waitCreate  bool
 )
 
