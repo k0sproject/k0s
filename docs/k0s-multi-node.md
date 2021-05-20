@@ -1,34 +1,39 @@
-# Manual Install (for advanced users)
+# Manual Install (Advanced)
 
-In this tutorial you'll create a multi-node cluster, which is locally managed in each node. It requires several steps to install each node separately and connect the nodes together with the access tokens. This tutorial is targeted for advanced users who want to setup their k0s nodes manually.
+You can manually set up k0s nodes by creating a multi-node cluster that is locally managed on each node. This involves several steps, to first install each node separately, and to then connect the node together using access tokens. 
 
-### Prerequisites
+## Prerequisites
 
-This tutorial has been written for Debian/Ubuntu, but it can be used for any Linux running one of the supported init systems: Systemd or OpenRC.
+**Note**: Before proceeding, make sure to review the [System Requirements](system-requirements.md). 
 
-Before proceeding, make sure to review the [System Requirements](system-requirements.md).
+Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system. 
 
-To speed-up the usage of `k0s` command, you may want to enable [shell completion](shell-completion.md).
+You can speed up the use of the `k0s` command by enabling [shell completion](shell-completion.md). 
 
-### Installation steps
+## Install k0s
 
-#### 1. Download k0s
+### 1. Download k0s
 
-The k0s download script downloads the latest stable k0s and makes it executable from /usr/bin/k0s.
+Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s. 
+
 ```
 $ curl -sSLf https://get.k0s.sh | sudo sh
 ```
 The download script accepts the following environment variables:
 
-1. `K0S_VERSION=v0.11.0` - select the version of k0s to be installed
-2. `DEBUG=true` - outputs commands and their arguments as they are executed.
+| Variable              | Purpose                                   |
+|:----------------------|:------------------------------------------|
+| `K0S_VERSION=v0.11.0` | Select the version of k0s to be installed |
+| `DEBUG=true` | Output commands and their arguments at execution. 
 
-If you need to use environment variables and you use sudo, you may need `--preserve-env` like
+**Note**: If you require environment variables and use sudo, you may need
+`--preserve-env`:
+
 ```sh
 curl -sSLf https://get.k0s.sh | sudo --preserve-env=K0S_VERSION sh
 ```
 
-#### 2. Bootstrap a controller node
+### 2. Bootstrap a controller node
 
 Create a configuration file:
 
@@ -36,7 +41,7 @@ Create a configuration file:
 $ k0s default-config > k0s.yaml
 
 ```
-If you wish to modify some of the settings, please check out the [configuration](configuration.md) documentation.
+**Note**: For information on settings modification, refer to the [configuration](configuration.md) documentation. 
 
 ```sh
 $ k0s install controller -c k0s.yaml
@@ -45,25 +50,30 @@ $ k0s install controller -c k0s.yaml
 $ systemctl start k0scontroller
 ```
 
-k0s process will act as a "supervisor" for all of the control plane components. In a few seconds you'll have the control plane up-and-running.
+k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running. 
 
-#### 3. Create a join token
+### 3. Create a join token
 
-To be able to join workers into the cluster a token is needed. The token embeds information, which enables mutual trust between the worker and controller(s) and allows the node to join the cluster as worker.
+You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker. 
 
-To get a token run the following command on one of the existing controller nodes:
+To get a token, run the following command on one of the existing controller nodes: 
+
 ```sh
 $ k0s token create --role=worker
 ```
 
-This will output a long [token](#tokens) string, which you will use to add a worker to the cluster. For enhanced security, it's possible to set an expiration time for the token by using:
+The resulting output is a long [token](#tokens) string, which you can use to add a worker to the cluster. 
+
+For enhanced security, run the following command to set an expiration time for the token:
+
 ```sh
 $ k0s token create --role=worker --expiry=100h > token-file
 ```
 
-#### 4. Add workers to the cluster
+### 4. Add workers to the cluster
 
-To join the worker we need to run k0s in the worker mode with the token from the previous step:
+To join the worker, run k0s in the worker mode with the join token you created:
+
 ```sh
 $ k0s install worker --token-file /path/to/token/file
 ```
@@ -71,28 +81,28 @@ $ k0s install worker --token-file /path/to/token/file
 $ systemctl start k0sworker
 ```
 
-##### About tokens
+#### About tokens
 
-The tokens are actually base64 encoded [kubeconfigs](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/). 
+The join tokens are base64-encoded [kubeconfigs](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) for several reasons: 
 
-Why:
+- Well-defined structure
+- Capable of direct use as bootstrap auth configs for kubelet
+- Embedding of CA info for mutual trust
 
-- Well defined structure
-- Can be used directly as bootstrap auth configs for kubelet
-- Embeds CA info for mutual trust
+The bearer token embedded in the kubeconfig is a [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/). For controller join tokens and worker join tokens k0s uses different usage attributes to ensure that k0s can validate the token role on the controller side. 
 
-The actual bearer token embedded in the kubeconfig is a [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/). For controller join token and for worker join token we use different usage attributes so we can make sure we can validate the token role on the controller side.
+### 5. Add controllers to the cluster
 
-#### 5. Add controllers to the cluster
+**Note**: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the [high availability configuration](high-availability.md) and make sure the configuration is identical for all controller nodes. 
 
-To add new controller nodes to the cluster, you must be using either etcd or an external data store (MySQL or Postgres) via kine. Please pay an extra attention to the [high availability configuration](high-availability.md), and make sure this configuration is identical for all controller nodes.
+To create a join token for the new controller, run the following command on an existing controller: 
 
-To create a join token for the new controller, run the following on an existing controller:
 ```sh
 $ k0s token create --role=controller --expiry=1h > token-file
 ```
 
 On the new controller, run:
+
 ```sh
 $ sudo k0s install controller --token-file /path/to/token/file
 ```
@@ -100,9 +110,9 @@ $ sudo k0s install controller --token-file /path/to/token/file
 $ systemctl start k0scontroller
 ```
 
-#### 6. Check service and k0s status
+### 6. Check service and k0s status
 
-You can check the service status and logs like this:
+To check the service status and log:
 ```
 $ sudo systemctl status k0scontroller
      Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)
@@ -116,6 +126,7 @@ $ sudo systemctl status k0scontroller
 ```
 
 To get general information about your k0s instance:
+
 ```
 $ sudo k0s status
 Version: v0.11.0
@@ -125,25 +136,28 @@ Role: controller
 Init System: linux-systemd
 ```
 
-#### 7. Access your cluster
+### 7. Access your cluster
 
-The Kubernetes command-line tool 'kubectl' is included into k0s binary. You can use it for example to deploy your application or check your node status like this:
+Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:
 ```
 $ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    <none>   4m6s   v1.21.1-k0s1
 ```
 
-You can also access your cluster easily with [LENS](https://k8slens.dev/). Just copy the kubeconfig 
+You can also access your cluster easily with [Lens](https://k8slens.dev/), simply by copying the kubeconfig and pasting it to Lens: 
+
 ```sh
 sudo cat /var/lib/k0s/pki/admin.conf
 ```
-and paste it to LENS. Note that in the kubeconfig you need add your controller's host ip address to the server field (replacing localhost) in order to access the cluster from an external network.
 
-### Next Steps
+**Note**: To access the cluster from an external network you must replace `localhost` in the kubeconfig with the host ip address for your controller. 
 
-- [Installing with k0sctl](k0sctl-install.md) for deploying and upgrading multi-node clusters with one command
-- [Control plane configuration options](configuration.md) for example for networking and datastore configuration
-- [Worker node configuration options](worker-node-config.md) for example for node labels and kubelet arguments
-- [Support for cloud providers](cloud-providers.md) for example for load balancer or storage configuration
-- [Installing the Traefik Ingress Controller](examples/traefik-ingress.md), a tutorial for ingress deployment
+## Next Steps
+
+- [Installing with k0sctl](k0sctl-install.md): Deploy and upgrade multi-node clusters with one command
+- [Control plane configuration options](configuration.md): Networking and datastore configuration
+- [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
+- [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
+- [Installing the Traefik Ingress Controller](examples/traefik-ingress.md):
+  Ingress deployment information
