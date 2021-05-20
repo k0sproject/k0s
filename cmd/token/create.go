@@ -28,6 +28,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/token"
 )
 
+var createTokenRole string
+
 func tokenCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -58,7 +60,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(clusterConfig, c.K0sVars, tokenRole, expiry)
+				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(clusterConfig, c.K0sVars, createTokenRole, expiry)
 
 				return err
 			})
@@ -71,11 +73,12 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
-	cmd.Flags().StringVar(&tokenRole, "role", "worker", "Either worker or controller")
-	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
-
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	cmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
+	cmd.Flags().StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
+	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
+
 	return cmd
 }

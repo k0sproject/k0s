@@ -698,6 +698,9 @@ jobs:
         env:
           EMBEDDED_BINS_BUILDMODE: none
 
+      - name: go modules check
+        run: make lint-gomod
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:

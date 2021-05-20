@@ -21,6 +21,11 @@ ifeq ($(DEBUG), false)
 LD_FLAGS ?= -w -s
 endif
 
+KUBECTL_VERSION = $(shell go mod graph |  grep "github.com/k0sproject/k0s" |  grep kubectl  | cut -d "@" -f 2 | sed "s/v0\./1./")
+KUBECTL_MAJOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 1)
+KUBECTL_MINOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 2)
+BUILD_DATE = $(shell date ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH:-}"} -u +'%Y-%m-%dT%H:%M:%SZ')
+
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.ContainerdVersion=$(containerd_version)
@@ -30,15 +35,21 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
 LD_FLAGS += -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
+LD_FLAGS += -X k8s.io/component-base/version.gitVersion="v$(KUBECTL_VERSION)"
+LD_FLAGS += -X k8s.io/component-base/version.gitMajor="$(KUBECTL_MAJOR)"
+LD_FLAGS += -X k8s.io/component-base/version.gitMinor="$(KUBECTL_MINOR)"
+LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
+LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
+
 
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
-golint := go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 && "${GOPATH}/bin/golangci-lint"
+golint := cd hack/ci-deps && go install github.com/golangci/golangci-lint/cmd/golangci-lint && cd ../.. && "${GOPATH}/bin/golangci-lint"
 endif
 
 go_bindata := $(shell which go-bindata)
 ifeq ($(go_bindata),)
-go_bindata := go get github.com/kevinburke/go-bindata/...@v3.22.0 && "${GOPATH}/bin/go-bindata"
+go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
 GOLANG_IMAGE = golang:1.16-alpine
@@ -73,8 +84,8 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: gen_bindata.go
-	GOOS=${GOHOSTOS} $(GO) run gen_bindata.go -o bindata_$(zz_os) -pkg assets \
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
+	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
@@ -98,8 +109,13 @@ k0s.exe k0s: $(GO_SRCS)
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
+SKIP_GOMOD_LINT ?= false
+ifeq ($(SKIP_GOMOD_LINT), false)
+GOMODLINT=lint-gomod
+endif
+
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go ${GOMODLINT}
 	$(golint) run ./...
 
 .PHONY: $(smoketests)
@@ -120,6 +136,7 @@ clean:
 	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
 	$(MAKE) -C embedded-bins clean
 	$(MAKE) -C image-bundle clean
+	$(MAKE) -C inttest clean
 
 .PHONY: manifests
 manifests:
@@ -136,3 +153,20 @@ image-bundle/image.list: k0s
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
+
+
+GOMODTIDYLINT=sh -c '\
+if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
+	echo "Run \`go mod tidy\` and commit the result"; \
+	exit 1; \
+fi ; \
+${GO} mod tidy; \
+if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
+ git checkout go.mod go.sum ; \
+ echo "Linter failure: go.mod and go.sum have unused deps. Run \`go mod tidy\` and commit the result"; \
+ exit 2; \
+fi \
+ ; ' GOMODTIDYLINT
+
+lint-gomod:
+	@${GOMODTIDYLINT}
