@@ -9,7 +9,7 @@ You can install k0s in an environment with restricted Internet access.
 
 * The containerd CLI management tool `ctr`, installed on the worker machine (refer to the ContainerD [getting-started](https://containerd.io/docs/getting-started/) guide). 
 
-### 1. Create the OCI bundle
+## 1. Create the OCI bundle
 
 **Note**: k0s supports only uncompressed image bundles.
 
@@ -42,7 +42,7 @@ Use following commands on a machine with an installed k0s worker:
 # ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle_file $IMAGES
 ```
 
-### 2. Sync the bundle file with the airgapped machine
+## 2. Sync the bundle file with the airgapped machine
 
 Copy the `bundle_file` you created in the previous step to the target machine into the `images` directory in the k0s data directory. 
 
@@ -51,7 +51,7 @@ Copy the `bundle_file` you created in the previous step to the target machine in
 # cp bundle_file /var/lib/k0s/images/bundle_file
 ```
 
-### 3. Ensure pull policy in the k0s.yaml (Optional)
+## 3. Ensure pull policy in the k0s.yaml (Optional)
 
 Use the following `k0s.yaml` to ensure that containerd does not pull images for k0s components from the Internet at any time. 
 
@@ -65,11 +65,11 @@ spec:
     default_pull_policy: Never
 ```
 
-### 4. Set up the Controller
+## 4. Set up the Controller
 
 Refer to the [Quick Start Guide](install.md) for information on setting up the controller node. 
 
-### 5. Set up a worker
+## 5. Set up a worker
 
 Perform the worker set up on the airgapped machine.
 
