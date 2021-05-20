@@ -14,6 +14,9 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
+BUILD_GO_FLAGS :=
+BUILD_GO_CGO_ENABLED ?= 0
+BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
 VERSION ?= $(shell git describe --tags)
@@ -40,7 +43,7 @@ LD_FLAGS += -X k8s.io/component-base/version.gitMajor="$(KUBECTL_MAJOR)"
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor="$(KUBECTL_MINOR)"
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
-
+LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
@@ -99,7 +102,7 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build -v -ldflags="$(LD_FLAGS)" -o $@.code main.go
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
 		&& chmod +x $@.tmp \

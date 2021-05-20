@@ -71,6 +71,11 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker build -t k0sbuild$(basename $@) \
 		--build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
 		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
+		--build-arg BUILD_GO_TAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_tags) \
+		--build-arg BUILD_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_enabled) \
+		--build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
+		--build-arg BUILD_GO_LDFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) \
+		--build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
 		-f $< .
 	touch $@
 

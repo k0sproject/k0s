@@ -2,6 +2,11 @@ ARG BUILDIMAGE=golang:1.15-alpine
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
+ARG BUILD_GO_TAGS
+ARG BUILD_GO_CGO_ENABLED
+ARG BUILD_GO_FLAGS
+ARG BUILD_GO_LDFLAGS
+ARG BUILD_GO_LDFLAGS_EXTRA
 ENV GOPATH=/go
 
 RUN apk upgrade -U -a && apk add \
@@ -12,8 +17,14 @@ RUN apk upgrade -U -a && apk add \
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
 RUN git clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
 WORKDIR /go/src/github.com/containerd/containerd
-RUN make COMMANDS="containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2" \
-	EXTRA_LDFLAGS="-extldflags=-static -s -w"
+RUN go version
+RUN make \
+	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
+	SHIM_CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
+	GO_TAGS="-tags=${BUILD_GO_TAGS}" \
+	COMMANDS="containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2" \
+	GO_BUILD_FLAGS="${BUILD_GO_FLAGS}" \
+	EXTRA_LDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}"
 
 FROM scratch
 COPY --from=build /go/src/github.com/containerd/containerd/bin/* /bin/
