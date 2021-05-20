@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manual-install-for-advanced-users" class="md-skip">
+        <a href="#manual-install-advanced" class="md-skip">
           Skip to content
         </a>
       
@@ -345,9 +345,64 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Install k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-download-k0s" class="md-nav__link">
+    1. Download k0s
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bootstrap-a-controller-node" class="md-nav__link">
+    2. Bootstrap a controller node
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-create-a-join-token" class="md-nav__link">
+    3. Create a join token
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-add-workers-to-the-cluster" class="md-nav__link">
+    4. Add workers to the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-add-controllers-to-the-cluster" class="md-nav__link">
+    5. Add controllers to the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-check-service-and-k0s-status" class="md-nav__link">
+    6. Check service and k0s status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-access-your-cluster" class="md-nav__link">
+    7. Access your cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -913,9 +968,64 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Install k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-download-k0s" class="md-nav__link">
+    1. Download k0s
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bootstrap-a-controller-node" class="md-nav__link">
+    2. Bootstrap a controller node
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-create-a-join-token" class="md-nav__link">
+    3. Create a join token
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-add-workers-to-the-cluster" class="md-nav__link">
+    4. Add workers to the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-add-controllers-to-the-cluster" class="md-nav__link">
+    5. Add controllers to the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-check-service-and-k0s-status" class="md-nav__link">
+    6. Check service and k0s status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-access-your-cluster" class="md-nav__link">
+    7. Access your cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -940,70 +1050,85 @@
               
                 
                 
-                <h1 id="manual-install-for-advanced-users">Manual Install (for advanced users)<a class="headerlink" href="#manual-install-for-advanced-users" title="Permanent link">#</a></h1>
-<p>In this tutorial you'll create a multi-node cluster, which is locally managed in each node. It requires several steps to install each node separately and connect the nodes together with the access tokens. This tutorial is targeted for advanced users who want to setup their k0s nodes manually.</p>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
-<p>This tutorial has been written for Debian/Ubuntu, but it can be used for any Linux running one of the supported init systems: Systemd or OpenRC.</p>
-<p>Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
-<p>To speed-up the usage of <code>k0s</code> command, you may want to enable <a href="../shell-completion/">shell completion</a>.</p>
-<h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
-<h4 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h4>
-<p>The k0s download script downloads the latest stable k0s and makes it executable from /usr/bin/k0s.
-<div class="highlight"><pre><span></span><code>$ curl -sSLf https://get.k0s.sh | sudo sh
+                <h1 id="manual-install-advanced">Manual Install (Advanced)<a class="headerlink" href="#manual-install-advanced" title="Permanent link">#</a></h1>
+<p>You can manually set up k0s nodes by creating a multi-node cluster that is locally managed on each node. This involves several steps, to first install each node separately, and to then connect the node together using access tokens. </p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p><strong>Note</strong>: Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>. </p>
+<p>Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system. </p>
+<p>You can speed up the use of the <code>k0s</code> command by enabling <a href="../shell-completion/">shell completion</a>. </p>
+<h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
+<h3 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h3>
+<p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s. </p>
+<p><div class="highlight"><pre><span></span><code>$ curl -sSLf https://get.k0s.sh | sudo sh
 </code></pre></div>
 The download script accepts the following environment variables:</p>
-<ol>
-<li><code>K0S_VERSION=v0.11.0</code> - select the version of k0s to be installed</li>
-<li><code>DEBUG=true</code> - outputs commands and their arguments as they are executed.</li>
-</ol>
-<p>If you need to use environment variables and you use sudo, you may need <code>--preserve-env</code> like
+<table>
+<thead>
+<tr>
+<th align="left">Variable</th>
+<th align="left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><code>K0S_VERSION=v0.11.0</code></td>
+<td align="left">Select the version of k0s to be installed</td>
+</tr>
+<tr>
+<td align="left"><code>DEBUG=true</code></td>
+<td align="left">Output commands and their arguments at execution.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: If you require environment variables and use sudo, you may need
+<code>--preserve-env</code>:</p>
 <div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo --preserve-env<span class="o">=</span>K0S_VERSION sh
-</code></pre></div></p>
-<h4 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h4>
+</code></pre></div>
+<h3 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h3>
 <p>Create a configuration file:</p>
 <p><div class="highlight"><pre><span></span><code>$ k0s default-config &gt; k0s.yaml
 </code></pre></div>
-If you wish to modify some of the settings, please check out the <a href="../configuration/">configuration</a> documentation.</p>
+<strong>Note</strong>: For information on settings modification, refer to the <a href="../configuration/">configuration</a> documentation. </p>
 <p><div class="highlight"><pre><span></span><code>$ k0s install controller -c k0s.yaml
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>$ systemctl start k0scontroller
 </code></pre></div></p>
-<p>k0s process will act as a "supervisor" for all of the control plane components. In a few seconds you'll have the control plane up-and-running.</p>
-<h4 id="3-create-a-join-token">3. Create a join token<a class="headerlink" href="#3-create-a-join-token" title="Permanent link">#</a></h4>
-<p>To be able to join workers into the cluster a token is needed. The token embeds information, which enables mutual trust between the worker and controller(s) and allows the node to join the cluster as worker.</p>
-<p>To get a token run the following command on one of the existing controller nodes:
+<p>k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running. </p>
+<h3 id="3-create-a-join-token">3. Create a join token<a class="headerlink" href="#3-create-a-join-token" title="Permanent link">#</a></h3>
+<p>You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker. </p>
+<p>To get a token, run the following command on one of the existing controller nodes: </p>
 <div class="highlight"><pre><span></span><code>$ k0s token create --role<span class="o">=</span>worker
-</code></pre></div></p>
-<p>This will output a long <a href="#tokens">token</a> string, which you will use to add a worker to the cluster. For enhanced security, it's possible to set an expiration time for the token by using:
+</code></pre></div>
+<p>The resulting output is a long <a href="#tokens">token</a> string, which you can use to add a worker to the cluster. </p>
+<p>For enhanced security, run the following command to set an expiration time for the token:</p>
 <div class="highlight"><pre><span></span><code>$ k0s token create --role<span class="o">=</span>worker --expiry<span class="o">=</span>100h &gt; token-file
-</code></pre></div></p>
-<h4 id="4-add-workers-to-the-cluster">4. Add workers to the cluster<a class="headerlink" href="#4-add-workers-to-the-cluster" title="Permanent link">#</a></h4>
-<p>To join the worker we need to run k0s in the worker mode with the token from the previous step:
-<div class="highlight"><pre><span></span><code>$ k0s install worker --token-file /path/to/token/file
+</code></pre></div>
+<h3 id="4-add-workers-to-the-cluster">4. Add workers to the cluster<a class="headerlink" href="#4-add-workers-to-the-cluster" title="Permanent link">#</a></h3>
+<p>To join the worker, run k0s in the worker mode with the join token you created:</p>
+<p><div class="highlight"><pre><span></span><code>$ k0s install worker --token-file /path/to/token/file
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>$ systemctl start k0sworker
 </code></pre></div></p>
-<h5 id="about-tokens">About tokens<a class="headerlink" href="#about-tokens" title="Permanent link">#</a></h5>
-<p>The tokens are actually base64 encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a>. </p>
-<p>Why:</p>
+<h4 id="about-tokens">About tokens<a class="headerlink" href="#about-tokens" title="Permanent link">#</a></h4>
+<p>The join tokens are base64-encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a> for several reasons: </p>
 <ul>
-<li>Well defined structure</li>
-<li>Can be used directly as bootstrap auth configs for kubelet</li>
-<li>Embeds CA info for mutual trust</li>
+<li>Well-defined structure</li>
+<li>Capable of direct use as bootstrap auth configs for kubelet</li>
+<li>Embedding of CA info for mutual trust</li>
 </ul>
-<p>The actual bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join token and for worker join token we use different usage attributes so we can make sure we can validate the token role on the controller side.</p>
-<h4 id="5-add-controllers-to-the-cluster">5. Add controllers to the cluster<a class="headerlink" href="#5-add-controllers-to-the-cluster" title="Permanent link">#</a></h4>
-<p>To add new controller nodes to the cluster, you must be using either etcd or an external data store (MySQL or Postgres) via kine. Please pay an extra attention to the <a href="../high-availability/">high availability configuration</a>, and make sure this configuration is identical for all controller nodes.</p>
-<p>To create a join token for the new controller, run the following on an existing controller:
+<p>The bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join tokens and worker join tokens k0s uses different usage attributes to ensure that k0s can validate the token role on the controller side. </p>
+<h3 id="5-add-controllers-to-the-cluster">5. Add controllers to the cluster<a class="headerlink" href="#5-add-controllers-to-the-cluster" title="Permanent link">#</a></h3>
+<p><strong>Note</strong>: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the <a href="../high-availability/">high availability configuration</a> and make sure the configuration is identical for all controller nodes. </p>
+<p>To create a join token for the new controller, run the following command on an existing controller: </p>
 <div class="highlight"><pre><span></span><code>$ k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h &gt; token-file
-</code></pre></div></p>
-<p>On the new controller, run:
-<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --token-file /path/to/token/file
+</code></pre></div>
+<p>On the new controller, run:</p>
+<p><div class="highlight"><pre><span></span><code>$ sudo k0s install controller --token-file /path/to/token/file
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>$ systemctl start k0scontroller
 </code></pre></div></p>
-<h4 id="6-check-service-and-k0s-status">6. Check service and k0s status<a class="headerlink" href="#6-check-service-and-k0s-status" title="Permanent link">#</a></h4>
-<p>You can check the service status and logs like this:
+<h3 id="6-check-service-and-k0s-status">6. Check service and k0s status<a class="headerlink" href="#6-check-service-and-k0s-status" title="Permanent link">#</a></h3>
+<p>To check the service status and log:
 <div class="highlight"><pre><span></span><code>$ sudo systemctl status k0scontroller
      Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)
      Active: active (running) since Fri 2021-02-26 08:37:23 UTC; 1min 25s ago
@@ -1014,31 +1139,32 @@ If you wish to modify some of the settings, please check out the <a href="../con
      CGroup: /system.slice/k0scontroller.service
      ....
 </code></pre></div></p>
-<p>To get general information about your k0s instance:
+<p>To get general information about your k0s instance:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s status
 Version: v0.11.0
 Process ID: 436
 Parent Process ID: 1
 Role: controller
 Init System: linux-systemd
-</code></pre></div></p>
-<h4 id="7-access-your-cluster">7. Access your cluster<a class="headerlink" href="#7-access-your-cluster" title="Permanent link">#</a></h4>
-<p>The Kubernetes command-line tool 'kubectl' is included into k0s binary. You can use it for example to deploy your application or check your node status like this:
+</code></pre></div>
+<h3 id="7-access-your-cluster">7. Access your cluster<a class="headerlink" href="#7-access-your-cluster" title="Permanent link">#</a></h3>
+<p>Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:
 <div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    &lt;none&gt;   4m6s   v1.21.1-k0s1
 </code></pre></div></p>
-<p>You can also access your cluster easily with <a href="https://k8slens.dev/">LENS</a>. Just copy the kubeconfig 
+<p>You can also access your cluster easily with <a href="https://k8slens.dev/">Lens</a>, simply by copying the kubeconfig and pasting it to Lens: </p>
 <div class="highlight"><pre><span></span><code>sudo cat /var/lib/k0s/pki/admin.conf
 </code></pre></div>
-and paste it to LENS. Note that in the kubeconfig you need add your controller's host ip address to the server field (replacing localhost) in order to access the cluster from an external network.</p>
-<h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
+<p><strong>Note</strong>: To access the cluster from an external network you must replace <code>localhost</code> in the kubeconfig with the host ip address for your controller. </p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../k0sctl-install/">Installing with k0sctl</a> for deploying and upgrading multi-node clusters with one command</li>
-<li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
-<li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
-<li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>, a tutorial for ingress deployment</li>
+<li><a href="../k0sctl-install/">Installing with k0sctl</a>: Deploy and upgrade multi-node clusters with one command</li>
+<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
+<li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
+<li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>:
+  Ingress deployment information</li>
 </ul>
                 
               

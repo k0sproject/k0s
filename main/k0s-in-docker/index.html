@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#running-k0s-in-docker" class="md-skip">
+        <a href="#run-k0s-in-docker" class="md-skip">
           Skip to content
         </a>
       
@@ -364,15 +364,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#start-k0s" class="md-nav__link">
+    Start k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Start k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-initiate-k0s" class="md-nav__link">
+    1. Initiate k0s
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-optional-create-additional-workers" class="md-nav__link">
+    2. (Optional) Create additional workers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-access-your-cluster" class="md-nav__link">
+    3. Access your cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-compose-alternative" class="md-nav__link">
-    Docker Compose (alternative)
+  <a href="#use-docker-compose-alternative" class="md-nav__link">
+    Use Docker Compose (alternative)
   </a>
   
 </li>
@@ -381,6 +408,19 @@
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
+  
+    <nav class="md-nav" aria-label="Known limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-custom-docker-networks" class="md-nav__link">
+    No custom Docker networks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -941,15 +981,42 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#start-k0s" class="md-nav__link">
+    Start k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Start k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-initiate-k0s" class="md-nav__link">
+    1. Initiate k0s
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-optional-create-additional-workers" class="md-nav__link">
+    2. (Optional) Create additional workers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-access-your-cluster" class="md-nav__link">
+    3. Access your cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-compose-alternative" class="md-nav__link">
-    Docker Compose (alternative)
+  <a href="#use-docker-compose-alternative" class="md-nav__link">
+    Use Docker Compose (alternative)
   </a>
   
 </li>
@@ -958,6 +1025,19 @@
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
+  
+    <nav class="md-nav" aria-label="Known limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-custom-docker-networks" class="md-nav__link">
+    No custom Docker networks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -982,37 +1062,43 @@
               
                 
                 
-                <h1 id="running-k0s-in-docker">Running k0s in Docker<a class="headerlink" href="#running-k0s-in-docker" title="Permanent link">#</a></h1>
-<p>In this tutorial you'll create a k0s cluster on top of docker. By default, both controller and worker are run in the same container to provide an easy local testing "cluster". The tutorial also shows how to add additional worker nodes to the cluster.</p>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
-<p>Docker environment on Mac, Windows or Linux. <a href="https://docs.docker.com/get-docker/">Get Docker</a>.</p>
-<h3 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h3>
-<p>The k0s containers are published both on Docker Hub and GitHub. The examples in this page show Docker Hub, because it's more simple to use. Using GitHub requires a separate authentication (not covered here). Alternative links:</p>
+                <h1 id="run-k0s-in-docker">Run k0s in Docker<a class="headerlink" href="#run-k0s-in-docker" title="Permanent link">#</a></h1>
+<p>You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster". </p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>You will require a <a href="https://docs.docker.com/get-docker/">Docker environment</a> running on a Mac, Windows, or Linux system.</p>
+<h2 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h2>
+<p>The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include: </p>
 <ul>
 <li>docker.io/k0sproject/k0s:latest</li>
 <li>docker.pkg.github.com/k0sproject/k0s/k0s:"version"</li>
 </ul>
-<h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
-<h4 id="1-start-k0s">1. Start k0s<a class="headerlink" href="#1-start-k0s" title="Permanent link">#</a></h4>
-<p>You can run your own k0s in Docker easily with:
+<h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
+<h3 id="1-initiate-k0s">1. Initiate k0s<a class="headerlink" href="#1-initiate-k0s" title="Permanent link">#</a></h3>
+<p>You can run your own k0s in Docker:</p>
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.io/k0sproject/k0s:latest
-</code></pre></div></p>
-<h4 id="2-create-additional-workers-optional">2. Create additional workers (optional)<a class="headerlink" href="#2-create-additional-workers-optional" title="Permanent link">#</a></h4>
-<p>If you want to attach multiple workers nodes into the cluster you can then distribute your application containers to separate workers.</p>
-<p>First, we need a join token for the worker:
+</code></pre></div>
+<h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
+<p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers. </p>
+<p>For each required worker:</p>
+<ol>
+<li>
+<p>Acquire a join token for the worker:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">token</span><span class="o">=</span><span class="k">$(</span>docker <span class="nb">exec</span> -t -i k0s k0s token create --role<span class="o">=</span>worker<span class="k">)</span>
-</code></pre></div></p>
-<p>Then create and join a new worker by running the container with:
+</code></pre></div>
+</li>
+<li>
+<p>Run the container to create and join the new worker:</p>
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.io/k0sproject/k0s:latest k0s worker <span class="nv">$token</span>
-</code></pre></div></p>
-<p>Repeat for as many workers you need, and have resources for. :)</p>
-<h4 id="3-access-your-cluster">3. Access your cluster<a class="headerlink" href="#3-access-your-cluster" title="Permanent link">#</a></h4>
-<p>You can access your cluster with kubectl:
+</code></pre></div>
+</li>
+</ol>
+<h3 id="3-access-your-cluster">3. Access your cluster<a class="headerlink" href="#3-access-your-cluster" title="Permanent link">#</a></h3>
+<p>Access your cluster using kubectl:</p>
 <div class="highlight"><pre><span></span><code>docker <span class="nb">exec</span> k0s kubectl get nodes
-</code></pre></div></p>
-<p>Alternatively, grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste it e.g. into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
-<h3 id="docker-compose-alternative">Docker Compose (alternative)<a class="headerlink" href="#docker-compose-alternative" title="Permanent link">#</a></h3>
-<p>You can also run k0s with Docker Compose:
+</code></pre></div>
+<p>Alternatively, grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste it into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
+<h2 id="use-docker-compose-alternative">Use Docker Compose (alternative)<a class="headerlink" href="#use-docker-compose-alternative" title="Permanent link">#</a></h2>
+<p>As an alternative you can run k0s using Docker Compose:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span> <span class="s">&quot;3.9&quot;</span>
 <span class="nt">services</span><span class="p">:</span>
   <span class="nt">k0s</span><span class="p">:</span>
@@ -1036,17 +1122,18 @@
         <span class="no">metadata:</span>
           <span class="no">name: k0s</span>
         <span class="no"># Any additional configuration goes here ...</span>
-</code></pre></div></p>
-<h3 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h3>
-<h4 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h4>
-<p>Currently, we cannot run k0s nodes if the containers are configured to use custom networks e.g. with <code>--net my-net</code>. This is caused by the fact that Docker sets up a custom DNS service within the network and that messes up CoreDNS. We know that there are some workarounds possible, but they are bit hackish. And on the other hand, running k0s cluster(s) in bridge network should not cause issues.</p>
-<h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
+</code></pre></div>
+<h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
+<h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
+<p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network. </p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../k0sctl-install/">Installing with k0sctl</a> for deploying and upgrading multi-node clusters with one command</li>
-<li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
-<li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
-<li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>, a tutorial for ingress deployment</li>
+<li><a href="../k0sctl-install/">Installing with k0sctl</a>: Deploy and upgrade multi-node clusters with one command</li>
+<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
+<li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
+<li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>:
+  Ingress deployment information</li>
 </ul>
                 
               

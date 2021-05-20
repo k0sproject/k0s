@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installing-with-k0sctl" class="md-skip">
+        <a href="#install-using-k0sctl" class="md-skip">
           Skip to content
         </a>
       
@@ -310,9 +310,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Install k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-k0sctl-tool" class="md-nav__link">
+    1. Install k0sctl tool
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-the-cluster" class="md-nav__link">
+    2. Configure the cluster.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deploy-the-cluster" class="md-nav__link">
+    3. Deploy the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-access-the-cluster" class="md-nav__link">
+    4. Access the cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -320,6 +354,19 @@
   <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
     Upgrade a k0s cluster using k0sctl
   </a>
+  
+    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
+    k0sctl cluster upgrade process
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -925,9 +972,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-steps" class="md-nav__link">
-    Installation steps
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
   </a>
+  
+    <nav class="md-nav" aria-label="Install k0s">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-k0sctl-tool" class="md-nav__link">
+    1. Install k0sctl tool
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-the-cluster" class="md-nav__link">
+    2. Configure the cluster.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deploy-the-cluster" class="md-nav__link">
+    3. Deploy the cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-access-the-cluster" class="md-nav__link">
+    4. Access the cluster
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -935,6 +1016,19 @@
   <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
     Upgrade a k0s cluster using k0sctl
   </a>
+  
+    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
+    k0sctl cluster upgrade process
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -966,20 +1060,24 @@
               
                 
                 
-                <h1 id="installing-with-k0sctl">Installing with k0sctl<a class="headerlink" href="#installing-with-k0sctl" title="Permanent link">#</a></h1>
-<p>This tutorial is based on k0sctl tool and it's targeted for creating a multi-node cluster for remote hosts. It describes an install method, which is automatic and easily repeatable. This is recommended for production clusters and the automatic upgrade requires using this install method. The automatic upgrade process is also described in this tutorial.</p>
-<p>k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information about the hosts. Based on the findings it proceeds to configure the hosts, deploys k0s and connects the k0s nodes together to form a cluster.</p>
+                <h1 id="install-using-k0sctl">Install using k0sctl<a class="headerlink" href="#install-using-k0sctl" title="Permanent link">#</a></h1>
+<p>k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information on the hosts, with which it forms a cluster by configuring the hosts, deploying k0s, and then connecting the k0s nodes together. </p>
 <p><img alt="k0sctl deployment" src="../img/k0sctl_deployment.png" /></p>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h3>
-<p>k0sctl can be executed on Linux, MacOS and Windows. See more details from the <a href="https://github.com/k0sproject/k0sctl">k0sctl github repository</a>. For hosts running k0s, see the <a href="../system-requirements/">System Requirements</a>.</p>
-<h3 id="installation-steps">Installation steps<a class="headerlink" href="#installation-steps" title="Permanent link">#</a></h3>
-<h4 id="1-install-k0sctl-tool">1. Install k0sctl tool<a class="headerlink" href="#1-install-k0sctl-tool" title="Permanent link">#</a></h4>
-<p>k0sctl is a single binary and the installation and download instructions can be found in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>.</p>
-<h4 id="2-configure-the-cluster">2. Configure the cluster<a class="headerlink" href="#2-configure-the-cluster" title="Permanent link">#</a></h4>
-<p>First create a k0sctl configuration file:
+<p>With k0sctl, you can create multi-node clusters in a manner that is automatic and easily repeatable. This method is recommended for production cluster installation.</p>
+<p><strong>Note</strong>: The k0sctl install method is necessary for automatic upgrade.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are availble on the <a href="https://github.com/k0sproject/k0sctl">k0sctl releases page</a>). </p>
+<p><strong>Note</strong>: For target host prerequisites information, refer to the <a href="../system-requirements/">k0s System Requirements</a>.</p>
+<h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
+<h3 id="1-install-k0sctl-tool">1. Install k0sctl tool<a class="headerlink" href="#1-install-k0sctl-tool" title="Permanent link">#</a></h3>
+<p>k0sctl is a single binary, the instructions for downloading and installing of which are available in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>. </p>
+<h3 id="2-configure-the-cluster">2. Configure the cluster.<a class="headerlink" href="#2-configure-the-cluster" title="Permanent link">#</a></h3>
+<ol>
+<li>
+<p>Run the following command to create a k0sctl configuration file:</p>
 <div class="highlight"><pre><span></span><code>$ k0sctl init &gt; k0sctl.yaml
-</code></pre></div></p>
-<p>A <code>k0sctl.yaml</code> file will be created in the current directory:</p>
+</code></pre></div>
+<p>This action creates a <code>k0sctl.yaml</code> file in the current directory:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -997,9 +1095,14 @@
       <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
       <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
 </code></pre></div>
-<p>As a mandatory step, each host must be given a valid IP address (which is reachable by k0sctl) and the connection details for an SSH connection. k0sctl configuration specifications can be found in <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a>.</p>
-<h4 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h4>
-<p>Next step is to run <code>k0sctl apply</code> to perform the cluster deployment:
+</li>
+<li>
+<p>Provide each host with a valid IP address that is reachable by k0ctl, and the connection details for an SSH connection. </p>
+</li>
+</ol>
+<p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications. </p>
+<h3 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h3>
+<p>Run <code>k0sctl apply</code> to perform the cluster deployment:</p>
 <div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml 
 
 ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
@@ -1046,13 +1149,12 @@ INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</spa
 INFO k0s cluster version <span class="m">0</span>.11.0 is now installed  
 INFO Tip: To access the cluster you can now fetch the admin kubeconfig using: 
 INFO      k0sctl kubeconfig              
-</code></pre></div></p>
-<p>And -- presto! Your k0s cluster is up and running.</p>
-<h4 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h4>
-<p>To access your k0s cluster, you first need to get the kubeconfig. k0sctl does this for you like this:
+</code></pre></div>
+<h3 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h3>
+<p>To access your k0s cluster, use k0sctl to generate a <code>kubeconfig</code> for the purpose.</p>
 <div class="highlight"><pre><span></span><code>$ k0sctl kubeconfig &gt; kubeconfig
-</code></pre></div></p>
-<p>Then you can access your cluster for example by using kubectl or <a href="https://k8slens.dev/">LENS</a>.
+</code></pre></div>
+<p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>. </p>
 <div class="highlight"><pre><span></span><code>$ kubectl get pods --kubeconfig kubeconfig -A
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
@@ -1061,24 +1163,31 @@ kube-system   coredns-5c98d7d4d8-tmrwv                   <span class="m">1</span
 kube-system   konnectivity-agent-d9xv2                   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m31s
 kube-system   kube-proxy-xp9r9                           <span class="m">1</span>/1     Running   <span class="m">0</span>          4m4s
 kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span>/1     Running   <span class="m">0</span>          3m51s
-</code></pre></div></p>
-<h3 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h3>
-<p>There's no dedicated upgrade sub-command in k0sctl, the configuration file describes the desired state of the cluster and when passed to <code>k0sctl apply</code>, it will perform a discovery of the current state and do what ever is needed to bring the cluster to the desired state, by for example performing an upgrade.</p>
-<h4 id="k0sctl-cluster-upgrade-process">K0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h4>
-<p>The following steps will be performed during a k0sctl cluster upgrade:</p>
+</code></pre></div>
+<h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
+<p>The upgrading of k0s clusters occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade). </p>
+<h3 id="k0sctl-cluster-upgrade-process">k0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h3>
+<p>The following operations occur during a k0sctl upgrade:</p>
 <ol>
-<li>Upgrade each controller one-by-one; As long as there’s multiple controllers configured there’s no downtime</li>
-<li>Upgrade workers in batches; 10% of the worker nodes are upgraded at a time</li>
-<li>Each worker is first drained allowing the workload to “move” to other nodes before the actual upgrade of the worker node components</li>
-<li>The process continues after we see the upgraded nodes back in “Ready” state</li>
-<li>Drain can be skipped with a --no-drain option</li>
+<li>
+<p>Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured. </p>
+</li>
+<li>
+<p>Upgrade of workers, in batches of 10%.</p>
+</li>
+<li>
+<p>Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the <code>--no-drain</code> option.) </p>
+</li>
+<li>
+<p>The upgrade process continues once the upgraded nodes return to <strong>Ready</strong> state. </p>
+</li>
 </ol>
-<p>The desired cluster version can be configured In the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:
+<p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>: </p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
   <span class="nt">k0s</span><span class="p">:</span>
     <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.11.0</span>
-</code></pre></div></p>
-<p>When a version has not been specified, k0sctl will check online for the latest version and default to using that.</p>
+</code></pre></div>
+<p>If you do not specify a version, k0sctl checks online for the latest version and defaults to it.</p>
 <div class="highlight"><pre><span></span><code>$ k0sctl apply
 ...
 ...
@@ -1097,17 +1206,20 @@ INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> 
 INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using: 
 INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig 
 </code></pre></div>
-<h3 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h3>
+<h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <ul>
-<li>k0sctl will not perform any discovery of hosts, it only operates on the hosts listed in the provided configuration</li>
-<li>k0sctl can currently only add more nodes to the cluster but cannot remove existing ones</li>
+<li>k0sctl does not perform any discovery of hosts, and thus it only operates on
+  the hosts listed in the provided configuration </li>
+<li>k0sctl can only add more nodes to the cluster. It cannot remove
+  existing nodes.</li>
 </ul>
-<h3 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h3>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../configuration/">Control plane configuration options</a> for example for networking and datastore configuration</li>
-<li><a href="../worker-node-config/">Worker node configuration options</a> for example for node labels and kubelet arguments</li>
-<li><a href="../cloud-providers/">Support for cloud providers</a> for example for load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>, a tutorial for ingress deployment</li>
+<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
+<li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
+<li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>:
+  Ingress deployment information</li>
 </ul>
                 
               

@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#running-k0s-worker-nodes-in-windows" class="md-skip">
+        <a href="#run-k0s-worker-nodes-in-windows" class="md-skip">
           Skip to content
         </a>
       
@@ -362,36 +362,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#experimental-status" class="md-nav__link">
-    Experimental status
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
+  <a href="#build-k0sexe" class="md-nav__link">
+    Build k0s.exe
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#build" class="md-nav__link">
-    Build
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    Description
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running" class="md-nav__link">
-    Running
+  <a href="#run-k0s" class="md-nav__link">
+    Run k0s
   </a>
   
 </li>
@@ -431,9 +417,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#some-useful-commands" class="md-nav__link">
-    Some useful commands
+  <a href="#useful-commands" class="md-nav__link">
+    Useful commands
   </a>
+  
+    <nav class="md-nav" aria-label="Useful commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-pod-with-cmdexe-shell" class="md-nav__link">
+    Run pod with cmd.exe shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manifest-for-pod-with-iis-web-server" class="md-nav__link">
+    Manifest for pod with IIS web-server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -961,36 +967,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#experimental-status" class="md-nav__link">
-    Experimental status
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    Requirements
+  <a href="#build-k0sexe" class="md-nav__link">
+    Build k0s.exe
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#build" class="md-nav__link">
-    Build
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    Description
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running" class="md-nav__link">
-    Running
+  <a href="#run-k0s" class="md-nav__link">
+    Run k0s
   </a>
   
 </li>
@@ -1030,9 +1022,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#some-useful-commands" class="md-nav__link">
-    Some useful commands
+  <a href="#useful-commands" class="md-nav__link">
+    Useful commands
   </a>
+  
+    <nav class="md-nav" aria-label="Useful commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-pod-with-cmdexe-shell" class="md-nav__link">
+    Run pod with cmd.exe shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manifest-for-pod-with-iis-web-server" class="md-nav__link">
+    Manifest for pod with IIS web-server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1050,63 +1062,58 @@
               
                 
                 
-                <h1 id="running-k0s-worker-nodes-in-windows">Running k0s worker nodes in Windows<a class="headerlink" href="#running-k0s-worker-nodes-in-windows" title="Permanent link">#</a></h1>
-<h2 id="experimental-status">Experimental status<a class="headerlink" href="#experimental-status" title="Permanent link">#</a></h2>
-<p>Windows support feature is under active development and MUST BE considered as experemential.</p>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
-<p>The cluster must have at least one worker node and control plane running on Linux. Windows can be used for running additional worker nodes.</p>
-<h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">#</a></h2>
-<p><code>make clean k0s.exe</code></p>
-<p>This should create k0s.exe with staged kubelet.exe and kube-proxy.exe</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">#</a></h2>
-<p>the k0s.exe supervises kubelet.exe and kube-proxy.exe
-During the first run calico install script created as <code>C:\bootstrap.ps1</code></p>
-<p>The bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings.</p>
-<h2 id="running">Running<a class="headerlink" href="#running" title="Permanent link">#</a></h2>
-<p>It is expected to have docker EE installed on the windows node (we need it during the initial calico set up)</p>
+                <h1 id="run-k0s-worker-nodes-in-windows">Run k0s worker nodes in Windows<a class="headerlink" href="#run-k0s-worker-nodes-in-windows" title="Permanent link">#</a></h1>
+<p><strong>IMPORTANT</strong>: Windows support for k0s is under active development and <strong>must be</strong> considered experimental.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<p>The cluster must be running at least one worker node and control plane on Linux. You ca use Windows to run additional worker nodes. </p>
+<h2 id="build-k0sexe">Build k0s.exe<a class="headerlink" href="#build-k0sexe" title="Permanent link">#</a></h2>
+<p>Invoke the <code>make clean k0s.exe</code> command to create k0s.exe with staged kubelet.exe and kube-proxy.exe.</p>
+<p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
+<p>During the first run, the calico install script is creaated as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings. </p>
+<h2 id="run-k0s">Run k0s<a class="headerlink" href="#run-k0s" title="Permanent link">#</a></h2>
+<p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up). </p>
 <div class="highlight"><pre><span></span><code>C:\&gt;k0s.exe worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=&lt;cidr_range&gt; --cluster-dns=&lt;clusterdns&gt; --api-server=&lt;k0s api&gt; &lt;token&gt;
 </code></pre></div>
-<p>Cluster control plane must be inited with proper config (see section below)</p>
+<p>You must initiate the Cluster control with the correct config.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <h3 id="strict-affinity">Strict-affinity<a class="headerlink" href="#strict-affinity" title="Permanent link">#</a></h3>
-<p>To run windows node we need to have strict affinity enabled.</p>
-<p>There is a configuration field <code>spec.network.calico.withWindowsNodes</code>, equals false by default.
-If set to the true, the additional calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> would be created with the following values</p>
-<p><div class="highlight"><pre><span></span><code>---
-apiVersion: crd.projectcalico.org/v1
-kind: IPAMConfig
-metadata:
-  name: default
-spec:
-  strictAffinity: true
+<p>You must enable strict affinity to run the windows node.</p>
+<p>If the <code>spec.network.calico.withWindowsNodes</code> field is set to <code>true</code> (it is set to <code>false</code> by default) the additional calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> is created with the following values: </p>
+<p><div class="highlight"><pre><span></span><code><span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">crd.projectcalico.org/v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IPAMConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">strictAffinity</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
-Another way is to use calicoctl manually:
+Alternately, you can manually execute calicoctl:
 <div class="highlight"><pre><span></span><code>calicoctl ipam configure --strictaffinity=true
 </code></pre></div></p>
 <h3 id="network-connectivity-in-aws">Network connectivity in AWS<a class="headerlink" href="#network-connectivity-in-aws" title="Permanent link">#</a></h3>
-<p>The network interface attached to your EC2 instance MUST have disabled “Change Source/Dest. Check” option.
-In AWS console option can be found on the Actions menu for a selected network interface.</p>
+<p>Disable the <code>Change Source/Dest. Check</code> option for the network interface attached to your EC2 instance. In AWS, the console option for the network interface is in the <strong>Actions</strong> menu. </p>
 <h3 id="hacks">Hacks<a class="headerlink" href="#hacks" title="Permanent link">#</a></h3>
-<p>We need to figure out proper way to pass cluster settings from controller plane to worker.</p>
-<p>While we don't have it, there are CLI arguments:
-- cidr-range
-- cluster-dns
-- api-server </p>
-<h2 id="some-useful-commands">Some useful commands<a class="headerlink" href="#some-useful-commands" title="Permanent link">#</a></h2>
-<p>Run pod with cmd.exe shell
+<p>k0s offers the following CLI arguments in lieu of a formal means for passing cluster settings from controller plane to worker: </p>
+<ul>
+<li>cidr-range</li>
+<li>cluster-dns</li>
+<li>api-server </li>
+</ul>
+<h2 id="useful-commands">Useful commands<a class="headerlink" href="#useful-commands" title="Permanent link">#</a></h2>
+<h3 id="run-pod-with-cmdexe-shell">Run pod with cmd.exe shell<a class="headerlink" href="#run-pod-with-cmdexe-shell" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>kubectl run win --image=hello-world:nanoserver --command=true -i --attach=true -- cmd.exe
-</code></pre></div></p>
-<p>Manifest for pod with IIS web-server
-<div class="highlight"><pre><span></span><code>apiVersion: v1
-kind: Pod
-metadata:
-  name: iis
-spec:
-  containers:
-  - name: iis
-    image: mcr.microsoft.com/windows/servercore/iis
-    imagePullPolicy: IfNotPresent
-</code></pre></div></p>
+</code></pre></div>
+<h3 id="manifest-for-pod-with-iis-web-server">Manifest for pod with IIS web-server<a class="headerlink" href="#manifest-for-pod-with-iis-web-server" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Pod</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iis</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">containers</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iis</span>
+    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/windows/servercore/iis</span>
+    <span class="nt">imagePullPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IfNotPresent</span>
+</code></pre></div>
                 
               
               
