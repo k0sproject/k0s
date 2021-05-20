@@ -1,28 +1,26 @@
 # Manifest Deployer
 
-To run k0s with your preferred extensions you have two options.
+Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by [defining your extensions as Helm charts](helm-charts.md).
 
-1. Define your extensions as Helm charts as described [in here](helm-charts.md).
+## Overview
 
-2. Use Manifest Deployer, which is included into k0s. This option is described on below.
+Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.
 
-### Overview
+By default, k0s reads all manifests under `/var/lib/k0s/manifests` and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.
 
-k0s embeds Manifest Deployer, which runs on the controller nodes and provides an easy way to deploy manifests automatically at runtime. 
-
-By default, k0s reads all manifests under `/var/lib/k0s/manifests` and ensures that their state matches the cluster state. Moreover, when a manifest file is removed, k0s will automatically prune all the resources associated with it. 
-
-For the most part, Manifest Deployer can be used like the `kubectl apply` command. The main difference is that Manifest Deployer constantly monitors the directory for changes. Thus, users don't need to manually apply the changes that are made to the manifest files.
+The use of Manifest Deployer is quite similar to the use the `kubectl apply` command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files. 
 
 ##### Note
 
-- Each directory that is a **direct descendant** of `/var/lib/k0s/manifests` is considered as its own "stack", but nested directories (further subfolders) will be excluded from the stack mechanism and thus, they are not automatically deployed by the Manifest Deployer.
-- k0s uses this mechanism for some of its internal in-cluster components and other resources. Make sure you only touch the manifests not managed by k0s.
-- Namespace must be explicitly defined in the manifests. There's no default namespace used by Manifest Deployer.
+- Each directory that is a direct descendant of `/var/lib/k0s/manifests` is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.   
 
-### Example
+- k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s. 
 
-You can try Manifest Deployer by creating a new folder under `/var/lib/k0s/manifests` and then create a manifest file like `nginx.yaml` with the following content:
+- Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace). 
+
+## Example
+
+To try Manifest Deployer, create a new folder under `/var/lib/k0s/manifests` and then create a manifest file (such as `nginx.yaml`) with the following content: 
 
 ```sh
 apiVersion: v1
@@ -52,7 +50,8 @@ spec:
         - containerPort: 80
 ```
 
-You should soon see the new pods appearing:
+New pods will appear soon thereafter.
+
 ```sh
 $ sudo k0s kubectl get pods --namespace nginx
 NAME                                READY   STATUS    RESTARTS   AGE
