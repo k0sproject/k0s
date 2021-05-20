@@ -26,6 +26,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var listTokenRole string
+
 func tokenListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
@@ -38,7 +40,7 @@ func tokenListCmd() *cobra.Command {
 				return err
 			}
 
-			tokens, err := manager.List(tokenRole)
+			tokens, err := manager.List(listTokenRole)
 			if err != nil {
 				return err
 			}
@@ -70,7 +72,7 @@ func tokenListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&tokenRole, "role", "", "Either worker, controller or empty for all roles")
+	cmd.Flags().StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
