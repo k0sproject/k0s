@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/high-availability/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/configuration-validation/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>Control Plane High Availability - Documentation</title>
+        <title>Configuration validation - Documentation</title>
       
     
     
@@ -74,11 +74,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#control-plane-high-availability" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -106,7 +101,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Control Plane High Availability
+              Configuration validation
             
           </span>
         </div>
@@ -557,12 +552,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
     
     <label class="md-nav__link" for="nav-5">
       Configuration
@@ -652,56 +645,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Control Plane High Availability
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../high-availability/" class="md-nav__link">
       Control Plane High Availability
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cluster-configuration" class="md-nav__link">
-    Cluster configuration
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -875,73 +823,24 @@
               </div>
             
             
-              
-              
-                
-              
-              
-                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                  <div class="md-sidebar__scrollwrap">
-                    <div class="md-sidebar__inner">
-                      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cluster-configuration" class="md-nav__link">
-    Cluster configuration
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                    </div>
-                  </div>
-                </div>
-              
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                <h1 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h1>
-<p>The configuration of a high availability control plane for k0s requires the deployment of both a load balancer and a cluster configuration file. </p>
-<h2 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h2>
-<p>Configure a load balancer with a single external address as the IP gateway for the controllers. Set the load balancer to allow traffic to each controller through the following ports: </p>
-<ul>
-<li>6443</li>
-<li>8132</li>
-<li>8133</li>
-<li>9443</li>
-</ul>
-<h2 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h2>
-<p>Configure a <code>k0s.yaml</code> configuration file for each controller node with the following options:</p>
-<ul>
-<li><code>network</code></li>
-<li><code>storage</code></li>
-<li><code>externalAddress</code></li>
-</ul>
-<p>For greater detail, refer to the <a href="../configuration/">Full configuration file reference</a>.</p>
+                  <h1>Configuration validation</h1>
+                
+                <p>k0s command-line interface has the ability to validate config syntax:</p>
+<div class="highlight"><pre><span></span><code>$ k0s validate config --config path/to/config/file
+</code></pre></div>
+<p><code>validate config</code> sub-command can validate the following:</p>
+<ol>
+<li>YAML formatting</li>
+<li><a href="#specapi-1">SANs addresses</a></li>
+<li><a href="#specnetwork-1">Network providers</a></li>
+<li><a href="#specworkerprofiles">Worker profiles</a> </li>
+</ol>
                 
               
               
@@ -956,41 +855,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href="../dual-stack/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                IPv4/IPv6 Dual-Stack Networking
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../shell-completion/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Shell Completion
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

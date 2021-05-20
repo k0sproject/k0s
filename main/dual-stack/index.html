@@ -673,35 +673,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cni-settings" class="md-nav__link">
-    CNI settings
+  <a href="#cni-settings-calico" class="md-nav__link">
+    CNI Settings: Calico
   </a>
-  
-    <nav class="md-nav" aria-label="CNI settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#calico-settings" class="md-nav__link">
-    Calico settings
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-cni" class="md-nav__link">
-    External CNI
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#additional-materials" class="md-nav__link">
-    Additional materials
+  <a href="#cni-settings-external-cni" class="md-nav__link">
+    CNI Settings: External CNI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    Additional Resources
   </a>
   
 </li>
@@ -917,35 +904,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cni-settings" class="md-nav__link">
-    CNI settings
+  <a href="#cni-settings-calico" class="md-nav__link">
+    CNI Settings: Calico
   </a>
-  
-    <nav class="md-nav" aria-label="CNI settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#calico-settings" class="md-nav__link">
-    Calico settings
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#external-cni" class="md-nav__link">
-    External CNI
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#additional-materials" class="md-nav__link">
-    Additional materials
+  <a href="#cni-settings-external-cni" class="md-nav__link">
+    CNI Settings: External CNI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    Additional Resources
   </a>
   
 </li>
@@ -964,10 +938,9 @@
               
                 
                 
-                <h1 id="dual-stack-networking">Dual-stack networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
-<p><strong>Note:</strong> Dual stack networking setup requires Calico or a custom CNI to be configured as the CNI provider.</p>
-<p>To enable dual-stack networking use the following k0s.yaml as an example.
-This settings will set up bundled calico cni, enable feature gates for the Kubernetes components and set up kubernetes-controller-manager.
+                <h1 id="dual-stack-networking">Dual-stack Networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
+<p><strong>Note:</strong> Dual stack networking setup requires that you configure Calico or a custom CNI as the CNI provider.</p>
+<p>Use the following <code>k0s.yaml</code> as a template to enable dual-stack networking. This configuration will set up bundled calico CNI, enable feature gates for the Kubernetes components, and set up <code>kubernetes-controller-manager</code>. </p>
 <div class="highlight"><pre><span></span><code>spec:
   network:
     podCIDR: &quot;10.244.0.0/16&quot;
@@ -978,19 +951,19 @@ This settings will set up bundled calico cni, enable feature gates for the Kuber
       enabled: true
       IPv6podCIDR: &quot;fd00::/108&quot;
       IPv6serviceCIDR: &quot;fd01::/108&quot;
-</code></pre></div></p>
-<h2 id="cni-settings">CNI settings<a class="headerlink" href="#cni-settings" title="Permanent link">#</a></h2>
-<h3 id="calico-settings">Calico settings<a class="headerlink" href="#calico-settings" title="Permanent link">#</a></h3>
-<p>Calico doesn't support tunneling for the IPv6, so "vxlan" and "ipip" backend wouldn't work. 
-If you need to have cross-pod connectivity, you need to use "bird" as a backend mode. 
-In any other mode the pods would be able to reach only pods on the same node.</p>
-<h3 id="external-cni">External CNI<a class="headerlink" href="#external-cni" title="Permanent link">#</a></h3>
-<p>The <code>k0s.yaml</code> dualStack section will enable all the neccessary feature gates for the Kubernetes components but in case of using external CNI it must be set up with IPv6 support.</p>
-<h2 id="additional-materials">Additional materials<a class="headerlink" href="#additional-materials" title="Permanent link">#</a></h2>
-<p>https://kubernetes.io/docs/concepts/services-networking/dual-stack/</p>
-<p>https://kubernetes.io/docs/tasks/network/validate-dual-stack/ </p>
-<p>https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/</p>
-<p>https://docs.projectcalico.org/networking/ipv6</p>
+</code></pre></div>
+<h2 id="cni-settings-calico">CNI Settings: Calico<a class="headerlink" href="#cni-settings-calico" title="Permanent link">#</a></h2>
+<p>For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work. </p>
+<p><strong>Note</strong>: In any Calico mode other than cross-pod, the pods can only reach pods on the same node. </p>
+<h2 id="cni-settings-external-cni">CNI Settings: External CNI<a class="headerlink" href="#cni-settings-external-cni" title="Permanent link">#</a></h2>
+<p>Although the <code>k0s.yaml</code> dualStack section enables all of the neccessary feature gates for the Kubernetes components, for use with an external CNI it must be set up to support IPv6.</p>
+<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">#</a></h2>
+<ul>
+<li>https://kubernetes.io/docs/concepts/services-networking/dual-stack/</li>
+<li>https://kubernetes.io/docs/tasks/network/validate-dual-stack/ </li>
+<li>https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/</li>
+<li>https://docs.projectcalico.org/networking/ipv6</li>
+</ul>
                 
               
               

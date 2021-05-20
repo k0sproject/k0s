@@ -661,15 +661,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#enabling-cloud-provider-support-in-kubelet" class="md-nav__link">
-    Enabling cloud provider support in kubelet
+  <a href="#1-enable-cloud-provider-support-in-kubelet" class="md-nav__link">
+    1. Enable cloud provider support in kubelet
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deploying-the-actual-cloud-provider" class="md-nav__link">
-    Deploying the actual cloud provider
+  <a href="#2-deploy-the-cloud-provider" class="md-nav__link">
+    2. Deploy the cloud provider
   </a>
   
 </li>
@@ -897,15 +897,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#enabling-cloud-provider-support-in-kubelet" class="md-nav__link">
-    Enabling cloud provider support in kubelet
+  <a href="#1-enable-cloud-provider-support-in-kubelet" class="md-nav__link">
+    1. Enable cloud provider support in kubelet
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#deploying-the-actual-cloud-provider" class="md-nav__link">
-    Deploying the actual cloud provider
+  <a href="#2-deploy-the-cloud-provider" class="md-nav__link">
+    2. Deploy the cloud provider
   </a>
   
 </li>
@@ -925,15 +925,13 @@
                 
                 
                 <h1 id="using-cloud-providers">Using cloud providers<a class="headerlink" href="#using-cloud-providers" title="Permanent link">#</a></h1>
-<p>k0s builds Kubernetes components in "providerless" mode. This means that there is no cloud providers built into k0s managed Kubernetes components.</p>
-<p>This means the cloud providers have to be configured "externally". The following steps outline how to enable cloud providers support in your k0s cluster.</p>
-<p>For more information on running Kubernetes with cloud providers see the <a href="https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/">official documentation</a>.</p>
-<h2 id="enabling-cloud-provider-support-in-kubelet">Enabling cloud provider support in kubelet<a class="headerlink" href="#enabling-cloud-provider-support-in-kubelet" title="Permanent link">#</a></h2>
-<p>Even when all components are built with "providerless" mode, we need to be able to enable cloud provider "mode" for kubelet. This is done by running the workers with <code>--enable-cloud-provider=true</code>. This enables <code>--cloud-provider=external</code> on kubelet process.</p>
-<h2 id="deploying-the-actual-cloud-provider">Deploying the actual cloud provider<a class="headerlink" href="#deploying-the-actual-cloud-provider" title="Permanent link">#</a></h2>
-<p>From Kubernetes point of view, it does not really matter how and where the cloud providers controller(s) are running. Of course the easiest way is to deploy them on the cluster itself. </p>
-<p>To deploy your cloud provider as k0s managed stack you can use the built-in <a href="../manifests/">manifest deployer</a>. Simply drop all the needed manifests under e.g. <code>/var/lib/k0s/manifests/aws/</code> directory and k0s will deploy everything.</p>
-<p>Some cloud providers do need some configuration files to be present on all the nodes or some other pre-requisites. Consult your cloud providers documentation for needed steps.</p>
+<p>k0s builds Kubernetes components in <em>providerless</em> mode, meaning that cloud providers are not built into k0s-managed Kubernetes components. As such, you must externally configure the cloud providers to enable their support in your k0s cluster (for more information on running Kubernetes with cloud providers, refer to the <a href="https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/">Kubernetes documentation</a>.</p>
+<h2 id="1-enable-cloud-provider-support-in-kubelet">1. Enable cloud provider support in kubelet<a class="headerlink" href="#1-enable-cloud-provider-support-in-kubelet" title="Permanent link">#</a></h2>
+<p>Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with <code>--enable-cloud-provider=true</code>, to enable <code>--cloud-provider=external</code> on the kubelet process.</p>
+<h2 id="2-deploy-the-cloud-provider">2. Deploy the cloud provider<a class="headerlink" href="#2-deploy-the-cloud-provider" title="Permanent link">#</a></h2>
+<p>The easiest way to deploy cloud provider controllers is on the k0s cluster.</p>
+<p>Use the built-in <a href="../manifests/">manifest deployer</a> built into k0s to deploy your cloud provider as a k0s-managed stack. Next, just drop all required manifests into the <code>/var/lib/k0s/manifests/aws/</code> directory, and k0s will handle the deployment.</p>
+<p><strong>Note</strong>: The prerequisites for the various cloud providers can vary (for example, several require that configuration files be present on all of the nodes). Refer to your chosen cloud provider's documentation as necessary.</p>
                 
               
               

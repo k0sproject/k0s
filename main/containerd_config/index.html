@@ -926,11 +926,10 @@
                 
                 <h1 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h1>
 <p><a href="https://github.com/containerd/containerd">containerd</a> is an industry-standard container runtime.</p>
-<p><strong>NOTE:</strong> In most use cases changes to the containerd configuration will not be required. </p>
-<p>In order to make changes to containerd configuration first you need to generate a default containerd configuration by running:
+<p><strong>NOTE:</strong> Changes to the containerd configuration is not required in most use cases.</p>
+<p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>: </p>
 <div class="highlight"><pre><span></span><code>containerd config default &gt; /etc/k0s/containerd.toml
 </code></pre></div>
-This command will set the default values to <code>/etc/k0s/containerd.toml</code>. </p>
 <p><code>k0s</code> runs containerd with the following default values:
 <div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
@@ -938,7 +937,7 @@ This command will set the default values to <code>/etc/k0s/containerd.toml</code
     --address=/var/lib/k0s/run/containerd.sock \
     --config=/etc/k0s/containerd.toml
 </code></pre></div></p>
-<p>Before proceeding further, add the following default values to the configuration file:
+<p>Next, add the following default values to the configuration file: </p>
 <div class="highlight"><pre><span></span><code>version = 2
 root = &quot;/var/lib/k0s/containerd&quot;
 state = &quot;/var/lib/k0s/run/containerd&quot;
@@ -946,16 +945,16 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
 
 [grpc]
   address = &quot;/var/lib/k0s/run/containerd.sock&quot;
-</code></pre></div></p>
-<p>Next if you want to change CRI look into this section</p>
+</code></pre></div>
+<p>Finally, if you want to change CRI look into:</p>
 <p><code>[plugins."io.containerd.runtime.v1.linux"]
     shim = "containerd-shim"
     runtime = "runc"</code></p>
 <h2 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h2>
-<blockquote>
 <p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
-</blockquote>
-<p>First you must install the needed gVisor binaries into the host.
+<ol>
+<li>
+<p>Install the needed gVisor binaries into the host.</p>
 <div class="highlight"><pre><span></span><code><span class="o">(</span>
   <span class="nb">set</span> -e
   <span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
@@ -969,9 +968,12 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
   chmod a+rx runsc gvisor-containerd-shim containerd-shim-runsc-v1
   sudo mv runsc gvisor-containerd-shim containerd-shim-runsc-v1 /usr/local/bin
 <span class="o">)</span>
-</code></pre></div></p>
-<p>See gVisor <a href="https://gvisor.dev/docs/user_guide/install/">install docs</a></p>
-<p>Next we need to prepare the config for <code>k0s</code> managed containerD to utilize gVisor as additional runtime:
+</code></pre></div>
+<p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install
+docs</a> for more information.</p>
+</li>
+<li>
+<p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime: </p>
 <div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
 <span class="s">disabled_plugins = [&quot;restart&quot;]</span>
 <span class="s">[plugins.linux]</span>
@@ -979,11 +981,15 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
 <span class="s">[plugins.cri.containerd.runtimes.runsc]</span>
 <span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
 <span class="s">EOF</span>
-</code></pre></div></p>
-<p>Then we can start and join the worker as normally into the cluster:
+</code></pre></div>
+</li>
+<li>
+<p>Start and join the worker into the cluster, as normal:</p>
 <div class="highlight"><pre><span></span><code>k0s worker <span class="nv">$token</span>
-</code></pre></div></p>
-<p>By default containerd uses nromal runc as the runtime. To make gVisor runtime usable for workloads we must register it to Kubernetes side:
+</code></pre></div>
+</li>
+<li>
+<p>Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime): </p>
 <div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
 <span class="s">apiVersion: node.k8s.io/v1beta1</span>
 <span class="s">kind: RuntimeClass</span>
@@ -991,8 +997,8 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
 <span class="s">  name: gvisor</span>
 <span class="s">handler: runsc</span>
 <span class="s">EOF</span>
-</code></pre></div></p>
-<p>After this we can use it for our workloads:
+</code></pre></div>
+<p>At this point, you can use gVisor runtim for your workloads:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Pod</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -1002,19 +1008,23 @@ state = &quot;/var/lib/k0s/run/containerd&quot;
   <span class="nt">containers</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
     <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
-</code></pre></div></p>
-<p>We can verify the created nginx pod is actually running under gVisor runtime:
+</code></pre></div>
+</li>
+<li>
+<p>(Optional) Verify tht the created nginx pod is running under gVisor runtime:</p>
 <div class="highlight"><pre><span></span><code># kubectl exec nginx-gvisor -- dmesg | grep -i gvisor
 [    0.000000] Starting gVisor...
-</code></pre></div></p>
+</code></pre></div>
+</li>
+</ol>
 <h2 id="using-custom-nvidia-container-runtime">Using custom <code>nvidia-container-runtime</code><a class="headerlink" href="#using-custom-nvidia-container-runtime" title="Permanent link">#</a></h2>
-<p>By default CRI is set tu runC and if you want to configure Nvidia GPU support you will have to replace <code>runc</code> with <code>nvidia-container-runtime</code> as shown below:</p>
+<p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>: </p>
 <div class="highlight"><pre><span></span><code>[plugins.&quot;io.containerd.runtime.v1.linux&quot;]
     shim = &quot;containerd-shim&quot;
     runtime = &quot;nvidia-container-runtime&quot;
 </code></pre></div>
-<p><strong>Note</strong> To run <code>nvidia-container-runtime</code> on your node please look <a href="https://josephb.org/blog/containerd-nvidia/">here</a> for detailed instructions.</p>
-<p>After changes to the configuration, restart <code>k0s</code> and in this case containerd will be using newly configured runtime.</p>
+<p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://josephb.org/blog/containerd-nvidia/">here</a>. </p>
+<p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>
                 
               
               

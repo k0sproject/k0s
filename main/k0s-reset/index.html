@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-reset" class="md-skip">
+        <a href="#uninstall-the-k0s-cluster" class="md-skip">
           Skip to content
         </a>
       
@@ -851,17 +851,17 @@
               
                 
                 
-                <h1 id="k0s-reset">k0s reset<a class="headerlink" href="#k0s-reset" title="Permanent link">#</a></h1>
-<p>k0s Command-Line interface allows users to remove all k0s related files from the host.</p>
-<p>The reset command operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, it will not run if the k0s service is running. So first, we need to stop the service:</p>
-<p>For controller nodes:</p>
+                <h1 id="uninstall-the-k0s-cluster">Uninstall the k0s Cluster<a class="headerlink" href="#uninstall-the-k0s-cluster" title="Permanent link">#</a></h1>
+<p>Use the k0s CLI <code>reset</code> command to uninstall k0s, by removing all k0s-related files from the host.</p>
+<p><code>reset</code> operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, the command will not run if the k0s service is running, so you must first stop the service: </p>
+<ol>
+<li>
+<p>Stop the controller nodes:</p>
 <div class="highlight"><pre><span></span><code>$ systemctl stop k0scontroller
 </code></pre></div>
-<p>If the service is not stopped k0s will return an error message:</p>
-<div class="highlight"><pre><span></span><code>$ k0s reset
-FATA k0s seems to be running! please stop k0s before reset. 
-</code></pre></div>
-<p>If k0s has been stopped, the reset operation will proceed:</p>
+</li>
+<li>
+<p>Invoke the <code>reset</code> command:</p>
 <div class="highlight"><pre><span></span><code>$ k0s reset
 INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:41<span class="o">]</span> Uninstalling the k0s service                 
 INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> no config file given, using defaults         
@@ -880,6 +880,8 @@ INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15
 INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> deleting k0s generated data-dir <span class="o">(</span>/var/lib/k0s<span class="o">)</span> and run-dir <span class="o">(</span>/run/k0s<span class="o">)</span> 
 ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:50<span class="o">]</span> k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended. 
 </code></pre></div>
+</li>
+</ol>
                 
               
               
