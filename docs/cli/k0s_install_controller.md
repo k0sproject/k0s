@@ -9,12 +9,12 @@ k0s install controller [flags]
 ### Examples
 
 ```
-All default values of controller command will be passed to the service stub unless overriden. 
+All default values of controller command will be passed to the service stub unless overriden.
 
 With controller subcommand you can setup a single node cluster by running:
 
-	k0s install controller --enable-worker
-	
+	sudo k0s install controller --enable-worker
+
 ```
 
 ### Options
