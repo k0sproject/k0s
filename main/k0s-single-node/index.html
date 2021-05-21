@@ -892,7 +892,7 @@
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>$ sudo k0s install controller --single
 INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:34:59<span class="o">]</span> Installing k0s service
-$ sudo systemctl start k0scontroller.service
+$ sudo k0s start
 </code></pre></div>
 <h2 id="use-k0s-to-access-the-cluster">Use k0s to access the cluster<a class="headerlink" href="#use-k0s-to-access-the-cluster" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code>$ k0s kubectl get nodes

@@ -853,32 +853,32 @@
                 
                 <h1 id="uninstall-the-k0s-cluster">Uninstall the k0s Cluster<a class="headerlink" href="#uninstall-the-k0s-cluster" title="Permanent link">#</a></h1>
 <p>Use the k0s CLI <code>reset</code> command to uninstall k0s, by removing all k0s-related files from the host.</p>
-<p><code>reset</code> operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, the command will not run if the k0s service is running, so you must first stop the service: </p>
+<p><code>reset</code> operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, the command will not run if the k0s service is running, so you must first stop the service:</p>
 <ol>
 <li>
-<p>Stop the controller nodes:</p>
-<div class="highlight"><pre><span></span><code>$ systemctl stop k0scontroller
+<p>Stop the service on controller nodes:</p>
+<div class="highlight"><pre><span></span><code>$ sudo k0s stop
 </code></pre></div>
 </li>
 <li>
 <p>Invoke the <code>reset</code> command:</p>
 <div class="highlight"><pre><span></span><code>$ k0s reset
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:41<span class="o">]</span> Uninstalling the k0s service                 
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> no config file given, using defaults         
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: etcd                          
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-apiserver                
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: konnectivity-server           
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-scheduler                
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> starting containerd <span class="k">for</span> cleanup operations... 
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> containerd succesfully started               
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up kubelet volumes...    
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed kubelet mounts!         
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up network namespaces... 
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed network namespaces!     
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to stop containers...             
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> successfully removed k0s containers!         
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> deleting k0s generated data-dir <span class="o">(</span>/var/lib/k0s<span class="o">)</span> and run-dir <span class="o">(</span>/run/k0s<span class="o">)</span> 
-ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:50<span class="o">]</span> k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended. 
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:41<span class="o">]</span> Uninstalling the k0s service
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> no config file given, using defaults
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: etcd
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-apiserver
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: konnectivity-server
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-scheduler
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> starting containerd <span class="k">for</span> cleanup operations...
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> containerd succesfully started
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up kubelet volumes...
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed kubelet mounts!
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up network namespaces...
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed network namespaces!
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to stop containers...
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> successfully removed k0s containers!
+INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> deleting k0s generated data-dir <span class="o">(</span>/var/lib/k0s<span class="o">)</span> and run-dir <span class="o">(</span>/run/k0s<span class="o">)</span>
+ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:50<span class="o">]</span> k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended.
 </code></pre></div>
 </li>
 </ol>
