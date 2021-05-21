@@ -44,7 +44,7 @@ _We have seen a gap between the host OS and Kubernetes that runs on top of it: H
 
 _We have seen K8S with partial FIPS security compliance: How to ensure security compliance for critical applications if only part of the system is FIPS compliant?_
 
-**&rarr;** k0s core + all included host OS dependencies + components on top may be compiled and packaged as a 100% FIPS compliant distribution with a proper toolchain.
+**&rarr;** k0s core + all included host OS dependencies + components on top may be compiled and packaged as a 100% FIPS compliant distribution using a proper toolchain.
 
 _We have seen Kubernetes with cumbersome lifecycle management, high minimum system requirements, weird host OS and infra restrictions, and/or need to use different distros to meet different use cases._
 
@@ -79,7 +79,7 @@ k0s is ready for production (starting from v1.21.0+k0s.0). Since the initial rel
 
 ## Scope
 
-While some Kubernetes distros package everything and the kitchen sink, k0s tries to minimize the amount of "add-ons" to bundle in. Instead, we aim to provide robust and versatile "base" for running Kubernetes in various setups. Of course we will provide some ways to easily control and setup various "add-ons", but we will not bundle many of those into k0s itself. There're couple of reasons why we think this is the correct way:
+While some Kubernetes distros package everything and the kitchen sink, k0s tries to minimize the amount of "add-ons" to bundle in. Instead, we aim to provide a robust and versatile "base" for running Kubernetes in various setups. Of course we will provide some ways to easily control and setup various "add-ons", but we will not bundle many of those into k0s itself. There are a couple of reasons why we think this is the correct way:
 - Many of the addons such as ingresses, service meshes, storage etc. are VERY opinionated. We try to build this base with less opinions. :D
 - Keeping up with the upstream releases with many external addons is very maintenance heavy. Shipping with old versions does not make much sense either.
 
