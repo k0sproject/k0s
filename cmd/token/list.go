@@ -33,6 +33,7 @@ func tokenListCmd() *cobra.Command {
 		Use:     "list",
 		Short:   "List join tokens",
 		Example: `k0s token list --role worker // list worker tokens`,
+		PreRunE: checkListTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
@@ -75,4 +76,15 @@ func tokenListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+func checkListTokenRole(cmd *cobra.Command, args []string) error {
+	if listTokenRole == "" {
+		cmd.SilenceUsage = true
+		return fmt.Errorf("role not provided, supported roles are %q and %q", "controller", "worker")
+	} else if !(listTokenRole == controllerRole || listTokenRole == workerRole) {
+		cmd.SilenceUsage = true
+		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", listTokenRole, controllerRole, workerRole)
+	}
+	return nil
 }
