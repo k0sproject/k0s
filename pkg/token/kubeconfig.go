@@ -78,9 +78,11 @@ func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars c
 	if role == "worker" {
 		data.User = "kubelet-bootstrap"
 		data.JoinURL = clusterConfig.Spec.API.APIAddressURL()
-	} else {
+	} else if role == "controller" {
 		data.User = "controller-bootstrap"
 		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()
+	} else {
+		return "", fmt.Errorf("unsupported role %s only supporter roles are %q and %q", role, "controller", "worker")
 	}
 
 	var buf bytes.Buffer

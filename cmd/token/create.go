@@ -37,6 +37,7 @@ func tokenCreateCmd() *cobra.Command {
 		Example: `k0s token create --role worker --expiry 100h //sets expiration time to 100 hours
 k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
 `,
+		PreRunE: checkCreateTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
@@ -81,4 +82,12 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")
 
 	return cmd
+}
+
+func checkCreateTokenRole(cmd *cobra.Command, args []string) error {
+	if !(createTokenRole == controllerRole || createTokenRole == workerRole) {
+		cmd.SilenceUsage = true
+		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", createTokenRole, controllerRole, workerRole)
+	}
+	return nil
 }

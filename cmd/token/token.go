@@ -28,6 +28,11 @@ var (
 	waitCreate  bool
 )
 
+const (
+	controllerRole = "controller"
+	workerRole     = "worker"
+)
+
 func NewTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
