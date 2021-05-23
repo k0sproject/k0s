@@ -85,7 +85,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 }
 
 func checkCreateTokenRole(cmd *cobra.Command, args []string) error {
-	if !(createTokenRole == controllerRole || createTokenRole == workerRole) {
+	if createTokenRole != controllerRole && createTokenRole != workerRole {
 		cmd.SilenceUsage = true
 		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", createTokenRole, controllerRole, workerRole)
 	}
