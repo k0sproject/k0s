@@ -28,6 +28,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
+const (
+	controllerRole = "controller"
+	workerRole     = "worker"
+)
+
 var (
 	kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
 apiVersion: v1
@@ -75,14 +80,14 @@ func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars c
 		CACert: base64.StdEncoding.EncodeToString(caCert),
 		Token:  tokenString,
 	}
-	if role == "worker" {
+	if role == workerRole {
 		data.User = "kubelet-bootstrap"
 		data.JoinURL = clusterConfig.Spec.API.APIAddressURL()
-	} else if role == "controller" {
+	} else if role == controllerRole {
 		data.User = "controller-bootstrap"
 		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()
 	} else {
-		return "", fmt.Errorf("unsupported role %s only supporter roles are %q and %q", role, "controller", "worker")
+		return "", fmt.Errorf("unsupported role %s only supported roles are %q and %q", role, controllerRole, workerRole)
 	}
 
 	var buf bytes.Buffer
