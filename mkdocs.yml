@@ -11,18 +11,18 @@ edit_uri: ""
 nav:
   - Overview: README.md
   - Install:
-      - Getting Started:                  install.md
-      - Installing with k0sctl:           k0sctl-install.md
+      - Quick Start Guide:                install.md
+      - Install using k0sctl:             k0sctl-install.md
       - Alternative Install Methods:
-          - Manual Install:               k0s-multi-node.md
+          - Manual Install (advanced):    k0s-multi-node.md
           - Docker:                       k0s-in-docker.md
           - Windows (experimental):       experimental-windows.md
           - Raspberry Pi 4:               raspberry-pi4.md
           - Ansible Playbook:             examples/ansible-playbook.md
-          - Airgap installation:          airgap-install.md
+          - Airgap Install:               airgap-install.md
       - System Requirements:              system-requirements.md
   - Extensions:
-      - Manifest Bundles:                 manifests.md
+      - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
       - Examples:
           - Traefik Ingress Controller:   examples/traefik-ingress.md
@@ -33,10 +33,11 @@ nav:
       - Networking:                       networking.md
   - Configuration:
       - Configuration Options:            configuration.md
+      - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
       - Containerd Configuration:         containerd_config.md
-      - Using a Custom CRI:               custom-cri-runtime.md
-      - Using Cloud Providers:            cloud-providers.md
+      - Use a Custom CRI:                 custom-cri-runtime.md
+      - Use Cloud Providers:              cloud-providers.md
       - IPv4/IPv6 Dual-Stack Networking:  dual-stack.md
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
