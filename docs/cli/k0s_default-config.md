@@ -2,19 +2,19 @@
 
 Output the default k0s configuration yaml to stdout
 
-```
+```shell
 k0s default-config [flags]
 ```
 
 ### Options
 
-```
+```shell
   -h, --help   help for default-config
 ```
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -24,5 +24,4 @@ k0s default-config [flags]
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-
+* [k0s](k0s.md) - k0s - Zero Friction Kubernetes

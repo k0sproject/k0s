@@ -1,6 +1,6 @@
 # Run k0s in Docker
 
-You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster". 
+You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster".
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ You will require a [Docker environment](https://docs.docker.com/get-docker/) run
 
 ## Container images
 
-The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include: 
+The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:
 
 - docker.io/k0sproject/k0s:latest
 - docker.pkg.github.com/k0sproject/k0s/k0s:"version"
@@ -25,7 +25,7 @@ docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:644
 
 ### 2. (Optional) Create additional workers
 
-You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers. 
+You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.
 
 For each required worker:
 
@@ -85,7 +85,7 @@ services:
 
 ### No custom Docker networks
 
-Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network. 
+Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with `--net my-net`). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.
 
 ## Next Steps
 

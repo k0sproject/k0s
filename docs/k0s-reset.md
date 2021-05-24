@@ -6,13 +6,13 @@ Use the k0s CLI `reset` command to uninstall k0s, by removing all k0s-related fi
 
 1. Stop the service on controller nodes:
 
-    ```sh
-    $ sudo k0s stop
+    ```shell
+    sudo k0s stop
     ```
 
 2. Invoke the `reset` command:
 
-    ```sh
+    ```shell
     $ k0s reset
     INFO[2021-02-25 15:58:41] Uninstalling the k0s service
     INFO[2021-02-25 15:58:42] no config file given, using defaults

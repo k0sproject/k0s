@@ -2,25 +2,27 @@
 
 Run worker
 
-```
+```shell
 k0s worker [join-token] [flags]
 ```
 
 ### Examples
 
-```
-	Command to add worker node to the master node:
-	CLI argument:
-	$ k0s worker [token]
+Command to add worker node to the master node using a CLI argument:
 
-	or CLI flag:
-	$ k0s worker --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag
+```shell
+k0s worker [token]
+```
+
+or a CLI flag:
+
+```shell
+k0s worker --token-file [path_to_file]
 ```
 
 ### Options
 
-```
+```shell
       --api-server string       HACK: api-server for the windows worker node
       --cidr-range string       HACK: cidr range for the windows worker node (default "10.96.0.0/12")
       --cluster-dns string      HACK: cluster dns for the windows worker node (default "10.96.0.10")
@@ -33,7 +35,7 @@ k0s worker [join-token] [flags]
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -43,5 +45,4 @@ k0s worker [join-token] [flags]
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-
+* [k0s](k0s.md) - k0s - Zero Friction Kubernetes

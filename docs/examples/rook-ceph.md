@@ -24,18 +24,21 @@ After the Ceph deployment we'll deploy a sample application (MongoDB) to use the
 In this example we'll use Terraform to create four Ubuntu VMs on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the VMs with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.
 
 We will use k0sctl to create the k0s cluster. k0sctl repo also includes a ready-made Terraform configuration to create the VMs on AWS. We'll use that. Let's start be cloning the k0sctl repo.
+
 ```sh
 git clone git@github.com:k0sproject/k0sctl.git
 ```
 
 Take a look at the Terraform files
+
 ```sh
 cd k0sctl/examples/aws-tf
 ls -l
 ```
 
 Open `variables.tf` and set the number of controller and worker nodes like this:
-```
+
+```terraform
 variable "cluster_name" {
   type    = string
   default = "k0sctl"
@@ -66,7 +69,8 @@ For AWS, you need an account. Terraform will use the following environment varia
 ![k0s_rook_ceph_aws_credentials.png](../img/k0s_rook_ceph_aws_credentials.png)
 
 When the environment variables are set, you can proceed with Terraform and deploy the VMs.
-```
+
+```shell
 terraform init
 terraform apply
 ```
@@ -86,16 +90,17 @@ We will be using raw partititions (AWS EBS volumes), which can be easily attache
 Deploy AWS EBS volumes, one for each worker node. You can manually create three EBS volumes (for example 10 GB each) using the AWS GUI and attach those to your worker nodes. Formatting shouldn't be done. Instead, Ceph handles that part automatically.
 
 After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:
-```
+
+```shell
 $ lsblk -f
 NAME        FSTYPE   LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINT
 loop0       squashfs                                                            0   100% /snap/amazon-ssm-agent/3552
 loop1       squashfs                                                            0   100% /snap/core18/1997
 loop2       squashfs                                                            0   100% /snap/snapd/11588
 loop3       squashfs                                                            0   100% /snap/lxd/19647
-nvme0n1                                                                                  
+nvme0n1
 └─nvme0n1p1 ext4     cloudimg-rootfs e8070c31-bfee-4314-a151-d1332dc23486    5.1G    33% /
-nvme1n1                                                                                  
+nvme1n1
 ```
 
 The last line (nvme1n1) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (FSTYPE is empty). This meets the Ceph storage requirements and you are good to proceed.
@@ -103,12 +108,14 @@ The last line (nvme1n1) in this example printout corresponds to the attached EBS
 ### 4. Install k0s using k0sctl
 
 You can use terraform to automatically output a config file for k0sctl with the ip addresses and access details.
-```
+
+```shell
 terraform output -raw k0s_cluster > k0sctl.yaml
 ```
 
 After that deploying k0s becomes very easy with the ready-made configuration.
-```
+
+```shell
 k0sctl apply --config k0sctl.yaml
 ```
 
@@ -117,14 +124,16 @@ It might take around 2-3 minutes for k0sctl to connect each node, install k0s an
 ### 5. Access k0s cluster
 
 To access your new cluster remotely, you can use k0sctl to fetch kubeconfig and use that with kubectl or Lens.
-```
+
+```shell
 k0sctl kubeconfig --config k0sctl.yaml > kubeconfig
 export KUBECONFIG=$PWD/kubeconfig
 kubectl get nodes
 ```
 
 The other option is to login to your controller node and use the k0s in-built kubectl to access the cluster. Then you don't need to worry about kubeconfig (k0s takes care of that automatically).
-```
+
+```shell
 ssh -i aws.pem <username>@<ip-address>
 sudo k0s kubectl get nodes
 ```
@@ -132,35 +141,41 @@ sudo k0s kubectl get nodes
 ### 6. Deploy Rook
 
 To get started with Rook, let's first clone the Rook GitHub repo:
-```
+
+```shell
 git clone --single-branch --branch v1.6.0 https://github.com/rook/rook.git
 cd rook/cluster/examples/kubernetes/ceph
 ```
 
 We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in `operator.yaml` like this
-```
+
+```yaml
 ROOK_CSI_KUBELET_DIR_PATH: "/var/lib/k0s/kubelet"
 ```
 
 To create the resources, which are needed by the Rook’s Ceph operator, run
-```
+
+```shell
 kubectl apply -f crds.yaml -f common.yaml -f operator.yaml
 ```
 
 Now you should see the operator running. Check them with
-```
+
+```shell
 kubectl get pods -n rook-ceph
 ```
 
 ### 7. Deploy Ceph Cluster
 
 Then you can proceed to create a Ceph cluster. Ceph will use the three EBS volumes attached to the worker nodes:
-```
+
+```shell
 kubectl apply -f cluster.yaml
 ```
 
 It takes some minutes to prepare the volumes and create the cluster. Once this is completed you should see the following output:
-```
+
+```shell
 $ kubectl get pods -n rook-ceph
 
 NAME                                                         READY   STATUS      RESTARTS   AGE
@@ -193,15 +208,16 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   0/1     Completed  
 ### 8. Configure Ceph block storage
 
 Before Ceph can provide storage to your cluster, you need to create a ReplicaPool and a StorageClass. In this example, we use the default configuration to create the block storage.
-```
+
+```shell
 kubectl apply -f ./csi/rbd/storageclass.yaml
-``` 
+```
 
 ### 9. Request storage
 
 Create a new manifest file `mongo-pvc.yaml` with the following content:
 
-````
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -213,21 +229,23 @@ spec:
   resources:
     requests:
       storage: 2Gi
-````
+```
 
 This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.
 
-```
+```shell
 kubectl apply -f mongo-pvc.yaml
 ```
 
 You can now check the status of your PVC:
-```
+
+```shell
 kubectl get pvc
-``` 
+```
 
 When the PVC gets the requested volume reserved (bound), it should look like this:
-```
+
+```shell
 $ kubectl get pvc
 
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
@@ -238,7 +256,7 @@ mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   3Gi        RWO  
 
 Let's deploy a Mongo database to verify the Ceph storage. Create a new file `mongo.yaml` with the following content:
 
-```
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -268,14 +286,16 @@ spec:
 ```
 
 Deploy the database:
-```
+
+```shell
 kubectl apply -f mongo.yaml
 ```
 
 ### 11. Access the application
 
 Open the MongoDB shell using the mongo pod:
-```
+
+```shell
 $ kubectl get pods
 NAME                    READY   STATUS    RESTARTS   AGE
 mongo-b87cbd5cc-4wx8t   1/1     Running   0          76s
@@ -284,27 +304,29 @@ $ kubectl exec -it mongo-b87cbd5cc-4wx8t -- mongo
 ```
 
 Create a DB and insert some data:
-```
+
+```mongodb
 > use testDB
 switched to db testDB
 > db.testDB.insertOne( {name: "abc", number: 123  })
 {
-	"acknowledged" : true,
-	"insertedId" : ObjectId("60815690a709d344f83b651d")
+  "acknowledged" : true,
+  "insertedId" : ObjectId("60815690a709d344f83b651d")
 }
 > db.testDB.insertOne( {name: "bcd", number: 234  })
 {
-	"acknowledged" : true,
-	"insertedId" : ObjectId("6081569da709d344f83b651e")
+  "acknowledged" : true,
+  "insertedId" : ObjectId("6081569da709d344f83b651e")
 }
 ```
 
 Read the data:
-```
+
+```mongodb
 > db.getCollection("testDB").find()
 { "_id" : ObjectId("60815690a709d344f83b651d"), "name" : "abc", "number" : 123 }
 { "_id" : ObjectId("6081569da709d344f83b651e"), "name" : "bcd", "number" : 234 }
-> 
+>
 ```
 
 You can also try to restart the mongo pod or restart the worker nodes to verity that the storage is persistent.
@@ -312,7 +334,8 @@ You can also try to restart the mongo pod or restart the worker nodes to verity 
 ### 12. Clean-up
 
 You can use Terraform to take down the VMs:
-```sh
+
+```shell
 terraform destroy
 ```
 

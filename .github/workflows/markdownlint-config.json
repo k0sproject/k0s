@@ -1,0 +1,8 @@
+{
+  "default": true,
+  "line_length": false,
+  "no-bare-urls": false,
+  "first-line-h1": false,
+  "single-trailing-newline": false,
+  "ol-prefix": "one_or_ordered"
+}

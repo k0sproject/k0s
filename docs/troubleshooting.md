@@ -1,13 +1,14 @@
 # Troubleshooting
 
-There are few common cases we've seen where k0s fails to run properly. 
+There are few common cases we've seen where k0s fails to run properly.
 
 ## CoreDNS in crashloop
 
 The most common case we've encountered so far has been CoreDNS getting into crashloop on the node(s).
 
 With kubectl you see something like this:
-```sh
+
+```shell
 $ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-25px6   1/1     Running   0          167m
@@ -25,7 +26,8 @@ kube-system   metrics-server-7d4bcb75dd-pqkrs            1/1     Running   0    
 ```
 
 When you check the logs, it'll show something like this:
-```
+
+```shell
 $ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
 plugin/loop: Loop (127.0.0.1:55953 -> :1053) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 4547991504243258144.3688648895315093531."
 ```
@@ -43,7 +45,6 @@ In the logs you probably see ETCD not starting up properly.
 Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s controller` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
 
 As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.
-
 
 ## Pods pending when using cloud providers
 
@@ -75,8 +76,9 @@ spec:
 
 With this config you can start your controller as usual. Any workers will need to be started with
 
-`k0s worker --profile coreos [TOKEN]`
-
+```shell
+k0s worker --profile coreos [TOKEN]
+```
 
 ## Profiling
 
@@ -84,18 +86,14 @@ We drop any debug related information and symbols from the compiled binary by ut
 
 To keep those symbols use `DEBUG` env variable:
 
+```shell
+DEBUG=true make k0s
 ```
-$ DEBUG=true make k0s
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=" -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=" \
-		    -o k0s.code main.go
-``` 
 
 Any value not equal to the "false" would work.
 
 To add custom linker flags use `LDFLAGS` variable.
 
-```
-$ LD_FLAGS="--custom-flag=value" make k0s
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="--custom-flag=value -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=\" -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=" \
-        -o k0s.code main.go
+```shell
+LD_FLAGS="--custom-flag=value" make k0s
 ```

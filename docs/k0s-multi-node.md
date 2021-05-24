@@ -16,9 +16,10 @@ You can speed up the use of the `k0s` command by enabling [shell completion](she
 
 Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
 
+```shell
+curl -sSLf https://get.k0s.sh | sudo sh
 ```
-$ curl -sSLf https://get.k0s.sh | sudo sh
-```
+
 The download script accepts the following environment variables:
 
 | Variable              | Purpose                                   |
@@ -26,10 +27,9 @@ The download script accepts the following environment variables:
 | `K0S_VERSION=v0.11.0` | Select the version of k0s to be installed |
 | `DEBUG=true` | Output commands and their arguments at execution.
 
-**Note**: If you require environment variables and use sudo, you may need
-`--preserve-env`:
+**Note**: If you require environment variables and use sudo, you may need `--preserve-env`:
 
-```sh
+```shell
 curl -sSLf https://get.k0s.sh | sudo --preserve-env=K0S_VERSION sh
 ```
 
@@ -37,17 +37,18 @@ curl -sSLf https://get.k0s.sh | sudo --preserve-env=K0S_VERSION sh
 
 Create a configuration file:
 
-```sh
-$ k0s default-config > k0s.yaml
-
+```shell
+k0s default-config > k0s.yaml
 ```
+
 **Note**: For information on settings modification, refer to the [configuration](configuration.md) documentation.
 
-```sh
-$ sudo k0s install controller -c k0s.yaml
+```shell
+sudo k0s install controller -c k0s.yaml
 ```
-```sh
-$ sudo k0s start
+
+```shell
+sudo k0s start
 ```
 
 k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running.
@@ -58,27 +59,28 @@ You need a token to join workers to the cluster. The token embeds information th
 
 To get a token, run the following command on one of the existing controller nodes:
 
-```sh
-$ k0s token create --role=worker
+```shell
+k0s token create --role=worker
 ```
 
 The resulting output is a long [token](#tokens) string, which you can use to add a worker to the cluster.
 
 For enhanced security, run the following command to set an expiration time for the token:
 
-```sh
-$ k0s token create --role=worker --expiry=100h > token-file
+```shell
+k0s token create --role=worker --expiry=100h > token-file
 ```
 
 ### 4. Add workers to the cluster
 
 To join the worker, run k0s in the worker mode with the join token you created:
 
-```sh
-$ sudo k0s install worker --token-file /path/to/token/file
+```shell
+sudo k0s install worker --token-file /path/to/token/file
 ```
-```sh
-$ sudo k0s start
+
+```shell
+sudo k0s start
 ```
 
 #### About tokens
@@ -97,24 +99,25 @@ The bearer token embedded in the kubeconfig is a [bootstrap token](https://kuber
 
 To create a join token for the new controller, run the following command on an existing controller:
 
-```sh
-$ k0s token create --role=controller --expiry=1h > token-file
+```shell
+k0s token create --role=controller --expiry=1h > token-file
 ```
 
 On the new controller, run:
 
-```sh
-$ sudo k0s install controller --token-file /path/to/token/file
+```shell
+sudo k0s install controller --token-file /path/to/token/file
 ```
-```sh
-$ k0s start
+
+```shell
+k0s start
 ```
 
 ### 6. Check k0s status
 
 To get general information about your k0s instance's status:
 
-```
+```shell
 $ sudo k0s status
 Version: v0.11.0
 Process ID: 436
@@ -126,7 +129,8 @@ Init System: linux-systemd
 ### 7. Access your cluster
 
 Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:
-```
+
+```shell
 $ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    <none>   4m6s   v1.21.1-k0s1
@@ -134,7 +138,7 @@ k0s    Ready    <none>   4m6s   v1.21.1-k0s1
 
 You can also access your cluster easily with [Lens](https://k8slens.dev/), simply by copying the kubeconfig and pasting it to Lens:
 
-```sh
+```shell
 sudo cat /var/lib/k0s/pki/admin.conf
 ```
 
