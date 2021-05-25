@@ -88,7 +88,7 @@ func (s *NetworkSuite) TestNetworkDefaults() {
 
 	s.Equal("kuberouter", n.Provider)
 	s.NotNil(n.KubeRouter)
-
+	s.Equal(ModeIptables, n.KubeProxy.Mode)
 }
 
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
@@ -140,6 +140,23 @@ spec:
 	s.Empty(n.KubeRouter.PeerRouterIPs)
 }
 
+func (s *NetworkSuite) TestKubeProxyDefaultsAfterMashaling() {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: foobar
+spec:
+`
+
+	c, err := configFromString(yamlData, k0sVars)
+	s.NoError(err)
+	p := c.Spec.Network.KubeProxy
+
+	s.Equal(ModeIptables, p.Mode)
+	s.False(p.Disabled)
+}
+
 func (s *NetworkSuite) TestValidation() {
 	s.T().Run("defaults_are_valid", func(t *testing.T) {
 		n := DefaultNetwork()
@@ -182,6 +199,7 @@ func (s *NetworkSuite) TestValidation() {
 		n.Calico.Mode = "bird"
 		n.DualStack = DefaultDualStack()
 		n.DualStack.Enabled = true
+		n.KubeProxy.Mode = "ipvs"
 		n.DualStack.IPv6PodCIDR = "fd00::/108"
 		n.DualStack.IPv6ServiceCIDR = "foobar"
 
@@ -199,11 +217,38 @@ func (s *NetworkSuite) TestValidation() {
 		n.DualStack.IPv6PodCIDR = "foobar"
 		n.DualStack.IPv6ServiceCIDR = "fd00::/108"
 		n.DualStack.Enabled = true
+		n.KubeProxy.Mode = "ipvs"
 
 		errors := n.Validate()
 		s.NotNil(errors)
 		s.Len(errors, 1)
 		s.Contains(errors[0].Error(), "invalid pod IPv6 CIDR")
+	})
+
+	s.T().Run("invalid_mode_for_kube_proxy", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.KubeProxy.Mode = "foobar"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "unsupported mode")
+	})
+
+	s.T().Run("invalid_proxy_mode_for_dualstack", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
+		n.Calico.Mode = "bird"
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.KubeProxy.Mode = "iptables"
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "fd01::/108"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "dual-stack requires kube-proxy in ipvs mode")
 	})
 }
 
