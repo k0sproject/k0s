@@ -2,7 +2,7 @@
 ![k0s network conformance](https://github.com/k0sproject/k0s/workflows/k0s%20Check%20Network/badge.svg)
 [![Slack](https://img.shields.io/badge/join%20slack-%23k0s-4A154B.svg)](https://join.slack.com/t/k8slens/shared_invite/enQtOTc5NjAyNjYyOTk4LWU1NDQ0ZGFkOWJkNTRhYTc2YjVmZDdkM2FkNGM5MjhiYTRhMDU2NDQ1MzIyMDA4ZGZlNmExOTc0N2JmY2M3ZGI)
 [![Go Reference](https://img.shields.io/badge/code%20reference-go.dev-bc42f5.svg)](https://pkg.go.dev/github.com/k0sproject/k0s)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/k0sproject/k0s?label=latest%20stable) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/k0sproject/k0s?include_prereleases&label=latest-release%20%28including+pre-release%29) ![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/k0sproject/k0s/latest) 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/k0sproject/k0s?label=latest%20stable) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/k0sproject/k0s?include_prereleases&label=latest-release%20%28including+pre-release%29) ![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/k0sproject/k0s/latest)
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/k0sproject/k0s?color=blueviolet&label=Stargazers) [![Releases](https://img.shields.io/github/downloads/k0sproject/k0s/total.svg)](https://github.com/k0sproject/k0s/tags?label=Downloads)
 
@@ -34,6 +34,7 @@ If you'd like to try k0s, please jump to our:
 - For docs, tutorials, and other k0s resources, see [docs main page](https://docs.k0sproject.io).
 
 ## Join the Community
+
 If you'd like to help build k0s, please check out our guide to [Contributing](https://docs.k0sproject.io/latest/contributors/overview/) and our [Code of Conduct](https://docs.k0sproject.io/latest/contributors/CODE_OF_CONDUCT/).
 
 ## Motivation
@@ -80,6 +81,7 @@ k0s is ready for production (starting from v1.21.0+k0s.0). Since the initial rel
 ## Scope
 
 While some Kubernetes distros package everything and the kitchen sink, k0s tries to minimize the amount of "add-ons" to bundle in. Instead, we aim to provide a robust and versatile "base" for running Kubernetes in various setups. Of course we will provide some ways to easily control and setup various "add-ons", but we will not bundle many of those into k0s itself. There are a couple of reasons why we think this is the correct way:
+
 - Many of the addons such as ingresses, service meshes, storage etc. are VERY opinionated. We try to build this base with less opinions. :D
 - Keeping up with the upstream releases with many external addons is very maintenance heavy. Shipping with old versions does not make much sense either.
 
@@ -90,29 +92,34 @@ With strong enough arguments we might take in new addons, but in general those s
 `k0s` can be built in 3 different ways:
 
 Fetch official binaries (except `konnectivity-server`, which are built from source):
-```
+
+```shell
 make EMBEDDED_BINS_BUILDMODE=fetch
 ```
 
 Build Kubernetes components from source as static binaries (requires docker):
-```
+
+```shell
 make EMBEDDED_BINS_BUILDMODE=docker
 ```
 
 Build k0s without any embedded binaries (requires that Kubernetes
 binaries are pre-installed on the runtime system):
-```
+
+```shell
 make EMBEDDED_BINS_BUILDMODE=none
 ```
 
 Builds can be done in parallel:
-```
+
+```shell
 make -j$(nproc)
 ```
 
 ## Smoke test
 
 To run a smoke test after build:
-```
+
+```shell
 make check-basic
 ```

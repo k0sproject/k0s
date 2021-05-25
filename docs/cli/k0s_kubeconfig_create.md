@@ -7,31 +7,34 @@ Create a kubeconfig for a user
 Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
 Note: A certificate once signed cannot be revoked for a particular user
 
-```
+```shell
 k0s kubeconfig create [username] [flags]
 ```
 
 ### Examples
 
-```
-	Command to create a kubeconfig for a user:
-	CLI argument:
-	$ k0s kubeconfig create [username]
+Command to create a kubeconfig for a user:
 
-	optionally add groups:
-	$ k0s kubeconfig create [username] --groups [groups]
+```shell
+k0s kubeconfig create [username]
+```
+
+optionally add groups:
+
+```shell
+k0s kubeconfig create [username] --groups [groups]
 ```
 
 ### Options
 
-```
+```shell
       --groups string   Specify groups
   -h, --help            help for create
 ```
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -41,5 +44,4 @@ k0s kubeconfig create [username] [flags]
 
 ### SEE ALSO
 
-* [k0s kubeconfig](k0s_kubeconfig.md)	 - Create a kubeconfig file for a specified user
-
+* [k0s kubeconfig](k0s_kubeconfig.md) - Create a kubeconfig file for a specified user

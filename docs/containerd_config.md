@@ -4,14 +4,15 @@
 
 **NOTE:** Changes to the containerd configuration is not required in most use cases.
 
-To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to `/etc/k0s/containerd.toml`: 
+To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to `/etc/k0s/containerd.toml`:
 
-```
+```shell
 containerd config default > /etc/k0s/containerd.toml
 ```
 
 `k0s` runs containerd with the following default values:
-```
+
+```shell
 /var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
     --state=/var/lib/k0s/run/containerd \
@@ -19,9 +20,9 @@ containerd config default > /etc/k0s/containerd.toml
     --config=/etc/k0s/containerd.toml
 ```
 
-Next, add the following default values to the configuration file: 
+Next, add the following default values to the configuration file:
 
-```
+```toml
 version = 2
 root = "/var/lib/k0s/containerd"
 state = "/var/lib/k0s/run/containerd"
@@ -33,7 +34,7 @@ state = "/var/lib/k0s/run/containerd"
 
 Finally, if you want to change CRI look into:
 
- ``` 
+```toml
   [plugins."io.containerd.runtime.v1.linux"]
     shim = "containerd-shim"
     runtime = "runc"
@@ -45,7 +46,7 @@ Finally, if you want to change CRI look into:
 
 1. Install the needed gVisor binaries into the host.
 
-    ```sh
+    ```shell
     (
       set -e
       URL=https://storage.googleapis.com/gvisor/releases/release/latest
@@ -61,12 +62,11 @@ Finally, if you want to change CRI look into:
     )
     ```
 
-    Refer to the [gVisor install
-    docs](https://gvisor.dev/docs/user_guide/install/) for more information.
+    Refer to the [gVisor install docs](https://gvisor.dev/docs/user_guide/install/) for more information.
 
-2. Prepare the config for `k0s` managed containerD, to utilize gVisor as additional runtime: 
+2. Prepare the config for `k0s` managed containerD, to utilize gVisor as additional runtime:
 
-    ```sh
+    ```shell
     cat <<EOF | sudo tee /etc/k0s/containerd.toml
     disabled_plugins = ["restart"]
     [plugins.linux]
@@ -78,13 +78,13 @@ Finally, if you want to change CRI look into:
 
 3. Start and join the worker into the cluster, as normal:
 
-    ```sh
+    ```shell
     k0s worker $token
     ```
 
-4. Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime): 
+4. Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):
 
-    ```sh
+    ```shell
     cat <<EOF | kubectl apply -f -
     apiVersion: node.k8s.io/v1beta1
     kind: RuntimeClass
@@ -110,21 +110,21 @@ Finally, if you want to change CRI look into:
 
 5. (Optional) Verify tht the created nginx pod is running under gVisor runtime:
 
-    ```
+    ```shell
     # kubectl exec nginx-gvisor -- dmesg | grep -i gvisor
     [    0.000000] Starting gVisor...
     ```
 
 ## Using custom `nvidia-container-runtime`
 
-By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing `runc` with `nvidia-container-runtime`: 
+By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing `runc` with `nvidia-container-runtime`:
 
-```
+```toml
 [plugins."io.containerd.runtime.v1.linux"]
     shim = "containerd-shim"
     runtime = "nvidia-container-runtime"
 ```
 
-**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://josephb.org/blog/containerd-nvidia/). 
+**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://josephb.org/blog/containerd-nvidia/).
 
 After editing the configuration, restart `k0s` to get containerd using the newly configured runtime.
