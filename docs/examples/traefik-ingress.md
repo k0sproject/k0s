@@ -1,14 +1,14 @@
 # Install the Traefik Ingress Controller on k0s
 
-You can configure k0s with the [Traefik ingress controller](https://doc.traefik.io/traefik/providers/kubernetes-ingress/), a [MetalLB service loadbalancer](https://metallb.universe.tf/), and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration. 
+You can configure k0s with the [Traefik ingress controller](https://doc.traefik.io/traefik/providers/kubernetes-ingress/), a [MetalLB service loadbalancer](https://metallb.universe.tf/), and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
 
 ## 1. Configure k0s.yaml
 
-Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their [Helm charts](helm-charts.md) as extensions in the k0s configuration file (`k0s.yaml`). 
+Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their [Helm charts](helm-charts.md) as extensions in the k0s configuration file (`k0s.yaml`).
 
-##### Note
+**Note:**
 
-A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network. 
+A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.
 
 ```yaml
 extensions:
@@ -38,15 +38,15 @@ extensions:
 
 ## 2. Retrieve the Load Balancer IP
 
-After you start your cluster, run `kubectl get all` to confirm the deployment of Traefik and MetalLB. The command should return a response with the `metallb` and `traefik` resources, along with a service load balancer that has an assigned `EXTERNAL-IP`. 
+After you start your cluster, run `kubectl get all` to confirm the deployment of Traefik and MetalLB. The command should return a response with the `metallb` and `traefik` resources, along with a service load balancer that has an assigned `EXTERNAL-IP`.
 
 ```shell
-root@k0s-host ➜ kubectl get all
+kubectl get all
 ```
 
 *Output*:
 
-```
+```shell
 NAME                                                 READY   STATUS    RESTARTS   AGE
 pod/metallb-1607085578-controller-864c9757f6-bpx6r   1/1     Running   0          81s
 pod/metallb-1607085578-speaker-245c2                 1/1     Running   0          60s
@@ -68,19 +68,23 @@ replicaset.apps/metallb-1607085578-controller-864c9757f6   1         1         1
 replicaset.apps/traefik-1607085579-77bbc57699              1         1         1       81s
 ```
 
-Take note of the `EXTERNAL-IP` given to the `service/traefik-n` load balancer. In this example, `192.168.0.5` has been assigned and can be used to access services via the Ingress proxy: 
+Take note of the `EXTERNAL-IP` given to the `service/traefik-n` load balancer. In this example, `192.168.0.5` has been assigned and can be used to access services via the Ingress proxy:
 
-```bash
+```shell
 NAME                         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
 service/traefik-1607085579   LoadBalancer   10.105.119.102   192.168.0.5      80:32153/TCP,443:30791/TCP   84s
-# Receiving a 404 response here is normal, as you've not configured any Ingress resources to respond yet
-root@k0s-host ➜ curl http://192.168.0.5
+```
+
+Receiving a 404 response here is normal, as you've not configured any Ingress resources to respond yet:
+
+```shell
+$ curl http://192.168.0.5
 404 page not found
 ```
 
 ## 3. Deploy and access the Traefik Dashboard
 
-With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range). 
+With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range).
 
 1. Create the Traefik Dashboard [IngressRoute](https://doc.traefik.io/traefik/providers/kubernetes-crd/) in a YAML file:
 
@@ -108,7 +112,7 @@ With an available and addressable load balancer present on your cluster, now you
 
     *Output*:
 
-    ```
+    ```shell
     ingressroute.traefik.containo.us/dashboard created
     ```
 
@@ -174,19 +178,21 @@ With an available and addressable load balancer present on your cluster, now you
 
     *Output*:
 
-    ```
+    ```shell
     deployment.apps/whoami-deployment created
     service/whoami-service created
     ingress.networking.k8s.io/whoami-ingress created
+    ```
 
 5. Test the ingress and service:
 
     ```shell
     curl http://192.168.0.5/whoami
     ```
+
     *Output*:
 
-    ```
+    ```shell
     Hostname: whoami-deployment-85bfbd48f-7l77c
     IP: 127.0.0.1
     IP: ::1
@@ -208,4 +214,4 @@ With an available and addressable load balancer present on your cluster, now you
 
 ## Further details
 
-With the Traefik Ingress Controller it is possible to use 3rd party tools, such as [ngrok](https://ngrok.io), to go further and expose your load balancer to the world. In doing this you enable dynamic certificate provisioning through [Let's Encrypt](https://letsencrypt.org/), using either [cert-manager](https://cert-manager.io/docs/) or Traefik's own built-in [ACME provider](https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/). 
+With the Traefik Ingress Controller it is possible to use 3rd party tools, such as [ngrok](https://ngrok.io), to go further and expose your load balancer to the world. In doing this you enable dynamic certificate provisioning through [Let's Encrypt](https://letsencrypt.org/), using either [cert-manager](https://cert-manager.io/docs/) or Traefik's own built-in [ACME provider](https://doc.traefik.io/traefik/v2.0/user-guides/crd-acme/).

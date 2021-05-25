@@ -4,13 +4,13 @@ Helper command for validating the config file
 
 ### Options
 
-```
+```shell
   -h, --help   help for validate
 ```
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -20,6 +20,5 @@ Helper command for validating the config file
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-* [k0s validate config](k0s_validate_config.md)	 - Helper command for validating the config file
-
+* [k0s](k0s.md) - k0s - Zero Friction Kubernetes
+* [k0s validate config](k0s_validate_config.md) - Helper command for validating the config file

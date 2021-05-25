@@ -2,24 +2,25 @@
 
 Helper command for validating the config file
 
-### Synopsis
-
-Example:
-   k0s validate config --config path_to_config.yaml
-
-```
+```shell
 k0s validate config [flags]
+```
+
+### Examples
+
+```shell
+ k0s validate config --config path_to_config.yaml
 ```
 
 ### Options
 
-```
+```shell
   -h, --help   help for config
 ```
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -29,5 +30,4 @@ k0s validate config [flags]
 
 ### SEE ALSO
 
-* [k0s validate](k0s_validate.md)	 - Helper command for validating the config file
-
+* [k0s validate](k0s_validate.md) - Helper command for validating the config file

@@ -10,66 +10,66 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
 ## Install k0s
 
-### 1. Download k0s
+1. Download k0s
 
-Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
+    Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
 
-```sh
-$ curl -sSLf https://get.k0s.sh | sudo sh
-```
+    ```shell
+    curl -sSLf https://get.k0s.sh | sudo sh
+    ```
 
-### 2. Install k0s as a service
+2. Install k0s as a service
 
-The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
+    The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
 
-Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:
+    Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:
 
-```sh
-$ sudo k0s install controller --single
-```
+    ```shell
+    sudo k0s install controller --single
+    ```
 
-The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
+    The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
 
-### 3. Start k0s as a service
+3. Start k0s as a service
 
-To start the k0s service, run:
+    To start the k0s service, run:
 
-```sh
-$ sudo k0s start
-```
+    ```shell
+    sudo k0s start
+    ```
 
-A minute or two typically passes before the node is ready to deploy applications.
+    A minute or two typically passes before the node is ready to deploy applications.
 
-(Optional) To enable the k0s service to always start following node restart on a host running systemd, run:
+    (Optional) To enable the k0s service to always start following node restart on a host running systemd, run:
 
-```sh
-$ sudo systemctl enable k0scontroller
-```
+    ```shell
+    sudo systemctl enable k0scontroller
+    ```
 
-### 4. Check service, logs and k0s status
+4. Check service, logs and k0s status
 
-To get general information about your k0s instance's status, run:
+    To get general information about your k0s instance's status, run:
 
-```sh
-$ sudo k0s status
-Version: v0.11.0
-Process ID: 436
-Parent Process ID: 1
-Role: controller+worker
-Init System: linux-systemd
-```
+    ```shell
+    $ sudo k0s status
+    Version: v0.11.0
+    Process ID: 436
+    Parent Process ID: 1
+    Role: controller+worker
+    Init System: linux-systemd
+    ```
 
-### 5. Access your cluster using kubectl
+5. Access your cluster using kubectl
 
-**Note**: k0s includes the Kubernetes command-line tool *kubectl*.
+    **Note**: k0s includes the Kubernetes command-line tool *kubectl*.
 
-Use kubectl to deploy your application or to check your node status:
+    Use kubectl to deploy your application or to check your node status:
 
-```sh
-$ sudo k0s kubectl get nodes
-NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    <none>   4m6s   v1.21.1-k0s1
-```
+    ```shell
+    $ sudo k0s kubectl get nodes
+    NAME   STATUS   ROLES    AGE    VERSION
+    k0s    Ready    <none>   4m6s   v1.21.1-k0s1
+    ```
 
 ## Uninstall k0s
 
@@ -77,21 +77,21 @@ The removal of k0s is a two-step process.
 
 1. Stop the service.
 
-```sh
-$ sudo systemctl stop k0scontroller
-```
+    ```shell
+    sudo systemctl stop k0scontroller
+    ```
 
 2. Execute the `k0s reset` command.
 
-   The `k0s reset` command cleans up the installed system service, data directories, containers, mounts and network namespaces.
+     The `k0s reset` command cleans up the installed system service, data directories, containers, mounts and network namespaces.
 
-```sh
-$ sudo k0s reset
-```
+    ```shell
+    sudo k0s reset
+    ```
 
 3. Reboot the system.
 
-   A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the `k0s reset` command.
+    A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the `k0s reset` command.
 
 ## Next Steps
 

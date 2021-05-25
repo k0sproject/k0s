@@ -9,7 +9,6 @@
 * Now you can exec into running nodes, for example: `footloose ssh root@controller0`
 * Within a node there is a config file (`/etc/k0s/config.yaml`) and systemd service (`k0s`) available for easier testing.
 
-
 ## Teardown
 
 * Teardown a cluster: `make delete-cluster`
