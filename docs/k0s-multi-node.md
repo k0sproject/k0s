@@ -63,7 +63,7 @@ To get a token, run the following command on one of the existing controller node
 k0s token create --role=worker
 ```
 
-The resulting output is a long [token](#tokens) string, which you can use to add a worker to the cluster.
+The resulting output is a long [token](#about-tokens) string, which you can use to add a worker to the cluster.
 
 For enhanced security, run the following command to set an expiration time for the token:
 
