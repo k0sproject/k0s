@@ -302,47 +302,6 @@
     Install k0s
   </a>
   
-    <nav class="md-nav" aria-label="Install k0s">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-download-k0s" class="md-nav__link">
-    1. Download k0s
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-install-k0s-as-a-service" class="md-nav__link">
-    2. Install k0s as a service
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-start-k0s-as-a-service" class="md-nav__link">
-    3. Start k0s as a service
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-check-service-logs-and-k0s-status" class="md-nav__link">
-    4. Check service, logs and k0s status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-access-your-cluster-using-kubectl" class="md-nav__link">
-    5. Access your cluster using kubectl
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -975,47 +934,6 @@
     Install k0s
   </a>
   
-    <nav class="md-nav" aria-label="Install k0s">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-download-k0s" class="md-nav__link">
-    1. Download k0s
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-install-k0s-as-a-service" class="md-nav__link">
-    2. Install k0s as a service
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-start-k0s-as-a-service" class="md-nav__link">
-    3. Start k0s as a service
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-check-service-logs-and-k0s-status" class="md-nav__link">
-    4. Check service, logs and k0s status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-access-your-cluster-using-kubectl" class="md-nav__link">
-    5. Access your cluster using kubectl
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1052,25 +970,33 @@
 <p><strong>Note</strong>: Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
 <p>Though the Quick Start material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system.</p>
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
-<h3 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h3>
+<ol>
+<li>
+<p>Download k0s</p>
 <p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.</p>
-<div class="highlight"><pre><span></span><code>$ curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
 </code></pre></div>
-<h3 id="2-install-k0s-as-a-service">2. Install k0s as a service<a class="headerlink" href="#2-install-k0s-as-a-service" title="Permanent link">#</a></h3>
+</li>
+<li>
+<p>Install k0s as a service</p>
 <p>The <code>k0s install</code> sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.</p>
 <p>Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --single
+<div class="highlight"><pre><span></span><code>sudo k0s install controller --single
 </code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. Refer to <a href="../k0s-multi-node/#installation-steps">manual install</a> for a custom config file example.</p>
-<h3 id="3-start-k0s-as-a-service">3. Start k0s as a service<a class="headerlink" href="#3-start-k0s-as-a-service" title="Permanent link">#</a></h3>
+</li>
+<li>
+<p>Start k0s as a service</p>
 <p>To start the k0s service, run:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s start
+<div class="highlight"><pre><span></span><code>sudo k0s start
 </code></pre></div>
 <p>A minute or two typically passes before the node is ready to deploy applications.</p>
 <p>(Optional) To enable the k0s service to always start following node restart on a host running systemd, run:</p>
-<div class="highlight"><pre><span></span><code>$ sudo systemctl <span class="nb">enable</span> k0scontroller
+<div class="highlight"><pre><span></span><code>sudo systemctl <span class="nb">enable</span> k0scontroller
 </code></pre></div>
-<h3 id="4-check-service-logs-and-k0s-status">4. Check service, logs and k0s status<a class="headerlink" href="#4-check-service-logs-and-k0s-status" title="Permanent link">#</a></h3>
+</li>
+<li>
+<p>Check service, logs and k0s status</p>
 <p>To get general information about your k0s instance's status, run:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s status
 Version: v0.11.0
@@ -1079,30 +1005,36 @@ Parent Process ID: <span class="m">1</span>
 Role: controller+worker
 Init System: linux-systemd
 </code></pre></div>
-<h3 id="5-access-your-cluster-using-kubectl">5. Access your cluster using kubectl<a class="headerlink" href="#5-access-your-cluster-using-kubectl" title="Permanent link">#</a></h3>
+</li>
+<li>
+<p>Access your cluster using kubectl</p>
 <p><strong>Note</strong>: k0s includes the Kubernetes command-line tool <em>kubectl</em>.</p>
 <p>Use kubectl to deploy your application or to check your node status:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    &lt;none&gt;   4m6s   v1.21.1-k0s1
 </code></pre></div>
+</li>
+</ol>
 <h2 id="uninstall-k0s">Uninstall k0s<a class="headerlink" href="#uninstall-k0s" title="Permanent link">#</a></h2>
 <p>The removal of k0s is a two-step process.</p>
 <ol>
-<li>Stop the service.</li>
-</ol>
-<div class="highlight"><pre><span></span><code>$ sudo systemctl stop k0scontroller
+<li>
+<p>Stop the service.</p>
+<div class="highlight"><pre><span></span><code>sudo systemctl stop k0scontroller
 </code></pre></div>
-<ol>
-<li>Execute the <code>k0s reset</code> command.</li>
-</ol>
+</li>
+<li>
+<p>Execute the <code>k0s reset</code> command.</p>
 <p>The <code>k0s reset</code> command cleans up the installed system service, data directories, containers, mounts and network namespaces.</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s reset
+<div class="highlight"><pre><span></span><code>sudo k0s reset
 </code></pre></div>
-<ol>
-<li>Reboot the system.</li>
-</ol>
+</li>
+<li>
+<p>Reboot the system.</p>
 <p>A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the <code>k0s reset</code> command.</p>
+</li>
+</ol>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../k0sctl-install/">Installing with k0sctl</a>: Deploy and upgrade multi-node clusters with one command</li>

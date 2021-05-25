@@ -926,30 +926,29 @@
 <h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
 <p>Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
 Note: A certificate once signed cannot be revoked for a particular user</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig create [username] [flags]
+<div class="highlight"><pre><span></span><code>k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span> <span class="o">[</span>flags<span class="o">]</span>
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>    Command to create a kubeconfig for a user:
-    CLI argument:
-    $ k0s kubeconfig create [username]
-
-    optionally add groups:
-    $ k0s kubeconfig create [username] --groups [groups]
+<p>Command to create a kubeconfig for a user:</p>
+<div class="highlight"><pre><span></span><code>k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span>
+</code></pre></div>
+<p>optionally add groups:</p>
+<div class="highlight"><pre><span></span><code>k0s kubeconfig create <span class="o">[</span>username<span class="o">]</span> --groups <span class="o">[</span>groups<span class="o">]</span>
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --groups string   Specify groups
-  -h, --help            help for create
+  -h, --help            <span class="nb">help</span> <span class="k">for</span> create
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
-      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                    Debug logging (default: false)
-      --debugListenOn string     Http listenOn for debug pprof handler (default &quot;:6060&quot;)
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
+<div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>
+      --data-dir string          Data Directory <span class="k">for</span> k0s <span class="o">(</span>default: /var/lib/k0s<span class="o">)</span>. DO NOT CHANGE <span class="k">for</span> an existing setup, things will break!
+  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
+      --debugListenOn string     Http listenOn <span class="k">for</span> debug pprof handler <span class="o">(</span>default <span class="s2">&quot;:6060&quot;</span><span class="o">)</span>
+  -l, --logging stringToString   Logging Levels <span class="k">for</span> the different components <span class="o">(</span>default <span class="o">[</span>konnectivity-server<span class="o">=</span><span class="m">1</span>,kube-apiserver<span class="o">=</span><span class="m">1</span>,kube-controller-manager<span class="o">=</span><span class="m">1</span>,kube-scheduler<span class="o">=</span><span class="m">1</span>,kubelet<span class="o">=</span><span class="m">1</span>,kube-proxy<span class="o">=</span><span class="m">1</span>,etcd<span class="o">=</span>info,containerd<span class="o">=</span>info<span class="o">])</span>
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s_kubeconfig/">k0s kubeconfig</a>    - Create a kubeconfig file for a specified user</li>
+<li><a href="../k0s_kubeconfig/">k0s kubeconfig</a> - Create a kubeconfig file for a specified user</li>
 </ul>
                 
               

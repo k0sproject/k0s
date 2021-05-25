@@ -937,13 +937,13 @@
                 
                 
                 <h1 id="configuration-options-for-worker-nodes">Configuration options for worker nodes<a class="headerlink" href="#configuration-options-for-worker-nodes" title="Permanent link">#</a></h1>
-<p>Although the <code>k0s worker</code> command does not take in any special yaml configuration, there are still methods for configuring the workers to run various components. </p>
+<p>Although the <code>k0s worker</code> command does not take in any special yaml configuration, there are still methods for configuring the workers to run various components.</p>
 <h2 id="node-labels">Node labels<a class="headerlink" href="#node-labels" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--labels</code> flag, with which you can make the newly joined worker node the register itself, in the Kubernetes API, with the given set of labels.</p>
 <p>For example, running the worker with <code>k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"</code> results in:</p>
-<div class="highlight"><pre><span></span><code>/ # kubectl get node --show-labels
+<div class="highlight"><pre><span></span><code>$ kubectl get node --show-labels
 NAME      STATUS     ROLES    AGE   VERSION        LABELS
-worker0   NotReady   &lt;none&gt;   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
+worker0   NotReady   &lt;none&gt;   10s   v1.20.2-k0s1   beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,k0sproject.io/foo<span class="o">=</span>bar,k0sproject.io/other<span class="o">=</span>xyz,kubernetes.io/arch<span class="o">=</span>amd64,kubernetes.io/hostname<span class="o">=</span>worker0,kubernetes.io/os<span class="o">=</span>linux
 </code></pre></div>
 <p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.</p>
 <h2 id="kubelet-args">Kubelet args<a class="headerlink" href="#kubelet-args" title="Permanent link">#</a></h2>

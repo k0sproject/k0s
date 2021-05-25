@@ -951,28 +951,28 @@
                 
                 
                 <h1 id="enabling-shell-completion">Enabling Shell Completion<a class="headerlink" href="#enabling-shell-completion" title="Permanent link">#</a></h1>
-<p>Generate the k0s completion script using the <code>k0s completion &lt;shell_name&gt;</code> command, for Bash, Zsh, fish, or PowerShell. </p>
+<p>Generate the k0s completion script using the <code>k0s completion &lt;shell_name&gt;</code> command, for Bash, Zsh, fish, or PowerShell.</p>
 <p>Sourcing the completion script in your shell enables k0s autocompletion.</p>
 <h2 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">#</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;source &lt;(k0s completion bash)&#39;</span> &gt;&gt;~/.bashrc
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion bash &gt; /etc/bash_completion.d/k0s
+<p>To load completions for each session, execute once:</p>
+<div class="highlight"><pre><span></span><code>k0s completion bash &gt; /etc/bash_completion.d/k0s
 </code></pre></div>
 <h2 id="zsh">Zsh<a class="headerlink" href="#zsh" title="Permanent link">#</a></h2>
-<p>If shell completion is not already enabled in Zsh environment you will need to enable it: </p>
-<p><div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
+<p>If shell completion is not already enabled in Zsh environment you will need to enable it:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s2">&quot;autoload -U compinit; compinit&quot;</span> &gt;&gt; ~/.zshrc
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
+<p>To load completions for each session, execute once:</p>
+<div class="highlight"><pre><span></span><code>k0s completion zsh &gt; <span class="s2">&quot;</span><span class="si">${</span><span class="nv">fpath</span><span class="p">[1]</span><span class="si">}</span><span class="s2">/_k0s&quot;</span>
 </code></pre></div>
-<strong>Note</strong>: You must start a new shell for the setup to take effect.</p>
+<p><strong>Note</strong>: You must start a new shell for the setup to take effect.</p>
 <h2 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">#</a></h2>
-<p><div class="highlight"><pre><span></span><code>$ k0s completion fish <span class="p">|</span> <span class="nb">source</span>
+<div class="highlight"><pre><span></span><code>k0s completion fish <span class="p">|</span> <span class="nb">source</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># To load completions for each session, execute once:</span>
-$ k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
-</code></pre></div></p>
+<p>To load completions for each session, execute once:</p>
+<div class="highlight"><pre><span></span><code>k0s completion fish &gt; ~/.config/fish/completions/k0s.fish
+</code></pre></div>
                 
               
               

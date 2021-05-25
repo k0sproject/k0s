@@ -326,7 +326,7 @@
         
           <li class="md-nav__item">
   <a href="#2-configure-the-cluster" class="md-nav__link">
-    2. Configure the cluster.
+    2. Configure the cluster
   </a>
   
 </li>
@@ -1000,7 +1000,7 @@
         
           <li class="md-nav__item">
   <a href="#2-configure-the-cluster" class="md-nav__link">
-    2. Configure the cluster.
+    2. Configure the cluster
   </a>
   
 </li>
@@ -1073,21 +1073,21 @@
                 
                 
                 <h1 id="install-using-k0sctl">Install using k0sctl<a class="headerlink" href="#install-using-k0sctl" title="Permanent link">#</a></h1>
-<p>k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information on the hosts, with which it forms a cluster by configuring the hosts, deploying k0s, and then connecting the k0s nodes together. </p>
+<p>k0sctl is a command-line tool for bootstrapping and managing k0s clusters. k0sctl connects to the provided hosts using SSH and gathers information on the hosts, with which it forms a cluster by configuring the hosts, deploying k0s, and then connecting the k0s nodes together.</p>
 <p><img alt="k0sctl deployment" src="../img/k0sctl_deployment.png" /></p>
 <p>With k0sctl, you can create multi-node clusters in a manner that is automatic and easily repeatable. This method is recommended for production cluster installation.</p>
 <p><strong>Note</strong>: The k0sctl install method is necessary for automatic upgrade.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p>You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are availble on the <a href="https://github.com/k0sproject/k0sctl">k0sctl releases page</a>). </p>
+<p>You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are availble on the <a href="https://github.com/k0sproject/k0sctl">k0sctl releases page</a>).</p>
 <p><strong>Note</strong>: For target host prerequisites information, refer to the <a href="../system-requirements/">k0s System Requirements</a>.</p>
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-install-k0sctl-tool">1. Install k0sctl tool<a class="headerlink" href="#1-install-k0sctl-tool" title="Permanent link">#</a></h3>
-<p>k0sctl is a single binary, the instructions for downloading and installing of which are available in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>. </p>
-<h3 id="2-configure-the-cluster">2. Configure the cluster.<a class="headerlink" href="#2-configure-the-cluster" title="Permanent link">#</a></h3>
+<p>k0sctl is a single binary, the instructions for downloading and installing of which are available in the <a href="https://github.com/k0sproject/k0sctl#installation">k0sctl github repository</a>.</p>
+<h3 id="2-configure-the-cluster">2. Configure the cluster<a class="headerlink" href="#2-configure-the-cluster" title="Permanent link">#</a></h3>
 <ol>
 <li>
 <p>Run the following command to create a k0sctl configuration file:</p>
-<div class="highlight"><pre><span></span><code>$ k0sctl init &gt; k0sctl.yaml
+<div class="highlight"><pre><span></span><code>k0sctl init &gt; k0sctl.yaml
 </code></pre></div>
 <p>This action creates a <code>k0sctl.yaml</code> file in the current directory:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
@@ -1109,13 +1109,13 @@
 </code></pre></div>
 </li>
 <li>
-<p>Provide each host with a valid IP address that is reachable by k0ctl, and the connection details for an SSH connection. </p>
+<p>Provide each host with a valid IP address that is reachable by k0ctl, and the connection details for an SSH connection.</p>
 </li>
 </ol>
-<p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications. </p>
+<p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications.</p>
 <h3 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h3>
 <p>Run <code>k0sctl apply</code> to perform the cluster deployment:</p>
-<div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml 
+<div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml
 
 ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
 ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
@@ -1123,50 +1123,50 @@
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
 
-INFO k0sctl <span class="m">0</span>.0.0 Copyright <span class="m">2021</span>, Mirantis Inc.   
-INFO Anonymized telemetry will be sent to Mirantis. 
-INFO By continuing to use k0sctl you agree to these terms: 
-INFO https://k0sproject.io/licenses/eula          
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: connected              
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: connected              
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: is running Ubuntu <span class="m">20</span>.10 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: is running Ubuntu <span class="m">20</span>.10 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts    
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing kubectl     
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather host facts 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: discovered <span class="m">10</span>.12.18.133 as private address 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Validate hosts   
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Download K0s on the hosts 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: downloading k0s <span class="m">0</span>.11.0 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: downloading k0s <span class="m">0</span>.11.0 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Configure K0s    
-WARN <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating default configuration 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: validating configuration 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: configuration was changed 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Initialize K0s Cluster 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing k0s controller 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> the k0s service to start 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> kubernetes api to respond 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Install workers  
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating token       
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: writing join token     
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: installing k0s worker  
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: starting service       
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: waiting <span class="k">for</span> node to become ready 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 2m2s                
-INFO k0s cluster version <span class="m">0</span>.11.0 is now installed  
-INFO Tip: To access the cluster you can now fetch the admin kubeconfig using: 
-INFO      k0sctl kubeconfig              
+INFO k0sctl <span class="m">0</span>.0.0 Copyright <span class="m">2021</span>, Mirantis Inc.
+INFO Anonymized telemetry will be sent to Mirantis.
+INFO By continuing to use k0sctl you agree to these terms:
+INFO https://k0sproject.io/licenses/eula
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: connected
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: connected
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: is running Ubuntu <span class="m">20</span>.10
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: is running Ubuntu <span class="m">20</span>.10
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing kubectl
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather host facts
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: discovered <span class="m">10</span>.12.18.133 as private address
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Validate hosts
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Download K0s on the hosts
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: downloading k0s <span class="m">0</span>.11.0
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: downloading k0s <span class="m">0</span>.11.0
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Configure K0s
+WARN <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating default configuration
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: validating configuration
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: configuration was changed
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Initialize K0s Cluster
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing k0s controller
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> the k0s service to start
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> kubernetes api to respond
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Install workers
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating token
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: writing join token
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: installing k0s worker
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: starting service
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: waiting <span class="k">for</span> node to become ready
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 2m2s
+INFO k0s cluster version <span class="m">0</span>.11.0 is now installed
+INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO      k0sctl kubeconfig
 </code></pre></div>
 <h3 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h3>
 <p>To access your k0s cluster, use k0sctl to generate a <code>kubeconfig</code> for the purpose.</p>
-<div class="highlight"><pre><span></span><code>$ k0sctl kubeconfig &gt; kubeconfig
+<div class="highlight"><pre><span></span><code>k0sctl kubeconfig &gt; kubeconfig
 </code></pre></div>
-<p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>. </p>
+<p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>.</p>
 <div class="highlight"><pre><span></span><code>$ kubectl get pods --kubeconfig kubeconfig -A
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
@@ -1177,24 +1177,24 @@ kube-system   kube-proxy-xp9r9                           <span class="m">1</span
 kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span>/1     Running   <span class="m">0</span>          3m51s
 </code></pre></div>
 <h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
-<p>The upgrading of k0s clusters occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade). </p>
+<p>The upgrading of k0s clusters occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).</p>
 <h3 id="k0sctl-cluster-upgrade-process">k0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h3>
 <p>The following operations occur during a k0sctl upgrade:</p>
 <ol>
 <li>
-<p>Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured. </p>
+<p>Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured.</p>
 </li>
 <li>
 <p>Upgrade of workers, in batches of 10%.</p>
 </li>
 <li>
-<p>Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the <code>--no-drain</code> option.) </p>
+<p>Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the <code>--no-drain</code> option.)</p>
 </li>
 <li>
-<p>The upgrade process continues once the upgraded nodes return to <strong>Ready</strong> state. </p>
+<p>The upgrade process continues once the upgraded nodes return to <strong>Ready</strong> state.</p>
 </li>
 </ol>
-<p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>: </p>
+<p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
   <span class="nt">k0s</span><span class="p">:</span>
     <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.11.0</span>
@@ -1203,25 +1203,25 @@ kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span
 <div class="highlight"><pre><span></span><code>$ k0sctl apply
 ...
 ...
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers 
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers
 INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: starting upgrade
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating... 
-INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start 
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers  
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel              
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting  
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again 
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful   
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s                 
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">0</span>.11.0 is now installed 
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using: 
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig 
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating...
+INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">0</span>.11.0 is now installed
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <ul>
 <li>k0sctl does not perform any discovery of hosts, and thus it only operates on
-  the hosts listed in the provided configuration </li>
+  the hosts listed in the provided configuration</li>
 <li>k0sctl can only add more nodes to the cluster. It cannot remove
   existing nodes.</li>
 </ul>
@@ -1230,8 +1230,7 @@ INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> 
 <li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>:
-  Ingress deployment information</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>: Ingress deployment information</li>
 </ul>
                 
               

@@ -977,10 +977,10 @@
                 
                 
                 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h1>
-<p>There are few common cases we've seen where k0s fails to run properly. </p>
+<p>There are few common cases we've seen where k0s fails to run properly.</p>
 <h2 id="coredns-in-crashloop">CoreDNS in crashloop<a class="headerlink" href="#coredns-in-crashloop" title="Permanent link">#</a></h2>
 <p>The most common case we've encountered so far has been CoreDNS getting into crashloop on the node(s).</p>
-<p>With kubectl you see something like this:
+<p>With kubectl you see something like this:</p>
 <div class="highlight"><pre><span></span><code>$ kubectl get pod --all-namespaces
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-25px6   <span class="m">1</span>/1     Running   <span class="m">0</span>          167m
@@ -995,11 +995,11 @@ kube-system   kube-proxy-kr2r9                           <span class="m">1</span
 kube-system   kube-proxy-tbljr                           <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
 kube-system   kube-proxy-xbw7p                           <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
 kube-system   metrics-server-7d4bcb75dd-pqkrs            <span class="m">1</span>/1     Running   <span class="m">0</span>          167m
-</code></pre></div></p>
-<p>When you check the logs, it'll show something like this:
+</code></pre></div>
+<p>When you check the logs, it'll show something like this:</p>
 <div class="highlight"><pre><span></span><code>$ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
-plugin/loop: Loop (127.0.0.1:55953 -&gt; :1053) detected for zone &quot;.&quot;, see https://coredns.io/plugins/loop#troubleshooting. Query: &quot;HINFO 4547991504243258144.3688648895315093531.&quot;
-</code></pre></div></p>
+plugin/loop: Loop <span class="o">(</span><span class="m">127</span>.0.0.1:55953 -&gt; :1053<span class="o">)</span> detected <span class="k">for</span> zone <span class="s2">&quot;.&quot;</span>, see https://coredns.io/plugins/loop#troubleshooting. Query: <span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
+</code></pre></div>
 <p>This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.</p>
 <p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>
 <p>Read more at CoreDNS <a href="https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters">troubleshooting docs</a>.</p>
@@ -1027,19 +1027,16 @@ plugin/loop: Loop (127.0.0.1:55953 -&gt; :1053) detected for zone &quot;.&quot;,
         <span class="nt">volumePluginDir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/</span>
 </code></pre></div>
 <p>With this config you can start your controller as usual. Any workers will need to be started with</p>
-<p><code>k0s worker --profile coreos [TOKEN]</code></p>
+<div class="highlight"><pre><span></span><code>k0s worker --profile coreos <span class="o">[</span>TOKEN<span class="o">]</span>
+</code></pre></div>
 <h2 id="profiling">Profiling<a class="headerlink" href="#profiling" title="Permanent link">#</a></h2>
 <p>We drop any debug related information and symbols from the compiled binary by utilzing <code>-w -s</code> linker flags.</p>
 <p>To keep those symbols use <code>DEBUG</code> env variable:</p>
-<div class="highlight"><pre><span></span><code>$ DEBUG=true make k0s
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=&quot; -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \&quot;github.com/k0sproject/k0s/pkg/build.EulaNotice=\&quot; -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=&quot; \
-            -o k0s.code main.go
+<div class="highlight"><pre><span></span><code><span class="nv">DEBUG</span><span class="o">=</span><span class="nb">true</span> make k0s
 </code></pre></div>
 <p>Any value not equal to the "false" would work.</p>
 <p>To add custom linker flags use <code>LDFLAGS</code> variable.</p>
-<div class="highlight"><pre><span></span><code>$ LD_FLAGS=&quot;--custom-flag=value&quot; make k0s
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags=&quot;--custom-flag=value -X github.com/k0sproject/k0s/pkg/build.Version=v0.9.0-7-g97e5bac -X \&quot;github.com/k0sproject/k0s/pkg/build.EulaNotice=\&quot; -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=&quot; \
-        -o k0s.code main.go
+<div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">&quot;--custom-flag=value&quot;</span> make k0s
 </code></pre></div>
                 
               

@@ -916,37 +916,35 @@
                 
                 <h2 id="k0s-worker">k0s worker<a class="headerlink" href="#k0s-worker" title="Permanent link">#</a></h2>
 <p>Run worker</p>
-<div class="highlight"><pre><span></span><code>k0s worker [join-token] [flags]
+<div class="highlight"><pre><span></span><code>k0s worker <span class="o">[</span>join-token<span class="o">]</span> <span class="o">[</span>flags<span class="o">]</span>
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>    Command to add worker node to the master node:
-    CLI argument:
-    $ k0s worker [token]
-
-    or CLI flag:
-    $ k0s worker --token-file [path_to_file]
-    Note: Token can be passed either as a CLI argument or as a flag
+<p>Command to add worker node to the master node using a CLI argument:</p>
+<div class="highlight"><pre><span></span><code>k0s worker <span class="o">[</span>token<span class="o">]</span>
+</code></pre></div>
+<p>or a CLI flag:</p>
+<div class="highlight"><pre><span></span><code>k0s worker --token-file <span class="o">[</span>path_to_file<span class="o">]</span>
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --api-server string       HACK: api-server for the windows worker node
-      --cidr-range string       HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cluster-dns string      HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
-      --cri-socket string       contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --enable-cloud-provider   Whether or not to enable cloud provider support in kubelet
-  -h, --help                    help for worker
-      --profile string          worker profile to use on the node (default &quot;default&quot;)
+<div class="highlight"><pre><span></span><code>      --api-server string       HACK: api-server <span class="k">for</span> the windows worker node
+      --cidr-range string       HACK: cidr range <span class="k">for</span> the windows worker node <span class="o">(</span>default <span class="s2">&quot;10.96.0.0/12&quot;</span><span class="o">)</span>
+      --cluster-dns string      HACK: cluster dns <span class="k">for</span> the windows worker node <span class="o">(</span>default <span class="s2">&quot;10.96.0.10&quot;</span><span class="o">)</span>
+      --cri-socket string       contrainer runtime socket to use, default to internal containerd. Format: <span class="o">[</span>remote<span class="p">|</span>docker<span class="o">]</span>:<span class="o">[</span>path-to-socket<span class="o">]</span>
+      --enable-cloud-provider   Whether or not to <span class="nb">enable</span> cloud provider support <span class="k">in</span> kubelet
+  -h, --help                    <span class="nb">help</span> <span class="k">for</span> worker
+      --profile string          worker profile to use on the node <span class="o">(</span>default <span class="s2">&quot;default&quot;</span><span class="o">)</span>
       --token-file string       Path to the file containing token.
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file (default: ./k0s.yaml)
-      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                    Debug logging (default: false)
-      --debugListenOn string     Http listenOn for debug pprof handler (default &quot;:6060&quot;)
-  -l, --logging stringToString   Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
+<div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>
+      --data-dir string          Data Directory <span class="k">for</span> k0s <span class="o">(</span>default: /var/lib/k0s<span class="o">)</span>. DO NOT CHANGE <span class="k">for</span> an existing setup, things will break!
+  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
+      --debugListenOn string     Http listenOn <span class="k">for</span> debug pprof handler <span class="o">(</span>default <span class="s2">&quot;:6060&quot;</span><span class="o">)</span>
+  -l, --logging stringToString   Logging Levels <span class="k">for</span> the different components <span class="o">(</span>default <span class="o">[</span>konnectivity-server<span class="o">=</span><span class="m">1</span>,kube-apiserver<span class="o">=</span><span class="m">1</span>,kube-controller-manager<span class="o">=</span><span class="m">1</span>,kube-scheduler<span class="o">=</span><span class="m">1</span>,kubelet<span class="o">=</span><span class="m">1</span>,kube-proxy<span class="o">=</span><span class="m">1</span>,etcd<span class="o">=</span>info,containerd<span class="o">=</span>info<span class="o">])</span>
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
+<li><a href="../k0s/">k0s</a> - k0s - Zero Friction Kubernetes</li>
 </ul>
                 
               

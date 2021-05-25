@@ -1045,6 +1045,7 @@
 <li><a href="#push-your-final-changes">Push Your Final Changes</a></li>
 </ul>
 <!-- /TOC -->
+
 <p>This guide assumes you have already cloned the upstream repo to your system via git clone, or via <code>go get github.com/k0sproject/k0s</code>.</p>
 <h2 id="fork-the-project">Fork The Project<a class="headerlink" href="#fork-the-project" title="Permanent link">#</a></h2>
 <ol>
@@ -1052,44 +1053,43 @@
 <li>On the top, right-hand side, click on "fork" and select your username for the fork destination.</li>
 </ol>
 <h2 id="adding-the-forked-remote">Adding the Forked Remote<a class="headerlink" href="#adding-the-forked-remote" title="Permanent link">#</a></h2>
-<p><div class="highlight"><pre><span></span><code>export GITHUB_USER={ your github&#39;s username }
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_USER</span><span class="o">={</span> your github<span class="err">&#39;</span>s username <span class="o">}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>cd $WORKDIR/k0s
-git remote add $GITHUB_USER git@github.com:${GITHUB_USER}/k0s.git
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span> <span class="nv">$WORKDIR</span>/k0s
+git remote add <span class="nv">$GITHUB_USER</span> git@github.com:<span class="si">${</span><span class="nv">GITHUB_USER</span><span class="si">}</span>/k0s.git
 
-# Prevent push to Upstream
+<span class="c1"># Prevent push to Upstream</span>
 git remote set-url --push origin no_push
 
-# Set your fork remote as a default push target
-git push --set-upstream $GITHUB_USER main
-</code></pre></div></p>
-<p>Your remotes should look something like this:
-<div class="highlight"><pre><span></span><code>➜ git remote -v
-origin  https://github.com/k0sproject/k0s (fetch)
-origin  no_push (push)
-my_fork git@github.com:{ github_username }/k0s.git (fetch)
-my_fork git@github.com:{ github_username }/k0s.git (push)
-</code></pre></div></p>
+<span class="c1"># Set your fork remote as a default push target</span>
+git push --set-upstream <span class="nv">$GITHUB_USER</span> main
+</code></pre></div>
+<p>Your remotes should look something like this:</p>
+<div class="highlight"><pre><span></span><code>$ git remote -v
+origin  https://github.com/k0sproject/k0s <span class="o">(</span>fetch<span class="o">)</span>
+origin  no_push <span class="o">(</span>push<span class="o">)</span>
+my_fork git@github.com:<span class="o">{</span> github_username <span class="o">}</span>/k0s.git <span class="o">(</span>fetch<span class="o">)</span>
+my_fork git@github.com:<span class="o">{</span> github_username <span class="o">}</span>/k0s.git <span class="o">(</span>push<span class="o">)</span>
+</code></pre></div>
 <h2 id="create-rebase-your-feature-branch">Create &amp; Rebase Your Feature Branch<a class="headerlink" href="#create-rebase-your-feature-branch" title="Permanent link">#</a></h2>
-<p>Create a feature branch and switch to it:
+<p>Create a feature branch and switch to it:</p>
 <div class="highlight"><pre><span></span><code>git checkout -b my_feature_branch
 </code></pre></div>
-Rebase your branch:
-<div class="highlight"><pre><span></span><code>git fetch origin
-
-git rebase origin/main
+<p>Rebase your branch:</p>
+<div class="highlight"><pre><span></span><code>$ git fetch origin
+$ git rebase origin/main
 Current branch my_feature_branch is up to date.
 </code></pre></div>
-Please don't use <code>git pull</code> instead of the above <code>fetch / rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
+<p>Please don't use <code>git pull</code> instead of the above <code>fetch / rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
 <h2 id="commit-push">Commit &amp; Push<a class="headerlink" href="#commit-push" title="Permanent link">#</a></h2>
-<p>Commit and sign your changes:
+<p>Commit and sign your changes:</p>
 <div class="highlight"><pre><span></span><code>git commit --signoff
 </code></pre></div>
-The commit message should have a short title as first line, an empty line and then a longer description that explains why the change was made, unless it is obvious.</p>
+<p>The commit message should have a short title as first line, an empty line and then a longer description that explains why the change was made, unless it is obvious.</p>
 <p>You can go back and edit/build/test some more, then <code>commit --amend</code> in a few cycles.</p>
-<p>When ready, push your changes to your fork's repository:
+<p>When ready, push your changes to your fork's repository:</p>
 <div class="highlight"><pre><span></span><code>git push --set-upstream my_fork my_feature_branch
-</code></pre></div></p>
+</code></pre></div>
 <h2 id="open-a-pull-request">Open a Pull Request<a class="headerlink" href="#open-a-pull-request" title="Permanent link">#</a></h2>
 <p><a href="https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork">Github Docs</a></p>
 <h3 id="get-a-code-review">Get a code review<a class="headerlink" href="#get-a-code-review" title="Permanent link">#</a></h3>
@@ -1101,48 +1101,48 @@ The commit message should have a short title as first line, an empty line and th
 Small commits that contain typo fixes, rebases, review feedbacks, etc should be squashed.</p>
 <p>To do that, it's best to perform an <a href="https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History">interactive rebase</a>:</p>
 <h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h4>
-<p>Rebase your feature branch against upstream main branch:
+<p>Rebase your feature branch against upstream main branch:</p>
 <div class="highlight"><pre><span></span><code>git rebase -i origin/main
-</code></pre></div></p>
-<p>If your PR has 3 commits, output would be similar to this:
+</code></pre></div>
+<p>If your PR has 3 commits, output would be similar to this:</p>
 <div class="highlight"><pre><span></span><code>pick f7f3f6d Changed some code
 pick 310154e fixed some typos
 pick a5f4a0d made some review changes
 
-# Rebase 710f0f8..a5f4a0d onto 710f0f8
-#
-# Commands:
-# p, pick &lt;commit&gt; = use commit
-# r, reword &lt;commit&gt; = use commit, but edit the commit message
-# e, edit &lt;commit&gt; = use commit, but stop for amending
-# s, squash &lt;commit&gt; = use commit, but meld into previous commit
-# f, fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message
-# x, exec &lt;command&gt; = run command (the rest of the line) using shell
-# b, break = stop here (continue rebase later with &#39;git rebase --continue&#39;)
-# d, drop &lt;commit&gt; = remove commit
-# l, label &lt;label&gt; = label current HEAD with a name
-# t, reset &lt;label&gt; = reset HEAD to a label
-# m, merge [-C &lt;commit&gt; | -c &lt;commit&gt;] &lt;label&gt; [# &lt;oneline&gt;]
-# .       create a merge commit using the original merge commit&#39;s
-# .       message (or the oneline, if no original merge commit was
-# .       specified). Use -c &lt;commit&gt; to reword the commit message.
-#
-# These lines can be re-ordered; they are executed from top to bottom.
-#
-# However, if you remove everything, the rebase will be aborted.
-#
-# Note that empty commits are commented out
+<span class="c1"># Rebase 710f0f8..a5f4a0d onto 710f0f8</span>
+<span class="c1">#</span>
+<span class="c1"># Commands:</span>
+<span class="c1"># p, pick &lt;commit&gt; = use commit</span>
+<span class="c1"># r, reword &lt;commit&gt; = use commit, but edit the commit message</span>
+<span class="c1"># e, edit &lt;commit&gt; = use commit, but stop for amending</span>
+<span class="c1"># s, squash &lt;commit&gt; = use commit, but meld into previous commit</span>
+<span class="c1"># f, fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message</span>
+<span class="c1"># x, exec &lt;command&gt; = run command (the rest of the line) using shell</span>
+<span class="c1"># b, break = stop here (continue rebase later with &#39;git rebase --continue&#39;)</span>
+<span class="c1"># d, drop &lt;commit&gt; = remove commit</span>
+<span class="c1"># l, label &lt;label&gt; = label current HEAD with a name</span>
+<span class="c1"># t, reset &lt;label&gt; = reset HEAD to a label</span>
+<span class="c1"># m, merge [-C &lt;commit&gt; | -c &lt;commit&gt;] &lt;label&gt; [# &lt;oneline&gt;]</span>
+<span class="c1"># .       create a merge commit using the original merge commit&#39;s</span>
+<span class="c1"># .       message (or the oneline, if no original merge commit was</span>
+<span class="c1"># .       specified). Use -c &lt;commit&gt; to reword the commit message.</span>
+<span class="c1">#</span>
+<span class="c1"># These lines can be re-ordered; they are executed from top to bottom.</span>
+<span class="c1">#</span>
+<span class="c1"># However, if you remove everything, the rebase will be aborted.</span>
+<span class="c1">#</span>
+<span class="c1"># Note that empty commits are commented out</span>
 </code></pre></div>
-Use a command line text editor to change the word <code>pick</code> to <code>f</code> of <code>fixup</code> for the commits you want to squash, then save your changes and continue the rebase:</p>
-<p>Per the output above, you can see that:
-<div class="highlight"><pre><span></span><code>fixup &lt;commit&gt; = like &quot;squash&quot;, but discard this commit&#39;s log message
+<p>Use a command line text editor to change the word <code>pick</code> to <code>f</code> of <code>fixup</code> for the commits you want to squash, then save your changes and continue the rebase:</p>
+<p>Per the output above, you can see that:</p>
+<div class="highlight"><pre><span></span><code>fixup &lt;commit&gt; <span class="o">=</span> like <span class="s2">&quot;squash&quot;</span>, but discard this commit<span class="err">&#39;</span>s log message
 </code></pre></div>
-Which means that when rebased, the commit message "fixed some typos" will be removed, and squashed with the parent commit.</p>
+<p>Which means that when rebased, the commit message "fixed some typos" will be removed, and squashed with the parent commit.</p>
 <h3 id="push-your-final-changes">Push Your Final Changes<a class="headerlink" href="#push-your-final-changes" title="Permanent link">#</a></h3>
-<p>Once done, you can push the final commits to your branch:
+<p>Once done, you can push the final commits to your branch:</p>
 <div class="highlight"><pre><span></span><code>git push --force
 </code></pre></div>
-You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if needed.</p>
+<p>You can run multiple iteration of <code>rebase</code>/<code>push -f</code>, if needed.</p>
                 
               
               

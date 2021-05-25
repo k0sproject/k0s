@@ -864,8 +864,8 @@
                 
                 
                 <h1 id="custom-cri-runtime">Custom CRI runtime<a class="headerlink" href="#custom-cri-runtime" title="Permanent link">#</a></h1>
-<p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>), however k0s will not start or manage the runtime, and configuration is solely your responsibility. </p>
-<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else). </p>
+<p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>), however k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
+<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
 <p>To run k0s with a pre-existing Docker setup, run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/docker.sock &lt;token&gt;</code>.</p>
 <p>When <code>docker</code> is used as a runtime, k0s configures kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
                 

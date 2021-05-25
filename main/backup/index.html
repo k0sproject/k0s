@@ -939,37 +939,42 @@
                 <h1 id="backuprestore-overview">Backup/Restore overview<a class="headerlink" href="#backuprestore-overview" title="Permanent link">#</a></h1>
 <p>k0s has integrated support for backing up cluster state and configuration.
 The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.</p>
-<p>The backups created by <code>k0s backup</code> command have following pieces of your cluster:
-- certificates (the content of the <code>&lt;data-dir&gt;/pki</code> directory)
-- etcd snapshot, if the etcd storage is used
-- k0s.yaml
-- any custom defined manifests under the <code>&lt;data-dir&gt;/manifests</code>
-- any image bundles located under the <code>&lt;data-dir&gt;/images</code>
-- any helm configuration</p>
-<p>Parts <strong>NOT</strong> covered by the backup utility:
-- PersistentVolumes of any running application<br />
-- database content, in case if the <code>kine</code> is used as a storage driver
-- any configuration to the cluster introduced by manual changes (e.g. changes that weren't saved under the <code>&lt;data-dir&gt;/manifests</code>)</p>
-<p>Any of the backup/restore related operations MUST be performed on the controller node. </p>
+<p>The backups created by <code>k0s backup</code> command have following pieces of your cluster:</p>
+<ul>
+<li>certificates (the content of the <code>&lt;data-dir&gt;/pki</code> directory)</li>
+<li>etcd snapshot, if the etcd storage is used</li>
+<li>k0s.yaml</li>
+<li>any custom defined manifests under the <code>&lt;data-dir&gt;/manifests</code></li>
+<li>any image bundles located under the <code>&lt;data-dir&gt;/images</code></li>
+<li>any helm configuration</li>
+</ul>
+<p>Parts <strong>NOT</strong> covered by the backup utility:</p>
+<ul>
+<li>PersistentVolumes of any running application</li>
+<li>database content, in case if the <code>kine</code> is used as a storage driver</li>
+<li>any configuration to the cluster introduced by manual changes (e.g. changes that weren't saved under the <code>&lt;data-dir&gt;/manifests</code>)</li>
+</ul>
+<p>Any of the backup/restore related operations MUST be performed on the controller node.</p>
 <h2 id="backup">Backup<a class="headerlink" href="#backup" title="Permanent link">#</a></h2>
-<p>To create backup run the following command on the controller node:
-<div class="highlight"><pre><span></span><code># k0s backup --save-path=&lt;directory&gt;
+<p>To create backup run the following command on the controller node:</p>
+<div class="highlight"><pre><span></span><code>k0s backup --save-path<span class="o">=</span>&lt;directory&gt;
 </code></pre></div>
-The directory used for the <code>save-path</code> value must exist and be writable. The default value is the current working directory.
-The command provides backup archive using following naming convention:</p>
-<p><code>k0s_backup_&lt;ISODatetimeString&gt;.tar.gz</code></p>
+<p>The directory used for the <code>save-path</code> value must exist and be writable. The default value is the current working directory.
+The command provides backup archive using following naming convention: <code>k0s_backup_&lt;ISODatetimeString&gt;.tar.gz</code></p>
 <p>Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwritten.</p>
 <h2 id="restore">Restore<a class="headerlink" href="#restore" title="Permanent link">#</a></h2>
-<p>To restore cluster state from the archive use the following command on the controller node:
-<div class="highlight"><pre><span></span><code># k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
-</code></pre></div></p>
+<p>To restore cluster state from the archive use the following command on the controller node:</p>
+<div class="highlight"><pre><span></span><code>k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
+</code></pre></div>
 <p>The command would fail if the data directory for the current controller has overlapping data with the backup archive content.
 The command would use the archived <code>k0s.yaml</code> as the cluster configuration description.</p>
 <p>In case if your cluster is HA, after restoring single controller node, join the rest of the controller nodes to the cluster.
-E.g. steps for N nodes cluster would be:
-- Restore backup on fresh machine
-- Run controller there
-- Join N-1 new machines to the cluster the same way as for the first setup.</p>
+E.g. steps for N nodes cluster would be:</p>
+<ul>
+<li>Restore backup on fresh machine</li>
+<li>Run controller there</li>
+<li>Join N-1 new machines to the cluster the same way as for the first setup.</li>
+</ul>
                 
               
               

@@ -74,6 +74,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#configuration-validation" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -594,6 +599,8 @@
     
     <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
     
+      
+    
     
     <a href="./" class="md-nav__link md-nav__link--active">
       Configuration Validation
@@ -844,23 +851,28 @@
               </div>
             
             
+              
+              
+                
+              
+              
+            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                  <h1>Configuration Validation</h1>
-                
-                <p>k0s command-line interface has the ability to validate config syntax:</p>
-<div class="highlight"><pre><span></span><code>$ k0s validate config --config path/to/config/file
+                <h1 id="configuration-validation">Configuration validation<a class="headerlink" href="#configuration-validation" title="Permanent link">#</a></h1>
+<p>k0s command-line interface has the ability to validate config syntax:</p>
+<div class="highlight"><pre><span></span><code>k0s validate config --config path/to/config/file
 </code></pre></div>
 <p><code>validate config</code> sub-command can validate the following:</p>
 <ol>
 <li>YAML formatting</li>
 <li><a href="#specapi-1">SANs addresses</a></li>
 <li><a href="#specnetwork-1">Network providers</a></li>
-<li><a href="#specworkerprofiles">Worker profiles</a> </li>
+<li><a href="#specworkerprofiles">Worker profiles</a></li>
 </ol>
                 
               

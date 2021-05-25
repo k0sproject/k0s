@@ -455,6 +455,19 @@
     Overview
   </a>
   
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#note" class="md-nav__link">
+    Note
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -913,6 +926,19 @@
     Overview
   </a>
   
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#note" class="md-nav__link">
+    Note
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -941,46 +967,46 @@
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
 <p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
 <p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
-<p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files. </p>
-<h5 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h5>
+<p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files.</p>
+<h3 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h3>
 <ul>
 <li>
-<p>Each directory that is a direct descendant of <code>/var/lib/k0s/manifests</code> is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.   </p>
+<p>Each directory that is a direct descendant of <code>/var/lib/k0s/manifests</code> is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.</p>
 </li>
 <li>
-<p>k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s. </p>
+<p>k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s.</p>
 </li>
 <li>
-<p>Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace). </p>
+<p>Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace).</p>
 </li>
 </ul>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
-<p>To try Manifest Deployer, create a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file (such as <code>nginx.yaml</code>) with the following content: </p>
-<div class="highlight"><pre><span></span><code>apiVersion: v1
-kind: Namespace
-metadata:
-  name: nginx
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-  namespace: nginx
-spec:
-  selector:
-    matchLabels:
-      app: nginx
-  replicas: <span class="m">3</span>
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: <span class="m">80</span>
+<p>To try Manifest Deployer, create a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file (such as <code>nginx.yaml</code>) with the following content:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-deployment</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">matchLabels</span><span class="p">:</span>
+      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+  <span class="nt">template</span><span class="p">:</span>
+    <span class="nt">metadata</span><span class="p">:</span>
+      <span class="nt">labels</span><span class="p">:</span>
+        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+    <span class="nt">spec</span><span class="p">:</span>
+      <span class="nt">containers</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
+        <span class="nt">ports</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">containerPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
 </code></pre></div>
 <p>New pods will appear soon thereafter.</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get pods --namespace nginx

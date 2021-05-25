@@ -937,45 +937,39 @@
                 
                 
                 <h1 id="helm-charts">Helm Charts<a class="headerlink" href="#helm-charts" title="Permanent link">#</a></h1>
-<p>Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of <a href="../manifests/">Manifest Deployer</a>. </p>
+<p>Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of <a href="../manifests/">Manifest Deployer</a>.</p>
 <p>k0s supports two methods for deploying applications using Helm charts:</p>
 <ul>
 <li>Use Helm command in runtime to install applications. Refer to the <a href="https://helm.sh/docs/intro/quickstart/">Helm Quickstart Guide</a> for more information.</li>
 <li>Insert Helm charts directly into the k0s configuration file, <code>k0s.yaml</code>. This method does not require a separate install of <code>helm</code> tool and the charts automatically deploy at the k0s bootstrap phase.</li>
 </ul>
-<h3 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h3>
-<p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file. </p>
-<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h3>
-<p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s. </p>
-<div class="highlight"><pre><span></span><code>spec:
-    extensions:
-      helm:
-        repositories:
-        - name: stable
-          url: https://charts.helm.sh/stable
-        - name: prometheus-community
-          url: https://prometheus-community.github.io/helm-charts
-        charts:
-        - name: prometheus-stack
-          chartname: prometheus-community/prometheus
-          version: <span class="s2">&quot;11.16.8&quot;</span>
-          values: <span class="p">|</span>
-            storageSpec:
-              emptyDir:
-                medium: Memory
-          namespace: default
+<h2 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h2>
+<p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
+<p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">extensions</span><span class="p">:</span>
+    <span class="nt">helm</span><span class="p">:</span>
+      <span class="nt">repositories</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">stable</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://charts.helm.sh/stable</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
+      <span class="nt">charts</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
+        <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
+        <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+          <span class="no">storageSpec:</span>
+            <span class="no">emptyDir:</span>
+              <span class="no">medium: Memory</span>
+        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
 <p>Example extensions that you can use with Helm charts include:</p>
 <ul>
-<li>
-<p>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (refer to the k0s documentation for <a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>) </p>
-</li>
-<li>
-<p>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></p>
-</li>
-<li>
-<p>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></p>
-</li>
+<li>Ingress controllers: <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">Nginx ingress</a>, <a href="https://github.com/traefik/traefik-helm-chart">Traefix ingress</a> (refer to the k0s documentation for <a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>)</li>
+<li>Volume storage providers: <a href="https://openebs.github.io/charts/">OpenEBS</a>, <a href="https://github.com/rook/rook/blob/master/Documentation/helm-operator.md">Rook</a>, <a href="https://longhorn.io/docs/0.8.1/deploy/install/install-with-helm/">Longhorn</a></li>
+<li>Monitoring: <a href="https://github.com/prometheus-community/helm-charts/">Prometheus</a>, <a href="https://github.com/grafana/helm-charts">Grafana</a></li>
 </ul>
                 
               

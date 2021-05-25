@@ -965,9 +965,9 @@
                 
                 
                 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h1>
-<p><strong>Note:</strong> As k0s is a new and dynamic project, the product architecture may occasionally outpace the documentation. The high level concepts and patterns, however, should always apply. </p>
+<p><strong>Note:</strong> As k0s is a new and dynamic project, the product architecture may occasionally outpace the documentation. The high level concepts and patterns, however, should always apply.</p>
 <h2 id="packaging">Packaging<a class="headerlink" href="#packaging" title="Permanent link">#</a></h2>
-<p>The k0s package is a single, self-extracting binary that embeds Kubernetes binaries, the benefits of which include: </p>
+<p>The k0s package is a single, self-extracting binary that embeds Kubernetes binaries, the benefits of which include:</p>
 <ul>
 <li>Statically compiled</li>
 <li>No OS-level dependencies</li>
@@ -977,17 +977,17 @@
 </ul>
 <p><img alt="k0s packaging as a single binary" src="../img/k0s_packaging.png" /></p>
 <h2 id="control-plane">Control plane<a class="headerlink" href="#control-plane" title="Permanent link">#</a></h2>
-<p>As a single binary, k0s acts as the process supervisor for all other control plane components. As such, there is no container engine or kubelet running on controllers by default, which thus means that a cluster user cannot schedule workloads onto controller nodes. </p>
+<p>As a single binary, k0s acts as the process supervisor for all other control plane components. As such, there is no container engine or kubelet running on controllers by default, which thus means that a cluster user cannot schedule workloads onto controller nodes.</p>
 <p><img alt="k0s Controller processes" src="../img/k0s_controller_processes.png" /></p>
-<p>Using k0s you can create, manage, and configure each of the components, running each as a "naked" process. Thus, there is no container engine running on the controller node. </p>
+<p>Using k0s you can create, manage, and configure each of the components, running each as a "naked" process. Thus, there is no container engine running on the controller node.</p>
 <h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h2>
-<p>Kubernetes control plane typically supports only etcd as the datastore. k0s, however, supports many other datastore options in addition to etcd, which it achieves by including <a href="https://github.com/rancher/kine/">kine</a>. Kine allows the use of a wide variety of backend data stores, such as MySQL, PostgreSQL, SQLite, and dqlite (refer to the <a href="../configuration/#specstorage"><code>spec.storage</code> documentation</a>). </p>
+<p>Kubernetes control plane typically supports only etcd as the datastore. k0s, however, supports many other datastore options in addition to etcd, which it achieves by including <a href="https://github.com/rancher/kine/">kine</a>. Kine allows the use of a wide variety of backend data stores, such as MySQL, PostgreSQL, SQLite, and dqlite (refer to the <a href="../configuration/#specstorage"><code>spec.storage</code> documentation</a>).</p>
 <p>In the case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. For example, by joining a new controller node with <code>k0s controller "long-join-token"</code> k0s  atomatically adjusts the etcd cluster membership info to allow the new member to join the cluster.</p>
 <p><strong>Note</strong>: k0s cannot shrink the etcd cluster. As such, to shut down the k0s controller on a node that node must first be manually removed from the etcd cluster.</p>
 <h2 id="worker-node">Worker node<a class="headerlink" href="#worker-node" title="Permanent link">#</a></h2>
 <p><img alt="k0s worker processes" src="../img/k0s_worker_processes.png" /></p>
-<p>As with the control plane, with k0s you can create and manage the core worker components as naked processes on the worker node. </p>
-<p>By default, k0s workers use <a href="https://containerd.io">containerd</a> as a high-level runtime and <a href="https://github.com/opencontainers/runc">runc</a> as a low-level runtime. Custom runtimes are also supported (refer to <a href="../custom-cri-runtime/">Custom CRI runtime</a>). </p>
+<p>As with the control plane, with k0s you can create and manage the core worker components as naked processes on the worker node.</p>
+<p>By default, k0s workers use <a href="https://containerd.io">containerd</a> as a high-level runtime and <a href="https://github.com/opencontainers/runc">runc</a> as a low-level runtime. Custom runtimes are also supported (refer to <a href="../custom-cri-runtime/">Custom CRI runtime</a>).</p>
                 
               
               

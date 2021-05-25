@@ -1075,11 +1075,11 @@
                 
                 
                 <h1 id="run-k0s-in-docker">Run k0s in Docker<a class="headerlink" href="#run-k0s-in-docker" title="Permanent link">#</a></h1>
-<p>You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster". </p>
+<p>You can create a k0s cluster on top of docker. In such a scenario, by default, both controller and worker nodes are run in the same container to provide an easy local testing "cluster".</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
 <p>You will require a <a href="https://docs.docker.com/get-docker/">Docker environment</a> running on a Mac, Windows, or Linux system.</p>
 <h2 id="container-images">Container images<a class="headerlink" href="#container-images" title="Permanent link">#</a></h2>
-<p>The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include: </p>
+<p>The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:</p>
 <ul>
 <li>docker.io/k0sproject/k0s:latest</li>
 <li>docker.pkg.github.com/k0sproject/k0s/k0s:"version"</li>
@@ -1090,7 +1090,7 @@
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.io/k0sproject/k0s:latest
 </code></pre></div>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
-<p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers. </p>
+<p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
 <p>For each required worker:</p>
 <ol>
 <li>
@@ -1137,7 +1137,7 @@
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
-<p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network. </p>
+<p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
 <li><a href="../k0sctl-install/">Installing with k0sctl</a>: Deploy and upgrade multi-node clusters with one command</li>

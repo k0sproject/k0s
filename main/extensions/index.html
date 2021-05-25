@@ -870,8 +870,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    Configuration
+  <a href="#configuration-example" class="md-nav__link">
+    Configuration example
   </a>
   
 </li>
@@ -900,66 +900,64 @@
 <p>At the moment the only supported type of extensions is helm based charts.</p>
 <p>The default configuration has no extensions.</p>
 <h2 id="helm-based-extensions">Helm based extensions<a class="headerlink" href="#helm-based-extensions" title="Permanent link">#</a></h2>
-<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h3>
-<p>Example. 
- <code>helm:
-  repositories:
-  - name: stable
-    url: https://charts.helm.sh/stable
-  - name: prometheus-community
-    url: https://prometheus-community.github.io/helm-charts
-  charts:
-  - name: prometheus-stack
-    chartname: prometheus-community/prometheus
-    version: "11.16.8"
-    values: |
-      storageSpec:
-        emptyDir:
-          medium: Memory
-    namespace: default
-<div class="highlight"><pre><span></span><code>By using the configuration above, the cluster would:
-
-- add stable and prometheus-community chart repositories
-- install the `prometheus-community/prometheus` chart of the specified version to the `default` namespace.
-
-The chart installation is implemented by using CRD `helm.k0sproject.io/Chart`.
-For every given helm extension the cluster creates a Chart CRD instance.
-The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:
-- install
-- upgrade
-- delete
-
-For security reasons, the cluster operates only on Chart CRDs instantiated in the `kube-system` namespace, however, the target namespace could be any.
-
-#### CRD definition
+<h3 id="configuration-example">Configuration example<a class="headerlink" href="#configuration-example" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">helm</span><span class="p">:</span>
+  <span class="nt">repositories</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">stable</span>
+    <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://charts.helm.sh/stable</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community</span>
+    <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
+  <span class="nt">charts</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
+    <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
+    <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
+    <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+      <span class="no">storageSpec:</span>
+        <span class="no">emptyDir:</span>
+          <span class="no">medium: Memory</span>
+    <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
-apiVersion: helm.k0sproject.io/v1beta1
-kind: Chart
-metadata:
-  creationTimestamp: "2020-11-10T14:17:53Z"
-  generation: 2
-  labels:
-    k0s.k0sproject.io/stack: helm
-  name: k0s-addon-chart-test-addon
-  namespace: kube-system
-  resourceVersion: "627"
-  selfLink: /apis/helm.k0sproject.io/v1beta1/namespaces/kube-system/charts/k0s-addon-chart-test-addon
-  uid: ebe59ed4-1ff8-4d41-8e33-005b183651ed
-spec:
-  chartName: prometheus-community/prometheus
-  namespace: default
-  values: |
-    storageSpec:
-      emptyDir:
-        medium: Memory
-  version: 11.16.8
-status:
-  appVersion: 2.21.0
-  namespace: default
-  releaseName: prometheus-1605017878
-  revision: 2
-  updated: 2020-11-10 14:18:08.235656 +0000 UTC m=+41.871656901
-  version: 11.16.8</code></p>
+<p>By using the configuration above, the cluster would:</p>
+<ul>
+<li>add stable and prometheus-community chart repositories</li>
+<li>install the <code>prometheus-community/prometheus</code> chart of the specified version to the <code>default</code> namespace.</li>
+</ul>
+<p>The chart installation is implemented by using CRD <code>helm.k0sproject.io/Chart</code>. For every given helm extension the cluster creates a Chart CRD instance. The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:</p>
+<ul>
+<li>install</li>
+<li>upgrade</li>
+<li>delete</li>
+</ul>
+<p>For security reasons, the cluster operates only on Chart CRDs instantiated in the <code>kube-system</code> namespace, however, the target namespace could be any.</p>
+<h4 id="crd-definition">CRD definition<a class="headerlink" href="#crd-definition" title="Permanent link">#</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Chart</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">creationTimestamp</span><span class="p">:</span> <span class="s">&quot;2020-11-10T14:17:53Z&quot;</span>
+  <span class="nt">generation</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+  <span class="nt">labels</span><span class="p">:</span>
+    <span class="nt">k0s.k0sproject.io/stack</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-addon-chart-test-addon</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kube-system</span>
+  <span class="nt">resourceVersion</span><span class="p">:</span> <span class="s">&quot;627&quot;</span>
+  <span class="nt">selfLink</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/apis/helm.k0sproject.io/v1beta1/namespaces/kube-system/charts/k0s-addon-chart-test-addon</span>
+  <span class="nt">uid</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ebe59ed4-1ff8-4d41-8e33-005b183651ed</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">chartName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+    <span class="no">storageSpec:</span>
+      <span class="no">emptyDir:</span>
+        <span class="no">medium: Memory</span>
+  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">11.16.8</span>
+<span class="nt">status</span><span class="p">:</span>
+  <span class="nt">appVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.21.0</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="nt">releaseName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-1605017878</span>
+  <span class="nt">revision</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+  <span class="nt">updated</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2020-11-10 14:18:08.235656 +0000 UTC m=+41.871656901</span>
+  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">11.16.8</span>
+</code></pre></div>
 <p>The <code>Chart.spec</code> defines the chart information.</p>
 <p>The <code>Chart.status</code> keeps the information about the last operation performed by the operator.</p>
                 

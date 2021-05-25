@@ -958,46 +958,35 @@ This guide will provide a simple how-to on how to configure and deploy newly add
 <h2 id="adding-a-new-link-to-the-navigation">Adding A New link to the Navigation<a class="headerlink" href="#adding-a-new-link-to-the-navigation" title="Permanent link">#</a></h2>
 <ul>
 <li>All docs must live under the <code>docs</code> directory (I.E., changes to the main <code>README.md</code> are not reflected in the website).</li>
-<li>
-<p>Add a new link under <code>nav</code> in the main <a href="https://github.com/k0sproject/k0s/blob/main/mkdocs.yml">mkdocs.yml</a> file:
-    ```
-  nav:</p>
+<li>Add a new link under <code>nav</code> in the main <a href="https://github.com/k0sproject/k0s/blob/main/mkdocs.yml">mkdocs.yml</a> file:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nt">nav</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Overview</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">README.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Creating A Cluster</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Quick Start Guide</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create-cluster.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Run in Docker</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-in-docker.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Single node set-up</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-single-node.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Configuration Reference</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Architecture</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">architecture.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Networking</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">networking.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Configuration Options</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">configuration.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Configuring Containerd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">containerd_config.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Using A Custom CRI</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">custom-cri-runtime.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Using Cloud Providers</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">cloud-providers.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Running k0s with Traefik</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">examples/traefik-ingress.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Running k0s as a service</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">install.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">k0s CLI Help Pages</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">cli/k0s.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Deploying Manifests</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">manifests.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">FAQ</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FAQ.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Troubleshooting</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">troubleshooting.md</span>
+  <span class="p p-Indicator">-</span> <span class="nt">Contributing</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Overview</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">contributors/overview.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Workflow</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">contributors/github_workflow.md</span>
+      <span class="p p-Indicator">-</span> <span class="nt">Testing</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">contributors/testing.md</span>
+</code></pre></div>
 <ul>
-<li>Overview: README.md</li>
-<li>Creating A Cluster:<ul>
-<li>Quick Start Guide: create-cluster.md</li>
-<li>Run in Docker: k0s-in-docker.md</li>
-<li>Single node set-up: k0s-single-node.md</li>
-</ul>
-</li>
-<li>Configuration Reference:<ul>
-<li>Architecture: architecture.md</li>
-<li>Networking: networking.md</li>
-<li>Configuration Options: configuration.md</li>
-<li>Configuring Containerd: containerd_config.md</li>
-<li>Using A Custom CRI: custom-cri-runtime.md</li>
-<li>Using Cloud Providers: cloud-providers.md</li>
-<li>Running k0s with Traefik: examples/traefik-ingress.md</li>
-<li>Running k0s as a service: install.md</li>
-<li>k0s CLI Help Pages: cli/k0s.md</li>
-</ul>
-</li>
-<li>Deploying Manifests: manifests.md</li>
-<li>FAQ: FAQ.md</li>
-<li>Troubleshooting: troubleshooting.md</li>
-<li>Contributing:<ul>
-<li>Overview: contributors/overview.md</li>
-<li>Workflow: contributors/github_workflow.md</li>
-<li>Testing: contributors/testing.md
-```</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>
-<p>Once your changes are pushed to <code>main</code>, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22</p>
-</li>
-<li>You should see the deployment outcome in the <code>gh-pages</code> deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages    </li>
+<li>Once your changes are pushed to <code>main</code>, the "Publish Docs" jos will start running: https://github.com/k0sproject/k0s/actions?query=workflow%3A%22Publish+docs+via+GitHub+Pages%22</li>
+<li>You should see the deployment outcome in the <code>gh-pages</code> deployment page: https://github.com/k0sproject/k0s/deployments/activity_log?environment=github-pages</li>
 </ul>
 <h2 id="testing-docs-locally">Testing docs locally<a class="headerlink" href="#testing-docs-locally" title="Permanent link">#</a></h2>
 <p>We've got a dockerized setup for easily testing docs in local environment. Simply run <code>docker-compose up</code> in the docs root folder. The docs will be available on <code>localhost:80</code>.</p>

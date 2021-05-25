@@ -915,51 +915,63 @@ we still have those changes applied. The code blocks in this section are <strong
 not the calico originals.</p>
 <p><code>static/manifests/calico/DaemonSet/calico-node.yaml</code>:</p>
 <ul>
-<li>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):<br />
-<div class="highlight"><pre><span></span><code>{{- if eq .Mode &quot;ipip&quot; }}
-# Enable IPIP
-- name: CALICO_IPV4POOL_IPIP
-  value: {{ .Overlay }}
-# Enable or Disable VXLAN on the default IP pool.
-- name: CALICO_IPV4POOL_VXLAN
-  value: &quot;Never&quot;
-{{- else if eq .Mode &quot;vxlan&quot; }}
-# Disable IPIP
-- name: CALICO_IPV4POOL_IPIP
-  value: &quot;Never&quot;
-# Enable VXLAN on the default IP pool.
-- name: CALICO_IPV4POOL_VXLAN
-  value: {{ .Overlay }}
-- name: FELIX_VXLANPORT
-  value: &quot;{{ .VxlanPort }}&quot;
-- name: FELIX_VXLANVNI
-  value: &quot;{{ .VxlanVNI }}&quot;
-{{- end }}
-</code></pre></div></li>
-<li>iptables auto detect:
-<div class="highlight"><pre><span></span><code># Auto detect the iptables backend
-- name: FELIX_IPTABLESBACKEND
-  value: &quot;auto&quot;
-</code></pre></div></li>
-<li>variable-based WireGuard support:
-<div class="highlight"><pre><span></span><code>{{- if .EnableWireguard }}
-- name: FELIX_WIREGUARDENABLED
-  value: &quot;true&quot;
-{{- end }}
-</code></pre></div></li>
-<li>variable-based cluster CIDR:<br />
-<div class="highlight"><pre><span></span><code>- name: CALICO_IPV4POOL_CIDR
-  value: &quot;{{ .ClusterCIDR }}&quot;
-</code></pre></div></li>
-<li>custom backend and MTU
-<div class="highlight"><pre><span></span><code># calico-config.yaml
-calico_backend: &quot;{{ .Mode }}&quot;
-veth_mtu: &quot;{{ .MTU }}&quot;
-</code></pre></div></li>
-<li>remove bgp from <code>CLUSTER_TYPE</code>
-<div class="highlight"><pre><span></span><code>- name: CLUSTER_TYPE
-  value: &quot;k8s&quot;
-</code></pre></div></li>
+<li>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{{</span><span class="nv">- if eq .Mode &quot;ipip&quot;</span> <span class="p p-Indicator">}}</span>
+<span class="c1"># Enable IPIP</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Overlay</span> <span class="p p-Indicator">}}</span>
+<span class="c1"># Enable or Disable VXLAN on the default IP pool.</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;Never&quot;</span>
+<span class="p p-Indicator">{{</span><span class="nv">- else if eq .Mode &quot;vxlan&quot;</span> <span class="p p-Indicator">}}</span>
+<span class="c1"># Disable IPIP</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;Never&quot;</span>
+<span class="c1"># Enable VXLAN on the default IP pool.</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Overlay</span> <span class="p p-Indicator">}}</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANPORT</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.VxlanPort</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANVNI</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.VxlanVNI</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="p p-Indicator">{{</span><span class="nv">- end</span> <span class="p p-Indicator">}}</span>
+</code></pre></div>
+<ul>
+<li>iptables auto detect:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># Auto detect the iptables backend</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_IPTABLESBACKEND</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;auto&quot;</span>
+</code></pre></div>
+<ul>
+<li>variable-based WireGuard support:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{{</span><span class="nv">- if .EnableWireguard</span> <span class="p p-Indicator">}}</span>
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_WIREGUARDENABLED</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;true&quot;</span>
+<span class="p p-Indicator">{{</span><span class="nv">- end</span> <span class="p p-Indicator">}}</span>
+</code></pre></div>
+<ul>
+<li>variable-based cluster CIDR:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_CIDR</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.ClusterCIDR</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<ul>
+<li>custom backend and MTU</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># calico-config.yaml</span>
+<span class="nt">calico_backend</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.Mode</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">veth_mtu</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.MTU</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<ul>
+<li>remove bgp from <code>CLUSTER_TYPE</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CLUSTER_TYPE</span>
+  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;k8s&quot;</span>
+</code></pre></div>
+<ul>
 <li>disable BIRD checks on liveness and readiness as we don't support BGP by removing
 <code>-bird-ready</code> and <code>-bird-live</code> from the readiness and liveness probes respectively</li>
 </ul>
@@ -970,13 +982,13 @@ veth_mtu: &quot;{{ .MTU }}&quot;
 <li><code>CalicoNodeImage</code> for calico/node</li>
 <li><code>CalicoKubeControllersImage</code> for calico/kube-controllers</li>
 </ul>
-<p>Also, all containers in manifests were modified to have 'imagePullPolicy' field:
-<div class="highlight"><pre><span></span><code>imagePullPolicy: {{ .PullPolicy }}
-</code></pre></div></p>
-<p>Example: 
-<div class="highlight"><pre><span></span><code># calico-node.yaml
-image: {{ .CalicoCNIImage }}
-</code></pre></div></p>
+<p>Also, all containers in manifests were modified to have 'imagePullPolicy' field:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">imagePullPolicy</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.PullPolicy</span> <span class="p p-Indicator">}}</span>
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># calico-node.yaml</span>
+<span class="nt">image</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.CalicoCNIImage</span> <span class="p p-Indicator">}}</span>
+</code></pre></div>
                 
               
               
