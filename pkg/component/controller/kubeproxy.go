@@ -117,6 +117,7 @@ func (k *KubeProxy) getConfig() (proxyConfig, error) {
 		Image:                k.clusterConf.Spec.Images.KubeProxy.URI(),
 		PullPolicy:           k.clusterConf.Spec.Images.DefaultPullPolicy,
 		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
+		Mode:                 k.clusterConf.Spec.Network.KubeProxy.Mode,
 	}
 
 	return cfg, nil
@@ -128,6 +129,7 @@ type proxyConfig struct {
 	ClusterCIDR          string
 	Image                string
 	PullPolicy           string
+	Mode                 string
 }
 
 const proxyTemplate = `
@@ -225,11 +227,8 @@ data:
     {{ if .DualStack }}
     featureGates:
       IPv6DualStack: true
-    mode: "ipvs"
-    {{ else }}
-    mode: ""
     {{ end }}
-    
+    mode: "{{ .Mode }}"
     conntrack:
       maxPerCore: 0
       min: null

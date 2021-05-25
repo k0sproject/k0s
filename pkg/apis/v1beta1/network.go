@@ -32,6 +32,7 @@ type Network struct {
 	Calico      *Calico     `yaml:"calico"`
 	KubeRouter  *KubeRouter `yaml:"kuberouter"`
 	DualStack   DualStack   `yaml:"dualStack,omitempty"`
+	KubeProxy   *KubeProxy  `yaml:"kubeProxy"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
@@ -42,6 +43,7 @@ func DefaultNetwork() *Network {
 		Provider:    "kuberouter",
 		KubeRouter:  DefaultKubeRouter(),
 		DualStack:   DefaultDualStack(),
+		KubeProxy:   DefaultKubeProxy(),
 	}
 }
 
@@ -74,8 +76,11 @@ func (n *Network) Validate() []error {
 		if err != nil {
 			errors = append(errors, fmt.Errorf("invalid service IPv6 CIDR %s", n.DualStack.IPv6ServiceCIDR))
 		}
+		if n.KubeProxy.Mode != ModeIPVS {
+			errors = append(errors, fmt.Errorf("dual-stack requires kube-proxy in ipvs mode"))
+		}
 	}
-
+	errors = append(errors, n.KubeProxy.Validate()...)
 	return errors
 }
 
@@ -142,6 +147,10 @@ func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	} else if n.Provider == "kuberouter" && n.KubeRouter == nil {
 		n.KubeRouter = DefaultKubeRouter()
 		n.Calico = nil
+	}
+
+	if n.KubeProxy == nil {
+		n.KubeProxy = DefaultKubeProxy()
 	}
 
 	return nil
