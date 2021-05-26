@@ -25,6 +25,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestKonnectivityVersion(t *testing.T) {
+	assert.Equal(t, getVersion(t, "konnectivity"), strings.TrimPrefix(KonnectivityImageVersion, "v"))
+}
+
 func TestKubeProxyVersion(t *testing.T) {
 	assert.Equal(t, getVersion(t, "kubernetes"), strings.TrimPrefix(KubeProxyImageVersion, "v"))
 }
