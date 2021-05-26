@@ -57,7 +57,6 @@ spec:
   podSecurityPolicy:
     defaultPolicy: 00-k0s-privileged
   telemetry:
-    interval: 10m0s
     enabled: true
   installConfig:
     users:
@@ -276,11 +275,10 @@ The `spec.konnectivity` key is the config file key in which you configure Konnec
 
 To improve the end-user experience k0s is configured by defaul to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the `enabled` setting to `false`.
 
-The default `interval` setting is `10m0s` (10 minutes), though you can edit this to any valid value in `time.Duration` string representation.
+The telemetry interval is ten minutes.
 
 ```yaml
 spec:
     telemetry:
-      interval: 10m0s
       enabled: true
 ```
