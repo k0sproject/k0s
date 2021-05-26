@@ -221,10 +221,15 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 				continue
 			}
 			if groupVersionKinds[key] == nil {
+				// We need to parse the GV from apiResourceList, for some reason the group and version infos are empty on the apiResource level
+				gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+				if err != nil {
+					return nil, fmt.Errorf("api discovery returned unparseable group-version: %s", apiResourceList.GroupVersion)
+				}
 				groupVersionKinds[key] = &schema.GroupVersionKind{
-					Group:   apiResource.Group,
+					Group:   gv.Group,
 					Kind:    apiResource.Kind,
-					Version: apiResource.Version,
+					Version: gv.Version,
 				}
 			}
 		}
@@ -241,7 +246,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		}(groupVersionKind)
 	}
 	wg.Wait()
-	log.Debugf("found %d prunable resources", len(pruneableResources))
+	log.Debugf("found %d prunable resources from %d namespaces", len(pruneableResources), len(namespaces))
 
 	return pruneableResources, nil
 }
@@ -255,8 +260,8 @@ func (s *Stack) deleteResource(ctx context.Context, mapper *restmapper.DeferredD
 	err = drClient.Delete(ctx, resource.GetName(), metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
-	if !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
-		return fmt.Errorf("deleting resource failed: %w", err)
+	if err != nil && !apiErrors.IsNotFound(err) && !apiErrors.IsGone(err) {
+		return fmt.Errorf("deleting resource failed: %s", err)
 	}
 	return nil
 }

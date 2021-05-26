@@ -75,9 +75,9 @@ func (a *Applier) init() error {
 	return nil
 }
 
-// Apply resources
-func (a *Applier) Apply() error {
-	if a.client == nil {
+// just a wrapper for the retry as we need to init "lazily" from both apply and delete directions
+func (a *Applier) lazyInit() error {
+	if a.client == nil || a.discoveryClient == nil {
 		err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
 			return true
 		}, a.init)
@@ -85,6 +85,16 @@ func (a *Applier) Apply() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Apply resources
+func (a *Applier) Apply() error {
+	err := a.lazyInit()
+	if err != nil {
+		return err
 	}
 	files, err := filepath.Glob(path.Join(a.Dir, "*.yaml"))
 	if err != nil {
@@ -114,6 +124,10 @@ func (a *Applier) Apply() error {
 
 // Delete deletes the entire stack by applying it with empty set of resources
 func (a *Applier) Delete() error {
+	err := a.lazyInit()
+	if err != nil {
+		return err
+	}
 	stack := Stack{
 		Name:      a.Name,
 		Resources: []*unstructured.Unstructured{},
@@ -121,7 +135,7 @@ func (a *Applier) Delete() error {
 		Discovery: a.discoveryClient,
 	}
 	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
-	err := stack.Apply(context.Background(), true)
+	err = stack.Apply(context.Background(), true)
 	return err
 }
 

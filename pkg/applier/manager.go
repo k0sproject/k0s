@@ -178,7 +178,7 @@ func (m *Manager) removeStack(name string) error {
 		m.log.WithField("stack", name).WithError(err).Warn("failed to stop and delete a stack applier")
 		return err
 	}
-
+	m.log.WithField("stack", name).Info("stack deleted succesfully")
 	delete(m.stacks, name)
 
 	return nil
