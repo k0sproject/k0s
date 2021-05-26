@@ -8,7 +8,7 @@ on:
 
   schedule:
     - cron: "0 23 * * *"
-
+  pull_request:
 jobs:
   terraform:
     env:
@@ -98,3 +98,10 @@ jobs:
           export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
           terraform destroy -auto-approve
         if: ${{ always() }}
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ always() }} # Pick up events even if the job fails or is canceled.
