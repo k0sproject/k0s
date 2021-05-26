@@ -5,10 +5,8 @@ on:
       prNumber:
         description: PR against which to this workflow
         required: false
-
   schedule:
     - cron: "0 23 * * *"
-
 jobs:
   terraform:
     env:
@@ -98,3 +96,13 @@ jobs:
           export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
           terraform destroy -auto-approve
         if: ${{ always() }}
+
+      - name: slack notify
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: 8398a7/action-slack@v3
+        with:
+          job_name: "K8s Network Conformance Testing"
+          status: ${{ job.status }}
+          fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
+        if: ${{ always() }} # Pick up events even if the job fails or is canceled.
