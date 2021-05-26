@@ -264,13 +264,11 @@ kind: ServiceAccount
 metadata:
   name: kube-router
   namespace: kube-system
-
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: kube-router
-  namespace: kube-system
 rules:
   - apiGroups:
     - ""
