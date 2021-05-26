@@ -37,7 +37,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker")
 	s.Require().NoError(err)
 
-	_, err = ssh.ExecWithOutput("rc-service k0scontroller start")
+	_, err = ssh.ExecWithOutput("k0s start")
 	s.Require().NoError(err)
 
 	err = s.WaitForKubeAPI(s.ControllerNode(0))
