@@ -237,12 +237,17 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 
 	wg := sync.WaitGroup{}
 	namespaces := s.getAllAccessibleNamespaces(ctx)
+	mu := sync.Mutex{} // The shield against concurrent appends for pruneable resources
 	for _, groupVersionKind := range groupVersionKinds {
 		wg.Add(1)
 		go func(groupVersionKind *schema.GroupVersionKind) {
 			defer wg.Done()
 			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind, namespaces)
-			pruneableResources = append(pruneableResources, pruneableForGvk...)
+			if len(pruneableForGvk) > 0 {
+				mu.Lock()
+				pruneableResources = append(pruneableResources, pruneableForGvk...)
+				mu.Unlock()
+			}
 		}(groupVersionKind)
 	}
 	wg.Wait()
