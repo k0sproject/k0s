@@ -157,6 +157,25 @@ spec:
 	s.False(p.Disabled)
 }
 
+func (s *NetworkSuite) TestKubeProxyDisabling() {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: foobar
+spec:
+  network:
+    kubeProxy:
+      disabled: true
+`
+
+	c, err := configFromString(yamlData, k0sVars)
+	s.NoError(err)
+	p := c.Spec.Network.KubeProxy
+
+	s.True(p.Disabled)
+}
+
 func (s *NetworkSuite) TestValidation() {
 	s.T().Run("defaults_are_valid", func(t *testing.T) {
 		n := DefaultNetwork()
