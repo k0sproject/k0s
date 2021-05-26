@@ -51,9 +51,8 @@ type CmdOpts config.CLIOptions
 
 func NewControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "controller [join-token]",
-		Short:   "Run controller",
-		Aliases: []string{"server"},
+		Use:   "controller [join-token]",
+		Short: "Run controller",
 		Example: `	Command to associate master nodes:
 	CLI argument:
 	$ k0s controller [join-token]

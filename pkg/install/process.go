@@ -37,32 +37,32 @@ type K0sStatus struct {
 	Output   string
 }
 
-func GetPid() (status *K0sStatus, err error) {
-	pid, ppid, err := getProcessID()
-	if err == nil && pid != nil {
-		status = &K0sStatus{
-			Pid:  *pid,
-			PPid: *ppid,
+func GetPid() (statuses []K0sStatus, err error) {
+	pids, err := getProcessID()
+	if err == nil && len(pids) > 0 {
+		for k, v := range pids {
+			statuses = append(statuses, K0sStatus{
+				Pid:  k,
+				PPid: v,
+			})
 		}
-		return status, nil
+		return statuses, nil
 	}
-	return &K0sStatus{}, nil
+	return nil, err
 }
 
-func getProcessID() (pid *int, ppid *int, err error) {
+func getProcessID() (pids map[int]int, err error) {
+	pids = make(map[int]int)
 	processList, err := ps.Processes()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
 	for _, p := range processList {
-		if p.Executable() == "k0s" && hasChildren(p.Pid(), processList) {
-			pid := p.Pid()
-			ppid := p.PPid()
-			return &pid, &ppid, nil
+		if strings.Contains(p.Executable(), "k0s") && hasChildren(p.Pid(), processList) {
+			pids[p.Pid()] = p.PPid()
 		}
 	}
-	return nil, nil, nil
+	return pids, nil
 }
 
 func hasChildren(pid int, processes []ps.Process) bool {

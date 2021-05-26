@@ -31,11 +31,9 @@ type CmdOpts config.CLIOptions
 
 var (
 	output string
-	s      *install.K0sStatus
 )
 
 func NewStatusCmd() *cobra.Command {
-	s = &install.K0sStatus{}
 	cmd := &cobra.Command{
 		Use:     "status",
 		Short:   "Helper command for get general information about k0s",
@@ -44,34 +42,44 @@ func NewStatusCmd() *cobra.Command {
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-			var err error
-			if s, err = install.GetPid(); err != nil {
+
+			statuses, err := install.GetPid()
+			if err != nil {
 				return err
 			}
+			if len(statuses) != 0 {
+				for _, s := range statuses {
+					status := install.K0sStatus{
+						Pid:  s.Pid,
+						PPid: s.PPid,
+					}
+					if len(statuses) > 1 {
+						fmt.Println("=================")
+					}
 
-			if s.Pid != 0 {
-				ver, err := s.GetK0sVersion()
-				if err != nil {
-					return err
-				}
-				s.Version = ver
+					ver, err := status.GetK0sVersion()
+					if err != nil {
+						return err
+					}
+					status.Version = ver
 
-				if os.Geteuid() != 0 {
-					logrus.Fatal("k0s status must be run as root!")
-				}
+					if os.Geteuid() != 0 {
+						logrus.Fatal("k0s status must be run as root!")
+					}
 
-				if s.SysInit, s.StubFile, err = install.GetSysInit(s.Role); err != nil {
-					return err
-				}
-				if s.Role, err = install.GetRoleByPID(s.Pid); err != nil {
-					return err
+					if status.SysInit, status.StubFile, err = install.GetSysInit(s.Role); err != nil {
+						return err
+					}
+					if status.Role, err = install.GetRoleByPID(status.Pid); err != nil {
+						return err
+					}
+					status.Output = output
+					status.String()
 				}
 			} else {
 				fmt.Fprintln(os.Stderr, "K0s not running")
 				os.Exit(1)
 			}
-			s.Output = output
-			s.String()
 			return nil
 		},
 	}

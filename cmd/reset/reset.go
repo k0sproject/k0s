@@ -61,7 +61,7 @@ func (c *CmdOpts) reset() error {
 	}
 
 	k0sStatus, _ := install.GetPid()
-	if k0sStatus.Pid != 0 {
+	if len(k0sStatus) > 0 {
 		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 

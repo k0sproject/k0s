@@ -23,9 +23,8 @@ import (
 
 func installControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "controller",
-		Short:   "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
-		Aliases: []string{"server"},
+		Use:   "controller",
+		Short: "Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)",
 		Example: `All default values of controller command will be passed to the service stub unless overriden. 
 
 With controller subcommand you can setup a single node cluster by running:
