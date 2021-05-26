@@ -1156,7 +1156,6 @@ configuration.</p>
   <span class="nt">podSecurityPolicy</span><span class="p">:</span>
     <span class="nt">defaultPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span>
   <span class="nt">telemetry</span><span class="p">:</span>
-    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10m0s</span>
     <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
   <span class="nt">installConfig</span><span class="p">:</span>
     <span class="nt">users</span><span class="p">:</span>
@@ -1485,10 +1484,9 @@ configuration.</p>
 </ul>
 <h3 id="spectelemetry"><code>spec.telemetry</code><a class="headerlink" href="#spectelemetry" title="Permanent link">#</a></h3>
 <p>To improve the end-user experience k0s is configured by defaul to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the <code>enabled</code> setting to <code>false</code>.</p>
-<p>The default <code>interval</code> setting is <code>10m0s</code> (10 minutes), though you can edit this to any valid value in <code>time.Duration</code> string representation.</p>
+<p>The telemetry interval is ten minutes.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
     <span class="nt">telemetry</span><span class="p">:</span>
-      <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10m0s</span>
       <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
                 
