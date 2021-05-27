@@ -35,9 +35,8 @@ nav:
       - Configuration Options:            configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
-      - Containerd Configuration:         containerd_config.md
-      - Use a Custom CRI:                 custom-cri-runtime.md
-      - Use Cloud Providers:              cloud-providers.md
+      - Runtime:                          runtime.md
+      - Cloud Providers:                  cloud-providers.md
       - IPv4/IPv6 Dual-Stack Networking:  dual-stack.md
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
