@@ -83,6 +83,8 @@ func TestDualStack(t *testing.T) {
 const k0sConfigWithAddon = `
 spec:
   network:
+    kubeProxy:
+      mode: ipvs
     provider: calico
     calico:
       mode: "bird"
