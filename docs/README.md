@@ -29,4 +29,4 @@ We welcome your help in building k0s! If you are interested, we invite you to ch
 
 ## Getting Started
 
-[Creating A k0s Cluster](install.md)
+[Quick Start Guide](install.md) for creating a full Kubernetes cluster with a single node.
