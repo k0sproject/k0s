@@ -36,4 +36,4 @@ In the case of k0s managed etcd, k0s manages the full lifecycle of the etcd clus
 
 As with the control plane, with k0s you can create and manage the core worker components as naked processes on the worker node.
 
-By default, k0s workers use [containerd](https://containerd.io) as a high-level runtime and [runc](https://github.com/opencontainers/runc) as a low-level runtime. Custom runtimes are also supported (refer to [Custom CRI runtime](custom-cri-runtime.md)).
+By default, k0s workers use [containerd](https://containerd.io) as a high-level runtime and [runc](https://github.com/opencontainers/runc) as a low-level runtime. Custom runtimes are also supported, refer to [Using custom CRI runtime](runtime.md#using-custom-cri-runtime).
