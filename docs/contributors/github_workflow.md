@@ -1,16 +1,5 @@
 # Github Workflow
 
-<!-- TOC -->
-- [Fork The Project](#fork-the-project)
-- [Adding the Forked Remote](#adding-the-forked-remote)
-- [Create & Rebase Your Feature Branch](#create--rebase-your-feature-branch)
-- [Commit & Push](#commit--push)
-- [Open a Pull Request](#open-a-pull-request)
-  - [Get a code review](#get-a-code-review)
-  - [Squash commits](#squash-commits)
-  - [Push Your Final Changes](#push-your-final-changes)
-<!-- /TOC -->
-
 This guide assumes you have already cloned the upstream repo to your system via git clone, or via `go get github.com/k0sproject/k0s`.
 
 ## Fork The Project

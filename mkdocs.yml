@@ -21,17 +21,7 @@ nav:
           - Ansible Playbook:             examples/ansible-playbook.md
           - Airgap Install:               airgap-install.md
       - System Requirements:              system-requirements.md
-  - Extensions:
-      - Manifest Deployer:                manifests.md
-      - Helm Charts:                      helm-charts.md
-      - Examples:
-          - Traefik Ingress Controller:   examples/traefik-ingress.md
-          - Ambassador Gateway:           examples/ambassador-ingress.md
-          - Ceph Storage with Rook:       examples/rook-ceph.md
-  - Architecture:
-      - Overview:                         architecture.md
-      - Networking:                       networking.md
-  - Configuration:
+  - Usage:
       - Configuration Options:            configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
@@ -43,14 +33,26 @@ nav:
       - User Management:                  user-management.md
       - Uninstall the k0s Cluster:        k0s-reset.md
       - Backup/Restore:                   backup.md
+  - Extensions:
+      - Manifest Deployer:                manifests.md
+      - Helm Charts:                      helm-charts.md
+      - Examples:
+          - Traefik Ingress Controller:   examples/traefik-ingress.md
+          - Ambassador Gateway:           examples/ambassador-ingress.md
+          - Ceph Storage with Rook:       examples/rook-ceph.md
+  - Troubleshooting:
+      - FAQ:                              FAQ.md
+      - Common Pitfalls:                  troubleshooting.md
+  - Reference:
+      - Architecture:                     architecture.md
+      - Networking:                       networking.md
       - CIS Benchmark:                    cis_benchmark.md
-  - FAQ: FAQ.md
-  - Troubleshooting: troubleshooting.md
   - Contributing:
-      - Overview: contributors/overview.md
-      - Workflow: contributors/github_workflow.md
-      - Testing: contributors/testing.md
-      - Documentation: internal/publishing_docs_using_mkdocs.md
+      - Overview:                         contributors/overview.md
+      - GitHub Workflow:                  contributors/github_workflow.md
+      - Testing:                          contributors/testing.md
+      - Documentation:                    internal/publishing_docs_using_mkdocs.md
+
 theme:
     name: 'material'
     highlightjs: true

@@ -1,4 +1,4 @@
-# Troubleshooting
+# Common Pitfalls
 
 There are few common cases we've seen where k0s fails to run properly.
 
