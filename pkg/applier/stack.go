@@ -248,16 +248,14 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 	s.log.Debug("starting to find prunable resources")
 	start := time.Now()
 	wg := sync.WaitGroup{}
-	namespaces := s.getAllAccessibleNamespaces(ctx)
 	mu := sync.Mutex{} // The shield against concurrent appends for pruneable resources
 
+	// Let's parallelize each group-version-kind finding
 	for _, groupVersionKind := range groupVersionKinds {
 		wg.Add(1)
 		go func(groupVersionKind *schema.GroupVersionKind) {
 			defer wg.Done()
-
-			s.log.Debugf("searching prunable resources for kind %s", groupVersionKind)
-			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind, namespaces)
+			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind)
 			if len(pruneableForGvk) > 0 {
 				mu.Lock()
 				pruneableResources = append(pruneableResources, pruneableForGvk...)
@@ -267,7 +265,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		}(groupVersionKind)
 	}
 	wg.Wait()
-	s.log.Debugf("found %d prunable resources from %d namespaces", len(pruneableResources), len(namespaces))
+	s.log.Debugf("found %d prunable resources", len(pruneableResources))
 	s.log.Debugf("finding prunable resources took %s", time.Since(start).String())
 	return pruneableResources, nil
 }
@@ -303,7 +301,7 @@ func (s *Stack) clientForResource(mapper *restmapper.DeferredDiscoveryRESTMapper
 	return drClient, nil
 }
 
-func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind, namespaces []string) []unstructured.Unstructured {
+func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper, groupVersionKind *schema.GroupVersionKind) []unstructured.Unstructured {
 	groupKind := schema.GroupKind{
 		Group: groupVersionKind.Group,
 		Kind:  groupVersionKind.Kind,
