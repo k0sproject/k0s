@@ -25,6 +25,7 @@ func NewFakeClientFactory(objects ...runtime.Object) FakeClientFactory {
 		{Group: "", Version: "v1", Resource: "nodes"}:                                         "NodeList",
 		{Group: "", Version: "v1", Resource: "configmaps"}:                                    "ConfigMapList",
 		{Group: "certificates.k8s.io", Version: "v1", Resource: "certificatesigningrequests"}: "CertificateSigningRequestList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}:                               "DeploymentList",
 	}
 
 	return FakeClientFactory{

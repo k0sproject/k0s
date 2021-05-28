@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"os"
 	"path"
 	"path/filepath"
 	"time"
@@ -54,10 +55,13 @@ func (k *KubeProxy) Init() error {
 
 // Run runs the kube-proxy reconciler
 func (k *KubeProxy) Run() error {
+	proxyDir := path.Join(k.K0sVars.ManifestsDir, "kubeproxy")
+	if k.clusterConf.Spec.Network.KubeProxy.Disabled {
+		return k.removeKubeProxy(proxyDir)
+	}
 
 	k.tickerDone = make(chan struct{})
 
-	proxyDir := path.Join(k.K0sVars.ManifestsDir, "kubeproxy")
 	err := util.InitDirectory(proxyDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
@@ -109,14 +113,21 @@ func (k *KubeProxy) Stop() error {
 	return nil
 }
 
+func (k *KubeProxy) removeKubeProxy(manifestDir string) error {
+	if !util.DirExists(manifestDir) {
+		return nil
+	}
+	return os.RemoveAll(manifestDir)
+}
+
 func (k *KubeProxy) getConfig() (proxyConfig, error) {
 	cfg := proxyConfig{
-		// FIXME get this from somewhere
 		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
 		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
 		Image:                k.clusterConf.Spec.Images.KubeProxy.URI(),
 		PullPolicy:           k.clusterConf.Spec.Images.DefaultPullPolicy,
 		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
+		Mode:                 k.clusterConf.Spec.Network.KubeProxy.Mode,
 	}
 
 	return cfg, nil
@@ -128,6 +139,7 @@ type proxyConfig struct {
 	ClusterCIDR          string
 	Image                string
 	PullPolicy           string
+	Mode                 string
 }
 
 const proxyTemplate = `
@@ -225,11 +237,8 @@ data:
     {{ if .DualStack }}
     featureGates:
       IPv6DualStack: true
-    mode: "ipvs"
-    {{ else }}
-    mode: ""
     {{ end }}
-    
+    mode: "{{ .Mode }}"
     conntrack:
       maxPerCore: 0
       min: null

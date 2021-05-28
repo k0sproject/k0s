@@ -671,6 +671,9 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		{
 			ContainerPort: uint16(s.KubeAPIExternalPort), // kube API
 		},
+		{
+			ContainerPort: uint16(6060), // pprof API
+		},
 	}
 
 	cfg := config.Config{
