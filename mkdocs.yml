@@ -20,19 +20,21 @@ nav:
           - Raspberry Pi 4:               raspberry-pi4.md
           - Ansible Playbook:             examples/ansible-playbook.md
           - Airgap Install:               airgap-install.md
+      - Upgrade:                          upgrade.md
+      - Backup/Restore:                   backup.md
       - System Requirements:              system-requirements.md
   - Usage:
       - Configuration Options:            configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
-      - Runtime:                          runtime.md
+      - Runtime (CRI):                    runtime.md
+      - Networking (CNI):                 networking.md
       - Cloud Providers:                  cloud-providers.md
-      - IPv4/IPv6 Dual-Stack Networking:  dual-stack.md
+      - IPv4/IPv6 Dual-Stack:             dual-stack.md
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
       - Uninstall the k0s Cluster:        k0s-reset.md
-      - Backup/Restore:                   backup.md
   - Extensions:
       - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
@@ -45,7 +47,6 @@ nav:
       - Common Pitfalls:                  troubleshooting.md
   - Reference:
       - Architecture:                     architecture.md
-      - Networking:                       networking.md
       - CIS Benchmark:                    cis_benchmark.md
   - Contributing:
       - Overview:                         contributors/overview.md
