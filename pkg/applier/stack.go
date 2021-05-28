@@ -56,14 +56,16 @@ type Stack struct {
 	keepResources []string
 	Client        dynamic.Interface
 	Discovery     discovery.CachedDiscoveryInterface
+
+	log *logrus.Entry
 }
 
 // Apply applies stack resources by creating or updating the resources. If prune is requested,
 // the previously applied stack resources which are not part of the current stack are removed from k8s api
 func (s *Stack) Apply(ctx context.Context, prune bool) error {
-	log := logrus.WithField("stack", s.Name)
+	s.log = logrus.WithField("stack", s.Name)
 
-	log.Debugf("applying with %d resources", len(s.Resources))
+	s.log.Debugf("applying with %d resources", len(s.Resources))
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(s.Discovery)
 	var sortedResources []*unstructured.Unstructured
 	for _, resource := range s.Resources {
@@ -100,16 +102,16 @@ func (s *Stack) Apply(ctx context.Context, prune bool) error {
 		} else { // The resource already exists, we need to update/patch it
 			localChecksum := resource.GetAnnotations()[ChecksumAnnotation]
 			if serverResource.GetAnnotations()[ChecksumAnnotation] == localChecksum {
-				log.Debug("resource checksums match, no need to update")
+				s.log.Debug("resource checksums match, no need to update")
 				s.keepResource(resource)
 				continue
 			}
 			if serverResource.GetAnnotations()[LastConfigAnnotation] == "" {
-				log.Debug("doing plain update as no last-config label present")
+				s.log.Debug("doing plain update as no last-config label present")
 				resource.SetResourceVersion(serverResource.GetResourceVersion())
 				_, err = drClient.Update(ctx, resource, metav1.UpdateOptions{})
 			} else {
-				log.Debug("patching resource")
+				s.log.Debug("patching resource")
 				err = s.patchResource(ctx, drClient, serverResource, resource)
 			}
 			if err != nil {
@@ -156,7 +158,6 @@ func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
 }
 
 func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
-	log := logrus.WithField("stack", s.Name)
 	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
 		return err
@@ -165,11 +166,11 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 		return nil
 	}
 
-	log.Debug("starting to delete resources, namespaced resources first")
+	s.log.Debug("starting to delete resources, namespaced resources first")
 	for _, resource := range pruneableResources {
 		resourceID := generateResourceID(resource)
 		if resource.GetNamespace() != "" {
-			log.Debugf("deleting resource %s", resourceID)
+			s.log.Debugf("deleting resource %s", resourceID)
 			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
@@ -179,14 +180,14 @@ func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryR
 	for _, resource := range pruneableResources {
 		resourceID := generateResourceID(resource)
 		if resource.GetNamespace() == "" {
-			log.Debugf("deleting resource %s", resourceID)
+			s.log.Debugf("deleting resource %s", resourceID)
 			err = s.deleteResource(ctx, mapper, resource)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	log.Debug("resources pruned succesfully")
+	s.log.Debug("resources pruned succesfully")
 	s.keepResources = []string{}
 
 	return nil
@@ -203,8 +204,6 @@ var ignoredResources = []string{
 }
 
 func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) ([]unstructured.Unstructured, error) {
-	log := logrus.WithField("stack", s.Name)
-
 	var pruneableResources []unstructured.Unstructured
 	apiResourceLists, err := s.Discovery.ServerPreferredResources()
 	if err != nil {
@@ -214,7 +213,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		// See https://github.com/kubernetes/kubernetes/issues/72051#issuecomment-521157642
 		// Common cause for this is metrics API which often gives 503s during discovery
 		if discovery.IsGroupDiscoveryFailedError(err) {
-			log.Debugf("error in api discovery for pruning: %s", err.Error())
+			s.log.Debugf("error in api discovery for pruning: %s", err.Error())
 		} else {
 			return nil, fmt.Errorf("failed to list api groups for pruning: %w", err)
 		}
@@ -228,7 +227,7 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 				continue
 			}
 			if util.StringSliceContains(ignoredResources, key) {
-				log.Debugf("skipping resource %s from prune", key)
+				s.log.Debugf("skipping resource %s from prune", key)
 				continue
 			}
 			if groupVersionKinds[key] == nil {
@@ -246,26 +245,30 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 		}
 	}
 
-	log.Debug("starting to find prunable resources")
+	s.log.Debug("starting to find prunable resources")
 	start := time.Now()
 	wg := sync.WaitGroup{}
 	namespaces := s.getAllAccessibleNamespaces(ctx)
 	mu := sync.Mutex{} // The shield against concurrent appends for pruneable resources
+
 	for _, groupVersionKind := range groupVersionKinds {
 		wg.Add(1)
 		go func(groupVersionKind *schema.GroupVersionKind) {
 			defer wg.Done()
+
+			s.log.Debugf("searching prunable resources for kind %s", groupVersionKind)
 			pruneableForGvk := s.findPruneableResourceForGroupVersionKind(ctx, mapper, groupVersionKind, namespaces)
 			if len(pruneableForGvk) > 0 {
 				mu.Lock()
 				pruneableResources = append(pruneableResources, pruneableForGvk...)
 				mu.Unlock()
 			}
+			s.log.Debugf("found %d prunable resources for kind %s", len(pruneableForGvk), groupVersionKind)
 		}(groupVersionKind)
 	}
 	wg.Wait()
-	log.Debugf("found %d prunable resources from %d namespaces", len(pruneableResources), len(namespaces))
-	log.Debugf("finding prunable resources took %s", time.Since(start).String())
+	s.log.Debugf("found %d prunable resources from %d namespaces", len(pruneableResources), len(namespaces))
+	s.log.Debugf("finding prunable resources took %s", time.Since(start).String())
 	return pruneableResources, nil
 }
 
@@ -318,7 +321,6 @@ func (s *Stack) findPruneableResourceForGroupVersionKind(ctx context.Context, ma
 
 func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.ResourceInterface) []unstructured.Unstructured {
 	var pruneableResources []unstructured.Unstructured
-	log := logrus.WithField("stack", s.Name)
 	listOpts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", NameLabel, s.Name),
 	}
@@ -331,7 +333,7 @@ func (s *Stack) getPruneableResources(ctx context.Context, drClient dynamic.Reso
 		// We need to filter out objects that do not actually have the stack label set
 		// There are some cases where we get "extra" results, e.g.: https://github.com/kubernetes-sigs/metrics-server/issues/604
 		if !s.isInStack(resource) && len(resource.GetOwnerReferences()) == 0 && resource.GetLabels()[NameLabel] == s.Name {
-			log.Debugf("adding prunable resource: %s", generateResourceID(resource))
+			s.log.Debugf("adding prunable resource: %s", generateResourceID(resource))
 			pruneableResources = append(pruneableResources, resource)
 		}
 	}
