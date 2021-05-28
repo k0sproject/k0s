@@ -18,14 +18,16 @@ package backup
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
 )
 
 // Manager hold configuration for particular backup-restore process
@@ -64,10 +66,14 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 }
 
 func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars) {
-	if clusterSpec.Storage.Type != v1beta1.EtcdStorageType {
-		logrus.Warnf("non-etcd data storage backup not supported. You must take the database backup manually")
-	} else {
+	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+	}
+	if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
+		logrus.Debugf("starting kine backup")
+		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
+	} else {
+		logrus.Warnf("only etcd and sqlite backup are supported. Other storage backends must be backed-up manually.")
 	}
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{
