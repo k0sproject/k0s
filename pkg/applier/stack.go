@@ -135,28 +135,6 @@ func (s *Stack) keepResource(resource *unstructured.Unstructured) {
 	s.keepResources = append(s.keepResources, resourceID)
 }
 
-func (s *Stack) getAllAccessibleNamespaces(ctx context.Context) []string {
-	var namespaces []string
-	nsGroupVersionResource := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	nsList, err := s.Client.Resource(nsGroupVersionResource).List(ctx, metav1.ListOptions{})
-	if apiErrors.IsForbidden(err) {
-		for _, resource := range s.Resources {
-			if ns := resource.GetNamespace(); ns != "" {
-				namespaces = append(namespaces, ns)
-			}
-		}
-	}
-	if err != nil {
-		return namespaces
-	}
-
-	for _, namespace := range nsList.Items {
-		namespaces = append(namespaces, namespace.GetName())
-	}
-
-	return namespaces
-}
-
 func (s *Stack) prune(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
 	pruneableResources, err := s.findPruneableResources(ctx, mapper)
 	if err != nil {
