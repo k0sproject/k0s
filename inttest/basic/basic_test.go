@@ -73,12 +73,6 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(0)))
 	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
-
-	cfg, err := s.GetKubeConfig(s.ControllerNode(0), dataDirOpt)
-	s.NoError(err)
-	s.T().Log("waiting to see metrics ready")
-	s.Require().NoError(common.WaitForMetricsReady(cfg))
-
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
