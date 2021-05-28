@@ -146,9 +146,8 @@ sudo cat /var/lib/k0s/pki/admin.conf
 
 ## Next Steps
 
-- [Installing with k0sctl](k0sctl-install.md): Deploy and upgrade multi-node clusters with one command
+- [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
 - [Control plane configuration options](configuration.md): Networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
 - [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
-- [Installing the Traefik Ingress Controller](examples/traefik-ingress.md):
-  Ingress deployment information
+- [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

@@ -136,13 +136,13 @@ Use a non-ha control plane with a single node.
     sudo k0s install controller
     ```
 
-2. Enable and start the service:
+2. Start the service:
 
     ```shell
-    systemctl enable --now k0scontroller
+    sudo k0s start
     ```
 
-3. Run `systemctl status k0scontroller` to verify the service status.
+3. Run `sudo k0s status` or `systemctl status k0scontroller` to verify the service status.
 
 ##### Worker Tokens
 
@@ -173,13 +173,13 @@ You must deploy and start a worker service for each worker nodes for which you c
     sudo k0s install worker --token-file /var/lib/k0s/join-token
     ```
 
-3. Enable and start the service:
+3. Start the service:
 
     ```shell
-    systemctl enable --now k0sworker
+    sudo k0s start
     ```
 
-4. Run `systemctl status k0sworker` to verify the service status.
+4. Run `sudo k0s status` or `systemctl status k0sworker` to verify the service status.
 
 ### Connect To Your Cluster
 
