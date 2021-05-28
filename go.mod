@@ -17,6 +17,8 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
+	github.com/hashicorp/raft v1.3.1 // indirect
+	github.com/hashicorp/raft-boltdb v0.0.0-20210422161416-485fa74b0b01 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
@@ -35,6 +37,7 @@ require (
 	github.com/opencontainers/selinux v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
+	github.com/rqlite/rqlite v4.6.0+incompatible // indirect
 	github.com/segmentio/analytics-go v3.1.0+incompatible
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.7.0
