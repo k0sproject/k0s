@@ -4,7 +4,7 @@ You can configure k0s with the [Traefik ingress controller](https://doc.traefik.
 
 ## 1. Configure k0s.yaml
 
-Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their [Helm charts](helm-charts.md) as extensions in the k0s configuration file (`k0s.yaml`).
+Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their [Helm charts](../helm-charts.md) as extensions in the k0s configuration file (`k0s.yaml`).
 
 **Note:**
 
