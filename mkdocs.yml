@@ -56,7 +56,7 @@ theme:
     highlightjs: true
     language: 'en'
     custom_dir: docs/custom_theme
-    favicon: https://github.com/k0sproject/k0sproject.github.io/blob/main/images/favicon/favicon.ico
+    favicon: img/k0s_social.png
     logo: img/k0s_social.png
     palette:
       - scheme: default
@@ -76,6 +76,9 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
+google_analytics:
+  - 274096580
+  - auto
 
 markdown_extensions:
   - pymdownx.highlight: {}
