@@ -69,6 +69,7 @@ require (
 	k8s.io/kube-aggregator v0.20.5
 	k8s.io/kubectl v0.20.2
 	k8s.io/mount-utils v0.20.4
+	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 )
 
