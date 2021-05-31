@@ -23,8 +23,6 @@ nav:
       - Architecture: architecture.md
       - Networking: networking.md
       - Configuration Options: configuration.md
-      - Configuring Containerd: containerd_config.md
-      - Using A Custom CRI: custom-cri-runtime.md
       - Using Cloud Providers: cloud-providers.md
       - Running k0s with Traefik: examples/traefik-ingress.md
       - Running k0s as a service: install.md
