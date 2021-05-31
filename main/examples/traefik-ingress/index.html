@@ -14,7 +14,7 @@
       
         <meta name="author" content="Mirantis, Inc.">
       
-      <link rel="shortcut icon" href="https://github.com/k0sproject/k0sproject.github.io/blob/main/images/favicon/favicon.ico">
+      <link rel="shortcut icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.0+insiders-1.7.0">
     
     
@@ -44,15 +44,12 @@
       <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-90E1JB4HW4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-90E1JB4HW4');
-  </script>
-
+      
+        
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","274096580","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview",document.location.pathname)})</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
     
   </head>
   
@@ -957,7 +954,7 @@
                 <h1 id="install-the-traefik-ingress-controller-on-k0s">Install the Traefik Ingress Controller on k0s<a class="headerlink" href="#install-the-traefik-ingress-controller-on-k0s" title="Permanent link">#</a></h1>
 <p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik ingress controller</a>, a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
 <h2 id="1-configure-k0syaml">1. Configure k0s.yaml<a class="headerlink" href="#1-configure-k0syaml" title="Permanent link">#</a></h2>
-<p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="helm-charts.md">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
+<p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="../../helm-charts/">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
 <p><strong>Note:</strong></p>
 <p>A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>

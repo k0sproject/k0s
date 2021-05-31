@@ -14,12 +14,12 @@
       
         <meta name="author" content="Mirantis, Inc.">
       
-      <link rel="shortcut icon" href="https://github.com/k0sproject/k0sproject.github.io/blob/main/images/favicon/favicon.ico">
+      <link rel="shortcut icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.0+insiders-1.7.0">
     
     
       
-        <title>Creating a single-node cluster - Documentation</title>
+        <title>K0s single node - Documentation</title>
       
     
     
@@ -44,15 +44,12 @@
       <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-90E1JB4HW4"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-90E1JB4HW4');
-  </script>
-
+      
+        
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","274096580","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview",document.location.pathname)})</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
     
   </head>
   
@@ -73,11 +70,6 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#creating-a-single-node-cluster" class="md-skip">
-          Skip to content
-        </a>
       
     </div>
     <div data-md-component="announce">
@@ -106,7 +98,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Creating a single-node cluster
+              K0s single node
             
           </span>
         </div>
@@ -828,75 +820,15 @@
               </div>
             
             
-              
-              
-                
-              
-              
-                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                  <div class="md-sidebar__scrollwrap">
-                    <div class="md-sidebar__inner">
-                      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#start-k0s" class="md-nav__link">
-    Start k0s
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#use-k0s-to-access-the-cluster" class="md-nav__link">
-    Use k0s to access the cluster
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                    </div>
-                  </div>
-                </div>
-              
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                <h1 id="creating-a-single-node-cluster">Creating a single-node cluster<a class="headerlink" href="#creating-a-single-node-cluster" title="Permanent link">#</a></h1>
-<p>These instructions outline a quick method for running a local k0s master and worker in a single node.</p>
-<p><strong>NOTE:</strong>  This method of running k0s is only recommended for dev, test or POC environments.</p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p>Install k0s as documented in the <a href="../install/">installation instructions</a>.</p>
-<h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>$ sudo k0s install controller --single
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:34:59<span class="o">]</span> Installing k0s service
-$ sudo k0s start
-</code></pre></div>
-<h2 id="use-k0s-to-access-the-cluster">Use k0s to access the cluster<a class="headerlink" href="#use-k0s-to-access-the-cluster" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code>k0s kubectl get nodes
-</code></pre></div>
+                  <h1>K0s single node</h1>
+                
+                <p>See the <a href="../install/">Quick Start Guide</a>.</p>
                 
               
               
