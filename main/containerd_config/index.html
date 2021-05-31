@@ -19,7 +19,7 @@
     
     
       
-        <title>Containerd Configuration - Documentation</title>
+        <title>Containerd config - Documentation</title>
       
     
     
@@ -74,11 +74,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#containerd-configuration" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -106,7 +101,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Containerd Configuration
+              Containerd config
             
           </span>
         </div>
@@ -557,12 +552,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
     
     <label class="md-nav__link" for="nav-5">
       Configuration
@@ -616,67 +609,10 @@
           
           
 
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Containerd Configuration
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      Containerd Configuration
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#using-gvisor" class="md-nav__link">
-    Using gVisor
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-custom-nvidia-container-runtime" class="md-nav__link">
-    Using custom nvidia-container-runtime
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
-  </li>
-
-        
-          
-          
-          
-
 
   <li class="md-nav__item">
-    <a href="../custom-cri-runtime/" class="md-nav__link">
-      Use a Custom CRI
+    <a href="../runtime/" class="md-nav__link">
+      Runtime
     </a>
   </li>
 
@@ -688,7 +624,7 @@
 
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
-      Use Cloud Providers
+      Cloud Providers
     </a>
   </li>
 
@@ -887,156 +823,15 @@
               </div>
             
             
-              
-              
-                
-              
-              
-                <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                  <div class="md-sidebar__scrollwrap">
-                    <div class="md-sidebar__inner">
-                      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#using-gvisor" class="md-nav__link">
-    Using gVisor
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-custom-nvidia-container-runtime" class="md-nav__link">
-    Using custom nvidia-container-runtime
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                    </div>
-                  </div>
-                </div>
-              
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                <h1 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h1>
-<p><a href="https://github.com/containerd/containerd">containerd</a> is an industry-standard container runtime.</p>
-<p><strong>NOTE:</strong> Changes to the containerd configuration is not required in most use cases.</p>
-<p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
-<div class="highlight"><pre><span></span><code>containerd config default &gt; /etc/k0s/containerd.toml
-</code></pre></div>
-<p><code>k0s</code> runs containerd with the following default values:</p>
-<div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd <span class="se">\</span>
-    --root<span class="o">=</span>/var/lib/k0s/containerd <span class="se">\</span>
-    --state<span class="o">=</span>/var/lib/k0s/run/containerd <span class="se">\</span>
-    --address<span class="o">=</span>/var/lib/k0s/run/containerd.sock <span class="se">\</span>
-    --config<span class="o">=</span>/etc/k0s/containerd.toml
-</code></pre></div>
-<p>Next, add the following default values to the configuration file:</p>
-<div class="highlight"><pre><span></span><code><span class="n">version</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">root</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/containerd&quot;</span>
-<span class="n">state</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/run/containerd&quot;</span>
-<span class="p">...</span>
-
-<span class="k">[grpc]</span>
-  <span class="n">address</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/run/containerd.sock&quot;</span>
-</code></pre></div>
-<p>Finally, if you want to change CRI look into:</p>
-<div class="highlight"><pre><span></span><code>  <span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
-    <span class="n">shim</span> <span class="o">=</span> <span class="s">&quot;containerd-shim&quot;</span>
-    <span class="n">runtime</span> <span class="o">=</span> <span class="s">&quot;runc&quot;</span>
-</code></pre></div>
-<h2 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h2>
-<p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
-<ol>
-<li>
-<p>Install the needed gVisor binaries into the host.</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span>
-  <span class="nb">set</span> -e
-  <span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
-  wget <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc.sha512 <span class="se">\</span>
-    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim.sha512 <span class="se">\</span>
-    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1 <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1.sha512
-  sha512sum -c runsc.sha512 <span class="se">\</span>
-    -c gvisor-containerd-shim.sha512 <span class="se">\</span>
-    -c containerd-shim-runsc-v1.sha512
-  rm -f *.sha512
-  chmod a+rx runsc gvisor-containerd-shim containerd-shim-runsc-v1
-  sudo mv runsc gvisor-containerd-shim containerd-shim-runsc-v1 /usr/local/bin
-<span class="o">)</span>
-</code></pre></div>
-<p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install docs</a> for more information.</p>
-</li>
-<li>
-<p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime:</p>
-<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
-<span class="s">disabled_plugins = [&quot;restart&quot;]</span>
-<span class="s">[plugins.linux]</span>
-<span class="s">  shim_debug = true</span>
-<span class="s">[plugins.cri.containerd.runtimes.runsc]</span>
-<span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
-<span class="s">EOF</span>
-</code></pre></div>
-</li>
-<li>
-<p>Start and join the worker into the cluster, as normal:</p>
-<div class="highlight"><pre><span></span><code>k0s worker <span class="nv">$token</span>
-</code></pre></div>
-</li>
-<li>
-<p>Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):</p>
-<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
-<span class="s">apiVersion: node.k8s.io/v1beta1</span>
-<span class="s">kind: RuntimeClass</span>
-<span class="s">metadata:</span>
-<span class="s">  name: gvisor</span>
-<span class="s">handler: runsc</span>
-<span class="s">EOF</span>
-</code></pre></div>
-<p>At this point, you can use gVisor runtim for your workloads:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Pod</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-gvisor</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">runtimeClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gvisor</span>
-  <span class="nt">containers</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
-</code></pre></div>
-</li>
-<li>
-<p>(Optional) Verify tht the created nginx pod is running under gVisor runtime:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># kubectl exec nginx-gvisor -- dmesg | grep -i gvisor</span>
-<span class="o">[</span>    <span class="m">0</span>.000000<span class="o">]</span> Starting gVisor...
-</code></pre></div>
-</li>
-</ol>
-<h2 id="using-custom-nvidia-container-runtime">Using custom <code>nvidia-container-runtime</code><a class="headerlink" href="#using-custom-nvidia-container-runtime" title="Permanent link">#</a></h2>
-<p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
-    <span class="n">shim</span> <span class="o">=</span> <span class="s">&quot;containerd-shim&quot;</span>
-    <span class="n">runtime</span> <span class="o">=</span> <span class="s">&quot;nvidia-container-runtime&quot;</span>
-</code></pre></div>
-<p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://josephb.org/blog/containerd-nvidia/">here</a>.</p>
-<p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>
+                  <h1>Containerd config</h1>
+                
+                <p>See <a href="../runtime/">runtime</a>.</p>
                 
               
               
@@ -1051,41 +846,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href="../worker-node-config/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Worker Node Configuration
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../custom-cri-runtime/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Use a Custom CRI
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

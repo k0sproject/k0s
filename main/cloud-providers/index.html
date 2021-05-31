@@ -19,7 +19,7 @@
     
     
       
-        <title>Use Cloud Providers - Documentation</title>
+        <title>Cloud Providers - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#using-cloud-providers" class="md-skip">
+        <a href="#cloud-providers" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Use Cloud Providers
+              Cloud Providers
             
           </span>
         </div>
@@ -618,20 +618,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../containerd_config/" class="md-nav__link">
-      Containerd Configuration
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../custom-cri-runtime/" class="md-nav__link">
-      Use a Custom CRI
+    <a href="../runtime/" class="md-nav__link">
+      Runtime
     </a>
   </li>
 
@@ -651,12 +639,12 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        Use Cloud Providers
+        Cloud Providers
         <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" class="md-nav__link md-nav__link--active">
-      Use Cloud Providers
+      Cloud Providers
     </a>
     
       
@@ -936,7 +924,7 @@
               
                 
                 
-                <h1 id="using-cloud-providers">Using cloud providers<a class="headerlink" href="#using-cloud-providers" title="Permanent link">#</a></h1>
+                <h1 id="cloud-providers">Cloud providers<a class="headerlink" href="#cloud-providers" title="Permanent link">#</a></h1>
 <p>k0s builds Kubernetes components in <em>providerless</em> mode, meaning that cloud providers are not built into k0s-managed Kubernetes components. As such, you must externally configure the cloud providers to enable their support in your k0s cluster (for more information on running Kubernetes with cloud providers, refer to the <a href="https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/">Kubernetes documentation</a>.</p>
 <h2 id="1-enable-cloud-provider-support-in-kubelet">1. Enable cloud provider support in kubelet<a class="headerlink" href="#1-enable-cloud-provider-support-in-kubelet" title="Permanent link">#</a></h2>
 <p>Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with <code>--enable-cloud-provider=true</code>, to enable <code>--cloud-provider=external</code> on the kubelet process.</p>
@@ -962,7 +950,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../custom-cri-runtime/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../runtime/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -971,7 +959,7 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Use a Custom CRI
+                Runtime
               </div>
             </div>
           </a>

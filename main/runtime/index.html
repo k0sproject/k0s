@@ -9,7 +9,7 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/dual-stack/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/runtime/">
       
       
         <meta name="author" content="Mirantis, Inc.">
@@ -19,7 +19,7 @@
     
     
       
-        <title>IPv4/IPv6 Dual-Stack Networking - Documentation</title>
+        <title>Runtime - Documentation</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dual-stack-networking" class="md-skip">
+        <a href="#runtime" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              IPv4/IPv6 Dual-Stack Networking
+              Runtime
             
           </span>
         </div>
@@ -616,11 +616,70 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../runtime/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Runtime
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Runtime
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#containerd-configuration" class="md-nav__link">
+    containerd configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-gvisor" class="md-nav__link">
+    Using gVisor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-nvidia-container-runtime" class="md-nav__link">
+    Using nvidia-container-runtime
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-custom-cri-runtime" class="md-nav__link">
+    Using custom CRI runtime
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -640,63 +699,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        IPv4/IPv6 Dual-Stack Networking
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../dual-stack/" class="md-nav__link">
       IPv4/IPv6 Dual-Stack Networking
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#cni-settings-calico" class="md-nav__link">
-    CNI Settings: Calico
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cni-settings-external-cni" class="md-nav__link">
-    CNI Settings: External CNI
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-resources" class="md-nav__link">
-    Additional Resources
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -904,22 +911,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-calico" class="md-nav__link">
-    CNI Settings: Calico
+  <a href="#containerd-configuration" class="md-nav__link">
+    containerd configuration
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cni-settings-external-cni" class="md-nav__link">
-    CNI Settings: External CNI
+  <a href="#using-gvisor" class="md-nav__link">
+    Using gVisor
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#additional-resources" class="md-nav__link">
-    Additional Resources
+  <a href="#using-nvidia-container-runtime" class="md-nav__link">
+    Using nvidia-container-runtime
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-custom-cri-runtime" class="md-nav__link">
+    Using custom CRI runtime
   </a>
   
 </li>
@@ -938,32 +952,113 @@
               
                 
                 
-                <h1 id="dual-stack-networking">Dual-stack Networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
-<p><strong>Note:</strong> Dual stack networking setup requires that you configure Calico or a custom CNI as the CNI provider.</p>
-<p>Use the following <code>k0s.yaml</code> as a template to enable dual-stack networking. This configuration will set up bundled calico CNI, enable feature gates for the Kubernetes components, and set up <code>kubernetes-controller-manager</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">network</span><span class="p">:</span>
-    <span class="nt">podCIDR</span><span class="p">:</span> <span class="s">&quot;10.244.0.0/16&quot;</span>
-    <span class="nt">serviceCIDR</span><span class="p">:</span> <span class="s">&quot;10.96.0.0/12&quot;</span>
-    <span class="nt">calico</span><span class="p">:</span>
-      <span class="nt">mode</span><span class="p">:</span> <span class="s">&quot;bird&quot;</span>
-    <span class="nt">dualStack</span><span class="p">:</span>
-      <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-      <span class="nt">IPv6podCIDR</span><span class="p">:</span> <span class="s">&quot;fd00::/108&quot;</span>
-      <span class="nt">IPv6serviceCIDR</span><span class="p">:</span> <span class="s">&quot;fd01::/108&quot;</span>
+                <h1 id="runtime">Runtime<a class="headerlink" href="#runtime" title="Permanent link">#</a></h1>
+<p>k0s uses <a href="https://github.com/containerd/containerd">containerd</a> as the default Container Runtime Interface (CRI) and runc as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.</p>
+<p><img alt="k0s_runtime" src="../img/k0s_runtime.png" /></p>
+<h2 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h2>
+<p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
+<div class="highlight"><pre><span></span><code>containerd config default &gt; /etc/k0s/containerd.toml
 </code></pre></div>
-<h2 id="cni-settings-calico">CNI Settings: Calico<a class="headerlink" href="#cni-settings-calico" title="Permanent link">#</a></h2>
-<p>For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work.</p>
-<p><strong>Note</strong>: In any Calico mode other than cross-pod, the pods can only reach pods on the same node.</p>
-<h2 id="cni-settings-external-cni">CNI Settings: External CNI<a class="headerlink" href="#cni-settings-external-cni" title="Permanent link">#</a></h2>
-<p>Although the <code>k0s.yaml</code> dualStack section enables all of the neccessary feature gates for the Kubernetes components, for use with an external CNI it must be set up to support IPv6.</p>
-<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">#</a></h2>
-<ul>
-<li>https://kubernetes.io/docs/concepts/services-networking/dual-stack/</li>
-<li>https://kubernetes.io/docs/tasks/network/validate-dual-stack/</li>
-<li>https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/</li>
-<li>https://docs.projectcalico.org/networking/ipv6</li>
-</ul>
+<p><code>k0s</code> runs containerd with the following default values:</p>
+<div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd <span class="se">\</span>
+    --root<span class="o">=</span>/var/lib/k0s/containerd <span class="se">\</span>
+    --state<span class="o">=</span>/var/lib/k0s/run/containerd <span class="se">\</span>
+    --address<span class="o">=</span>/var/lib/k0s/run/containerd.sock <span class="se">\</span>
+    --config<span class="o">=</span>/etc/k0s/containerd.toml
+</code></pre></div>
+<p>Next, add the following default values to the configuration file:</p>
+<div class="highlight"><pre><span></span><code><span class="n">version</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">root</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/containerd&quot;</span>
+<span class="n">state</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/run/containerd&quot;</span>
+<span class="p">...</span>
+
+<span class="k">[grpc]</span>
+  <span class="n">address</span> <span class="o">=</span> <span class="s">&quot;/var/lib/k0s/run/containerd.sock&quot;</span>
+</code></pre></div>
+<p>Finally, if you want to change CRI look into:</p>
+<div class="highlight"><pre><span></span><code>  <span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
+    <span class="n">shim</span> <span class="o">=</span> <span class="s">&quot;containerd-shim&quot;</span>
+    <span class="n">runtime</span> <span class="o">=</span> <span class="s">&quot;runc&quot;</span>
+</code></pre></div>
+<h2 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h2>
+<p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
+<ol>
+<li>
+<p>Install the needed gVisor binaries into the host.</p>
+<div class="highlight"><pre><span></span><code><span class="o">(</span>
+  <span class="nb">set</span> -e
+  <span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
+  wget <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc.sha512 <span class="se">\</span>
+    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim.sha512 <span class="se">\</span>
+    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1 <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1.sha512
+  sha512sum -c runsc.sha512 <span class="se">\</span>
+    -c gvisor-containerd-shim.sha512 <span class="se">\</span>
+    -c containerd-shim-runsc-v1.sha512
+  rm -f *.sha512
+  chmod a+rx runsc gvisor-containerd-shim containerd-shim-runsc-v1
+  sudo mv runsc gvisor-containerd-shim containerd-shim-runsc-v1 /usr/local/bin
+<span class="o">)</span>
+</code></pre></div>
+<p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install docs</a> for more information.</p>
+</li>
+<li>
+<p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime:</p>
+<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
+<span class="s">disabled_plugins = [&quot;restart&quot;]</span>
+<span class="s">[plugins.linux]</span>
+<span class="s">  shim_debug = true</span>
+<span class="s">[plugins.cri.containerd.runtimes.runsc]</span>
+<span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
+<span class="s">EOF</span>
+</code></pre></div>
+</li>
+<li>
+<p>Start and join the worker into the cluster, as normal:</p>
+<div class="highlight"><pre><span></span><code>k0s worker <span class="nv">$token</span>
+</code></pre></div>
+</li>
+<li>
+<p>Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):</p>
+<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
+<span class="s">apiVersion: node.k8s.io/v1beta1</span>
+<span class="s">kind: RuntimeClass</span>
+<span class="s">metadata:</span>
+<span class="s">  name: gvisor</span>
+<span class="s">handler: runsc</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>At this point, you can use gVisor runtime for your workloads:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Pod</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-gvisor</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">runtimeClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gvisor</span>
+  <span class="nt">containers</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+</code></pre></div>
+</li>
+<li>
+<p>(Optional) Verify tht the created nginx pod is running under gVisor runtime:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubectl exec nginx-gvisor -- dmesg | grep -i gvisor</span>
+<span class="o">[</span>    <span class="m">0</span>.000000<span class="o">]</span> Starting gVisor...
+</code></pre></div>
+</li>
+</ol>
+<h2 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h2>
+<p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
+    <span class="n">shim</span> <span class="o">=</span> <span class="s">&quot;containerd-shim&quot;</span>
+    <span class="n">runtime</span> <span class="o">=</span> <span class="s">&quot;nvidia-container-runtime&quot;</span>
+</code></pre></div>
+<p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://josephb.org/blog/containerd-nvidia/">here</a>.</p>
+<p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>
+<h2 id="using-custom-cri-runtime">Using custom CRI runtime<a class="headerlink" href="#using-custom-cri-runtime" title="Permanent link">#</a></h2>
+<p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
+<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
+<p>To run k0s with a pre-existing Docker setup, run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/docker.sock &lt;token&gt;</code>.</p>
+<p>When <code>docker</code> is used as a runtime, k0s configures kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
                 
               
               
@@ -982,7 +1077,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../worker-node-config/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -991,19 +1086,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Cloud Providers
+                Worker Node Configuration
               </div>
             </div>
           </a>
         
         
-          <a href="../high-availability/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Control Plane High Availability
+                Cloud Providers
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

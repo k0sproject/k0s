@@ -19,7 +19,7 @@
     
     
       
-        <title>Use a Custom CRI - Documentation</title>
+        <title>Custom cri runtime - Documentation</title>
       
     
     
@@ -74,11 +74,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#custom-cri-runtime" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -106,7 +101,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Use a Custom CRI
+              Custom cri runtime
             
           </span>
         </div>
@@ -557,12 +552,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
     
     <label class="md-nav__link" for="nav-5">
       Configuration
@@ -618,30 +611,9 @@
 
 
   <li class="md-nav__item">
-    <a href="../containerd_config/" class="md-nav__link">
-      Containerd Configuration
+    <a href="../runtime/" class="md-nav__link">
+      Runtime
     </a>
-  </li>
-
-        
-          
-          
-          
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      Use a Custom CRI
-    </a>
-    
   </li>
 
         
@@ -652,7 +624,7 @@
 
   <li class="md-nav__item">
     <a href="../cloud-providers/" class="md-nav__link">
-      Use Cloud Providers
+      Cloud Providers
     </a>
   </li>
 
@@ -851,23 +823,15 @@
               </div>
             
             
-              
-              
-                
-              
-              
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
                 
                 
-                <h1 id="custom-cri-runtime">Custom CRI runtime<a class="headerlink" href="#custom-cri-runtime" title="Permanent link">#</a></h1>
-<p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>), however k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
-<p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
-<p>To run k0s with a pre-existing Docker setup, run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/docker.sock &lt;token&gt;</code>.</p>
-<p>When <code>docker</code> is used as a runtime, k0s configures kubelet to create the dockershim socket at <code>/var/run/dockershim.sock</code>.</p>
+                  <h1>Custom cri runtime</h1>
+                
+                <p>See <a href="../runtime/">runtime</a>.</p>
                 
               
               
@@ -882,41 +846,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href="../containerd_config/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Containerd Configuration
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Use Cloud Providers
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

@@ -80,11 +80,7 @@
      <lastmod>2021-05-31</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
-     <loc>https://docs.k0sproject.io/main/containerd_config/</loc>
-     <lastmod>2021-05-31</lastmod>
-     <changefreq>daily</changefreq>
-    </url><url>
-     <loc>https://docs.k0sproject.io/main/custom-cri-runtime/</loc>
+     <loc>https://docs.k0sproject.io/main/runtime/</loc>
      <lastmod>2021-05-31</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
