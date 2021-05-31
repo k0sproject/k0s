@@ -41,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/start"
 	"github.com/k0sproject/k0s/cmd/status"
 	"github.com/k0sproject/k0s/cmd/stop"
+	"github.com/k0sproject/k0s/cmd/sysinfo"
 	"github.com/k0sproject/k0s/cmd/token"
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
@@ -87,6 +88,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(status.NewStatusCmd())
 	cmd.AddCommand(start.NewStartCmd())
 	cmd.AddCommand(stop.NewStopCmd())
+	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())
 	cmd.AddCommand(validate.NewValidateCmd())
 	cmd.AddCommand(version.NewVersionCmd())
