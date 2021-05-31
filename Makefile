@@ -55,15 +55,25 @@ ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
-GOLANG_IMAGE = golang:1.16-alpine
-GO ?= GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
+ifeq ($(TARGET_OS),windows)
+build: k0s.exe
+else
+build: k0s
+endif
+
+golang_image := $(shell docker inspect --type=image k0sbuild.docker-image.k0s)
+ifneq ($(golang_image),)
+golang_image := docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+endif
+
+GO ?= $(golang_image) && GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
 	-e GOARCH \
 	-e GOCACHE \
 	--user $$(id -u) \
-	$(GOLANG_IMAGE) go
+	k0sbuild.docker-image.k0s go
 
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
