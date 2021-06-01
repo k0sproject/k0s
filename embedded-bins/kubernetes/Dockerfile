@@ -22,7 +22,7 @@ RUN \
 		export KUBE_CGO_OVERRIDES="${COMMANDS}"; \
 	fi; \
 	for cmd in $COMMANDS; do \
-		export KUBE_GIT_VERSION="v$VERSION-k0s1"; \
+		export KUBE_GIT_VERSION="v$VERSION+k0s"; \
 		make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd || break;\
 	done
 
