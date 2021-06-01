@@ -15,13 +15,13 @@ TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 BUILD_GO_FLAGS :=
-BUILD_GO_CGO_ENABLED ?= 0
+BUILD_GO_CGO_ENABLED ?= 1
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
 VERSION ?= $(shell git describe --tags)
 ifeq ($(DEBUG), false)
-LD_FLAGS ?= -w -s
+LD_FLAGS ?= -w -s -extldflags=-static
 endif
 
 KUBECTL_VERSION = $(shell go mod graph |  grep "github.com/k0sproject/k0s" |  grep kubectl  | cut -d "@" -f 2 | sed "s/v0\./1./")

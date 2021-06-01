@@ -17,13 +17,17 @@ package restore
 
 import (
 	"fmt"
+
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/install"
+
+	"os"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type CmdOpts config.CLIOptions
@@ -65,6 +69,11 @@ func (c *CmdOpts) restore(path string) error {
 		return fmt.Errorf("this command must be run as root")
 	}
 
+	k0sStatus, _ := install.GetPid()
+	if k0sStatus.Pid != 0 {
+		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
+	}
+
 	if !util.FileExists(path) {
 		return fmt.Errorf("given file %s does not exist", path)
 	}
@@ -84,7 +93,7 @@ func (c *CmdOpts) restore(path string) error {
 }
 
 // TODO Need to move to some common place, now it's defined in restore and backup commands
-func preRunValidateConfig(cmd *cobra.Command, args []string) error {
+func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
 	if err != nil {
