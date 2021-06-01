@@ -22,8 +22,10 @@ import (
 	"path/filepath"
 
 	"github.com/rqlite/rqlite/db"
-	"github.com/rqlite/rqlite/store"
 	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 const kineBackup = "kine-state-backup.db"
@@ -43,7 +45,8 @@ func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep
 }
 
 func (s *sqliteStep) Name() string {
-	return "sqlite"
+	dbPath, _ := s.getKineDBPath()
+	return fmt.Sprintf("sqlite db path %s", dbPath)
 }
 
 func (s *sqliteStep) Backup() (StepResult, error) {
@@ -55,12 +58,12 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 	path := filepath.Join(s.tmpDir, kineBackup)
 
 	logrus.Debugf("exporting kine db to %v", path)
-	f, err := os.Create(path)
+	_, err = os.Create(path)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("failed to create kine backup: %v", err)
 	}
 	// create a hot backup of the kine db
-	err = kineDB.Dump(f)
+	err = kineDB.Backup(path)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("failed to back-up kine db: %v", err)
 	}
@@ -68,30 +71,31 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 }
 
 func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
-	dbConf := store.NewDBConfig(s.dataSource, false)
-	db := store.New(&store.StoreConfig{
-		DBConf:    dbConf,
-		Dir:       s.dataDir,
-		Tn:        nil,
-		Logger:    nil,
-		PeerStore: nil,
-	})
-
 	snapshotPath := filepath.Join(restoreFrom, kineBackup)
-	snapFile, err := os.Open(snapshotPath)
-	if err != nil {
-		logrus.Errorf("failed to open snapshot file: %v", err)
+	if !util.FileExists(snapshotPath) {
+		return fmt.Errorf("sqlite snapshot not found at %s", snapshotPath)
 	}
-	if err := db.Restore(snapFile); err != nil {
+	dbPath, err := s.getKineDBPath()
+	if err != nil {
+		return err
+	}
+
+	// make sure DB dir exists. if not, create it.
+	dbPathDir := filepath.Dir(dbPath)
+	if err = util.InitDirectory(dbPathDir, constant.KineDBDirMode); err != nil {
+		return err
+	}
+	logrus.Infof("restoring sqlite db to `%s`", dbPath)
+	if err := util.FileCopy(snapshotPath, dbPath); err != nil {
 		logrus.Errorf("failed to restore snapshot from disk: %v", err)
 	}
 	return nil
 }
+
 func (s *sqliteStep) getKineDBPath() (string, error) {
 	u, err := url.Parse(s.dataSource)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse Kind datasource string: %v", err)
 	}
-	logrus.Debugf("kinedb path: %v", u.Path)
 	return u.Path, nil
 }

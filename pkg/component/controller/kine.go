@@ -63,7 +63,7 @@ func (k *Kine) Init() error {
 	}
 	if dsURL.Scheme == "sqlite" {
 		// Make sure the db basedir exists
-		err = util.InitDirectory(filepath.Dir(dsURL.Path), 0750)
+		err = util.InitDirectory(filepath.Dir(dsURL.Path), constant.KineDBDirMode)
 		if err != nil {
 			return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}
