@@ -18,6 +18,7 @@ package cleanup
 
 import (
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/component/worker"
 	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -26,27 +27,45 @@ import (
 )
 
 type Config struct {
-	containerdBinPath    string
-	containerdCmd        *exec.Cmd
-	containerdSockerPath string
-	criCtl               *crictl.CriCtl
-	dataDir              string
-	runDir               string
-	CfgFile              string
-	K0sVars              constant.CfgVars
+	containerd 	*containerdConfig
+	criCtl     	*crictl.CriCtl
+	dataDir    	string
+	runDir     	string
+	CfgFile    	string
+	K0sVars    	constant.CfgVars
 }
 
-func NewConfig(dataDir string) *Config {
+type containerdConfig struct {
+	binPath 	string
+	cmd 		*exec.Cmd
+	socketPath 	string
+}
+
+func NewConfig(dataDir string, criSocketPath string) (*Config, error) {
 	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
-	criSocketPath := fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+
+	var err error
+	var containerdCfg *containerdConfig
+
+	if criSocketPath == "" {
+		criSocketPath = fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+		containerdCfg = &containerdConfig{
+			binPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
+			socketPath: fmt.Sprintf("%s/containerd.sock", runDir),
+		}
+	} else {
+		_, criSocketPath, err = worker.SplitRuntimeConfig(criSocketPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &Config{
-		dataDir:              dataDir,
-		runDir:               runDir,
-		containerdSockerPath: fmt.Sprintf("%s/containerd.sock", runDir),
-		containerdBinPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
-		criCtl:               crictl.NewCriCtl(criSocketPath),
-	}
+		containerd: containerdCfg,
+		criCtl:     crictl.NewCriCtl(criSocketPath),
+		dataDir:    dataDir,
+		runDir:     runDir,
+	}, nil
 }
 
 func (c *Config) Cleanup() error {
