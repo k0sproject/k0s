@@ -23,8 +23,8 @@ func (c *containerd) Name() string {
 
 // NeedsToRun checks if containerd is present on the host
 func (c *containerd) NeedsToRun() bool {
-	if _, err := os.Stat(c.Config.containerdBinPath); err != nil {
-		logrus.Debugf("could not find containerd binary at %v errored with: %v", c.Config.containerdBinPath, err)
+	if _, err := os.Stat(c.Config.containerd.binPath); err != nil {
+		logrus.Debugf("could not find containerd binary at %v errored with: %v", c.Config.containerd.binPath, err)
 		return false
 	}
 	return true
@@ -79,15 +79,15 @@ func (c *containerd) startContainerd() error {
 	args := []string{
 		fmt.Sprintf("--root=%s", filepath.Join(c.Config.dataDir, "containerd")),
 		fmt.Sprintf("--state=%s", filepath.Join(c.Config.runDir, "containerd")),
-		fmt.Sprintf("--address=%s", c.Config.containerdSockerPath),
+		fmt.Sprintf("--address=%s", c.Config.containerd.socketPath),
 		"--config=/etc/k0s/containerd.toml",
 	}
-	cmd := exec.Command(c.Config.containerdBinPath, args...)
+	cmd := exec.Command(c.Config.containerd.binPath, args...)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start containerd: %v", err)
 	}
 
-	c.Config.containerdCmd = cmd
+	c.Config.containerd.cmd = cmd
 	logrus.Debugf("started containerd successfully")
 
 	return nil
@@ -95,15 +95,15 @@ func (c *containerd) startContainerd() error {
 
 func (c *containerd) stopContainerd() {
 	logrus.Debug("attempting to stop containerd")
-	logrus.Debugf("found containerd pid: %v", c.Config.containerdCmd.Process.Pid)
-	if err := c.Config.containerdCmd.Process.Signal(os.Interrupt); err != nil {
+	logrus.Debugf("found containerd pid: %v", c.Config.containerd.cmd.Process.Pid)
+	if err := c.Config.containerd.cmd.Process.Signal(os.Interrupt); err != nil {
 		logrus.Errorf("failed to kill containerd: %v", err)
 	}
 	// if process, didn't exit, wait a few seconds and send SIGKILL
-	if c.Config.containerdCmd.ProcessState.ExitCode() != -1 {
+	if c.Config.containerd.cmd.ProcessState.ExitCode() != -1 {
 		time.Sleep(5 * time.Second)
 
-		if err := c.Config.containerdCmd.Process.Kill(); err != nil {
+		if err := c.Config.containerd.cmd.Process.Kill(); err != nil {
 			logrus.Errorf("failed to send SIGKILL to containerd: %v", err)
 		}
 	}
