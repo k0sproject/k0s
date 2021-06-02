@@ -104,7 +104,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
-		logrus.Debug("creating certificates")
+		logrus.Debugf("creating certificate %s", certFile)
 		req := csr.CertificateRequest{
 			KeyRequest: csr.NewKeyRequest(),
 			CN:         certReq.CN,
@@ -199,24 +199,29 @@ func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile strin
 	}
 
 	if cert, err = certinfo.ParseCertificateFile(certFile); err != nil {
-		logrus.Debugf("unable to parse certificate file: %v", err)
+		logrus.Warnf("unable to parse certificate file at %s: %v", certFile, err)
 		return true
 	}
 
-	// if existing SANs are different than configured, delete the certificate to re-generate it
-	if !util.IsStringArrayEqual(certReq.Hostnames, cert.SANs) {
-		logrus.Debug("found changes in SAN configuration. attempting to re-generate files")
-
-		files := []string{certFile, keyFile}
-		for _, f := range files {
-			logrus.Debugf("deleting file %v for certificate re-generation", f)
-			if err := os.Remove(f); err != nil {
-				logrus.Errorf("failed to delete file: %v", f)
-			}
-		}
+	if isManagedByK0s(cert) {
 		return true
 	}
-	// no changes are detected. continue
+
+	logrus.Debugf("cert regeneration not needed for %s, not managed by k0s: %s", certFile, cert.Issuer.CommonName)
+	return false
+}
+
+// checks if the cert issuer (CA) is a k0s setup one
+func isManagedByK0s(cert *certinfo.Certificate) bool {
+	switch cert.Issuer.CommonName {
+	case "kubernetes-ca":
+		return true
+	case "kubernetes-front-proxy-ca":
+		return true
+	case "etcd-ca":
+		return true
+	}
+
 	return false
 }
 
