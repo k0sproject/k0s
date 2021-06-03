@@ -113,7 +113,7 @@ func (c *containerd) stopContainerd() {
 func (c *containerd) stopAllContainers() error {
 	var msg []error
 	logrus.Debugf("trying to list all pods")
-	pods, err := c.Config.criCtl.ListPods()
+	pods, err := c.Config.containerRuntime.ListContainers()
 	if err != nil {
 		logrus.Debugf("failed at listing pods %v", err)
 		return err
@@ -129,7 +129,7 @@ func (c *containerd) stopAllContainers() error {
 
 	for _, pod := range pods {
 		logrus.Debugf("stopping container: %v", pod)
-		err := c.Config.criCtl.StopPod(pod)
+		err := c.Config.containerRuntime.StopContainer(pod)
 		if err != nil {
 			if strings.Contains(err.Error(), "443: connect: connection refused") {
 				// on a single node instance, we will see "connection refused" error. this is to be expected
@@ -142,14 +142,14 @@ func (c *containerd) stopAllContainers() error {
 				msg = append(msg, fmtError)
 			}
 		}
-		err = c.Config.criCtl.RemovePod(pod)
+		err = c.Config.containerRuntime.RemoveContainer(pod)
 		if err != nil {
 			msg = append(msg, fmt.Errorf("failed to remove pod %v: err: %v", pod, err))
 
 		}
 	}
 
-	pods, err = c.Config.criCtl.ListPods()
+	pods, err = c.Config.containerRuntime.ListContainers()
 	if err == nil && len(pods) == 0 {
 		logrus.Info("successfully removed k0s containers!")
 	}

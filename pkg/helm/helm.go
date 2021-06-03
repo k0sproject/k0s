@@ -96,8 +96,6 @@ func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
 	}
 	r.CachePath = hc.helmCacheDir
 
-
-
 	if _, err := r.DownloadIndexFile(); err != nil {
 		return fmt.Errorf("can't add repository: %q is not a valid chart repository or cannot be reached: %v", "repo", err)
 	}
