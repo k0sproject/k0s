@@ -8,7 +8,7 @@ type ContainerRuntime interface {
 
 func NewContainerRuntime(runtimeType string, criSocketPath string) ContainerRuntime {
 	if runtimeType == "docker" {
-		return nil
+		return &DockerRuntime{criSocketPath}
 	}
 	return &CRIRuntime{criSocketPath}
 }
