@@ -113,14 +113,18 @@ func NewRootCmd() *cobra.Command {
 
 func newDocsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "docs",
-		Short: "Generate Markdown docs for the k0s binary",
+		Use:       "docs <markdown|man>",
+		Short:     "Generate k0s command documentation",
+		ValidArgs: []string{"markdown", "man"},
+		Args:      cobra.ExactValidArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := generateDocs()
-			if err != nil {
-				return err
+			switch args[0] {
+			case "markdown":
+				return doc.GenMarkdownTree(NewRootCmd(), "./docs/cli")
+			case "man":
+				return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
 			}
-			return nil
+			return fmt.Errorf("invalid format")
 		},
 	}
 }
@@ -143,7 +147,7 @@ func newDefaultConfigCmd() *cobra.Command {
 
 func newCompletionCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "completion [bash|zsh|fish|powershell]",
+		Use:   "completion <bash|zsh|fish|powershell>",
 		Short: "Generate completion script",
 		Long: `To load completions:
 
@@ -195,13 +199,6 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 func (c *cliOpts) buildConfig() error {
 	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(c.K0sVars))
 	fmt.Print(string(conf))
-	return nil
-}
-
-func generateDocs() error {
-	if err := doc.GenMarkdownTree(NewRootCmd(), "./docs/cli"); err != nil {
-		return err
-	}
 	return nil
 }
 
