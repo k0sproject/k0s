@@ -19,7 +19,7 @@
     
     
       
-        <title>Networking - Documentation</title>
+        <title>Networking (CNI) - Documentation</title>
       
     
     
@@ -103,7 +103,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Networking
+              Networking (CNI)
             
           </span>
         </div>
@@ -377,6 +377,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../upgrade/" class="md-nav__link">
+      Upgrade
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../backup/" class="md-nav__link">
+      Backup/Restore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
@@ -392,10 +416,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       Usage
@@ -452,8 +478,106 @@
 
   <li class="md-nav__item">
     <a href="../runtime/" class="md-nav__link">
-      Runtime
+      Runtime (CRI)
     </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Networking (CNI)
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
+      Networking (CNI)
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-cluster-networking" class="md-nav__link">
+    In-cluster networking
+  </a>
+  
+    <nav class="md-nav" aria-label="In-cluster networking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    Notes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kube-router" class="md-nav__link">
+    Kube-router
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calico" class="md-nav__link">
+    Calico
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-cni-configuration" class="md-nav__link">
+    Custom CNI configuration
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controller-worker-communication" class="md-nav__link">
+    Controller-Worker communication
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-ports-and-protocols" class="md-nav__link">
+    Required ports and protocols
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -476,7 +600,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 Dual-Stack Networking
+      IPv4/IPv6 Dual-Stack
     </a>
   </li>
 
@@ -525,18 +649,6 @@
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../backup/" class="md-nav__link">
-      Backup/Restore
     </a>
   </li>
 
@@ -712,12 +824,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
       Reference
@@ -740,104 +850,6 @@
     <a href="../architecture/" class="md-nav__link">
       Architecture
     </a>
-  </li>
-
-        
-          
-          
-          
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Networking
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      Networking
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#in-cluster-networking" class="md-nav__link">
-    In-cluster networking
-  </a>
-  
-    <nav class="md-nav" aria-label="In-cluster networking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kube-router" class="md-nav__link">
-    Kube-router
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calico" class="md-nav__link">
-    Calico
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-cni-configuration" class="md-nav__link">
-    Custom CNI configuration
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-worker-communication" class="md-nav__link">
-    Controller-Worker communication
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-ports-and-protocols" class="md-nav__link">
-    Required ports and protocols
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -1140,7 +1152,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../architecture/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../runtime/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1149,19 +1161,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Architecture
+                Runtime (CRI)
               </div>
             </div>
           </a>
         
         
-          <a href="../cis_benchmark/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                CIS Benchmark
+                Cloud Providers
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

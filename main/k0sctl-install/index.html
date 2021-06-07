@@ -348,26 +348,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
-    Upgrade a k0s cluster using k0sctl
-  </a>
-  
-    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
-    k0sctl cluster upgrade process
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
@@ -492,6 +472,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../upgrade/" class="md-nav__link">
+      Upgrade
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../backup/" class="md-nav__link">
+      Backup/Restore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
@@ -567,7 +571,19 @@
 
   <li class="md-nav__item">
     <a href="../runtime/" class="md-nav__link">
-      Runtime
+      Runtime (CRI)
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking/" class="md-nav__link">
+      Networking (CNI)
     </a>
   </li>
 
@@ -591,7 +607,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 Dual-Stack Networking
+      IPv4/IPv6 Dual-Stack
     </a>
   </li>
 
@@ -640,18 +656,6 @@
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../backup/" class="md-nav__link">
-      Backup/Restore
     </a>
   </li>
 
@@ -862,18 +866,6 @@
 
 
   <li class="md-nav__item">
-    <a href="../networking/" class="md-nav__link">
-      Networking
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
     <a href="../cis_benchmark/" class="md-nav__link">
       CIS Benchmark
     </a>
@@ -1036,26 +1028,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
-    Upgrade a k0s cluster using k0sctl
-  </a>
-  
-    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
-    k0sctl cluster upgrade process
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#known-limitations" class="md-nav__link">
     Known limitations
   </a>
@@ -1187,54 +1159,10 @@ kube-system   konnectivity-agent-d9xv2                   <span class="m">1</span
 kube-system   kube-proxy-xp9r9                           <span class="m">1</span>/1     Running   <span class="m">0</span>          4m4s
 kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span>/1     Running   <span class="m">0</span>          3m51s
 </code></pre></div>
-<h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
-<p>The upgrading of k0s clusters occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).</p>
-<h3 id="k0sctl-cluster-upgrade-process">k0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h3>
-<p>The following operations occur during a k0sctl upgrade:</p>
-<ol>
-<li>
-<p>Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured.</p>
-</li>
-<li>
-<p>Upgrade of workers, in batches of 10%.</p>
-</li>
-<li>
-<p>Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the <code>--no-drain</code> option.)</p>
-</li>
-<li>
-<p>The upgrade process continues once the upgraded nodes return to <strong>Ready</strong> state.</p>
-</li>
-</ol>
-<p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">k0s</span><span class="p">:</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.11.0</span>
-</code></pre></div>
-<p>If you do not specify a version, k0sctl checks online for the latest version and defaults to it.</p>
-<div class="highlight"><pre><span></span><code>$ k0sctl apply
-...
-...
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: starting upgrade
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating...
-INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">0</span>.11.0 is now installed
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using:
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig
-</code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <ul>
-<li>k0sctl does not perform any discovery of hosts, and thus it only operates on
-  the hosts listed in the provided configuration</li>
-<li>k0sctl can only add more nodes to the cluster. It cannot remove
-  existing nodes.</li>
+<li>k0sctl does not perform any discovery of hosts, and thus it only operates on the hosts listed in the provided configuration.</li>
+<li>k0sctl can only add more nodes to the cluster. It cannot remove existing nodes.</li>
 </ul>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>

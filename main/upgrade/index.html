@@ -9,24 +9,24 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_docs/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/upgrade/">
       
       
         <meta name="author" content="Mirantis, Inc.">
       
-      <link rel="shortcut icon" href="../../img/k0s_social.png">
+      <link rel="shortcut icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.0+insiders-1.7.0">
     
     
       
-        <title>K0s docs - Documentation</title>
+        <title>Upgrade - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.406af9ae.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.406af9ae.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ec60dfa4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ec60dfa4.min.css">
         
       
     
@@ -41,7 +41,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
       
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-docs" class="md-skip">
+        <a href="#upgrade" class="md-skip">
           Skip to content
         </a>
       
@@ -87,7 +87,7 @@
   <nav class="md-header-nav md-grid" aria-label="Header">
     <a href="https://docs.k0sproject.io/main" title="Documentation" class="md-header-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header-nav__button md-icon" for="__drawer">
@@ -103,7 +103,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s docs
+              Upgrade
             
           </span>
         </div>
@@ -195,7 +195,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="https://docs.k0sproject.io/main" title="Documentation" class="md-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -222,7 +222,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Overview
     </a>
   </li>
@@ -232,10 +232,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Install
@@ -255,7 +257,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../install/" class="md-nav__link">
+    <a href="../install/" class="md-nav__link">
       Quick Start Guide
     </a>
   </li>
@@ -267,7 +269,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0sctl-install/" class="md-nav__link">
+    <a href="../k0sctl-install/" class="md-nav__link">
       Install using k0sctl
     </a>
   </li>
@@ -300,7 +302,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-multi-node/" class="md-nav__link">
+    <a href="../k0s-multi-node/" class="md-nav__link">
       Manual Install (advanced)
     </a>
   </li>
@@ -312,7 +314,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
+    <a href="../k0s-in-docker/" class="md-nav__link">
       Docker
     </a>
   </li>
@@ -324,7 +326,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../experimental-windows/" class="md-nav__link">
+    <a href="../experimental-windows/" class="md-nav__link">
       Windows (experimental)
     </a>
   </li>
@@ -336,7 +338,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../raspberry-pi4/" class="md-nav__link">
+    <a href="../raspberry-pi4/" class="md-nav__link">
       Raspberry Pi 4
     </a>
   </li>
@@ -348,7 +350,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ansible-playbook/" class="md-nav__link">
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
       Ansible Playbook
     </a>
   </li>
@@ -360,7 +362,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../airgap-install/" class="md-nav__link">
+    <a href="../airgap-install/" class="md-nav__link">
       Airgap Install
     </a>
   </li>
@@ -375,11 +377,69 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../upgrade/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Upgrade
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Upgrade
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-a-k0s-node-locally" class="md-nav__link">
+    Upgrade a k0s node locally
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Upgrade a k0s cluster using k0sctl
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
+    k0sctl cluster upgrade process
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -389,7 +449,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../backup/" class="md-nav__link">
+    <a href="../backup/" class="md-nav__link">
       Backup/Restore
     </a>
   </li>
@@ -401,7 +461,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../system-requirements/" class="md-nav__link">
+    <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
   </li>
@@ -439,7 +499,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration/" class="md-nav__link">
+    <a href="../configuration/" class="md-nav__link">
       Configuration Options
     </a>
   </li>
@@ -451,7 +511,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration-validation/" class="md-nav__link">
+    <a href="../configuration-validation/" class="md-nav__link">
       Configuration Validation
     </a>
   </li>
@@ -463,7 +523,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../worker-node-config/" class="md-nav__link">
+    <a href="../worker-node-config/" class="md-nav__link">
       Worker Node Configuration
     </a>
   </li>
@@ -475,7 +535,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../runtime/" class="md-nav__link">
+    <a href="../runtime/" class="md-nav__link">
       Runtime (CRI)
     </a>
   </li>
@@ -487,7 +547,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../networking/" class="md-nav__link">
+    <a href="../networking/" class="md-nav__link">
       Networking (CNI)
     </a>
   </li>
@@ -499,7 +559,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cloud-providers/" class="md-nav__link">
+    <a href="../cloud-providers/" class="md-nav__link">
       Cloud Providers
     </a>
   </li>
@@ -511,7 +571,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../dual-stack/" class="md-nav__link">
+    <a href="../dual-stack/" class="md-nav__link">
       IPv4/IPv6 Dual-Stack
     </a>
   </li>
@@ -523,7 +583,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../high-availability/" class="md-nav__link">
+    <a href="../high-availability/" class="md-nav__link">
       Control Plane High Availability
     </a>
   </li>
@@ -535,7 +595,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../shell-completion/" class="md-nav__link">
+    <a href="../shell-completion/" class="md-nav__link">
       Shell Completion
     </a>
   </li>
@@ -547,7 +607,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user-management/" class="md-nav__link">
+    <a href="../user-management/" class="md-nav__link">
       User Management
     </a>
   </li>
@@ -559,7 +619,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-reset/" class="md-nav__link">
+    <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
     </a>
   </li>
@@ -597,7 +657,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../manifests/" class="md-nav__link">
+    <a href="../manifests/" class="md-nav__link">
       Manifest Deployer
     </a>
   </li>
@@ -609,7 +669,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../helm-charts/" class="md-nav__link">
+    <a href="../helm-charts/" class="md-nav__link">
       Helm Charts
     </a>
   </li>
@@ -642,7 +702,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/traefik-ingress/" class="md-nav__link">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
       Traefik Ingress Controller
     </a>
   </li>
@@ -654,7 +714,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
       Ambassador Gateway
     </a>
   </li>
@@ -666,7 +726,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/rook-ceph/" class="md-nav__link">
+    <a href="../examples/rook-ceph/" class="md-nav__link">
       Ceph Storage with Rook
     </a>
   </li>
@@ -709,7 +769,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../FAQ/" class="md-nav__link">
+    <a href="../FAQ/" class="md-nav__link">
       FAQ
     </a>
   </li>
@@ -721,7 +781,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../troubleshooting/" class="md-nav__link">
+    <a href="../troubleshooting/" class="md-nav__link">
       Common Pitfalls
     </a>
   </li>
@@ -759,7 +819,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../architecture/" class="md-nav__link">
+    <a href="../architecture/" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -771,7 +831,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cis_benchmark/" class="md-nav__link">
+    <a href="../cis_benchmark/" class="md-nav__link">
       CIS Benchmark
     </a>
   </li>
@@ -809,7 +869,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/overview/" class="md-nav__link">
+    <a href="../contributors/overview/" class="md-nav__link">
       Overview
     </a>
   </li>
@@ -821,7 +881,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/github_workflow/" class="md-nav__link">
+    <a href="../contributors/github_workflow/" class="md-nav__link">
       GitHub Workflow
     </a>
   </li>
@@ -833,7 +893,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/testing/" class="md-nav__link">
+    <a href="../contributors/testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -845,7 +905,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+    <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
       Documentation
     </a>
   </li>
@@ -865,6 +925,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -872,6 +934,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -881,30 +945,23 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-docs" class="md-nav__link">
-    k0s docs
+  <a href="#upgrade-a-k0s-node-locally" class="md-nav__link">
+    Upgrade a k0s node locally
   </a>
   
-    <nav class="md-nav" aria-label="k0s docs">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Upgrade a k0s cluster using k0sctl
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade a k0s cluster using k0sctl">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
+  <a href="#k0sctl-cluster-upgrade-process" class="md-nav__link">
+    k0sctl cluster upgrade process
   </a>
   
 </li>
@@ -928,26 +985,67 @@
               
                 
                 
-                  <h1>K0s docs</h1>
-                
-                <h2 id="k0s-docs">k0s docs<a class="headerlink" href="#k0s-docs" title="Permanent link">#</a></h2>
-<p>Generate Markdown docs for the k0s binary</p>
-<div class="highlight"><pre><span></span><code>k0s docs <span class="o">[</span>flags<span class="o">]</span>
-</code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -h, --help   <span class="nb">help</span> <span class="k">for</span> docs
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>
-      --data-dir string          Data Directory <span class="k">for</span> k0s <span class="o">(</span>default: /var/lib/k0s<span class="o">)</span>. DO NOT CHANGE <span class="k">for</span> an existing setup, things will break!
-  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
-      --debugListenOn string     Http listenOn <span class="k">for</span> debug pprof handler <span class="o">(</span>default <span class="s2">&quot;:6060&quot;</span><span class="o">)</span>
-  -l, --logging stringToString   Logging Levels <span class="k">for</span> the different components <span class="o">(</span>default <span class="o">[</span>konnectivity-server<span class="o">=</span><span class="m">1</span>,kube-apiserver<span class="o">=</span><span class="m">1</span>,kube-controller-manager<span class="o">=</span><span class="m">1</span>,kube-scheduler<span class="o">=</span><span class="m">1</span>,kubelet<span class="o">=</span><span class="m">1</span>,kube-proxy<span class="o">=</span><span class="m">1</span>,etcd<span class="o">=</span>info,containerd<span class="o">=</span>info<span class="o">])</span>
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+                <h1 id="upgrade">Upgrade<a class="headerlink" href="#upgrade" title="Permanent link">#</a></h1>
+<p>The k0s upgrade is a simple process due to its single binary distribution. The k0s single binary file includes all the necessary parts for the upgrade and essentially the upgrade process is to replace that file and restart the service.</p>
+<p>This tutorial explains two different approaches for k0s upgrade:</p>
 <ul>
-<li><a href="../k0s/">k0s</a> - k0s - Zero Friction Kubernetes</li>
+<li><a href="#upgrade-a-k0s-node-locally">Upgrade a k0s node locally</a></li>
+<li><a href="#upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl</a></li>
 </ul>
+<h2 id="upgrade-a-k0s-node-locally">Upgrade a k0s node locally<a class="headerlink" href="#upgrade-a-k0s-node-locally" title="Permanent link">#</a></h2>
+<p>If your k0s cluster has been deployed with k0sctl, then k0sctl provides the easiest upgrade method. In that case jump to the next chapter. However, if you have deployed k0s without k0sctl, then follow the upgrade method explained in this chapter.</p>
+<p>Before starting the upgrade, consider moving your applications to another node if you want to avoid downtime. This can be done by <a href="https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/">draining a worker node</a>. Remember to uncordon the worker node afterwards to tell Kubernetes that it can resume scheduling new pods onto the node.</p>
+<p>The upgrade process is started by stopping the currently running k0s service.</p>
+<div class="highlight"><pre><span></span><code>sudo k0s stop
+</code></pre></div>
+<p>Now you can replace the old k0s binary file. The easiest way is to use the download script. It will download the latest k0s binary and replace the old binary with it. You can also do this manually without the download script.</p>
+<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+</code></pre></div>
+<p>Then you can start the service (with the upgraded k0s) and your upgrade is done.</p>
+<div class="highlight"><pre><span></span><code>sudo k0s start
+</code></pre></div>
+<h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
+<p>The upgrading of k0s clusters using k0sctl occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).</p>
+<h3 id="k0sctl-cluster-upgrade-process">k0sctl cluster upgrade process<a class="headerlink" href="#k0sctl-cluster-upgrade-process" title="Permanent link">#</a></h3>
+<p>The following operations occur during a k0sctl upgrade:</p>
+<ol>
+<li>
+<p>Upgrade of each controller, one at a time. There is no downtime if multiple controllers are configured.</p>
+</li>
+<li>
+<p>Upgrade of workers, in batches of 10%.</p>
+</li>
+<li>
+<p>Draining of workers, which allows the workload to move to other nodes prior to the actual upgrade of the worker node components. (To skip the drain process, use the <code>--no-drain</code> option.)</p>
+</li>
+<li>
+<p>The upgrade process continues once the upgraded nodes return to <strong>Ready</strong> state.</p>
+</li>
+</ol>
+<p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">k0s</span><span class="p">:</span>
+    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.21.1+k0s.0</span>
+</code></pre></div>
+<p>If you do not specify a version, k0sctl checks online for the latest version and defaults to it.</p>
+<div class="highlight"><pre><span></span><code>$ k0sctl apply
+...
+...
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: starting upgrade
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating...
+INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">1</span>.21.1+k0s.0 is now installed
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using:
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig
+</code></pre></div>
                 
               
               
@@ -962,6 +1060,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../airgap-install/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Airgap Install
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../backup/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Backup/Restore
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1008,15 +1141,15 @@
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.4d7724a9.min.js"></script>
-      <script src="../../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.4d7724a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "..",
           features: ['toc.autohide', 'search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.0f64ce30.min.js"
+            worker: "../assets/javascripts/worker/search.0f64ce30.min.js"
           }, typeof search !== "undefined" && search),
           version: {'method': 'mike'}
         })

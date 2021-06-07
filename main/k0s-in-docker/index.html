@@ -494,6 +494,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../upgrade/" class="md-nav__link">
+      Upgrade
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../backup/" class="md-nav__link">
+      Backup/Restore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
@@ -569,7 +593,19 @@
 
   <li class="md-nav__item">
     <a href="../runtime/" class="md-nav__link">
-      Runtime
+      Runtime (CRI)
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking/" class="md-nav__link">
+      Networking (CNI)
     </a>
   </li>
 
@@ -593,7 +629,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 Dual-Stack Networking
+      IPv4/IPv6 Dual-Stack
     </a>
   </li>
 
@@ -642,18 +678,6 @@
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../backup/" class="md-nav__link">
-      Backup/Restore
     </a>
   </li>
 
@@ -854,18 +878,6 @@
   <li class="md-nav__item">
     <a href="../architecture/" class="md-nav__link">
       Architecture
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../networking/" class="md-nav__link">
-      Networking
     </a>
   </li>
 
@@ -1151,12 +1163,11 @@
 <p>Currently, k0s nodes cannot be run if the containers are configured to use custom networks (for example, with <code>--net my-net</code>). This is because Docker sets up a custom DNS service within the network which creates issues with CoreDNS. No completely reliable workaounds are available, however no issues should arise from running k0s cluster(s) on a bridge network.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
 <ul>
-<li><a href="../k0sctl-install/">Installing with k0sctl</a>: Deploy and upgrade multi-node clusters with one command</li>
+<li><a href="../k0sctl-install/">Install using k0sctl</a>: Deploy multi-node clusters using just one command</li>
 <li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
 <li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
 <li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>:
-  Ingress deployment information</li>
+<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>: Ingress deployment information</li>
 </ul>
                 
               

@@ -467,6 +467,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../upgrade/" class="md-nav__link">
+      Upgrade
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../backup/" class="md-nav__link">
+      Backup/Restore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
@@ -542,7 +566,19 @@
 
   <li class="md-nav__item">
     <a href="../runtime/" class="md-nav__link">
-      Runtime
+      Runtime (CRI)
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../networking/" class="md-nav__link">
+      Networking (CNI)
     </a>
   </li>
 
@@ -566,7 +602,7 @@
 
   <li class="md-nav__item">
     <a href="../dual-stack/" class="md-nav__link">
-      IPv4/IPv6 Dual-Stack Networking
+      IPv4/IPv6 Dual-Stack
     </a>
   </li>
 
@@ -615,18 +651,6 @@
   <li class="md-nav__item">
     <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../backup/" class="md-nav__link">
-      Backup/Restore
     </a>
   </li>
 
@@ -827,18 +851,6 @@
   <li class="md-nav__item">
     <a href="../architecture/" class="md-nav__link">
       Architecture
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../networking/" class="md-nav__link">
-      Networking
     </a>
   </li>
 
@@ -1129,12 +1141,12 @@ v0.9.1
 </code></pre></div>
 </li>
 <li>
-<p>Enable and start the service:</p>
-<div class="highlight"><pre><span></span><code>systemctl <span class="nb">enable</span> --now k0scontroller
+<p>Start the service:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s start
 </code></pre></div>
 </li>
 <li>
-<p>Run <code>systemctl status k0scontroller</code> to verify the service status.</p>
+<p>Run <code>sudo k0s status</code> or <code>systemctl status k0scontroller</code> to verify the service status.</p>
 </li>
 </ol>
 <h5 id="worker-tokens">Worker Tokens<a class="headerlink" href="#worker-tokens" title="Permanent link">#</a></h5>
@@ -1158,12 +1170,12 @@ v0.9.1
 </code></pre></div>
 </li>
 <li>
-<p>Enable and start the service:</p>
-<div class="highlight"><pre><span></span><code>systemctl <span class="nb">enable</span> --now k0sworker
+<p>Start the service:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s start
 </code></pre></div>
 </li>
 <li>
-<p>Run <code>systemctl status k0sworker</code> to verify the service status.</p>
+<p>Run <code>sudo k0s status</code> or <code>systemctl status k0sworker</code> to verify the service status.</p>
 </li>
 </ol>
 <h3 id="connect-to-your-cluster">Connect To Your Cluster<a class="headerlink" href="#connect-to-your-cluster" title="Permanent link">#</a></h3>
