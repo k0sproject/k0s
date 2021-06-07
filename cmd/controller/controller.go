@@ -134,11 +134,17 @@ func joinController(tokenArg string, certRootDir string) (*token.JoinClient, err
 		return nil, fmt.Errorf("failed to create join client: %w", err)
 	}
 
-	caData, err := joinClient.GetCA()
+	var caData v1beta1.CaResponse
+	err = retry.Do(func() error {
+		caData, err = joinClient.GetCA()
+		if err != nil {
+			return fmt.Errorf("failed to sync CA: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to sync CA: %w", err)
+		return nil, err
 	}
-
 	return joinClient, writeCerts(caData, certRootDir)
 }
 
