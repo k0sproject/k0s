@@ -27,8 +27,9 @@ nav:
       - Configuration Options:            configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
-      - Runtime (CRI):                    runtime.md
       - Networking (CNI):                 networking.md
+      - Runtime (CRI):                    runtime.md
+      - Storage (CSI):                    storage.md
       - Cloud Providers:                  cloud-providers.md
       - IPv4/IPv6 Dual-Stack:             dual-stack.md
       - Control Plane High Availability:  high-availability.md
@@ -79,9 +80,6 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
-google_analytics:
-  - 274096580
-  - auto
 
 markdown_extensions:
   - pymdownx.highlight: {}
