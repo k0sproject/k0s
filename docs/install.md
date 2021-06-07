@@ -38,13 +38,9 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     sudo k0s start
     ```
 
+    The k0s service will start automatically after the node restart.
+
     A minute or two typically passes before the node is ready to deploy applications.
-
-    (Optional) To enable the k0s service to always start following node restart on a host running systemd, run:
-
-    ```shell
-    sudo systemctl enable k0scontroller
-    ```
 
 4. Check service, logs and k0s status
 
@@ -78,7 +74,7 @@ The removal of k0s is a two-step process.
 1. Stop the service.
 
     ```shell
-    sudo systemctl stop k0scontroller
+    sudo k0s stop
     ```
 
 2. Execute the `k0s reset` command.
@@ -95,7 +91,7 @@ The removal of k0s is a two-step process.
 
 ## Next Steps
 
-- [Installing with k0sctl](k0sctl-install.md): Deploy and upgrade multi-node clusters with one command
+- [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
 - [Manual Install](k0s-multi-node.md): (Advanced) Manually deploy multi-node clusters
 - [Control plane configuration options](configuration.md): Networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
