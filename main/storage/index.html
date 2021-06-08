@@ -9,24 +9,24 @@
         <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_stop/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/storage/">
       
       
         <meta name="author" content="Mirantis, Inc.">
       
-      <link rel="shortcut icon" href="../../img/k0s_social.png">
+      <link rel="shortcut icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2, mkdocs-material-6.1.0+insiders-1.7.0">
     
     
       
-        <title>K0s stop - Documentation</title>
+        <title>Storage (CSI) - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.406af9ae.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.406af9ae.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ec60dfa4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ec60dfa4.min.css">
         
       
     
@@ -41,7 +41,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-stop" class="md-skip">
+        <a href="#storage-csi" class="md-skip">
           Skip to content
         </a>
       
@@ -91,7 +91,7 @@
   <nav class="md-header-nav md-grid" aria-label="Header">
     <a href="https://docs.k0sproject.io/main" title="Documentation" class="md-header-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header-nav__button md-icon" for="__drawer">
@@ -107,7 +107,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              K0s stop
+              Storage (CSI)
             
           </span>
         </div>
@@ -199,7 +199,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="https://docs.k0sproject.io/main" title="Documentation" class="md-nav__button md-logo" aria-label="Documentation">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -226,7 +226,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Overview
     </a>
   </li>
@@ -259,7 +259,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../install/" class="md-nav__link">
+    <a href="../install/" class="md-nav__link">
       Quick Start Guide
     </a>
   </li>
@@ -271,7 +271,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0sctl-install/" class="md-nav__link">
+    <a href="../k0sctl-install/" class="md-nav__link">
       Install using k0sctl
     </a>
   </li>
@@ -304,7 +304,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-multi-node/" class="md-nav__link">
+    <a href="../k0s-multi-node/" class="md-nav__link">
       Manual Install (advanced)
     </a>
   </li>
@@ -316,7 +316,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-in-docker/" class="md-nav__link">
+    <a href="../k0s-in-docker/" class="md-nav__link">
       Docker
     </a>
   </li>
@@ -328,7 +328,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../experimental-windows/" class="md-nav__link">
+    <a href="../experimental-windows/" class="md-nav__link">
       Windows (experimental)
     </a>
   </li>
@@ -340,7 +340,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../raspberry-pi4/" class="md-nav__link">
+    <a href="../raspberry-pi4/" class="md-nav__link">
       Raspberry Pi 4
     </a>
   </li>
@@ -352,7 +352,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ansible-playbook/" class="md-nav__link">
+    <a href="../examples/ansible-playbook/" class="md-nav__link">
       Ansible Playbook
     </a>
   </li>
@@ -364,7 +364,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../airgap-install/" class="md-nav__link">
+    <a href="../airgap-install/" class="md-nav__link">
       Airgap Install
     </a>
   </li>
@@ -381,7 +381,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../upgrade/" class="md-nav__link">
+    <a href="../upgrade/" class="md-nav__link">
       Upgrade
     </a>
   </li>
@@ -393,7 +393,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../backup/" class="md-nav__link">
+    <a href="../backup/" class="md-nav__link">
       Backup/Restore
     </a>
   </li>
@@ -405,7 +405,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../system-requirements/" class="md-nav__link">
+    <a href="../system-requirements/" class="md-nav__link">
       System Requirements
     </a>
   </li>
@@ -420,10 +420,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       Usage
@@ -443,7 +445,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration/" class="md-nav__link">
+    <a href="../configuration/" class="md-nav__link">
       Configuration Options
     </a>
   </li>
@@ -455,7 +457,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../configuration-validation/" class="md-nav__link">
+    <a href="../configuration-validation/" class="md-nav__link">
       Configuration Validation
     </a>
   </li>
@@ -467,7 +469,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../worker-node-config/" class="md-nav__link">
+    <a href="../worker-node-config/" class="md-nav__link">
       Worker Node Configuration
     </a>
   </li>
@@ -479,7 +481,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../networking/" class="md-nav__link">
+    <a href="../networking/" class="md-nav__link">
       Networking (CNI)
     </a>
   </li>
@@ -491,7 +493,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../runtime/" class="md-nav__link">
+    <a href="../runtime/" class="md-nav__link">
       Runtime (CRI)
     </a>
   </li>
@@ -501,11 +503,49 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../storage/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Storage (CSI)
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Storage (CSI)
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example-storage-solutions" class="md-nav__link">
+    Example storage solutions
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -515,7 +555,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cloud-providers/" class="md-nav__link">
+    <a href="../cloud-providers/" class="md-nav__link">
       Cloud Providers
     </a>
   </li>
@@ -527,7 +567,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../dual-stack/" class="md-nav__link">
+    <a href="../dual-stack/" class="md-nav__link">
       IPv4/IPv6 Dual-Stack
     </a>
   </li>
@@ -539,7 +579,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../high-availability/" class="md-nav__link">
+    <a href="../high-availability/" class="md-nav__link">
       Control Plane High Availability
     </a>
   </li>
@@ -551,7 +591,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../shell-completion/" class="md-nav__link">
+    <a href="../shell-completion/" class="md-nav__link">
       Shell Completion
     </a>
   </li>
@@ -563,7 +603,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user-management/" class="md-nav__link">
+    <a href="../user-management/" class="md-nav__link">
       User Management
     </a>
   </li>
@@ -575,7 +615,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../k0s-reset/" class="md-nav__link">
+    <a href="../k0s-reset/" class="md-nav__link">
       Uninstall the k0s Cluster
     </a>
   </li>
@@ -613,7 +653,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../manifests/" class="md-nav__link">
+    <a href="../manifests/" class="md-nav__link">
       Manifest Deployer
     </a>
   </li>
@@ -625,7 +665,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../helm-charts/" class="md-nav__link">
+    <a href="../helm-charts/" class="md-nav__link">
       Helm Charts
     </a>
   </li>
@@ -658,7 +698,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/traefik-ingress/" class="md-nav__link">
+    <a href="../examples/traefik-ingress/" class="md-nav__link">
       Traefik Ingress Controller
     </a>
   </li>
@@ -670,7 +710,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+    <a href="../examples/ambassador-ingress/" class="md-nav__link">
       Ambassador Gateway
     </a>
   </li>
@@ -682,7 +722,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../examples/rook-ceph/" class="md-nav__link">
+    <a href="../examples/rook-ceph/" class="md-nav__link">
       Ceph Storage with Rook
     </a>
   </li>
@@ -725,7 +765,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../FAQ/" class="md-nav__link">
+    <a href="../FAQ/" class="md-nav__link">
       FAQ
     </a>
   </li>
@@ -737,7 +777,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../troubleshooting/" class="md-nav__link">
+    <a href="../troubleshooting/" class="md-nav__link">
       Common Pitfalls
     </a>
   </li>
@@ -775,7 +815,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../architecture/" class="md-nav__link">
+    <a href="../architecture/" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -787,7 +827,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../cis_benchmark/" class="md-nav__link">
+    <a href="../cis_benchmark/" class="md-nav__link">
       CIS Benchmark
     </a>
   </li>
@@ -825,7 +865,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/overview/" class="md-nav__link">
+    <a href="../contributors/overview/" class="md-nav__link">
       Overview
     </a>
   </li>
@@ -837,7 +877,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/github_workflow/" class="md-nav__link">
+    <a href="../contributors/github_workflow/" class="md-nav__link">
       GitHub Workflow
     </a>
   </li>
@@ -849,7 +889,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../contributors/testing/" class="md-nav__link">
+    <a href="../contributors/testing/" class="md-nav__link">
       Testing
     </a>
   </li>
@@ -861,7 +901,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+    <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
       Documentation
     </a>
   </li>
@@ -881,6 +921,8 @@
             
               
               
+                
+              
               
                 <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
                   <div class="md-sidebar__scrollwrap">
@@ -888,6 +930,8 @@
                       
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -897,36 +941,9 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-stop" class="md-nav__link">
-    k0s stop
+  <a href="#example-storage-solutions" class="md-nav__link">
+    Example storage solutions
   </a>
-  
-    <nav class="md-nav" aria-label="k0s stop">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -944,23 +961,25 @@
               
                 
                 
-                  <h1>K0s stop</h1>
-                
-                <h2 id="k0s-stop">k0s stop<a class="headerlink" href="#k0s-stop" title="Permanent link">#</a></h2>
-<p>Stop the k0s service after it has been installed using <code>k0s install</code>. Must be run as root (or with sudo).</p>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -h, --help   <span class="nb">help</span> <span class="k">for</span> start
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+                <h1 id="storage-csi">Storage (CSI)<a class="headerlink" href="#storage-csi" title="Permanent link">#</a></h1>
+<p>k0s supports a wide range of different storage options. There are no "selected" storage in k0s. Instead, all Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
+<p>When the storage solution implements Container Storage Interface (CSI), containers can communicate with the storage for creation and configuration of persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
+<p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
+<h2 id="example-storage-solutions">Example storage solutions<a class="headerlink" href="#example-storage-solutions" title="Permanent link">#</a></h2>
+<p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
 <ul>
-<li><a href="./">k0s start</a> - Start the k0s service after it has been installed using <code>k0s install</code>. Must be run as root (or with sudo)</li>
-<li><a href="../k0s_install/">k0s install</a> - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
-<li><a href="../k0s_install_controller/">k0s install controller</a> - Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)</li>
-<li><a href="../k0s_install_worker/">k0s install worker</a> - Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)</li>
+<li>Rook-Ceph (Open Source)</li>
+<li>OpenEBS (Open Source)</li>
+<li>MinIO (Open Source)</li>
+<li>Gluster (Open Source)</li>
+<li>Longhorn (Open Source)</li>
+<li>Amazon EBS</li>
+<li>Google Persistent Disk</li>
+<li>Azure Disk</li>
+<li>Portworx</li>
 </ul>
+<p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
+<p>If you are looking for a bit more simple solution and use a folder from the node local disk, you can take a look at <a href="https://docs.openebs.io/docs/next/uglocalpv-hostpath.html">OpenEBS</a>. With OpenEBS, you can either create a simple local storage or a highly available distributed storage.</p>
                 
               
               
@@ -975,6 +994,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../runtime/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Runtime (CRI)
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../cloud-providers/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Cloud Providers
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1021,15 +1075,15 @@
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.4d7724a9.min.js"></script>
-      <script src="../../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.4d7724a9.min.js"></script>
+      <script src="../assets/javascripts/bundle.0421a6ad.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "..",
           features: ['toc.autohide', 'search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.0f64ce30.min.js"
+            worker: "../assets/javascripts/worker/search.0f64ce30.min.js"
           }, typeof search !== "undefined" && search),
           version: {'method': 'mike'}
         })
