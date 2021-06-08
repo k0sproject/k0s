@@ -102,7 +102,7 @@ func GetKubeCtlFlagSet() *pflag.FlagSet {
 
 func GetCriSocketFlag() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVar(&workerOpts.CriSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	flagset.StringVar(&workerOpts.CriSocket, "cri-socket", "", "container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	return flagset
 }
 
