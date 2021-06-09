@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -64,7 +65,7 @@ func NewStatusCmd() *cobra.Command {
 					return err
 				}
 
-				if s.SysInit, s.StubFile, err = install.GetSysInit(s.Role); err != nil {
+				if s.SysInit, s.StubFile, err = install.GetSysInit(strings.TrimSuffix(s.Role, "+worker")); err != nil {
 					return err
 				}
 			} else {
