@@ -14,7 +14,7 @@ The command will return information about system init, PID, k0s role, kubeconfig
 
 ```shell
   -h, --help         help for status
-  -o, --out string   sets type of out put to json or yaml
+  -o, --out string   sets type of output to json or yaml
 ```
 
 ### Options inherited from parent commands
