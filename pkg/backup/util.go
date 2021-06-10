@@ -94,3 +94,9 @@ func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 func timeStamp() string {
 	return time.Now().Format(timeStampLayout)
 }
+
+func getArchiveTimestamp(archivePath string) string {
+	fileName := filepath.Base(archivePath)
+	nameWithoutExt := strings.Split(fileName, ".")[0]
+	return strings.Trim(nameWithoutExt, "k0s_backup")
+}
