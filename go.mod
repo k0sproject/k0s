@@ -16,7 +16,6 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/hashicorp/raft v1.3.1 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.8
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect

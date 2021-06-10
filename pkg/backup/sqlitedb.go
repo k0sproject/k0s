@@ -55,6 +55,9 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 		return StepResult{}, err
 	}
 	kineDB, err := db.Open(dbPath)
+	if err != nil {
+		return StepResult{}, err
+	}
 	path := filepath.Join(s.tmpDir, kineBackup)
 
 	logrus.Debugf("exporting kine db to %v", path)

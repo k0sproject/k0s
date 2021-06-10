@@ -17,6 +17,10 @@ package restore
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/backup"
@@ -24,13 +28,13 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/install"
 
-	"os"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type CmdOpts config.CLIOptions
+
+var restoredConfigPath string
 
 func NewRestoreCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -53,6 +57,7 @@ func NewRestoreCmd() *cobra.Command {
 	}
 
 	cmd.SilenceUsage = true
+	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: ${cwd}/k0s_<archive timestamp>.yaml)")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -89,7 +94,11 @@ func (c *CmdOpts) restore(path string) error {
 		return err
 	}
 	// c.CfgFile, c.ClusterConfig.Spec, c.K0sVars
-	return mgr.RunRestore(path, c.K0sVars)
+
+	if restoredConfigPath == "" {
+		restoredConfigPath = defaultConfigFileOutputPath(path)
+	}
+	return mgr.RunRestore(path, c.K0sVars, restoredConfigPath)
 }
 
 // TODO Need to move to some common place, now it's defined in restore and backup commands
@@ -100,4 +109,20 @@ func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 		return err
 	}
 	return nil
+}
+
+// set output config file name and path according to input archive Timestamps
+// the default location for the restore operation is the currently running cwd
+// this can be override, by using the --config-out flag
+func defaultConfigFileOutputPath(archivePath string) string {
+	f := filepath.Base(archivePath)
+	nameWithoutExt := strings.Split(f, ".")[0]
+	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")
+	restoredFileName := fmt.Sprintf("k0s_%s.yaml", fName)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return path.Join(cwd, restoredFileName)
 }
