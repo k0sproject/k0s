@@ -11,11 +11,14 @@ import (
 )
 
 type configurationStep struct {
-	path string
+	path       string
+	backupTime string
 }
 
-func newConfigurationStep(path string) *configurationStep {
-	return &configurationStep{path: path}
+func newConfigurationStep(path string, archivePath string) *configurationStep {
+	return &configurationStep{
+		path:       path,
+		backupTime: getArchiveTimestamp(archivePath)}
 }
 
 func (c configurationStep) Name() string {
@@ -42,7 +45,13 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		return nil
 	}
 	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
-	objectPathInRestored := path.Join(restoreTo, "k0s.yaml")
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	restoredFileName := fmt.Sprintf("k0s_%s.yaml", c.backupTime)
+	objectPathInRestored := path.Join(cwd, restoredFileName)
+
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, objectPathInRestored)
 	return util.FileCopy(objectPathInArchive, objectPathInRestored)
 }

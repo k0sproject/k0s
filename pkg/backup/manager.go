@@ -41,7 +41,7 @@ type Manager struct {
 
 // RunBackup backups cluster
 func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
-	bm.discoverSteps(cfgPath, clusterSpec, vars, "backup")
+	bm.discoverSteps(cfgPath, clusterSpec, vars, "backup", "")
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -68,7 +68,7 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 
 }
 
-func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string) {
+func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, archivePath string) {
 	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	}
@@ -90,7 +90,7 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 		}
 		bm.Add(NewFilesystemStep(path))
 	}
-	bm.Add(newConfigurationStep(cfgPath))
+	bm.Add(newConfigurationStep(cfgPath, archivePath))
 }
 
 // Add adds backup step
@@ -132,9 +132,9 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars) erro
 	defer os.RemoveAll(bm.tmpDir)
 	cfg, err := bm.getConfigForRestore(k0sVars)
 	if err != nil {
-		return fmt.Errorf("failed to parse backuped configuration file, check the backup archive: %v", err)
+		return fmt.Errorf("failed to parse backed-up configuration file.s check the backup archive: %v", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore")
+	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", archivePath)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
