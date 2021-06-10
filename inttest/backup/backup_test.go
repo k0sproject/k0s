@@ -17,10 +17,10 @@ package basic
 
 import (
 	"context"
+	"testing"
+
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"sort"
-	"testing"
 
 	"github.com/stretchr/testify/suite"
 
@@ -92,78 +92,43 @@ func (s *BackupSuite) TestK0sGetsUp() {
 
 	snapshotAfterBackup := s.makeSnapshot(kc)
 	s.Require().NoError(err)
-	s.Require().True(snapshot.hasServices(2))
-	s.Require().True(snapshot.hasDeployments(2))
-	s.Require().True(snapshot.hasDaemonSets(3))
+	// Matching object UIDs after restore guarantees we got the full state restored
 	s.Require().Equal(snapshot, snapshotAfterBackup)
 }
 
 type snapshot struct {
-	systemNs    types.UID
-	daemonSets  []types.UID
-	deployments []types.UID
-	services    []types.UID
-}
-
-func (s snapshot) hasDaemonSets(n int) bool {
-	return len(s.daemonSets) == n
-}
-
-func (s snapshot) hasServices(n int) bool {
-	return len(s.services) == n
-}
-
-func (s snapshot) hasDeployments(n int) bool {
-	return len(s.deployments) == n
+	namespaces map[types.UID]string
+	services   map[types.UID]string
+	nodes      map[types.UID]string
 }
 
 func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 	// Take some UIDs to be able to verify state has restored properly
-	nsNew, err := kc.CoreV1().Namespaces().Get(context.TODO(), "kube-system", v1.GetOptions{})
+	namespaces := make(map[types.UID]string)
+	nsList, err := kc.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
 	s.Require().NoError(err)
-
-	daemonSets := []types.UID{}
-	deployments := []types.UID{}
-	services := []types.UID{}
-	{
-		response, err := kc.AppsV1().DaemonSets("kube-system").List(context.TODO(), v1.ListOptions{})
-		s.Require().NoError(err)
-		for _, obj := range response.Items {
-			daemonSets = append(daemonSets, obj.ObjectMeta.UID)
-		}
-	}
-	{
-		response, err := kc.AppsV1().Deployments("kube-system").List(context.TODO(), v1.ListOptions{})
-		s.Require().NoError(err)
-
-		for _, obj := range response.Items {
-			deployments = append(deployments, obj.ObjectMeta.UID)
-		}
-	}
-	{
-		response, err := kc.CoreV1().Services("kube-system").List(context.TODO(), v1.ListOptions{})
-		s.Require().NoError(err)
-
-		for _, obj := range response.Items {
-			services = append(services, obj.ObjectMeta.UID)
-		}
+	for _, n := range nsList.Items {
+		namespaces[n.ObjectMeta.UID] = n.Name
 	}
 
-	sort.Slice(daemonSets, func(i, j int) bool {
-		return daemonSets[i] > daemonSets[j]
-	})
-	sort.Slice(deployments, func(i, j int) bool {
-		return deployments[i] > deployments[j]
-	})
-	sort.Slice(services, func(i, j int) bool {
-		return services[i] > services[j]
-	})
+	services := make(map[types.UID]string)
+	{
+		svc, err := kc.CoreV1().Services("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+		s.Require().NoError(err)
+		services[svc.ObjectMeta.UID] = svc.Name
+	}
+
+	nodes := make(map[types.UID]string)
+	nodeList, err := kc.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	s.Require().NoError(err)
+	for _, n := range nodeList.Items {
+		nodes[n.ObjectMeta.UID] = n.Name
+	}
 
 	return snapshot{
-		systemNs:    nsNew.ObjectMeta.UID,
-		daemonSets:  daemonSets,
-		deployments: deployments,
-		services:    services,
+		namespaces: namespaces,
+		services:   services,
+		nodes:      nodes,
 	}
 }
 
