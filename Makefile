@@ -55,12 +55,6 @@ ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
-ifeq ($(TARGET_OS),windows)
-build: k0s.exe
-else
-build: k0s
-endif
-
 golang_image := $(shell docker inspect --type=image k0sbuild.docker-image.k0s)
 ifneq ($(golang_image),)
 golang_image := docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .

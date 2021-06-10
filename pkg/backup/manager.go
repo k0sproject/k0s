@@ -68,7 +68,7 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 
 }
 
-func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, archivePath string) {
+func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
 	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	}
@@ -90,7 +90,7 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 		}
 		bm.Add(NewFilesystemStep(path))
 	}
-	bm.Add(newConfigurationStep(cfgPath, archivePath))
+	bm.Add(newConfigurationStep(cfgPath, restoredConfigPath))
 }
 
 // Add adds backup step
@@ -125,7 +125,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 }
 
 // RunRestore restores cluster
-func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars) error {
+func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
 	if err := util.ExtractArchive(archivePath, bm.tmpDir); err != nil {
 		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
@@ -134,7 +134,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars) erro
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file.s check the backup archive: %v", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", archivePath)
+	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", restoredConfigPath)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
