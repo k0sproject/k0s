@@ -55,25 +55,25 @@ ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
-golang_image := $(shell docker inspect --type=image k0sbuild.docker-image.k0s)
-ifneq ($(golang_image),)
-golang_image := docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
-endif
-
-GO ?= $(golang_image) && GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
+GOLANG_IMAGE = k0sbuild.docker-image.k0s
+GO ?= GOCACHE=/tmp/.cache docker run --rm -v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
 	-e GOARCH \
 	-e GOCACHE \
 	--user $$(id -u) \
-	k0sbuild.docker-image.k0s go
+	$(GOLANG_IMAGE) go
+
+.k0sbuild.docker-image.k0s:
+	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+	touch $@
 
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
-build: k0s.exe
+build: .k0sbuild.docker-image.k0s k0s.exe
 else
-build: k0s
+build: .k0sbuild.docker-image.k0s k0s
 endif
 
 .PHONY: all
