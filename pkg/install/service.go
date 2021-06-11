@@ -28,23 +28,23 @@ var (
 	k0sDescription = "k0s - Zero Friction Kubernetes"
 )
 
-type program struct{}
+type Program struct{}
 
-func (p *program) Start(service.Service) error {
+func (p *Program) Start(service.Service) error {
 	// Start should not block. Do the actual work async.
 	return nil
 }
 
-func (p *program) Stop(service.Service) error {
+func (p *Program) Stop(service.Service) error {
 	// Stop should not block. Return with a few seconds.
 	return nil
 }
 
 // InstalledService returns a k0s service if one has been installed on the host or an error otherwise.
 func InstalledService() (service.Service, error) {
-	prg := &program{}
+	prg := &Program{}
 	for _, role := range []string{"controller", "worker"} {
-		c := getServiceConfig(role)
+		c := GetServiceConfig(role)
 		s, err := service.New(prg, c)
 		if err == nil {
 			return s, nil
@@ -59,10 +59,10 @@ func EnsureService(args []string) error {
 	var deps []string
 	var svcConfig *service.Config
 
-	prg := &program{}
+	prg := &Program{}
 	for _, v := range args {
 		if v == "controller" || v == "worker" {
-			svcConfig = getServiceConfig(v)
+			svcConfig = GetServiceConfig(v)
 			break
 		}
 	}
@@ -98,13 +98,13 @@ func EnsureService(args []string) error {
 }
 
 func UninstallService(role string) error {
-	prg := &program{}
+	prg := &Program{}
 
 	if role == "controller+worker" {
 		role = "controller"
 	}
 
-	svcConfig := getServiceConfig(role)
+	svcConfig := GetServiceConfig(role)
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func GetSysInit(role string) (sysInitPlatform string, stubFile string, err error
 }
 
 func getSysInitPlatform() (string, error) {
-	prg := &program{}
+	prg := &Program{}
 	s, err := service.New(prg, &service.Config{Name: "132"})
 	if err != nil {
 		return "", err
@@ -149,11 +149,12 @@ func getSysInitPlatform() (string, error) {
 	return s.Platform(), nil
 }
 
-func getServiceConfig(role string) *service.Config {
+func GetServiceConfig(role string) *service.Config {
 	var k0sDisplayName string
+
 	if role == "controller" || role == "worker" {
 		k0sDisplayName = "k0s " + role
-		k0sServiceName = k0sServiceName + role
+		k0sServiceName = "k0s" + role
 	}
 	return &service.Config{
 		Name:        k0sServiceName,

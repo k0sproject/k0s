@@ -30,6 +30,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
+func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
+	return getUserList(*clusterConfig.Spec.Install.SystemUsers)
+}
+
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) error {
 	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
@@ -50,8 +54,10 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range users {
-		if err := DeleteUser(v); err != nil {
-			messages = append(messages, err.Error())
+		if exists, _ := util.CheckIfUserExists(v); exists {
+			if err := DeleteUser(v); err != nil {
+				messages = append(messages, err.Error())
+			}
 		}
 	}
 	if len(messages) > 0 {
@@ -115,7 +121,7 @@ func DeleteUser(userName string) error {
 	var userCmd string
 	var userCmdArgs []string
 
-	logrus.Infof("deleting user: %s", userName)
+	logrus.Debugf("deleting user: %s", userName)
 	_, err := util.GetExecPath("userdel")
 	if err == nil {
 		userCmd = "userdel"
