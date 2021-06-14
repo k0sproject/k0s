@@ -253,9 +253,7 @@ func (c *Certificates) Stop() error {
 }
 
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
-	if util.FileExists(dest) {
-		return util.ChownFile(dest, owner, constant.CertSecureMode)
-	}
+	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	data := struct {
 		URL        string
 		CACert     string
