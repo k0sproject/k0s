@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/k0sproject/k0s/pkg/cleanup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 )
@@ -65,37 +65,14 @@ func (c *CmdOpts) reset() error {
 		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
-	role := install.GetRoleByStagedKubelet(c.K0sVars.BinDir)
-	logrus.Debugf("detected role for cleanup: %v", role)
-	err := install.UninstallService(role)
-	if err != nil {
-		// might be that k0s was not run as a part of a service. just notify on uninstall error
-		logger.Infof("failed to uninstall k0s service: %v", err)
-	}
-	// Get Cleanup Config
-	cfg := install.NewCleanUpConfig(c.K0sVars.DataDir)
+	cfg := cleanup.NewConfig(c.K0sVars.DataDir)
+	cfg.CfgFile = c.CfgFile
+	cfg.K0sVars = c.K0sVars
 
-	if strings.Contains(role, "controller") {
-		clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-		if err != nil {
-			logger.Errorf("failed to get cluster setup: %v", err)
-		}
-		if err := install.DeleteControllerUsers(clusterConfig); err != nil {
-			// don't fail, just notify on delete error
-			logger.Infof("failed to delete controller users: %v", err)
-		}
-	}
-	if strings.Contains(role, "worker") {
-		if err := cfg.WorkerCleanup(); err != nil {
-			logger.Infof("error while attempting to clean up worker resources: %v", err)
-		}
-	}
+	err := cfg.Cleanup()
 
-	if err := cfg.RemoveAllDirectories(); err != nil {
-		logger.Info(err.Error())
-	}
-	logrus.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
-	return nil
+	logger.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
+	return err
 }
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {

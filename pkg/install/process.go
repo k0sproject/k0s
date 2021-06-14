@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/mitchellh/go-ps"
 	"gopkg.in/yaml.v2"
 )
@@ -131,5 +132,19 @@ func (s K0sStatus) String() {
 		if s.StubFile != "" {
 			fmt.Println("Service file:", s.StubFile)
 		}
+	}
+}
+
+// This function attempts to find out the host role, by staged binaries
+func GetRoleByStagedKubelet(binPath string) string {
+	apiBinary := fmt.Sprintf("%s/%s", binPath, "kube-apiserver")
+	kubeletBinary := fmt.Sprintf("%s/%s", binPath, "kubelet")
+
+	if util.FileExists(apiBinary) && util.FileExists(kubeletBinary) {
+		return "controller+worker"
+	} else if util.FileExists(apiBinary) {
+		return "controller"
+	} else {
+		return "worker"
 	}
 }
