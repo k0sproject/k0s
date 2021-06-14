@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2021 k0s authors
 
@@ -71,8 +73,7 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
 	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
-	}
-	if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
+	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
 		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
 	} else {
 		logrus.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
@@ -132,7 +133,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, rest
 	defer os.RemoveAll(bm.tmpDir)
 	cfg, err := bm.getConfigForRestore(k0sVars)
 	if err != nil {
-		return fmt.Errorf("failed to parse backed-up configuration file.s check the backup archive: %v", err)
+		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %v", err)
 	}
 	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", restoredConfigPath)
 	logrus.Info("Starting restore")

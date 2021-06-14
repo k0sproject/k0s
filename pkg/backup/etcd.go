@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2021 k0s authors
 
@@ -18,9 +20,10 @@ package backup
 import (
 	"context"
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
 	"os"
 	"path/filepath"
+
+	"github.com/k0sproject/k0s/internal/util"
 
 	"go.etcd.io/etcd/clientv3/snapshot"
 	"go.uber.org/zap"
