@@ -73,7 +73,7 @@ func NewConfig(dataDir string, criSocketPath string) (*Config, error) {
 func (c *Config) Cleanup() error {
 	var msg []error
 	cleanupSteps := []Step{
-		&containerd{Config: c},
+		&containers{Config: c},
 		&users{Config: c},
 		&services{Config: c},
 		&directories{Config: c},
