@@ -18,7 +18,7 @@ func (u *users) Name() string {
 
 // NeedsToRun detects controller users
 func (u *users) NeedsToRun() bool {
-	clusterConfig, err := config.GetYamlFromFile(u.Config.CfgFile, u.Config.K0sVars)
+	clusterConfig, err := config.GetYamlFromFile(u.Config.cfgFile, u.Config.k0sVars)
 	if err != nil {
 		return false
 	}
@@ -35,7 +35,7 @@ func (u *users) NeedsToRun() bool {
 // Run removes all controller users that are present on the host
 func (u *users) Run() error {
 	logger := logrus.New()
-	clusterConfig, err := config.GetYamlFromFile(u.Config.CfgFile, u.Config.K0sVars)
+	clusterConfig, err := config.GetYamlFromFile(u.Config.cfgFile, u.Config.k0sVars)
 	if err != nil {
 		logger.Errorf("failed to get cluster setup: %v", err)
 	}
