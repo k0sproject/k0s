@@ -34,6 +34,9 @@ const (
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0755
 
+	// KineDBDirMode is the expected directory permissions for the Kine DB
+	KineDBDirMode = 0750
+
 	// User accounts for services
 
 	// EtcdUser defines the user to use for running etcd process

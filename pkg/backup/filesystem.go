@@ -1,12 +1,15 @@
+// +build !windows
+
 package backup
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/sirupsen/logrus"
 )
 
 // FileSystemStep creates backup for file system object
@@ -21,7 +24,7 @@ func (d FileSystemStep) Name() string {
 func (d FileSystemStep) Backup() (StepResult, error) {
 	s, err := os.Stat(d.path)
 	if os.IsNotExist(err) {
-		logrus.Infof("Path `%s` is not existed, skipping backup", d.path)
+		logrus.Infof("Path `%s` does not exist, skipping...", d.path)
 		return StepResult{}, nil
 	}
 	if err != nil {
@@ -53,7 +56,7 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 	objectPathInRestored := path.Join(restoreTo, childName)
 	stat, err := os.Stat(objectPathInArchive)
 	if os.IsNotExist(err) {
-		logrus.Infof("Path `%s` not found in the archive, skipping", objectPathInArchive)
+		logrus.Infof("Path `%s` not found in the archive, skipping...", objectPathInArchive)
 		return nil
 	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, objectPathInRestored)

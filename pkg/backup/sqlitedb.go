@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2021 k0s authors
 
@@ -15,43 +17,90 @@ limitations under the License.
 */
 package backup
 
-// import (
-// 	"fmt"
-// 	"net/url"
-// 	"os"
-// 	"path/filepath"
+import (
+	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
 
-// 	"github.com/rqlite/rqlite/db"
-// 	"github.com/sirupsen/logrus"
-// )
+	"github.com/rqlite/rqlite/db"
+	"github.com/sirupsen/logrus"
 
-// func (c *Config) saveSQLiteDB() error {
-// 	dbPath, err := c.getKineDBPath()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	kineDB, err := db.Open(dbPath)
-// 	path := filepath.Join(c.tmpDir, kineBackup)
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/constant"
+)
 
-// 	logrus.Debugf("exporting kine db to %v", path)
-// 	f, err := os.Create(path)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create kine backup: %v", err)
-// 	}
-// 	// create a hot backup of the kine db
-// 	err = kineDB.Dump(f)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to back-up kine db: %v", err)
-// 	}
-// 	c.savedAssets = append(c.savedAssets, path)
-// 	return nil
-// }
+const kineBackup = "kine-state-backup.db"
 
-// func (c *Config) getKineDBPath() (string, error) {
-// 	u, err := url.Parse(c.storageSpec.Kine.DataSource)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to parse Kind datasource string: %v", err)
-// 	}
-// 	logrus.Debugf("kinedb path: %v", u.Path)
-// 	return u.Path, nil
-// }
+type sqliteStep struct {
+	dataSource string
+	tmpDir     string
+	dataDir    string
+}
+
+func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep {
+	return &sqliteStep{
+		tmpDir:     tmpDir,
+		dataSource: dataSource,
+		dataDir:    dataDir,
+	}
+}
+
+func (s *sqliteStep) Name() string {
+	dbPath, _ := s.getKineDBPath()
+	return fmt.Sprintf("sqlite db path %s", dbPath)
+}
+
+func (s *sqliteStep) Backup() (StepResult, error) {
+	dbPath, err := s.getKineDBPath()
+	if err != nil {
+		return StepResult{}, err
+	}
+	kineDB, err := db.Open(dbPath)
+	if err != nil {
+		return StepResult{}, err
+	}
+	path := filepath.Join(s.tmpDir, kineBackup)
+
+	logrus.Debugf("exporting kine db to %v", path)
+	_, err = os.Create(path)
+	if err != nil {
+		return StepResult{}, fmt.Errorf("failed to create kine backup: %v", err)
+	}
+	// create a hot backup of the kine db
+	err = kineDB.Backup(path)
+	if err != nil {
+		return StepResult{}, fmt.Errorf("failed to back-up kine db: %v", err)
+	}
+	return StepResult{filesForBackup: []string{path}}, nil
+}
+
+func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
+	snapshotPath := filepath.Join(restoreFrom, kineBackup)
+	if !util.FileExists(snapshotPath) {
+		return fmt.Errorf("sqlite snapshot not found at %s", snapshotPath)
+	}
+	dbPath, err := s.getKineDBPath()
+	if err != nil {
+		return err
+	}
+
+	// make sure DB dir exists. if not, create it.
+	dbPathDir := filepath.Dir(dbPath)
+	if err = util.InitDirectory(dbPathDir, constant.KineDBDirMode); err != nil {
+		return err
+	}
+	logrus.Infof("restoring sqlite db to `%s`", dbPath)
+	if err := util.FileCopy(snapshotPath, dbPath); err != nil {
+		logrus.Errorf("failed to restore snapshot from disk: %v", err)
+	}
+	return nil
+}
+
+func (s *sqliteStep) getKineDBPath() (string, error) {
+	u, err := url.Parse(s.dataSource)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse Kind datasource string: %v", err)
+	}
+	return u.Path, nil
+}

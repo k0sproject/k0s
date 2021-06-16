@@ -72,6 +72,12 @@ else
 build: k0s
 endif
 
+.k0sbuild.docker-image.k0s:
+	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+	touch $@
+
+.k0sbuild.docker-image.k0s: build/Dockerfile
+
 .PHONY: all
 all: k0s k0s.exe
 
@@ -93,10 +99,17 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
 
+
 k0s: TARGET_OS = linux
 k0s: pkg/assets/zz_generated_offsets_linux.go
+k0s: BUILD_GO_CGO_ENABLED = 1
+k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
+k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
+k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
+k0s.exe: BUILD_GO_CGO_ENABLED = 0
+k0s.exe: GOLANG_IMAGE = golang:1.16-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
 k0s.exe k0s: static/gen_manifests.go
@@ -136,7 +149,8 @@ check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
+	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go .k0sbuild.docker-image.k0s
+	docker rmi k0sbuild.docker-image.k0s -f
 	$(MAKE) -C embedded-bins clean
 	$(MAKE) -C image-bundle clean
 	$(MAKE) -C inttest clean
@@ -173,3 +187,4 @@ fi \
 
 lint-gomod:
 	@${GOMODTIDYLINT}
+
