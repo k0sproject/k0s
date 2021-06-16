@@ -67,14 +67,11 @@ func (c *CmdOpts) reset() error {
 	}
 
 	// Get Cleanup Config
-	cfg, err := cleanup.NewConfig(c.K0sVars.DataDir, c.WorkerOptions.CriSocket)
+	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
 	if err != nil {
 		logger.Fatalf("failed to configure cleanup: %v", err)
 		return err
 	}
-
-	cfg.CfgFile = c.CfgFile
-	cfg.K0sVars = c.K0sVars
 
 	err = cfg.Cleanup()
 
