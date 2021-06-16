@@ -66,13 +66,6 @@ func (c *CmdOpts) reset() error {
 		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
-	role := install.GetRoleByStagedKubelet(c.K0sVars.BinDir)
-	logrus.Debugf("detected role for cleanup: %v", role)
-	err := install.UninstallService(role)
-	if err != nil {
-		// might be that k0s was not run as a part of a service. just notify on uninstall error
-		logger.Infof("failed to uninstall k0s service: %v", err)
-	}
 	// Get Cleanup Config
 	cfg, err := cleanup.NewConfig(c.K0sVars.DataDir, c.WorkerOptions.CriSocket)
 	if err != nil {
