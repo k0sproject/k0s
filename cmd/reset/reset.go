@@ -45,6 +45,7 @@ func NewResetCmd() *cobra.Command {
 	}
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
 	return cmd
 }
 
@@ -65,11 +66,14 @@ func (c *CmdOpts) reset() error {
 		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
-	cfg := cleanup.NewConfig(c.K0sVars.DataDir)
-	cfg.CfgFile = c.CfgFile
-	cfg.K0sVars = c.K0sVars
+	// Get Cleanup Config
+	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
+	if err != nil {
+		logger.Fatalf("failed to configure cleanup: %v", err)
+		return err
+	}
 
-	err := cfg.Cleanup()
+	err = cfg.Cleanup()
 
 	logger.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
 	return err

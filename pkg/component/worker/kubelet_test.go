@@ -54,7 +54,7 @@ func TestCRISocketParsing(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			criType, sock, err := splitRuntimeConfig(tc.input)
+			criType, sock, err := SplitRuntimeConfig(tc.input)
 			if tc.err {
 				require.Error(t, err)
 			} else {

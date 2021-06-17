@@ -18,41 +18,64 @@ package cleanup
 
 import (
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/component/worker"
 	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/crictl"
+	"github.com/k0sproject/k0s/pkg/container/runtime"
 	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
-	containerdBinPath    string
-	containerdCmd        *exec.Cmd
-	containerdSockerPath string
-	criCtl               *crictl.CriCtl
-	dataDir              string
-	runDir               string
-	CfgFile              string
-	K0sVars              constant.CfgVars
+	cfgFile          string
+	containerd       *containerdConfig
+	containerRuntime runtime.ContainerRuntime
+	dataDir          string
+	k0sVars          constant.CfgVars
+	runDir           string
 }
 
-func NewConfig(dataDir string) *Config {
+type containerdConfig struct {
+	binPath    string
+	cmd        *exec.Cmd
+	socketPath string
+}
+
+func NewConfig(k0sVars constant.CfgVars, cfgFile string, criSocketPath string) (*Config, error) {
 	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
-	criSocketPath := fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+
+	var err error
+	var containerdCfg *containerdConfig
+	var runtimeType string
+
+	if criSocketPath == "" {
+		criSocketPath = fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+		containerdCfg = &containerdConfig{
+			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
+			socketPath: fmt.Sprintf("%s/containerd.sock", runDir),
+		}
+		runtimeType = "cri"
+	} else {
+		runtimeType, criSocketPath, err = worker.SplitRuntimeConfig(criSocketPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &Config{
-		dataDir:              dataDir,
-		runDir:               runDir,
-		containerdSockerPath: fmt.Sprintf("%s/containerd.sock", runDir),
-		containerdBinPath:    fmt.Sprintf("%s/%s", dataDir, "bin/containerd"),
-		criCtl:               crictl.NewCriCtl(criSocketPath),
-	}
+		cfgFile:          cfgFile,
+		containerd:       containerdCfg,
+		containerRuntime: runtime.NewContainerRuntime(runtimeType, criSocketPath),
+		dataDir:          k0sVars.DataDir,
+		runDir:           runDir,
+		k0sVars:          k0sVars,
+	}, nil
 }
 
 func (c *Config) Cleanup() error {
 	var msg []error
 	cleanupSteps := []Step{
-		&containerd{Config: c},
+		&containers{Config: c},
 		&users{Config: c},
 		&services{Config: c},
 		&directories{Config: c},
