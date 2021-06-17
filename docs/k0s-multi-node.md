@@ -133,7 +133,7 @@ Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to dep
 ```shell
 $ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    <none>   4m6s   v1.21.1-k0s1
+k0s    Ready    <none>   4m6s   v1.21.2-k0s1
 ```
 
 You can also access your cluster easily with [Lens](https://k8slens.dev/), simply by copying the kubeconfig and pasting it to Lens:
