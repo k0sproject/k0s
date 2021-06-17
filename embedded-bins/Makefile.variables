@@ -32,7 +32,7 @@ kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
 etcd_version = 3.4.16
-etcd_buildimage = golang:1.13-alpine
+etcd_buildimage = golang:1.16-alpine
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
 #etcd_build_go_flags =
