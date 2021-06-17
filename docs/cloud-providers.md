@@ -1,20 +1,15 @@
-# Using cloud providers
+# Cloud providers
 
-k0s builds Kubernetes components in "providerless" mode. This means that there is no cloud providers built into k0s managed Kubernetes components.
+k0s builds Kubernetes components in *providerless* mode, meaning that cloud providers are not built into k0s-managed Kubernetes components. As such, you must externally configure the cloud providers to enable their support in your k0s cluster (for more information on running Kubernetes with cloud providers, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/).
 
-This means the cloud providers have to be configured "externally". The following steps outline how to enable cloud providers support in your k0s cluster.
+## 1. Enable cloud provider support in kubelet
 
-For more information on running Kubernetes with cloud providers see the [official documentation](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/).
+Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with `--enable-cloud-provider=true`, to enable `--cloud-provider=external` on the kubelet process.
 
-## Enabling cloud provider support in kubelet
+## 2. Deploy the cloud provider
 
-Even when all components are built with "providerless" mode, we need to be able to enable cloud provider "mode" for kubelet. This is done by running the workers with `--enable-cloud-provider=true`. This enables `--cloud-provider=external` on kubelet process.
+The easiest way to deploy cloud provider controllers is on the k0s cluster.
 
-## Deploying the actual cloud provider
+Use the built-in [manifest deployer](manifests.md) built into k0s to deploy your cloud provider as a k0s-managed stack. Next, just drop all required manifests into the `/var/lib/k0s/manifests/aws/` directory, and k0s will handle the deployment.
 
-From Kubernetes point of view, it does not really matter how and where the cloud providers controller(s) are running. Of course the easiest way is to deploy them on the cluster itself. 
-
-To deploy your cloud provider as k0s managed stack you can use the built-in [manifest deployer](manifests.md). Simply drop all the needed manifests under e.g. `/var/lib/k0s/manifests/aws/` directory and k0s will deploy everything.
-
-Some cloud providers do need some configuration files to be present on all the nodes or some other pre-requisites. Consult your cloud providers documentation for needed steps.
-
+**Note**: The prerequisites for the various cloud providers can vary (for example, several require that configuration files be present on all of the nodes). Refer to your chosen cloud provider's documentation as necessary.

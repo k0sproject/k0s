@@ -7,11 +7,11 @@ As fetching and modifying the entire multi-thousand line file is error-prone,
 you may follow these steps to upgrade Calico to the latest version:
 
 1. run `./get-calico.sh`
-1. check the git diff to see if it looks sensible
-1. re-apply our manual adjustments (documented below)
-1. run `make bindata-manifests`
-4. compile, pray, and test
-5. commit and create a PR
+2. check the git diff to see if it looks sensible
+3. re-apply our manual adjustments (documented below)
+4. run `make bindata-manifests`
+5. compile, pray, and test
+6. commit and create a PR
 
 ## Manual Adjustments
 
@@ -22,8 +22,9 @@ not the calico originals.
 
 `static/manifests/calico/DaemonSet/calico-node.yaml`:
 
-- variable-based support for both vxlan and ipip (search for `ipip` to find):  
-```helmyaml
+- variable-based support for both vxlan and ipip (search for `ipip` to find):
+
+```yaml
 {{- if eq .Mode "ipip" }}
 # Enable IPIP
 - name: CALICO_IPV4POOL_IPIP
@@ -44,39 +45,50 @@ not the calico originals.
   value: "{{ .VxlanVNI }}"
 {{- end }}
 ```
+
 - iptables auto detect:
-```helmyaml
+
+```yaml
 # Auto detect the iptables backend
 - name: FELIX_IPTABLESBACKEND
   value: "auto"
 ```
+
 - variable-based WireGuard support:
-```helmyaml
+
+```yaml
 {{- if .EnableWireguard }}
 - name: FELIX_WIREGUARDENABLED
   value: "true"
 {{- end }}
 ```
-- variable-based cluster CIDR:  
-```helmyaml
+
+- variable-based cluster CIDR:
+
+```yaml
 - name: CALICO_IPV4POOL_CIDR
   value: "{{ .ClusterCIDR }}"
 ```
+
 - custom backend and MTU
-```helmyaml
+
+```yaml
 # calico-config.yaml
 calico_backend: "{{ .Mode }}"
 veth_mtu: "{{ .MTU }}"
 ```
+
 - remove bgp from `CLUSTER_TYPE`
-```helmyaml
+
+```yaml
 - name: CLUSTER_TYPE
   value: "k8s"
 ```
+
 - disable BIRD checks on liveness and readiness as we don't support BGP by removing
 `-bird-ready` and `-bird-live` from the readiness and liveness probes respectively
 
-### Container image names 
+### Container image names
 
 Instead of hardcoded image names and versions use placeholders to support configuration level settings. Following placeholders are used:
 
@@ -85,12 +97,14 @@ Instead of hardcoded image names and versions use placeholders to support config
 - `CalicoKubeControllersImage` for calico/kube-controllers
 
 Also, all containers in manifests were modified to have 'imagePullPolicy' field:
-```
+
+```yaml
 imagePullPolicy: {{ .PullPolicy }}
 ```
 
-Example: 
-```
+Example:
+
+```yaml
 # calico-node.yaml
 image: {{ .CalicoCNIImage }}
 ```

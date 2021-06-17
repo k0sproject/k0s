@@ -1,195 +1,198 @@
-# Creating a cluster with Ansible Playbook
+# Creating a cluster with an Ansible Playbook
 
-Using Ansible and the k0s-ansible playbook, you can install a multi-node Kubernetes Cluster in a couple of minutes. Ansible is a popular infrastructure as code tool which helps you automate tasks to achieve the desired state in a system.
+Ansible is a popular infrastructure-as-code tool that can use to automate tasks for the purpose of achieving the desired state in a system. With Ansible (and the k0s-Ansible playbook) you can quickly install a multi-node Kubernetes Cluster.
 
-This guide shows how you can install k0s on local virtual machines. In this guide, the following tools are used:
+**Note**: Before using Ansible to create a cluster, you should have a general understanding of Ansible (refer to the official [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/index.html).
 
-- `multipass`, a lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS ([installation guide](https://multipass.run/docs)).
-- `ansible`, a popular infrastructure as code tool ([installation guide](https://docs.ansible.com/ansible/latest/installation_guide/index.html)).
-- and of course `kubectl` on your local machine ([Installation guide](https://kubernetes.io/docs/tasks/tools/install-kubectl/)).
+## Prerequisites
 
-Before following this tutorial, you should have a general understanding of Ansible. A great way to start is the official [Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/index.html).
+You will require the following tools to install k0s on local virtual machines:
 
-_Please note: k0s users created k0s-ansible. Please send your feedback, bug reports, and pull requests to [github.com/movd/k0s-ansible](https://github.com/movd/k0s-ansible)._
+| Tool            | Detail                                    |
+|:----------------------|:------------------------------------------|
+| `multipass`  | A lightweight VM manager that uses KVM on Linux, Hyper-V on Windows, and hypervisor.framework on macOS. [Installation information](https://multipass.run/docs)|
+| `ansible`          | An infrastructure as code tool. [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/index.html) |
+| `kubectl`             | Command line tool for running commands against Kubernetes clusters.  [Kubernetes Install Tools](https://docs.ansible.com/ansible/latest/installation_guide/index.html) |
 
-Without further ado, let's jump right in.
+## Create the cluster
 
-## Download k0s-ansible
+1. Download k0s-ansible
 
-On your local machine clone the k0s-ansible repository:
+    Clone the k0s-ansible repository on your local machine:
 
-```ShellSession
-$ git clone https://github.com/movd/k0s-ansible.git
-$ cd k0s-ansible
-```
+    ```shell
+    git clone https://github.com/movd/k0s-ansible.git
+    cd k0s-ansible
+    ```
 
-## Create virtual machines
+2. Create virtual machines
 
-_For this tutorial, multipass was used. However, there is no interdependence. This playbook should also work with VMs created in alternative ways or Raspberry Pis._
+    **Note**: Though multipass is the VM manager in use here, there is no interdependence.
 
-Next, create a couple of virtual machines. For the automation to work, each instance must have passwordless SSH access. To achieve this, we provision each instance with a cloud-init manifest that imports your current users' public SSH key and into a user `k0s`. For your convenience, a bash script is included that does just that:
+    Create a number of virtual machines. For the automation to work, each instance must have passwordless SSH access. To achieve this, provision each instance with a cloud-init manifest that imports your current users' public SSH key and into a user `k0s` (refer to the bash script below).
 
-`./tools/multipass_create_instances.sh 7` ◀️ this creates 7 virtual machines
+    This creates 7 virtual machines:
 
-```ShellSession
-$ ./tools/multipass_create_instances.sh 7
-Create cloud-init to import ssh key...
-[1/7] Creating instance k0s-1 with multipass...
-Launched: k0s-1
-[2/7] Creating instance k0s-2 with multipass...
-Launched: k0s-2
-[3/7] Creating instance k0s-3 with multipass...
-Launched: k0s-3
-[4/7] Creating instance k0s-4 with multipass...
-Launched: k0s-4
-[5/7] Creating instance k0s-5 with multipass...
-Launched: k0s-5
-[6/7] Creating instance k0s-6 with multipass...
-Launched: k0s-6
-[7/7] Creating instance k0s-7 with multipass...
-Launched: k0s-7
-Name State IPv4 Image
-k0s-1 Running 192.168.64.32 Ubuntu 20.04 LTS
-k0s-2 Running 192.168.64.33 Ubuntu 20.04 LTS
-k0s-3 Running 192.168.64.56 Ubuntu 20.04 LTS
-k0s-4 Running 192.168.64.57 Ubuntu 20.04 LTS
-k0s-5 Running 192.168.64.58 Ubuntu 20.04 LTS
-k0s-6 Running 192.168.64.60 Ubuntu 20.04 LTS
-k0s-7 Running 192.168.64.61 Ubuntu 20.04 LTS
-```
+    ```shell
+    $ ./tools/multipass_create_instances.sh 7
+    Create cloud-init to import ssh key...
+    [1/7] Creating instance k0s-1 with multipass...
+    Launched: k0s-1
+    [2/7] Creating instance k0s-2 with multipass...
+    Launched: k0s-2
+    [3/7] Creating instance k0s-3 with multipass...
+    Launched: k0s-3
+    [4/7] Creating instance k0s-4 with multipass...
+    Launched: k0s-4
+    [5/7] Creating instance k0s-5 with multipass...
+    Launched: k0s-5
+    [6/7] Creating instance k0s-6 with multipass...
+    Launched: k0s-6
+    [7/7] Creating instance k0s-7 with multipass...
+    Launched: k0s-7
+    Name State IPv4 Image
+    k0s-1 Running 192.168.64.32 Ubuntu 20.04 LTS
+    k0s-2 Running 192.168.64.33 Ubuntu 20.04 LTS
+    k0s-3 Running 192.168.64.56 Ubuntu 20.04 LTS
+    k0s-4 Running 192.168.64.57 Ubuntu 20.04 LTS
+    k0s-5 Running 192.168.64.58 Ubuntu 20.04 LTS
+    k0s-6 Running 192.168.64.60 Ubuntu 20.04 LTS
+    k0s-7 Running 192.168.64.61 Ubuntu 20.04 LTS
+    ```
 
-## Create Ansible inventory
+3. Create Ansible inventory
 
-After that, we create our inventory directory by copying the sample:
+    1. Copy the sample to create the inventory directory:
 
-```ShellSession
-$ cp -rfp inventory/sample inventory/multipass
-```
+        ```shell
+        cp -rfp inventory/sample inventory/multipass
+        ```
 
-Now we need to create our inventory. The before built virtual machines need to be assigned to the different host groups required by the playbook's logic.
+    2. Create the inventory.
 
-- `initial_controller` = must contain a single node that creates the worker and controller tokens needed by the other nodes.
-- `controller` = can contain nodes that, together with the host from `initial_controller` form a highly available isolated control plane.
-- `worker` = must contain at least one node so that we can deploy Kubernetes objects.
+        Assign the virtual machines to the different host groups, as required by the playbook logic.
 
-We could fill `inventory/multipass/inventory.yml` by hand with the metadata provided by `multipass list,` but since we are lazy and want to automate as much as possible, we can use the included Python script `multipass_generate_inventory.py`:
+        | Host group            | Detail                                    |
+        |:----------------------|:------------------------------------------|
+        | `initial_controller`  | Must contain a single node that creates the worker and controller tokens needed by the other nodes|
+        | `controller`          | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane |
+        | `worker`              | Must contain at least one node, to allow for the deployment of Kubernetes objects |
 
-To automatically fill our inventory run:
+    3. Fill in `inventory/multipass/inventory.yml`. This can be done by direct entry using the metadata provided by `multipass list,`, or you can use the following Python script `multipass_generate_inventory.py`:
 
-```
-$ ./tools/multipass_generate_inventory.py
-Designate first three instances as control plane
-Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
-$ cp tools/inventory.yml inventory/multipass/inventory.yml
-```
+        ```shell
+        $ ./tools/multipass_generate_inventory.py
+        Designate first three instances as control plane
+        Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
+        $ cp tools/inventory.yml inventory/multipass/inventory.yml
+        ```
 
-Now `inventory/multipass/inventory.yml` should look like this (Of course, your IP addresses might differ):
+        Your `inventory/multipass/inventory.yml` should resemble the example below:
 
-```yaml
----
-all:
-  children:
-    initial_controller:
-      hosts:
-        k0s-1:
-    controller:
-      hosts:
-        k0s-2:
-        k0s-3:
-    worker:
-      hosts:
-        k0s-4:
-        k0s-5:
-        k0s-6:
-        k0s-7:
-  hosts:
-    k0s-1:
-      ansible_host: 192.168.64.32
-    k0s-2:
-      ansible_host: 192.168.64.33
-    k0s-3:
-      ansible_host: 192.168.64.56
-    k0s-4:
-      ansible_host: 192.168.64.57
-    k0s-5:
-      ansible_host: 192.168.64.58
-    k0s-6:
-      ansible_host: 192.168.64.60
-    k0s-7:
-      ansible_host: 192.168.64.61
-  vars:
-    ansible_user: k0s
-```
+        ```yaml
+        ---
+        all:
+          children:
+            initial_controller:
+              hosts:
+                k0s-1:
+            controller:
+              hosts:
+                k0s-2:
+                k0s-3:
+            worker:
+              hosts:
+                k0s-4:
+                k0s-5:
+                k0s-6:
+                k0s-7:
+          hosts:
+            k0s-1:
+              ansible_host: 192.168.64.32
+            k0s-2:
+              ansible_host: 192.168.64.33
+            k0s-3:
+              ansible_host: 192.168.64.56
+            k0s-4:
+              ansible_host: 192.168.64.57
+            k0s-5:
+              ansible_host: 192.168.64.58
+            k0s-6:
+              ansible_host: 192.168.64.60
+            k0s-7:
+              ansible_host: 192.168.64.61
+          vars:
+            ansible_user: k0s
+        ```
 
-## Test the connection to the virtual machines
+4. Test the virtual machine connections
 
-To test the connection to your hosts just run:
+    Run the following command to test the connection to your hosts:
 
-```ShellSession
-$ ansible -i inventory/multipass/inventory.yml -m ping
-k0s-4 | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/bin/python3"
-    },
-    "changed": false,
-    "ping": "pong"
-}
-...
-```
+    ```shell
+    $ ansible -i inventory/multipass/inventory.yml -m ping
+    k0s-4 | SUCCESS => {
+        "ansible_facts": {
+            "discovered_interpreter_python": "/usr/bin/python3"
+        },
+        "changed": false,
+        "ping": "pong"
+    }
+    ...
+    ```
 
-If all is green and successful, you can proceed.
+    If the test result indicates success, you can proceed.
 
-## Provision the cluster with Ansible
+5. Provision the cluster with Ansible
 
-Finally, we can start provisioning the cluster. Applying the playbook, k0s will get downloaded and set up on all nodes, tokens will get exchanged, and a kubeconfig will get dumped to your local deployment environment.
+    Applying the playbook, k0s download and be set up on all nodes, tokens will be exchanged, and a kubeconfig will be dumped to your local deployment environment.
 
-```ShellSession
-$ ansible-playbook site.yml -i inventory/multipass/inventory.yml
-...
-TASK [k0s/initial_controller : print kubeconfig command] *******************************************************
-Tuesday 22 December 2020  17:43:20 +0100 (0:00:00.257)       0:00:41.287 ******
-ok: [k0s-1] => {
-    "msg": "To use Cluster: export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml"
-}
-...
-PLAY RECAP *****************************************************************************************************
-k0s-1                      : ok=21   changed=11   unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-2                      : ok=10   changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-3                      : ok=10   changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-4                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-5                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-6                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
-k0s-7                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    ```shell
+    $ ansible-playbook site.yml -i inventory/multipass/inventory.yml
+    TASK [k0s/initial_controller : print kubeconfig command] *******************************************************
+    Tuesday 22 December 2020  17:43:20 +0100 (0:00:00.257)       0:00:41.287 ******
+    ok: [k0s-1] => {
+        "msg": "To use Cluster: export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml"
+    }
+    ...
+    PLAY RECAP *****************************************************************************************************
+    k0s-1                      : ok=21   changed=11   unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-2                      : ok=10   changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-3                      : ok=10   changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-4                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-5                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-6                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
+    k0s-7                      : ok=9    changed=5    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
 
-Tuesday 22 December 2020  17:43:36 +0100 (0:00:01.204)       0:00:57.478 ******
-===============================================================================
-prereq : Install apt packages -------------------------------------------------------------------------- 22.70s
-k0s/controller : Wait for k8s apiserver ----------------------------------------------------------------- 4.30s
-k0s/initial_controller : Create worker join token ------------------------------------------------------- 3.38s
-k0s/initial_controller : Wait for k8s apiserver --------------------------------------------------------- 3.36s
-download : Download k0s binary k0s-v0.9.0-rc1-amd64 ----------------------------------------------------- 3.11s
-Gathering Facts ----------------------------------------------------------------------------------------- 2.85s
-Gathering Facts ----------------------------------------------------------------------------------------- 1.95s
-prereq : Create k0s Directories ------------------------------------------------------------------------- 1.53s
-k0s/worker : Enable and check k0s service --------------------------------------------------------------- 1.20s
-prereq : Write the k0s config file ---------------------------------------------------------------------- 1.09s
-k0s/initial_controller : Enable and check k0s service --------------------------------------------------- 0.94s
-k0s/controller : Enable and check k0s service ----------------------------------------------------------- 0.73s
-Gathering Facts ----------------------------------------------------------------------------------------- 0.71s
-Gathering Facts ----------------------------------------------------------------------------------------- 0.66s
-Gathering Facts ----------------------------------------------------------------------------------------- 0.64s
-k0s/worker : Write the k0s token file on worker --------------------------------------------------------- 0.64s
-k0s/worker : Copy k0s service file ---------------------------------------------------------------------- 0.53s
-k0s/controller : Write the k0s token file on controller ------------------------------------------------- 0.41s
-k0s/controller : Copy k0s service file ------------------------------------------------------------------ 0.40s
-k0s/initial_controller : Copy k0s service file ---------------------------------------------------------- 0.36s
-```
+    Tuesday 22 December 2020  17:43:36 +0100 (0:00:01.204)       0:00:57.478 ******
+    ===============================================================================
+    prereq : Install apt packages -------------------------------------------------------------------------- 22.70s
+    k0s/controller : Wait for k8s apiserver ----------------------------------------------------------------- 4.30s
+    k0s/initial_controller : Create worker join token ------------------------------------------------------- 3.38s
+    k0s/initial_controller : Wait for k8s apiserver --------------------------------------------------------- 3.36s
+    download : Download k0s binary k0s-v0.9.0-rc1-amd64 ----------------------------------------------------- 3.11s
+    Gathering Facts ----------------------------------------------------------------------------------------- 2.85s
+    Gathering Facts ----------------------------------------------------------------------------------------- 1.95s
+    prereq : Create k0s Directories ------------------------------------------------------------------------- 1.53s
+    k0s/worker : Enable and check k0s service --------------------------------------------------------------- 1.20s
+    prereq : Write the k0s config file ---------------------------------------------------------------------- 1.09s
+    k0s/initial_controller : Enable and check k0s service --------------------------------------------------- 0.94s
+    k0s/controller : Enable and check k0s service ----------------------------------------------------------- 0.73s
+    Gathering Facts ----------------------------------------------------------------------------------------- 0.71s
+    Gathering Facts ----------------------------------------------------------------------------------------- 0.66s
+    Gathering Facts ----------------------------------------------------------------------------------------- 0.64s
+    k0s/worker : Write the k0s token file on worker --------------------------------------------------------- 0.64s
+    k0s/worker : Copy k0s service file ---------------------------------------------------------------------- 0.53s
+    k0s/controller : Write the k0s token file on controller ------------------------------------------------- 0.41s
+    k0s/controller : Copy k0s service file ------------------------------------------------------------------ 0.40s
+    k0s/initial_controller : Copy k0s service file ---------------------------------------------------------- 0.36s
+    ```
 
 ## Use the cluster with kubectl
 
-While the playbook ran, a kubeconfig got copied to your local machine. You can use it to get simple access to your new Kubernetes cluster:
+A kubeconfig was copied to your local machine while the playbook was running which you can use to gain access to your new Kubernetes cluster:
 
-```ShellSession
+```shell
 $ export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
 $ kubectl cluster-info
 Kubernetes control plane is running at https://192.168.64.32:6443
@@ -204,9 +207,9 @@ k0s-6   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.60   <none>        U
 k0s-7   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.61   <none>        Ubuntu 20.04.1 LTS   5.4.0-54-generic   containerd://1.4.3
 ```
 
-⬆️ Of course, the first three control plane nodes won't show up here because the control plane is fully isolated. You can check on the distributed etcd cluster by running this ad-hoc command (or ssh'ing directly into a controller node):
+**Note**: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command:
 
-```ShellSession
+```shell
 $ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
 {
   "level": "info",
@@ -220,9 +223,9 @@ $ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/mult
 }
 ```
 
-After a while, all worker nodes become `Ready`. Your cluster is now waiting to get used. We can test by creating a simple nginx deployment.
+Once all worker nodes are at `Ready` state you can use the cluster. You can test the cluster state by creating a simple nginx deployment.
 
-```ShellSession
+```shell
 $ kubectl create deployment nginx --image=gcr.io/google-containers/nginx --replicas=5
 deployment.apps/nginx created
 
@@ -237,3 +240,5 @@ $ kubectl run hello-k0s --image=quay.io/prometheus/busybox --rm -it --restart=Ne
 ...
 pod "hello-k0s" deleted
 ```
+
+**Note**: k0s users are the developers of k0s-ansible. Please send your feedback, bug reports, and pull requests to [github.com/movd/k0s-ansible](https://github.com/movd/k0s-ansible)._

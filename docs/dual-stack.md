@@ -1,10 +1,10 @@
-# Dual-stack networking
+# Dual-stack Networking
 
-**Note:** Dual stack networking setup requires Calico or a custom CNI to be configured as the CNI provider.
+**Note:** Dual stack networking setup requires that you configure Calico or a custom CNI as the CNI provider.
 
-To enable dual-stack networking use the following k0s.yaml as an example.
-This settings will set up bundled calico cni, enable feature gates for the Kubernetes components and set up kubernetes-controller-manager.
-```
+Use the following `k0s.yaml` as a template to enable dual-stack networking. This configuration will set up bundled calico CNI, enable feature gates for the Kubernetes components, and set up `kubernetes-controller-manager`.
+
+```yaml
 spec:
   network:
     podCIDR: "10.244.0.0/16"
@@ -16,22 +16,20 @@ spec:
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
 ```
-## CNI settings
 
-### Calico settings
+## CNI Settings: Calico
 
-Calico doesn't support tunneling for the IPv6, so "vxlan" and "ipip" backend wouldn't work. 
-If you need to have cross-pod connectivity, you need to use "bird" as a backend mode. 
-In any other mode the pods would be able to reach only pods on the same node.
+For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work.
 
-### External CNI
-The `k0s.yaml` dualStack section will enable all the neccessary feature gates for the Kubernetes components but in case of using external CNI it must be set up with IPv6 support.
- 
-## Additional materials
-https://kubernetes.io/docs/concepts/services-networking/dual-stack/
+**Note**: In any Calico mode other than cross-pod, the pods can only reach pods on the same node.
 
-https://kubernetes.io/docs/tasks/network/validate-dual-stack/ 
+## CNI Settings: External CNI
 
-https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/
+Although the `k0s.yaml` dualStack section enables all of the neccessary feature gates for the Kubernetes components, for use with an external CNI it must be set up to support IPv6.
 
-https://docs.projectcalico.org/networking/ipv6
+## Additional Resources
+
+* https://kubernetes.io/docs/concepts/services-networking/dual-stack/
+* https://kubernetes.io/docs/tasks/network/validate-dual-stack/
+* https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/
+* https://docs.projectcalico.org/networking/ipv6

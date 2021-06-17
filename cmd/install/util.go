@@ -34,7 +34,7 @@ func cmdFlagsToArgs(cmd *cobra.Command) []string {
 		case "stringSlice", "stringToString":
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s="%s"`, f.Name, strings.Trim(val, "[]")))
 		default:
-			if f.Name == "data-dir" || f.Name == "token-file" || f.Name == "config-file" {
+			if f.Name == "data-dir" || f.Name == "token-file" || f.Name == "config" {
 				val, _ = filepath.Abs(val)
 			}
 			flagsAndVals = append(flagsAndVals, fmt.Sprintf("--%s=%s", f.Name, val))

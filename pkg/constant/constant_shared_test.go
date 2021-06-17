@@ -17,6 +17,7 @@ package constant
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"strings"
 	"testing"
@@ -24,22 +25,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestKonnectivityVersion(t *testing.T) {
+	assert.Equal(t, getVersion(t, "konnectivity"), strings.TrimPrefix(KonnectivityImageVersion, "v"))
+}
+
 func TestKubeProxyVersion(t *testing.T) {
-	kubeVersion := getKubeVersion(t)
-	assert.Equal(t, kubeVersion, strings.TrimPrefix(KubeProxyImageVersion, "v"))
+	assert.Equal(t, getVersion(t, "kubernetes"), strings.TrimPrefix(KubeProxyImageVersion, "v"))
 }
 
 func TestKubernetesMajorMinorVersion(t *testing.T) {
-	kubeVersion := getKubeVersion(t)
-
-	ver := strings.Split(kubeVersion, ".")
+	ver := strings.Split(getVersion(t, "kubernetes"), ".")
 	kubeMinorMajor := ver[0] + "." + ver[1]
 
 	assert.Equal(t, kubeMinorMajor, KubernetesMajorMinorVersion)
 }
 
-func getKubeVersion(t *testing.T) string {
-	cmd := exec.Command("make", "--no-print-directory", "-f", "-", "print-kubernetes_version")
+func getVersion(t *testing.T, component string) string {
+	cmd := exec.Command("make", "--no-print-directory", "-f", "-", fmt.Sprintf("print-%s_version", component))
 	cmd.Stdin = bytes.NewBuffer([]byte(makefile))
 
 	out, err := cmd.Output()
@@ -51,6 +53,6 @@ func getKubeVersion(t *testing.T) string {
 const makefile = `
 include ../../embedded-bins/Makefile.variables
 
-print-kubernetes_version:
-	@echo $(kubernetes_version)
+print-%:
+	@echo $($*)
 `

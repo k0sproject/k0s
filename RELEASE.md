@@ -5,6 +5,7 @@ We try to follow the practice of releasing often. That allows us to have smaller
 ## Creating a release
 
 Creating a release happens via Github Actions by creating a git tag. Tag creation triggers the release workflow which will do most of the heavy-lifting:
+
 - Create the actual release in [releases](https://github.com/k0sproject/k0s/releases/)
 - Build `k0s` binary on both AMD64 and ARM64 architectures
 - Push the bins into the release as downloadable assets

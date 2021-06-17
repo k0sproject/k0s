@@ -1,4 +1,4 @@
-# Conformance Testing 
+# Conformance Testing
 
 This is a TF configuration to easily setup a K0s cluster with AWS and start sonobuoy.
 Requirements:
@@ -8,7 +8,7 @@ Requirements:
 
 To provision required setup follow next steps:
 
-```
+```shell
 $ cd terraform
 $ terraform init
 $ terraform apply
@@ -25,25 +25,34 @@ controller_ip = [
   "54.73.141.241",
 ]
 ```
+
 ## Test Variables
-In order to run the conformance test, you will need to set the tested k0s version and the tested Kubernetes version.
-This can be done in two ways.
+
+In order to run the conformance test, you will need to set the tested k0s version and the tested Kubernetes version. This can be done in two ways.
+
 ### 1. Create a var file
+
 In the same directory as your `main.tf` file, create an additional file `terraform.tfvars` with the following input:
-```
+
+```terraform
 k0s_version=v0.9.0
-k8s_version=v1.21.1
+k8s_version=v1.21.2
 onobuoy_version=0.20.0
-```  
+```
+
 ### 2. Environment variables
+
+```shell
+TF_VAR_k0s_version=v0.7.0-beta1 TF_VAR_sonobuoy_version=0.18.0 TF_VAR_k8s_version=v1.21.2 terraform apply
 ```
-TF_VAR_k0s_version=v0.7.0-beta1 TF_VAR_sonobuoy_version=0.18.0 TF_VAR_k8s_version=v1.21.1 terraform apply
-```
-**NOTE:** By default, terraform will fetch sonobuoy version **0.20.0**. If you want to use a different version you can override this with one of the above methods. 
+
+**NOTE:** By default, terraform will fetch sonobuoy version **0.20.0**. If you want to use a different version you can override this with one of the above methods.
 
 ## Fetching Sonobuoy's results
+
 Once provisioning of the cluster finishes you can get the results by SSH'ing into the controller:
-```
+
+```shell
 $ ssh -i .terraform/modules/k0s-sonobuoy/inttest/terraform/test-cluster/aws_private.pem ubuntu@[controller_ip]
 
 ubuntu@controller-0:~$ export KUBECONFIG=/var/lib/k0s/pki/admin.conf
@@ -58,12 +67,14 @@ Sonobuoy is still running. Runs can take up to 60 minutes.
 
 Once sonobuoy finishes to retieve results run following command on the cluster host:
 
+```shell
+result=$(sonobuoy retrieve)
 ```
-ubuntu@controller-0:~$ result=$(sonobuoy retrieve)
-```
+
 Analyze results:
-```
-ubunut@controller-0:~$ sonobuoy results $results
+
+```shell
+$ sonobuoy results $results
 Plugin: systemd-logs
 Status: passed
 Total: 3
@@ -81,11 +92,12 @@ Skipped: 4930
 
 To retrieve results to you localhost run following command:
 
-```
-$ scp -i .terraform/modules/k0s-sonobuoy/inttest/terraform/test-cluster/aws_private.pem ubuntu@[controller_ip]:[path_to_results_tarball]
+```shell
+scp -i .terraform/modules/k0s-sonobuoy/inttest/terraform/test-cluster/aws_private.pem ubuntu@[controller_ip]:[path_to_results_tarball]
 ```
 
 And finally to teardown the cluster run:
-```
-$ terraform destroy --auto-approve
+
+```shell
+terraform destroy --auto-approve
 ```

@@ -2,25 +2,27 @@
 
 Run controller
 
-```
+```shell
 k0s controller [join-token] [flags]
 ```
 
 ### Examples
 
-```
-	Command to associate master nodes:
-	CLI argument:
-	$ k0s controller [join-token]
+Command to associate master nodes using a CLI argument:
 
-	or CLI flag:
-	$ k0s controller --token-file [path_to_file]
-	Note: Token can be passed either as a CLI argument or as a flag
+```shell
+k0s controller [join-token]
+```
+
+or a CLI flag:
+
+```shell
+k0s controller --token-file [path_to_file]
 ```
 
 ### Options
 
-```
+```shell
       --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --enable-worker       enable worker (default false)
   -h, --help                help for controller
@@ -30,7 +32,7 @@ k0s controller [join-token] [flags]
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -40,5 +42,4 @@ k0s controller [join-token] [flags]
 
 ### SEE ALSO
 
-* [k0s](k0s.md)	 - k0s - Zero Friction Kubernetes
-
+* [k0s](k0s.md) - k0s - Zero Friction Kubernetes

@@ -13,8 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package install
 
-// no need to build unix specific funcs into windows
-func cleanupMount(path string)            {}
-func cleanupNetworkNamespace(path string) {}
+package backup
+
+import (
+	"fmt"
+
+	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/spf13/cobra"
+)
+
+type CmdOpts config.CLIOptions
+
+var savePath string
+
+func NewBackupCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "backup",
+		Short: "Back-Up k0s configuration. Not supported on Windows OS",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return fmt.Errorf("unsupported Operating System for this command")
+		},
+	}
+	cmd.SilenceUsage = true
+	return cmd
+}

@@ -2,19 +2,19 @@
 
 Returns etcd cluster members list
 
-```
+```shell
 k0s etcd member-list [flags]
 ```
 
 ### Options
 
-```
+```shell
   -h, --help   help for member-list
 ```
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -24,5 +24,4 @@ k0s etcd member-list [flags]
 
 ### SEE ALSO
 
-* [k0s etcd](k0s_etcd.md)	 - Manage etcd cluster
-
+* [k0s etcd](k0s_etcd.md) - Manage etcd cluster

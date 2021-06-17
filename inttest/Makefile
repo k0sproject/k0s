@@ -32,8 +32,8 @@ check-network-vm: bin/sonobuoy
 TIMEOUT ?= 4m
 
 check-byocri: TIMEOUT=5m
-# Basic also check to get metrics api service et all ready, will take some time
-check-basic: TIMEOUT=6m
+# readiness check for metric tests takes between around 5 and 6 minutes.
+check-metrics: TIMEOUT=6m
 
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
 check-customports: TIMEOUT=6m

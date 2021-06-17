@@ -8,9 +8,9 @@ The default configuration has no extensions.
 
 ## Helm based extensions
 
-### Configuration
-Example. 
- ```
+### Configuration example
+
+```yaml
 helm:
   repositories:
   - name: stable
@@ -33,9 +33,8 @@ By using the configuration above, the cluster would:
 - add stable and prometheus-community chart repositories
 - install the `prometheus-community/prometheus` chart of the specified version to the `default` namespace.
 
-The chart installation is implemented by using CRD `helm.k0sproject.io/Chart`.
-For every given helm extension the cluster creates a Chart CRD instance.
-The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:
+The chart installation is implemented by using CRD `helm.k0sproject.io/Chart`. For every given helm extension the cluster creates a Chart CRD instance. The cluster has a controller which monitors for the Chart CRDs, supporting the following operations:
+
 - install
 - upgrade
 - delete
@@ -44,7 +43,7 @@ For security reasons, the cluster operates only on Chart CRDs instantiated in th
 
 #### CRD definition
 
-```
+```yaml
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:

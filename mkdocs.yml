@@ -11,52 +11,56 @@ edit_uri: ""
 nav:
   - Overview: README.md
   - Install:
-      - Getting Started:                  install.md
-      - Installing with k0sctl:           k0sctl-install.md
+      - Quick Start Guide:                install.md
+      - Install using k0sctl:             k0sctl-install.md
       - Alternative Install Methods:
-          - Manual Install:               k0s-multi-node.md
+          - Manual Install (advanced):    k0s-multi-node.md
           - Docker:                       k0s-in-docker.md
           - Windows (experimental):       experimental-windows.md
           - Raspberry Pi 4:               raspberry-pi4.md
           - Ansible Playbook:             examples/ansible-playbook.md
-          - Airgap installation:          airgap-install.md
+          - Airgap Install:               airgap-install.md
+      - Upgrade:                          upgrade.md
+      - Backup/Restore:                   backup.md
       - System Requirements:              system-requirements.md
+  - Usage:
+      - Configuration Options:            configuration.md
+      - Configuration Validation:         configuration-validation.md
+      - Worker Node Configuration:        worker-node-config.md
+      - Networking (CNI):                 networking.md
+      - Runtime (CRI):                    runtime.md
+      - Storage (CSI):                    storage.md
+      - Cloud Providers:                  cloud-providers.md
+      - IPv4/IPv6 Dual-Stack:             dual-stack.md
+      - Control Plane High Availability:  high-availability.md
+      - Shell Completion:                 shell-completion.md
+      - User Management:                  user-management.md
+      - Uninstall the k0s Cluster:        k0s-reset.md
   - Extensions:
-      - Manifest Bundles:                 manifests.md
+      - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
       - Examples:
           - Traefik Ingress Controller:   examples/traefik-ingress.md
           - Ambassador Gateway:           examples/ambassador-ingress.md
           - Ceph Storage with Rook:       examples/rook-ceph.md
-  - Architecture:
-      - Overview:                         architecture.md
-      - Networking:                       networking.md
-  - Configuration:
-      - Configuration Options:            configuration.md
-      - Worker Node Configuration:        worker-node-config.md
-      - Containerd Configuration:         containerd_config.md
-      - Using a Custom CRI:               custom-cri-runtime.md
-      - Using Cloud Providers:            cloud-providers.md
-      - IPv4/IPv6 Dual-Stack Networking:  dual-stack.md
-      - Control Plane High Availability:  high-availability.md
-      - Shell Completion:                 shell-completion.md
-      - User Management:                  user-management.md
-      - Uninstall the k0s Cluster:        k0s-reset.md
-      - Backup/Restore:                   backup.md
+  - Troubleshooting:
+      - FAQ:                              FAQ.md
+      - Common Pitfalls:                  troubleshooting.md
+  - Reference:
+      - Architecture:                     architecture.md
       - CIS Benchmark:                    cis_benchmark.md
-  - FAQ: FAQ.md
-  - Troubleshooting: troubleshooting.md
   - Contributing:
-      - Overview: contributors/overview.md
-      - Workflow: contributors/github_workflow.md
-      - Testing: contributors/testing.md
-      - Documentation: internal/publishing_docs_using_mkdocs.md
+      - Overview:                         contributors/overview.md
+      - GitHub Workflow:                  contributors/github_workflow.md
+      - Testing:                          contributors/testing.md
+      - Documentation:                    internal/publishing_docs_using_mkdocs.md
+
 theme:
     name: 'material'
     highlightjs: true
     language: 'en'
     custom_dir: docs/custom_theme
-    favicon: https://github.com/k0sproject/k0sproject.github.io/blob/main/images/favicon/favicon.ico
+    favicon: img/k0s_social.png
     logo: img/k0s_social.png
     palette:
       - scheme: default

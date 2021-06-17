@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,10 +61,11 @@ func NewStatusCmd() *cobra.Command {
 					logrus.Fatal("k0s status must be run as root!")
 				}
 
-				if s.SysInit, s.StubFile, err = install.GetSysInit(s.Role); err != nil {
+				if s.Role, err = install.GetRoleByPID(s.Pid); err != nil {
 					return err
 				}
-				if s.Role, err = install.GetRoleByPID(s.Pid); err != nil {
+
+				if s.SysInit, s.StubFile, err = install.GetSysInit(strings.TrimSuffix(s.Role, "+worker")); err != nil {
 					return err
 				}
 			} else {
@@ -76,6 +78,6 @@ func NewStatusCmd() *cobra.Command {
 		},
 	}
 	cmd.SilenceUsage = true
-	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of out put to json or yaml")
+	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
 	return cmd
 }

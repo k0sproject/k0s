@@ -1,216 +1,197 @@
-# Creating Raspberry Pi 4 Cluster
+# Create a Raspberry Pi 4 Cluster
 
-This is a highly opinionated example of deploying the [k0s](https://github.com/k0sproject/k0s) distribution of [Kubernetes](https://kubernetes.io) to a cluster comprised of [Raspberry Pi 4 Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with [Ubuntu 20.04 LTS](https://ubuntu.com) as the operating system.
+You can deploy the [k0s](https://github.com/k0sproject/k0s) distribution of [Kubernetes](https://kubernetes.io) to a cluster comprised of [Raspberry Pi 4 Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with [Ubuntu 20.04 LTS](https://ubuntu.com) as the operating system.
 
 ## Prerequisites
 
-The following tools should be installed on your local workstation to use this example:
+Install the following tools on your local system:
 
 * [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) `v1.19.4`+
 * [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) `v1.5`+
+* [Raspberry Pi 4 Model B Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with 8GB of RAM and 64GB SD Cards.
 
-## Walkthrough
+**Note:** If you use lower spec Raspberry Pi machines, it may be necessary to manually edit the example code and k0s configuration.
 
-In order to deploy k0s on your Raspberry Pi systems we'll follow these steps:
+## Install k0s
 
-1. Hardware & Operating System Setup
-2. Networking Configurations
-3. Node Configurations
-4. Deploying Kubernetes
+### Set up hardware and operating system
 
-These steps require a fair amount of pre-requisite knowledge of [Linux](https://linux.com) and assume a basic understanding of the [Ubuntu Linux Distribution](https://ubuntu.com) as well as [Kubernetes](https://kubernetes.io).
+Download and install the [Ubuntu Server 20.04.1 LTS RASPI 4 Image](https://ubuntu.com/download/raspberry-pi/thank-you?version=20.04.1&architecture=server-arm64+raspi).
 
-If you're feeling out of sorts, consider reading through the [Kubernetes Basics Documentation](https://kubernetes.io/docs/tutorials/kubernetes-basics/) for more context and some less complex exercises to get started with.
+**Note**: In addition to the documentation Ubuntu provides [documentation on installing Ubuntu on Raspberry Pi Computers](https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi), the [Raspberry Pi Foundation](https://raspberrypi.org) offers an[imaging tool](https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/) that you can use to write the Ubuntu image to your noe SD cards.
 
-## Hardware & Operating System
+Once [cloud-init](https://cloud-init.io/) finishes bootstrapping the system, the default login credentials are set to user `ubuntu` with password `ubuntu` (which you will be prompted to change on first login).
 
-**Note** that this example was developed with [Raspberry Pi 4 Model B Computers](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/) with 8GB of RAM and 64GB SD Cards. You may have to do some manual editing of the example code and k0s configuration to get things working in your environment if you use lower spec machines.
+### Network configurations
 
-### Downloading Ubuntu
+**Note**: For network configurtion purposes, this documentation assumes that all of your computers are connected on the same subnet.
 
-When this example was developed the following image was used:
+Review the [k0s required ports documentation](https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols) to ensure that your network and firewall configurations allow necessary traffic for the cluster.
 
-* [Ubuntu Server 20.04.1 LTS RASPI 4 Image](https://ubuntu.com/download/raspberry-pi/thank-you?version=20.04.1&architecture=server-arm64+raspi)
+Review the [Ubuntu Server Networking Configuration Documentation](https://ubuntu.com/server/docs/network-configuration) to ensure that all systems have a static IP address on the network, or that the network is providing a static DHCP lease for the nodes.
 
-It's likely later versions and other versions will work but when in doubt consider using the above image for the nodes.
+#### OpenSSH
 
-### Installing Ubuntu
-
-The [Raspberry Pi Foundation](https://raspberrypi.org) provides a convenient [imaging tool](https://www.raspberrypi.org/blog/raspberry-pi-imager-imaging-utility/) for writing the Ubuntu image to your nodes' SD cards by selecting the image and the SD card you want to write it to.
-
-If all goes well it should be as simple as flashing the SD, inserting it into the Raspberry Pi system, and turning it on and Ubuntu will bootstrap itself. If you run into any trouble however, Ubuntu provides [documentation on installing Ubuntu on Raspberry Pi Computers](https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi).
-
-Note that the default login credentials for the systems once [cloud-init](https://cloud-init.io/) finishes bootstrapping the system will be user `ubuntu` with password `ubuntu` and you'll be required to change the password on first login.
-
-## Networking
-
-For this example it's assumed that you have all computers connected to eachother on the same subnet, but the rest is pretty much open ended.
-
-Make sure that you review the [k0s required ports documentation](https://github.com/k0sproject/k0s/blob/main/docs/networking.md#needed-open-ports--protocols) to ensure that your network and firewall configurations will allow necessary traffic for the cluster.
-
-Review the [Ubuntu Server Networking Configuration Documentation](https://ubuntu.com/server/docs/network-configuration) and ensure that all systems get a static IP address on the network, or that the network is providing a static DHCP lease for the nodes.
-
-### OpenSSH
-
-Ubuntu Server will deploy and enable [OpenSSH](https://www.openssh.com/) by default, but make sure that for whichever user you're going to deploy the cluster with on the build system their [SSH Key is copied to each node's root user](https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/), or you may have to do additional manual configurations to run the example.
-
-Effectively before you start, you should have it configured so that the current user can run:
+Ubuntu Server deploys and enables [OpenSSH](https://www.openssh.com/) by default. Confirm, though, that for whichever user you will deploy the cluster with on the build system, their [SSH Key is copied to each node's root user](https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/). Before you start, the configuration should be such that the current user can run:
 
 ```shell
-$ ssh root@${HOST}
+ssh root@${HOST}
 ```
 
-Where `${HOST}` is any node and the login will succeed with no further prompts.
+Where `${HOST}` is any node and the login can succeed with no further prompts.
 
-## Setup Nodes
+### Set up Nodes
 
-Each node (whether control plane or not) will need some additional setup to prepare for k0s deployment.
+Every node (whether control plane or not) requires additional configuration in preparation for k0s deployment.
 
-### CGroup Configuration
+#### CGroup Configuration
 
-Ensure that the following packages are installed on each node:
+1. Ensure that the following packages are installed on each node:
+
+    ```shell
+    apt-get install cgroup-lite cgroup-tools cgroupfs-mount
+    ```
+
+2. Enable the `memory` cgroup in the Kernel by adding it to the Kernel command line.
+
+3. Open the file `/boot/firmware/cmdline.txt` (responsible for managing the Kernel parameters), and confirm that the following parameters exist (and add them as necessary):
+
+    ```shell
+    cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
+    ```
+
+4. Be sure to reboot each node to ensure the `memory` cgroup is loaded.
+
+#### Swap (Optional)
+
+While swap is _technically optional_, enable it to ease memory pressure.
+
+1. To create a swapfile:
+
+    ```shell
+    fallocate -l 2G /swapfile && \
+    chmod 0600 /swapfile && \
+    mkswap /swapfile && \
+    swapon -a
+    ```
+
+2. Ensure that the usage of swap is not too agressive by setting the `sudo sysctl vm.swappiness=10` (the default is generally higher) and configuring it to be persistent in `/etc/sysctl.d/*`.
+
+3. Ensure that your swap is mounted after reboots by confirming that the following line exists in your `/etc/fstab` configuration:
+
+    ```shell
+    /swapfile         none           swap sw       0 0
+    ```
+
+#### Kernel Modules
+
+Ensure the loading of the `overlay`, `nf_conntrack` and `br_netfilter` modules:
 
 ```shell
-$ apt-get install cgroup-lite cgroup-tools cgroupfs-mount
+modprobe overlay
+modprobe nf_conntrack
+modprobe br_netfilter
 ```
 
-Additionally not all Ubuntu images are going to have the `memory` cgroup enabled in the Kernel by default, one simple way to enable this is by adding it to the Kernel command line.
+In addition, add each of these modules to your `/etc/modules-load.d/modules.conf` file to ensure they persist following reboot.
 
-Open the file `/boot/firmware/cmdline.txt` which is responsible for managing the Kernel parameters, and ensure that the following parameters exist (add them if not):
+#### Download k0s
+
+Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For example:
 
 ```shell
-cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0s-v0.9.1-arm64 # replace version number!
+sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
-Make sure you `reboot` each node to ensure the `memory` cgroup is loaded.
+-- or --
 
-### Swap (Optional)
-
-While this is _technical optional_ if you have limited RAM (like < 2GB) it can be helpful to enable swap to ease some memory pressure.
-
-You can create a swapfile by running the following:
+Use the k0s download script (as one command) to download the latest stable
+k0s and make it executable in `/usr/bin/k0s`.
 
 ```shell
-fallocate -l 2G /swapfile
-chmod 0600 /swapfile
-mkswap /swapfile
-swapon -a
+curl -sSLf https://get.k0s.sh | sudo sh
 ```
 
-To ensure that the usage of swap is not too agressive, make sure you set the `sudo sysctl vm.swappiness=10` (the default is generally higher). Configure this in `/etc/sysctl.d/*` to be persistent.
+At this point you can run `k0s`:
 
-Lastly to ensure that your swap is mounted after reboots, make sure the following line exists in your `/etc/fstab` configuration:
-
-```shell
-/swapfile         none           swap sw       0 0
-```
-
-### Kernel Modules
-
-Some important Kernel modules to keep track of are the `overlay`, `nf_conntrack` and `br_netfilter` modules, ensure those are loaded:
-
-```shell
-$ modprobe overlay
-$ modprobe nf_conntrack
-$ modprobe br_netfilter
-```
-
-Add each of these modules to your `/etc/modules-load.d/modules.conf` file as well to ensure they persist after reboot.
-
-### Download k0s
-
-Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest), for example:
-
-```shell
-$ wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0s-v0.9.1-arm64
-$ chmod a+x /tmp/k0s
-$ sudo mv /tmp/k0s /usr/bin/k0s
-```
-or use the k0s download script (as one command) to download the latest stable k0s and make it executable in /usr/bin/k0s.
-```sh
-$ curl -sSLf https://get.k0s.sh | sudo sh
-```
-
-Now you'll be able to run `k0s`:
 ```shell
 $ k0s version
 v0.9.1
 ```
 
-## Deploying Kubernetes
+### Deploy Kubernetes
 
-Each node is now setup to handle being a control plane node or worker node.
+Each node can now serve as a control plane node or worker node.
 
-### Control Plane Node
+#### Control Plane Node
 
-For this demonstration, we'll use a non-ha control plane with a single node.
+Use a non-ha control plane with a single node.
 
-#### Systemd Service
+##### Systemd Service (controller)
 
-Create a systemd service:
+1. Create a systemd service:
 
-```sh
-$ sudo k0s install controller
-```
+    ```shell
+    sudo k0s install controller
+    ```
 
-Enable and start the service:
+2. Start the service:
 
-```shell
-$ systemctl enable --now k0scontroller
-```
+    ```shell
+    sudo k0s start
+    ```
 
-Run `systemctl status k0scontroller` to verify the service status.
+3. Run `sudo k0s status` or `systemctl status k0scontroller` to verify the service status.
 
-#### Worker Tokens
+##### Worker Tokens
 
-For each worker node that you expect to have, create a join token (and save this for later steps):
-
-```shell
-$ k0s token create --role worker
-```
-
-### Worker
-
-For any number of worker nodes which you created join tokens for we'll need to deploy a worker service and start it.
-
-#### Systemd Service
-
-Create the join token for the worker:
+For each worker node that you expect to have, create a join token:
 
 ```shell
-$ mkdir -p /var/lib/k0s/
-$ echo ${TOKEN_CONTENT} > /var/lib/k0s/join-token
+k0s token create --role worker
 ```
 
-Where `${TOKEN_CONTENT}` is one of the join tokens you created in the control plane setup.
+Save the join token for subsequent steps.
 
-Then deploy the systemd service for the worker:
+#### Worker
 
-```sh
-$ sudo k0s install worker --token-file /var/lib/k0s/join-token
-```
+You must deploy and start a worker service for each worker nodes for which you created join tokens.
 
-Enable and start the service:
+##### Systemd Service (worker)
+
+1. Create the join token file for the worker (where `TOKEN_CONTENT` is one of the join tokens created in the control plane setup):
+
+    ```shell
+    mkdir -p /var/lib/k0s/
+    echo TOKEN_CONTENT > /var/lib/k0s/join-token
+    ```
+
+2. Deploy the systemd service for the worker:
+
+    ```shell
+    sudo k0s install worker --token-file /var/lib/k0s/join-token
+    ```
+
+3. Start the service:
+
+    ```shell
+    sudo k0s start
+    ```
+
+4. Run `sudo k0s status` or `systemctl status k0sworker` to verify the service status.
+
+### Connect To Your Cluster
+
+Generate a `kubeconfig` for the cluster and begin managing it with `kubectl` (where `CONTROL_PLANE_NODE` is the control plane node address):
 
 ```shell
-$ systemctl enable --now k0sworker
-```
-
-Run `systemctl status k0sworker` to verify the service status.
-
-## Connecting To Your Cluster
-
-Now generate a `kubeconfig` for the cluster and start managing it with `kubectl`:
-
-```shell
-ssh root@${CONTROL_PLANE_NODE} k0s kubeconfig create --groups "system:masters" k0s > config.yaml
+ssh root@CONTROL_PLANE_NODE k0s kubeconfig create --groups "system:masters" k0s > config.yaml
 export KUBECONFIG=$(pwd)/config.yaml
 kubectl create clusterrolebinding k0s-admin-binding --clusterrole=admin --user=k0s
 ```
 
-Where `${CONTROL_PLANE_NODE}` is the address of your control plane node.
-
-Now the cluster can be accessed and used:
+You can now access and use the cluster:
 
 ```shell
 $ kubectl get nodes,deployments,pods -A
@@ -236,5 +217,3 @@ kube-system   pod/kube-proxy-ct6bg                           1/1     Running    
 kube-system   pod/kube-proxy-hg8t2                           1/1     Running       0          4m45s
 kube-system   pod/kube-proxy-vghs9                           1/1     Running       0          5m9s
 ```
-
-Enjoy!

@@ -1,46 +1,38 @@
-# Running k0s worker nodes in Windows
+# Run k0s worker nodes in Windows
 
-## Experimental status
+**IMPORTANT**: Windows support for k0s is under active development and **must be** considered experimental.
 
-Windows support feature is under active development and MUST BE considered as experemential.
+## Prerequisites
 
-## Requirements
+The cluster must be running at least one worker node and control plane on Linux. You ca use Windows to run additional worker nodes.
 
-The cluster must have at least one worker node and control plane running on Linux. Windows can be used for running additional worker nodes.
+## Build k0s.exe
 
-## Build
+Invoke the `make clean k0s.exe` command to create k0s.exe with staged kubelet.exe and kube-proxy.exe.
 
-`make clean k0s.exe`
+**Note**: The k0s.exe supervises kubelet.exe and kube-proxy.exe.
 
-This should create k0s.exe with staged kubelet.exe and kube-proxy.exe
+During the first run, the calico install script is creaated as `C:\bootstrap.ps1`. This bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings.
 
-## Description
-the k0s.exe supervises kubelet.exe and kube-proxy.exe
-During the first run calico install script created as `C:\bootstrap.ps1`
+## Run k0s
 
-The bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings.
- 
+Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).
 
-## Running
-
-It is expected to have docker EE installed on the windows node (we need it during the initial calico set up)
-
-```
-C:\>k0s.exe worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
+```shell
+k0s worker --cri-socket=docker:tcp://127.0.0.1:2375 --cidr-range=<cidr_range> --cluster-dns=<clusterdns> --api-server=<k0s api> <token>
 ```
 
-Cluster control plane must be inited with proper config (see section below)
+You must initiate the Cluster control with the correct config.
 
 ## Configuration
 
 ### Strict-affinity
 
-To run windows node we need to have strict affinity enabled.
+You must enable strict affinity to run the windows node.
 
-There is a configuration field `spec.network.calico.withWindowsNodes`, equals false by default.
-If set to the true, the additional calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` would be created with the following values
+If the `spec.network.calico.withWindowsNodes` field is set to `true` (it is set to `false` by default) the additional calico related manifest `/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml` is created with the following values:
 
-```
+```yaml
 ---
 apiVersion: crd.projectcalico.org/v1
 kind: IPAMConfig
@@ -49,34 +41,36 @@ metadata:
 spec:
   strictAffinity: true
 ```
-Another way is to use calicoctl manually:
-```
+
+Alternately, you can manually execute calicoctl:
+
+```shell
 calicoctl ipam configure --strictaffinity=true
 ```
 
 ### Network connectivity in AWS
-The network interface attached to your EC2 instance MUST have disabled “Change Source/Dest. Check” option.
-In AWS console option can be found on the Actions menu for a selected network interface.
+
+Disable the `Change Source/Dest. Check` option for the network interface attached to your EC2 instance. In AWS, the console option for the network interface is in the **Actions** menu.
 
 ### Hacks
 
-We need to figure out proper way to pass cluster settings from controller plane to worker.
+k0s offers the following CLI arguments in lieu of a formal means for passing cluster settings from controller plane to worker:
 
-While we don't have it, there are CLI arguments:
 - cidr-range
 - cluster-dns
-- api-server 
+- api-server
 
+## Useful commands
 
-## Some useful commands
+### Run pod with cmd.exe shell
 
-Run pod with cmd.exe shell
-```
+```shell
 kubectl run win --image=hello-world:nanoserver --command=true -i --attach=true -- cmd.exe
 ```
 
-Manifest for pod with IIS web-server
-```
+### Manifest for pod with IIS web-server
+
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:

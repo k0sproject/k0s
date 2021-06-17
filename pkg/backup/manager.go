@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
 Copyright 2021 k0s authors
 
@@ -18,14 +20,18 @@ package backup
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Manager hold configuration for particular backup-restore process
@@ -37,7 +43,7 @@ type Manager struct {
 
 // RunBackup backups cluster
 func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
-	bm.discoverSteps(cfgPath, clusterSpec, vars)
+	bm.discoverSteps(cfgPath, clusterSpec, vars, "backup", "")
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -54,20 +60,23 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	if err := bm.save(backupFileName, assets); err != nil {
 		return fmt.Errorf("failed to create archive `%s`: %v", backupFileName, err)
 	}
-
-	if err := util.FileCopy(filepath.Join(bm.tmpDir, backupFileName), filepath.Join(savePathDir, backupFileName)); err != nil {
+	srcBackupFile := filepath.Join(bm.tmpDir, backupFileName)
+	destBackupFile := filepath.Join(savePathDir, backupFileName)
+	if err := util.FileCopy(srcBackupFile, destBackupFile); err != nil {
 		return fmt.Errorf("failed to rename temporary archive: %v", err)
 	}
-
+	logrus.Infof("archive %s created successfully", destBackupFile)
 	return nil
 
 }
 
-func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars) {
-	if clusterSpec.Storage.Type != v1beta1.EtcdStorageType {
-		logrus.Warnf("non-etcd data storage backup not supported. You must take the database backup manually")
-	} else {
+func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
+	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
+		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
+	} else {
+		logrus.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
 	}
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{
@@ -77,10 +86,12 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 		vars.HelmHome,
 		vars.HelmRepositoryConfig,
 	} {
-		logrus.Infof("adding `%s` path to the backup archive", path)
+		if action == "backup" {
+			logrus.Infof("adding `%s` path to the backup archive", path)
+		}
 		bm.Add(NewFilesystemStep(path))
 	}
-	bm.Add(newConfigurationStep(cfgPath))
+	bm.Add(newConfigurationStep(cfgPath, restoredConfigPath))
 }
 
 // Add adds backup step
@@ -94,7 +105,7 @@ func (bm *Manager) Add(step Backuper) {
 
 func (bm Manager) save(backupFileName string, assets []string) error {
 	archiveFile := filepath.Join(bm.tmpDir, backupFileName)
-	logrus.Infof("creating temporary archive file: %v", archiveFile)
+	logrus.Debugf("creating temporary archive file: %v", archiveFile)
 	out, err := os.Create(archiveFile)
 	if err != nil {
 		return fmt.Errorf("error creating archive file: %v", err)
@@ -111,22 +122,24 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to copy archive file from temporary directory: %v", err)
 	}
-	logrus.Infof("archive %s created successfully", destinationFile)
 	return nil
 }
 
 // RunRestore restores cluster
-func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars) error {
+func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
 	if err := util.ExtractArchive(archivePath, bm.tmpDir); err != nil {
 		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)
 	cfg, err := bm.getConfigForRestore(k0sVars)
 	if err != nil {
-		return fmt.Errorf("failed to parse backuped configuration file, check the backup archive: %v", err)
+		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %v", err)
 	}
-	bm.discoverSteps("k0s.yaml", cfg.Spec, k0sVars)
+	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", restoredConfigPath)
+	logrus.Info("Starting restore")
+
 	for _, step := range bm.steps {
+		logrus.Info("Restore step: ", step.Name())
 		if err := step.Restore(bm.tmpDir, bm.dataDir); err != nil {
 			return fmt.Errorf("failed to restore on step `%s`: %v", step.Name(), err)
 		}
@@ -141,7 +154,12 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 		return v1beta1.DefaultClusterConfig(k0sVars), nil
 	}
 	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
-	return v1beta1.ConfigFromFile(configFromBackup, k0sVars)
+
+	cfg, err := config.GetYamlFromFile(configFromBackup, k0sVars)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 // NewBackupManager builds new manager

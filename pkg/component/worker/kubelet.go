@@ -128,7 +128,7 @@ func (k *Kubelet) Run() error {
 	}
 
 	if k.CRISocket != "" {
-		rtType, rtSock, err := splitRuntimeConfig(k.CRISocket)
+		rtType, rtSock, err := SplitRuntimeConfig(k.CRISocket)
 		if err != nil {
 			return err
 		}
@@ -209,20 +209,6 @@ func (k *Kubelet) Stop() error {
 
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
-
-func splitRuntimeConfig(rtConfig string) (string, string, error) {
-	runtimeConfig := strings.SplitN(rtConfig, ":", 2)
-	if len(runtimeConfig) != 2 {
-		return "", "", fmt.Errorf("cannot parse CRI socket path")
-	}
-	runtimeType := runtimeConfig[0]
-	runtimeSocket := runtimeConfig[1]
-	if runtimeType != "docker" && runtimeType != "remote" {
-		return "", "", fmt.Errorf("unknown runtime type %s, must be either of remote or docker", runtimeType)
-	}
-
-	return runtimeType, runtimeSocket, nil
-}
 
 const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
 

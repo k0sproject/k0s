@@ -31,6 +31,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/api"
 	"github.com/k0sproject/k0s/cmd/backup"
 	"github.com/k0sproject/k0s/cmd/controller"
+	"github.com/k0sproject/k0s/cmd/ctr"
 	"github.com/k0sproject/k0s/cmd/etcd"
 	"github.com/k0sproject/k0s/cmd/install"
 	"github.com/k0sproject/k0s/cmd/kubeconfig"
@@ -40,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/start"
 	"github.com/k0sproject/k0s/cmd/status"
 	"github.com/k0sproject/k0s/cmd/stop"
+	"github.com/k0sproject/k0s/cmd/sysinfo"
 	"github.com/k0sproject/k0s/cmd/token"
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
@@ -75,16 +77,18 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(airgap.NewAirgapCmd())
 	cmd.AddCommand(api.NewAPICmd())
 	cmd.AddCommand(backup.NewBackupCmd())
-	cmd.AddCommand(restore.NewRestoreCmd())
 	cmd.AddCommand(controller.NewControllerCmd())
+	cmd.AddCommand(ctr.NewCtrCommand())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
 	cmd.AddCommand(kubectl.NewK0sKubectlCmd())
 	cmd.AddCommand(reset.NewResetCmd())
-	cmd.AddCommand(status.NewStatusCmd())
+	cmd.AddCommand(restore.NewRestoreCmd())
 	cmd.AddCommand(start.NewStartCmd())
+	cmd.AddCommand(status.NewStatusCmd())
 	cmd.AddCommand(stop.NewStopCmd())
+	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())
 	cmd.AddCommand(validate.NewValidateCmd())
 	cmd.AddCommand(version.NewVersionCmd())
@@ -109,14 +113,18 @@ func NewRootCmd() *cobra.Command {
 
 func newDocsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "docs",
-		Short: "Generate Markdown docs for the k0s binary",
+		Use:       "docs <markdown|man>",
+		Short:     "Generate k0s command documentation",
+		ValidArgs: []string{"markdown", "man"},
+		Args:      cobra.ExactValidArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := generateDocs()
-			if err != nil {
-				return err
+			switch args[0] {
+			case "markdown":
+				return doc.GenMarkdownTree(NewRootCmd(), "./docs/cli")
+			case "man":
+				return doc.GenManTree(NewRootCmd(), &doc.GenManHeader{Title: "k0s", Section: "1"}, "./man")
 			}
-			return nil
+			return fmt.Errorf("invalid format")
 		},
 	}
 }
@@ -139,7 +147,7 @@ func newDefaultConfigCmd() *cobra.Command {
 
 func newCompletionCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "completion [bash|zsh|fish|powershell]",
+		Use:   "completion <bash|zsh|fish|powershell>",
 		Short: "Generate completion script",
 		Long: `To load completions:
 
@@ -191,13 +199,6 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 func (c *cliOpts) buildConfig() error {
 	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(c.K0sVars))
 	fmt.Print(string(conf))
-	return nil
-}
-
-func generateDocs() error {
-	if err := doc.GenMarkdownTree(NewRootCmd(), "./docs/cli"); err != nil {
-		return err
-	}
 	return nil
 }
 

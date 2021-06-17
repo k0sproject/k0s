@@ -14,6 +14,9 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
+BUILD_GO_FLAGS :=
+BUILD_GO_CGO_ENABLED ?= 0
+BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
 VERSION ?= $(shell git describe --tags)
@@ -33,14 +36,14 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KubernetesVersion=$(kubernete
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KineVersion=$(kine_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
-LD_FLAGS += -X \"github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)\"
+LD_FLAGS += -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
 LD_FLAGS += -X k8s.io/component-base/version.gitVersion="v$(KUBECTL_VERSION)"
 LD_FLAGS += -X k8s.io/component-base/version.gitMajor="$(KUBECTL_MAJOR)"
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor="$(KUBECTL_MINOR)"
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
-
+LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 golint := $(shell which golangci-lint)
 ifeq ($(golint),)
@@ -69,6 +72,12 @@ else
 build: k0s
 endif
 
+.k0sbuild.docker-image.k0s:
+	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+	touch $@
+
+.k0sbuild.docker-image.k0s: build/Dockerfile
+
 .PHONY: all
 all: k0s k0s.exe
 
@@ -84,22 +93,29 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s
 	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
 
+
 k0s: TARGET_OS = linux
 k0s: pkg/assets/zz_generated_offsets_linux.go
+k0s: BUILD_GO_CGO_ENABLED = 1
+k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
+k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
+k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
+k0s.exe: BUILD_GO_CGO_ENABLED = 0
+k0s.exe: GOLANG_IMAGE = golang:1.16-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
 k0s.exe k0s: static/gen_manifests.go
 
 k0s.exe k0s: $(GO_SRCS)
-	CGO_ENABLED=0 GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build -v -ldflags="$(LD_FLAGS)" -o $@.code main.go
+	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
 		&& chmod +x $@.tmp \
@@ -133,7 +149,8 @@ check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
+	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go .k0sbuild.docker-image.k0s
+	docker rmi k0sbuild.docker-image.k0s -f
 	$(MAKE) -C embedded-bins clean
 	$(MAKE) -C image-bundle clean
 	$(MAKE) -C inttest clean
@@ -170,3 +187,4 @@ fi \
 
 lint-gomod:
 	@${GOMODTIDYLINT}
+

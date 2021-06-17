@@ -1,38 +1,45 @@
 # Enabling Shell Completion
 
-The k0s completion script for Bash, zsh, fish and powershell can be generated with the command
-`k0s completion < shell >`. 
+Generate the k0s completion script using the `k0s completion <shell_name>` command, for Bash, Zsh, fish, or PowerShell.
 
 Sourcing the completion script in your shell enables k0s autocompletion.
 
-### Bash
+## Bash
 
-```sh
+```shell
 echo 'source <(k0s completion bash)' >>~/.bashrc
 ```
 
-```sh
-# To load completions for each session, execute once:
-$ k0s completion bash > /etc/bash_completion.d/k0s
-```
-### Zsh
+To load completions for each session, execute once:
 
-If shell completion is not already enabled in your environment you will need to enable it. You can execute the following once:
-```sh
-$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+```shell
+k0s completion bash > /etc/bash_completion.d/k0s
 ```
-```sh
-# To load completions for each session, execute once:
-$ k0s completion zsh > "${fpath[1]}/_k0s"
-```
-You will need to start a new shell for this setup to take effect.
 
-### Fish
+## Zsh
 
-```sh
-$ k0s completion fish | source
+If shell completion is not already enabled in Zsh environment you will need to enable it:
+
+```shell
+echo "autoload -U compinit; compinit" >> ~/.zshrc
 ```
-```sh
-# To load completions for each session, execute once:
-$ k0s completion fish > ~/.config/fish/completions/k0s.fish
+
+To load completions for each session, execute once:
+
+```shell
+k0s completion zsh > "${fpath[1]}/_k0s"
+```
+
+**Note**: You must start a new shell for the setup to take effect.
+
+## Fish
+
+```shell
+k0s completion fish | source
+```
+
+To load completions for each session, execute once:
+
+```shell
+k0s completion fish > ~/.config/fish/completions/k0s.fish
 ```

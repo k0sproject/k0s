@@ -1,23 +1,22 @@
-package crictl
+package runtime
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
-type CriCtl struct {
-	addr string
+var _ ContainerRuntime = &CRIRuntime{}
+
+type CRIRuntime struct {
+	criSocketPath string
 }
 
-func NewCriCtl(addr string) *CriCtl {
-	return &CriCtl{addr}
-}
-
-func (c *CriCtl) ListPods() ([]string, error) {
-	client, conn, err := getRuntimeClient(c.addr)
+func (cri *CRIRuntime) ListContainers() ([]string, error) {
+	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CRI runtime client: %w", err)
@@ -39,8 +38,8 @@ func (c *CriCtl) ListPods() ([]string, error) {
 	return pods, nil
 }
 
-func (c *CriCtl) RemovePod(id string) error {
-	client, conn, err := getRuntimeClient(c.addr)
+func (cri *CRIRuntime) RemoveContainer(id string) error {
+	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
 		return fmt.Errorf("failed to create CRI runtime client: %w", err)
@@ -59,8 +58,8 @@ func (c *CriCtl) RemovePod(id string) error {
 	return nil
 }
 
-func (c *CriCtl) StopPod(id string) error {
-	client, conn, err := getRuntimeClient(c.addr)
+func (cri *CRIRuntime) StopContainer(id string) error {
+	client, conn, err := getRuntimeClient(cri.criSocketPath)
 	defer closeConnection(conn)
 	if err != nil {
 		return fmt.Errorf("failed to create CRI runtime client: %w", err)

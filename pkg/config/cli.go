@@ -100,11 +100,16 @@ func GetKubeCtlFlagSet() *pflag.FlagSet {
 	return flagset
 }
 
+func GetCriSocketFlag() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVar(&workerOpts.CriSocket, "cri-socket", "", "container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
+	return flagset
+}
+
 func GetWorkerFlags() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
-	flagset.StringVar(&workerOpts.CriSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	flagset.StringVar(&workerOpts.APIServer, "api-server", "", "HACK: api-server for the windows worker node")
 	flagset.StringVar(&workerOpts.CIDRRange, "cidr-range", "10.96.0.0/12", "HACK: cidr range for the windows worker node")
 	flagset.StringVar(&workerOpts.ClusterDNS, "cluster-dns", "10.96.0.10", "HACK: cluster dns for the windows worker node")
@@ -113,6 +118,8 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
+	flagset.AddFlagSet(GetCriSocketFlag())
+
 	return flagset
 }
 
@@ -122,9 +129,9 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
-	flagset.StringVar(&workerOpts.CriSocket, "cri-socket", "", "contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]")
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.BoolVar(&controllerOpts.SingleNode, "single", false, "enable single node (implies --enable-worker, default false)")
+	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset
 }

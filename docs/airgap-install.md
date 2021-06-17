@@ -1,63 +1,62 @@
 # Airgap install
 
-In this tutorial we are going to cover k0s deployment in the environment with restricted internet access. 
-As usually in the k0sproject we aim to give you the best user experience with the least possible amount of friction.
+You can install k0s in an environment with restricted Internet access.
 
-## Prerequisites for exporting images bundle from running cluster
+## Prerequisites
 
-Working cluster with at least one controller (this cluster will be used to build images bundle).
-Please, refer to the [getting started guide](install.md).
-You also need to have containerd CLI management tool `ctr` installed on the worker machine. Please refer to the ContainerD [getting-started](https://containerd.io/docs/getting-started/) guide.
+* A working cluster with at least one controller, to be used to
+  build the images bundle. For more information, refer to the [Quick Start Guide](install.md).
 
-## Steps
+* The containerd CLI management tool `ctr`, installed on the worker machine (refer to the ContainerD [getting-started](https://containerd.io/docs/getting-started/) guide).
 
-#### 1. Create OCI bundle
+## 1. Create the OCI bundle
 
-To create an OCI bundle, use the same processor architecture (x86-64, ARM64, ARMv7) as on the target system, because the OCI bundles are built specifically for each architecture.
+**Note**: k0s supports only uncompressed image bundles.
 
-k0s supports only uncompressed image bundles.
+As OCI bundles are build specifically for each architecture, create an OCI bundle that uses the same processor architecture (x86-64, ARM64, ARMv7) as on the target system.
 
-##### 1.1 Using Docker
-Use following commands to build OCI bundle by utilizing your docker environment. 
+k0s offers two methods for creating OCI bundles, one using Docker and the other using a previously set up k0s worker. Be aware, though, that you cannot use the Docker method for the ARM architectures due to [kube-proxy image multiarch manifest problem](https://github.com/kubernetes/kubernetes/issues/98229).
+
+### Docker
+
+1. Pull the images.
+
+   ```shell
+   k0s airgap list-images | xargs -I{} docker pull {}
+   ```
+
+2. Create the bundle.
+
+   ```shell
+   docker image save $(k0s airgap list-images | xargs) -o bundle_file
+   ```
+
+### Previously set up k0s worker
+
+As containerd pulls all images during the k0s worker normal bootstrap, you can use it to build the OCI bundle with images.
+
+Use following commands on a machine with an installed k0s worker:
+
+```shell
+ctr --namespace k8s.io \
+    --address /run/k0s/containerd.sock \
+    images export bundle_file $(k0s airgap list-images | xargs)
 ```
-## Pull images
-# k0s airgap list-images | xargs -I{} docker pull {}
 
-## Create bundle
-# docker image save $(k0s airgap list-images | xargs) -o bundle_file
-```
+## 2. Sync the bundle file with the airgapped machine
 
-**Note:**
-This Docker method doesn't currently work for the ARM architectures due to [kube-proxy image multiarch manifest problem](https://github.com/kubernetes/kubernetes/issues/98229). So, for the ARM architectures, use the method in step 1.2.
+Copy the `bundle_file` you created in the previous step to the target machine into the `images` directory in the k0s data directory.
 
-##### 1.2 Using previously set up k0s worker
-To build OCI bundle with images we can utilize the fact that containerd pulls all images during the k0s worker normal bootstrap.
-Use following commands on the machine with previously installed k0s worker:
-
-```
-## The command k0s airgap list-images prints images used by the current setup
-## It respects the k0s.yaml values
-
-# export IMAGES=`k0s airgap list-images | xargs`
-# ctr --namespace k8s.io --address /run/k0s/containerd.sock images export bundle_file $IMAGES 
-```
-
-Pay attention to the `address` and `namespace` arguments given to the `ctr` tool.
-
-#### 2. Sync bundle file with airgapped machine
-
-Copy the `bundle_file` from the previous step to the target machine. Place the file under the `images` directory in the k0s data directory.
-Use following commands to place bundle into the default location:
-
-```
+```shell
 # mkdir -p /var/lib/k0s/images
 # cp bundle_file /var/lib/k0s/images/bundle_file
 ```
 
-#### 3. Ensure pull policy in the k0s.yaml (optional)
+## 3. Ensure pull policy in the k0s.yaml (Optional)
 
-Use the following k0s.yaml to force containerd to never pull images for the k0s components. Otherwise containerd pulls the images, which are not found from the bundle, from the internet.
-```
+Use the following `k0s.yaml` to ensure that containerd does not pull images for k0s components from the Internet at any time.
+
+```yaml
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: Cluster
 metadata:
@@ -67,10 +66,12 @@ spec:
     default_pull_policy: Never
 ```
 
-#### 4. Controller
-Set up the controller node as usual. Please refer to the [getting started guide](install.md).
+## 4. Set up the Controller
 
-#### 5. Run worker
+Refer to the [Quick Start Guide](install.md) for information on setting up the controller node.
 
-Do the worker set up as usually on the airgapped machine.
-During the start up k0s worker will import all bundles from the `$K0S_DATA_DIR/images` before even starting `kubelet`
+## 5. Set up a worker
+
+Perform the worker set up on the airgapped machine.
+
+**Note**: During start up the k0s worker imports all bundles from the `$K0S_DATA_DIR/images` before even starting `kubelet`.

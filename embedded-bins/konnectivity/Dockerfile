@@ -2,14 +2,26 @@ ARG BUILDIMAGE=golang:1.15-alpine
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
+ARG BUILD_GO_TAGS
+ARG BUILD_GO_CGO_ENABLED
+ARG BUILD_GO_FLAGS
+ARG BUILD_GO_LDFLAGS
+ARG BUILD_GO_LDFLAGS_EXTRA
 
 RUN apk add build-base git make
 
 RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
+RUN go version
 RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 && \
     make gen && \
-    CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static -w -s"' -o bin/proxy-server cmd/server/main.go
+    CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
+    GOOS=linux \
+    go build \
+        ${BUILD_GO_FLAGS} \
+        -tags="${BUILD_GO_TAGS}" \
+        -ldflags="${BUILD_GO_LDFLAGS} ${BUILD_GO_LDFLAGS_EXTRA}" \
+        -o bin/proxy-server cmd/server/main.go
 
 FROM scratch
 COPY --from=build /apiserver-network-proxy/bin/proxy-server /bin/konnectivity-server

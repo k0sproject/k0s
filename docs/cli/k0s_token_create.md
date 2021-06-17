@@ -2,13 +2,13 @@
 
 Create join token
 
-```
+```shell
 k0s token create [flags]
 ```
 
 ### Options
 
-```
+```shell
       --expiry string   set duration time for token (default "0")
   -h, --help            help for create
       --role string     Either worker or controller (default "worker")
@@ -17,7 +17,7 @@ k0s token create [flags]
 
 ### Options inherited from parent commands
 
-```
+```shell
   -c, --config string            config file (default: ./k0s.yaml)
       --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                    Debug logging (default: false)
@@ -27,5 +27,4 @@ k0s token create [flags]
 
 ### SEE ALSO
 
-* [k0s token](k0s_token.md)	 - Manage join tokens
-
+* [k0s token](k0s_token.md) - Manage join tokens
