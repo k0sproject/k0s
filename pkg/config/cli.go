@@ -16,8 +16,11 @@ limitations under the License.
 package config
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
+	cloudprovider "k8s.io/cloud-provider"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -52,6 +55,10 @@ type CLIOptions struct {
 type ControllerOptions struct {
 	EnableWorker bool
 	SingleNode   bool
+
+	EnableK0sCloudProvider          bool
+	K0sCloudProviderUpdateFrequency time.Duration
+	K0sCloudProviderPort            int
 }
 
 // Shared worker cli flags
@@ -131,6 +138,9 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.BoolVar(&controllerOpts.SingleNode, "single", false, "enable single node (implies --enable-worker, default false)")
+	flagset.BoolVar(&controllerOpts.EnableK0sCloudProvider, "enable-k0s-cloud-provider", false, "enables the k0s-cloud-provider (default false)")
+	flagset.DurationVar(&controllerOpts.K0sCloudProviderUpdateFrequency, "k0s-cloud-provider-update-frequency", 2*time.Minute, "the frequency of k0s-cloud-provider node updates")
+	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset
