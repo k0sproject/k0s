@@ -38,9 +38,9 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
 LD_FLAGS += -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
-LD_FLAGS += -X k8s.io/component-base/version.gitVersion="v$(KUBECTL_VERSION)"
-LD_FLAGS += -X k8s.io/component-base/version.gitMajor="$(KUBECTL_MAJOR)"
-LD_FLAGS += -X k8s.io/component-base/version.gitMinor="$(KUBECTL_MINOR)"
+LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(KUBECTL_VERSION)
+LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(KUBECTL_MAJOR)
+LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(KUBECTL_MINOR)
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
