@@ -14,6 +14,7 @@ require (
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.9.0+incompatible
+	github.com/go-openapi/jsonpointer v0.19.3
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect

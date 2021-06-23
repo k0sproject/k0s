@@ -14,5 +14,6 @@ smoketests := \
 	check-multicontroller \
 	check-singlenode \
 	check-backup \
-	check-airgap
+	check-airgap \
+	check-k0scloudprovider
 
