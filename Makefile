@@ -149,11 +149,11 @@ check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests
 
 .PHONY: clean
 clean:
-	rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go .k0sbuild.docker-image.k0s
-	docker rmi k0sbuild.docker-image.k0s -f
-	$(MAKE) -C embedded-bins clean
-	$(MAKE) -C image-bundle clean
-	$(MAKE) -C inttest clean
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go .k0sbuild.docker-image.k0s
+	-docker rmi k0sbuild.docker-image.k0s -f
+	-$(MAKE) -C embedded-bins clean
+	-$(MAKE) -C image-bundle clean
+	-$(MAKE) -C inttest clean
 
 .PHONY: manifests
 manifests:
