@@ -17,7 +17,7 @@ func (i inMemorySaver) Save(dst string, content []byte) error {
 }
 
 func TestCalicoManifests(t *testing.T) {
-	k0sVars := constant.GetConfig("")
+	k0sVars := constant.GetConfig("", "")
 	clusterConfig := v1beta1.DefaultClusterConfig(k0sVars)
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"

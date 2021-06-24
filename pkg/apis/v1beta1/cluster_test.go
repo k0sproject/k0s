@@ -33,7 +33,7 @@ func TestClusterDefaults(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, c.Metadata)
 	assert.Equal(t, "k0s", c.Metadata.Name)
-	assert.Equal(t, DefaultStorageSpec(constant.GetConfig("")), c.Spec.Storage)
+	assert.Equal(t, DefaultStorageSpec(constant.GetConfig("", "")), c.Spec.Storage)
 }
 
 func TestStorageDefaults(t *testing.T) {

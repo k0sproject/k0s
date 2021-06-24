@@ -33,7 +33,7 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
-		k0sVars := constant.GetConfig("")
+		k0sVars := constant.GetConfig("", "")
 		t.Run("default_config", func(t *testing.T) {
 			cfg := DefaultClusterConfig(k0sVars)
 			cfg.Spec.Images.Repository = "my.repo"

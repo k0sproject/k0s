@@ -16,8 +16,8 @@ import (
 func TestGetConfigWithZeroNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 
-	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig(""))
-	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar"), fakeFactory)
+	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig("", ""))
+	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar", ""), fakeFactory)
 	require.NoError(t, err)
 	cfg, err := metrics.getConfig()
 	require.NoError(t, err)
@@ -39,8 +39,8 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig(""))
-	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar"), fakeFactory)
+	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig("", ""))
+	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar", ""), fakeFactory)
 	require.NoError(t, err)
 	cfg, err := metrics.getConfig()
 	require.NoError(t, err)

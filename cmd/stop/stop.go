@@ -29,6 +29,7 @@ func NewStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the k0s service configured on this host. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			if os.Geteuid() != 0 {
 				return fmt.Errorf("this command must be run as root")
 			}
@@ -36,12 +37,7 @@ func NewStopCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			status, err := svc.Status()
-			if err != nil {
-				return err
-			}
-			if status == service.StatusStopped {
-				cmd.SilenceUsage = true
+			if status, err := svc.Status(); err != nil || status == service.StatusStopped {
 				return fmt.Errorf("already stopped")
 			}
 			return svc.Stop()

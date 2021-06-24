@@ -214,7 +214,7 @@ func (c *CmdOpts) startController() error {
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars)
 
-	componentManager.Add(&controller.APIServer{
+	componentManager.Add(&controller.KubeAPIServer{
 		ClusterConfig:      c.ClusterConfig,
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.Logging["kube-apiserver"],

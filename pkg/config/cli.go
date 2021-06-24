@@ -26,6 +26,7 @@ import (
 var (
 	CfgFile        string
 	DataDir        string
+	RunDir         string
 	Debug          bool
 	DebugListenOn  string
 	K0sVars        constant.CfgVars
@@ -87,6 +88,7 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	flagset.StringVar(&RunDir, "run-dir", "", "Run Directory for k0s (default: /run/k0s (root), {data-dir}/run (non-root))")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
 }
@@ -96,6 +98,7 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 func GetKubeCtlFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	flagset.StringVar(&RunDir, "run-dir", "", "Run Directory for k0s (default: /run/k0s (root), {data-dir}/run (non-root))")
 	flagset.BoolVar(&Debug, "debug", false, "Debug logging (default: false)")
 	return flagset
 }
@@ -137,7 +140,7 @@ func GetControllerFlags() *pflag.FlagSet {
 }
 
 func GetCmdOpts() CLIOptions {
-	K0sVars = constant.GetConfig(DataDir)
+	K0sVars = constant.GetConfig(DataDir, RunDir)
 
 	opts := CLIOptions{
 		ControllerOptions: controllerOpts,

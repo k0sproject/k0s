@@ -34,8 +34,8 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-// APIServer implement the component interface to run kube api
-type APIServer struct {
+// KubeAPIServer implement the component interface to run kube api
+type KubeAPIServer struct {
 	ClusterConfig      *config.ClusterConfig
 	K0sVars            constant.CfgVars
 	LogLevel           string
@@ -73,7 +73,7 @@ type egressSelectorConfig struct {
 }
 
 // Init extracts needed binaries
-func (a *APIServer) Init() error {
+func (a *KubeAPIServer) Init() error {
 	var err error
 	a.uid, err = util.GetUID(constant.ApiserverUser)
 	if err != nil {
@@ -83,7 +83,7 @@ func (a *APIServer) Init() error {
 }
 
 // Run runs kube api
-func (a *APIServer) Run() error {
+func (a *KubeAPIServer) Run() error {
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
@@ -171,7 +171,7 @@ func (a *APIServer) Run() error {
 	return a.supervisor.Supervise()
 }
 
-func (a *APIServer) writeKonnectivityConfig() error {
+func (a *KubeAPIServer) writeKonnectivityConfig() error {
 	tw := util.TemplateWriter{
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
@@ -189,12 +189,12 @@ func (a *APIServer) writeKonnectivityConfig() error {
 }
 
 // Stop stops APIServer
-func (a *APIServer) Stop() error {
+func (a *KubeAPIServer) Stop() error {
 	return a.supervisor.Stop()
 }
 
 // Health-check interface
-func (a *APIServer) Healthy() error {
+func (a *KubeAPIServer) Healthy() error {
 	// Load client cert so the api can authenitcate the request.
 	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
 	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")

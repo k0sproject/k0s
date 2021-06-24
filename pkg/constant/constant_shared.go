@@ -99,7 +99,7 @@ type CfgVars struct {
 }
 
 // GetConfig returns the pointer to a Config struct
-func GetConfig(dataDir string) CfgVars {
+func GetConfig(dataDir, runDir string) CfgVars {
 	if dataDir == "" {
 		switch runtime.GOOS {
 		case "windows":
@@ -112,12 +112,14 @@ func GetConfig(dataDir string) CfgVars {
 	// fetch absolute path for dataDir
 	dataDir, _ = filepath.Abs(dataDir)
 
-	var runDir string
-	if os.Geteuid() == 0 {
-		runDir = "/run/k0s"
-	} else {
-		runDir = formatPath(dataDir, "run")
+	if runDir == "" {
+		if runtime.GOOS != "windows" && os.Geteuid() == 0 {
+			runDir = "/run/k0s"
+		} else {
+			runDir = formatPath(dataDir, "run")
+		}
 	}
+
 	certDir := formatPath(dataDir, "pki")
 	winCertDir := WinDataDirDefault + "\\pki" // hacky but we need it to be windows style even on linux machine
 	helmHome := formatPath(dataDir, "helmhome")

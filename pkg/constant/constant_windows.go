@@ -27,8 +27,6 @@ const (
 	CertRootDir = "C:\\var\\lib\\k0s\\pki"
 	// BinDir defines the location for all pki related binaries
 	BinDir = "C:\\var\\lib\\k0s\\bin"
-	// RunDir run directory
-	RunDir = "C:\\run\\k0s"
 	// ManifestsDir stack applier directory
 	ManifestsDir = "C:\\var\\lib\\k0s\\manifests"
 	// KubeletVolumePluginDir defines the location for kubelet plugins volume executables

@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var k0sVars = constant.GetConfig("")
+var k0sVars = constant.GetConfig("", "")
 
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"

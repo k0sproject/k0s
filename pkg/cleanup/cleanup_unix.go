@@ -18,8 +18,9 @@ package cleanup
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/component/worker"
 	"os/exec"
+
+	"github.com/k0sproject/k0s/pkg/component/worker"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
@@ -42,17 +43,15 @@ type containerdConfig struct {
 }
 
 func NewConfig(k0sVars constant.CfgVars, cfgFile string, criSocketPath string) (*Config, error) {
-	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
-
 	var err error
 	var containerdCfg *containerdConfig
 	var runtimeType string
 
 	if criSocketPath == "" {
-		criSocketPath = fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+		criSocketPath = fmt.Sprintf("unix:///%s/containerd.sock", k0sVars.RunDir)
 		containerdCfg = &containerdConfig{
 			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
-			socketPath: fmt.Sprintf("%s/containerd.sock", runDir),
+			socketPath: fmt.Sprintf("%s/containerd.sock", k0sVars.RunDir),
 		}
 		runtimeType = "cri"
 	} else {
@@ -67,7 +66,7 @@ func NewConfig(k0sVars constant.CfgVars, cfgFile string, criSocketPath string) (
 		containerd:       containerdCfg,
 		containerRuntime: runtime.NewContainerRuntime(runtimeType, criSocketPath),
 		dataDir:          k0sVars.DataDir,
-		runDir:           runDir,
+		runDir:           k0sVars.RunDir,
 		k0sVars:          k0sVars,
 	}, nil
 }
