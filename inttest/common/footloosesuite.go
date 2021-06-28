@@ -33,6 +33,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-openapi/jsonpointer"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
@@ -44,7 +45,10 @@ import (
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
 
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -556,6 +560,13 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 		return nil, err
 	}
 	return n.Labels, nil
+}
+
+// AddNodeLabel adds a label to the provided node.
+func (s *FootlooseSuite) AddNodeLabel(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
+	labelKey := fmt.Sprintf("/metadata/labels/%s", jsonpointer.Escape(key))
+	labelPatch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, labelKey, value)
+	return kc.CoreV1().Nodes().Patch(context.TODO(), node, types.JSONPatchType, []byte(labelPatch), v1.PatchOptions{})
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.
