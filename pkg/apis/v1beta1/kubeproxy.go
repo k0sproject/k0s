@@ -17,7 +17,7 @@ package v1beta1
 
 import "fmt"
 
-var _ Validateable = (*KubeProxy)(nil)
+// var _ Validateable = (*KubeProxy)(nil)
 
 const (
 	ModeIptables  = "iptables"

@@ -1,0 +1,517 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: clusterconfigs.k0s.k0sproject.io
+spec:
+  group: k0s.k0sproject.io
+  names:
+    kind: ClusterConfig
+    listKind: ClusterConfigList
+    plural: clusterconfigs
+    singular: clusterconfig
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: ClusterConfig is the Schema for the clusterconfigs API
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSpec defines the desired state of ClusterConfig
+            properties:
+              api:
+                description: APISpec defines the settings for the K0s API
+                properties:
+                  address:
+                    description: Local address on which to bind an API
+                    type: string
+                  externalAddress:
+                    description: The loadbalancer address (for k0s controllers running
+                      behind a loadbalancer)
+                    type: string
+                  extraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Map of key-values (strings) for any extra arguments
+                      to pass down to Kubernetes api-server process
+                    type: object
+                  k0sApiPort:
+                    description: 'Custom port for k0s-api server to listen on (default:
+                      9443)'
+                    type: integer
+                  port:
+                    description: 'Custom port for kube-api server to listen on (default:
+                      6443)'
+                    type: integer
+                  sans:
+                    description: List of additional addresses to push to API servers
+                      serving the certificate
+                    items:
+                      type: string
+                    type: array
+                required:
+                - address
+                - port
+                - sans
+                type: object
+              controllerManager:
+                description: ControllerManagerSpec defines the fields for the ControllerManager
+                properties:
+                  extraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Map of key-values (strings) for any extra arguments
+                      you want to pass down to the Kubernetes controller manager process
+                    type: object
+                type: object
+              extensions:
+                description: ClusterExtensions specifies cluster extensions
+                properties:
+                  helm:
+                    description: HelmExtensions specifies settings for cluster helm
+                      based extensions
+                    properties:
+                      charts:
+                        items:
+                          description: Chart single helm addon
+                          properties:
+                            chartname:
+                              type: string
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                            values:
+                              type: string
+                            version:
+                              type: string
+                          required:
+                          - chartname
+                          - name
+                          - namespace
+                          - values
+                          - version
+                          type: object
+                        type: array
+                      repositories:
+                        items:
+                          description: Repository describes single repository entry.
+                            Fields map to the CLI flags for the "helm add" command
+                          properties:
+                            caFile:
+                              type: string
+                            certFile:
+                              type: string
+                            insecure:
+                              type: boolean
+                            keyfile:
+                              type: string
+                            name:
+                              type: string
+                            password:
+                              type: string
+                            url:
+                              type: string
+                            username:
+                              type: string
+                          required:
+                          - caFile
+                          - certFile
+                          - insecure
+                          - keyfile
+                          - name
+                          - password
+                          - url
+                          - username
+                          type: object
+                        type: array
+                    required:
+                    - charts
+                    - repositories
+                    type: object
+                required:
+                - helm
+                type: object
+              images:
+                description: ClusterImages sets docker images for addon components
+                properties:
+                  calico:
+                    description: CalicoImageSpec config group for calico related image
+                      settings
+                    properties:
+                      cni:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                      kubecontrollers:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                      node:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                    required:
+                    - cni
+                    - kubecontrollers
+                    - node
+                    type: object
+                  coredns:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    required:
+                    - image
+                    - version
+                    type: object
+                  default_pull_policy:
+                    type: string
+                  konnectivity:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    required:
+                    - image
+                    - version
+                    type: object
+                  kubeproxy:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    required:
+                    - image
+                    - version
+                    type: object
+                  kuberouter:
+                    description: KubeRouterImageSpec config group for kube-router
+                      related images
+                    properties:
+                      cni:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                      cniInstaller:
+                        description: ImageSpec container image settings
+                        properties:
+                          image:
+                            type: string
+                          version:
+                            type: string
+                        required:
+                        - image
+                        - version
+                        type: object
+                    required:
+                    - cni
+                    - cniInstaller
+                    type: object
+                  metricsserver:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    required:
+                    - image
+                    - version
+                    type: object
+                  repository:
+                    type: string
+                required:
+                - calico
+                - coredns
+                - konnectivity
+                - kubeproxy
+                - kuberouter
+                - metricsserver
+                type: object
+              installConfig:
+                description: InstallSpec defines the required fields for the `k0s
+                  install` command
+                properties:
+                  users:
+                    description: SystemUser defines the user to use for each component
+                    properties:
+                      etcdUser:
+                        type: string
+                      kineUser:
+                        type: string
+                      konnectivityUser:
+                        type: string
+                      kubeAPIserverUser:
+                        type: string
+                      kubeSchedulerUser:
+                        type: string
+                    type: object
+                type: object
+              konnectivity:
+                description: KonnectivitySpec defines the requested state for Konnectivity
+                properties:
+                  adminPort:
+                    description: admin port to listen on (default 8133)
+                    format: int64
+                    type: integer
+                  agentPort:
+                    description: agent port to listen on (default 8132)
+                    format: int64
+                    type: integer
+                type: object
+              network:
+                description: Network defines the network related config options
+                properties:
+                  calico:
+                    description: Calico defines the calico related config options
+                    properties:
+                      flexVolumeDriverPath:
+                        description: 'The host path for Calicos flex-volume-driver(default:
+                          /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)'
+                        type: string
+                      ipAutodetectionMethod:
+                        description: Host's IP Auto-detection method for Calico (see
+                          https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods)
+                        type: string
+                      ipV6AutodetectionMethod:
+                        description: Host's IPv6 Auto-detection method for Calico
+                        type: string
+                      mode:
+                        description: vxlan (default) or ipip
+                        type: string
+                      mtu:
+                        description: 'MTU for overlay network (default: 0)'
+                        type: integer
+                      overlay:
+                        description: Overlay Type (Always, Never or CrossSubnet)
+                        type: string
+                      vxlanPort:
+                        description: 'The UDP port for VXLAN (default: 4789)'
+                        type: integer
+                      vxlanVNI:
+                        description: 'The virtual network ID for VXLAN (default: 4096)'
+                        type: integer
+                      wireguard:
+                        description: 'Enable wireguard-based encryption (default:
+                          false)'
+                        type: boolean
+                      withWindowsNodes:
+                        description: 'Windows Nodes (default: false)'
+                        type: boolean
+                    required:
+                    - flexVolumeDriverPath
+                    - mode
+                    - mtu
+                    - overlay
+                    - vxlanPort
+                    - vxlanVNI
+                    - wireguard
+                    - withWindowsNodes
+                    type: object
+                  dualStack:
+                    description: DualStack defines network configuration for ipv4\ipv6
+                      mixed cluster setup
+                    properties:
+                      IPv6podCIDR:
+                        type: string
+                      IPv6serviceCIDR:
+                        type: string
+                      enabled:
+                        type: boolean
+                    type: object
+                  kubeProxy:
+                    description: KubeProxy defines the configuration for kube-proxy
+                    type: object
+                  kuberouter:
+                    description: KubeRouter defines the kube-router related config
+                      options
+                    properties:
+                      autoMTU:
+                        description: 'Auto-detection of used MTU (default: true)'
+                        type: boolean
+                      mtu:
+                        description: Override MTU setting (autoMTU must be set to
+                          false)
+                        type: integer
+                      peerRouterASNs:
+                        description: Comma-separated list of global peer addresses
+                        type: string
+                      peerRouterIPs:
+                        description: Comma-separated list of global peer ASNs
+                        type: string
+                    required:
+                    - autoMTU
+                    - mtu
+                    - peerRouterASNs
+                    - peerRouterIPs
+                    type: object
+                  podCIDR:
+                    description: Pod network CIDR to use in the cluster
+                    type: string
+                  provider:
+                    description: 'Network provider (valid values: calico, kuberouter,
+                      or custom)'
+                    type: string
+                  serviceCIDR:
+                    description: Network CIDR to use for cluster VIP services
+                    type: string
+                required:
+                - calico
+                - kubeProxy
+                - kuberouter
+                - podCIDR
+                - provider
+                - serviceCIDR
+                type: object
+              podSecurityPolicy:
+                description: PodSecurityPolicy defines the config options for setting
+                  system level default PSP
+                properties:
+                  defaultPolicy:
+                    description: default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
+                    type: string
+                required:
+                - defaultPolicy
+                type: object
+              scheduler:
+                description: SchedulerSpec defines the fields for the Scheduler
+                properties:
+                  extraArgs:
+                    additionalProperties:
+                      type: string
+                    description: Map of key-values (strings) for any extra arguments
+                      you want to pass down to Kubernetes scheduler process
+                    type: object
+                type: object
+              storage:
+                description: StorageSpec defines the storage related config options
+                properties:
+                  etcd:
+                    description: EtcdConfig defines etcd related config options
+                    properties:
+                      peerAddress:
+                        description: Node address used for etcd cluster peering
+                        type: string
+                    required:
+                    - peerAddress
+                    type: object
+                  kine:
+                    description: KineConfig defines the Kine related config options
+                    properties:
+                      dataSource:
+                        description: kine datasource URL
+                        type: string
+                    required:
+                    - dataSource
+                    type: object
+                  type:
+                    description: Type of the data store (valid values:etcd or kine)
+                    type: string
+                required:
+                - etcd
+                - type
+                type: object
+              telemetry:
+                description: ClusterTelemetry holds telemetry related settings
+                properties:
+                  enabled:
+                    type: boolean
+                required:
+                - enabled
+                type: object
+              workerProfiles:
+                description: WorkerProfiles profiles collection
+                items:
+                  description: WorkerProfile worker profile
+                  properties:
+                    name:
+                      description: String; name to use as profile selector for the
+                        worker process
+                      type: string
+                    values:
+                      additionalProperties:
+                        description: RawMessage is a raw encoded JSON value. It implements
+                          Marshaler and Unmarshaler and can be used to delay JSON
+                          decoding or precompute a JSON encoding.
+                        format: byte
+                        type: string
+                      description: Worker Mapping object
+                      type: object
+                  required:
+                  - name
+                  - values
+                  type: object
+                type: array
+            required:
+            - api
+            - images
+            - network
+            - podSecurityPolicy
+            - storage
+            - telemetry
+            type: object
+          status:
+            description: ClusterConfigStatus defines the observed state of ClusterConfig
+            type: object
+        required:
+        - apiVersion
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

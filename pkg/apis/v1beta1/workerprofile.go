@@ -16,10 +16,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
-var _ Validateable = (*WorkerProfiles)(nil)
+// var _ Validateable = (*WorkerProfiles)(nil)
 
 // WorkerProfiles profiles collection
 type WorkerProfiles []WorkerProfile
@@ -37,8 +38,10 @@ func (wps WorkerProfiles) Validate() []error {
 
 // WorkerProfile worker profile
 type WorkerProfile struct {
-	Name   string                 `yaml:"name"`
-	Values map[string]interface{} `yaml:"values"`
+	// String; name to use as profile selector for the worker process
+	Name string `json:"name"`
+	// Worker Mapping object
+	Values map[string]json.RawMessage `json:"values"`
 }
 
 var lockedFields = map[string]struct{}{
