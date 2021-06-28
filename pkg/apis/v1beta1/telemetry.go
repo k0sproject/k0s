@@ -1,10 +1,10 @@
 package v1beta1
 
-var _ Validateable = (*ClusterTelemetry)(nil)
+// var _ Validateable = (*ClusterTelemetry)(nil)
 
 // ClusterTelemetry holds telemetry related settings
 type ClusterTelemetry struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled bool `json:"enabled"`
 }
 
 // DefaultClusterTelemetry default settings

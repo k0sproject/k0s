@@ -17,10 +17,14 @@ package v1beta1
 
 // KubeRouter defines the kube-router related config options
 type KubeRouter struct {
-	MTU            int    `yaml:"mtu"`
-	PeerRouterIPs  string `yaml:"peerRouterIPs"`
-	PeerRouterASNs string `yaml:"peerRouterASNs"`
-	AutoMTU        bool   `yaml:"autoMTU"`
+	// Auto-detection of used MTU (default: true)
+	AutoMTU bool `json:"autoMTU"`
+	// Override MTU setting (autoMTU must be set to false)
+	MTU int `json:"mtu"`
+	// Comma-separated list of global peer addresses
+	PeerRouterASNs string `json:"peerRouterASNs"`
+	// Comma-separated list of global peer ASNs
+	PeerRouterIPs string `json:"peerRouterIPs"`
 }
 
 // DefaultKubeRouter returns the default config for kube-router

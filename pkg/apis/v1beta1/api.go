@@ -19,20 +19,31 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/k0sproject/k0s/internal/util"
+
+	"github.com/asaskevich/govalidator"
 )
 
-var _ Validateable = (*APISpec)(nil)
+// var _ Validateable = (*APISpec)(nil)
 
-// APISpec ...
+// APISpec defines the settings for the K0s API
 type APISpec struct {
-	Address         string            `yaml:"address"`
-	Port            int               `yaml:"port"`
-	K0sAPIPort      int               `yaml:"k0sApiPort,omitempty"`
-	ExternalAddress string            `yaml:"externalAddress,omitempty"`
-	SANs            []string          `yaml:"sans"`
-	ExtraArgs       map[string]string `yaml:"extraArgs,omitempty"`
+	// Local address on which to bind an API
+	Address string `json:"address"`
+
+	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
+	ExternalAddress string `json:"externalAddress,omitempty"`
+
+	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+	// Custom port for k0s-api server to listen on (default: 9443)
+	K0sAPIPort int `json:"k0sApiPort,omitempty"`
+
+	// Custom port for kube-api server to listen on (default: 6443)
+	Port int `json:"port"`
+
+	// List of additional addresses to push to API servers serving the certificate
+	SANs []string `json:"sans"`
 }
 
 // DefaultAPISpec default settings for api

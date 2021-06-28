@@ -24,9 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
-var (
-	k0sVars = constant.CfgVars{}
-)
+var k0sVars = constant.CfgVars{}
 
 func TestClusterDefaults(t *testing.T) {
 	c, err := configFromString("apiVersion: k0s.k0sproject.io/v1beta1", k0sVars)
