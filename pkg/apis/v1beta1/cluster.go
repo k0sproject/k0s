@@ -17,11 +17,11 @@ package v1beta1
 
 import (
 	"fmt"
+	"github.com/k0sproject/k0s/internal/util"
 	"io/ioutil"
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/constant"
-	"gopkg.in/yaml.v2"
 )
 
 // ClusterConfig cluster manifest
@@ -149,7 +149,7 @@ func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
 
 func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	config := &ClusterConfig{k0sVars: k0sVars}
-	err := yaml.UnmarshalStrict([]byte(yml), &config)
+	err := util.YamlUnmarshalStrictIgnoringFields([]byte(yml), &config, []string{"interval"})
 	if err != nil {
 		return config, err
 	}
