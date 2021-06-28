@@ -22,17 +22,21 @@ import (
 	utilnet "k8s.io/utils/net"
 )
 
-var _ Validateable = (*Network)(nil)
+// var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	PodCIDR     string      `yaml:"podCIDR"`
-	ServiceCIDR string      `yaml:"serviceCIDR"`
-	Provider    string      `yaml:"provider"`
-	Calico      *Calico     `yaml:"calico"`
-	KubeRouter  *KubeRouter `yaml:"kuberouter"`
-	DualStack   DualStack   `yaml:"dualStack,omitempty"`
-	KubeProxy   *KubeProxy  `yaml:"kubeProxy"`
+	Calico     *Calico     `json:"calico"`
+	DualStack  DualStack   `json:"dualStack,omitempty"`
+	KubeProxy  *KubeProxy  `json:"kubeProxy"`
+	KubeRouter *KubeRouter `json:"kuberouter"`
+
+	// Pod network CIDR to use in the cluster
+	PodCIDR string `json:"podCIDR"`
+	// Network provider (valid values: calico, kuberouter, or custom)
+	Provider string `json:"provider"`
+	// Network CIDR to use for cluster VIP services
+	ServiceCIDR string `json:"serviceCIDR"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values

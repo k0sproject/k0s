@@ -16,9 +16,6 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
@@ -56,14 +53,14 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 	if clusterConfig.Spec.Install == nil {
 		clusterConfig.Spec.Install = v1beta1.DefaultInstallSpec()
 	}
-
-	errors := clusterConfig.Validate()
-	if len(errors) > 0 {
-		messages := make([]string, len(errors))
-		for _, e := range errors {
-			messages = append(messages, e.Error())
-		}
-		return nil, fmt.Errorf(strings.Join(messages, "\n"))
-	}
+	/*
+		errors := clusterConfig.Validate()
+		if len(errors) > 0 {
+			messages := make([]string, len(errors))
+			for _, e := range errors {
+				messages = append(messages, e.Error())
+			}
+			return nil, fmt.Errorf(strings.Join(messages, "\n"))
+		}*/
 	return clusterConfig, nil
 }
