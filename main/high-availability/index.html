@@ -666,16 +666,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
+  <a href="#network-considerations" class="md-nav__link">
+    Network considerations
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cluster-configuration" class="md-nav__link">
-    Cluster configuration
+  <a href="#load-balancer" class="md-nav__link">
+    Load Balancer
   </a>
+  
+    <nav class="md-nav" aria-label="Load Balancer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-configuration-haproxy" class="md-nav__link">
+    Example configuration: HAProxy
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k0s-configuration" class="md-nav__link">
+    k0s configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="k0s configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-using-k0syaml-for-each-controller" class="md-nav__link">
+    Configuration using k0s.yaml (for each controller)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-using-k0sctlyaml-for-k0sctl" class="md-nav__link">
+    Configuration using k0sctl.yaml (for k0sctl)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1113,16 +1153,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
+  <a href="#network-considerations" class="md-nav__link">
+    Network considerations
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cluster-configuration" class="md-nav__link">
-    Cluster configuration
+  <a href="#load-balancer" class="md-nav__link">
+    Load Balancer
   </a>
+  
+    <nav class="md-nav" aria-label="Load Balancer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-configuration-haproxy" class="md-nav__link">
+    Example configuration: HAProxy
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k0s-configuration" class="md-nav__link">
+    k0s configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="k0s configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-using-k0syaml-for-each-controller" class="md-nav__link">
+    Configuration using k0s.yaml (for each controller)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-using-k0sctlyaml-for-k0sctl" class="md-nav__link">
+    Configuration using k0sctl.yaml (for k0sctl)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1141,23 +1221,68 @@
                 
                 
                 <h1 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h1>
-<p>The configuration of a high availability control plane for k0s requires the deployment of both a load balancer and a cluster configuration file.</p>
+<p>You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.</p>
+<p><img alt="k0s high availability" src="../img/k0s_high_availability.png" /></p>
+<h2 id="network-considerations">Network considerations<a class="headerlink" href="#network-considerations" title="Permanent link">#</a></h2>
+<p>You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.</p>
+<p>For etcd high availability it's recommended to configure 3 or 5 controller nodes.</p>
+<ul>
+<li>With 3 nodes it's possible to lose one node and still have the quorum with 2 working nodes.</li>
+<li>With 2 controller nodes, the quorum is lost if one node fails and there's only one working node left.</li>
+<li>With 5 nodes it's possible to lose two nodes and still have the quorum with 3 working nodes.</li>
+</ul>
 <h2 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h2>
-<p>Configure a load balancer with a single external address as the IP gateway for the controllers. Set the load balancer to allow traffic to each controller through the following ports:</p>
+<p>Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:</p>
 <ul>
-<li>6443</li>
-<li>8132</li>
-<li>8133</li>
-<li>9443</li>
+<li>6443 (for Kubernetes API)</li>
+<li>8132 (for Konnectivity agent)</li>
+<li>8133 (for Konnectivity server)</li>
+<li>9443 (for controller join API)</li>
 </ul>
-<h2 id="cluster-configuration">Cluster configuration<a class="headerlink" href="#cluster-configuration" title="Permanent link">#</a></h2>
-<p>Configure a <code>k0s.yaml</code> configuration file for each controller node with the following options:</p>
-<ul>
-<li><code>network</code></li>
-<li><code>storage</code></li>
-<li><code>externalAddress</code></li>
-</ul>
-<p>For greater detail, refer to the <a href="../configuration/">Full configuration file reference</a>.</p>
+<p>The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.</p>
+<h3 id="example-configuration-haproxy">Example configuration: HAProxy<a class="headerlink" href="#example-configuration-haproxy" title="Permanent link">#</a></h3>
+<p>Change the default mode to tcp under the 'defaults' section of haproxy.cfg.</p>
+<p>Add the following lines to the end of the haproxy.cfg:</p>
+<div class="highlight"><pre><span></span><code>frontend kubeAPI
+    bind :6443
+    default_backend back
+frontend konnectivityAgent
+    bind :8132
+    default_backend back
+frontend konnectivityServer
+    bind :8133
+    default_backend back
+frontend controllerJoinAPI
+    bind :9443
+    default_backend back
+
+backend back
+    server k0s-controller1 &lt;ip-address1&gt;
+    server k0s-controller2 &lt;ip-address2&gt;
+    server k0s-controller3 &lt;ip-address3&gt;
+</code></pre></div>
+<p>Restart HAProxy to apply the configuration changes.</p>
+<h2 id="k0s-configuration">k0s configuration<a class="headerlink" href="#k0s-configuration" title="Permanent link">#</a></h2>
+<p>The load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
+<h3 id="configuration-using-k0syaml-for-each-controller">Configuration using k0s.yaml (for each controller)<a class="headerlink" href="#configuration-using-k0syaml-for-each-controller" title="Permanent link">#</a></h3>
+<p>Note to update your load balancer's public ip address into two places.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">api</span><span class="p">:</span>
+    <span class="nt">externalAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
+    <span class="nt">sans</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
+</code></pre></div>
+<h3 id="configuration-using-k0sctlyaml-for-k0sctl">Configuration using k0sctl.yaml (for k0sctl)<a class="headerlink" href="#configuration-using-k0sctlyaml-for-k0sctl" title="Permanent link">#</a></h3>
+<p>Add the following lines to the end of the k0sctl.yaml. Note to update your load balancer's public ip address into two places.</p>
+<div class="highlight"><pre><span></span><code>  <span class="nt">k0s</span><span class="p">:</span>
+    <span class="nt">config</span><span class="p">:</span>
+      <span class="nt">spec</span><span class="p">:</span>
+        <span class="nt">api</span><span class="p">:</span>
+          <span class="nt">externalAddress</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
+          <span class="nt">sans</span><span class="p">:</span>
+          <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span>
+</code></pre></div>
+<p>For greater detail about k0s configuration, refer to the <a href="../configuration/">Full configuration file reference</a>.</p>
                 
               
               

@@ -1287,7 +1287,7 @@
 </thead>
 <tbody>
 <tr>
-<td align="left"><code>K0S_VERSION=v0.11.0</code></td>
+<td align="left">`K0S_VERSION=v1.21.2+k0s.0</td>
 <td align="left">Select the version of k0s to be installed</td>
 </tr>
 <tr>
@@ -1296,8 +1296,8 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Note</strong>: If you require environment variables and use sudo, you may need <code>--preserve-env</code>:</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo --preserve-env<span class="o">=</span>K0S_VERSION sh
+<p><strong>Note</strong>: If you require environment variables and use sudo, you can do:</p>
+<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo <span class="nv">K0S_VERSION</span><span class="o">=</span>v1.21.2+k0s.0 sh
 </code></pre></div>
 <h3 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h3>
 <p>Create a configuration file:</p>
@@ -1345,11 +1345,12 @@
 <h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
 <p>To get general information about your k0s instance's status:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s status
-Version: v0.11.0
-Process ID: <span class="m">436</span>
+Version: v1.21.2+k0s.0
+Process ID: <span class="m">2769</span>
 Parent Process ID: <span class="m">1</span>
 Role: controller
 Init System: linux-systemd
+Service file: /etc/systemd/system/k0scontroller.service
 </code></pre></div>
 <h3 id="7-access-your-cluster">7. Access your cluster<a class="headerlink" href="#7-access-your-cluster" title="Permanent link">#</a></h3>
 <p>Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:</p>
