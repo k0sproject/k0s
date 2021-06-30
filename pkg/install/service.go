@@ -46,10 +46,20 @@ func InstalledService() (service.Service, error) {
 	for _, role := range []string{"controller", "worker"} {
 		c := GetServiceConfig(role)
 		s, err := service.New(prg, c)
-		if err == nil {
-			return s, nil
+		if err != nil {
+			return nil, err
 		}
+		_, err = s.Status()
+
+		if err != nil && err == service.ErrNotInstalled {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
 	}
+
 	var s service.Service
 	return s, fmt.Errorf("k0s has not been installed as a service")
 }
