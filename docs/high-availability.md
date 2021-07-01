@@ -8,11 +8,7 @@ You can create high availability for the control plane by distributing the contr
 
 You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.
 
-For etcd high availability it's recommended to configure 3 or 5 controller nodes.
-
-- With 3 nodes it's possible to lose one node and still have the quorum with 2 working nodes.
-- With 2 controller nodes, the quorum is lost if one node fails and there's only one working node left.
-- With 5 nodes it's possible to lose two nodes and still have the quorum with 3 working nodes.
+For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the [etcd documentation](https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members).
 
 ## Load Balancer
 
