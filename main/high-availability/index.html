@@ -471,6 +471,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../reset/" class="md-nav__link">
+        Uninstall/Reset
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
@@ -750,20 +764,6 @@
     <li class="md-nav__item">
       <a href="../user-management/" class="md-nav__link">
         User Management
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../k0s-reset/" class="md-nav__link">
-        Uninstall the k0s Cluster
       </a>
     </li>
   
@@ -1225,12 +1225,7 @@
 <p><img alt="k0s high availability" src="../img/k0s_high_availability.png" /></p>
 <h2 id="network-considerations">Network considerations<a class="headerlink" href="#network-considerations" title="Permanent link">#</a></h2>
 <p>You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.</p>
-<p>For etcd high availability it's recommended to configure 3 or 5 controller nodes.</p>
-<ul>
-<li>With 3 nodes it's possible to lose one node and still have the quorum with 2 working nodes.</li>
-<li>With 2 controller nodes, the quorum is lost if one node fails and there's only one working node left.</li>
-<li>With 5 nodes it's possible to lose two nodes and still have the quorum with 3 working nodes.</li>
-</ul>
+<p>For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the <a href="https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members">etcd documentation</a>.</p>
 <h2 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h2>
 <p>Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:</p>
 <ul>

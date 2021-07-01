@@ -492,16 +492,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#backup" class="md-nav__link">
-    Backup
+  <a href="#backuprestore-a-k0s-node-locally" class="md-nav__link">
+    Backup/restore a k0s node locally
   </a>
+  
+    <nav class="md-nav" aria-label="Backup/restore a k0s node locally">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backup-local" class="md-nav__link">
+    Backup (local)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore-local" class="md-nav__link">
+    Restore (local)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#restore" class="md-nav__link">
-    Restore
+  <a href="#backuprestore-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Backup/restore a k0s cluster using k0sctl
   </a>
+  
+    <nav class="md-nav" aria-label="Backup/restore a k0s cluster using k0sctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backup-remote" class="md-nav__link">
+    Backup (remote)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore-remote" class="md-nav__link">
+    Restore (remote)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -509,6 +549,20 @@
   
 </nav>
       
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reset/" class="md-nav__link">
+        Uninstall/Reset
+      </a>
     </li>
   
 
@@ -710,20 +764,6 @@
     <li class="md-nav__item">
       <a href="../user-management/" class="md-nav__link">
         User Management
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../k0s-reset/" class="md-nav__link">
-        Uninstall the k0s Cluster
       </a>
     </li>
   
@@ -1113,16 +1153,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#backup" class="md-nav__link">
-    Backup
+  <a href="#backuprestore-a-k0s-node-locally" class="md-nav__link">
+    Backup/restore a k0s node locally
   </a>
+  
+    <nav class="md-nav" aria-label="Backup/restore a k0s node locally">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backup-local" class="md-nav__link">
+    Backup (local)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore-local" class="md-nav__link">
+    Restore (local)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#restore" class="md-nav__link">
-    Restore
+  <a href="#backuprestore-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Backup/restore a k0s cluster using k0sctl
   </a>
+  
+    <nav class="md-nav" aria-label="Backup/restore a k0s cluster using k0sctl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backup-remote" class="md-nav__link">
+    Backup (remote)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore-remote" class="md-nav__link">
+    Restore (remote)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1141,12 +1221,12 @@
                 
                 
                 <h1 id="backuprestore-overview">Backup/Restore overview<a class="headerlink" href="#backuprestore-overview" title="Permanent link">#</a></h1>
-<p>k0s has integrated support for backing up cluster state and configuration.
-The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.</p>
+<p>k0s has integrated support for backing up cluster state and configuration. The k0s backup utility is aiming to back up and restore k0s managed parts of the cluster.</p>
 <p>The backups created by <code>k0s backup</code> command have following pieces of your cluster:</p>
 <ul>
 <li>certificates (the content of the <code>&lt;data-dir&gt;/pki</code> directory)</li>
-<li>etcd snapshot, if the etcd storage is used</li>
+<li>etcd snapshot, if the etcd datastore is used</li>
+<li>Kine/SQLite snapshot, if the Kine/SQLite datastore is used</li>
 <li>k0s.yaml</li>
 <li>any custom defined manifests under the <code>&lt;data-dir&gt;/manifests</code></li>
 <li>any image bundles located under the <code>&lt;data-dir&gt;/images</code></li>
@@ -1155,23 +1235,24 @@ The k0s backup utility is aiming to back up and restore k0s managed parts of the
 <p>Parts <strong>NOT</strong> covered by the backup utility:</p>
 <ul>
 <li>PersistentVolumes of any running application</li>
-<li>database content, in case if the <code>kine</code> is used as a storage driver</li>
+<li>datastore, in case something else than etcd or Kine/SQLite is used</li>
 <li>any configuration to the cluster introduced by manual changes (e.g. changes that weren't saved under the <code>&lt;data-dir&gt;/manifests</code>)</li>
 </ul>
 <p>Any of the backup/restore related operations MUST be performed on the controller node.</p>
-<h2 id="backup">Backup<a class="headerlink" href="#backup" title="Permanent link">#</a></h2>
+<h2 id="backuprestore-a-k0s-node-locally">Backup/restore a k0s node locally<a class="headerlink" href="#backuprestore-a-k0s-node-locally" title="Permanent link">#</a></h2>
+<h3 id="backup-local">Backup (local)<a class="headerlink" href="#backup-local" title="Permanent link">#</a></h3>
 <p>To create backup run the following command on the controller node:</p>
 <div class="highlight"><pre><span></span><code>k0s backup --save-path<span class="o">=</span>&lt;directory&gt;
 </code></pre></div>
 <p>The directory used for the <code>save-path</code> value must exist and be writable. The default value is the current working directory.
 The command provides backup archive using following naming convention: <code>k0s_backup_&lt;ISODatetimeString&gt;.tar.gz</code></p>
 <p>Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwritten.</p>
-<h2 id="restore">Restore<a class="headerlink" href="#restore" title="Permanent link">#</a></h2>
+<h3 id="restore-local">Restore (local)<a class="headerlink" href="#restore-local" title="Permanent link">#</a></h3>
 <p>To restore cluster state from the archive use the following command on the controller node:</p>
 <div class="highlight"><pre><span></span><code>k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
 </code></pre></div>
-<p>The command would fail if the data directory for the current controller has overlapping data with the backup archive content.
-The command would use the archived <code>k0s.yaml</code> as the cluster configuration description.</p>
+<p>The command would fail if the data directory for the current controller has overlapping data with the backup archive content.</p>
+<p>The command would use the archived <code>k0s.yaml</code> as the cluster configuration description.</p>
 <p>In case if your cluster is HA, after restoring single controller node, join the rest of the controller nodes to the cluster.
 E.g. steps for N nodes cluster would be:</p>
 <ul>
@@ -1179,6 +1260,18 @@ E.g. steps for N nodes cluster would be:</p>
 <li>Run controller there</li>
 <li>Join N-1 new machines to the cluster the same way as for the first setup.</li>
 </ul>
+<h2 id="backuprestore-a-k0s-cluster-using-k0sctl">Backup/restore a k0s cluster using k0sctl<a class="headerlink" href="#backuprestore-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
+<p>With k0sctl you can perform cluster level backup and restore remotely with one command.</p>
+<h3 id="backup-remote">Backup (remote)<a class="headerlink" href="#backup-remote" title="Permanent link">#</a></h3>
+<p>To create backup run the following command:</p>
+<div class="highlight"><pre><span></span><code>k0sctl backup
+</code></pre></div>
+<p>k0sctl connects to the cluster nodes to create a backup. The backup file is stored in the current working directory.</p>
+<h3 id="restore-remote">Restore (remote)<a class="headerlink" href="#restore-remote" title="Permanent link">#</a></h3>
+<p>To restore cluster state from the archive use the following command:</p>
+<div class="highlight"><pre><span></span><code>k0sctl apply --restore-from /path/to/backup_file.tar.gz
+</code></pre></div>
+<p>The control plane load balancer address (externalAddress) needs to remain the same between backup and restore. This is caused by the fact that all worker node components connect to this address and cannot currently be re-configured.</p>
                 
               
               
@@ -1215,13 +1308,13 @@ E.g. steps for N nodes cluster would be:</p>
       
       
         
-        <a href="../system-requirements/" class="md-footer__link md-footer__link--next" aria-label="Next: System Requirements" rel="next">
+        <a href="../reset/" class="md-footer__link md-footer__link--next" aria-label="Next: Uninstall/Reset" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              System Requirements
+              Uninstall/Reset
             </div>
           </div>
           <div class="md-footer__button md-icon">

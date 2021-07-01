@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/k0s-reset/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/reset/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>Uninstall the k0s Cluster - Documentation</title>
+        <title>Uninstall/Reset - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#uninstall-the-k0s-cluster" class="md-skip">
+        <a href="#uninstallreset" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Uninstall the k0s Cluster
+              Uninstall/Reset
             
           </span>
         </div>
@@ -270,12 +270,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
       
       
@@ -469,6 +471,67 @@
               
   
   
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Uninstall/Reset
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Uninstall/Reset
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-a-k0s-node-locally" class="md-nav__link">
+    Uninstall a k0s node locally
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Uninstall a k0s cluster using k0sctl
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
   
     <li class="md-nav__item">
       <a href="../system-requirements/" class="md-nav__link">
@@ -491,14 +554,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
       
       
       
@@ -664,30 +725,6 @@
       <a href="../user-management/" class="md-nav__link">
         User Management
       </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Uninstall the k0s Cluster
-      </a>
-      
     </li>
   
 
@@ -1069,6 +1106,28 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-a-k0s-node-locally" class="md-nav__link">
+    Uninstall a k0s node locally
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-a-k0s-cluster-using-k0sctl" class="md-nav__link">
+    Uninstall a k0s cluster using k0sctl
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1081,34 +1140,61 @@
                 
                 
                 
-                <h1 id="uninstall-the-k0s-cluster">Uninstall the k0s Cluster<a class="headerlink" href="#uninstall-the-k0s-cluster" title="Permanent link">#</a></h1>
-<p>Use the k0s CLI <code>reset</code> command to uninstall k0s, by removing all k0s-related files from the host.</p>
-<p><code>reset</code> operates under the assumption that k0s is installed as a service on the host. To prevent accidental triggering, the command will not run if the k0s service is running, so you must first stop the service:</p>
+                <h1 id="uninstallreset">Uninstall/Reset<a class="headerlink" href="#uninstallreset" title="Permanent link">#</a></h1>
+<p>k0s can be uninstalled locally with <code>k0s reset</code> command and remotely with <code>k0sctl reset</code> command. They remove all k0s-related files from the host.</p>
+<p><code>reset</code> operates under the assumption that k0s is installed as a service on the host.</p>
+<h2 id="uninstall-a-k0s-node-locally">Uninstall a k0s node locally<a class="headerlink" href="#uninstall-a-k0s-node-locally" title="Permanent link">#</a></h2>
+<p>To prevent accidental triggering, <code>k0s reset</code> will not run if the k0s service is running, so you must first stop the service:</p>
 <ol>
 <li>
-<p>Stop the service on controller nodes:</p>
+<p>Stop the service:</p>
 <div class="highlight"><pre><span></span><code>sudo k0s stop
 </code></pre></div>
 </li>
 <li>
 <p>Invoke the <code>reset</code> command:</p>
-<div class="highlight"><pre><span></span><code>$ k0s reset
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:41<span class="o">]</span> Uninstalling the k0s service
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> no config file given, using defaults
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: etcd
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-apiserver
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: konnectivity-server
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> deleting user: kube-scheduler
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> starting containerd <span class="k">for</span> cleanup operations...
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> containerd succesfully started
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up kubelet volumes...
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed kubelet mounts!
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to clean up network namespaces...
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> successfully removed network namespaces!
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:42<span class="o">]</span> attempting to stop containers...
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> successfully removed k0s containers!
-INFO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:49<span class="o">]</span> deleting k0s generated data-dir <span class="o">(</span>/var/lib/k0s<span class="o">)</span> and run-dir <span class="o">(</span>/run/k0s<span class="o">)</span>
-ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15</span>:58:50<span class="o">]</span> k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended.
+<div class="highlight"><pre><span></span><code>$ sudo k0s reset
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:39<span class="o">]</span> * containers steps
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> successfully removed k0s containers!
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> no config file given, using defaults
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> * remove k0s users step:
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> no config file given, using defaults
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> * uninstal service step
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> Uninstalling the k0s service
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:45<span class="o">]</span> * remove directories step
+INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:45<span class="o">]</span> * CNI leftovers cleanup step
+INFO k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended.
+</code></pre></div>
+</li>
+</ol>
+<h2 id="uninstall-a-k0s-cluster-using-k0sctl">Uninstall a k0s cluster using k0sctl<a class="headerlink" href="#uninstall-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
+<p>k0sctl can be used to connect each node and remove all k0s-related files and processes from the hosts.</p>
+<ol>
+<li>
+<p>Invoke <code>k0sctl reset</code> command:</p>
+<div class="highlight"><pre><span></span><code>$ k0sctl reset --config k0sctl.yaml
+k0sctl v0.9.0 Copyright <span class="m">2021</span>, k0sctl authors.
+
+? Going to reset all of the hosts, which will destroy all configuration and data, Are you sure? Yes
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: connected              
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: connected            
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: is running Ubuntu <span class="m">20</span>.04.2 LTS 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: is running Ubuntu <span class="m">20</span>.04.2 LTS 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts    
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: found existing configuration 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: is running k0s controller version <span class="m">1</span>.21.2+k0s.0 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: is running k0s worker version <span class="m">1</span>.21.2+k0s.0 
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: checking <span class="k">if</span> worker  has joined 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Reset hosts      
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: stopping k0s           
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: stopping k0s         
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: running k0s reset    
+INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: running k0s reset      
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
+<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 8s                  
 </code></pre></div>
 </li>
 </ol>
@@ -1132,7 +1218,7 @@ ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../user-management/" class="md-footer__link md-footer__link--prev" aria-label="Previous: User Management" rel="prev">
+        <a href="../backup/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Backup/Restore" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1141,20 +1227,20 @@ ERRO<span class="o">[</span><span class="m">2021</span>-02-25 <span class="m">15
               <span class="md-footer__direction">
                 Previous
               </span>
-              User Management
+              Backup/Restore
             </div>
           </div>
         </a>
       
       
         
-        <a href="../manifests/" class="md-footer__link md-footer__link--next" aria-label="Next: Manifest Deployer" rel="next">
+        <a href="../system-requirements/" class="md-footer__link md-footer__link--next" aria-label="Next: System Requirements" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Manifest Deployer
+              System Requirements
             </div>
           </div>
           <div class="md-footer__button md-icon">
