@@ -94,3 +94,5 @@ replace (
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 )
+
+replace github.com/kardianos/service => github.com/k0sproject/kardianos-service v1.2.1-0.20210701120136-4fa800c407da
