@@ -22,7 +22,7 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/k0sproject/dig v0.1.0
-	github.com/kardianos/service v1.2.1-0.20201211143537-ef35c563203c
+	github.com/kardianos/service v1.2.1-0.20210616011951-36c9bf8c36a2
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mitchellh/go-homedir v1.1.0
@@ -94,3 +94,5 @@ replace (
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 )
+
+replace github.com/kardianos/service => github.com/k0sproject/kardianos-service v1.2.1-0.20210701120136-4fa800c407da
