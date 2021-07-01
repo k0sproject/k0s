@@ -22,6 +22,7 @@ nav:
           - Airgap Install:               airgap-install.md
       - Upgrade:                          upgrade.md
       - Backup/Restore:                   backup.md
+      - Uninstall/Reset:                  reset.md
       - System Requirements:              system-requirements.md
   - Usage:
       - Configuration Options:            configuration.md
@@ -35,7 +36,6 @@ nav:
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
-      - Uninstall the k0s Cluster:        k0s-reset.md
   - Extensions:
       - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
