@@ -23,7 +23,7 @@ kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
 kubernetes_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kine_version = 0.6.0
+kine_version = 0.6.2
 kine_buildimage = golang:1.16-alpine
 #kine_build_go_tags =
 #kine_build_go_cgo_enabled =
