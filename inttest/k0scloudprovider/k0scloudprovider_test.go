@@ -43,38 +43,62 @@ func (s *K0sCloudProviderSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.Require().NoError(err)
 
-	// Ensure that worker0 doesn't have the special label ...
-	w0labels, err := s.GetNodeLabels(s.WorkerNode(0), kc)
+	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.Require().NoError(err)
-	s.Require().NotContains(w0labels, k0scloudprovider.ExternalIPLabel)
 
-	// .. and that the external IP has not been defined.
-	w0AddrsFoundInitial, err := nodeHasAddressWithType(kc, s.WorkerNode(0), "1.2.3.4", v1.NodeExternalIP)
+	// Test the adding of various addresses using addition via annotations
+	w0Helper := defaultNodeAddValueHelper(s.AddNodeAnnotation)
+	s.testAddAddress(kc, s.WorkerNode(0), "1.2.3.4", w0Helper)
+	s.testAddAddress(kc, s.WorkerNode(0), "2041:0000:140F::875B:131B", w0Helper)
+	s.testAddAddress(kc, s.WorkerNode(0), "GIGO", w0Helper)
+}
+
+// nodeAddValueFunc defines how a key/value can be added to a node
+type nodeAddValueFunc func(node string, kc *kubernetes.Clientset, key string, value string) (*v1.Node, error)
+
+// nodeAddValueHelper provides all of the callback functions needed to test
+// the addition of addresses into the provider (pre, add, post)
+type nodeAddValueHelper struct {
+	addressFoundPre  func(kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
+	addressAdd       nodeAddValueFunc
+	addressFoundPost func(kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
+}
+
+// defaultNodeAddValueHelper creates a nodeAddValueHelper using the provided
+// adder function (ie. labels, or annotation add functions)
+func defaultNodeAddValueHelper(adder nodeAddValueFunc) nodeAddValueHelper {
+	return nodeAddValueHelper{
+		addressFoundPre:  nodeHasAddressWithType,
+		addressAdd:       adder,
+		addressFoundPost: nodeHasAddressWithType,
+	}
+}
+
+// testAddAddress adds the provided address to a node via a helper. This ensures that
+// the address doesn't already exist, can be added successfully, and exists after addition.
+func (s *K0sCloudProviderSuite) testAddAddress(kc *kubernetes.Clientset, node string, addr string, helper nodeAddValueHelper) {
+	s.T().Logf("Testing add address - node=%s, addr=%s", node, addr)
+
+	addrFound, err := helper.addressFoundPre(kc, node, addr, v1.NodeExternalIP)
 	s.Require().NoError(err)
-	s.Require().False(w0AddrsFoundInitial)
+	s.Require().False(addrFound, "ExternalIP=%s already exists on node=%s", addr, node)
 
-	// Now, add the special 'k0sproject.io/node-ip-external' label with an
-	// IP address to the worker node, and after a few seconds the IP address
-	// should be listed as an 'ExternalIP'
-	w0, err := s.AddNodeLabel(s.WorkerNode(0), kc, k0scloudprovider.ExternalIPLabel, "1.2.3.4")
+	// Now, add the special 'k0sproject.io/node-ip-external' key with an IP address to the
+	// worker node, and after a few seconds the IP address should be listed as an 'ExternalIP'
+	w, err := helper.addressAdd(node, kc, k0scloudprovider.ExternalIPAnnotation, addr)
 	s.Require().NoError(err)
-	s.Require().NotNil(w0)
+	s.Require().NotNil(w)
 
-	// The k0s-cloud-provider is configured to update every 5s, so wait
-	// for 10s and then look for the external IP.
-	s.T().Logf("waiting 10s for the next k0s-cloud-provider update")
+	// The k0s-cloud-provider is configured to update every 5s, so wait for 10s and then
+	// look for the external IP.
+	s.T().Logf("waiting 10s for the next k0s-cloud-provider update (testAddAddress: node=%s, addr=%s)", node, addr)
 	time.Sleep(10 * time.Second)
 
-	// Need to ensure that an 'ExternalIP' address of '1.2.3.4' has been added,
-	// indicating that k0s-cloud-provider properly processed the label.
-	w0AddrsFoundPostUpdate, err := nodeHasAddressWithType(kc, s.WorkerNode(0), "1.2.3.4", v1.NodeExternalIP)
+	// Need to ensure that a matching 'ExternalIP' address has been added, indicating that
+	// k0s-cloud-provider properly processed the annotation.
+	foundPostUpdate, err := helper.addressFoundPost(kc, node, addr, v1.NodeExternalIP)
 	s.Require().NoError(err)
-	s.Require().True(w0AddrsFoundPostUpdate, "unable to find ExternalIP=1.2.3.4")
-
-	// Sanity: Ensure that worker1 doesn't also have the new ExternalIP address
-	w1AddrsFound, err := nodeHasAddressWithType(kc, s.WorkerNode(1), "1.2.3.4", v1.NodeExternalIP)
-	s.Require().NoError(err)
-	s.Require().False(w1AddrsFound, "worker1 incorrectly has ExternalIP=1.2.3.4")
+	s.Require().True(foundPostUpdate, "unable to find ExternalIP=%s on node=%s", addr, node)
 }
 
 // nodeHasAddressWithType is a helper for fetching all of the addresses associated to

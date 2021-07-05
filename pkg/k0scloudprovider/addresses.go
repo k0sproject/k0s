@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	ExternalIPLabel = "k0sproject.io/node-ip-external"
+	ExternalIPAnnotation = "k0sproject.io/node-ip-external"
 )
 
 // AddressCollector finds addresses on a node.
@@ -79,8 +79,8 @@ func populateExternalAddress(addrs *[]v1.NodeAddress, node *v1.Node) {
 		return
 	}
 
-	// Search the nodes labels for any external IP address definitions.
-	if externalIP, ok := node.Labels[ExternalIPLabel]; ok {
+	// Search the nodes annotations for any external IP address definitions.
+	if externalIP, ok := node.Annotations[ExternalIPAnnotation]; ok {
 		*addrs = append(*addrs, v1.NodeAddress{Type: v1.NodeExternalIP, Address: externalIP})
 	}
 }

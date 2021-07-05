@@ -562,11 +562,30 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 	return n.Labels, nil
 }
 
+// GetNodeLabels return the labels of given node
+func (s *FootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
+	n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return n.Annotations, nil
+}
+
 // AddNodeLabel adds a label to the provided node.
 func (s *FootlooseSuite) AddNodeLabel(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
-	labelKey := fmt.Sprintf("/metadata/labels/%s", jsonpointer.Escape(key))
-	labelPatch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, labelKey, value)
-	return kc.CoreV1().Nodes().Patch(context.TODO(), node, types.JSONPatchType, []byte(labelPatch), v1.PatchOptions{})
+	return nodeValuePatchAdd(node, kc, "/metadata/labels", key, value)
+}
+
+// AddNodeAnnotation adds an annotation to the provided node.
+func (s *FootlooseSuite) AddNodeAnnotation(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
+	return nodeValuePatchAdd(node, kc, "/metadata/annotations", key, value)
+}
+
+// nodeValuePatchAdd patch-adds a key/value to a specific path via the Node API
+func nodeValuePatchAdd(node string, kc *kubernetes.Clientset, path string, key string, value string) (*corev1.Node, error) {
+	keyPath := fmt.Sprintf("%s/%s", path, jsonpointer.Escape(key))
+	patch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, keyPath, value)
+	return kc.CoreV1().Nodes().Patch(context.TODO(), node, types.JSONPatchType, []byte(patch), v1.PatchOptions{})
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.
