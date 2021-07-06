@@ -4,7 +4,7 @@ k0s builds Kubernetes components in *providerless* mode, meaning that cloud prov
 
 ## 1. Enable cloud provider support in kubelet
 
-Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with `--enable-cloud-provider=true`, to enable `--cloud-provider=external` on the kubelet process.
+Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with `--enable-cloud-provider=true`.
 
 ## 2. Deploy the cloud provider
 
