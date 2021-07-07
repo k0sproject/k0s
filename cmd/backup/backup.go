@@ -70,24 +70,27 @@ func (c *CmdOpts) backup() error {
 	}
 
 	if !util.DirExists(savePath) {
-		logger.Fatalf("the save-path directory (%v) does not exist.", savePath)
+		return fmt.Errorf("the save-path directory (%v) does not exist", savePath)
 	}
 
 	if !util.DirExists(c.K0sVars.DataDir) {
-		logger.Fatalf("cannot find data-dir (%v). check your environment and/or command input and try again.", c.K0sVars.DataDir)
+		return fmt.Errorf("cannot find data-dir (%v). check your environment and/or command input and try again", c.K0sVars.DataDir)
 	}
 
-	role := install.GetRoleByStagedKubelet(c.K0sVars.BinDir)
-	logrus.Debugf("detected role for backup operations: %v", role)
+	status, err := install.GetStatusInfo(config.StatusSocket)
+	if err != nil {
+		return fmt.Errorf("unable to detect cluster status %s", err)
+	}
+	logrus.Debugf("detected role for backup operations: %v", status.Role)
 
-	if strings.Contains(role, "controller") {
+	if strings.Contains(status.Role, "controller") {
 		mgr, err := backup.NewBackupManager()
 		if err != nil {
 			return err
 		}
 		return mgr.RunBackup(c.CfgFile, c.ClusterConfig.Spec, c.K0sVars, savePath)
 	}
-	return fmt.Errorf("backup command must be run on the controller node, have `%s`", role)
+	return fmt.Errorf("backup command must be run on the controller node, have `%s`", status.Role)
 }
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {

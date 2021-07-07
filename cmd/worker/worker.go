@@ -28,9 +28,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/install"
 )
 
 type CmdOpts config.CLIOptions
@@ -139,6 +142,20 @@ func (c *CmdOpts) StartWorker() error {
 		})
 	}
 
+	if !c.SingleNode && !c.EnableWorker {
+		componentManager.Add(&status.Status{
+			StatusInformation: install.K0sStatus{
+				Pid:           os.Getpid(),
+				Role:          "worker",
+				Args:          os.Args,
+				Version:       build.Version,
+				Workloads:     true,
+				K0sVars:       c.K0sVars,
+				ClusterConfig: c.ClusterConfig,
+			},
+			Socket: config.StatusSocket,
+		})
+	}
 	// extract needed components
 	if err := componentManager.Init(); err != nil {
 		return err

@@ -16,6 +16,7 @@ limitations under the License.
 package config
 
 import (
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -31,6 +32,7 @@ var (
 	DataDir        string
 	Debug          bool
 	DebugListenOn  string
+	StatusSocket   string
 	K0sVars        constant.CfgVars
 	workerOpts     WorkerOptions
 	controllerOpts ControllerOptions
@@ -94,6 +96,7 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
+	flagset.StringVar(&StatusSocket, "status-socket", filepath.Join(K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
 }

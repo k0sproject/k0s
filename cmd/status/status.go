@@ -16,13 +16,13 @@ limitations under the License.
 package status
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
+	"path/filepath"
 	"runtime"
-	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -32,52 +32,58 @@ type CmdOpts config.CLIOptions
 
 var (
 	output string
-	s      *install.K0sStatus
 )
 
 func NewStatusCmd() *cobra.Command {
-	s = &install.K0sStatus{}
 	cmd := &cobra.Command{
 		Use:     "status",
 		Short:   "Helper command for get general information about k0s",
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-			var err error
-			if s, err = install.GetPid(); err != nil {
+
+			statusInfo, err := install.GetStatusInfo(config.StatusSocket)
+			if err != nil {
 				return err
 			}
-
-			if s.Pid != 0 {
-				ver, err := s.GetK0sVersion()
-				if err != nil {
-					return err
-				}
-				s.Version = ver
-
-				if os.Geteuid() != 0 {
-					logrus.Fatal("k0s status must be run as root!")
-				}
-
-				if s.Role, err = install.GetRoleByPID(s.Pid); err != nil {
-					return err
-				}
-
-				if s.SysInit, s.StubFile, err = install.GetSysInit(strings.TrimSuffix(s.Role, "+worker")); err != nil {
-					return err
-				}
+			if statusInfo != nil {
+				printStatus(statusInfo, output)
 			} else {
-				fmt.Fprintln(os.Stderr, "K0s not running")
-				os.Exit(1)
+				fmt.Println("K0s is not running")
 			}
-			s.Output = output
-			s.String()
 			return nil
 		},
 	}
+
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
+	cmd.PersistentFlags().StringVar(&config.StatusSocket, "status-socket", filepath.Join(config.K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
+
 	return cmd
+}
+
+func printStatus(status *install.K0sStatus, output string) {
+	switch output {
+	case "json":
+		jsn, _ := json.MarshalIndent(status, "", "   ")
+		fmt.Println(string(jsn))
+	case "yaml":
+		ym, _ := yaml.Marshal(status)
+		fmt.Println(string(ym))
+	default:
+		fmt.Println("Version:", status.Version)
+		fmt.Println("Process ID:", status.Pid)
+		fmt.Println("Role:", status.Role)
+		fmt.Println("Workloads:", status.Workloads)
+
+		if status.SysInit != "" {
+			fmt.Println("Init System:", status.SysInit)
+		}
+		if status.StubFile != "" {
+			fmt.Println("Service file:", status.StubFile)
+		}
+	}
 }

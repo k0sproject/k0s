@@ -61,16 +61,15 @@ func (c *CmdOpts) reset() error {
 		logger.Fatal("this command must be run as root!")
 	}
 
-	k0sStatus, _ := install.GetPid()
-	if k0sStatus.Pid != 0 {
+	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
+	if k0sStatus != nil && k0sStatus.Pid != 0 {
 		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
 	// Get Cleanup Config
 	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
 	if err != nil {
-		logger.Fatalf("failed to configure cleanup: %v", err)
-		return err
+		return fmt.Errorf("failed to configure cleanup: %v", err)
 	}
 
 	err = cfg.Cleanup()

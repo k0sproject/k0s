@@ -39,8 +39,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -293,6 +295,24 @@ func (c *CmdOpts) startController() error {
 			),
 		)
 	}
+
+	workload := false
+	if c.SingleNode || c.EnableWorker {
+		workload = true
+	}
+
+	componentManager.Add(&status.Status{
+		StatusInformation: install.K0sStatus{
+			Pid:           os.Getpid(),
+			Role:          "controller",
+			Args:          os.Args,
+			Version:       build.Version,
+			Workloads:     workload,
+			K0sVars:       c.K0sVars,
+			ClusterConfig: c.ClusterConfig,
+		},
+		Socket: config.StatusSocket,
+	})
 
 	perfTimer.Checkpoint("starting-component-init")
 	// init components
