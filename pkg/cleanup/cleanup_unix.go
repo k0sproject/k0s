@@ -18,8 +18,9 @@ package cleanup
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/pkg/component/worker"
 	"os/exec"
+
+	"github.com/k0sproject/k0s/pkg/component/worker"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
@@ -80,6 +81,7 @@ func (c *Config) Cleanup() error {
 		&services{Config: c},
 		&directories{Config: c},
 		&cni{Config: c},
+		&bridge{},
 	}
 
 	for _, step := range cleanupSteps {
