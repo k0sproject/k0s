@@ -15,21 +15,22 @@ limitations under the License.
 */
 package v1beta1
 
-var _ Validateable = (*ClusterTelemetry)(nil)
+import "gopkg.in/yaml.v2"
 
-// ClusterTelemetry holds telemetry related settings
-type ClusterTelemetry struct {
-	Enabled bool `json:"enabled" yaml:"enabled"`
-}
-
-// DefaultClusterTelemetry default settings
-func DefaultClusterTelemetry() *ClusterTelemetry {
-	return &ClusterTelemetry{
-		Enabled: true,
+// custom DeepcopyInto func for WorkerProfile
+func (in *WorkerProfile) DeepCopyInto(out *WorkerProfile) {
+	if in == nil {
+		return
 	}
-}
+	b, err := yaml.Marshal(in.Values)
+	if err != nil {
+		return
+	}
+	var values Values
 
-// Validate stub for Validateable interface
-func (c *ClusterTelemetry) Validate() []error {
-	return nil
+	err = yaml.Unmarshal(b, &values)
+	if err != nil {
+		return
+	}
+	out.Values = values
 }

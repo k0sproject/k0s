@@ -21,12 +21,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
-// var _ Validateable = (*PodSecurityPolicy)(nil)
+var _ Validateable = (*PodSecurityPolicy)(nil)
 
 // PodSecurityPolicy defines the config options for setting system level default PSP
 type PodSecurityPolicy struct {
 	// default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
-	DefaultPolicy string `json:"defaultPolicy"`
+	DefaultPolicy string `json:"defaultPolicy" yaml:"defaultPolicy"`
 }
 
 // DefaultPodSecurityPolicy creates new PodSecurityPolicy with sane defaults

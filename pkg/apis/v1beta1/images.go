@@ -24,8 +24,8 @@ import (
 
 // ImageSpec container image settings
 type ImageSpec struct {
-	Image   string `json:"image"`
-	Version string `json:"version"`
+	Image   string `json:"image" yaml:"image"`
+	Version string `json:"version" yaml:"version"`
 }
 
 // URI build image uri
@@ -35,16 +35,16 @@ func (is ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity"`
-	MetricsServer ImageSpec `json:"metricsserver"`
-	KubeProxy     ImageSpec `json:"kubeproxy"`
-	CoreDNS       ImageSpec `json:"coredns"`
+	Konnectivity  ImageSpec `json:"konnectivity" yaml:"konnectivity"`
+	MetricsServer ImageSpec `json:"metricsserver" yaml:"metricsserver"`
+	KubeProxy     ImageSpec `json:"kubeproxy" yaml:"kubeproxy"`
+	CoreDNS       ImageSpec `json:"coredns" yaml:"coredns"`
 
-	Calico     CalicoImageSpec     `json:"calico"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
+	Calico     CalicoImageSpec     `json:"calico" yaml:"calico"`
+	KubeRouter KubeRouterImageSpec `json:"kuberouter" yaml:"kuberouter"`
 
-	Repository        string `json:"repository,omitempty"`
-	DefaultPullPolicy string `json:"default_pull_policy,omitempty"`
+	Repository        string `json:"repository,omitempty" yaml:"repository,omitempty"`
+	DefaultPullPolicy string `json:"default_pull_policy,omitempty" yaml:"default_pull_policy,omitempty"`
 }
 
 func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -78,15 +78,15 @@ func (ci *ClusterImages) overrideImageRepositories() {
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni"`
-	Node            ImageSpec `json:"node"`
-	KubeControllers ImageSpec `json:"kubecontrollers"`
+	CNI             ImageSpec `json:"cni" yaml:"cni"`
+	Node            ImageSpec `json:"node" yaml:"node"`
+	KubeControllers ImageSpec `json:"kubecontrollers" yaml:"kubecontrollers"`
 }
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni"`
-	CNIInstaller ImageSpec `json:"cniInstaller"`
+	CNI          ImageSpec `json:"cni" yaml:"cni"`
+	CNIInstaller ImageSpec `json:"cniInstaller" yaml:"cniInstaller"`
 }
 
 // DefaultClusterImages default image settings
