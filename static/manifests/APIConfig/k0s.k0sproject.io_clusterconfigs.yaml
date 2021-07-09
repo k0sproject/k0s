@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: (devel)
   creationTimestamp: null
   name: clusterconfigs.k0s.k0sproject.io
 spec:
@@ -22,6 +22,9 @@ spec:
         description: ClusterConfig is the Schema for the clusterconfigs API
         properties:
           apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
             description: 'Kind is a string value representing the REST resource this
@@ -478,14 +481,7 @@ spec:
                         worker process
                       type: string
                     values:
-                      additionalProperties:
-                        description: RawMessage is a raw encoded JSON value. It implements
-                          Marshaler and Unmarshaler and can be used to delay JSON
-                          decoding or precompute a JSON encoding.
-                        format: byte
-                        type: string
                       description: Worker Mapping object
-                      type: object
                   required:
                   - name
                   - values
@@ -502,8 +498,6 @@ spec:
           status:
             description: ClusterConfigStatus defines the observed state of ClusterConfig
             type: object
-        required:
-        - apiVersion
         type: object
     served: true
     storage: true

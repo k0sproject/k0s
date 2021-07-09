@@ -29,21 +29,21 @@ const (
 	KineStorageType = "kine"
 )
 
-// var _ Validateable = (*StorageSpec)(nil)
+var _ Validateable = (*StorageSpec)(nil)
 
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
-	Etcd *EtcdConfig `json:"etcd"`
-	Kine *KineConfig `json:"kine,omitempty"`
+	Etcd *EtcdConfig `json:"etcd" yaml:"etcd"`
+	Kine *KineConfig `json:"kine,omitempty" yaml:"kine,omitempty"`
 
 	// Type of the data store (valid values:etcd or kine)
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 }
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {
 	// kine datasource URL
-	DataSource string `json:"dataSource"`
+	DataSource string `json:"dataSource" yaml:"dataSource"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
@@ -103,7 +103,7 @@ func (s *StorageSpec) Validate() []error {
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
 	// Node address used for etcd cluster peering
-	PeerAddress string `json:"peerAddress"`
+	PeerAddress string `json:"peerAddress" yaml:"peerAddress"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults

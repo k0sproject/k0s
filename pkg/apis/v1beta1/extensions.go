@@ -15,38 +15,38 @@ limitations under the License.
 */
 package v1beta1
 
-// var _ Validateable = (*ClusterExtensions)(nil)
+var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
-	Helm *HelmExtensions `json:"helm"`
+	Helm *HelmExtensions `json:"helm" yaml:"helm"`
 }
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	Repositories []Repository `json:"repositories"`
-	Charts       []Chart      `json:"charts"`
+	Repositories []Repository `json:"repositories" yaml:"repositories"`
+	Charts       []Chart      `json:"charts" yaml:"charts"`
 }
 
 // Chart single helm addon
 type Chart struct {
-	Name      string `json:"name"`
-	ChartName string `json:"chartname"`
-	Version   string `json:"version"`
-	Values    string `json:"values"`
-	TargetNS  string `json:"namespace"`
+	Name      string `json:"name" yaml:"name"`
+	ChartName string `json:"chartname" yaml:"chartname"`
+	Version   string `json:"version" yaml:"version"`
+	Values    string `json:"values" yaml:"values"`
+	TargetNS  string `json:"namespace" yaml:"namespace"`
 }
 
 // Repository describes single repository entry. Fields map to the CLI flags for the "helm add" command
 type Repository struct {
-	Name     string `json:"name"`
-	URL      string `json:"url"`
-	CAFile   string `json:"caFile"`
-	CertFile string `json:"certFile"`
-	Insecure bool   `json:"insecure"`
-	KeyFile  string `json:"keyfile"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Name     string `json:"name" yaml:"name"`
+	URL      string `json:"url" yaml:"url"`
+	CAFile   string `json:"caFile" yaml:"caFile"`
+	CertFile string `json:"certFile" yaml:"certFile"`
+	Insecure bool   `json:"insecure" yaml:"insecure"`
+	KeyFile  string `json:"keyfile" yaml:"keyfile"`
+	Username string `json:"username" yaml:"username"`
+	Password string `json:"password" yaml:"password"`
 }
 
 // Validate stub for Validateable interface

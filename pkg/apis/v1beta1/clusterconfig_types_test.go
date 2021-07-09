@@ -29,8 +29,6 @@ var k0sVars = constant.CfgVars{}
 func TestClusterDefaults(t *testing.T) {
 	c, err := configFromString("apiVersion: k0s.k0sproject.io/v1beta1", k0sVars)
 	assert.NoError(t, err)
-	assert.NotNil(t, c.Metadata)
-	assert.Equal(t, "k0s", c.Metadata.Name)
 	assert.Equal(t, DefaultStorageSpec(constant.GetConfig("")), c.Spec.Storage)
 }
 

@@ -18,11 +18,10 @@ package controller
 import (
 	"bytes"
 	"fmt"
-	"path"
-	"path/filepath"
-
 	"io"
 	"io/ioutil"
+	"path"
+	"path/filepath"
 
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
@@ -95,7 +94,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, false) // Do not add dualstack feature gate to the custom profiles
-		merged, err := mergeProfiles(&profileConfig, profile.Values)
+		merged, err := mergeProfiles(&profileConfig, unstructuredYamlObject(profile.Values))
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
 		}
