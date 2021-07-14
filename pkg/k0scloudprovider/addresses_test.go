@@ -123,8 +123,8 @@ var testDataPopulateExternalAddress = []populateAddressTestData{
 		name: "Equality",
 		input: &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{
-					ExternalIPLabel: "1.2.3.4",
+				Annotations: map[string]string{
+					ExternalIPAnnotation: "1.2.3.4",
 				},
 			},
 			Status: v1.NodeStatus{
@@ -139,7 +139,7 @@ var testDataPopulateExternalAddress = []populateAddressTestData{
 		name: "Missing",
 		input: &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{},
+				Annotations: map[string]string{},
 			},
 			Status: v1.NodeStatus{
 				Addresses: []v1.NodeAddress{},
