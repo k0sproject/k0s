@@ -42,7 +42,7 @@ check-customports: TIMEOUT=6m
 include Makefile.variables
 
 $(smoketests): .footloose-alpine.stamp
-	K0S_IMAGES_BUNDLE=$(realpath ../image-bundle/bundle.tar) K0S_PATH=$(realpath ../k0s) go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
+	K0S_IMAGES_BUNDLE="$(realpath ../image-bundle/bundle.tar)" K0S_PATH="$(realpath ../k0s)" go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean
 clean:
