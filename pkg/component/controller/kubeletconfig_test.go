@@ -74,7 +74,6 @@ func Test_KubeletConfig(t *testing.T) {
 			requireRole(t, manifestYamls[len(resourceNamesForRole)], resourceNamesForRole)
 		})
 		t.Run("user_profile_X_must_be_merged_with_default_profile", func(t *testing.T) {
-
 			profileXXX := struct {
 				Data map[string]string `yaml:"data"`
 			}{}
@@ -111,10 +110,12 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
 		config.WorkerProfile{
 			Name: "profile_XXX",
-			Values: map[string]interface{}{
-				"authentication": map[string]interface{}{
-					"anonymous": map[string]interface{}{
-						"enabled": false,
+			Config: &config.WorkerConfig{
+				Values: map[string]interface{}{
+					"authentication": map[string]interface{}{
+						"anonymous": map[string]interface{}{
+							"enabled": false,
+						},
 					},
 				},
 			},
@@ -124,10 +125,12 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
 		config.WorkerProfile{
 			Name: "profile_YYY",
-			Values: map[string]interface{}{
-				"authentication": map[string]interface{}{
-					"webhook": map[string]interface{}{
-						"cacheTTL": "15s",
+			Config: &config.WorkerConfig{
+				Values: map[string]interface{}{
+					"authentication": map[string]interface{}{
+						"webhook": map[string]interface{}{
+							"cacheTTL": "15s",
+						},
 					},
 				},
 			},

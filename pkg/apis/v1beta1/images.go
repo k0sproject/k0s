@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -24,8 +25,8 @@ import (
 
 // ImageSpec container image settings
 type ImageSpec struct {
-	Image   string `json:"image" yaml:"image"`
-	Version string `json:"version" yaml:"version"`
+	Image   string `json:"image"`
+	Version string `json:"version"`
 }
 
 // URI build image uri
@@ -35,22 +36,22 @@ func (is ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity" yaml:"konnectivity"`
-	MetricsServer ImageSpec `json:"metricsserver" yaml:"metricsserver"`
-	KubeProxy     ImageSpec `json:"kubeproxy" yaml:"kubeproxy"`
-	CoreDNS       ImageSpec `json:"coredns" yaml:"coredns"`
+	Konnectivity  ImageSpec `json:"konnectivity"`
+	MetricsServer ImageSpec `json:"metricsserver"`
+	KubeProxy     ImageSpec `json:"kubeproxy"`
+	CoreDNS       ImageSpec `json:"coredns"`
 
-	Calico     CalicoImageSpec     `json:"calico" yaml:"calico"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter" yaml:"kuberouter"`
+	Calico     CalicoImageSpec     `json:"calico"`
+	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
 
-	Repository        string `json:"repository,omitempty" yaml:"repository,omitempty"`
-	DefaultPullPolicy string `json:"default_pull_policy,omitempty" yaml:"default_pull_policy,omitempty"`
+	Repository        string `json:"repository,omitempty"`
+	DefaultPullPolicy string `json:"default_pull_policy,omitempty"`
 }
 
-func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (ci *ClusterImages) UnmarshalJSON(data []byte) error {
 	type wrapper ClusterImages
 	imagesWrapper := (*wrapper)(ci)
-	if err := unmarshal(imagesWrapper); err != nil {
+	if err := json.Unmarshal(data, imagesWrapper); err != nil {
 		return err
 	}
 	ci.overrideImageRepositories()
@@ -78,15 +79,15 @@ func (ci *ClusterImages) overrideImageRepositories() {
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni" yaml:"cni"`
-	Node            ImageSpec `json:"node" yaml:"node"`
-	KubeControllers ImageSpec `json:"kubecontrollers" yaml:"kubecontrollers"`
+	CNI             ImageSpec `json:"cni"`
+	Node            ImageSpec `json:"node"`
+	KubeControllers ImageSpec `json:"kubecontrollers"`
 }
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni" yaml:"cni"`
-	CNIInstaller ImageSpec `json:"cniInstaller" yaml:"cniInstaller"`
+	CNI          ImageSpec `json:"cni"`
+	CNIInstaller ImageSpec `json:"cniInstaller"`
 }
 
 // DefaultClusterImages default image settings

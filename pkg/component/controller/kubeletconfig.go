@@ -100,7 +100,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, false) // Do not add dualstack feature gate to the custom profiles
-		merged, err := mergeProfiles(&profileConfig, unstructuredYamlObject(profile.Values))
+		merged, err := mergeProfiles(&profileConfig, profile.Config.Values)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
 		}

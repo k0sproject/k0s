@@ -15,7 +15,9 @@ limitations under the License.
 */
 package v1beta1
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var _ Validateable = (*KubeProxy)(nil)
 
@@ -27,8 +29,8 @@ const (
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
-	Disabled bool
-	Mode     string
+	Disabled bool   `json:"disabled,omitempty"`
+	Mode     string `json:"mode,omitempty"`
 }
 
 // DefaultKubeProxy creates the default config for kube-proxy

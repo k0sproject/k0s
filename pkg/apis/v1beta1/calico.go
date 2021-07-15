@@ -15,37 +15,39 @@ limitations under the License.
 */
 package v1beta1
 
+import "encoding/json"
+
 // Calico defines the calico related config options
 type Calico struct {
 	// Enable wireguard-based encryption (default: false)
-	EnableWireguard bool `json:"wireguard" yaml:"wireguard"`
+	EnableWireguard bool `json:"wireguard"`
 
 	// The host path for Calicos flex-volume-driver(default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)
-	FlexVolumeDriverPath string `json:"flexVolumeDriverPath" yaml:"flexVolumeDriverPath"`
+	FlexVolumeDriverPath string `json:"flexVolumeDriverPath"`
 
 	// Host's IP Auto-detection method for Calico (see https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods)
-	IPAutodetectionMethod string `json:"ipAutodetectionMethod,omitempty" yaml:"ipAutodetectionMethod,omitempty"`
+	IPAutodetectionMethod string `json:"ipAutodetectionMethod,omitempty"`
 
 	// Host's IPv6 Auto-detection method for Calico
-	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty" yaml:"ipV6AutodetectionMethod,omitempty"`
+	IPv6AutodetectionMethod string `json:"ipV6AutodetectionMethod,omitempty"`
 
 	// MTU for overlay network (default: 0)
 	MTU int `json:"mtu" yaml:"mtu"`
 
 	// vxlan (default) or ipip
-	Mode string `json:"mode" yaml:"mode"`
+	Mode string `json:"mode"`
 
 	// Overlay Type (Always, Never or CrossSubnet)
-	Overlay string `json:"overlay" yaml:"overlay" validate:"oneof=Always Never CrossSubnet" `
+	Overlay string `json:"overlay" validate:"oneof=Always Never CrossSubnet" `
 
 	// The UDP port for VXLAN (default: 4789)
-	VxlanPort int `json:"vxlanPort" yaml:"vxlanPort"`
+	VxlanPort int `json:"vxlanPort"`
 
 	// The virtual network ID for VXLAN (default: 4096)
-	VxlanVNI int `json:"vxlanVNI" yaml:"vxlanVNI"`
+	VxlanVNI int `json:"vxlanVNI"`
 
 	// Windows Nodes (default: false)
-	WithWindowsNodes bool `json:"withWindowsNodes" yaml:"withWindowsNodes"`
+	WithWindowsNodes bool `json:"withWindowsNodes"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -64,8 +66,8 @@ func DefaultCalico() *Calico {
 	}
 }
 
-// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
-func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from JSON
+func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.Mode = "vxlan"
 	c.VxlanPort = 4789
 	c.VxlanVNI = 4096
@@ -77,9 +79,9 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.IPAutodetectionMethod = ""
 	c.IPv6AutodetectionMethod = ""
 
-	type ycalico Calico
-	yc := (*ycalico)(c)
-	if err := unmarshal(yc); err != nil {
+	type jcalico Calico
+	jc := (*jcalico)(c)
+	if err := json.Unmarshal(data, jc); err != nil {
 		return err
 	}
 

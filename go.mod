@@ -66,8 +66,9 @@ require (
 	k8s.io/kubectl v0.22.0
 	k8s.io/mount-utils v0.22.0
 	k8s.io/system-validators v1.4.0
-	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
-	rsc.io/letsencrypt v0.0.3 // indirect
+	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
+	sigs.k8s.io/controller-runtime v0.8.1
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 replace (

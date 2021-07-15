@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -51,9 +51,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var (
-	longDesc string
-)
+var longDesc string
 
 type cliOpts config.CLIOptions
 
