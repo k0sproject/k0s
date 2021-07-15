@@ -67,7 +67,7 @@ func TestWorkerProfile(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				profile := WorkerProfile{
-					Values: tc.spec,
+					Config: &WorkerConfig{tc.spec},
 				}
 				valid := profile.Validate() == nil
 				assert.Equal(t, valid, tc.valid)

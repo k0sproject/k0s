@@ -19,7 +19,7 @@ var _ Validateable = (*ClusterTelemetry)(nil)
 
 // ClusterTelemetry holds telemetry related settings
 type ClusterTelemetry struct {
-	Enabled bool `json:"enabled" yaml:"enabled"`
+	Enabled bool `json:"enabled"`
 }
 
 // DefaultClusterTelemetry default settings

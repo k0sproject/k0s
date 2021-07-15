@@ -15,22 +15,22 @@ limitations under the License.
 */
 package v1beta1
 
-import "gopkg.in/yaml.v2"
+import "sigs.k8s.io/yaml"
 
 // custom DeepcopyInto func for WorkerProfile
 func (in *WorkerProfile) DeepCopyInto(out *WorkerProfile) {
 	if in == nil {
 		return
 	}
-	b, err := yaml.Marshal(in.Values)
+	b, err := yaml.Marshal(in.Config)
 	if err != nil {
 		return
 	}
-	var values Values
+	var config *WorkerConfig
 
-	err = yaml.Unmarshal(b, &values)
+	err = yaml.Unmarshal(b, &config)
 	if err != nil {
 		return
 	}
-	out.Values = values
+	out.Config = config
 }

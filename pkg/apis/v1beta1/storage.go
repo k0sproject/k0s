@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -33,17 +34,17 @@ var _ Validateable = (*StorageSpec)(nil)
 
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
-	Etcd *EtcdConfig `json:"etcd" yaml:"etcd"`
-	Kine *KineConfig `json:"kine,omitempty" yaml:"kine,omitempty"`
+	Etcd *EtcdConfig `json:"etcd"`
+	Kine *KineConfig `json:"kine,omitempty"`
 
 	// Type of the data store (valid values:etcd or kine)
-	Type string `json:"type" yaml:"type"`
+	Type string `json:"type"`
 }
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {
 	// kine datasource URL
-	DataSource string `json:"dataSource" yaml:"dataSource"`
+	DataSource string `json:"dataSource"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
@@ -81,15 +82,15 @@ func (s *StorageSpec) IsJoinable() bool {
 	return false
 }
 
-// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
-func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 	s.Type = EtcdStorageType
 	s.Etcd = DefaultEtcdConfig()
 
-	type ystorageconfig StorageSpec
-	yc := (*ystorageconfig)(s)
+	type jstorageconfig StorageSpec
+	jc := (*jstorageconfig)(s)
 
-	if err := unmarshal(yc); err != nil {
+	if err := json.Unmarshal(data, jc); err != nil {
 		return err
 	}
 	return nil
@@ -103,7 +104,7 @@ func (s *StorageSpec) Validate() []error {
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
 	// Node address used for etcd cluster peering
-	PeerAddress string `json:"peerAddress" yaml:"peerAddress"`
+	PeerAddress string `json:"peerAddress"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults

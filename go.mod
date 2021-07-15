@@ -69,6 +69,7 @@ require (
 	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
 	sigs.k8s.io/controller-runtime v0.8.1
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 // We need to force to a git commit of 3.4.13 release, see https://github.com/etcd-io/etcd/issues/12109

@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,18 +32,18 @@ import (
 
 // ClusterSpec defines the desired state of ClusterConfig
 type ClusterSpec struct {
-	API               *APISpec               `json:"api" yaml:"api"`
-	ControllerManager *ControllerManagerSpec `json:"controllerManager,omitempty" yaml:"controllerManager,omitempty"`
-	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty" yaml:"scheduler,omitempty"`
-	Storage           *StorageSpec           `json:"storage" yaml:"storage"`
-	Network           *Network               `json:"network" yaml:"network"`
-	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy" yaml:"podSecurityPolicy"`
-	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty" yaml:"workerProfiles,omitempty"`
-	Telemetry         *ClusterTelemetry      `json:"telemetry" yaml:"telemetry"`
-	Install           *InstallSpec           `json:"installConfig,omitempty" yaml:"installConfig,omitempty"`
-	Images            *ClusterImages         `json:"images" yaml:"images"`
-	Extensions        *ClusterExtensions     `json:"extensions,omitempty" yaml:"extensions,omitempty"`
-	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty" yaml:"konnectivity,omitempty"`
+	API               *APISpec               `json:"api"`
+	ControllerManager *ControllerManagerSpec `json:"controllerManager,omitempty"`
+	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty"`
+	Storage           *StorageSpec           `json:"storage"`
+	Network           *Network               `json:"network"`
+	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy"`
+	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
+	Telemetry         *ClusterTelemetry      `json:"telemetry"`
+	Install           *InstallSpec           `json:"installConfig,omitempty"`
+	Images            *ClusterImages         `json:"images"`
+	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
+	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -56,29 +57,29 @@ type ClusterConfigStatus struct {
 
 // ClusterConfig is the Schema for the clusterconfigs API
 type ClusterConfig struct {
-	metav1.TypeMeta   `json:",omitempty,inline" yaml:",omitempty,inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",omitempty,inline"`
 
-	Spec    *ClusterSpec        `json:"spec,omitempty" yaml:"spec,omitempty"`
-	Status  ClusterConfigStatus `json:"status,omitempty" yaml:"status,omitempty"`
+	Spec    *ClusterSpec        `json:"spec,omitempty"`
+	Status  ClusterConfigStatus `json:"status,omitempty"`
 	k0sVars constant.CfgVars
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
 type InstallSpec struct {
-	SystemUsers *SystemUser `json:"users,omitempty" yaml:"users,omitempty"`
+	SystemUsers *SystemUser `json:"users,omitempty"`
 }
 
 // ControllerManagerSpec defines the fields for the ControllerManager
 type ControllerManagerSpec struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process
-	ExtraArgs map[string]string `json:"extraArgs,omitempty" yaml:"extraArgs,omitempty"`
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 // SchedulerSpec defines the fields for the Scheduler
 type SchedulerSpec struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process
-	ExtraArgs map[string]string `json:"extraArgs,omitempty" yaml:"extraArgs,omitempty"`
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -126,12 +127,12 @@ func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
 }
 
 func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
+	// config := DefaultClusterConfig(k0sVars)
 	config := &ClusterConfig{k0sVars: k0sVars}
-	err := util.YamlUnmarshalStrictIgnoringFields([]byte(yml), &config, []string{"interval"})
+	err := util.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, []string{"interval"})
 	if err != nil {
 		return config, err
 	}
-
 	if config.Spec == nil {
 		config.Spec = DefaultClusterSpec(k0sVars)
 	}
@@ -141,7 +142,7 @@ func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, err
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
 func DefaultClusterConfig(k0sVars constant.CfgVars) *ClusterConfig {
 	return &ClusterConfig{
-		ObjectMeta: metav1.ObjectMeta{ClusterName: "k0s"},
+		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "k0s.k0sproject.io/v1beta1",
 			Kind:       "Cluster",
@@ -150,19 +151,18 @@ func DefaultClusterConfig(k0sVars constant.CfgVars) *ClusterConfig {
 	}
 }
 
-// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
-func (c *ClusterConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	c.Kind = "Cluster"
-	c.ClusterName = "k0s"
+	c.Name = "k0s"
 	c.Spec = DefaultClusterSpec(c.k0sVars)
 
-	type yclusterconfig ClusterConfig
-	yc := (*yclusterconfig)(c)
+	type jclusterconfig ClusterConfig
+	jc := (*jclusterconfig)(c)
 
-	if err := unmarshal(yc); err != nil {
+	if err := json.Unmarshal(data, jc); err != nil {
 		return err
 	}
-
 	return nil
 }
 

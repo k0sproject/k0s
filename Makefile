@@ -156,8 +156,13 @@ clean:
 	-$(MAKE) -C inttest clean
 
 .PHONY: manifests
-manifests:
-	controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
+manifests: helmCRD cfgCRD
+
+helmCRD: $(shell cd pkg/apis/helm.k0sproject.io/)
+	controller-gen crd paths="./..." output:crd:artifacts:config=../../..static/manifests/helm/CustomResourceDefinition object
+
+cfgCRD: $(shell cd pkg/apis/v1beta1/)
+	controller-gen crd paths="./..." output:crd:artifacts:config=../../../static/manifests/v1beta1/CustomResourceDefinition object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
 	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
