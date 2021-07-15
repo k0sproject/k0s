@@ -19,16 +19,16 @@ import "fmt"
 
 // CaResponse defines the response type for /ca control API
 type CaResponse struct {
-	Key   []byte `json:"key" yaml:"key"`
-	Cert  []byte `json:"cert" yaml:"cert"`
-	SAKey []byte `json:"saKey" yaml:"saKey"`
-	SAPub []byte `json:"saPub" yaml:"saPub"`
+	Key   []byte `json:"key"`
+	Cert  []byte `json:"cert"`
+	SAKey []byte `json:"saKey"`
+	SAPub []byte `json:"saPub"`
 }
 
 // EtcdRequest defines the etcd control api request structure
 type EtcdRequest struct {
-	Node        string `json:"node" yaml:"node"`
-	PeerAddress string `json:"peerAddress" yaml:"peerAddress"`
+	Node        string `json:"node"`
+	PeerAddress string `json:"peerAddress"`
 }
 
 // Validate validates the request
@@ -46,6 +46,6 @@ func (e *EtcdRequest) Validate() error {
 
 // EtcdResponse defines the etcd control api response structure
 type EtcdResponse struct {
-	CA             CaResponse `json:"ca" yaml:"ca"`
-	InitialCluster []string   `json:"initialCluster" yaml:"initialCluster"`
+	CA             CaResponse `json:"ca"`
+	InitialCluster []string   `json:"initialCluster"`
 }

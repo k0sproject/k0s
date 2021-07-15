@@ -36,16 +36,19 @@ func (wps WorkerProfiles) Validate() []error {
 }
 
 // WorkerProfile worker profile
-// +k8s:deepcopy-gen=false
 type WorkerProfile struct {
 	// String; name to use as profile selector for the worker process
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name"`
 	// Worker Mapping object
-	Values `json:"values" yaml:"values"`
+	Config *WorkerConfig `json:"values"`
 }
 
 // +k8s:deepcopy-gen=false
-type Values map[string]interface{}
+type WorkerConfig struct {
+	Values map[string]interface{}
+}
+
+// type Values map[string]interface{}
 
 var lockedFields = map[string]struct{}{
 	"clusterDNS":    {},
@@ -56,7 +59,7 @@ var lockedFields = map[string]struct{}{
 
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
-	for field := range wp.Values {
+	for field := range wp.Config.Values {
 		if _, found := lockedFields[field]; found {
 			return fmt.Errorf("field `%s` is prohibited to override in worker profile", field)
 		}

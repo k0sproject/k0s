@@ -66,7 +66,6 @@ func (s *NetworkSuite) TestAddresses() {
 		t.Run("single_stack_default", func(t *testing.T) {
 			n := DefaultNetwork()
 			s.Equal(n.ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
-
 		})
 		t.Run("dual_stack_api_listens_on_ipv4", func(t *testing.T) {
 			n := DefaultNetwork()
