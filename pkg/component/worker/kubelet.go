@@ -52,8 +52,12 @@ type Kubelet struct {
 }
 
 type kubeletConfig struct {
-	ClientCAFile    string
-	VolumePluginDir string
+	ClientCAFile       string
+	VolumePluginDir    string
+	KubeReservedCgroup string
+	KubeletCgroups     string
+	CgroupsPerQOS      bool
+	ResolvConf         string
 }
 
 // Init extracts the needed binaries
@@ -80,6 +84,12 @@ func (k *Kubelet) Init() error {
 func (k *Kubelet) Run() error {
 	cmd := "kubelet"
 
+	kubeletConfigData := kubeletConfig{
+		ClientCAFile:       filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
+		VolumePluginDir:    k.K0sVars.KubeletVolumePluginDir,
+		KubeReservedCgroup: "system.slice",
+		KubeletCgroups:     "/system.slice/containerd.service",
+	}
 	if runtime.GOOS == "windows" {
 		cmd = "kubelet.exe"
 	}
@@ -96,9 +106,7 @@ func (k *Kubelet) Run() error {
 		"--bootstrap-kubeconfig": k.K0sVars.KubeletBootstrapConfigPath,
 		"--kubeconfig":           k.K0sVars.KubeletAuthConfigPath,
 		"--v":                    k.LogLevel,
-		"--kube-reserved-cgroup": "system.slice",
 		"--runtime-cgroups":      "/system.slice/containerd.service",
-		"--kubelet-cgroups":      "/system.slice/containerd.service",
 		"--cert-dir":             filepath.Join(k.dataDir, "pki"),
 	}
 
@@ -111,20 +119,20 @@ func (k *Kubelet) Run() error {
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %v", err)
 		}
-		args["--cgroups-per-qos"] = "false"
+		kubeletConfigData.CgroupsPerQOS = false
+		kubeletConfigData.ResolvConf = ""
 		args["--enforce-node-allocatable"] = ""
 		args["--pod-infra-container-image"] = "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
 		args["--network-plugin"] = "cni"
 		args["--cni-bin-dir"] = "C:\\k\\cni"
 		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
 		args["--hostname-override"] = node
-		args["--resolv-conf"] = ""
 		args["--cluster-domain"] = "cluster.local"
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	} else {
-		args["--cgroups-per-qos"] = "true"
-		args["--resolv-conf"] = resolvConfPath
+		kubeletConfigData.CgroupsPerQOS = true
+		kubeletConfigData.ResolvConf = resolvConfPath
 	}
 
 	if k.CRISocket != "" {
@@ -180,11 +188,8 @@ func (k *Kubelet) Run() error {
 		tw := util.TemplateWriter{
 			Name:     "kubelet-config",
 			Template: kubeletconfig,
-			Data: kubeletConfig{
-				ClientCAFile:    filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
-				VolumePluginDir: k.K0sVars.KubeletVolumePluginDir,
-			},
-			Path: kubeletConfigPath,
+			Data:     kubeletConfigData,
+			Path:     kubeletConfigPath,
 		}
 		err = tw.Write()
 		if err != nil {
