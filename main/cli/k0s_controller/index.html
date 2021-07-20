@@ -1130,11 +1130,14 @@
 <div class="highlight"><pre><span></span><code>k0s controller --token-file <span class="o">[</span>path_to_file<span class="o">]</span>
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: <span class="o">[</span>remote<span class="p">|</span>docker<span class="o">]</span>:<span class="o">[</span>path-to-socket<span class="o">]</span>
-      --enable-worker       <span class="nb">enable</span> worker <span class="o">(</span>default <span class="nb">false</span><span class="o">)</span>
-  -h, --help                <span class="nb">help</span> <span class="k">for</span> controller
-      --profile string      worker profile to use on the node <span class="o">(</span>default <span class="s2">&quot;default&quot;</span><span class="o">)</span>
-      --token-file string   Path to the file containing join-token.
+<div class="highlight"><pre><span></span><code>      --cri-socket string                              contrainer runtime socket to use, default to internal containerd. Format: <span class="o">[</span>remote<span class="p">|</span>docker<span class="o">]</span>:<span class="o">[</span>path-to-socket<span class="o">]</span>
+      --enable-worker                                  <span class="nb">enable</span> worker <span class="o">(</span>default <span class="nb">false</span><span class="o">)</span>
+  -h, --help                                           <span class="nb">help</span> <span class="k">for</span> controller
+      --profile string                                 worker profile to use on the node <span class="o">(</span>default <span class="s2">&quot;default&quot;</span><span class="o">)</span>
+      --token-file string                              Path to the file containing join-token.
+      --enable-k0s-cloud-provider                      enables the k0s-cloud-provider <span class="o">(</span>default <span class="nb">false</span><span class="o">)</span>
+      --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on <span class="o">(</span>default <span class="m">10258</span><span class="o">)</span>
+      --k0s-cloud-provider-update-frequency duration   the frequency of k0s-cloud-provider node updates <span class="o">(</span>default 2m0s<span class="o">)</span>
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>

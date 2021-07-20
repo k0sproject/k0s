@@ -652,16 +652,49 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-enable-cloud-provider-support-in-kubelet" class="md-nav__link">
-    1. Enable cloud provider support in kubelet
+  <a href="#external-cloud-providers" class="md-nav__link">
+    External Cloud Providers
   </a>
+  
+    <nav class="md-nav" aria-label="External Cloud Providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-cloud-provider-support-in-kubelet" class="md-nav__link">
+    Enable cloud provider support in kubelet
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-the-cloud-provider" class="md-nav__link">
+    Deploy the cloud provider
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-deploy-the-cloud-provider" class="md-nav__link">
-    2. Deploy the cloud provider
+  <a href="#k0s-cloud-provider" class="md-nav__link">
+    k0s Cloud Provider
   </a>
+  
+    <nav class="md-nav" aria-label="k0s Cloud Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defaults" class="md-nav__link">
+    Defaults
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1113,16 +1146,49 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-enable-cloud-provider-support-in-kubelet" class="md-nav__link">
-    1. Enable cloud provider support in kubelet
+  <a href="#external-cloud-providers" class="md-nav__link">
+    External Cloud Providers
   </a>
+  
+    <nav class="md-nav" aria-label="External Cloud Providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-cloud-provider-support-in-kubelet" class="md-nav__link">
+    Enable cloud provider support in kubelet
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-the-cloud-provider" class="md-nav__link">
+    Deploy the cloud provider
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-deploy-the-cloud-provider" class="md-nav__link">
-    2. Deploy the cloud provider
+  <a href="#k0s-cloud-provider" class="md-nav__link">
+    k0s Cloud Provider
   </a>
+  
+    <nav class="md-nav" aria-label="k0s Cloud Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defaults" class="md-nav__link">
+    Defaults
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1142,12 +1208,32 @@
                 
                 <h1 id="cloud-providers">Cloud providers<a class="headerlink" href="#cloud-providers" title="Permanent link">#</a></h1>
 <p>k0s builds Kubernetes components in <em>providerless</em> mode, meaning that cloud providers are not built into k0s-managed Kubernetes components. As such, you must externally configure the cloud providers to enable their support in your k0s cluster (for more information on running Kubernetes with cloud providers, refer to the <a href="https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/">Kubernetes documentation</a>.</p>
-<h2 id="1-enable-cloud-provider-support-in-kubelet">1. Enable cloud provider support in kubelet<a class="headerlink" href="#1-enable-cloud-provider-support-in-kubelet" title="Permanent link">#</a></h2>
+<h2 id="external-cloud-providers">External Cloud Providers<a class="headerlink" href="#external-cloud-providers" title="Permanent link">#</a></h2>
+<h3 id="enable-cloud-provider-support-in-kubelet">Enable cloud provider support in kubelet<a class="headerlink" href="#enable-cloud-provider-support-in-kubelet" title="Permanent link">#</a></h3>
 <p>Even when all components are built with providerless mode, you must be able to enable cloud provider mode for kubelet. To do this, run the workers with <code>--enable-cloud-provider=true</code>.</p>
-<h2 id="2-deploy-the-cloud-provider">2. Deploy the cloud provider<a class="headerlink" href="#2-deploy-the-cloud-provider" title="Permanent link">#</a></h2>
+<h3 id="deploy-the-cloud-provider">Deploy the cloud provider<a class="headerlink" href="#deploy-the-cloud-provider" title="Permanent link">#</a></h3>
 <p>The easiest way to deploy cloud provider controllers is on the k0s cluster.</p>
 <p>Use the built-in <a href="../manifests/">manifest deployer</a> built into k0s to deploy your cloud provider as a k0s-managed stack. Next, just drop all required manifests into the <code>/var/lib/k0s/manifests/aws/</code> directory, and k0s will handle the deployment.</p>
 <p><strong>Note</strong>: The prerequisites for the various cloud providers can vary (for example, several require that configuration files be present on all of the nodes). Refer to your chosen cloud provider's documentation as necessary.</p>
+<h2 id="k0s-cloud-provider">k0s Cloud Provider<a class="headerlink" href="#k0s-cloud-provider" title="Permanent link">#</a></h2>
+<p>Alternatively, k0s provides its own lightweight cloud provider that can
+be used to statically assign <code>ExternalIP</code> values to worker nodes via
+Kubernetes annotations.  This is beneficial for those who need to expose
+worker nodes externally via static IP assignments.</p>
+<p>To enable this functionality, add the parameter <code>--enable-k0s-cloud-provider=true</code>
+to all controllers, and <code>--enable-cloud-provider=true</code> to all workers.</p>
+<p>Adding a static IP address to a node using <code>kubectl</code>:</p>
+<div class="highlight"><pre><span></span><code>kubectl annotate \
+    node &lt;node&gt; \
+    k0sproject.io/node-ip-external=&lt;external IP&gt;
+</code></pre></div>
+<p>Both IPv4 and IPv6 addresses are supported.</p>
+<h3 id="defaults">Defaults<a class="headerlink" href="#defaults" title="Permanent link">#</a></h3>
+<p>The default node refresh interval is <code>2m</code>, which can be overridden using
+the <code>--k0s-cloud-provider-update-frequency=&lt;duration&gt;</code> parameter when launching
+the controller(s).</p>
+<p>The default port that the cloud provider binds to can be overridden using the
+<code>--k0s-cloud-provider-port=&lt;int&gt;</code> parameter when launching the controller(s).</p>
                 
               
               
