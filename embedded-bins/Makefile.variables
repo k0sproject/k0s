@@ -6,7 +6,7 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_ldflags =
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-containerd_version = 1.4.6
+containerd_version = 1.4.8
 containerd_buildimage = golang:1.15-alpine
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
