@@ -70,6 +70,21 @@ const (
 	KubeRouterCNIImageVersion          = "v1.2.1"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
+
+	// Controller component names
+	KonnectivityServerComponentName    = "konnectivity-server"
+	KubeSchedulerComponentName         = "kube-scheduler"
+	KubeControllerManagerComponentName = "kube-controller-manager"
+	ControlAPIComponentName            = "control-api"
+	CsrApproverComponentName           = "csr-approver"
+	DefaultPspComponentName            = "default-psp"
+	KubeProxyComponentName             = "kube-proxy"
+	CoreDNSComponentname               = "coredns"
+	NetworkProviderComponentName       = "network-provider"
+	HelmComponentName                  = "helm"
+	MetricsServerComponentName         = "metrics-server"
+	KubeletConfigComponentName         = "kubelet-config"
+	SystemRbacComponentName            = "system-rbac"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s
