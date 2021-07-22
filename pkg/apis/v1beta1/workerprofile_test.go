@@ -16,9 +16,10 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"testing"
 
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestWorkerProfile worker profile test suite
@@ -66,9 +67,11 @@ func TestWorkerProfile(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				profile := WorkerProfile{
-					Config: &WorkerConfig{tc.spec},
+				b, err := json.Marshal(tc.spec)
+				if err != nil {
+					t.Fatal(err)
 				}
+				profile := WorkerProfile{Config: b}
 				valid := profile.Validate() == nil
 				assert.Equal(t, valid, tc.valid)
 			})
