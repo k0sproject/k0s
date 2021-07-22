@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -107,33 +108,41 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 	k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
 	require.NoError(t, err)
 
+	cfgProfileX := map[string]interface{}{
+		"authentication": map[string]interface{}{
+			"anonymous": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+	}
+	wcx, err := json.Marshal(cfgProfileX)
+	if err != nil {
+		t.Fatal(err)
+	}
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
 		config.WorkerProfile{
-			Name: "profile_XXX",
-			Config: &config.WorkerConfig{
-				Values: map[string]interface{}{
-					"authentication": map[string]interface{}{
-						"anonymous": map[string]interface{}{
-							"enabled": false,
-						},
-					},
-				},
-			},
+			Name:   "profile_XXX",
+			Config: wcx,
 		},
 	)
 
+	cfgProfileY := map[string]interface{}{
+		"authentication": map[string]interface{}{
+			"webhook": map[string]interface{}{
+				"cacheTTL": "15s",
+			},
+		},
+	}
+
+	wcy, err := json.Marshal(cfgProfileY)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
 		config.WorkerProfile{
-			Name: "profile_YYY",
-			Config: &config.WorkerConfig{
-				Values: map[string]interface{}{
-					"authentication": map[string]interface{}{
-						"webhook": map[string]interface{}{
-							"cacheTTL": "15s",
-						},
-					},
-				},
-			},
+			Name:   "profile_YYY",
+			Config: wcy,
 		},
 	)
 	return k

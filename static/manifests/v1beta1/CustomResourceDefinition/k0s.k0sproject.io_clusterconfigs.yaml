@@ -487,7 +487,8 @@ spec:
                       type: string
                     values:
                       description: Worker Mapping object
-                      type: object
+                      format: byte
+                      type: string
                   required:
                   - name
                   - values
