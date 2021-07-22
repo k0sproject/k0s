@@ -17,6 +17,7 @@ package controller
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -100,7 +101,13 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	}
 	for _, profile := range k.clusterSpec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, false) // Do not add dualstack feature gate to the custom profiles
-		merged, err := mergeProfiles(&profileConfig, profile.Config.Values)
+
+		var workerValues unstructuredYamlObject
+		err := json.Unmarshal(profile.Config, &workerValues)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode worker profile values: %v", err)
+		}
+		merged, err := mergeProfiles(&profileConfig, workerValues)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
 		}

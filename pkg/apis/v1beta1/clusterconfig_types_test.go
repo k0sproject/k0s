@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -158,4 +159,48 @@ spec:
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
+}
+
+func TestWorkerProfileConfig(t *testing.T) {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: foobar
+spec:
+  workerProfiles:
+  - profile_XXX:
+    name: profile_XXX
+    values:
+      authentication:
+        anonymous:
+          enabled: true
+        webhook:
+          cacheTTL: 2m0s
+          enabled: true
+  - profile_YYY:
+    name: profile_YYY
+    values:
+      apiVersion: v2
+      authentication:
+        anonymous:
+          enabled: false
+`
+	c, err := configFromString(yamlData, k0sVars)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
+	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
+	assert.Equal(t, "profile_YYY", c.Spec.WorkerProfiles[1].Name)
+
+	j := c.Spec.WorkerProfiles[1].Config
+	var parsed map[string]interface{}
+
+	err = json.Unmarshal(j, &parsed)
+	assert.NoError(t, err)
+
+	for field, value := range parsed {
+		if field == "apiVersion" {
+			assert.Equal(t, "v2", value)
+		}
+	}
 }

@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -40,15 +41,8 @@ type WorkerProfile struct {
 	// String; name to use as profile selector for the worker process
 	Name string `json:"name"`
 	// Worker Mapping object
-	Config *WorkerConfig `json:"values"`
+	Config json.RawMessage `json:"values"`
 }
-
-// +k8s:deepcopy-gen=false
-type WorkerConfig struct {
-	Values map[string]interface{}
-}
-
-// type Values map[string]interface{}
 
 var lockedFields = map[string]struct{}{
 	"clusterDNS":    {},
@@ -59,7 +53,14 @@ var lockedFields = map[string]struct{}{
 
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
-	for field := range wp.Config.Values {
+	var parsed map[string]interface{}
+
+	err := json.Unmarshal(wp.Config, &parsed)
+	if err != nil {
+		return err
+	}
+
+	for field := range parsed {
 		if _, found := lockedFields[field]; found {
 			return fmt.Errorf("field `%s` is prohibited to override in worker profile", field)
 		}
