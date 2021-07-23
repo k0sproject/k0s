@@ -40,11 +40,11 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	switch cfgPath {
 	case "-":
-		clusterConfig, err = v1beta1.ConfigFromStdin(k0sVars)
+		clusterConfig, err = v1beta1.ConfigFromStdin(k0sVars.DataDir)
 	case "":
-		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars)
+		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars.DataDir)
 	default:
-		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, k0sVars)
+		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, k0sVars.DataDir)
 	}
 	if err != nil {
 		return nil, err

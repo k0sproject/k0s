@@ -24,7 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -60,9 +59,9 @@ type ClusterConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`
 
+	DataDir string              `json:"dataDir,omitempty"`
 	Spec    *ClusterSpec        `json:"spec,omitempty"`
 	Status  ClusterConfigStatus `json:"status,omitempty"`
-	k0sVars constant.CfgVars
 }
 
 // InstallSpec defines the required fields for the `k0s install` command
@@ -108,46 +107,44 @@ func (s *SchedulerSpec) IsZero() bool {
 }
 
 // ConfigFromFile takes a file path as Input, and parses it into a ClusterConfig
-func ConfigFromFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
+func ConfigFromFile(filename string, dataDir string) (*ClusterConfig, error) {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
-
-	return configFromString(string(buf), k0sVars)
+	return configFromString(string(buf), dataDir)
 }
 
 // ConfigFromStdin tries to read k0s.yaml config from stdin
-func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
+func ConfigFromStdin(dataDir string) (*ClusterConfig, error) {
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}
-	return configFromString(string(input), k0sVars)
+	return configFromString(string(input), dataDir)
 }
 
-func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
-	// config := DefaultClusterConfig(k0sVars)
-	config := &ClusterConfig{k0sVars: k0sVars}
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), &config, []string{"interval"})
+func configFromString(yml string, dataDir string) (*ClusterConfig, error) {
+	config := &ClusterConfig{}
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, []string{"interval"})
 	if err != nil {
 		return config, err
 	}
 	if config.Spec == nil {
-		config.Spec = DefaultClusterSpec(k0sVars)
+		config.Spec = DefaultClusterSpec(dataDir)
 	}
 	return config, nil
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
-func DefaultClusterConfig(k0sVars constant.CfgVars) *ClusterConfig {
+func DefaultClusterConfig(dataDir string) *ClusterConfig {
 	return &ClusterConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "k0s.k0sproject.io/v1beta1",
 			Kind:       "Cluster",
 		},
-		Spec: DefaultClusterSpec(k0sVars),
+		Spec: DefaultClusterSpec(dataDir),
 	}
 }
 
@@ -155,7 +152,7 @@ func DefaultClusterConfig(k0sVars constant.CfgVars) *ClusterConfig {
 func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	c.Kind = "Cluster"
 	c.Name = "k0s"
-	c.Spec = DefaultClusterSpec(c.k0sVars)
+	c.Spec = DefaultClusterSpec(c.DataDir)
 
 	type jclusterconfig ClusterConfig
 	jc := (*jclusterconfig)(c)
@@ -167,9 +164,9 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultClusterSpec default settings
-func DefaultClusterSpec(k0sVars constant.CfgVars) *ClusterSpec {
+func DefaultClusterSpec(dataDir string) *ClusterSpec {
 	return &ClusterSpec{
-		Storage: DefaultStorageSpec(k0sVars),
+		Storage: DefaultStorageSpec(dataDir),
 		Network: DefaultNetwork(),
 		API:     DefaultAPISpec(),
 		ControllerManager: &ControllerManagerSpec{

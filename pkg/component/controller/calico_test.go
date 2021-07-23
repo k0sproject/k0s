@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
 
 type inMemorySaver map[string][]byte
+
+var dataDir string
 
 func (i inMemorySaver) Save(dst string, content []byte) error {
 	i[dst] = content
@@ -17,8 +18,7 @@ func (i inMemorySaver) Save(dst string, content []byte) error {
 }
 
 func TestCalicoManifests(t *testing.T) {
-	k0sVars := constant.GetConfig("")
-	clusterConfig := v1beta1.DefaultClusterConfig(k0sVars)
+	clusterConfig := v1beta1.DefaultClusterConfig(dataDir)
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"
 	clusterConfig.Spec.Network.KubeRouter = nil
@@ -52,7 +52,6 @@ func TestCalicoManifests(t *testing.T) {
 	})
 
 	t.Run("must_have_wireguard_enabled_if_config_has", func(t *testing.T) {
-
 		clusterConfig.Spec.Network.Calico.EnableWireguard = true
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
@@ -86,7 +85,6 @@ func TestCalicoManifests(t *testing.T) {
 
 	t.Run("ip_autodetection", func(t *testing.T) {
 		t.Run("use_IPAutodetectionMethod_for_both_families_by_default", func(t *testing.T) {
-
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
@@ -106,7 +104,6 @@ func TestCalicoManifests(t *testing.T) {
 			spec.RequireContainerHasEnvVariable(t, "calico-node", "IP_AUTODETECTION_METHOD", templateContext.IPAutodetectionMethod)
 		})
 		t.Run("use_IPV6AutodetectionMethod_for_ipv6_if_specified", func(t *testing.T) {
-
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
 			clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod = "anothermethod"
 			saver := inMemorySaver{}

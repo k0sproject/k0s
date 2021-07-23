@@ -34,7 +34,7 @@ func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
 
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
+		k, err := NewKubeletConfig(config.DefaultClusterConfig(dataDir).Spec, k0sVars)
 		require.NoError(t, err)
 		buf, err := k.run(dnsAddr)
 		require.NoError(t, err)
@@ -105,7 +105,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
+	k, err := NewKubeletConfig(config.DefaultClusterConfig(dataDir).Spec, k0sVars)
 	require.NoError(t, err)
 
 	cfgProfileX := map[string]interface{}{
