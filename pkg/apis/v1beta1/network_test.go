@@ -102,7 +102,7 @@ spec:
     calico:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -125,7 +125,7 @@ spec:
     kuberouter:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -148,7 +148,7 @@ metadata:
 spec:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	p := c.Spec.Network.KubeProxy
 
@@ -168,7 +168,7 @@ spec:
       disabled: true
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	p := c.Spec.Network.KubeProxy
 
