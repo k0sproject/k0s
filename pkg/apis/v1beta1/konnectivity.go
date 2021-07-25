@@ -20,6 +20,7 @@ var _ Validateable = (*KonnectivitySpec)(nil)
 
 // KonnectivitySpec ...
 type KonnectivitySpec struct {
+	Disabled  bool  `yaml:"disabled,omitempty"`
 	AgentPort int64 `yaml:"agentPort,omitempty"`
 	AdminPort int64 `yaml:"adminPort,omitempty"`
 }

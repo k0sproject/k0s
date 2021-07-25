@@ -219,7 +219,7 @@ func (c *CmdOpts) startController() error {
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.Logging["kube-apiserver"],
 		Storage:            storageBackend,
-		EnableKonnectivity: !c.SingleNode,
+		EnableKonnectivity: !c.ClusterConfig.Spec.Konnectivity.Disabled && !c.SingleNode,
 	})
 
 	if c.ClusterConfig.Spec.API.ExternalAddress != "" {
@@ -228,7 +228,7 @@ func (c *CmdOpts) startController() error {
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-	if !c.SingleNode {
+	if !c.ClusterConfig.Spec.Konnectivity.Disabled && !c.SingleNode {
 		componentManager.Add(&controller.Konnectivity{
 			ClusterConfig:     c.ClusterConfig,
 			LogLevel:          c.Logging["konnectivity-server"],
