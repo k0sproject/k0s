@@ -141,6 +141,7 @@ spec:
 | Element   | Description           |
 |-----------|---------------------------|
 | `mode`      | `vxlan` (default) or `ipip`|
+| `overlay`   | Overlay mode: `Always` (default), `CrossSubnet` or `None` (requires `mode=vxlan` to disable calico overlay-network). 
 | `vxlanPort`      | The UDP port for VXLAN (default: `4789`).|
 | `vxlanVNI`      | The virtual network ID for VXLAN (default: `4096`).|
 | `mtu`      | MTU for overlay network (default: `0`, which causes Calico to detect optimal MTU during bootstrap).|
