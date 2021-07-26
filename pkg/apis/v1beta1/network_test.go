@@ -116,7 +116,7 @@ spec:
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -142,7 +142,7 @@ spec:
 func (s *NetworkSuite) TestKubeProxyDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -159,7 +159,7 @@ spec:
 func (s *NetworkSuite) TestKubeProxyDisabling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
