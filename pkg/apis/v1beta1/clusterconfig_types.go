@@ -53,6 +53,7 @@ type ClusterConfigStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:validation:Optional
 
 // ClusterConfig is the Schema for the clusterconfigs API
 type ClusterConfig struct {
@@ -142,7 +143,7 @@ func DefaultClusterConfig(dataDir string) *ClusterConfig {
 		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "k0s.k0sproject.io/v1beta1",
-			Kind:       "Cluster",
+			Kind:       "ClusterConfig",
 		},
 		Spec: DefaultClusterSpec(dataDir),
 	}
@@ -150,8 +151,12 @@ func DefaultClusterConfig(dataDir string) *ClusterConfig {
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
 func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
-	c.Kind = "Cluster"
-	c.Name = "k0s"
+	if c.Kind == "" {
+		c.Kind = "ClusterConfig"
+	}
+	if c.ClusterName == "" {
+		c.ClusterName = "k0s"
+	}
 	c.Spec = DefaultClusterSpec(c.DataDir)
 
 	type jclusterconfig ClusterConfig

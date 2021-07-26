@@ -36,6 +36,7 @@ func NewCRD(s manifestsSaver) *CRD {
 
 var bundles = []string{
 	"helm",
+	"v1beta1",
 }
 
 // Init  (c CRD) Init() error {
@@ -47,7 +48,6 @@ func (c CRD) Init() error {
 func (c CRD) Run() error {
 	for _, bundle := range bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
-
 		if err != nil {
 			return fmt.Errorf("can't unbundle CRD `%s` manifests: %v", bundle, err)
 		}

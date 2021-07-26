@@ -68,10 +68,6 @@ spec:
                     items:
                       type: string
                     type: array
-                required:
-                - address
-                - port
-                - sans
                 type: object
               controllerManager:
                 description: ControllerManagerSpec defines the fields for the ControllerManager
@@ -104,12 +100,6 @@ spec:
                               type: string
                             version:
                               type: string
-                          required:
-                          - chartname
-                          - name
-                          - namespace
-                          - values
-                          - version
                           type: object
                         type: array
                       repositories:
@@ -133,23 +123,9 @@ spec:
                               type: string
                             username:
                               type: string
-                          required:
-                          - caFile
-                          - certFile
-                          - insecure
-                          - keyfile
-                          - name
-                          - password
-                          - url
-                          - username
                           type: object
                         type: array
-                    required:
-                    - charts
-                    - repositories
                     type: object
-                required:
-                - helm
                 type: object
               images:
                 description: ClusterImages sets docker images for addon components
@@ -165,9 +141,6 @@ spec:
                             type: string
                           version:
                             type: string
-                        required:
-                        - image
-                        - version
                         type: object
                       kubecontrollers:
                         description: ImageSpec container image settings
@@ -176,9 +149,6 @@ spec:
                             type: string
                           version:
                             type: string
-                        required:
-                        - image
-                        - version
                         type: object
                       node:
                         description: ImageSpec container image settings
@@ -187,14 +157,7 @@ spec:
                             type: string
                           version:
                             type: string
-                        required:
-                        - image
-                        - version
                         type: object
-                    required:
-                    - cni
-                    - kubecontrollers
-                    - node
                     type: object
                   coredns:
                     description: ImageSpec container image settings
@@ -203,9 +166,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - image
-                    - version
                     type: object
                   default_pull_policy:
                     type: string
@@ -216,9 +176,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - image
-                    - version
                     type: object
                   kubeproxy:
                     description: ImageSpec container image settings
@@ -227,9 +184,6 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - image
-                    - version
                     type: object
                   kuberouter:
                     description: KubeRouterImageSpec config group for kube-router
@@ -242,9 +196,6 @@ spec:
                             type: string
                           version:
                             type: string
-                        required:
-                        - image
-                        - version
                         type: object
                       cniInstaller:
                         description: ImageSpec container image settings
@@ -253,13 +204,7 @@ spec:
                             type: string
                           version:
                             type: string
-                        required:
-                        - image
-                        - version
                         type: object
-                    required:
-                    - cni
-                    - cniInstaller
                     type: object
                   metricsserver:
                     description: ImageSpec container image settings
@@ -268,19 +213,9 @@ spec:
                         type: string
                       version:
                         type: string
-                    required:
-                    - image
-                    - version
                     type: object
                   repository:
                     type: string
-                required:
-                - calico
-                - coredns
-                - konnectivity
-                - kubeproxy
-                - kuberouter
-                - metricsserver
                 type: object
               installConfig:
                 description: InstallSpec defines the required fields for the `k0s
@@ -352,15 +287,6 @@ spec:
                       withWindowsNodes:
                         description: 'Windows Nodes (default: false)'
                         type: boolean
-                    required:
-                    - flexVolumeDriverPath
-                    - mode
-                    - mtu
-                    - overlay
-                    - vxlanPort
-                    - vxlanVNI
-                    - wireguard
-                    - withWindowsNodes
                     type: object
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6
@@ -398,11 +324,6 @@ spec:
                       peerRouterIPs:
                         description: Comma-separated list of global peer ASNs
                         type: string
-                    required:
-                    - autoMTU
-                    - mtu
-                    - peerRouterASNs
-                    - peerRouterIPs
                     type: object
                   podCIDR:
                     description: Pod network CIDR to use in the cluster
@@ -414,13 +335,6 @@ spec:
                   serviceCIDR:
                     description: Network CIDR to use for cluster VIP services
                     type: string
-                required:
-                - calico
-                - kubeProxy
-                - kuberouter
-                - podCIDR
-                - provider
-                - serviceCIDR
                 type: object
               podSecurityPolicy:
                 description: PodSecurityPolicy defines the config options for setting
@@ -429,8 +343,6 @@ spec:
                   defaultPolicy:
                     description: default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
                     type: string
-                required:
-                - defaultPolicy
                 type: object
               scheduler:
                 description: SchedulerSpec defines the fields for the Scheduler
@@ -451,8 +363,6 @@ spec:
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string
-                    required:
-                    - peerAddress
                     type: object
                   kine:
                     description: KineConfig defines the Kine related config options
@@ -460,23 +370,16 @@ spec:
                       dataSource:
                         description: kine datasource URL
                         type: string
-                    required:
-                    - dataSource
                     type: object
                   type:
                     description: Type of the data store (valid values:etcd or kine)
                     type: string
-                required:
-                - etcd
-                - type
                 type: object
               telemetry:
                 description: ClusterTelemetry holds telemetry related settings
                 properties:
                   enabled:
                     type: boolean
-                required:
-                - enabled
                 type: object
               workerProfiles:
                 description: WorkerProfiles profiles collection
@@ -491,18 +394,8 @@ spec:
                       description: Worker Mapping object
                       format: byte
                       type: string
-                  required:
-                  - name
-                  - values
                   type: object
                 type: array
-            required:
-            - api
-            - images
-            - network
-            - podSecurityPolicy
-            - storage
-            - telemetry
             type: object
           status:
             description: ClusterConfigStatus defines the observed state of ClusterConfig
