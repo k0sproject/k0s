@@ -55,11 +55,11 @@ const (
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
 	KonnectivityImage                  = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
-	KonnectivityImageVersion           = "v0.0.21"
+	KonnectivityImageVersion           = "v0.0.22"
 	MetricsImage                       = "gcr.io/k8s-staging-metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.3.7"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.21.2"
+	KubeProxyImageVersion              = "v1.21.3"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.7.0"
 	CalicoImage                        = "docker.io/calico/cni"

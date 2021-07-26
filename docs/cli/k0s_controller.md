@@ -23,11 +23,14 @@ k0s controller --token-file [path_to_file]
 ### Options
 
 ```shell
-      --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --enable-worker       enable worker (default false)
-  -h, --help                help for controller
-      --profile string      worker profile to use on the node (default "default")
-      --token-file string   Path to the file containing join-token.
+      --cri-socket string                              contrainer runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+      --enable-worker                                  enable worker (default false)
+  -h, --help                                           help for controller
+      --profile string                                 worker profile to use on the node (default "default")
+      --token-file string                              Path to the file containing join-token.
+      --enable-k0s-cloud-provider                      enables the k0s-cloud-provider (default false)
+      --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)
+      --k0s-cloud-provider-update-frequency duration   the frequency of k0s-cloud-provider node updates (default 2m0s)
 ```
 
 ### Options inherited from parent commands
