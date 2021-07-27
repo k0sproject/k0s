@@ -15,5 +15,6 @@ smoketests := \
 	check-singlenode \
 	check-backup \
 	check-airgap \
-	check-k0scloudprovider
+	check-k0scloudprovider \
+	check-cli
 
