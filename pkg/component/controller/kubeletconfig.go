@@ -82,7 +82,12 @@ func (k *KubeletConfig) Run() error {
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
 	defaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
+	defaultProfile["cgroupsPerQOS"] = true
+	defaultProfile["resolvConf"] = "{{.ResolvConf}}"
+
 	winDefaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
+	winDefaultProfile["cgroupsPerQOS"] = false
+
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
@@ -212,6 +217,8 @@ func getDefaultProfile(dnsAddress string, dualStack bool) unstructuredYamlObject
 		"rotateCertificates":   true,
 		"serverTLSBootstrap":   true,
 		"eventRecordQPS":       0,
+		"kubeReservedCgroup":   "{{.KubeReservedCgroup}}",
+		"kubeletCgroups":       "{{.KubeletCgroups}}",
 	}
 	if dualStack {
 		profile["featureGates"] = map[string]bool{
