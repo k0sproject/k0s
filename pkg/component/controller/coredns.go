@@ -28,7 +28,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -242,7 +242,7 @@ type CoreDNS struct {
 	client        kubernetes.Interface
 	tickerDone    chan struct{}
 	log           *logrus.Entry
-	clusterConfig *config.ClusterConfig
+	clusterConfig *v1beta1.ClusterConfig
 	K0sVars       constant.CfgVars
 }
 
@@ -255,7 +255,7 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactory) (*CoreDNS, error) {
+func NewCoreDNS(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactory) (*CoreDNS, error) {
 	client, err := clientFactory.GetClient()
 	if err != nil {
 		return nil, err
@@ -287,7 +287,7 @@ func (c *CoreDNS) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = coreDNSConfig{}
+		previousConfig := coreDNSConfig{}
 		for {
 			select {
 			case <-ticker.C:

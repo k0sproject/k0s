@@ -23,18 +23,16 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
-
-	"github.com/sirupsen/logrus"
 )
 
-var (
-	kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
+var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
 apiVersion: v1
 clusters:
 - cluster:
@@ -56,19 +54,17 @@ users:
     client-certificate-data: {{.ClientCert}}
     client-key-data: {{.ClientKey}}
 `))
-)
 
 // Certificates is the Component implementation to manage all k0s certs
 type Certificates struct {
 	CACert      string
 	CertManager certificate.Manager
-	ClusterSpec *config.ClusterSpec
+	ClusterSpec *v1beta1.ClusterSpec
 	K0sVars     constant.CfgVars
 }
 
 // Init initializes the certificate component
 func (c *Certificates) Init() error {
-
 	eg, _ := errgroup.WithContext(context.Background())
 	// Common CA
 	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
@@ -156,7 +152,6 @@ func (c *Certificates) Init() error {
 			CAKey:  caCertKey,
 		}
 		ccmCert, err := c.CertManager.EnsureCertificate(ccmReq, constant.ApiserverUser)
-
 		if err != nil {
 			return err
 		}

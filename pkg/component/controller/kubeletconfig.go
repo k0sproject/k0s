@@ -30,19 +30,19 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {
-	clusterSpec *config.ClusterSpec
+	clusterSpec *v1beta1.ClusterSpec
 	log         *logrus.Entry
 	k0sVars     constant.CfgVars
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*KubeletConfig, error) {
+func NewKubeletConfig(clusterSpec *v1beta1.ClusterSpec, k0sVars constant.CfgVars) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
 	return &KubeletConfig{
 		log:         log,

@@ -54,6 +54,9 @@ type ClusterConfigStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:validation:Optional
+// +genclient
+// +genclient:onlyVerbs=create,delete,list,get
+// +groupName=clusterconfigs.k0s.k0sproject.io
 
 // ClusterConfig is the Schema for the clusterconfigs API
 type ClusterConfig struct {
@@ -83,7 +86,8 @@ type SchedulerSpec struct {
 }
 
 //+kubebuilder:object:root=true
-
+// +genclient
+// +genclient:onlyVerbs=create
 // ClusterConfigList contains a list of ClusterConfig
 type ClusterConfigList struct {
 	metav1.TypeMeta `json:",inline"`

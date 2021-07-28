@@ -22,17 +22,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
 	"github.com/k0sproject/k0s/static"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
-	clusterConf *config.ClusterConfig
+	clusterConf *v1beta1.ClusterConfig
 	tickerDone  chan struct{}
 	log         *logrus.Entry
 
@@ -66,7 +67,7 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(clusterConf *config.ClusterConfig, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
+func NewCalico(clusterConf *v1beta1.ClusterConfig, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
 		clusterConf: clusterConf,
@@ -88,7 +89,6 @@ func (c *Calico) Run() error {
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
 	crds, err := static.AssetDir("manifests/calico/CustomResourceDefinition")
-
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,6 @@ func (c *Calico) Run() error {
 		output := bytes.NewBuffer([]byte{})
 
 		contents, err := static.Asset(fmt.Sprintf("manifests/calico/CustomResourceDefinition/%s", filename))
-
 		if err != nil {
 			return fmt.Errorf("failed to fetch crd %s: %w", filename, err)
 		}
@@ -121,7 +120,7 @@ func (c *Calico) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = calicoConfig{}
+		previousConfig := calicoConfig{}
 		for {
 			select {
 			case <-ticker.C:
@@ -151,7 +150,6 @@ func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig
 	}
 
 	manifestDirectories, err := static.AssetDir("manifests/calico")
-
 	if err != nil {
 		c.log.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
 		return nil
@@ -178,7 +176,6 @@ func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig
 			manifestName := fmt.Sprintf("calico-%s-%s", dir, filename)
 			output := bytes.NewBuffer([]byte{})
 			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
-
 			if err != nil {
 				return nil
 			}

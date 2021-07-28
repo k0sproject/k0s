@@ -31,7 +31,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -43,7 +43,7 @@ import (
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
-	Config      *config.EtcdConfig
+	Config      *v1beta1.EtcdConfig
 	JoinClient  *token.JoinClient
 	K0sVars     constant.CfgVars
 	LogLevel    string
@@ -87,7 +87,7 @@ func (e *Etcd) Init() error {
 }
 
 func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
-	var etcdResponse config.EtcdResponse
+	var etcdResponse v1beta1.EtcdResponse
 	var err error
 	for i := 0; i < 20; i++ {
 		logrus.Infof("trying to sync etcd config")

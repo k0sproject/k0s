@@ -29,7 +29,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -38,7 +38,7 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig      *config.ClusterConfig
+	ClusterConfig      *v1beta1.ClusterConfig
 	K0sVars            constant.CfgVars
 	LogLevel           string
 	Storage            component.Component
@@ -158,10 +158,10 @@ func (a *APIServer) Run() error {
 		GID:     a.gid,
 	}
 	switch a.ClusterConfig.Spec.Storage.Type {
-	case config.KineStorageType:
+	case v1beta1.KineStorageType:
 		a.supervisor.Args = append(a.supervisor.Args,
 			fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
-	case config.EtcdStorageType:
+	case v1beta1.EtcdStorageType:
 		a.supervisor.Args = append(a.supervisor.Args,
 			"--etcd-servers=https://127.0.0.1:2379",
 			fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),

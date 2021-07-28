@@ -22,7 +22,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -33,12 +33,12 @@ import (
 Depending on user config, we select either of the above rule sets to be the default
 */
 type DefaultPSP struct {
-	clusterSpec *config.ClusterSpec
+	clusterSpec *v1beta1.ClusterSpec
 	k0sVars     constant.CfgVars
 }
 
 // NewDefaultPSP creates new system level RBAC reconciler
-func NewDefaultPSP(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*DefaultPSP, error) {
+func NewDefaultPSP(clusterSpec *v1beta1.ClusterSpec, k0sVars constant.CfgVars) (*DefaultPSP, error) {
 	return &DefaultPSP{
 		clusterSpec: clusterSpec,
 		k0sVars:     k0sVars,

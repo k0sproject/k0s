@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +21,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -28,7 +29,7 @@ import (
 // Helm watch for Chart crd
 type HelmAddons struct {
 	Client            clientset.ChartV1Beta1Interface
-	ClusterConfig     *k0sv1beta1.ClusterConfig
+	ClusterConfig     *config.ClusterConfig
 	saver             manifestsSaver
 	L                 *logrus.Entry
 	stopCh            chan struct{}
@@ -40,7 +41,7 @@ type HelmAddons struct {
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory, leaderElector LeaderElector) *HelmAddons {
+func NewHelmAddons(c *config.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory, leaderElector LeaderElector) *HelmAddons {
 	return &HelmAddons{
 		ClusterConfig:     c,
 		saver:             s,
@@ -211,7 +212,6 @@ func (h *HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
 	}
 
 	q.Forget(job)
-
 }
 
 func (h *HelmAddons) saveError(origErr error, objectID string) {
@@ -245,14 +245,12 @@ func (h *HelmAddons) uninstall(id string) error {
 }
 
 func (h *HelmAddons) reconcile(objectID string) error {
-
 	if !h.leaderElector.IsLeader() {
 		h.L.Info("dry run, doesn't reconcile")
 		return nil
 	}
 	name := strings.Split(objectID, "/")[1]
 	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
-
 	if err != nil {
 		return fmt.Errorf("can't reconcile chart `%s`: %v", objectID, err)
 	}
@@ -293,7 +291,7 @@ func (h *HelmAddons) reconcile(objectID string) error {
 	return nil
 }
 
-func (h *HelmAddons) addRepo(repo k0sv1beta1.Repository) error {
+func (h *HelmAddons) addRepo(repo config.Repository) error {
 	return h.helm.AddRepository(repo)
 }
 

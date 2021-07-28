@@ -28,7 +28,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -231,7 +231,7 @@ spec:
 // MetricServer is the reconciler implementation for metrics server
 type MetricServer struct {
 	log               *logrus.Entry
-	clusterConfig     *config.ClusterConfig
+	clusterConfig     *v1beta1.ClusterConfig
 	tickerDone        chan struct{}
 	K0sVars           constant.CfgVars
 	kubeClientFactory k8sutil.ClientFactory
@@ -245,7 +245,7 @@ type metricsConfig struct {
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactory) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactory) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:               log,
@@ -273,7 +273,7 @@ func (m *MetricServer) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = metricsConfig{}
+		previousConfig := metricsConfig{}
 		for {
 			select {
 			case <-ticker.C:

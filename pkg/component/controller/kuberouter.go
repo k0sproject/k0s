@@ -19,14 +19,14 @@ import (
 	"bytes"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // KubeRouter implements the kube-router reconciler component
 type KubeRouter struct {
-	clusterConf *config.ClusterConfig
+	clusterConf *v1beta1.ClusterConfig
 	log         *logrus.Entry
 
 	saver manifestsSaver
@@ -43,7 +43,7 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(clusterConf *config.ClusterConfig, manifestsSaver manifestsSaver) (*KubeRouter, error) {
+func NewKubeRouter(clusterConf *v1beta1.ClusterConfig, manifestsSaver manifestsSaver) (*KubeRouter, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kube-router"})
 	return &KubeRouter{
 		clusterConf: clusterConf,
@@ -90,7 +90,6 @@ func (c *KubeRouter) Run() error {
 	err = c.saver.Save("kube-router.yaml", output.Bytes())
 	if err != nil {
 		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
-
 	}
 
 	return nil
