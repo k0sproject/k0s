@@ -36,7 +36,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
@@ -95,7 +95,6 @@ func (c *CmdOpts) startAPI() error {
 		router.Path(prefix + "/ca").Methods("GET").Handler(
 			c.controllerHandler(c.caHandler()),
 		)
-
 	}
 	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
 		c.workerHandler(c.kubeConfigHandler()),
@@ -155,7 +154,6 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 			return
 		}
 		etcdCAKey, err := os.ReadFile(etcdCaCertKey)
-
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -234,12 +232,10 @@ users:
 			return
 		}
 	})
-
 }
 
 func (c *CmdOpts) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-
 		caResp := v1beta1.CaResponse{}
 		key, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
 		if err != nil {

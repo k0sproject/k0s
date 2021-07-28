@@ -6,10 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -19,6 +15,10 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Commands run different helm command in the same way as CLI tool
@@ -62,7 +62,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 	return actionConfig, nil
 }
 
-func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
+func (hc *Commands) AddRepository(repoCfg v1beta1.Repository) error {
 	err := dir.Init(filepath.Dir(hc.repoFile), constant.DataDirMode)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
@@ -145,9 +145,9 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 		Out:     os.Stdout,
 		Getters: getters,
 		Options: []getter.Option{
-			//getter.WithBasicAuth(c.Username, c.Password),
-			//getter.WithTLSClientConfig(c.CertFile, c.KeyFile, c.CaFile),
-			//getter.WithInsecureSkipVerifyTLS(c.InsecureSkipTLSverify),
+			// getter.WithBasicAuth(c.Username, c.Password),
+			// getter.WithTLSClientConfig(c.CertFile, c.KeyFile, c.CaFile),
+			// getter.WithInsecureSkipVerifyTLS(c.InsecureSkipTLSverify),
 		},
 		RepositoryConfig: hc.repoFile,
 		RepositoryCache:  hc.helmCacheDir,
@@ -266,7 +266,6 @@ func (hc *Commands) UpgradeChart(chartName string, version string, releaseName s
 	}
 
 	chartRelease, err := upgrade.Run(releaseName, loadedChart, values)
-
 	if err != nil {
 		return nil, fmt.Errorf("can't upgrade loadedChart `%s`: %v", loadedChart.Metadata.Name, err)
 	}

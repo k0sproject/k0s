@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/machineid"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
 )
 
@@ -72,7 +72,7 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 
 func (c Component) getStorageType() string {
 	switch c.ClusterConfig.Spec.Storage.Type {
-	case config.EtcdStorageType, config.KineStorageType:
+	case v1beta1.EtcdStorageType, v1beta1.KineStorageType:
 		return c.ClusterConfig.Spec.Storage.Type
 	}
 	return "unknown"
@@ -82,7 +82,6 @@ func (c Component) getClusterID() (string, error) {
 	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(context.Background(),
 		"kube-system",
 		metav1.GetOptions{})
-
 	if err != nil {
 		return "", fmt.Errorf("can't find kube-system namespace: %v", err)
 	}
@@ -116,7 +115,7 @@ func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 
 func (c Component) getControlPlaneNodeCount() (int, error) {
 	switch c.ClusterConfig.Spec.Storage.Type {
-	case config.EtcdStorageType:
+	case v1beta1.EtcdStorageType:
 		cl, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 		if err != nil {
 			return 0, fmt.Errorf("can't get etcd client: %v", err)

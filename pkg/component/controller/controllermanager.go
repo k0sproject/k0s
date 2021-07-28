@@ -24,7 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -32,7 +32,7 @@ import (
 
 // Manager implement the component interface to run kube scheduler
 type Manager struct {
-	ClusterConfig *config.ClusterConfig
+	ClusterConfig *v1beta1.ClusterConfig
 	gid           int
 	K0sVars       constant.CfgVars
 	LogLevel      string

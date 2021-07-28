@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
@@ -36,7 +36,7 @@ type LeaderElector interface {
 }
 
 type leaderElector struct {
-	ClusterConfig *config.ClusterConfig
+	ClusterConfig *v1beta1.ClusterConfig
 
 	L *logrus.Entry
 
@@ -50,7 +50,7 @@ type leaderElector struct {
 }
 
 // NewLeaderElector creates new leader elector
-func NewLeaderElector(c *config.ClusterConfig, kubeClientFactory kubeutil.ClientFactory) LeaderElector {
+func NewLeaderElector(c *v1beta1.ClusterConfig, kubeClientFactory kubeutil.ClientFactory) LeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
 	return &leaderElector{
@@ -72,7 +72,6 @@ func (l *leaderElector) Run() error {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
 	leasePool, err := leaderelection.NewLeasePool(client, "k0s-endpoint-reconciler", leaderelection.WithLogger(l.L))
-
 	if err != nil {
 		return err
 	}

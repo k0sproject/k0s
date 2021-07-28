@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/sirupsen/logrus"

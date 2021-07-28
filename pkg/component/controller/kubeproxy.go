@@ -25,22 +25,21 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // KubeProxy is the component implementation to manage kube-proxy
 type KubeProxy struct {
-	//client     *kubernetes.Clientset
+	// client     *kubernetes.Clientset
 	tickerDone  chan struct{}
 	log         *logrus.Entry
-	clusterConf *config.ClusterConfig
+	clusterConf *v1beta1.ClusterConfig
 	K0sVars     constant.CfgVars
 }
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(clusterSpec *config.ClusterConfig, k0sVars constant.CfgVars) (*KubeProxy, error) {
-
+func NewKubeProxy(clusterSpec *v1beta1.ClusterConfig, k0sVars constant.CfgVars) (*KubeProxy, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
 	return &KubeProxy{
 		log:         log,
@@ -71,7 +70,7 @@ func (k *KubeProxy) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = proxyConfig{}
+		previousConfig := proxyConfig{}
 		for {
 			select {
 			case <-ticker.C:

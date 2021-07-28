@@ -3,7 +3,8 @@ package telemetry
 import (
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
@@ -13,7 +14,7 @@ import (
 
 // Component is a telemetry component for k0s component manager
 type Component struct {
-	ClusterConfig     *config.ClusterConfig
+	ClusterConfig     *v1beta1.ClusterConfig
 	K0sVars           constant.CfgVars
 	Version           string
 	KubeClientFactory kubeutil.ClientFactory

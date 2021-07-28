@@ -25,14 +25,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	authorization "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 var kubeletServerUsages = []v1.KeyUsage{
@@ -51,14 +53,14 @@ type CSRApprover struct {
 	L      *logrus.Entry
 	stopCh chan struct{}
 
-	ClusterConfig     *config.ClusterConfig
+	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactory
 	leaderElector     LeaderElector
 	clientset         clientset.Interface
 }
 
 // NewCSRApprover creates the CSRApprover component
-func NewCSRApprover(c *config.ClusterConfig, leaderElector LeaderElector, kubeClientFactory kubeutil.ClientFactory) *CSRApprover {
+func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *CSRApprover {
 	d := atomic.Value{}
 	d.Store(true)
 	return &CSRApprover{
@@ -91,7 +93,6 @@ func (a *CSRApprover) Init() error {
 
 // Run every 10 seconds checks for newly issued CSRs and approves them
 func (a *CSRApprover) Run() error {
-
 	go func() {
 		ticker := time.NewTicker(10 * time.Second) // TODO: sometimes this should be refactored so it watches instead of polls for CSRs
 		defer ticker.Stop()
@@ -114,7 +115,6 @@ func (a *CSRApprover) Run() error {
 
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
 func (a *CSRApprover) approveCSR() error {
-
 	if !a.leaderElector.IsLeader() {
 		a.L.Debug("not the leader, can't approve certificates")
 		return nil
