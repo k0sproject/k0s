@@ -76,8 +76,8 @@ func (c *CmdOpts) restore(path string) error {
 		return fmt.Errorf("this command must be run as root")
 	}
 
-	k0sStatus, _ := install.GetPid()
-	if k0sStatus.Pid != 0 {
+	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
+	if k0sStatus != nil && k0sStatus.Pid != 0 {
 		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
