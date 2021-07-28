@@ -1516,6 +1516,10 @@ sudo k0s start
 <td><code>vxlan</code> (default) or <code>ipip</code></td>
 </tr>
 <tr>
+<td><code>overlay</code></td>
+<td>Overlay mode: <code>Always</code> (default), <code>CrossSubnet</code> or <code>None</code> (requires <code>mode=vxlan</code> to disable calico overlay-network).</td>
+</tr>
+<tr>
 <td><code>vxlanPort</code></td>
 <td>The UDP port for VXLAN (default: <code>4789</code>).</td>
 </tr>
