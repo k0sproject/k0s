@@ -22,10 +22,8 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/k0sproject/dig v0.1.0
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
-	github.com/magiconair/properties v1.8.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.8.4 // indirect
 	github.com/pkg/errors v0.9.1
@@ -66,9 +64,10 @@ require (
 	k8s.io/kubectl v0.22.0
 	k8s.io/mount-utils v0.22.0
 	k8s.io/system-validators v1.4.0
-	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
+	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.8.1
-	sigs.k8s.io/yaml v1.2.0 // indirect
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
