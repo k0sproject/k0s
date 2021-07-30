@@ -45,6 +45,10 @@ spec:
                   address:
                     description: Address on which to connect to the API server.
                     type: string
+                  bindAddress:
+                    description: The IP address for the Kubernetes API server to listen
+                      on.
+                    type: string
                   externalAddress:
                     description: The loadbalancer address (for k0s controllers running
                       behind a loadbalancer)
