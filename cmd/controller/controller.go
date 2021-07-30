@@ -186,6 +186,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	logrus.Infof("using api address: %s", nodeConfig.Spec.API.Address)
+	logrus.Infof("using api bind-address: %s", nodeConfig.Spec.API.BindAddress)
 	logrus.Infof("using listen port: %d", nodeConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", nodeConfig.Spec.API.SANs)
 

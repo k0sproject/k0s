@@ -65,7 +65,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 	}
 	c.CACert = string(cert)
 	// Changing the URL here also requires changes in the "k0s kubeconfig admin" subcommand.
-	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)
+	kubeConfigAPIUrl := fmt.Sprintf("https://%s:%d", c.ClusterSpec.API.APIServerAddress(), c.ClusterSpec.API.Port)
 
 	apiServerUID, err := users.LookupUID(constant.ApiserverUser)
 	if err != nil {
@@ -73,7 +73,6 @@ func (c *Certificates) Init(ctx context.Context) error {
 		apiServerUID = users.RootUID
 		logrus.WithError(err).Warn("Files with key material for kube-apiserver user will be owned by root")
 	}
-
 	eg.Go(func() error {
 		// Front proxy CA
 		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {
