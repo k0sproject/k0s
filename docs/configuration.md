@@ -54,6 +54,7 @@ spec:
     address: 192.168.68.104
     k0sApiPort: 9443
     port: 6443
+    bindAddress: 192.0.2.1
     sans:
     - 192.168.68.104
   controllerManager: {}
@@ -113,9 +114,10 @@ spec:
 ### `spec.api`
 
 | Element                  | Description                                                                                                                                                                                                                 |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------------| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `externalAddress`        | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster. |
-| `address`                | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                  |
+| `address`                | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                 |
+| `bindAddress`            | The IP address for the Kubernetes API server to to listen on. The associated interface(s) must be reachable by the rest of the cluster. Will be added as an additional subject alternative name to the API server's TLS certificate. If blank or an unspecified address (`0.0.0.0` or `::`), all interfaces and IP address families will be used. This is effectively the value for the API server's `--bind-address` CLI flag.    |
 | `sans`                   | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                |
 | `extraArgs`              | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
 | `port`¹                  | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |

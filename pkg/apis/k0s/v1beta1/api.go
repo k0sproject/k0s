@@ -37,6 +37,10 @@ type APISpec struct {
 	// Address on which to connect to the API server.
 	Address string `json:"address,omitempty"`
 
+	// The IP address for the Kubernetes API server to listen on.
+	// +optional
+	BindAddress string `json:"bindAddress,omitempty"`
+
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
 	ExternalAddress string `json:"externalAddress,omitempty"`
 
@@ -102,10 +106,21 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
-// Sans return the given SANS plus all local adresses and externalAddress if given
+// APIServerAddress returns the address the API is listening on
+func (a *APISpec) APIServerAddress() string {
+	if a.BindAddress == "" {
+		return "localhost"
+	}
+	return a.BindAddress
+}
+
+// Sans return the given SANS plus all local addresses and externalAddress if given
 func (a *APISpec) Sans() []string {
 	sans, _ := iface.AllAddresses()
 	sans = append(sans, a.Address)
+	if a.BindAddress != "" {
+		sans = append(sans, a.BindAddress)
+	}
 	sans = append(sans, a.SANs...)
 	if a.ExternalAddress != "" {
 		sans = append(sans, a.ExternalAddress)
@@ -150,6 +165,9 @@ func (a *APISpec) Validate() []error {
 		validateIPAddressOrDNSName(sansPath.Index(idx), san)
 	}
 
+	if a.BindAddress != "" && !govalidator.IsIP(a.BindAddress) {
+		errors = append(errors, field.Invalid(field.NewPath("bindAddress"), a.BindAddress, "invalid IP address"))
+	}
 	return errors
 }
 
