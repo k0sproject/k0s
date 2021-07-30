@@ -56,6 +56,7 @@ func DefaultAPISpec() *APISpec {
 	return &APISpec{
 		Port:                   6443,
 		K0sAPIPort:             9443,
+		BindAddress:            "0.0.0.0",
 		SANs:                   addresses,
 		Address:                publicAddress,
 		ExtraArgs:              make(map[string]string),
@@ -98,6 +99,20 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 	return fmt.Sprintf("https://%s:%d", addr, port)
 }
 
+// APIServerAddress returns the address the API is listening on
+func (a *APISpec) APIServerAddress() string {
+	return a.getAPIServerAddress(a.BindAddress)
+}
+
+func (a *APISpec) getAPIServerAddress(address string) string {
+	switch address {
+	case "0.0.0.0":
+		return "localhost"
+	default:
+		return address
+	}
+}
+
 // Sans return the given SANS plus all local adresses and externalAddress if given
 func (a *APISpec) Sans() []string {
 	sans, _ := iface.AllAddresses()
@@ -126,6 +141,10 @@ func (a *APISpec) Validate() []error {
 
 	if !govalidator.IsIP(a.Address) {
 		errors = append(errors, fmt.Errorf("spec.api.address: %q is not IP address", a.Address))
+	}
+
+	if !govalidator.IsIP(a.BindAddress) {
+		errors = append(errors, fmt.Errorf("spec.api.bindAddress: %q is not IP address", a.BindAddress))
 	}
 
 	return errors

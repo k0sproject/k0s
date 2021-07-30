@@ -95,6 +95,7 @@ func (a *APIServer) Run(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
+		"bind-address":                     a.ClusterConfig.Spec.API.BindAddress,
 		"secure-port":                      fmt.Sprintf("%d", a.ClusterConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
 		"client-ca-file":                   path.Join(a.K0sVars.CertRootDir, "ca.crt"),
@@ -223,7 +224,7 @@ func (a *APIServer) Healthy() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	resp, err := client.Get(fmt.Sprintf("https://localhost:%d/readyz?verbose", a.ClusterConfig.Spec.API.Port))
+	resp, err := client.Get(fmt.Sprintf("https://%s:%d/readyz?verbose", a.ClusterConfig.Spec.API.APIServerAddress(), a.ClusterConfig.Spec.API.Port))
 	if err != nil {
 		return err
 	}
