@@ -125,6 +125,10 @@ func (a *APIServer) Start(_ context.Context) error {
 		"enable-admission-plugins":         "NodeRestriction",
 	}
 
+	if a.ClusterConfig.Spec.API.BindAddress != "" {
+		args["bind-address"] = a.ClusterConfig.Spec.API.BindAddress
+	}
+
 	apiAudiences := []string{"https://kubernetes.default.svc"}
 
 	if a.EnableKonnectivity {
@@ -229,7 +233,7 @@ func (a *APIServer) Ready() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	resp, err := client.Get(fmt.Sprintf("https://localhost:%d/readyz?verbose", a.ClusterConfig.Spec.API.Port))
+	resp, err := client.Get(fmt.Sprintf("https://%s:%d/readyz?verbose", a.ClusterConfig.Spec.API.APIServerAddress(), a.ClusterConfig.Spec.API.Port))
 	if err != nil {
 		return err
 	}
