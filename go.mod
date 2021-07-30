@@ -22,7 +22,7 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/k0sproject/dig v0.1.0
-	github.com/kardianos/service v1.2.1-0.20210616011951-36c9bf8c36a2
+	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mitchellh/go-homedir v1.1.0
@@ -43,7 +43,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.2
-	github.com/vishvananda/netlink v1.1.0 // indirect
+	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
@@ -52,6 +52,7 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/sync v0.0.0-20200930132711-30421366ff76
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/tools v0.0.0-20201013201025-64a9e34f3752 // indirect
 	google.golang.org/grpc v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
@@ -94,5 +95,3 @@ replace (
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 )
-
-replace github.com/kardianos/service => github.com/k0sproject/kardianos-service v1.2.1-0.20210701120136-4fa800c407da
