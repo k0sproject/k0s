@@ -1,6 +1,6 @@
 # Manifest Deployer
 
-Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by [defining your extensions as Helm charts](helm-charts.md).
+Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by defining your extensions as [Helm charts](helm-charts.md)).
 
 ## Overview
 

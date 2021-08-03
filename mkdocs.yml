@@ -31,18 +31,17 @@ nav:
       - Networking (CNI):                 networking.md
       - Runtime (CRI):                    runtime.md
       - Storage (CSI):                    storage.md
+      - Manifest Deployer:                manifests.md
+      - Helm Charts:                      helm-charts.md
       - Cloud Providers:                  cloud-providers.md
       - IPv4/IPv6 Dual-Stack:             dual-stack.md
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
   - Extensions:
-      - Manifest Deployer:                manifests.md
-      - Helm Charts:                      helm-charts.md
-      - Examples:
-          - Traefik Ingress Controller:   examples/traefik-ingress.md
-          - Ambassador Gateway:           examples/ambassador-ingress.md
-          - Ceph Storage with Rook:       examples/rook-ceph.md
+      - Traefik Ingress Controller:       examples/traefik-ingress.md
+      - Ambassador Gateway:               examples/ambassador-ingress.md
+      - Ceph Storage with Rook:           examples/rook-ceph.md
   - Troubleshooting:
       - FAQ:                              FAQ.md
       - Common Pitfalls:                  troubleshooting.md

@@ -1,6 +1,6 @@
 # Helm Charts
 
-Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of [Manifest Deployer](manifests.md).
+Defining your extensions as Helm charts is one of two methods you can use to run k0s with your preferred extensions (the other being through the use of [Manifest Deployer](manifests.md)).
 
 k0s supports two methods for deploying applications using Helm charts:
 
