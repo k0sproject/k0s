@@ -505,12 +505,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
@@ -615,112 +617,6 @@
               
   
   
-  
-    <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
-        Cloud Providers
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
-        IPv4/IPv6 Dual-Stack
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
-        Control Plane High Availability
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
-        Shell Completion
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
-        User Management
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-    
-  
-  
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_4">
-          Extensions
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="Extensions" data-md-level="1">
-        <label class="md-nav__title" for="__nav_4">
-          <span class="md-nav__icon md-icon"></span>
-          Extensions
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
     
   
   
@@ -810,24 +706,102 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../cloud-providers/" class="md-nav__link">
+        Cloud Providers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dual-stack/" class="md-nav__link">
+        IPv4/IPv6 Dual-Stack
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-availability/" class="md-nav__link">
+        Control Plane High Availability
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell-completion/" class="md-nav__link">
+        Shell Completion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-management/" class="md-nav__link">
+        User Management
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
     
     <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       
       
       
-        <label class="md-nav__link" for="__nav_4_3">
-          Examples
+        <label class="md-nav__link" for="__nav_4">
+          Extensions
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Examples" data-md-level="2">
-        <label class="md-nav__title" for="__nav_4_3">
+      <nav class="md-nav" aria-label="Extensions" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
-          Examples
+          Extensions
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -868,13 +842,6 @@
       <a href="../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
     </li>
   
 
@@ -1167,7 +1134,7 @@
                 
                 
                 <h1 id="manifest-deployer">Manifest Deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by <a href="../helm-charts/">defining your extensions as Helm charts</a>.</p>
+<p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by defining your extensions as <a href="../helm-charts/">Helm charts</a>).</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
 <p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
 <p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
@@ -1239,7 +1206,7 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../user-management/" class="md-footer__link md-footer__link--prev" aria-label="Previous: User Management" rel="prev">
+        <a href="../storage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Storage (CSI)" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1248,7 +1215,7 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
               <span class="md-footer__direction">
                 Previous
               </span>
-              User Management
+              Storage (CSI)
             </div>
           </div>
         </a>
