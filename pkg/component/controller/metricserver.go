@@ -234,7 +234,7 @@ type MetricServer struct {
 	clusterConfig     *v1beta1.ClusterConfig
 	tickerDone        chan struct{}
 	K0sVars           constant.CfgVars
-	kubeClientFactory k8sutil.ClientFactory
+	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
 type metricsConfig struct {
@@ -245,7 +245,7 @@ type metricsConfig struct {
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactory) (*MetricServer, error) {
+func NewMetricServer(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:               log,

@@ -423,8 +423,7 @@ func (c *CmdOpts) startController() error {
 	return nil
 }
 
-func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderElector controller.LeaderElector) (map[string]component.Component, error) {
-	var err error
+func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector) (map[string]component.Component, error) {
 	reconcilers := make(map[string]component.Component)
 	clusterSpec := c.ClusterConfig.Spec
 
@@ -508,6 +507,8 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		reconcilers["systemRBAC"] = systemRBAC
 	}
 
+	cfgReconciler := controller.NewClusterConfigReconciler(c.ClusterConfig, leaderElector, c.K0sVars)
+	reconcilers["clusterConfig"] = cfgReconciler
 	return reconcilers, nil
 }
 

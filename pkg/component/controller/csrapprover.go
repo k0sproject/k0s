@@ -54,13 +54,13 @@ type CSRApprover struct {
 	stopCh chan struct{}
 
 	ClusterConfig     *v1beta1.ClusterConfig
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 	leaderElector     LeaderElector
 	clientset         clientset.Interface
 }
 
 // NewCSRApprover creates the CSRApprover component
-func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *CSRApprover {
+func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *CSRApprover {
 	d := atomic.Value{}
 	d.Store(true)
 	return &CSRApprover{

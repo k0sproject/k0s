@@ -17,7 +17,7 @@ type Component struct {
 	ClusterConfig     *v1beta1.ClusterConfig
 	K0sVars           constant.CfgVars
 	Version           string
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	kubernetesClient kubernetes.Interface
 	analyticsClient  analyticsClient
