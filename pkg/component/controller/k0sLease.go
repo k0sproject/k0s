@@ -17,7 +17,7 @@ import (
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sLease struct {
 	ClusterConfig     *v1beta1.ClusterConfig
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	cancelCtx   context.Context
 	cancelFunc  context.CancelFunc

@@ -32,9 +32,9 @@ import (
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
 	K0sVars           constant.CfgVars
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	//client               kubernetes.Interface
+	// client               kubernetes.Interface
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc

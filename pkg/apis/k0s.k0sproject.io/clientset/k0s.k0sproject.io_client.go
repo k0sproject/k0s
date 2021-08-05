@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	rest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
 
 	scheme "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/scheme"
@@ -48,8 +49,12 @@ func (c *K0sV1beta1Client) ClusterConfigLists(namespace string) ClusterConfigLis
 }
 
 // NewForConfig creates a new K0sV1beta1Client for the given config.
-func NewForConfig(c *rest.Config) (*K0sV1beta1Client, error) {
-	config := *c
+func NewForConfig(cfgPath string) (*K0sV1beta1Client, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch client config from %s: %v", cfgPath, err)
+	}
+
 	if config.RateLimiter == nil && config.QPS > 0 {
 		if config.Burst <= 0 {
 			return nil, fmt.Errorf("burst is required to be greater than 0 when RateLimiter is not set and QPS is set to greater than 0")
@@ -57,10 +62,10 @@ func NewForConfig(c *rest.Config) (*K0sV1beta1Client, error) {
 		config.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(config.QPS, config.Burst)
 	}
 
-	if err := setConfigDefaults(&config); err != nil {
+	if err := setConfigDefaults(config); err != nil {
 		return nil, err
 	}
-	client, err := rest.RESTClientFor(&config)
+	client, err := rest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +74,8 @@ func NewForConfig(c *rest.Config) (*K0sV1beta1Client, error) {
 
 // NewForConfigOrDie creates a new K0sV1beta1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOqrDie(c *rest.Config) *K0sV1beta1Client {
-	client, err := NewForConfig(c)
+func NewForConfigOqrDie(cfgPath string) *K0sV1beta1Client {
+	client, err := NewForConfig(cfgPath)
 	if err != nil {
 		panic(err)
 	}

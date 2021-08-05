@@ -153,5 +153,4 @@ spec:
 	_, err = a.client.Resource(*gvNS).Get(context.Background(), "kube-system", metav1.GetOptions{})
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
-
 }

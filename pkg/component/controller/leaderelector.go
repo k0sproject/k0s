@@ -42,7 +42,7 @@ type leaderElector struct {
 
 	stopCh            chan struct{}
 	leaderStatus      atomic.Value
-	kubeClientFactory kubeutil.ClientFactory
+	kubeClientFactory kubeutil.ClientFactoryInterface
 	leaseCancel       context.CancelFunc
 
 	acquiredLeaseCallbacks []func()
@@ -50,7 +50,7 @@ type leaderElector struct {
 }
 
 // NewLeaderElector creates new leader elector
-func NewLeaderElector(c *v1beta1.ClusterConfig, kubeClientFactory kubeutil.ClientFactory) LeaderElector {
+func NewLeaderElector(c *v1beta1.ClusterConfig, kubeClientFactory kubeutil.ClientFactoryInterface) LeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
 	return &leaderElector{

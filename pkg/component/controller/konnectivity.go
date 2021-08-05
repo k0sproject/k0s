@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -48,14 +49,12 @@ type Konnectivity struct {
 	uid           int
 
 	// used for lease lock
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory k8sutil.ClientFactoryInterface
 
-	serverCount int
-
+	serverCount     int
 	serverCountChan chan int
-
-	stopCtx  context.Context
-	stopFunc context.CancelFunc
+	stopCtx         context.Context
+	stopFunc        context.CancelFunc
 
 	log *logrus.Entry
 }

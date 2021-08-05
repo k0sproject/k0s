@@ -36,12 +36,12 @@ type HelmAddons struct {
 	informer          cache.SharedIndexInformer
 	helm              *helm.Commands
 	kubeConfig        string
-	kubeClientFactory kubeutil.ClientFactory
+	kubeClientFactory kubeutil.ClientFactoryInterface
 	leaderElector     LeaderElector
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *config.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory, leaderElector LeaderElector) *HelmAddons {
+func NewHelmAddons(c *config.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
 	return &HelmAddons{
 		ClusterConfig:     c,
 		saver:             s,

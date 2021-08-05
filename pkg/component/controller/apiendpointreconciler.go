@@ -41,11 +41,11 @@ type APIEndpointReconciler struct {
 
 	leaderElector     LeaderElector
 	stopCh            chan struct{}
-	kubeClientFactory k8sutil.ClientFactory
+	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *APIEndpointReconciler {
+func NewEndpointReconciler(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *APIEndpointReconciler {
 	d := atomic.Value{}
 	d.Store(true)
 	return &APIEndpointReconciler{
