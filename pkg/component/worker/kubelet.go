@@ -62,17 +62,30 @@ type kubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	cmd := "kubelet"
+	cmds := []string{"kubelet", "xtables-legacy-multi"}
+
 	if runtime.GOOS == "windows" {
-		cmd = "kubelet.exe"
+		cmds = []string{"kubelet.exe"}
 	}
-	err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
-	if err != nil {
-		return err
+
+	for _, cmd := range cmds {
+		err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
+		if err != nil {
+			return err
+		}
+	}
+
+	if runtime.GOOS == "linux" {
+		for _, symlink := range []string{"iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
+			err := os.Symlink("xtables-legacy-multi", filepath.Join(k.K0sVars.BinDir, symlink))
+			if err != nil {
+				return fmt.Errorf("failed to create symlink %s: %w", symlink, err)
+			}
+		}
 	}
 
 	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
-	err = util.InitDirectory(k.dataDir, constant.DataDirMode)
+	err := util.InitDirectory(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)
 	}
