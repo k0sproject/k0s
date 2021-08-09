@@ -23,7 +23,7 @@ To prevent accidental triggering, `k0s reset` will not run if the k0s service is
     INFO[2021-06-29 13:08:44] no config file given, using defaults
     INFO[2021-06-29 13:08:44] * remove k0s users step:
     INFO[2021-06-29 13:08:44] no config file given, using defaults
-    INFO[2021-06-29 13:08:44] * uninstal service step
+    INFO[2021-06-29 13:08:44] * uninstall service step
     INFO[2021-06-29 13:08:44] Uninstalling the k0s service
     INFO[2021-06-29 13:08:45] * remove directories step
     INFO[2021-06-29 13:08:45] * CNI leftovers cleanup step
