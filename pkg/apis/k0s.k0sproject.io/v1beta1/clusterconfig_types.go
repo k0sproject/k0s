@@ -56,7 +56,7 @@ type ClusterConfigStatus struct {
 //+kubebuilder:validation:Optional
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get
-// +groupName=clusterconfigs.k0s.k0sproject.io
+// +groupName=k0s.k0sproject.io
 
 // ClusterConfig is the Schema for the clusterconfigs API
 type ClusterConfig struct {

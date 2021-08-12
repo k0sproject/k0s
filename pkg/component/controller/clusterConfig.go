@@ -47,6 +47,7 @@ func (r *ClusterConfigReconciler) Init() error {
 	return nil
 }
 
+/*
 func (r *ClusterConfigReconciler) Run() error {
 	c, err := cfgClient.NewForConfig(r.kubeConfig)
 	if err != nil {
@@ -55,6 +56,34 @@ func (r *ClusterConfigReconciler) Run() error {
 	r.configClient = c
 	r.tickerDone = make(chan struct{})
 	go r.Reconcile()
+	return nil
+}*/
+
+func (r *ClusterConfigReconciler) Run() error {
+	c, err := cfgClient.NewForConfig(r.kubeConfig)
+	if err != nil {
+		return fmt.Errorf("can't create kubernetes typed Client for cluster config: %v", err)
+	}
+	r.configClient = c
+	r.tickerDone = make(chan struct{})
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				err := r.Reconcile()
+				if err != nil {
+					r.log.Warnf("external API address reconciliation failed: %s", err.Error())
+				}
+			case <-r.tickerDone:
+				r.log.Info("endpoint reconciler done")
+				return
+			}
+		}
+	}()
+
 	return nil
 }
 
@@ -71,39 +100,32 @@ func (r *ClusterConfigReconciler) Run() error {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *ClusterConfigReconciler) Reconcile() {
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			getOpts := v1.GetOptions{TypeMeta: resourceType}
-			_, err := r.configClient.ClusterConfigs(constant.ClusterConfigNamespace).Get(context.Background(), "k0s", getOpts)
+func (r *ClusterConfigReconciler) Reconcile() error {
+	getOpts := v1.GetOptions{TypeMeta: resourceType}
+	_, err := r.configClient.ClusterConfigs(constant.ClusterConfigNamespace).Get(context.Background(), "k0s", getOpts)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// ClusterConfig CR cannot be found, which means we can create it
+			r.log.Debugf("didn't find cluster config object: %v", err)
+			err := r.copyRunningConfigToCR()
 			if err != nil {
-				if errors.IsNotFound(err) {
-					// ClusterConfig CR cannot be found, which means we can create it
-					err := r.copyRunningConfigToCR()
-					if err != nil {
-						r.log.Errorf("failed to save cluster config  %v\n", err)
-					}
-				} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-					r.log.Errorf("Error getting cluster config %v\n", statusError.ErrStatus.Message)
-				}
-				r.log.Errorf("failed to reconcile config status: %v", err)
-				continue
+				r.log.Errorf("failed to save cluster config  %v\n", err)
 			}
-			/*
-				if r.ClusterConfig.Spec != clusterConfig.Spec {
-					// found a change in configuration
-					r.log.Infof("detected change in cluster config. reconciling...")
-				}*/
-
-		case <-r.tickerDone:
-			r.log.Info("clusterConfig reconciler done")
-			return
+		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+			r.log.Errorf("error getting cluster config %v\n", statusError.ErrStatus.Message)
 		}
+		r.log.Errorf("failed to reconcile config status: %v", err)
+		return err
 	}
+
+	r.log.Debugf("reconciling cluster config (nothing to do!)")
+	/*
+		// Found a clusterConfig CR. Let's compare it
+			if r.ClusterConfig.Spec != clusterConfig.Spec {
+				// found a change in configuration
+				r.log.Infof("detected change in cluster config. reconciling...")
+			}*/
+	return nil
 }
 
 // Stop stops
@@ -156,11 +178,16 @@ func clusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.Cluste
 }
 
 func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
+	if !r.leaderElector.IsLeader() {
+		r.log.Debug("I am not the leader, not reconciling cluster configuration")
+		return nil
+	}
 	clusterWideConfig := clusterConfigMinusNodeConfig(r.ClusterConfig)
 	createOpts := v1.CreateOptions{TypeMeta: resourceType}
 	_, err := r.configClient.ClusterConfigs(constant.ClusterConfigNamespace).Create(context.Background(), clusterWideConfig, createOpts)
 	if err != nil {
 		return err
 	}
+	r.log.Info("successfully wrote clusterConfig to API")
 	return nil
 }
