@@ -37,7 +37,7 @@ type Network struct {
 	// Network provider (valid values: calico, kuberouter, or custom)
 	Provider string `json:"provider"`
 	// Network CIDR to use for cluster VIP services
-	ServiceCIDR string `json:"serviceCIDR"`
+	ServiceCIDR string `json:"serviceCIDR,omitempty"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values

@@ -176,7 +176,7 @@ manifests: .helmCRD .cfgCRD
 	cd $(ROOT_DIR)/pkg/apis/helm.k0sproject.io/ && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)static/manifests/helm/CustomResourceDefinition object
 
 .cfgCRD:
-	cd $(ROOT_DIR)/pkg/apis/v1beta1 && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
+	cd $(ROOT_DIR)/pkg/apis/k0s.k0sproject.io/v1beta1 && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
 	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
