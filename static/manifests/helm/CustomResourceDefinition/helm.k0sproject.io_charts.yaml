@@ -15,10 +15,13 @@ spec:
     plural: charts
     singular: chart
   scope: Namespaced
-  spec.versions[*].subresources:
-    status: {}
-  spec.versions[*].schema:
-    openAPIV3Schema:
+  versions:
+  - name: v1
+    subresources:
+      status: {}
+  - name: v1
+    schema:
+      openAPIV3Schema:
       description: Chart is the Schema for the charts API
       properties:
         apiVersion:
@@ -67,7 +70,7 @@ spec:
               type: string
           type: object
       type: object
-  version: v1beta1
+  # version: v1beta1
   versions:
   - name: v1beta1
     served: true
