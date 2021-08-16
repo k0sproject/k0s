@@ -111,10 +111,10 @@ subjects:
     name: metrics-server
     namespace: kube-system
 ---
-apiVersion: apiregistration.k8s.io/v1beta1
+apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1beta1.metrics.k8s.io
+  name: metrics.k8s.io
 spec:
   service:
     name: metrics-server
