@@ -2,7 +2,7 @@ FROM alpine:3.13
 
 ENV KUBE_VERSION=1.21.3
 
-RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils iptables curl haproxy
+RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils curl haproxy
 # enable syslog and sshd
 RUN rc-update add cgroups boot
 RUN rc-update add syslog boot
