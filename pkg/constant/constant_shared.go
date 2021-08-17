@@ -57,7 +57,7 @@ const (
 	KonnectivityImage                  = "us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent"
 	KonnectivityImageVersion           = "v0.0.22"
 	MetricsImage                       = "gcr.io/k8s-staging-metrics-server/metrics-server"
-	MetricsImageVersion                = "v0.3.7"
+	MetricsImageVersion                = "v0.5.0"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
 	KubeProxyImageVersion              = "v1.22.0"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
