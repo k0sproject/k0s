@@ -595,21 +595,25 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
 		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
 		if err != nil {
+			s.T().Logf("kube-client error: %v", err)
 			return false, nil
 		}
 		v, err := kc.ServerVersion()
 		if err != nil {
+			s.T().Logf("server version error: %v", err)
 			return false, nil
 		}
 		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 		defer cancel()
 		res := kc.RESTClient().Get().RequestURI("/readyz").Do(ctx)
 		if res.Error() != nil {
+			s.T().Logf("readyz error: %v", res.Error())
 			return false, nil
 		}
 		var statusCode int
 		res.StatusCode(&statusCode)
 		if statusCode != http.StatusOK {
+			s.T().Logf("status not ok. code: %v", statusCode)
 			return false, nil
 		}
 
