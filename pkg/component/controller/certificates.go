@@ -246,6 +246,12 @@ func (c *Certificates) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (c *Certificates) Reconcile() error {
+	logrus.Debug("reconcile method called for: Certificates")
+	return nil
+}
+
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	data := struct {

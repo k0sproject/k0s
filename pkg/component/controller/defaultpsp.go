@@ -20,6 +20,8 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -74,6 +76,12 @@ func (d *DefaultPSP) Run() error {
 
 // Stop does currently nothing
 func (d *DefaultPSP) Stop() error {
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (d *DefaultPSP) Reconcile() error {
+	logrus.Debug("reconcile method called for: DefaultPSP")
 	return nil
 }
 

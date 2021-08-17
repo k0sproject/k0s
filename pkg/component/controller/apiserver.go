@@ -195,6 +195,12 @@ func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *APIServer) Reconcile() error {
+	logrus.Debug("reconcile method called for: APIServer")
+	return nil
+}
+
 // Health-check interface
 func (a *APIServer) Healthy() error {
 	// Load client cert so the api can authenitcate the request.

@@ -19,6 +19,7 @@ package component
 type Component interface {
 	Init() error
 	Run() error
+	Reconcile() error
 	Stop() error
 	Healthy() error
 }

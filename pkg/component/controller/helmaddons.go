@@ -320,6 +320,12 @@ func (h *HelmAddons) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (h *HelmAddons) Reconcile() error {
+	logrus.Debug("reconcile method called for: HelmAddons")
+	return nil
+}
+
 // Healthy
 func (h *HelmAddons) Healthy() error {
 	return nil

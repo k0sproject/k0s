@@ -123,6 +123,10 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 	if clusterConfig.ResourceVersion > r.resourceVersion {
 		r.log.Debugf("detected change in cluster config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.resourceVersion, clusterConfig.ResourceVersion)
 		r.resourceVersion = clusterConfig.ResourceVersion
+		err = r.ComponentManager.Reconcile()
+		if err != nil {
+			return err
+		}
 	}
 	r.log.Debugf("reconciling cluster config (nothing to do!)")
 	return nil

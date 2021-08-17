@@ -53,26 +53,32 @@ func NewKubeRouter(clusterConf *v1beta1.ClusterConfig, manifestsSaver manifestsS
 }
 
 // Init does nothing
-func (c *KubeRouter) Init() error { return nil }
+func (k *KubeRouter) Init() error { return nil }
 
 // Healthy is a no-op check
-func (c *KubeRouter) Healthy() error { return nil }
+func (k *KubeRouter) Healthy() error { return nil }
 
 // Stop no-op as nothing running
-func (c *KubeRouter) Stop() error { return nil }
+func (k *KubeRouter) Stop() error { return nil }
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeRouter) Reconcile() error {
+	logrus.Debug("reconcile method called for: KubeRouter")
+	return nil
+}
 
 // Run runs the kube-router reconciler
-func (c *KubeRouter) Run() error {
-	c.log.Info("starting to dump manifests")
+func (k *KubeRouter) Run() error {
+	k.log.Info("starting to dump manifests")
 
 	cfg := kubeRouterConfig{
-		AutoMTU:           c.clusterConf.Spec.Network.KubeRouter.AutoMTU,
-		MTU:               c.clusterConf.Spec.Network.KubeRouter.MTU,
-		PeerRouterIPs:     c.clusterConf.Spec.Network.KubeRouter.PeerRouterIPs,
-		PeerRouterASNs:    c.clusterConf.Spec.Network.KubeRouter.PeerRouterASNs,
-		CNIImage:          c.clusterConf.Spec.Images.KubeRouter.CNI.URI(),
-		CNIInstallerImage: c.clusterConf.Spec.Images.KubeRouter.CNIInstaller.URI(),
-		PullPolicy:        c.clusterConf.Spec.Images.DefaultPullPolicy,
+		AutoMTU:           k.clusterConf.Spec.Network.KubeRouter.AutoMTU,
+		MTU:               k.clusterConf.Spec.Network.KubeRouter.MTU,
+		PeerRouterIPs:     k.clusterConf.Spec.Network.KubeRouter.PeerRouterIPs,
+		PeerRouterASNs:    k.clusterConf.Spec.Network.KubeRouter.PeerRouterASNs,
+		CNIImage:          k.clusterConf.Spec.Images.KubeRouter.CNI.URI(),
+		CNIInstallerImage: k.clusterConf.Spec.Images.KubeRouter.CNIInstaller.URI(),
+		PullPolicy:        k.clusterConf.Spec.Images.DefaultPullPolicy,
 	}
 
 	output := bytes.NewBuffer([]byte{})
@@ -87,7 +93,7 @@ func (c *KubeRouter) Run() error {
 		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
 	}
 
-	err = c.saver.Save("kube-router.yaml", output.Bytes())
+	err = k.saver.Save("kube-router.yaml", output.Bytes())
 	if err != nil {
 		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
 	}

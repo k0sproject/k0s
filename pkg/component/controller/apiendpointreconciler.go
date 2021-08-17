@@ -95,6 +95,12 @@ func (a *APIEndpointReconciler) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *APIEndpointReconciler) Reconcile() error {
+	logrus.Debug("reconcile method called for: APIEndpointReconciler")
+	return nil
+}
+
 // Healthy dummy implementation
 func (a *APIEndpointReconciler) Healthy() error { return nil }
 

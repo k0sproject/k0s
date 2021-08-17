@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -65,6 +66,12 @@ func (m *K0SControlAPI) Run() error {
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (m *K0SControlAPI) Reconcile() error {
+	logrus.Debug("reconcile method called for: K0SControlAPI")
+	return nil
 }
 
 // Healthy for health-check interface

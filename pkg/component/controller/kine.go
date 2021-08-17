@@ -105,5 +105,11 @@ func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Kine) Reconcile() error {
+	logrus.Debug("reconcile method called for: Kine")
+	return nil
+}
+
 // Health-check interface
 func (k *Kine) Healthy() error { return nil }

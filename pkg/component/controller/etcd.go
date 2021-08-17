@@ -204,6 +204,12 @@ func (e *Etcd) Stop() error {
 	return e.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (e *Etcd) Reconcile() error {
+	logrus.Debug("reconcile method called for: Etcd")
+	return nil
+}
+
 func (e *Etcd) setupCerts() error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")

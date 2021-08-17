@@ -80,6 +80,12 @@ func (k *KubeletConfig) Run() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeletConfig) Reconcile() error {
+	logrus.Debug("reconcile method called for: KubeletConfig")
+	return nil
+}
+
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
 	defaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)

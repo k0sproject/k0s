@@ -81,6 +81,12 @@ func (c *Component) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (c *Component) Reconcile() error {
+	logrus.Debug("reconcile method called for: Telemetry")
+	return nil
+}
+
 // Healthy checks health
 func (c *Component) Healthy() error {
 	return nil

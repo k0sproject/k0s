@@ -75,7 +75,6 @@ func (m *Manager) Init() error {
 
 // Start starts all managed components
 func (m *Manager) Start(ctx context.Context) error {
-
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.components {
 		compName := reflect.TypeOf(comp).Elem().Name()
@@ -102,6 +101,20 @@ func (m *Manager) Stop() error {
 			logrus.Errorf("failed to stop component: %s", err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to stop components")
+			}
+		}
+	}
+	return ret
+}
+
+// Reoncile reconciles all managed components
+func (m *Manager) Reconcile() error {
+	var ret error = nil
+	for i := len(m.components) - 1; i >= 0; i-- {
+		if err := m.components[i].Reconcile(); err != nil {
+			logrus.Errorf("failed to reconcile component: %s", err.Error())
+			if ret == nil {
+				ret = fmt.Errorf("failed to reconcile components")
 			}
 		}
 	}

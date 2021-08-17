@@ -121,6 +121,12 @@ func (l *leaderElector) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (l *leaderElector) Reconcile() error {
+	logrus.Debug("reconcile method called for: leaderElector")
+	return nil
+}
+
 func (l *leaderElector) IsLeader() bool {
 	return l.leaderStatus.Load().(bool)
 }

@@ -94,5 +94,11 @@ func (a *Scheduler) Stop() error {
 	return a.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *Scheduler) Reconcile() error {
+	logrus.Debug("reconcile method called for: Scheduler")
+	return nil
+}
+
 // Health-check interface
 func (a *Scheduler) Healthy() error { return nil }

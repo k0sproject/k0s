@@ -80,6 +80,12 @@ func (a *CSRApprover) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *CSRApprover) Reconcile() error {
+	logrus.Debug("reconcile method called for: CSRApprover")
+	return nil
+}
+
 // Init initializes the component needs
 func (a *CSRApprover) Init() error {
 	var err error
