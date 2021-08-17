@@ -40,8 +40,8 @@ func Test_KubeletConfig(t *testing.T) {
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		t.Run("output_must_have_3_manifests", func(t *testing.T) {
 			require.Len(t, manifestYamls, 4, "Must have exactly 4 generated manifests per profile")
-			requireConfigMap(t, manifestYamls[0], "kubelet-config-default-1.21")
-			requireConfigMap(t, manifestYamls[1], "kubelet-config-default-windows-1.21")
+			requireConfigMap(t, manifestYamls[0], "kubelet-config-default-1.22")
+			requireConfigMap(t, manifestYamls[1], "kubelet-config-default-windows-1.22")
 			requireRole(t, manifestYamls[2], []string{
 				formatProfileName("default"),
 				formatProfileName("default-windows"),
@@ -67,7 +67,7 @@ func Test_KubeletConfig(t *testing.T) {
 			// check that each profile has config map, role and role binding
 			var resourceNamesForRole []string
 			for idx, profileName := range []string{"default", "default-windows", "profile_XXX", "profile_YYY"} {
-				fullName := "kubelet-config-" + profileName + "-1.21"
+				fullName := "kubelet-config-" + profileName + "-1.22"
 				resourceNamesForRole = append(resourceNamesForRole, formatProfileName(profileName))
 				requireConfigMap(t, manifestYamls[idx], fullName)
 			}
