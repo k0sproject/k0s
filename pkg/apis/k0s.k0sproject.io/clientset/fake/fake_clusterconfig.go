@@ -25,6 +25,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 )
 
@@ -69,6 +70,12 @@ func (c *FakeClusterConfigs) List(ctx context.Context, opts v1.ListOptions) (res
 		}
 	}
 	return list, err
+}
+
+// Watch returns a watch.Interface that watches the requested clusterConfigs.
+func (c *FakeClusterConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	return c.Fake.
+		InvokesWatch(testing.NewWatchAction(clusterconfigsResource, c.ns, opts))
 }
 
 // Create takes the representation of a clusterConfig and creates it.  Returns the server's representation of the clusterConfig, and an error, if there is any.
