@@ -314,6 +314,12 @@ func (m *MetricServer) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (m *MetricServer) Reconcile() error {
+	logrus.Debug("reconcile method called for: MetricServer")
+	return nil
+}
+
 // Healthy is the health-check interface
 func (m *MetricServer) Healthy() error { return nil }
 

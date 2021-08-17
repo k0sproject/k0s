@@ -175,6 +175,12 @@ func (k *Konnectivity) Stop() error {
 	return k.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Konnectivity) Reconcile() error {
+	logrus.Debug("reconcile method called for: Konnectivity")
+	return nil
+}
+
 type konnectivityAgentConfig struct {
 	APIAddress string
 	AgentPort  int64

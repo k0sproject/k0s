@@ -233,6 +233,12 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Kubelet) Reconcile() error {
+	logrus.Debug("reconcile method called for: Kubelet")
+	return nil
+}
+
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
 

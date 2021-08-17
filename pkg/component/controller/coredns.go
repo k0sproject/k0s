@@ -365,5 +365,11 @@ func (c *CoreDNS) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (c *CoreDNS) Reconcile() error {
+	logrus.Debug("reconcile method called for: CoreDNS")
+	return nil
+}
+
 // Health-check interface
 func (c *CoreDNS) Healthy() error { return nil }

@@ -94,7 +94,6 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 }
 
 func (c CalicoInstaller) Run() error {
-
 	return nil
 }
 
@@ -103,6 +102,11 @@ func (c CalicoInstaller) Stop() error {
 }
 
 func (c CalicoInstaller) Healthy() error {
+	return nil
+}
+
+func (c CalicoInstaller) Reconcile() error {
+	logrus.Debug("reconcile method called for: CalicoInstaller")
 	return nil
 }
 

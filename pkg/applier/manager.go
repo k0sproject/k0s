@@ -85,6 +85,12 @@ func (m *Manager) Stop() error {
 	return nil
 }
 
+// Reconcile reconciles the Manager
+func (m *Manager) Reconcile() error {
+	logrus.Debug("reconcile method called for: Manager")
+	return nil
+}
+
 func (m *Manager) runWatchers(ctx context.Context) error {
 	log := logrus.WithField("component", "applier-manager")
 

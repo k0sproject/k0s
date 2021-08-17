@@ -66,6 +66,12 @@ func (s *Status) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (s *Status) Reconcile() error {
+	logrus.Debug("reconcile method called for: Status")
+	return nil
+}
+
 type statusHandler struct {
 	Status *Status
 }

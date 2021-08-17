@@ -113,6 +113,12 @@ func (k *KubeProxy) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeProxy) Reconcile() error {
+	logrus.Debug("reconcile method called for: KubeProxy")
+	return nil
+}
+
 func (k *KubeProxy) removeKubeProxy(manifestDir string) error {
 	if !dir.Exists(manifestDir) {
 		return nil

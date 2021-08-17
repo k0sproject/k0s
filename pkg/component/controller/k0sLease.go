@@ -83,5 +83,11 @@ func (l *K0sLease) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (l *K0sLease) Reconcile() error {
+	logrus.Debug("reconcile method called for: K0sLease")
+	return nil
+}
+
 // Healthy is a no-op healchcheck
 func (l *K0sLease) Healthy() error { return nil }

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/static"
+	"github.com/sirupsen/logrus"
 )
 
 // CRD unpacks bundled CRD definitions to the filesystem
@@ -69,6 +70,12 @@ func (c CRD) Run() error {
 }
 
 func (c CRD) Stop() error {
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (c CRD) Reconcile() error {
+	logrus.Debug("reconcile method called for: helm CRD")
 	return nil
 }
 

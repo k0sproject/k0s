@@ -133,5 +133,11 @@ func (a *Manager) Stop() error {
 	return a.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *Manager) Reconcile() error {
+	logrus.Debug("reconcile method called for: ControllerManager")
+	return nil
+}
+
 // Health-check interface
 func (a *Manager) Healthy() error { return nil }

@@ -229,5 +229,11 @@ func (c *Calico) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (c *Calico) Reconcile() error {
+	logrus.Debug("reconcile method called for: Calico")
+	return nil
+}
+
 // Health-check interface
 func (c *Calico) Healthy() error { return nil }
