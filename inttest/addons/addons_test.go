@@ -119,7 +119,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (st
 		}
 		as.Require().True(found)
 		as.Require().Equal("default", testAddonItem.Status.Namespace)
-		as.Require().Equal("2.21.0", testAddonItem.Status.AppVersion)
+		as.Require().Equal("2.26.0", testAddonItem.Status.AppVersion)
 		as.Require().Equal("default", testAddonItem.Status.Namespace)
 		as.Require().NotEmpty(testAddonItem.Status.ReleaseName)
 		releaseName = testAddonItem.Status.ReleaseName
@@ -179,7 +179,7 @@ func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]in
 			Name:      "test-addon",
 			ChartName: "prometheus-community/prometheus",
 			Values:    string(valuesBytes),
-			Version:   "11.16.8",
+			Version:   "14.6.0",
 			TargetNS:  "default",
 		},
 	}
@@ -213,7 +213,7 @@ spec:
           charts:
           - name: %s
             chartname: prometheus-community/prometheus
-            version: "11.16.8"
+            version: "14.6.0"
             values: ""
             namespace: default
 `
