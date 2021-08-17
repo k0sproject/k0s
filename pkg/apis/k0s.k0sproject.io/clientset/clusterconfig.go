@@ -23,6 +23,7 @@ import (
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
 
 	scheme "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/scheme"
@@ -41,6 +42,7 @@ type ClusterConfigInterface interface {
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.ClusterConfig, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.ClusterConfigList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	ClusterConfigExpansion
 }
 
@@ -86,6 +88,21 @@ func (c *clusterConfigs) List(ctx context.Context, opts v1.ListOptions) (result 
 		Do(ctx).
 		Into(result)
 	return
+}
+
+// Watch returns a watch.Interface that watches the requested clusterConfigs.
+func (c *clusterConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(c.ns).
+		Resource("clusterconfigs").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
 }
 
 // Create takes the representation of a clusterConfig and creates it.  Returns the server's representation of the clusterConfig, and an error, if there is any.
