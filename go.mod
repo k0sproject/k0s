@@ -5,11 +5,12 @@ go 1.16
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/Microsoft/hcsshim v0.8.14
+	github.com/Microsoft/hcsshim v0.8.18
+	github.com/Microsoft/hcsshim/test v0.0.0-20210813225834-a0b514937762 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.4.4
+	github.com/containerd/containerd v1.5.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/libnetwork v0.5.6
@@ -22,14 +23,11 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/k0sproject/dig v0.1.0
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
-	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
-	github.com/opencontainers/runtime-tools v0.0.0-20181011054405-1d69bd0f9c39 // indirect
 	github.com/opencontainers/selinux v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
@@ -51,17 +49,14 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
-	go.etcd.io/etcd/etcdctl/v3 v3.5.0 // indirect
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.38.0
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.6.3
-	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
 	k8s.io/api v0.22.0
 	k8s.io/apimachinery v0.22.0
 	k8s.io/cli-runtime v0.22.0
@@ -69,11 +64,9 @@ require (
 	k8s.io/cloud-provider v0.22.0
 	k8s.io/component-base v0.22.0
 	k8s.io/cri-api v0.22.0
-	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.9.0
+	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.22.0
 	k8s.io/kubectl v0.22.0
-	k8s.io/kubernetes v1.13.0 // indirect
 	k8s.io/mount-utils v0.22.0
 	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
