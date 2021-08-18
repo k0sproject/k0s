@@ -64,7 +64,6 @@ require (
 	k8s.io/cloud-provider v0.22.0
 	k8s.io/component-base v0.22.0
 	k8s.io/cri-api v0.22.0
-	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.22.0
 	k8s.io/kubectl v0.22.0
 	k8s.io/mount-utils v0.22.0
