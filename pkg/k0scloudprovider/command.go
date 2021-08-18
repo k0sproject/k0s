@@ -26,7 +26,6 @@ import (
 	"k8s.io/cloud-provider/app/config"
 	"k8s.io/cloud-provider/options"
 	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/klog"
 )
 
 type Command func(stopCh <-chan struct{})
@@ -66,51 +65,28 @@ func NewCommand(c Config) (Command, error) {
 		return nil, fmt.Errorf("unable to create k0s-cloud-provider configuration: %w", err)
 	}
 
-	// Builds the provider using the specified `AddressCollector`
-
-	cloud := NewProvider(c.AddressCollector)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create k0s-cloud-provider: %w", err)
-	}
-
 	return func(stopCh <-chan struct{}) {
-		cloud.Initialize(ccmc.ClientBuilder, stopCh)
+		cloudInitializer := func(config *config.CompletedConfig) cloudprovider.Interface {
+			// Builds the provider using the specified `AddressCollector`
+			cloud := NewProvider(c.AddressCollector)
 
-		controllerInitializers := app.ConstructControllerInitializers(app.DefaultInitFuncConstructors, ccmc.Complete(), cloud)
-		for _, disabledController := range disabledControllerList {
-			delete(controllerInitializers, disabledController)
+			controllerInitializers := app.ConstructControllerInitializers(app.DefaultInitFuncConstructors, ccmc.Complete(), cloud)
+			for _, disabledController := range disabledControllerList {
+				delete(controllerInitializers, disabledController)
+			}
+
+			cloud.Initialize(ccmc.ClientBuilder, stopCh)
+
+			return cloud
 		}
 
 		// Override the commands arguments to avoid it by default using `os.Args[]`
 		fss := cliflag.NamedFlagSets{}
 		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, app.DefaultInitFuncConstructors, fss, stopCh)
-		// command := app.NewCloudControllerManagerCommand(ccmo, ccmc, controllerInitializers)
 		command.SetArgs([]string{})
 
 		if err := command.Execute(); err != nil {
 			logrus.Errorf("unable to execute command: %v", err)
 		}
 	}, nil
-}
-
-func cloudInitializer(config *config.CompletedConfig) cloudprovider.Interface {
-	cloudConfig := config.ComponentConfig.KubeCloudShared.CloudProvider
-
-	// initialize cloud provider with the cloud provider name and config file provided
-	cloud, err := cloudprovider.InitCloudProvider(Name, cloudConfig.CloudConfigFile)
-	if err != nil {
-		klog.Fatalf("Cloud provider could not be initialized: %v", err)
-	}
-	if cloud == nil {
-		klog.Fatalf("Cloud provider is nil")
-	}
-
-	if !cloud.HasClusterID() {
-		if config.ComponentConfig.KubeCloudShared.AllowUntaggedCloud {
-			klog.Warning("detected a cluster without a ClusterID.  A ClusterID will be required in the future.  Please tag your cluster to avoid any future issues")
-		} else {
-			klog.Fatalf("no ClusterID found.  A ClusterID is required for the cloud provider to function properly.  This check can be bypassed by setting the allow-untagged-cloud option")
-		}
-	}
-	return cloud
 }
