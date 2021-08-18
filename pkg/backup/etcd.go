@@ -25,10 +25,12 @@ import (
 
 	"github.com/k0sproject/k0s/internal/util"
 
-	"go.etcd.io/etcd/clientv3/snapshot"
+	"go.etcd.io/etcd/client/v3/snapshot"
 	"go.uber.org/zap"
 
 	"github.com/k0sproject/k0s/pkg/etcd"
+
+	utilsnapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 )
 
 const etcdBackup = "etcd-snapshot.db"
@@ -60,10 +62,9 @@ func (e etcdStep) Backup() (StepResult, error) {
 
 	// disable etcd's logging
 	lg := zap.NewNop()
-	m := snapshot.NewV3(lg)
 
 	// save snapshot
-	if err = m.Save(ctx, *etcdClient.Config, path); err != nil {
+	if err = snapshot.Save(ctx, lg, *etcdClient.Config, path); err != nil {
 		return StepResult{}, err
 	}
 	// add snapshot's path to assets
@@ -78,13 +79,13 @@ func (e etcdStep) Restore(restoreFrom, _ string) error {
 
 	// disable etcd's logging
 	lg := zap.NewNop()
-	m := snapshot.NewV3(lg)
+	m := utilsnapshot.NewV3(lg)
 	name, err := os.Hostname()
 	if err != nil {
 		return err
 	}
 	peerURL := fmt.Sprintf("https://%s:2380", e.peerAddress)
-	restoreConfig := snapshot.RestoreConfig{
+	restoreConfig := utilsnapshot.RestoreConfig{
 		SnapshotPath:   snapshotPath,
 		OutputDataDir:  e.etcdDataDir,
 		PeerURLs:       []string{peerURL},
