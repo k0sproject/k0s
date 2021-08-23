@@ -21,8 +21,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
+	"k8s.io/cloud-provider/app/config"
 	"k8s.io/cloud-provider/options"
+	cliflag "k8s.io/component-base/cli/flag"
 )
 
 type Command func(stopCh <-chan struct{})
@@ -62,23 +65,24 @@ func NewCommand(c Config) (Command, error) {
 		return nil, fmt.Errorf("unable to create k0s-cloud-provider configuration: %w", err)
 	}
 
-	// Builds the provider using the specified `AddressCollector`
-
-	cloud := NewProvider(c.AddressCollector)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create k0s-cloud-provider: %w", err)
-	}
-
 	return func(stopCh <-chan struct{}) {
-		cloud.Initialize(ccmc.ClientBuilder, stopCh)
+		cloudInitializer := func(config *config.CompletedConfig) cloudprovider.Interface {
+			// Builds the provider using the specified `AddressCollector`
+			cloud := NewProvider(c.AddressCollector)
 
-		controllerInitializers := app.DefaultControllerInitializers(ccmc.Complete(), cloud)
-		for _, disabledController := range disabledControllerList {
-			delete(controllerInitializers, disabledController)
+			controllerInitializers := app.ConstructControllerInitializers(app.DefaultInitFuncConstructors, ccmc.Complete(), cloud)
+			for _, disabledController := range disabledControllerList {
+				delete(controllerInitializers, disabledController)
+			}
+
+			cloud.Initialize(ccmc.ClientBuilder, stopCh)
+
+			return cloud
 		}
 
 		// Override the commands arguments to avoid it by default using `os.Args[]`
-		command := app.NewCloudControllerManagerCommand(ccmo, ccmc, controllerInitializers)
+		fss := cliflag.NamedFlagSets{}
+		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, app.DefaultInitFuncConstructors, fss, stopCh)
 		command.SetArgs([]string{})
 
 		if err := command.Execute(); err != nil {

@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ^1.16
         id: go
 
       - name: Check out code into the Go module directory
@@ -131,6 +131,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
+
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -162,6 +168,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -193,6 +204,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -224,6 +240,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -255,6 +276,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -286,6 +312,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -317,6 +348,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -348,6 +384,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -379,6 +420,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -410,6 +456,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -441,6 +492,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -474,6 +530,11 @@ jobs:
     if: false
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -505,6 +566,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -536,6 +602,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -567,6 +638,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -629,6 +705,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -660,6 +741,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -691,6 +777,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -724,7 +815,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ^1.16
         id: go
 
       - name: Check out code into the Go module directory
@@ -770,6 +861,13 @@ jobs:
     name: Smoke test on armv7
     runs-on: [self-hosted,linux,arm,lxc]
     steps:
+      # We cannot rely on this as it's not working on arm, see https://github.com/actions/setup-go/issues/106
+      # Instead we must have proper golang version setup at system level.
+      # - name: Set up Go 1.x
+      #   uses: actions/setup-go@v2
+      #   with:
+      #     go-version: ^1.16
+      #   id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
