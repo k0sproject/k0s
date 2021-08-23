@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/internal/upgrading-calico/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/environment-variables/">
       
       
         
       
-      <link rel="icon" href="../../img/k0s_social.png">
+      <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Upgrading Calico - Documentation</title>
+        <title>Configuration of Environment Variables - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#upgrading-calico" class="md-skip">
+        <a href="#environment-variables" class="md-skip">
           Skip to content
         </a>
       
@@ -103,9 +103,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Upgrading Calico
+              Configuration of Environment Variables
             
           </span>
         </div>
@@ -226,9 +226,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -312,7 +312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0sctl-install/" class="md-nav__link">
+      <a href="../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -352,7 +352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-multi-node/" class="md-nav__link">
+      <a href="../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -366,7 +366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-in-docker/" class="md-nav__link">
+      <a href="../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -380,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../experimental-windows/" class="md-nav__link">
+      <a href="../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -394,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi4/" class="md-nav__link">
+      <a href="../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -408,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -422,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../airgap-install/" class="md-nav__link">
+      <a href="../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -443,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../upgrade/" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -457,7 +457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -471,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reset/" class="md-nav__link">
+      <a href="../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -485,7 +485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-requirements/" class="md-nav__link">
+      <a href="../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -505,12 +505,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
@@ -533,7 +535,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -547,7 +549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration-validation/" class="md-nav__link">
+      <a href="../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -561,7 +563,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../worker-node-config/" class="md-nav__link">
+      <a href="../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -575,7 +577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../networking/" class="md-nav__link">
+      <a href="../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -589,7 +591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../runtime/" class="md-nav__link">
+      <a href="../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -603,7 +605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage/" class="md-nav__link">
+      <a href="../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -617,7 +619,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manifests/" class="md-nav__link">
+      <a href="../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -631,7 +633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../helm-charts/" class="md-nav__link">
+      <a href="../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -645,7 +647,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cloud-providers/" class="md-nav__link">
+      <a href="../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -659,7 +661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dual-stack/" class="md-nav__link">
+      <a href="../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -673,7 +675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../high-availability/" class="md-nav__link">
+      <a href="../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -687,7 +689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../shell-completion/" class="md-nav__link">
+      <a href="../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -701,7 +703,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-management/" class="md-nav__link">
+      <a href="../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -713,11 +715,58 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../environment-variables/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Configuration of Environment Variables
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Configuration of Environment Variables
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#systemd" class="md-nav__link">
+    SystemD
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openrc" class="md-nav__link">
+    OpenRC
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -763,7 +812,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -777,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../examples/ambassador-ingress/" class="md-nav__link">
         Ambassador Gateway
       </a>
     </li>
@@ -791,7 +840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -839,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../FAQ/" class="md-nav__link">
+      <a href="../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -853,7 +902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -901,7 +950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -915,7 +964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cis_benchmark/" class="md-nav__link">
+      <a href="../cis_benchmark/" class="md-nav__link">
         CIS Benchmark
       </a>
     </li>
@@ -963,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/overview/" class="md-nav__link">
+      <a href="../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -977,7 +1026,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/github_workflow/" class="md-nav__link">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -991,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/testing/" class="md-nav__link">
+      <a href="../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1005,7 +1054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1045,22 +1094,16 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#manual-adjustments" class="md-nav__link">
-    Manual Adjustments
-  </a>
-  
-    <nav class="md-nav" aria-label="Manual Adjustments">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#container-image-names" class="md-nav__link">
-    Container image names
+  <a href="#systemd" class="md-nav__link">
+    SystemD
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#openrc" class="md-nav__link">
+    OpenRC
+  </a>
   
 </li>
       
@@ -1078,99 +1121,20 @@
                 
                 
                 
-                <h1 id="upgrading-calico">Upgrading Calico<a class="headerlink" href="#upgrading-calico" title="Permanent link">#</a></h1>
-<p>k0s bundles Kubernetes manifests for Calico. The manifests are retrieved
-from the <a href="https://docs.projectcalico.org/manifests/calico.yaml">official Calico docs</a>.</p>
-<p>As fetching and modifying the entire multi-thousand line file is error-prone,
-you may follow these steps to upgrade Calico to the latest version:</p>
-<ol>
-<li>run <code>./get-calico.sh</code></li>
-<li>check the git diff to see if it looks sensible</li>
-<li>re-apply our manual adjustments (documented below)</li>
-<li>run <code>make bindata-manifests</code></li>
-<li>compile, pray, and test</li>
-<li>commit and create a PR</li>
-</ol>
-<h2 id="manual-adjustments">Manual Adjustments<a class="headerlink" href="#manual-adjustments" title="Permanent link">#</a></h2>
-<p><strong>Note:</strong> All manual adjustments should be fairly obvious from the git diff.
-This section attempts to provide a sanity checklist to go through and make sure
-we still have those changes applied. The code blocks in this section are <strong>our modifications</strong>,
-not the calico originals.</p>
-<p><code>static/manifests/calico/DaemonSet/calico-node.yaml</code>:</p>
-<ul>
-<li>variable-based support for both vxlan and ipip (search for <code>ipip</code> to find):</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{{</span><span class="nv">- if eq .Mode &quot;ipip&quot;</span> <span class="p p-Indicator">}}</span>
-<span class="c1"># Enable IPIP</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Overlay</span> <span class="p p-Indicator">}}</span>
-<span class="c1"># Enable or Disable VXLAN on the default IP pool.</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;Never&quot;</span>
-<span class="p p-Indicator">{{</span><span class="nv">- else if eq .Mode &quot;vxlan&quot;</span> <span class="p p-Indicator">}}</span>
-<span class="c1"># Disable IPIP</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_IPIP</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;Never&quot;</span>
-<span class="c1"># Enable VXLAN on the default IP pool.</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_VXLAN</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Overlay</span> <span class="p p-Indicator">}}</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANPORT</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.VxlanPort</span><span class="nv"> </span><span class="s">}}&quot;</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_VXLANVNI</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.VxlanVNI</span><span class="nv"> </span><span class="s">}}&quot;</span>
-<span class="p p-Indicator">{{</span><span class="nv">- end</span> <span class="p p-Indicator">}}</span>
+                <h1 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">#</a></h1>
+<p><code>k0s install</code> does not support environment variables.
+Setting environment variable for a component used by k0s depends on used init system.</p>
+<h2 id="systemd">SystemD<a class="headerlink" href="#systemd" title="Permanent link">#</a></h2>
+<p>Create a drop-in directory and add config file with a desired environment variable:</p>
+<div class="highlight"><pre><span></span><code>mkdir -p /etc/systemd/system/k0scontroller.service.d
+tee -a /etc/systemd/system/k0scontroller.service.d/http-proxy.conf <span class="s">&lt;&lt;EOT</span>
+<span class="s">[Service]</span>
+<span class="s">Environment=HTTP_PROXY=192.168.33.10:3128</span>
+<span class="s">EOT</span>
 </code></pre></div>
-<ul>
-<li>iptables auto detect:</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># Auto detect the iptables backend</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_IPTABLESBACKEND</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;auto&quot;</span>
-</code></pre></div>
-<ul>
-<li>variable-based WireGuard support:</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{{</span><span class="nv">- if .EnableWireguard</span> <span class="p p-Indicator">}}</span>
-<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FELIX_WIREGUARDENABLED</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;true&quot;</span>
-<span class="p p-Indicator">{{</span><span class="nv">- end</span> <span class="p p-Indicator">}}</span>
-</code></pre></div>
-<ul>
-<li>variable-based cluster CIDR:</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CALICO_IPV4POOL_CIDR</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.ClusterCIDR</span><span class="nv"> </span><span class="s">}}&quot;</span>
-</code></pre></div>
-<ul>
-<li>custom backend and MTU</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># calico-config.yaml</span>
-<span class="nt">calico_backend</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.Mode</span><span class="nv"> </span><span class="s">}}&quot;</span>
-<span class="nt">veth_mtu</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">.MTU</span><span class="nv"> </span><span class="s">}}&quot;</span>
-</code></pre></div>
-<ul>
-<li>remove bgp from <code>CLUSTER_TYPE</code></li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CLUSTER_TYPE</span>
-  <span class="nt">value</span><span class="p">:</span> <span class="s">&quot;k8s&quot;</span>
-</code></pre></div>
-<ul>
-<li>disable BIRD checks on liveness and readiness as we don't support BGP by removing
-<code>-bird-ready</code> and <code>-bird-live</code> from the readiness and liveness probes respectively</li>
-</ul>
-<h3 id="container-image-names">Container image names<a class="headerlink" href="#container-image-names" title="Permanent link">#</a></h3>
-<p>Instead of hardcoded image names and versions use placeholders to support configuration level settings. Following placeholders are used:</p>
-<ul>
-<li><code>CalicoCNIImage</code> for calico/cni</li>
-<li><code>CalicoNodeImage</code> for calico/node</li>
-<li><code>CalicoKubeControllersImage</code> for calico/kube-controllers</li>
-</ul>
-<p>Also, all containers in manifests were modified to have 'imagePullPolicy' field:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">imagePullPolicy</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.PullPolicy</span> <span class="p p-Indicator">}}</span>
-</code></pre></div>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># calico-node.yaml</span>
-<span class="nt">image</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.CalicoCNIImage</span> <span class="p p-Indicator">}}</span>
+<h2 id="openrc">OpenRC<a class="headerlink" href="#openrc" title="Permanent link">#</a></h2>
+<p>Export desired environment variable overriding service configuration in /etc/conf.d directory:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;export HTTP_PROXY=&quot;192.168.33.10:3128&quot;&#39;</span> &gt; /etc/conf.d/k0scontroller
 </code></pre></div>
                 
               
@@ -1188,6 +1152,41 @@ not the calico originals.</p>
       
         
 <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../user-management/" class="md-footer__link md-footer__link--prev" aria-label="Previous: User Management" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              User Management
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../examples/traefik-ingress/" class="md-footer__link md-footer__link--next" aria-label="Next: Traefik Ingress Controller" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Traefik Ingress Controller
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1237,10 +1236,10 @@ not the calico originals.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>
