@@ -1231,7 +1231,7 @@
 <p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the network provider in the k0s configurtion file (<code>k0s.yaml</code>). You can do this, for example, by pushing network provider manifests into <code>/var/lib/k0s/manifests</code>, from where k0s controllers will collect them for deployment into the cluster (for more information, refer to <a href="../manifests/">Manifest Deployer</a>.</p>
 <h2 id="controller-worker-communication">Controller-Worker communication<a class="headerlink" href="#controller-worker-communication" title="Permanent link">#</a></h2>
 <p>One goal of k0s is to allow for the deployment of an isolated control plane, which may prevent the establishment of an IP route between controller nodes and the pod network. Thus, to enable this communication path (which is mandated by conformance tests), k0s deploys <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/">Konnectivity service</a> to proxy traffic from the API server (control plane) into the worker nodes. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.</p>
-<p><strong>Note</strong>: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access.</p>
+<p><strong>Note</strong>: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access, port 8132. Moreover, configure your firewalls for outbound access, port 6443, in order to access Kube-API from the worker nodes.</p>
 <p><img alt="k0s controller_worker_networking" src="../img/k0s_controller_worker_networking.png" /></p>
 <h2 id="required-ports-and-protocols">Required ports and protocols<a class="headerlink" href="#required-ports-and-protocols" title="Permanent link">#</a></h2>
 <table>
@@ -1289,8 +1289,8 @@
 </tr>
 <tr>
 <td>TCP</td>
-<td>8132,8133</td>
-<td>konnectivity server</td>
+<td>8132</td>
+<td>konnectivity</td>
 <td>worker &lt;-&gt; controller</td>
 <td>Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets</td>
 </tr>

@@ -1211,8 +1211,7 @@
 <p>Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:</p>
 <ul>
 <li>6443 (for Kubernetes API)</li>
-<li>8132 (for Konnectivity agent)</li>
-<li>8133 (for Konnectivity server)</li>
+<li>8132 (for Konnectivity)</li>
 <li>9443 (for controller join API)</li>
 </ul>
 <p>The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.</p>
@@ -1221,22 +1220,35 @@
 <p>Add the following lines to the end of the haproxy.cfg:</p>
 <div class="highlight"><pre><span></span><code>frontend kubeAPI
     bind :6443
-    default_backend back
-frontend konnectivityAgent
+    default_backend kubeAPI_backend
+frontend konnectivity
     bind :8132
-    default_backend back
-frontend konnectivityServer
-    bind :8133
-    default_backend back
+    default_backend konnectivity_backend
 frontend controllerJoinAPI
     bind :9443
-    default_backend back
+    default_backend controllerJoinAPI_backend
 
-backend back
-    server k0s-controller1 &lt;ip-address1&gt;
-    server k0s-controller2 &lt;ip-address2&gt;
-    server k0s-controller3 &lt;ip-address3&gt;
+backend kubeAPI_backend
+    server k0s-controller1 &lt;ip-address1&gt;:6443 check check-ssl verify none
+    server k0s-controller2 &lt;ip-address2&gt;:6443 check check-ssl verify none
+    server k0s-controller3 &lt;ip-address3&gt;:6443 check check-ssl verify none
+backend konnectivity_backend
+    server k0s-controller1 &lt;ip-address1&gt;:8132 check check-ssl verify none
+    server k0s-controller2 &lt;ip-address2&gt;:8132 check check-ssl verify none
+    server k0s-controller3 &lt;ip-address3&gt;:8132 check check-ssl verify none
+backend controllerJoinAPI_backend
+    server k0s-controller1 &lt;ip-address1&gt;:9443 check check-ssl verify none
+    server k0s-controller2 &lt;ip-address2&gt;:9443 check check-ssl verify none
+    server k0s-controller3 &lt;ip-address3&gt;:9443 check check-ssl verify none
+
+listen stats
+   bind *:9000
+   mode http
+   stats enable
+   stats uri /
 </code></pre></div>
+<p>The last block "listen stats" is optional, but can be helpful. It enables HAProxy statistics with a separate dashboard to monitor for example the health of each backend server. You can access it using a web browser:</p>
+<p><code>http://&lt;ip-addr&gt;:9000</code></p>
 <p>Restart HAProxy to apply the configuration changes.</p>
 <h2 id="k0s-configuration">k0s configuration<a class="headerlink" href="#k0s-configuration" title="Permanent link">#</a></h2>
 <p>The load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
