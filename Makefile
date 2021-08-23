@@ -160,10 +160,13 @@ clean-gocache:
 	-docker volume rm k0sbuild.gocache
 	-rm .k0sbuild.docker-vol.gocache
 
-.PHONY: clean
-clean: clean-gocache
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go .k0sbuild.docker-image.k0s
+clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f
+	-rm -f .k0sbuild.docker-image.k0s
+
+.PHONY: clean
+clean: clean-gocache clean-docker-image
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C image-bundle clean
 	-$(MAKE) -C inttest clean
