@@ -16,9 +16,10 @@ limitations under the License.
 package token
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/k0sproject/k0s/internal/util"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -36,6 +37,7 @@ func tokenListCmd() *cobra.Command {
 		PreRunE: checkListTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
+			c.Logger = util.CLILogger()
 			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
 			if err != nil {
 				return err
@@ -46,11 +48,11 @@ func tokenListCmd() *cobra.Command {
 				return err
 			}
 			if len(tokens) == 0 {
-				fmt.Println("No k0s join tokens found")
+				c.Logger.Info("No k0s join tokens found")
 				return nil
 			}
 
-			//fmt.Printf("Tokens: %v \n", tokens)
+			// fmt.Printf("Tokens: %v \n", tokens)
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"ID", "Role", "Expires at"})
 			table.SetAutoWrapText(false)
@@ -79,9 +81,10 @@ func tokenListCmd() *cobra.Command {
 }
 
 func checkListTokenRole(cmd *cobra.Command, args []string) error {
+	logger := util.CLILogger()
 	if listTokenRole != "" && (listTokenRole != controllerRole && listTokenRole != workerRole) {
 		cmd.SilenceUsage = true
-		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", listTokenRole, controllerRole, workerRole)
+		logger.Fatalf("unsupported role %q, supported roles are %q and %q", listTokenRole, controllerRole, workerRole)
 	}
 	return nil
 }

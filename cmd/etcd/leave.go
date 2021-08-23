@@ -19,9 +19,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/k0sproject/k0s/internal/util"
+
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +34,8 @@ func etcdLeaveCmd() *cobra.Command {
 		Short: "Sign off a given etc node from etcd cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			c.Logger = util.CLILogger()
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
@@ -54,19 +56,19 @@ func etcdLeaveCmd() *cobra.Command {
 
 			peerID, err := etcdClient.GetPeerIDByAddress(ctx, peerURL)
 			if err != nil {
-				logrus.WithField("peerURL", peerURL).Errorf("Failed to get peer name")
+				c.Logger.WithField("peerURL", peerURL).Errorf("Failed to get peer name")
 				return err
 			}
 
 			if err := etcdClient.DeleteMember(ctx, peerID); err != nil {
-				logrus.
+				c.Logger.
 					WithField("peerURL", peerURL).
 					WithField("peerID", peerID).
 					Errorf("Failed to delete node from cluster")
 				return err
 			}
 
-			logrus.
+			c.Logger.
 				WithField("peerID", peerID).
 				Info("Successfully deleted")
 			return nil

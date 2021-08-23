@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -39,10 +40,12 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 `,
 		PreRunE: checkCreateTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Disable logrus for token commands
-			logrus.SetLevel(logrus.FatalLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			// Disable logrus for token commands
+			c.Logger = util.CLILogger()
+			c.Logger.SetLevel(logrus.FatalLevel)
+
+			clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
@@ -85,9 +88,10 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 }
 
 func checkCreateTokenRole(cmd *cobra.Command, args []string) error {
+	logger := util.CLILogger()
 	if createTokenRole != controllerRole && createTokenRole != workerRole {
 		cmd.SilenceUsage = true
-		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", createTokenRole, controllerRole, workerRole)
+		logger.Fatalf("unsupported role %q, supported roles are %q and %q", createTokenRole, controllerRole, workerRole)
 	}
 	return nil
 }

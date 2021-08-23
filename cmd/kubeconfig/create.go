@@ -19,14 +19,16 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-
-	"github.com/cloudflare/cfssl/log"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/k0sproject/k0s/internal/util"
+
+	"github.com/cloudflare/cfssl/log"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -77,16 +79,16 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			if len(args) == 0 {
 				return fmt.Errorf("username is mandatory")
 			}
-			var username = args[0]
+			username := args[0]
 			c := CmdOpts(config.GetCmdOpts())
+			c.Logger = util.CLILogger()
 			clusterAPIURL, err := c.getAPIURL()
-
 			if err != nil {
 				return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
 			}
 			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
-				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
+				c.Logger.Fatalf("failed to read cluster ca certificate: %v, check if the control plane is initialized on this node", err)
 			}
 			caCertPath, caCertKey := path.Join(c.K0sVars.CertRootDir, "ca.crt"), path.Join(c.K0sVars.CertRootDir, "ca.key")
 			userReq := certificate.Request{
@@ -138,9 +140,9 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 
 func (c *CmdOpts) getAPIURL() (string, error) {
 	// Disable logrus
-	logrus.SetLevel(logrus.FatalLevel)
+	c.Logger.SetLevel(logrus.FatalLevel)
 
-	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 	if err != nil {
 		return "", err
 	}

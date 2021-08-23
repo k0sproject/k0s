@@ -21,6 +21,8 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/util"
+
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -95,6 +97,7 @@ spec:
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
 	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
 
+	logger := util.K0sLogger()
 	fakes := kubeutil.NewFakeClientFactory()
 	verbs := []string{"get", "list", "delete", "create"}
 	fakes.RawDiscovery.Resources = []*metav1.APIResourceList{
@@ -115,7 +118,7 @@ spec:
 		},
 	}
 
-	a := NewApplier(dir, fakes)
+	a := NewApplier(dir, fakes, logger)
 	assert.NoError(t, err)
 
 	err = a.Apply()
@@ -134,7 +137,7 @@ spec:
 	assert.NoError(t, err)
 
 	// Attempt to delete the stack with a different applier
-	a2 := NewApplier(dir, fakes)
+	a2 := NewApplier(dir, fakes, logger)
 	assert.NoError(t, a2.Delete())
 	// Check that the resources are deleted
 	_, err = a.client.Resource(*gv).Namespace("kube-system").Get(context.Background(), "applier-test", metav1.GetOptions{})
@@ -153,5 +156,4 @@ spec:
 	_, err = a.client.Resource(*gvNS).Get(context.Background(), "kube-system", metav1.GetOptions{})
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
-
 }

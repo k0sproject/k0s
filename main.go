@@ -26,7 +26,6 @@ import (
 //go:generate make generate-bindata
 
 func init() {
-
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.InfoLevel)
 

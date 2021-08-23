@@ -57,6 +57,7 @@ type Certificate struct {
 // Manager is the certificate manager
 type Manager struct {
 	K0sVars constant.CfgVars
+	Logger  *logrus.Logger
 }
 
 // EnsureCA makes sure the given CA certs and key is created.
@@ -96,7 +97,6 @@ func (m *Manager) EnsureCA(name, cn string) error {
 
 // EnsureCertificate creates the specified certificate if it does not already exist
 func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certificate, error) {
-
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
@@ -104,7 +104,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
-		logrus.Debugf("creating certificate %s", certFile)
+		m.Logger.Debugf("creating certificate %s", certFile)
 		req := csr.CertificateRequest{
 			KeyRequest: csr.NewKeyRequest(),
 			CN:         certReq.CN,
@@ -184,7 +184,6 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 		Key:  string(key),
 		Cert: string(cert),
 	}, nil
-
 }
 
 // if regenerateCert does not need to do any changes, it will return false
@@ -199,7 +198,7 @@ func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile strin
 	}
 
 	if cert, err = certinfo.ParseCertificateFile(certFile); err != nil {
-		logrus.Warnf("unable to parse certificate file at %s: %v", certFile, err)
+		m.Logger.Warnf("unable to parse certificate file at %s: %v", certFile, err)
 		return true
 	}
 
@@ -207,7 +206,7 @@ func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile strin
 		return true
 	}
 
-	logrus.Debugf("cert regeneration not needed for %s, not managed by k0s: %s", certFile, cert.Issuer.CommonName)
+	m.Logger.Debugf("cert regeneration not needed for %s, not managed by k0s: %s", certFile, cert.Issuer.CommonName)
 	return false
 }
 
@@ -241,7 +240,7 @@ func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner str
 		return err
 	}
 
-	var privateKey = &pem.Block{
+	privateKey := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
@@ -268,7 +267,7 @@ func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner str
 		return err
 	}
 
-	var pemkey = &pem.Block{
+	pemkey := &pem.Block{
 		Type:  "PUBLIC KEY",
 		Bytes: pubBytes,
 	}

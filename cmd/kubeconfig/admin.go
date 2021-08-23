@@ -16,12 +16,10 @@ limitations under the License.
 package kubeconfig
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
@@ -37,20 +35,21 @@ func kubeConfigAdminCmd() *cobra.Command {
 	$ kubectl get nodes`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
+			c.Logger = util.CLILogger()
 			if util.FileExists(c.K0sVars.AdminKubeConfigPath) {
 				content, err := ioutil.ReadFile(c.K0sVars.AdminKubeConfigPath)
 				if err != nil {
-					log.Fatal(err)
+					c.Logger.Fatal(err)
 				}
 
 				clusterAPIURL, err := c.getAPIURL()
 				if err != nil {
-					return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
+					c.Logger.Fatalf("failed to fetch cluster's API Address: %v", err)
 				}
 				newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
 				os.Stdout.Write([]byte(newContent))
 			} else {
-				return fmt.Errorf("failed to read admin config, check if the control plane is initialized on this node")
+				c.Logger.Fatal("failed to read admin config, check if the control plane is initialized on this node")
 			}
 			return nil
 		},

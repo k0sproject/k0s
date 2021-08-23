@@ -21,16 +21,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func sendError(err error, resp http.ResponseWriter, status ...int) {
+func sendError(logger *logrus.Logger, err error, resp http.ResponseWriter, status ...int) {
 	code := http.StatusInternalServerError
 	if len(status) == 1 {
 		code = status[0]
 	}
-	logrus.Error(err)
+	logger.Error(err)
 	resp.Header().Set("Content-Type", "text/plain")
 	resp.WriteHeader(code)
 	if _, err := resp.Write([]byte(err.Error())); err != nil {
-		sendError(err, resp)
+		sendError(logger, err, resp)
 		return
 	}
 }

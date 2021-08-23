@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -80,7 +79,6 @@ func NewWorkerCmd() *cobra.Command {
 
 // StartWorker starts the worker components based on the CmdOpts config
 func (c *CmdOpts) StartWorker() error {
-
 	worker.KernelSetup()
 	if c.TokenArg == "" && !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
@@ -176,25 +174,25 @@ func (c *CmdOpts) StartWorker() error {
 	go func() {
 		select {
 		case <-ch:
-			logrus.Info("Shutting down k0s worker")
+			c.Logger.Info("Shutting down k0s worker")
 			cancel()
 		case <-ctx.Done():
-			logrus.Debug("Context done in go-routine")
+			c.Logger.Debug("Context done in go-routine")
 		}
 	}()
 
 	err = componentManager.Start(ctx)
 	if err != nil {
-		logrus.WithError(err).Error("failed to start some of the worker components")
+		c.Logger.WithError(err).Error("failed to start some of the worker components")
 		ch <- syscall.SIGTERM
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()
-	logrus.Info("Shutting down k0s worker")
+	c.Logger.Info("Shutting down k0s worker")
 
 	// Stop components
 	if err := componentManager.Stop(); err != nil {
-		logrus.WithError(err).Error("error while stoping component manager")
+		c.Logger.WithError(err).Error("error while stoping component manager")
 	}
 	return nil
 }

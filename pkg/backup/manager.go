@@ -39,6 +39,7 @@ type Manager struct {
 	steps   []Backuper
 	tmpDir  string
 	dataDir string
+	logger  *logrus.Logger
 }
 
 // RunBackup backups cluster
@@ -47,27 +48,26 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
-	logrus.Info("Starting backup")
+	bm.logger.Info("Starting backup")
 	for _, step := range bm.steps {
-		logrus.Info("Backup step: ", step.Name())
+		bm.logger.Info("Backup step: ", step.Name())
 		result, err := step.Backup()
 		if err != nil {
-			return fmt.Errorf("failed to create backup on step `%s`: %v", step.Name(), err)
+			bm.logger.Fatalf("failed to create backup on step `%s`: %v", step.Name(), err)
 		}
 		assets = append(assets, result.filesForBackup...)
 	}
 	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
 	if err := bm.save(backupFileName, assets); err != nil {
-		return fmt.Errorf("failed to create archive `%s`: %v", backupFileName, err)
+		bm.logger.Fatalf("failed to create archive `%s`: %v", backupFileName, err)
 	}
 	srcBackupFile := filepath.Join(bm.tmpDir, backupFileName)
 	destBackupFile := filepath.Join(savePathDir, backupFileName)
 	if err := util.FileCopy(srcBackupFile, destBackupFile); err != nil {
-		return fmt.Errorf("failed to rename temporary archive: %v", err)
+		bm.logger.Fatalf("failed to rename temporary archive: %v", err)
 	}
-	logrus.Infof("archive %s created successfully", destBackupFile)
+	bm.logger.Infof("archive %s created successfully", destBackupFile)
 	return nil
-
 }
 
 func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
@@ -76,7 +76,7 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
 		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
 	} else {
-		logrus.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
+		bm.logger.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
 	}
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{
@@ -87,7 +87,7 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 		vars.HelmRepositoryConfig,
 	} {
 		if action == "backup" {
-			logrus.Infof("adding `%s` path to the backup archive", path)
+			bm.logger.Infof("adding `%s` path to the backup archive", path)
 		}
 		bm.Add(NewFilesystemStep(path))
 	}
@@ -105,22 +105,22 @@ func (bm *Manager) Add(step Backuper) {
 
 func (bm Manager) save(backupFileName string, assets []string) error {
 	archiveFile := filepath.Join(bm.tmpDir, backupFileName)
-	logrus.Debugf("creating temporary archive file: %v", archiveFile)
+	bm.logger.Debugf("creating temporary archive file: %v", archiveFile)
 	out, err := os.Create(archiveFile)
 	if err != nil {
-		return fmt.Errorf("error creating archive file: %v", err)
+		bm.logger.Fatalf("error creating archive file: %v", err)
 	}
 	defer out.Close()
 	// Create the archive and write the output to the "out" Writer
 	err = createArchive(out, assets, bm.dataDir)
 	if err != nil {
-		logrus.Fatalf("error creating archive: %v", err)
+		bm.logger.Fatalf("error creating archive: %v", err)
 	}
 
 	destinationFile := filepath.Join(bm.tmpDir, backupFileName)
 	err = util.FileCopy(archiveFile, destinationFile)
 	if err != nil {
-		return fmt.Errorf("failed to copy archive file from temporary directory: %v", err)
+		bm.logger.Fatalf("failed to copy archive file from temporary directory: %v", err)
 	}
 	return nil
 }
@@ -128,20 +128,20 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 // RunRestore restores cluster
 func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
 	if err := util.ExtractArchive(archivePath, bm.tmpDir); err != nil {
-		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
+		bm.logger.Fatalf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)
 	cfg, err := bm.getConfigForRestore(k0sVars)
 	if err != nil {
-		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %v", err)
+		bm.logger.Fatalf("failed to parse backed-up configuration file, check the backup archive: %v", err)
 	}
 	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", restoredConfigPath)
-	logrus.Info("Starting restore")
+	bm.logger.Info("Starting restore")
 
 	for _, step := range bm.steps {
-		logrus.Info("Restore step: ", step.Name())
+		bm.logger.Info("Restore step: ", step.Name())
 		if err := step.Restore(bm.tmpDir, bm.dataDir); err != nil {
-			return fmt.Errorf("failed to restore on step `%s`: %v", step.Name(), err)
+			bm.logger.Fatalf("failed to restore on step `%s`: %v", step.Name(), err)
 		}
 	}
 	return nil
@@ -153,9 +153,9 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 	if os.IsNotExist(err) {
 		return v1beta1.DefaultClusterConfig(k0sVars), nil
 	}
-	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
+	bm.logger.Infof("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := config.GetYamlFromFile(configFromBackup, k0sVars)
+	cfg, err := config.GetYamlFromFile(configFromBackup, k0sVars, bm.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -164,13 +164,16 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 
 // NewBackupManager builds new manager
 func NewBackupManager() (*Manager, error) {
+	logger := util.CLILogger()
 	tmpDir, err := ioutil.TempDir("", "k0s-backup")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary directory: %v", err)
+		logger.Errorf("failed to create temporary directory: %v", err)
+		return nil, err
 	}
 
 	bm := &Manager{
 		tmpDir: tmpDir,
+		logger: logger,
 	}
 
 	return bm, nil

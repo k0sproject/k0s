@@ -18,6 +18,7 @@ package airgap
 import (
 	"fmt"
 
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -33,10 +34,12 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// we don't need warning messages in case of default config
-			logrus.SetLevel(logrus.ErrorLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			// we don't need warning messages in case of default config
+			c.Logger = util.CLILogger()
+			c.Logger.SetLevel(logrus.ErrorLevel)
+
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}

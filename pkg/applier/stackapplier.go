@@ -32,12 +32,12 @@ type StackApplier struct {
 
 	fsWatcher *fsnotify.Watcher
 	applier   Applier
-	log       *logrus.Entry
+	log       *logrus.Logger
 	done      chan bool
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory) (*StackApplier, error) {
+func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory, logger *logrus.Logger) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -46,15 +46,15 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory) (*
 	if err != nil {
 		return nil, err
 	}
-	applier := NewApplier(path, kubeClientFactory)
-	log := logrus.WithField("component", "applier-"+applier.Name)
-	log.WithField("path", path).Debug("created stack applier")
+	applier := NewApplier(path, kubeClientFactory, logger)
+	logger.WithField("component", "applier-"+applier.Name)
+	logger.WithField("path", path).Debug("created stack applier")
 
 	return &StackApplier{
 		Path:      path,
 		fsWatcher: watcher,
 		applier:   applier,
-		log:       log,
+		log:       logger,
 		done:      make(chan bool, 1),
 	}, nil
 }

@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	corev1 "k8s.io/api/core/v1"
@@ -60,7 +59,7 @@ func NewAPICmd() *cobra.Command {
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
@@ -95,7 +94,6 @@ func (c *CmdOpts) startAPI() error {
 		router.Path(prefix + "/ca").Methods("GET").Handler(
 			c.controllerHandler(c.caHandler()),
 		)
-
 	}
 	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
 		c.workerHandler(c.kubeConfigHandler()),
@@ -122,25 +120,25 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 		var etcdReq v1beta1.EtcdRequest
 		err := json.NewDecoder(req.Body).Decode(&etcdReq)
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
-		logrus.Infof("etcd API, adding new member: %s", etcdReq.PeerAddress)
+		c.Logger.Infof("etcd API, adding new member: %s", etcdReq.PeerAddress)
 		err = etcdReq.Validate()
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 
 		etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 
 		memberList, err := etcdClient.AddMember(ctx, etcdReq.Node, etcdReq.PeerAddress)
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 
@@ -151,13 +149,12 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "ca.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "ca.key")
 		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		etcdCAKey, err := ioutil.ReadFile(etcdCaCertKey)
-
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 
@@ -167,7 +164,7 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 		}
 		resp.Header().Set("content-type", "application/json")
 		if err := json.NewEncoder(resp).Encode(etcdResp); err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 	})
@@ -196,7 +193,7 @@ users:
 `
 		l, err := c.KubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		found := false
@@ -210,7 +207,7 @@ users:
 			break
 		}
 		if !found {
-			sendError(fmt.Errorf("no calico-node-token secret found"), resp)
+			sendError(c.Logger, fmt.Errorf("no calico-node-token secret found"), resp)
 			return
 		}
 
@@ -230,47 +227,45 @@ users:
 			},
 		}
 		if err := tw.WriteToBuffer(resp); err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 	})
-
 }
 
 func (c *CmdOpts) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-
 		caResp := v1beta1.CaResponse{}
 		key, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		caResp.Key = key
 		crt, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		caResp.Cert = crt
 
 		saKey, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.key"))
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
 		saPub, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.pub"))
 		if err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 		caResp.SAPub = saPub
 
 		resp.Header().Set("content-type", "application/json")
 		if err := json.NewEncoder(resp).Encode(caResp); err != nil {
-			sendError(err, resp)
+			sendError(c.Logger, err, resp)
 			return
 		}
 	})
@@ -285,7 +280,7 @@ We need to validate:
 */
 func (c *CmdOpts) isValidToken(token string, role string) bool {
 	parts := strings.Split(token, ".")
-	logrus.Debugf("token parts: %v", parts)
+	c.Logger.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
 		return false
 	}
@@ -293,7 +288,7 @@ func (c *CmdOpts) isValidToken(token string, role string) bool {
 	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
 	secret, err := c.KubeClient.CoreV1().Secrets("kube-system").Get(context.TODO(), secretName, v1.GetOptions{})
 	if err != nil {
-		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
+		c.Logger.Errorf("failed to get bootstrap token: %s", err.Error())
 		return false
 	}
 
@@ -313,7 +308,7 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+			sendError(c.Logger, fmt.Errorf("go away"), w, http.StatusUnauthorized)
 			return
 		}
 
@@ -321,11 +316,11 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 		if len(parts) == 2 {
 			token := parts[1]
 			if !c.isValidToken(token, role) {
-				sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+				sendError(c.Logger, fmt.Errorf("go away"), w, http.StatusUnauthorized)
 				return
 			}
 		} else {
-			sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
+			sendError(c.Logger, fmt.Errorf("go away"), w, http.StatusUnauthorized)
 			return
 		}
 

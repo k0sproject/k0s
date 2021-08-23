@@ -16,8 +16,7 @@ limitations under the License.
 package etcd
 
 import (
-	"fmt"
-
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -32,13 +31,14 @@ func NewEtcdCmd() *cobra.Command {
 		Short: "Manage etcd cluster",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			c.Logger = util.CLILogger()
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
 			c.ClusterConfig = cfg
 			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
-				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
+				c.Logger.Fatalf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
 			}
 			return nil
 		},

@@ -30,7 +30,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/install"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -47,12 +46,15 @@ func NewRestoreCmd() *cobra.Command {
 			if len(args) != 1 {
 				return fmt.Errorf("path to backup archive expected")
 			}
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			c.Logger = util.CLILogger()
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
 
 			c.ClusterConfig = cfg
+			c.Logger = util.CLILogger()
+
 			return c.restore(args[0])
 		},
 		PreRunE: preRunValidateConfig,
@@ -65,20 +67,13 @@ func NewRestoreCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) restore(path string) error {
-	logger := logrus.New()
-	textFormatter := new(logrus.TextFormatter)
-	textFormatter.ForceColors = true
-	textFormatter.DisableTimestamp = true
-
-	logger.SetFormatter(textFormatter)
-
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
 
 	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
+		c.Logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
 	if !util.FileExists(path) {

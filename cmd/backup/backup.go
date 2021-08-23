@@ -23,7 +23,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/internal/util"
@@ -42,7 +41,8 @@ func NewBackupCmd() *cobra.Command {
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			c.Logger = util.CLILogger()
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
 				return err
 			}
@@ -58,15 +58,10 @@ func NewBackupCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) backup() error {
-	logger := logrus.New()
-	textFormatter := new(logrus.TextFormatter)
-	textFormatter.ForceColors = true
-	textFormatter.DisableTimestamp = true
-
-	logger.SetFormatter(textFormatter)
+	c.Logger = util.CLILogger()
 
 	if os.Geteuid() != 0 {
-		logger.Fatal("this command must be run as root!")
+		c.Logger.Fatal("this command must be run as root!")
 	}
 
 	if !util.DirExists(savePath) {
@@ -81,7 +76,7 @@ func (c *CmdOpts) backup() error {
 	if err != nil {
 		return fmt.Errorf("unable to detect cluster status %s", err)
 	}
-	logrus.Debugf("detected role for backup operations: %v", status.Role)
+	c.Logger.Debugf("detected role for backup operations: %v", status.Role)
 
 	if strings.Contains(status.Role, "controller") {
 		mgr, err := backup.NewBackupManager()

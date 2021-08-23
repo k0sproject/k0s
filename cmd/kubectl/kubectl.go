@@ -18,7 +18,6 @@ package kubectl
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 
@@ -52,7 +51,7 @@ func NewK0sKubectlCmd() *cobra.Command {
 			// Verify we can read the config before pushing it to env
 			file, err := os.OpenFile(c.K0sVars.AdminKubeConfigPath, os.O_RDONLY, 0600)
 			if err != nil {
-				logrus.Errorf("cannot read admin kubeconfig at %s, is the server running?", c.K0sVars.AdminKubeConfigPath)
+				c.Logger.Errorf("cannot read admin kubeconfig at %s, is the server running?", c.K0sVars.AdminKubeConfigPath)
 				return err
 			}
 			defer file.Close()

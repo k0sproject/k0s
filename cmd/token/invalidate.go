@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/util"
+
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/spf13/cobra"
@@ -31,6 +33,7 @@ func tokenInvalidateCmd() *cobra.Command {
 		Example: "k0s token invalidate xyz123",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
+			c.Logger = util.CLILogger()
 			if len(args) < 1 {
 				return fmt.Errorf("invalidate requires at least one token Id to invalidate")
 			}
@@ -44,7 +47,7 @@ func tokenInvalidateCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("token %s deleted succesfully\n", id)
+				c.Logger.Infof("token %s deleted succesfully", id)
 			}
 			return nil
 		},

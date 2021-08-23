@@ -51,9 +51,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var (
-	longDesc string
-)
+var longDesc string
 
 type cliOpts config.CLIOptions
 
@@ -65,10 +63,10 @@ func NewRootCmd() *cobra.Command {
 			c := cliOpts(config.GetCmdOpts())
 			// set DEBUG from env, or from command flag
 			if viper.GetString("debug") != "" || c.Debug {
-				logrus.SetLevel(logrus.DebugLevel)
+				c.Logger.SetLevel(logrus.DebugLevel)
 				go func() {
-					log.Println("starting debug server under", c.DebugListenOn)
-					log.Println(http.ListenAndServe(c.DebugListenOn, nil))
+					c.Logger.Debugf("starting debug server under %s", c.DebugListenOn)
+					c.Logger.Debug(http.ListenAndServe(c.DebugListenOn, nil))
 				}()
 			}
 		},

@@ -25,10 +25,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
+func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars, logger *logrus.Logger) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	if cfgPath == "" {
 		// no config file exists, using defaults
-		logrus.Info("no config file given, using defaults")
+		logger.Info("no config file given, using defaults")
 	}
 	cfg, err := ValidateYaml(cfgPath, k0sVars)
 	if err != nil {

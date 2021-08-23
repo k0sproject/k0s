@@ -34,11 +34,11 @@ type Manager struct {
 	K0sVars           constant.CfgVars
 	KubeClientFactory kubeutil.ClientFactory
 
-	//client               kubernetes.Interface
+	// client               kubernetes.Interface
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc
-	log           *logrus.Entry
+	Logger        *logrus.Logger
 	stacks        map[string]*StackApplier
 
 	LeaderElector controller.LeaderElector
@@ -50,11 +50,11 @@ func (m *Manager) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
-	m.log = logrus.WithField("component", "applier-manager")
+	m.Logger.WithField("component", "applier-manager")
 	m.stacks = make(map[string]*StackApplier)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
-	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
+	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory, m.Logger)
 
 	m.LeaderElector.AddAcquiredLeaseCallback(func() {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -86,8 +86,7 @@ func (m *Manager) Stop() error {
 }
 
 func (m *Manager) runWatchers(ctx context.Context) error {
-	log := logrus.WithField("component", "applier-manager")
-
+	m.Logger.WithField("component", "applier-manager")
 	dirs, err := util.GetAllDirs(m.bundlePath)
 	if err != nil {
 		return err
@@ -95,21 +94,21 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 
 	for _, dir := range dirs {
 		if err := m.createStack(path.Join(m.bundlePath, dir)); err != nil {
-			log.WithError(err).Error("failed to create stack")
+			m.Logger.WithError(err).Error("failed to create stack")
 			return err
 		}
 	}
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.WithError(err).Error("failed to create watcher")
+		m.Logger.WithError(err).Error("failed to create watcher")
 		return err
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(m.bundlePath)
 	if err != nil {
-		log.Warnf("Failed to start watcher: %s", err.Error())
+		m.Logger.Warnf("Failed to start watcher: %s", err.Error())
 	}
 	for {
 		select {
@@ -118,7 +117,7 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 				return err
 			}
 
-			log.Warnf("watch error: %s", err.Error())
+			m.Logger.Warnf("watch error: %s", err.Error())
 		case event, ok := <-watcher.Events:
 			if !ok {
 				return nil
@@ -134,7 +133,7 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 				_ = m.removeStack(event.Name)
 			}
 		case <-ctx.Done():
-			log.Info("manifest watcher done")
+			m.Logger.Info("manifest watcher done")
 			return nil
 		}
 	}
@@ -145,8 +144,8 @@ func (m *Manager) createStack(name string) error {
 	if _, ok := m.stacks[name]; ok {
 		return nil
 	}
-	m.log.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name, m.KubeClientFactory)
+	m.Logger.WithField("stack", name).Info("registering new stack")
+	sa, err := NewStackApplier(name, m.KubeClientFactory, m.Logger)
 	if err != nil {
 		return err
 	}
@@ -163,22 +162,22 @@ func (m *Manager) removeStack(name string) error {
 	sa, ok := m.stacks[name]
 
 	if !ok {
-		m.log.
+		m.Logger.
 			WithField("path", name).
 			Debug("attempted to remove non-existent stack, probably not a directory")
 		return nil
 	}
 	err := sa.Stop()
 	if err != nil {
-		m.log.WithField("stack", name).WithError(err).Warn("failed to stop stack applier")
+		m.Logger.WithField("stack", name).WithError(err).Warn("failed to stop stack applier")
 		return err
 	}
 	err = sa.DeleteStack()
 	if err != nil {
-		m.log.WithField("stack", name).WithError(err).Warn("failed to stop and delete a stack applier")
+		m.Logger.WithField("stack", name).WithError(err).Warn("failed to stop and delete a stack applier")
 		return err
 	}
-	m.log.WithField("stack", name).Info("stack deleted succesfully")
+	m.Logger.WithField("stack", name).Info("stack deleted succesfully")
 	delete(m.stacks, name)
 
 	return nil

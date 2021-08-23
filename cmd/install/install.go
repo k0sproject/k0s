@@ -46,26 +46,26 @@ func NewInstallCmd() *cobra.Command {
 // * sets up startup and logging for k0s
 func (c *CmdOpts) setup(role string, args []string) error {
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("this command must be run as root")
+		c.Logger.Fatal("this command must be run as root!")
 	}
 
 	// if cfgFile is not provided k0s will handle this so no need to check if the file exists.
 	if c.CfgFile != "" && !util.IsDirectory(c.CfgFile) && !util.FileExists(c.CfgFile) {
-		return fmt.Errorf("file %s does not exist", c.CfgFile)
+		c.Logger.Fatalf("file %s does not exist", c.CfgFile)
 	}
 	if role == "controller" {
-		cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+		cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 		if err != nil {
 			return err
 		}
 		c.ClusterConfig = cfg
 		if err := install.CreateControllerUsers(c.ClusterConfig, c.K0sVars); err != nil {
-			return fmt.Errorf("failed to create controller users: %v", err)
+			c.Logger.Fatalf("failed to create controller users: %v", err)
 		}
 	}
 	err := install.EnsureService(args)
 	if err != nil {
-		return fmt.Errorf("failed to install k0s service: %v", err)
+		c.Logger.Fatalf("failed to install k0s service: %v", err)
 	}
 	return nil
 }
@@ -102,6 +102,7 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
 	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+	c.Logger = util.CLILogger()
 	if err != nil {
 		return err
 	}

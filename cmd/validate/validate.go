@@ -16,7 +16,7 @@ limitations under the License.
 package validate
 
 import (
-	"fmt"
+	"github.com/k0sproject/k0s/internal/util"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
@@ -42,9 +42,10 @@ func validateConfigCmd() *cobra.Command {
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			_, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			c.Logger = util.CLILogger()
+			_, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars, c.Logger)
 			if err != nil {
-				fmt.Println(err)
+				c.Logger.Fatal(err)
 			}
 			return nil
 		},

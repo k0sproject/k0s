@@ -37,22 +37,22 @@ type Applier struct {
 	Name string
 	Dir  string
 
-	log             *logrus.Entry
+	log             *logrus.Logger
 	clientFactory   kubernetes.ClientFactory
 	client          dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactory) Applier {
+func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactory, logger *logrus.Logger) Applier {
 	name := filepath.Base(dir)
-	log := logrus.WithFields(logrus.Fields{
+	logger.WithFields(logrus.Fields{
 		"component": "applier",
 		"bundle":    name,
 	})
 
 	return Applier{
-		log:           log,
+		log:           logger,
 		Dir:           dir,
 		Name:          name,
 		clientFactory: kubeClientFactory,
@@ -81,7 +81,6 @@ func (a *Applier) lazyInit() error {
 		err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
 			return true
 		}, a.init)
-
 		if err != nil {
 			return err
 		}

@@ -36,6 +36,7 @@ type sqliteStep struct {
 	dataSource string
 	tmpDir     string
 	dataDir    string
+	logger     *logrus.Logger
 }
 
 func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep {
@@ -43,6 +44,7 @@ func newSqliteStep(tmpDir string, dataSource string, dataDir string) *sqliteStep
 		tmpDir:     tmpDir,
 		dataSource: dataSource,
 		dataDir:    dataDir,
+		logger:     util.CLILogger(),
 	}
 }
 
@@ -62,7 +64,7 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 	}
 	path := filepath.Join(s.tmpDir, kineBackup)
 
-	logrus.Debugf("exporting kine db to %v", path)
+	s.logger.Debugf("exporting kine db to %v", path)
 	_, err = os.Create(path)
 	if err != nil {
 		return StepResult{}, fmt.Errorf("failed to create kine backup: %v", err)
@@ -90,9 +92,9 @@ func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 	if err = util.InitDirectory(dbPathDir, constant.KineDBDirMode); err != nil {
 		return err
 	}
-	logrus.Infof("restoring sqlite db to `%s`", dbPath)
+	s.logger.Infof("restoring sqlite db to `%s`", dbPath)
 	if err := util.FileCopy(snapshotPath, dbPath); err != nil {
-		logrus.Errorf("failed to restore snapshot from disk: %v", err)
+		s.logger.Errorf("failed to restore snapshot from disk: %v", err)
 	}
 	return nil
 }

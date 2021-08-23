@@ -19,6 +19,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/util"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
@@ -51,6 +54,7 @@ type CLIOptions struct {
 	K0sVars          constant.CfgVars
 	KubeClient       k8s.Interface
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
+	Logger           *logrus.Logger
 }
 
 // Shared controller cli flags
@@ -161,6 +165,7 @@ func GetCmdOpts() CLIOptions {
 		DefaultLogLevels: DefaultLogLevels(),
 		K0sVars:          K0sVars,
 		DebugListenOn:    DebugListenOn,
+		Logger:           util.K0sLogger(),
 	}
 	return opts
 }
