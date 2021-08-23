@@ -58,7 +58,8 @@ listen stats
 ```
 
 The last block "listen stats" is optional, but can be helpful. It enables HAProxy statistics with a separate dashboard to monitor for example the health of each backend server. You can access it using a web browser:
-http://<ip-addr>:9000
+
+```http://<ip-addr>:9000```
 
 Restart HAProxy to apply the configuration changes.
 
