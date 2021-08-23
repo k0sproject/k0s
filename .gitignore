@@ -14,3 +14,4 @@ out.json
 .vscode
 static/gen_manifests.go
 .k0sbuild.docker-image.*
+.k0sbuild.docker-vol.*
