@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/manifests/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/examples/metallb-loadbalancer/">
       
       
         
       
-      <link rel="icon" href="../img/k0s_social.png">
+      <link rel="icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Manifest Deployer - Documentation</title>
+        <title>MetalLB Load Balancer - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manifest-deployer" class="md-skip">
+        <a href="#installing-metallb-load-balancer" class="md-skip">
           Skip to content
         </a>
       
@@ -103,9 +103,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Manifest Deployer
+              MetalLB Load Balancer
             
           </span>
         </div>
@@ -226,9 +226,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -312,7 +312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -352,7 +352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -366,7 +366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -380,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -394,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -408,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -422,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -443,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -457,7 +457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -471,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -485,8 +485,238 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         System Requirements
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        Configuration Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration-validation/" class="md-nav__link">
+        Configuration Validation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worker-node-config/" class="md-nav__link">
+        Worker Node Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../networking/" class="md-nav__link">
+        Networking (CNI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runtime/" class="md-nav__link">
+        Runtime (CRI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../storage/" class="md-nav__link">
+        Storage (CSI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manifests/" class="md-nav__link">
+        Manifest Deployer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../helm-charts/" class="md-nav__link">
+        Helm Charts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud-providers/" class="md-nav__link">
+        Cloud Providers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dual-stack/" class="md-nav__link">
+        IPv4/IPv6 Dual-Stack
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../high-availability/" class="md-nav__link">
+        Control Plane High Availability
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../shell-completion/" class="md-nav__link">
+        Shell Completion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-management/" class="md-nav__link">
+        User Management
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment-variables/" class="md-nav__link">
+        Configuration of Environment Variables
       </a>
     </li>
   
@@ -512,297 +742,7 @@
     <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_3">
-          Usage
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="Usage" data-md-level="1">
-        <label class="md-nav__title" for="__nav_3">
-          <span class="md-nav__icon md-icon"></span>
-          Usage
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
-        Configuration Options
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
-        Configuration Validation
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
-        Worker Node Configuration
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
-        Networking (CNI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
-        Runtime (CRI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
-        Storage (CSI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Manifest Deployer
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Manifest Deployer
-      </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
-  </a>
-  
-    <nav class="md-nav" aria-label="Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    Note
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
-        Helm Charts
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
-        Cloud Providers
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
-        IPv4/IPv6 Dual-Stack
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
-        Control Plane High Availability
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
-        Shell Completion
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
-        User Management
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
-        Configuration of Environment Variables
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
       
       
       
@@ -823,11 +763,85 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          MetalLB Load Balancer
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         MetalLB Load Balancer
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#about-load-balancers" class="md-nav__link">
+    About Load Balancers
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metallb" class="md-nav__link">
+    MetalLB
+  </a>
+  
+    <nav class="md-nav" aria-label="MetalLB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-metallb" class="md-nav__link">
+    Install MetalLB
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-information" class="md-nav__link">
+    Additional information
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-examples" class="md-nav__link">
+    Alternative examples
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -839,7 +853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -853,7 +867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../ambassador-ingress/" class="md-nav__link">
         Ambassador Gateway
       </a>
     </li>
@@ -867,7 +881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -915,7 +929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -929,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -977,7 +991,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -991,7 +1005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         CIS Benchmark
       </a>
     </li>
@@ -1039,7 +1053,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/overview/" class="md-nav__link">
+      <a href="../../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1053,7 +1067,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1067,7 +1081,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1081,7 +1095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1121,16 +1135,23 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+  <a href="#about-load-balancers" class="md-nav__link">
+    About Load Balancers
   </a>
   
-    <nav class="md-nav" aria-label="Overview">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metallb" class="md-nav__link">
+    MetalLB
+  </a>
+  
+    <nav class="md-nav" aria-label="MetalLB">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    Note
+  <a href="#install-metallb" class="md-nav__link">
+    Install MetalLB
   </a>
   
 </li>
@@ -1141,8 +1162,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
+  <a href="#additional-information" class="md-nav__link">
+    Additional information
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-examples" class="md-nav__link">
+    Alternative examples
   </a>
   
 </li>
@@ -1161,59 +1189,103 @@
                 
                 
                 
-                <h1 id="manifest-deployer">Manifest Deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by defining your extensions as <a href="../helm-charts/">Helm charts</a>).</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
-<p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
-<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
-<p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files.</p>
-<h3 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h3>
-<ul>
+                <h1 id="installing-metallb-load-balancer">Installing MetalLB Load Balancer<a class="headerlink" href="#installing-metallb-load-balancer" title="Permanent link">#</a></h1>
+<p>This tutorial covers the installation of MetalLB load balancer on k0s. k0s doesn't come with an in-built load balancer, but it's easy to deploy MetalLB as shown in this document.</p>
+<h2 id="about-load-balancers">About Load Balancers<a class="headerlink" href="#about-load-balancers" title="Permanent link">#</a></h2>
+<p>Load balancers can be used for exposing applications to the external network. Load balancer provides a single IP address to route incoming requests to your app. In order to successfully create Kubernetes services of type LoadBalancer, you need to have the load balancer (implementation) available for Kubernetes.</p>
+<p>Load balancer can be implemented by a <a href="../../cloud-providers/">cloud provider</a> as an external service (with additional cost). This can also be implemented internally in the Kubernetes cluster (pure SW solution) with MetalLB.</p>
+<h2 id="metallb">MetalLB<a class="headerlink" href="#metallb" title="Permanent link">#</a></h2>
+<p>MetalLB implements the Kubernetes service of type LoadBalancer. When a LoadBalancer service is requested, MetalLB allocates an IP address from the configured range and makes the network aware that the IP “lives” in the cluster.</p>
+<p><img alt="k0s_metallb_loadbalancer" src="../../img/k0s_metallb_loadbalancer.png" /></p>
+<p>One of the benefits of MetalLB is that you avoid all cloud provider dependencies. That's why MetalLB is typically used for bare-metal deployments.</p>
+<p>See the MetalLB requirements in the <a href="https://metallb.universe.tf/#requirements">MetalLB's official documentation</a>. By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router, you need to enable strict ARP mode. See <a href="https://metallb.universe.tf/installation/#preparation">MetalLB preparations</a>.</p>
+<p>Port 7946 (TCP &amp; UDP) must be allowed between the nodes.</p>
+<h3 id="install-metallb">Install MetalLB<a class="headerlink" href="#install-metallb" title="Permanent link">#</a></h3>
+<ol>
 <li>
-<p>Each directory that is a direct descendant of <code>/var/lib/k0s/manifests</code> is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.</p>
+<p>Install MetalLB using the official manifests by MetalLB</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+</code></pre></div>
 </li>
 <li>
-<p>k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s.</p>
+<p>Create ConfigMap for MetalLB</p>
+<p>Next you need to create ConfigMap, which includes an IP address range for the load balancer. The pool of IPs must be dedicated to MetalLB's use. You can't reuse for example the Kubernetes node IPs or IPs controlled by other services. You can, however, use private IP addresses, for example 192.168.1.180-192.168.1.199, but then you need to take care of the routing from the external network if you need external access. In this example, we don't need it.</p>
+<p>Create a YAML file accordingly, and deploy it: <code>kubectl apply -f metallb-configmap.yaml</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ConfigMap</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">config</span>
+<span class="nt">data</span><span class="p">:</span>
+  <span class="nt">config</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+    <span class="no">address-pools:</span>
+    <span class="no">- name: default</span>
+      <span class="no">protocol: layer2</span>
+      <span class="no">addresses:</span>
+      <span class="no">- &lt;ip-address-range-start&gt;-&lt;ip-address-range-stop&gt;</span>
+</code></pre></div>
 </li>
 <li>
-<p>Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace).</p>
-</li>
-</ul>
-<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
-<p>To try Manifest Deployer, create a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file (such as <code>nginx.yaml</code>) with the following content:</p>
+<p>Deploy an example application (web server) with a load balancer</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
 <span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
 <span class="nn">---</span>
 <span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
 <span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-deployment</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
 <span class="nt">spec</span><span class="p">:</span>
   <span class="nt">selector</span><span class="p">:</span>
     <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
-  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
   <span class="nt">template</span><span class="p">:</span>
     <span class="nt">metadata</span><span class="p">:</span>
       <span class="nt">labels</span><span class="p">:</span>
-        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
     <span class="nt">spec</span><span class="p">:</span>
       <span class="nt">containers</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
-        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">httpd</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">httpd:2.4.48-alpine3.14</span>
         <span class="nt">ports</span><span class="p">:</span>
         <span class="p p-Indicator">-</span> <span class="nt">containerPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server-service</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">ports</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">protocol</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TCP</span>
+      <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+      <span class="nt">targetPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+  <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">LoadBalancer</span>
 </code></pre></div>
-<p>New pods will appear soon thereafter.</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get pods --namespace nginx
-NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-66b6c48dd5-8zq7d   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
-nginx-deployment-66b6c48dd5-br4jv   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
-nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
+</li>
+<li>
+<p>Check your LoadBalancer</p>
+<p>Run the following command to see your LoadBalancer with the external-ip and port.</p>
+<div class="highlight"><pre><span></span><code>kubectl get service -n web
 </code></pre></div>
+</li>
+<li>
+<p>Access your example application</p>
+<p>If you used private IP addresses for MetalLB in the ConfigMap (in step 2), you should run the following command from the local network. Use the IP address from the previous step.</p>
+<div class="highlight"><pre><span></span><code>curl &lt;EXTERNAL-IP&gt;
+</code></pre></div>
+<p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
+</li>
+</ol>
+<h2 id="additional-information">Additional information<a class="headerlink" href="#additional-information" title="Permanent link">#</a></h2>
+<p>For more information about MetalLB installation, take a look at <a href="https://metallb.universe.tf/installation/">the official MetalLB documenation</a>.</p>
+<h2 id="alternative-examples">Alternative examples<a class="headerlink" href="#alternative-examples" title="Permanent link">#</a></h2>
+<p>Get load balancer using <a href="../../cloud-providers/">cloud provider</a>.</p>
                 
               
               
@@ -1234,7 +1306,7 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../storage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Storage (CSI)" rel="prev">
+        <a href="../../environment-variables/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration of Environment Variables" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1243,20 +1315,20 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
               <span class="md-footer__direction">
                 Previous
               </span>
-              Storage (CSI)
+              Configuration of Environment Variables
             </div>
           </div>
         </a>
       
       
         
-        <a href="../helm-charts/" class="md-footer__link md-footer__link--next" aria-label="Next: Helm Charts" rel="next">
+        <a href="../traefik-ingress/" class="md-footer__link md-footer__link--next" aria-label="Next: Traefik Ingress Controller" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Helm Charts
+              Traefik Ingress Controller
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1314,10 +1386,10 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>

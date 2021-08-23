@@ -336,6 +336,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/main/examples/metallb-loadbalancer/</loc>
+         <lastmod>2021-08-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/main/examples/rook-ceph/</loc>
          <lastmod>2021-08-23</lastmod>
          <changefreq>daily</changefreq>
