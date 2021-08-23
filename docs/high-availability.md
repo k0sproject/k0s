@@ -15,8 +15,7 @@ For etcd high availability it's recommended to configure 3 or 5 controller nodes
 Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:
 
 - 6443 (for Kubernetes API)
-- 8132 (for Konnectivity agent)
-- 8133 (for Konnectivity server)
+- 8132 (for Konnectivity)
 - 9443 (for controller join API)
 
 The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.
@@ -30,22 +29,36 @@ Add the following lines to the end of the haproxy.cfg:
 ```txt
 frontend kubeAPI
     bind :6443
-    default_backend back
-frontend konnectivityAgent
+    default_backend kubeAPI_backend
+frontend konnectivity
     bind :8132
-    default_backend back
-frontend konnectivityServer
-    bind :8133
-    default_backend back
+    default_backend konnectivity_backend
 frontend controllerJoinAPI
     bind :9443
-    default_backend back
+    default_backend controllerJoinAPI_backend
 
-backend back
-    server k0s-controller1 <ip-address1>
-    server k0s-controller2 <ip-address2>
-    server k0s-controller3 <ip-address3>
+backend kubeAPI_backend
+    server k0s-controller1 <ip-address1>:6443 check check-ssl verify none
+    server k0s-controller2 <ip-address2>:6443 check check-ssl verify none
+    server k0s-controller3 <ip-address3>:6443 check check-ssl verify none
+backend konnectivity_backend
+    server k0s-controller1 <ip-address1>:8132 check check-ssl verify none
+    server k0s-controller2 <ip-address2>:8132 check check-ssl verify none
+    server k0s-controller3 <ip-address3>:8132 check check-ssl verify none
+backend controllerJoinAPI_backend
+    server k0s-controller1 <ip-address1>:9443 check check-ssl verify none
+    server k0s-controller2 <ip-address2>:9443 check check-ssl verify none
+    server k0s-controller3 <ip-address3>:9443 check check-ssl verify none
+
+listen stats
+   bind *:9000
+   mode http
+   stats enable
+   stats uri /
 ```
+
+The last block "listen stats" is optional, but can be helpful. It enables HAProxy statistics with a separate dashboard to monitor for example the health of each backend server. You can access it using a web browser:
+http://<ip-addr>:9000
 
 Restart HAProxy to apply the configuration changes.
 

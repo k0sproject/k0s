@@ -35,7 +35,7 @@ You can opt-out of having k0s manage the network setup and choose instead to use
 
 One goal of k0s is to allow for the deployment of an isolated control plane, which may prevent the establishment of an IP route between controller nodes and the pod network. Thus, to enable this communication path (which is mandated by conformance tests), k0s deploys [Konnectivity service](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/) to proxy traffic from the API server (control plane) into the worker nodes. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.
 
-**Note**: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access.
+**Note**: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access, port 8132. Moreover, configure your firewalls for outbound access, port 6443, in order to access Kube-API from the worker nodes.
 
 ![k0s controller_worker_networking](img/k0s_controller_worker_networking.png)
 
@@ -49,4 +49,4 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 | UDP       | 4789      | Calico                    | worker <-> worker           | Calico VXLAN overlay
 | TCP       | 10250     | kubelet                   | Master, Worker => Host `*`  | Authenticated kubelet API for the master node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
 | TCP       | 9443      | k0s-api                   | controller <-> controller   | k0s controller join API, TLS with token auth
-| TCP       | 8132,8133 | konnectivity server       | worker <-> controller       | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+| TCP       | 8132      | konnectivity              | worker <-> controller       | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
