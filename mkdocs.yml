@@ -38,6 +38,7 @@ nav:
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
+      - Configuration of Environment Variables: environment-variables.md
   - Extensions:
       - Traefik Ingress Controller:       examples/traefik-ingress.md
       - Ambassador Gateway:               examples/ambassador-ingress.md
