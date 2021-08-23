@@ -40,6 +40,7 @@ nav:
       - User Management:                  user-management.md
       - Configuration of Environment Variables: environment-variables.md
   - Extensions:
+      - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
       - Traefik Ingress Controller:       examples/traefik-ingress.md
       - Ambassador Gateway:               examples/ambassador-ingress.md
       - Ceph Storage with Rook:           examples/rook-ceph.md
