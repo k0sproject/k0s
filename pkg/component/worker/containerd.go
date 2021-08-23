@@ -17,6 +17,7 @@ package worker
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -62,8 +63,17 @@ func (c *ContainerD) Run() error {
 			fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
 			fmt.Sprintf("--log-level=%s", c.LogLevel),
-			"--config=/etc/k0s/containerd.toml",
 		},
+	}
+
+	const conf string = "/etc/k0s/containerd.toml"
+	_, err := os.Stat(conf)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	} else {
+		c.supervisor.Args = append(c.supervisor.Args, fmt.Sprintf("--config=%s", conf))
 	}
 	// TODO We need to dump the config file suited for k0s use
 
