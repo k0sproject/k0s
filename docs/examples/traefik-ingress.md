@@ -1,4 +1,4 @@
-# Install the Traefik Ingress Controller on k0s
+# Installing Traefik Ingress Controller
 
 You can configure k0s with the [Traefik ingress controller](https://doc.traefik.io/traefik/providers/kubernetes-ingress/), a [MetalLB service loadbalancer](https://metallb.universe.tf/), and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
 
