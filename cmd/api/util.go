@@ -18,19 +18,20 @@ package api
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/internal/util"
 )
 
-func sendError(logger *logrus.Logger, err error, resp http.ResponseWriter, status ...int) {
+func sendError(err error, resp http.ResponseWriter, status ...int) {
 	code := http.StatusInternalServerError
 	if len(status) == 1 {
 		code = status[0]
 	}
+	logger := util.K0sLogger()
 	logger.Error(err)
 	resp.Header().Set("Content-Type", "text/plain")
 	resp.WriteHeader(code)
 	if _, err := resp.Write([]byte(err.Error())); err != nil {
-		sendError(logger, err, resp)
+		sendError(err, resp)
 		return
 	}
 }

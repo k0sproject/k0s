@@ -18,12 +18,13 @@ package applier
 import (
 	"time"
 
-	"k8s.io/client-go/util/retry"
-
-	"github.com/k0sproject/k0s/pkg/debounce"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
+	"k8s.io/client-go/util/retry"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/debounce"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 // StackApplier handles each directory as a Stack and watches for changes
@@ -37,7 +38,7 @@ type StackApplier struct {
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory, logger *logrus.Logger) (*StackApplier, error) {
+func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -46,7 +47,8 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory, lo
 	if err != nil {
 		return nil, err
 	}
-	applier := NewApplier(path, kubeClientFactory, logger)
+	applier := NewApplier(path, kubeClientFactory)
+	logger := util.K0sLogger()
 	logger.WithField("component", "applier-"+applier.Name)
 	logger.WithField("path", path).Debug("created stack applier")
 

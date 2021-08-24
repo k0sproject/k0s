@@ -167,7 +167,6 @@ func (c *CmdOpts) startController() error {
 	componentManager := component.NewManager()
 	certificateManager := certificate.Manager{
 		K0sVars: c.K0sVars,
-		Logger:  c.Logger,
 	}
 
 	var joinClient *token.JoinClient
@@ -260,7 +259,7 @@ func (c *CmdOpts) startController() error {
 	}
 	componentManager.Add(leaderElector)
 
-	componentManager.Add(&applier.Manager{K0sVars: c.K0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector, Logger: c.Logger})
+	componentManager.Add(&applier.Manager{K0sVars: c.K0sVars, KubeClientFactory: adminClientFactory, LeaderElector: leaderElector})
 	if !c.SingleNode {
 		componentManager.Add(&controller.K0SControlAPI{
 			ConfigPath: c.CfgFile,

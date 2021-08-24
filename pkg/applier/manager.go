@@ -50,11 +50,12 @@ func (m *Manager) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
+	m.Logger = util.K0sLogger()
 	m.Logger.WithField("component", "applier-manager")
 	m.stacks = make(map[string]*StackApplier)
 	m.bundlePath = m.K0sVars.ManifestsDir
 
-	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory, m.Logger)
+	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
 
 	m.LeaderElector.AddAcquiredLeaseCallback(func() {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -145,7 +146,7 @@ func (m *Manager) createStack(name string) error {
 		return nil
 	}
 	m.Logger.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name, m.KubeClientFactory, m.Logger)
+	sa, err := NewStackApplier(name, m.KubeClientFactory)
 	if err != nil {
 		return err
 	}

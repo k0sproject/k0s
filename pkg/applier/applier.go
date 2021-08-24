@@ -22,14 +22,15 @@ import (
 	"path"
 	"path/filepath"
 
-	"k8s.io/client-go/util/retry"
-
-	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
+
+	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 // Applier manages all the "static" manifests and applies them on the k8s API
@@ -44,8 +45,9 @@ type Applier struct {
 }
 
 // NewApplier creates new Applier
-func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactory, logger *logrus.Logger) Applier {
+func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactory) Applier {
 	name := filepath.Base(dir)
+	logger := util.K0sLogger()
 	logger.WithFields(logrus.Fields{
 		"component": "applier",
 		"bundle":    name,
