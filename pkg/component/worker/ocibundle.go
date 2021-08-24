@@ -3,15 +3,15 @@ package worker
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
 	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 // OCIBundleReconciler tries to import OCI bundle into the running containerd instance
@@ -33,7 +33,7 @@ func (a *OCIBundleReconciler) Init() error {
 }
 
 func (a *OCIBundleReconciler) Run() error {
-	files, err := ioutil.ReadDir(a.k0sVars.OCIBundleDir)
+	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
 	if err != nil {
 		return fmt.Errorf("can't read bundles directory")
 	}

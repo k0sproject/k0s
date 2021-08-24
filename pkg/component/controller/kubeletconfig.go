@@ -18,11 +18,11 @@ package controller
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
 	"io"
-	"io/ioutil"
 
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
@@ -121,7 +121,7 @@ func (k *KubeletConfig) save(data []byte) error {
 	}
 
 	filePath := filepath.Join(kubeletDir, "kubelet-config.yaml")
-	if err := ioutil.WriteFile(filePath, data, constant.CertMode); err != nil {
+	if err := os.WriteFile(filePath, data, constant.CertMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
 	return nil
@@ -228,7 +228,7 @@ metadata:
   name: {{.Name}}
   namespace: kube-system
 data:
-  kubelet: | 
+  kubelet: |
 {{ .KubeletConfigYAML | nindent 4 }}
 `
 
@@ -241,7 +241,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
-  resourceNames: 
+  resourceNames:
 {{- range .ConfigMapNames }}
     - "{{ . -}}"
 {{ end }}

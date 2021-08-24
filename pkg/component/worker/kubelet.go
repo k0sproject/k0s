@@ -17,7 +17,7 @@ package worker
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -222,7 +222,7 @@ func getNodeName() (string, error) {
 		return os.Hostname()
 	}
 	defer resp.Body.Close()
-	h, err := ioutil.ReadAll(resp.Body)
+	h, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("can't read aws hostname: %v", err)
 	}

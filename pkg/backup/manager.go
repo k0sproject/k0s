@@ -20,7 +20,6 @@ package backup
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -164,7 +163,7 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 
 // NewBackupManager builds new manager
 func NewBackupManager() (*Manager, error) {
-	tmpDir, err := ioutil.TempDir("", "k0s-backup")
+	tmpDir, err := os.MkdirTemp("", "k0s-backup")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %v", err)
 	}

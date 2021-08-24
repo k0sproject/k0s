@@ -18,7 +18,7 @@ package install
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -81,7 +81,7 @@ func GetRoleByPID(pid int) (role string, err error) {
 	}
 
 	var raw []byte
-	if raw, err = ioutil.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid)); err != nil {
+	if raw, err = os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid)); err != nil {
 		return "", err
 	}
 	cmdln := string(raw)

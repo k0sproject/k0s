@@ -20,7 +20,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -58,7 +58,7 @@ users:
 
 func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
 	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
-	caCert, err := ioutil.ReadFile(crtFile)
+	caCert, err := os.ReadFile(crtFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to read cluster ca certificate from %s: %w. check if the control plane is initialized on this node", crtFile, err)
 	}

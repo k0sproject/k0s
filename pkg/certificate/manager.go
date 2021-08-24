@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -81,12 +80,12 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
+	err = os.WriteFile(keyFile, key, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(certFile, cert, constant.CertMode)
+	err = os.WriteFile(certFile, cert, constant.CertMode)
 	if err != nil {
 		return err
 	}
@@ -146,11 +145,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 			Key:  string(key),
 			Cert: string(cert),
 		}
-		err = ioutil.WriteFile(keyFile, key, constant.CertSecureMode)
+		err = os.WriteFile(keyFile, key, constant.CertSecureMode)
 		if err != nil {
 			return Certificate{}, err
 		}
-		err = ioutil.WriteFile(certFile, cert, constant.CertMode)
+		err = os.WriteFile(certFile, cert, constant.CertMode)
 		if err != nil {
 			return Certificate{}, err
 		}
@@ -171,11 +170,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	_ = os.Chown(keyFile, uid, -1)
 	_ = os.Chown(certFile, uid, -1)
 
-	cert, err := ioutil.ReadFile(certFile)
+	cert, err := os.ReadFile(certFile)
 	if err != nil {
 		return Certificate{}, fmt.Errorf("failed to read ca cert %s for %s: %w", certFile, certReq.Name, err)
 	}
-	key, err := ioutil.ReadFile(keyFile)
+	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return Certificate{}, fmt.Errorf("failed to read ca key %s for %s: %w", keyFile, certReq.Name, err)
 	}

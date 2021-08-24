@@ -17,7 +17,6 @@ package sonobuoy
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -152,7 +151,7 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 }
 
 func (s *NetworkSuite) dumpKubeConfig() string {
-	dir, err := ioutil.TempDir("", "sig-network-kubeconfig-")
+	dir, err := os.MkdirTemp("", "sig-network-kubeconfig-")
 	s.NoError(err)
 	ssh, err := s.SSH(s.ControllerIP)
 	s.NoError(err)

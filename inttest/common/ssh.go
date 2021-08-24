@@ -17,11 +17,11 @@ package common
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
-	"golang.org/x/crypto/ssh"
-	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/mitchellh/go-homedir"
+	"golang.org/x/crypto/ssh"
 )
 
 // SSHConnection describes an SSH connection
@@ -100,7 +100,7 @@ func loadExternalFile(path string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	filedata, err := ioutil.ReadFile(realpath)
+	filedata, err := os.ReadFile(realpath)
 	if err != nil {
 		return []byte{}, err
 	}
