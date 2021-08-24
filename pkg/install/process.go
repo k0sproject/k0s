@@ -18,7 +18,7 @@ package install
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 
@@ -57,7 +57,7 @@ func GetStatusInfo(socketPath string) (status *K0sStatus, err error) {
 	}
 	defer response.Body.Close()
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}

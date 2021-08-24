@@ -19,7 +19,7 @@ limitations under the License.
 package worker
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -31,7 +31,7 @@ import (
 
 // check if kernel has overlay fs
 func hasFilesystem(filesystem string) bool {
-	data, err := ioutil.ReadFile("/proc/filesystems")
+	data, err := os.ReadFile("/proc/filesystems")
 	if err != nil {
 		return false
 	}
@@ -53,7 +53,7 @@ func modprobe(module string) {
 
 func enableSysCtl(entry string) {
 	file := path.Join("/proc", "sys", entry)
-	err := ioutil.WriteFile(file, []byte("1"), 0644)
+	err := os.WriteFile(file, []byte("1"), 0644)
 	if err != nil {
 		logrus.Warnf("Failed to enable %s: %s", file, err.Error())
 	}

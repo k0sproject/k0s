@@ -18,7 +18,7 @@ package applier
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,7 +32,7 @@ import (
 )
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
-	dir, err := ioutil.TempDir("", "applier-test-*")
+	dir, err := os.MkdirTemp("", "applier-test-*")
 	assert.NoError(t, err)
 	templateNS := `
 apiVersion: v1
@@ -88,12 +88,12 @@ spec:
             memory: "64Mi"
             cpu: "100m"
         ports:
-          - containerPort: 80	
+          - containerPort: 80
 `
-	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
-	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
-	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
-	assert.NoError(t, ioutil.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
+	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
+	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
+	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
+	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()
 	verbs := []string{"get", "list", "delete", "create"}

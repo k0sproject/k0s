@@ -17,7 +17,6 @@ package supervisor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -60,7 +59,7 @@ func (s *Supervisor) processWaitQuit() bool {
 	}()
 
 	pidbuf := []byte(strconv.Itoa(s.cmd.Process.Pid) + "\n")
-	err := ioutil.WriteFile(s.PidFile, pidbuf, constant.PidFileMode)
+	err := os.WriteFile(s.PidFile, pidbuf, constant.PidFileMode)
 	if err != nil {
 		s.log.Warnf("Failed to write file %s: %v", s.PidFile, err)
 	}

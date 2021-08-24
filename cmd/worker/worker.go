@@ -18,7 +18,6 @@ package worker
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"runtime"
@@ -61,7 +60,7 @@ func NewWorkerCmd() *cobra.Command {
 			}
 
 			if len(c.TokenFile) > 0 {
-				bytes, err := ioutil.ReadFile(c.TokenFile)
+				bytes, err := os.ReadFile(c.TokenFile)
 				if err != nil {
 					return err
 				}

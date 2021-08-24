@@ -17,7 +17,6 @@ package kubeconfig
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -38,7 +37,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			if util.FileExists(c.K0sVars.AdminKubeConfigPath) {
-				content, err := ioutil.ReadFile(c.K0sVars.AdminKubeConfigPath)
+				content, err := os.ReadFile(c.K0sVars.AdminKubeConfigPath)
 				if err != nil {
 					log.Fatal(err)
 				}

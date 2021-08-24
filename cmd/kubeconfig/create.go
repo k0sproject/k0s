@@ -20,13 +20,13 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"html/template"
+	"os"
+	"path"
+
 	"github.com/cloudflare/cfssl/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"html/template"
-	"io/ioutil"
-	"os"
-	"path"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -84,7 +84,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			if err != nil {
 				return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
 			}
-			caCert, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
+			caCert, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
 				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
 			}

@@ -18,7 +18,7 @@ package applier
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -143,7 +143,7 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 	var resources []*unstructured.Unstructured
 	for _, file := range files {
 		// TODO Probably better to pass in the file stream into decoder and not to read it fully to mem first
-		source, err := ioutil.ReadFile(file)
+		source, err := os.ReadFile(file)
 		if err != nil {
 			return nil, err
 		}
