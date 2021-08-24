@@ -59,7 +59,7 @@ func (r *ClusterConfigReconciler) Init() error {
 func (r *ClusterConfigReconciler) Run() error {
 	c, err := cfgClient.NewForConfig(r.kubeConfig)
 	if err != nil {
-		return fmt.Errorf("can't create kubernetes typed Client for cluster config: %v", err)
+		return fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
 	}
 	r.configClient = c.ClusterConfigs(constant.ClusterConfigNamespace)
 	r.tickerDone = make(chan struct{})
@@ -78,10 +78,10 @@ func (r *ClusterConfigReconciler) Run() error {
 			case <-ticker.C:
 				err := r.Reconcile()
 				if err != nil {
-					r.log.Warnf("external API address reconciliation failed: %s", err.Error())
+					r.log.Warnf("cluster-config reconciliation failed: %s", err.Error())
 				}
 			case <-r.tickerDone:
-				r.log.Info("endpoint reconciler done")
+				r.log.Info("cluster-config reconciler done")
 				return
 			}
 		}
@@ -108,27 +108,27 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// ClusterConfig CR cannot be found, which means we can create it
-			r.log.Debugf("didn't find cluster config object: %v", err)
+			r.log.Debugf("didn't find cluster-config object: %v", err)
 			err := r.copyRunningConfigToCR()
 			if err != nil {
-				r.log.Errorf("failed to save cluster config  %v\n", err)
+				r.log.Errorf("failed to save cluster-config  %v\n", err)
 			}
 		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			r.log.Errorf("error getting cluster config %v\n", statusError.ErrStatus.Message)
+			r.log.Errorf("error getting cluster-config %v\n", statusError.ErrStatus.Message)
 		}
 		r.log.Errorf("failed to reconcile config status: %v", err)
 		return err
 	}
 	// watch the clusterConfig resource for changes
 	if clusterConfig.ResourceVersion > r.resourceVersion {
-		r.log.Debugf("detected change in cluster config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.resourceVersion, clusterConfig.ResourceVersion)
+		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.resourceVersion, clusterConfig.ResourceVersion)
 		r.resourceVersion = clusterConfig.ResourceVersion
 		err = r.ComponentManager.Reconcile()
 		if err != nil {
 			return err
 		}
 	}
-	r.log.Debugf("reconciling cluster config (nothing to do!)")
+	r.log.Debugf("reconciling cluster-config (nothing to do!)")
 	return nil
 }
 
@@ -155,12 +155,12 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
 		return err
 	}
 	r.resourceVersion = clusterConfig.ResourceVersion
-	r.log.Info("successfully wrote clusterConfig to API")
+	r.log.Info("successfully wrote cluster-config to API")
 	return nil
 }
 
 // HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack stripps away the node-specific bootstrapping config so that we write a "clean" config to the CR
+// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
 // This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
 //		- APISpec
 //		- StorageSpec

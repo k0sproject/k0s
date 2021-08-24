@@ -73,7 +73,6 @@ require (
 replace (
 	github.com/Microsoft/go-winio => github.com/Microsoft/go-winio v0.4.19
 	github.com/docker/libnetwork => github.com/moby/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
-	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
 )
 
 // backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
