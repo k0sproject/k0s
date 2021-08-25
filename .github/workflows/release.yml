@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
+env:
+  GO_VERSION: ^1.16
+  GO_VERSION_WIN: ^1.13
+
 jobs:
   release:
     name: release
@@ -37,13 +41,15 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.16
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
@@ -133,13 +139,15 @@ jobs:
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
         env:
@@ -167,14 +175,15 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
