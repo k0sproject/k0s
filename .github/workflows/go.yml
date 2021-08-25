@@ -27,6 +27,10 @@ on:
       - '.github/workflows/docs.yml'
       - '.github/workflows/mkdocs-set-default-version.yml'
       - 'mkdocs.yml'
+env:
+  GO_VERSION: ^1.16
+  GO_VERSION_WIN: ^1.13
+
 jobs:
   build:
     name: Build
@@ -36,14 +40,15 @@ jobs:
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - uses: actions/cache@v2
         name: Go modules cache
@@ -90,14 +95,15 @@ jobs:
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-win-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.13
-        id: go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION_WIN }}
+        id: go
 
       - uses: actions/cache@v2
         name: Go modules cache
@@ -131,18 +137,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
-
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -168,17 +174,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -204,17 +211,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -240,17 +248,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -276,17 +285,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -312,17 +322,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -348,17 +359,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -384,17 +396,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -420,17 +433,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -456,17 +470,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -494,17 +509,18 @@ jobs:
     if: false
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -530,17 +546,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -566,17 +583,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -602,17 +620,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -669,17 +688,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -705,17 +725,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -741,11 +762,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
@@ -753,6 +769,11 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
         id: restore-compiled-binary
@@ -777,17 +798,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
       - name: Get PR Reference and Set Cache Name
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - name: Cache compiled binary for smoke testing
         uses: actions/cache@v2
@@ -812,14 +834,14 @@ jobs:
     runs-on: [self-hosted,linux,arm64]
 
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
 
       - uses: actions/cache@v2
         name: Go modules cache
@@ -866,7 +888,7 @@ jobs:
       # - name: Set up Go 1.x
       #   uses: actions/setup-go@v2
       #   with:
-      #     go-version: ^1.16
+      #     go-version: ${{ env.GO_VERSION }}
       #   id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
