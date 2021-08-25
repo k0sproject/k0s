@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
 
       - name: Check out code into the Go module directory
@@ -93,7 +93,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ${{ secrets.GO_VERSION_WIN }}
         id: go
 
       - name: Check out code into the Go module directory
@@ -134,7 +134,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
 
       - name: Get PR Reference and Set Cache Name
@@ -171,7 +171,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -207,7 +207,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -243,7 +243,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -279,7 +279,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -315,7 +315,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -351,7 +351,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -387,7 +387,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -423,7 +423,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -459,7 +459,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -495,7 +495,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -533,7 +533,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -569,7 +569,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -605,7 +605,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -641,7 +641,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -708,7 +708,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -744,7 +744,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -780,7 +780,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -815,7 +815,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
 
       - name: Check out code into the Go module directory
@@ -866,7 +866,7 @@ jobs:
       # - name: Set up Go 1.x
       #   uses: actions/setup-go@v2
       #   with:
-      #     go-version: ^1.16
+      #     go-version: ${{ secrets.GO_VERSION }}
       #   id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2

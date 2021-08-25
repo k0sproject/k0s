@@ -24,7 +24,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ secrets.GO_VERSION }}
         id: go
       - name: Get PR Reference
         env:
