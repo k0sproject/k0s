@@ -113,7 +113,7 @@ Port 7946 (TCP & UDP) must be allowed between the nodes.
 
 ## Additional information
 
-For more information about MetalLB installation, take a look at [the official MetalLB documenation](https://metallb.universe.tf/installation/).
+For more information about MetalLB installation, take a look at [the official MetalLB documentation](https://metallb.universe.tf/installation/).
 
 ## Alternative examples
 

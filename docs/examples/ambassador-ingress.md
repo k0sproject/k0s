@@ -1,4 +1,4 @@
-# Install Ambassador Gateway on k0s
+# Installing Ambassador API Gateway
 
 You can configure k0s with the [Ambassador API Gateway](https://www.getambassador.io/products/api-gateway/) and a [MetalLB service loadbalancer](https://metallb.universe.tf/). To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
 
