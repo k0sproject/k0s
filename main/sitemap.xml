@@ -341,6 +341,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/main/examples/nginx-ingress/</loc>
+         <lastmod>2021-08-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/main/examples/rook-ceph/</loc>
          <lastmod>2021-08-25</lastmod>
          <changefreq>daily</changefreq>

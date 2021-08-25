@@ -23,7 +23,7 @@
     
     
       
-        <title>Ambassador Gateway - Documentation</title>
+        <title>Ambassador API Gateway - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#install-ambassador-gateway-on-k0s" class="md-skip">
+        <a href="#installing-ambassador-api-gateway" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Ambassador Gateway
+              Ambassador API Gateway
             
           </span>
         </div>
@@ -779,6 +779,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../nginx-ingress/" class="md-nav__link">
+        NGINX Ingress Controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
@@ -803,12 +817,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Ambassador Gateway
+          Ambassador API Gateway
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Ambassador Gateway
+        Ambassador API Gateway
       </a>
       
         
@@ -1149,7 +1163,7 @@
                 
                 
                 
-                <h1 id="install-ambassador-gateway-on-k0s">Install Ambassador Gateway on k0s<a class="headerlink" href="#install-ambassador-gateway-on-k0s" title="Permanent link">#</a></h1>
+                <h1 id="installing-ambassador-api-gateway">Installing Ambassador API Gateway<a class="headerlink" href="#installing-ambassador-api-gateway" title="Permanent link">#</a></h1>
 <p>You can configure k0s with the <a href="https://www.getambassador.io/products/api-gateway/">Ambassador API Gateway</a> and a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
 <h2 id="use-docker-for-non-native-k0s-platforms">Use Docker for non-native k0s platforms<a class="headerlink" href="#use-docker-for-non-native-k0s-platforms" title="Permanent link">#</a></h2>
 <p>With Docker you can run k0s on platforms that the distribution does not natively support (refer to <a href="../../k0s-in-docker/">Run k0s in Docker</a>). Skip this section if you are on a platform that k0s natively supports.</p>

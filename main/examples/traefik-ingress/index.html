@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#install-the-traefik-ingress-controller-on-k0s" class="md-skip">
+        <a href="#installing-traefik-ingress-controller" class="md-skip">
           Skip to content
         </a>
       
@@ -777,6 +777,20 @@
               
   
   
+  
+    <li class="md-nav__item">
+      <a href="../nginx-ingress/" class="md-nav__link">
+        NGINX Ingress Controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
     
   
   
@@ -855,7 +869,7 @@
   
     <li class="md-nav__item">
       <a href="../ambassador-ingress/" class="md-nav__link">
-        Ambassador Gateway
+        Ambassador API Gateway
       </a>
     </li>
   
@@ -1163,7 +1177,7 @@
                 
                 
                 
-                <h1 id="install-the-traefik-ingress-controller-on-k0s">Install the Traefik Ingress Controller on k0s<a class="headerlink" href="#install-the-traefik-ingress-controller-on-k0s" title="Permanent link">#</a></h1>
+                <h1 id="installing-traefik-ingress-controller">Installing Traefik Ingress Controller<a class="headerlink" href="#installing-traefik-ingress-controller" title="Permanent link">#</a></h1>
 <p>You can configure k0s with the <a href="https://doc.traefik.io/traefik/providers/kubernetes-ingress/">Traefik ingress controller</a>, a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>, and deploy the Traefik Dashboard using a service sample. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
 <h2 id="1-configure-k0syaml">1. Configure k0s.yaml<a class="headerlink" href="#1-configure-k0syaml" title="Permanent link">#</a></h2>
 <p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="../../helm-charts/">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
@@ -1362,7 +1376,7 @@ X-Real-Ip: <span class="m">192</span>.168.0.82
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../metallb-loadbalancer/" class="md-footer__link md-footer__link--prev" aria-label="Previous: MetalLB Load Balancer" rel="prev">
+        <a href="../nginx-ingress/" class="md-footer__link md-footer__link--prev" aria-label="Previous: NGINX Ingress Controller" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1371,20 +1385,20 @@ X-Real-Ip: <span class="m">192</span>.168.0.82
               <span class="md-footer__direction">
                 Previous
               </span>
-              MetalLB Load Balancer
+              NGINX Ingress Controller
             </div>
           </div>
         </a>
       
       
         
-        <a href="../ambassador-ingress/" class="md-footer__link md-footer__link--next" aria-label="Next: Ambassador Gateway" rel="next">
+        <a href="../ambassador-ingress/" class="md-footer__link md-footer__link--next" aria-label="Next: Ambassador API Gateway" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Ambassador Gateway
+              Ambassador API Gateway
             </div>
           </div>
           <div class="md-footer__button md-icon">

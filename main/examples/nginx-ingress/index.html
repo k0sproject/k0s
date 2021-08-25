@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_kubeconfig/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/examples/nginx-ingress/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>K0s kubeconfig - Documentation</title>
+        <title>NGINX Ingress Controller - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-kubeconfig" class="md-skip">
+        <a href="#installing-nginx-ingress-controller" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s kubeconfig
+              NGINX Ingress Controller
             
           </span>
         </div>
@@ -408,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -735,12 +735,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
       
       
       
@@ -763,7 +765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -775,11 +777,92 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../examples/nginx-ingress/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          NGINX Ingress Controller
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         NGINX Ingress Controller
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#nodeport-vs-loadbalancer-vs-ingress-controller" class="md-nav__link">
+    NodePort vs LoadBalancer vs Ingress controller
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nginx-ingress-controller" class="md-nav__link">
+    NGINX Ingress Controller
+  </a>
+  
+    <nav class="md-nav" aria-label="NGINX Ingress Controller">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-nginx-using-nodeport" class="md-nav__link">
+    Install NGINX using NodePort
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-nginx-using-loadbalancer" class="md-nav__link">
+    Install NGINX using LoadBalancer
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-information" class="md-nav__link">
+    Additional information
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-examples-for-ingress-controllers-on-k0s" class="md-nav__link">
+    Alternative examples for Ingress Controllers on k0s
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -791,7 +874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -805,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -819,7 +902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -1063,6 +1146,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1071,36 +1156,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-kubeconfig" class="md-nav__link">
-    k0s kubeconfig
+  <a href="#nodeport-vs-loadbalancer-vs-ingress-controller" class="md-nav__link">
+    NodePort vs LoadBalancer vs Ingress controller
   </a>
   
-    <nav class="md-nav" aria-label="k0s kubeconfig">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nginx-ingress-controller" class="md-nav__link">
+    NGINX Ingress Controller
+  </a>
+  
+    <nav class="md-nav" aria-label="NGINX Ingress Controller">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
+  <a href="#install-nginx-using-nodeport" class="md-nav__link">
+    Install NGINX using NodePort
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
+  <a href="#install-nginx-using-loadbalancer" class="md-nav__link">
+    Install NGINX using LoadBalancer
   </a>
   
 </li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-information" class="md-nav__link">
+    Additional information
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-examples-for-ingress-controllers-on-k0s" class="md-nav__link">
+    Alternative examples for Ingress Controllers on k0s
+  </a>
   
 </li>
       
@@ -1118,28 +1217,188 @@
                 
                 
                 
-                  <h1>K0s kubeconfig</h1>
-                
-                <h2 id="k0s-kubeconfig">k0s kubeconfig<a class="headerlink" href="#k0s-kubeconfig" title="Permanent link">#</a></h2>
-<p>Create a kubeconfig file for a specified user</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig <span class="o">[</span>command<span class="o">]</span> <span class="o">[</span>flags<span class="o">]</span>
+                <h1 id="installing-nginx-ingress-controller">Installing NGINX Ingress Controller<a class="headerlink" href="#installing-nginx-ingress-controller" title="Permanent link">#</a></h1>
+<p>This tutorial covers the installation of <a href="https://github.com/kubernetes/ingress-nginx">NGINX Ingress controller</a>, which is an open source project made by the Kubernetes community. k0s doesn't come with an in-built Ingress controller, but it's easy to deploy NGINX Ingress as shown in this document. Other Ingress solutions can be used as well (see the links at the end of the page).</p>
+<h2 id="nodeport-vs-loadbalancer-vs-ingress-controller">NodePort vs LoadBalancer vs Ingress controller<a class="headerlink" href="#nodeport-vs-loadbalancer-vs-ingress-controller" title="Permanent link">#</a></h2>
+<p>Kubernetes offers multiple options for exposing services to external networks. The main options are NodePort, LoadBalancer and Ingress controller.</p>
+<p><strong>NodePort</strong>, as the name says, means that a port on a node is configured to route incoming requests to a certain service. The port range is limited to 30000-32767, so you cannot expose commonly used ports like 80 or 443 with NodePort.</p>
+<p><strong>LoadBalancer</strong> is a service, which is typically implemented by the cloud provider as an external service (with additional cost). Load balancers can also be installed internally in the Kubernetes cluster with MetalLB, which is typically used for bare-metal deployments. Load balancer provides a single IP address to access your services, which can run on multiple nodes.</p>
+<p><strong>Ingress controller</strong> helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort or LoadBalancer. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.</p>
+<h2 id="nginx-ingress-controller">NGINX Ingress Controller<a class="headerlink" href="#nginx-ingress-controller" title="Permanent link">#</a></h2>
+<p>NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. Both of these alternatives are described in more detail on below, with separate examples.</p>
+<p><img alt="k0s_ingress_controller" src="../../img/k0s_ingress_controller.png" /></p>
+<h3 id="install-nginx-using-nodeport">Install NGINX using NodePort<a class="headerlink" href="#install-nginx-using-nodeport" title="Permanent link">#</a></h3>
+<p>Installing NGINX using NodePort is the most simple example for Ingress Controller as we can avoid the load balancer dependency. NodePort is used for exposing the NGINX Ingress to the external network.</p>
+<ol>
+<li>
+<p>Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/baremetal/deploy.yaml
 </code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -h, --help   <span class="nb">help</span> <span class="k">for</span> kubeconfig
+</li>
+<li>
+<p>Check that the Ingress controller pods have started</p>
+<div class="highlight"><pre><span></span><code>kubectl get pods -n ingress-nginx
 </code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>
-      --data-dir string          Data Directory <span class="k">for</span> k0s <span class="o">(</span>default: /var/lib/k0s<span class="o">)</span>. DO NOT CHANGE <span class="k">for</span> an existing setup, things will break!
-  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
-      --debugListenOn string     Http listenOn <span class="k">for</span> debug pprof handler <span class="o">(</span>default <span class="s2">&quot;:6060&quot;</span><span class="o">)</span>
-  -l, --logging stringToString   Logging Levels <span class="k">for</span> the different components <span class="o">(</span>default <span class="o">[</span>konnectivity-server<span class="o">=</span><span class="m">1</span>,kube-apiserver<span class="o">=</span><span class="m">1</span>,kube-controller-manager<span class="o">=</span><span class="m">1</span>,kube-scheduler<span class="o">=</span><span class="m">1</span>,kubelet<span class="o">=</span><span class="m">1</span>,kube-proxy<span class="o">=</span><span class="m">1</span>,etcd<span class="o">=</span>info,containerd<span class="o">=</span>info<span class="o">])</span>
+</li>
+<li>
+<p>Check that you can see the NodePort service</p>
+<div class="highlight"><pre><span></span><code>kubectl get services -n ingress-nginx
 </code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+</li>
+<li>
+<p>Try connecting the Ingress controller using the NodePort from the previous step (in the range of 30000-32767)</p>
+<div class="highlight"><pre><span></span><code>curl &lt;worker-external-ip&gt;:&lt;node-port&gt;
+</code></pre></div>
+<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is ok for now. If you see a response from nginx, the Ingress Controller is running and you can reach it.</p>
+</li>
+<li>
+<p>Deploy a small test application (httpd web server) to verify your Ingress controller.</p>
+<p>Create the following YAML file and name it "simple-web-server-with-ingress.yaml":</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">matchLabels</span><span class="p">:</span>
+      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">template</span><span class="p">:</span>
+    <span class="nt">metadata</span><span class="p">:</span>
+      <span class="nt">labels</span><span class="p">:</span>
+        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+    <span class="nt">spec</span><span class="p">:</span>
+      <span class="nt">containers</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">httpd</span>
+        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">httpd:2.4.48-alpine3.14</span>
+        <span class="nt">ports</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">containerPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server-service</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">ports</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">protocol</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TCP</span>
+      <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5000</span>
+      <span class="nt">targetPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">networking.k8s.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Ingress</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server-ingress</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">rules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">host</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web.example.com</span>
+    <span class="nt">http</span><span class="p">:</span>
+      <span class="nt">paths</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/</span>
+        <span class="nt">pathType</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Prefix</span>
+        <span class="nt">backend</span><span class="p">:</span>
+          <span class="nt">service</span><span class="p">:</span>
+            <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web-server-service</span>
+            <span class="nt">port</span><span class="p">:</span>
+              <span class="nt">number</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5000</span>
+</code></pre></div>
+<p>Deploy the app:</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f simple-web-server-with-ingress.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Verify that you can access your application using the NodePort from step 3.</p>
+<div class="highlight"><pre><span></span><code>curl &lt;worker-external-ip&gt;:&lt;node-port&gt; -H <span class="s1">&#39;Host: web.example.com&#39;</span>
+</code></pre></div>
+<p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
+</li>
+</ol>
+<h3 id="install-nginx-using-loadbalancer">Install NGINX using LoadBalancer<a class="headerlink" href="#install-nginx-using-loadbalancer" title="Permanent link">#</a></h3>
+<p>In this example you'll install NGINX Ingress controller using LoadBalancer on k0s.</p>
+<ol>
+<li>
+<p>Install LoadBalancer</p>
+<p>There are two alternatives to install LoadBalancer on k0s. Follow the links in order to install LoadBalancer.</p>
 <ul>
-<li><a href="../k0s/">k0s</a> - k0s - Zero Friction Kubernetes</li>
-<li><a href="../k0s_kubeconfig_admin/">k0s kubeconfig admin</a> - Display Admin's Kubeconfig file</li>
-<li><a href="../k0s_kubeconfig_create/">k0s kubeconfig create</a> - Create a kubeconfig for a user</li>
+<li><a href="../metallb-loadbalancer/">MetalLB</a> as a pure SW solution running internally in the k0s cluster</li>
+<li><a href="../../cloud-providers/">Cloud provider's</a> load balancer running outside of the k0s cluster</li>
 </ul>
+</li>
+<li>
+<p>Verify LoadBalancer</p>
+<p>In order to proceed you need to have a load balancer available for the Kubernetes cluster. To verify that it's available, deploy a simple load balancer service.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example-load-balancer</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">ports</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">protocol</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TCP</span>
+      <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+      <span class="nt">targetPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+  <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">LoadBalancer</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>kubectl apply -f example-load-balancer.yaml
+</code></pre></div>
+<p>Then run the following command to see your LoadBalancer with an external IP address.</p>
+<div class="highlight"><pre><span></span><code>kubectl get service example-load-balancer
+</code></pre></div>
+<p>If the LoadBalancer is not available, you won't get an IP address for EXTERNAL-IP. Instead, it's <code>&lt;pending&gt;</code>. In this case you should go back to the previous step and check your load balancer availability.</p>
+<p>If you are successful, you'll see a real IP address and you can proceed further.</p>
+<p>You can delete the example-load-balancer:</p>
+<div class="highlight"><pre><span></span><code>kubectl delete -f example-load-balancer.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/baremetal/deploy.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Edit the NGINX Ingress Controller to use LoadBalancer instead of NodePort</p>
+<div class="highlight"><pre><span></span><code>kubectl edit service ingress-nginx-controller -n ingress-nginx
+</code></pre></div>
+<p>Find the spec.type field and change it from "NodePort" to "LoadBalancer".</p>
+</li>
+<li>
+<p>Check that you can see the ingress-nginx-controller with type LoadBalancer.</p>
+<div class="highlight"><pre><span></span><code>kubectl get services -n ingress-nginx
+</code></pre></div>
+</li>
+<li>
+<p>Try connecting to the Ingress controller</p>
+<p>If you used private IP addresses for MetalLB in step 2, you should run the following command from the local network. Use the IP address from the previous step, column EXTERNAL-IP.</p>
+<div class="highlight"><pre><span></span><code>curl &lt;EXTERNAL-IP&gt;
+</code></pre></div>
+<p>If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is ok for now. If you see a response from nginx, the Ingress Controller is running and you can reach it using LoadBalancer.</p>
+</li>
+<li>
+<p>Deploy a small test application (httpd web server) to verify your Ingress.</p>
+<p>Create the YAML file "simple-web-server-with-ingress.yaml" as described in the previous chapter (step 5) and deploy it.</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f simple-web-server-with-ingress.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Verify that you can access your application through the LoadBalancer and Ingress controller.</p>
+<div class="highlight"><pre><span></span><code>curl &lt;worker-external-ip&gt; -H <span class="s1">&#39;Host: web.example.com&#39;</span>
+</code></pre></div>
+<p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
+</li>
+</ol>
+<h2 id="additional-information">Additional information<a class="headerlink" href="#additional-information" title="Permanent link">#</a></h2>
+<p>For more information about NGINX Ingress Controller installation, take a look at the <a href="https://kubernetes.github.io/ingress-nginx/deploy/">official ingress-nginx documentation</a>.</p>
+<h2 id="alternative-examples-for-ingress-controllers-on-k0s">Alternative examples for Ingress Controllers on k0s<a class="headerlink" href="#alternative-examples-for-ingress-controllers-on-k0s" title="Permanent link">#</a></h2>
+<p><a href="https://docs.k0sproject.io/main/examples/traefik-ingress/">Traefik Ingress</a></p>
                 
               
               
@@ -1156,6 +1415,41 @@
       
         
 <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../metallb-loadbalancer/" class="md-footer__link md-footer__link--prev" aria-label="Previous: MetalLB Load Balancer" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              MetalLB Load Balancer
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../traefik-ingress/" class="md-footer__link md-footer__link--next" aria-label="Next: Traefik Ingress Controller" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Traefik Ingress Controller
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
