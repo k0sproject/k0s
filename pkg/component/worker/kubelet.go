@@ -77,7 +77,12 @@ func (k *Kubelet) Init() error {
 
 	if runtime.GOOS == "linux" {
 		for _, symlink := range []string{"iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
-			err := os.Symlink("xtables-legacy-multi", filepath.Join(k.K0sVars.BinDir, symlink))
+			symlinkPath := filepath.Join(k.K0sVars.BinDir, symlink)
+
+			// remove if it exist and ignore error if it doesn't
+			_ = os.Remove(symlinkPath)
+
+			err := os.Symlink("xtables-legacy-multi", symlinkPath)
 			if err != nil {
 				return fmt.Errorf("failed to create symlink %s: %w", symlink, err)
 			}
