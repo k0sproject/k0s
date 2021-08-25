@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -35,7 +35,7 @@ func (c CalicoInstaller) Init() error {
 		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
 	}
 
-	if err := ioutil.WriteFile(path, []byte(installCalicoPowershell), 777); err != nil {
+	if err := os.WriteFile(path, []byte(installCalicoPowershell), 777); err != nil {
 		return fmt.Errorf("can't unpack calico installer: %v", err)
 	}
 
@@ -82,11 +82,11 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected response status: %s", resp.Status)
 	}
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("can't read response body: %v", err)
 	}
-	if err := ioutil.WriteFile(path, b, 0700); err != nil {
+	if err := os.WriteFile(path, b, 0700); err != nil {
 		return fmt.Errorf("can't save kubeconfig for calico: %v", err)
 	}
 	posh := NewPowershell()
@@ -243,7 +243,7 @@ function GetCalicoKubeConfig()
       [parameter(Mandatory=$false)] $SecretName = "calico-node",
       [parameter(Mandatory=$false)] $KubeConfigPath = "C:\\var\\lib\\k0s\\kubelet-bootstrap.conf"
     )
-	Move-Item -Path C:\\calico-kube-config -Destination C:\\CalicoWindows\calico-kube-config 
+	Move-Item -Path C:\\calico-kube-config -Destination C:\\CalicoWindows\calico-kube-config
 }
 
 
@@ -319,7 +319,7 @@ if ($platform -EQ "ec2") {
 
     $calicoNs = GetCalicoNamespace
     GetCalicoKubeConfig -CalicoNamespace $calicoNs
-    $Backend = GetBackendType 
+    $Backend = GetBackendType
 
     Write-Host "Backend networking is $Backend"
     if ($Backend -EQ "bgp") {

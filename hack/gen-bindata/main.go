@@ -23,7 +23,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -50,12 +49,12 @@ func compressFiles(prefix string) []fileInfo {
 	// compress the files
 	var wg sync.WaitGroup
 	for _, dir := range flag.Args() {
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, f := range files {
-			tmpf, err := ioutil.TempFile("", f.Name())
+			tmpf, err := os.CreateTemp("", f.Name())
 			if err != nil {
 				log.Fatal(err)
 			}

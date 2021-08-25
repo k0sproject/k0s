@@ -18,7 +18,7 @@ package controller
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -35,7 +35,7 @@ type FsManifestsSaver struct {
 // Save saves given manifest under the given path
 func (f FsManifestsSaver) Save(dst string, content []byte) error {
 	target := filepath.Join(f.dir, dst)
-	if err := ioutil.WriteFile(target, content, constant.ManifestsDirMode); err != nil {
+	if err := os.WriteFile(target, content, constant.ManifestsDirMode); err != nil {
 		return fmt.Errorf("can't write manifest %s: %v", target, err)
 	}
 	logrus.WithField("component", "manifest-saver").Debugf("succesfully wrote %s", target)

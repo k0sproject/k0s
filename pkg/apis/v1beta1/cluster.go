@@ -17,9 +17,10 @@ package v1beta1
 
 import (
 	"fmt"
-	"github.com/k0sproject/k0s/internal/util"
-	"io/ioutil"
+	"io"
 	"os"
+
+	"github.com/k0sproject/k0s/internal/util"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -129,7 +130,7 @@ func validateSpecs(v Validateable) []error {
 
 // ConfigFromFile ...
 func ConfigFromFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
@@ -139,7 +140,7 @@ func ConfigFromFile(filename string, k0sVars constant.CfgVars) (*ClusterConfig, 
 
 // ConfigFromStdin tries to read k0s.yaml config from stdin
 func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
-	input, err := ioutil.ReadAll(os.Stdin)
+	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}

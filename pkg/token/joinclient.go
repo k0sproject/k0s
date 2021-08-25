@@ -18,7 +18,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 
@@ -88,7 +88,7 @@ func (j *JoinClient) GetCA() (v1beta1.CaResponse, error) {
 	if resp.Body == nil {
 		return caData, fmt.Errorf("response body is nil")
 	}
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return caData, err
 	}
@@ -130,7 +130,7 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) 
 		return etcdResponse, fmt.Errorf("unexpected response status when trying to join etcd cluster: %s", resp.Status)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return etcdResponse, err
 	}
