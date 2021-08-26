@@ -294,3 +294,13 @@ spec:
     telemetry:
       enabled: true
 ```
+
+## Disabling controller components
+
+k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:
+
+```sh
+--disable-components strings                     disable components (valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac)
+```
+
+As seen from the component list above, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.
