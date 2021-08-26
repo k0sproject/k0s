@@ -17,6 +17,7 @@ package config
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -55,8 +56,9 @@ type CLIOptions struct {
 
 // Shared controller cli flags
 type ControllerOptions struct {
-	EnableWorker bool
-	SingleNode   bool
+	EnableWorker      bool
+	SingleNode        bool
+	DisableComponents []string
 
 	EnableK0sCloudProvider          bool
 	K0sCloudProviderUpdateFrequency time.Duration
@@ -133,11 +135,30 @@ func GetWorkerFlags() *pflag.FlagSet {
 	return flagset
 }
 
+func AvailableComponents() []string {
+	return []string{
+		constant.KonnectivityServerComponentName,
+		constant.KubeSchedulerComponentName,
+		constant.KubeControllerManagerComponentName,
+		constant.ControlAPIComponentName,
+		constant.CsrApproverComponentName,
+		constant.DefaultPspComponentName,
+		constant.KubeProxyComponentName,
+		constant.CoreDNSComponentname,
+		constant.NetworkProviderComponentName,
+		constant.HelmComponentName,
+		constant.MetricsServerComponentName,
+		constant.KubeletConfigComponentName,
+		constant.SystemRbacComponentName,
+	}
+}
+
 func GetControllerFlags() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
+	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(AvailableComponents()[:], ",")+")")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.BoolVar(&controllerOpts.SingleNode, "single", false, "enable single node (implies --enable-worker, default false)")
