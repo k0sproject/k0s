@@ -671,6 +671,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#disabling-controller-components" class="md-nav__link">
+    Disabling controller components
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1315,6 +1322,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#disabling-controller-components" class="md-nav__link">
+    Disabling controller components
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1729,6 +1743,11 @@ sudo k0s start
     <span class="nt">telemetry</span><span class="p">:</span>
       <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
+<h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
+<p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac<span class="o">)</span>
+</code></pre></div>
+<p>As seen from the component list above, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.</p>
                 
               
               
