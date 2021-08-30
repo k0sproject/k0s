@@ -1,7 +1,7 @@
 package cleanup
 
 import (
-	"github.com/k0sproject/k0s/internal/util"
+	iusers "github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
@@ -25,7 +25,7 @@ func (u *users) NeedsToRun() bool {
 
 	users := install.GetControllerUsers(clusterConfig)
 	for _, user := range users {
-		if exists, _ := util.CheckIfUserExists(user); exists {
+		if exists, _ := iusers.CheckIfUserExists(user); exists {
 			return true
 		}
 	}

@@ -21,7 +21,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -41,7 +41,7 @@ type Scheduler struct {
 // Init extracts the needed binaries
 func (a *Scheduler) Init() error {
 	var err error
-	a.uid, err = util.GetUID(constant.SchedulerUser)
+	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}

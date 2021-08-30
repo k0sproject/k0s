@@ -13,13 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package util
+package flags
 
-import "strings"
+import (
+	"strings"
 
-// SplitFlags splits arbitrary set of flags into MappedArgs struct
-func SplitFlags(input string) MappedArgs {
-	mArgs := MappedArgs{}
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+)
+
+// Split splits arbitrary set of flags into StringMap struct
+func Split(input string) stringmap.StringMap {
+	mArgs := stringmap.StringMap{}
 	args := strings.Split(input, " ")
 	for _, a := range args {
 		av := strings.SplitN(a, "=", 2)

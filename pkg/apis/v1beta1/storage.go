@@ -20,7 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -105,7 +105,7 @@ type EtcdConfig struct {
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults
 func DefaultEtcdConfig() *EtcdConfig {
-	addr, err := util.FirstPublicAddress()
+	addr, err := iface.FirstPublicAddress()
 	if err != nil {
 		logrus.Warnf("failed to resolve etcd peering address automatically, using loopback")
 		addr = "127.0.0.1"

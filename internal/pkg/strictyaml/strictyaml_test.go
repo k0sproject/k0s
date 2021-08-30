@@ -1,8 +1,9 @@
-package util
+package strictyaml
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // ClusterConfig cluster manifest
@@ -15,7 +16,7 @@ func TestDoNotFailOnObsoleteFields(t *testing.T) {
 		input := `
 stringA: stringValue
 stringB: shouldBeIgnoredAndGiveNoError
-stringC: 
+stringC:
   key: value
 `
 		tgt := testConfig{}
@@ -28,7 +29,7 @@ stringC:
 		input := `
 stringA: stringValue
 stringB: shouldGiveErrorBecauseNotMasked
-stringC: 
+stringC:
   key: value
 `
 		tgt := testConfig{}

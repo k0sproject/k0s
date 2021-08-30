@@ -27,7 +27,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -76,7 +77,7 @@ type egressSelectorConfig struct {
 // Init extracts needed binaries
 func (a *APIServer) Init() error {
 	var err error
-	a.uid, err = util.GetUID(constant.ApiserverUser)
+	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-apiserver as root: %w", err))
 	}
@@ -173,7 +174,7 @@ func (a *APIServer) Run() error {
 }
 
 func (a *APIServer) writeKonnectivityConfig() error {
-	tw := util.TemplateWriter{
+	tw := templatewriter.TemplateWriter{
 		Name:     "konnectivity",
 		Template: egressSelectorConfigTemplate,
 		Data: egressSelectorConfig{

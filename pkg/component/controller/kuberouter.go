@@ -18,7 +18,7 @@ package controller
 import (
 	"bytes"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -76,7 +76,7 @@ func (c *KubeRouter) Run() error {
 	}
 
 	output := bytes.NewBuffer([]byte{})
-	tw := util.TemplateWriter{
+	tw := templatewriter.TemplateWriter{
 		Name:     "kube-router",
 		Template: kubeRouterTemplate,
 		Data:     cfg,
