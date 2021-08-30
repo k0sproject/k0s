@@ -28,7 +28,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -120,7 +121,7 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 
 func (k *KubeletConfig) save(data []byte) error {
 	kubeletDir := path.Join(k.k0sVars.ManifestsDir, "kubelet")
-	err := util.InitDirectory(kubeletDir, constant.ManifestsDirMode)
+	err := dir.Init(kubeletDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func (k *KubeletConfig) writeConfigMapWithProfile(w io.Writer, name string, prof
 	if err != nil {
 		return err
 	}
-	tw := util.TemplateWriter{
+	tw := templatewriter.TemplateWriter{
 		Name:     "kubelet-config",
 		Template: kubeletConfigsManifestTemplate,
 		Data: struct {
@@ -158,7 +159,7 @@ func formatProfileName(name string) string {
 }
 
 func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []string) error {
-	tw := util.TemplateWriter{
+	tw := templatewriter.TemplateWriter{
 		Name:     "kubelet-config-rbac",
 		Template: rbacRoleAndBindingsManifestTemplate,
 		Data: struct {

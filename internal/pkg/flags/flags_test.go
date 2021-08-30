@@ -13,23 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package util
+package flags
 
-import "crypto/rand"
+import (
+	"testing"
 
-var letters = "abcdefghijklmnopqrstuvwxyz0123456789"
+	"github.com/stretchr/testify/assert"
+)
 
-// RandomString generates a random string with given length
-func RandomString(length int) string {
+func TestFlagSplitting(t *testing.T) {
+	args := "--foo=bar --foobar=xyz,asd --bool-flag"
 
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		// Not much we can do on broken system
-		panic("random is broken: " + err.Error())
-	}
+	m := Split(args)
 
-	for i, b := range bytes {
-		bytes[i] = letters[b%byte(len(letters))]
-	}
-	return string(bytes)
+	assert.Equal(t, 3, len(m))
+	assert.Equal(t, "bar", m["--foo"])
+	assert.Equal(t, "xyz,asd", m["--foobar"])
+	assert.Equal(t, "", m["--bool-flag"])
+}
+
+func TestFlagSplittingBoolFlags(t *testing.T) {
+	args := "--bool-flag"
+
+	m := Split(args)
+
+	assert.Equal(t, 1, len(m))
+	assert.Equal(t, "", m["--bool-flag"])
 }

@@ -22,7 +22,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -43,9 +43,9 @@ func (f FsManifestsSaver) Save(dst string, content []byte) error {
 }
 
 // NewManifestsSaver builds new filesystem manifests saver
-func NewManifestsSaver(dir string, dataDir string) (*FsManifestsSaver, error) {
-	manifestDir := path.Join(dataDir, "manifests", dir)
-	err := util.InitDirectory(manifestDir, constant.ManifestsDirMode)
+func NewManifestsSaver(manifest string, dataDir string) (*FsManifestsSaver, error) {
+	manifestDir := path.Join(dataDir, "manifests", manifest)
+	err := dir.Init(manifestDir, constant.ManifestsDirMode)
 	if err != nil {
 		return nil, err
 	}

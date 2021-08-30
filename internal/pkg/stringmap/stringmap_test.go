@@ -1,4 +1,4 @@
-package util
+package stringmap
 
 import (
 	"sort"
@@ -10,12 +10,12 @@ import (
 func TestToArgs(t *testing.T) {
 	tests := []struct {
 		name string
-		args MappedArgs
+		args StringMap
 		want []string
 	}{
 		{
 			"basic",
-			MappedArgs{
+			StringMap{
 				"foo":   "bar",
 				"bar":   "baf",
 				"empty": "",
@@ -35,11 +35,11 @@ func TestToArgs(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
-	original := MappedArgs{
+	original := StringMap{
 		"foo": "bar",
 	}
 
-	original.Merge(MappedArgs{
+	original.Merge(StringMap{
 		"another": "val",
 		"foo":     "overridden",
 	})

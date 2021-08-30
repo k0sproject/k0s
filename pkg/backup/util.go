@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
 
 const timeStampLayout = "2006-01-02T15_04_05_000Z"
@@ -83,7 +83,7 @@ func addToArchive(tw *tar.Writer, filename string, baseDir string) error {
 		return fmt.Errorf("failed to write file header to archive: %v", err)
 	}
 
-	if !util.IsDirectory(filename) {
+	if !dir.IsDirectory(filename) {
 		// Copy file content to tar archive
 		_, err = io.Copy(tw, file)
 		if err != nil {

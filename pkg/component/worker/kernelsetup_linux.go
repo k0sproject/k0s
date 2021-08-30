@@ -24,9 +24,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/sirupsen/logrus"
 )
 
 // check if kernel has overlay fs
@@ -65,10 +65,10 @@ func KernelSetup() {
 	if !hasFilesystem("overlay") {
 		modprobe("overlay")
 	}
-	if !util.FileExists("/proc/net/nf_conntrack") {
+	if !file.Exists("/proc/net/nf_conntrack") {
 		modprobe("nf_conntrack")
 	}
-	if !util.FileExists("/proc/sys/net/bridge/bridge-nf-call-iptables") {
+	if !file.Exists("/proc/sys/net/bridge/bridge-nf-call-iptables") {
 		modprobe("br_netfilter")
 	}
 	enableSysCtl("net/ipv4/conf/all/forwarding")

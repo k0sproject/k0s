@@ -13,29 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package util
+package random
 
-import (
-	"os/user"
-	"strconv"
-)
+import "crypto/rand"
 
-// GetUID returns uid of given username and logs a warning if its missing
-func GetUID(name string) (int, error) {
-	entry, err := user.Lookup(name)
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(entry.Uid)
-}
+var letters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-func CheckIfUserExists(name string) (bool, error) {
-	_, err := user.Lookup(name)
-	if _, ok := err.(user.UnknownUserError); ok {
-		return false, nil
+// String generates a random string with given length
+func String(length int) string {
+
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		// Not much we can do on broken system
+		panic("random is broken: " + err.Error())
 	}
-	if err != nil {
-		return false, err
+
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
 	}
-	return true, nil
+	return string(bytes)
 }
