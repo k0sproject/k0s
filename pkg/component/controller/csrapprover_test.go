@@ -31,7 +31,6 @@ import (
 	certv1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestBasicCRSApprover(t *testing.T) {
@@ -59,7 +58,7 @@ func TestBasicCRSApprover(t *testing.T) {
 		},
 	}
 
-	newCsr, err := client.CertificatesV1().CertificateSigningRequests().Create(ctx, csrReq, v1.CreateOptions{})
+	newCsr, err := client.CertificatesV1().CertificateSigningRequests().Create(ctx, csrReq, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := &v1beta1.ClusterConfig{
@@ -75,7 +74,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	assert.NoError(t, c.Init())
 	assert.NoError(t, c.approveCSR())
 
-	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, v1.GetOptions{})
+	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, csr)
 	assert.True(t, csr.Name == newCsr.Name)
