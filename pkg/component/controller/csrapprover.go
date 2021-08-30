@@ -26,8 +26,6 @@ import (
 	"time"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	authorization "k8s.io/api/authorization/v1"
@@ -60,7 +58,7 @@ type CSRApprover struct {
 }
 
 // NewCSRApprover creates the CSRApprover component
-func NewCSRApprover(c *k0sv1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *CSRApprover {
+func NewCSRApprover(c *config.ClusterConfig, leaderElector LeaderElector, kubeClientFactory kubeutil.ClientFactory) *CSRApprover {
 	d := atomic.Value{}
 	d.Store(true)
 	return &CSRApprover{

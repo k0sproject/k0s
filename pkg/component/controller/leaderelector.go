@@ -21,7 +21,6 @@ import (
 	"sync/atomic"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
@@ -51,7 +50,7 @@ type leaderElector struct {
 }
 
 // NewLeaderElector creates new leader elector
-func NewLeaderElector(c *k0sv1beta1.ClusterConfig, kubeClientFactory kubeutil.ClientFactory) LeaderElector {
+func NewLeaderElector(c *config.ClusterConfig, kubeClientFactory kubeutil.ClientFactory) LeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
 	return &leaderElector{
