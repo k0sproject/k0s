@@ -9,7 +9,7 @@ variable "k0s_version" {
 
 variable "sonobuoy_version" {
   type    = string
-  default = "0.20.0"
+  default = "0.53.2"
 }
 
 variable "k8s_version" {
