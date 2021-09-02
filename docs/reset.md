@@ -23,7 +23,7 @@ To prevent accidental triggering, `k0s reset` will not run if the k0s service is
     INFO[2021-06-29 13:08:44] no config file given, using defaults
     INFO[2021-06-29 13:08:44] * remove k0s users step:
     INFO[2021-06-29 13:08:44] no config file given, using defaults
-    INFO[2021-06-29 13:08:44] * uninstal service step
+    INFO[2021-06-29 13:08:44] * uninstall service step
     INFO[2021-06-29 13:08:44] Uninstalling the k0s service
     INFO[2021-06-29 13:08:45] * remove directories step
     INFO[2021-06-29 13:08:45] * CNI leftovers cleanup step
@@ -50,8 +50,8 @@ k0sctl can be used to connect each node and remove all k0s-related files and pro
     INFO ==> Running phase: Prepare hosts    
     INFO ==> Running phase: Gather k0s facts 
     INFO [ssh] 13.53.43.63:22: found existing configuration 
-    INFO [ssh] 13.53.43.63:22: is running k0s controller version 1.21.3+k0s.0
-    INFO [ssh] 13.53.218.149:22: is running k0s worker version 1.21.3+k0s.0
+    INFO [ssh] 13.53.43.63:22: is running k0s controller version 1.21.4+k0s.0
+    INFO [ssh] 13.53.218.149:22: is running k0s worker version 1.21.4+k0s.0
     INFO [ssh] 13.53.43.63:22: checking if worker  has joined 
     INFO ==> Running phase: Reset hosts      
     INFO [ssh] 13.53.43.63:22: stopping k0s           

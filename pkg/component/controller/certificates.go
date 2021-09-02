@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -81,7 +80,7 @@ func (c *Certificates) Init() error {
 
 	// We need CA cert loaded to generate client configs
 	logrus.Debugf("CA key and cert exists, loading")
-	cert, err := ioutil.ReadFile(caCertPath)
+	cert, err := os.ReadFile(caCertPath)
 	if err != nil {
 		return fmt.Errorf("failed to read ca cert: %w", err)
 	}

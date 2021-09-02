@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"path"
@@ -70,7 +69,7 @@ func NewControllerCmd() *cobra.Command {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
 			if len(c.TokenFile) > 0 {
-				bytes, err := ioutil.ReadFile(c.TokenFile)
+				bytes, err := os.ReadFile(c.TokenFile)
 				if err != nil {
 					return err
 				}
@@ -120,7 +119,7 @@ func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
 		{path: filepath.Join(certRootDir, "sa.key"), data: caData.SAKey, mode: constant.CertSecureMode},
 		{path: filepath.Join(certRootDir, "sa.pub"), data: caData.SAPub, mode: constant.CertMode},
 	} {
-		err := ioutil.WriteFile(f.path, f.data, f.mode)
+		err := os.WriteFile(f.path, f.data, f.mode)
 		if err != nil {
 			return fmt.Errorf("failed to write %s: %w", f.path, err)
 		}

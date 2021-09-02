@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -88,7 +87,7 @@ func (s *FootlooseSuite) SetupSuite() {
 	if s.KonnectivityAgentPort == 0 {
 		s.KonnectivityAgentPort = 8132
 	}
-	dir, err := ioutil.TempDir("", "footloose-keys")
+	dir, err := os.MkdirTemp("", "footloose-keys")
 	if err != nil {
 		s.T().Logf("ERROR: failed to load footloose config: %s", err.Error())
 		s.T().FailNow()
@@ -191,7 +190,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 			s.T().Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
 		}
 		logPath := path.Join("/tmp", fmt.Sprintf("%s.log", m.Hostname()))
-		if err := ioutil.WriteFile(logPath, []byte(log), 0700); err != nil {
+		if err := os.WriteFile(logPath, []byte(log), 0700); err != nil {
 			s.T().Logf("failed to save logs from machine %s: %s", m.Hostname(), err)
 		}
 
@@ -206,7 +205,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 			return
 		}
 		filename := path.Join(os.TempDir(), util.RandomString(8)+"-footloose.yaml")
-		err = ioutil.WriteFile(filename, footlooseYaml, 0700)
+		err = os.WriteFile(filename, footlooseYaml, 0700)
 		if err != nil {
 			s.T().Logf("failed to write footloose yaml: %s", err.Error())
 			return

@@ -37,10 +37,10 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
-      - name: Set up Go 1.x
+      - name: Set up Go 1.16
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ^1.16
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
@@ -136,7 +136,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ^1.16
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
@@ -170,7 +170,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.13
+          go-version: ^1.16
         id: go
 
       - name: Check out code into the Go module directory

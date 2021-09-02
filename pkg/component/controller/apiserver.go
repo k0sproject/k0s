@@ -19,8 +19,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 
@@ -203,7 +204,7 @@ func (a *APIServer) Healthy() error {
 		return err
 	}
 	// Load CA cert
-	caCert, err := ioutil.ReadFile(path.Join(a.K0sVars.CertRootDir, "ca.crt"))
+	caCert, err := os.ReadFile(path.Join(a.K0sVars.CertRootDir, "ca.crt"))
 	if err != nil {
 		return err
 	}
@@ -224,7 +225,7 @@ func (a *APIServer) Healthy() error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err == nil {
 			logrus.Debugf("api server readyz output:\n %s", string(body))
 		}

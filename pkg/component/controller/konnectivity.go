@@ -31,8 +31,7 @@ import (
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -45,7 +44,7 @@ type Konnectivity struct {
 	uid           int
 
 	// used for lease lock
-	KubeClientFactory k8sutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactory
 
 	serverCount int
 
@@ -240,7 +239,7 @@ func (k *Konnectivity) countLeaseHolders() (int, error) {
 	}
 	for _, l := range leases.Items {
 		if strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl") {
-			if kubernetes.IsValidLease(l) {
+			if kubeutil.IsValidLease(l) {
 				count++
 			}
 		}

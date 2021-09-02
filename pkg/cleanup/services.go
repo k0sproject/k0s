@@ -15,7 +15,7 @@ type services struct {
 
 // Name returns the name of the step
 func (s *services) Name() string {
-	return "uninstal service step"
+	return "uninstall service step"
 }
 
 // NeedsToRun checks if k0s service files are persent on the host

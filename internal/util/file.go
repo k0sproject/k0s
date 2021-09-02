@@ -18,11 +18,11 @@ package util
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 // FileExists checks if a file exists and is not a directory before we
@@ -97,12 +97,12 @@ func FileCopy(src, dst string) error {
 		return fmt.Errorf("%s is not a regular file", src)
 	}
 
-	input, err := ioutil.ReadFile(src)
+	input, err := os.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("error reading source file (%v): %v", src, err)
 	}
 
-	err = ioutil.WriteFile(dst, input, sourceFileStat.Mode())
+	err = os.WriteFile(dst, input, sourceFileStat.Mode())
 	if err != nil {
 		return fmt.Errorf("error writing destination file (%v): %v", dst, err)
 	}

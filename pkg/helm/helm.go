@@ -2,7 +2,6 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +68,7 @@ func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
 
-	b, err := ioutil.ReadFile(hc.repoFile)
+	b, err := os.ReadFile(hc.repoFile)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}

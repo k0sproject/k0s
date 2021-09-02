@@ -17,7 +17,6 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -33,7 +32,7 @@ func GetAllDirs(base string) ([]string, error) {
 	if !IsDirectory(base) {
 		return dirs, fmt.Errorf("%s is not a directory", base)
 	}
-	fileInfos, err := ioutil.ReadDir(base)
+	fileInfos, err := os.ReadDir(base)
 	if err != nil {
 		return dirs, err
 	}

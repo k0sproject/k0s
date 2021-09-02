@@ -17,7 +17,6 @@ package sonobuoy
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -70,7 +69,7 @@ func (s *NetworkSuite) TestSigNetwork() {
 		`--e2e-focus=\[sig-network\].*\[Conformance\]`,
 		`--e2e-skip=\[Serial\]`,
 		"--e2e-parallel=y",
-		"--kube-conformance-image-version=v1.21.3",
+		"--kube-conformance-image-version=v1.21.4",
 	}
 	s.T().Log("running sonobuoy, this may take a while")
 	sonoFinished := make(chan bool)
@@ -152,7 +151,7 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 }
 
 func (s *NetworkSuite) dumpKubeConfig() string {
-	dir, err := ioutil.TempDir("", "sig-network-kubeconfig-")
+	dir, err := os.MkdirTemp("", "sig-network-kubeconfig-")
 	s.NoError(err)
 	ssh, err := s.SSH(s.ControllerIP)
 	s.NoError(err)

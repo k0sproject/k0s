@@ -20,9 +20,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -149,12 +149,12 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 		}
 
 		etcdCaCertPath, etcdCaCertKey := filepath.Join(c.K0sVars.EtcdCertDir, "ca.crt"), filepath.Join(c.K0sVars.EtcdCertDir, "ca.key")
-		etcdCACert, err := ioutil.ReadFile(etcdCaCertPath)
+		etcdCACert, err := os.ReadFile(etcdCaCertPath)
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
-		etcdCAKey, err := ioutil.ReadFile(etcdCaCertKey)
+		etcdCAKey, err := os.ReadFile(etcdCaCertKey)
 
 		if err != nil {
 			sendError(err, resp)
@@ -241,27 +241,27 @@ func (c *CmdOpts) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		caResp := v1beta1.CaResponse{}
-		key, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
+		key, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Key = key
-		crt, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
+		crt, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.Cert = crt
 
-		saKey, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.key"))
+		saKey, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.key"))
 		if err != nil {
 			sendError(err, resp)
 			return
 		}
 		caResp.SAKey = saKey
 
-		saPub, err := ioutil.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.pub"))
+		saPub, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "sa.pub"))
 		if err != nil {
 			sendError(err, resp)
 			return

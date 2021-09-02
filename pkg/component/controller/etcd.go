@@ -18,7 +18,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -104,12 +103,12 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 	if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
 		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 	} else {
-		err = ioutil.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
+		err = os.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
 		if err != nil {
 			return nil, err
 		}
 
-		err = ioutil.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
+		err = os.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
 		if err != nil {
 			return nil, err
 		}

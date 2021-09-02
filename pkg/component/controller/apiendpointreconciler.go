@@ -25,7 +25,6 @@ import (
 	"time"
 
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -45,7 +44,7 @@ type APIEndpointReconciler struct {
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(c *k0sv1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *APIEndpointReconciler {
+func NewEndpointReconciler(c *config.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *APIEndpointReconciler {
 	d := atomic.Value{}
 	d.Store(true)
 	return &APIEndpointReconciler{
