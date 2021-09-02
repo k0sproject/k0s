@@ -49,12 +49,6 @@ func NewRestoreCmd() *cobra.Command {
 			if len(args) != 1 {
 				return fmt.Errorf("path to backup archive expected")
 			}
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-
-			c.ClusterConfig = cfg
 			return c.restore(args[0])
 		},
 		PreRunE: preRunValidateConfig,

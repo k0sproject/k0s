@@ -20,6 +20,8 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -40,9 +42,13 @@ type DefaultPSP struct {
 }
 
 // NewDefaultPSP creates new system level RBAC reconciler
-func NewDefaultPSP(clusterSpec *v1beta1.ClusterSpec, k0sVars constant.CfgVars) (*DefaultPSP, error) {
+func NewDefaultPSP(k0sVars constant.CfgVars) (*DefaultPSP, error) {
+	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	if err != nil {
+		return nil, err
+	}
 	return &DefaultPSP{
-		clusterSpec: clusterSpec,
+		clusterSpec: cfg.Spec,
 		k0sVars:     k0sVars,
 	}, nil
 }

@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -28,10 +27,9 @@ import (
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath    string
-	ClusterConfig *v1beta1.ClusterConfig
-	K0sVars       constant.CfgVars
-	supervisor    supervisor.Supervisor
+	ConfigPath string
+	K0sVars    constant.CfgVars
+	supervisor supervisor.Supervisor
 }
 
 // Init does currently nothing

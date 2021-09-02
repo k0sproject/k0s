@@ -87,18 +87,19 @@ const (
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
 
 	// Controller component names
-	KonnectivityServerComponentName    = "konnectivity-server"
-	KubeSchedulerComponentName         = "kube-scheduler"
-	KubeControllerManagerComponentName = "kube-controller-manager"
+	APIConfigComponentName             = "api-config"
 	ControlAPIComponentName            = "control-api"
+	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
 	DefaultPspComponentName            = "default-psp"
-	KubeProxyComponentName             = "kube-proxy"
-	CoreDNSComponentname               = "coredns"
-	NetworkProviderComponentName       = "network-provider"
 	HelmComponentName                  = "helm"
-	MetricsServerComponentName         = "metrics-server"
+	KonnectivityServerComponentName    = "konnectivity-server"
+	KubeControllerManagerComponentName = "kube-controller-manager"
+	KubeProxyComponentName             = "kube-proxy"
+	KubeSchedulerComponentName         = "kube-scheduler"
 	KubeletConfigComponentName         = "kubelet-config"
+	MetricsServerComponentName         = "metrics-server"
+	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs

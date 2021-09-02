@@ -42,7 +42,7 @@ func validateConfigCmd() *cobra.Command {
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			_, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			_, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
 				fmt.Println(err)
 			}

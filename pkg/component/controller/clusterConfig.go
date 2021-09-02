@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
@@ -25,7 +27,7 @@ var (
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
 type ClusterConfigReconciler struct {
-	ClusterConfig    *v1beta1.ClusterConfig
+	YamlConfig       *v1beta1.ClusterConfig
 	ComponentManager *component.Manager
 
 	configClient    cfgClient.ClusterConfigInterface
@@ -38,18 +40,22 @@ type ClusterConfigReconciler struct {
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(c *v1beta1.ClusterConfig, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager) *ClusterConfigReconciler {
+func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager) (*ClusterConfigReconciler, error) {
 	d := atomic.Value{}
 	d.Store(true)
 
+	cfg, err := config.GetYamlFromFile(cfgFile, k0sVars)
+	if err != nil {
+		return nil, err
+	}
 	return &ClusterConfigReconciler{
-		ClusterConfig:    c,
 		ComponentManager: mgr,
+		YamlConfig:       cfg,
 
 		kubeConfig:    k0sVars.AdminKubeConfigPath,
 		leaderElector: leaderElector,
 		log:           logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
-	}
+	}, nil
 }
 
 func (r *ClusterConfigReconciler) Init() error {
@@ -149,7 +155,7 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
 		r.log.Debug("I am not the leader, not reconciling cluster configuration")
 		return nil
 	}
-	clusterWideConfig := clusterConfigMinusNodeConfig(r.ClusterConfig)
+	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig)
 	clusterConfig, err := r.configClient.Create(context.Background(), clusterWideConfig, cOpts)
 	if err != nil {
 		return err
@@ -157,41 +163,4 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
 	r.resourceVersion = clusterConfig.ResourceVersion
 	r.log.Info("successfully wrote cluster-config to API")
 	return nil
-}
-
-// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
-// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-//		- APISpec
-//		- StorageSpec
-//		- Network.ServiceCIDR
-// TODO: separate bootstrapping configuration from node-specific configuration
-func clusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.ClusterConfig {
-	clusterSpec := &v1beta1.ClusterSpec{
-		ControllerManager: config.Spec.ControllerManager,
-		Scheduler:         config.Spec.Scheduler,
-		Network: &v1beta1.Network{
-			Calico:     config.Spec.Network.Calico,
-			DualStack:  config.Spec.Network.DualStack,
-			KubeProxy:  config.Spec.Network.KubeProxy,
-			KubeRouter: config.Spec.Network.KubeRouter,
-			PodCIDR:    config.Spec.Network.PodCIDR,
-			Provider:   config.Spec.Network.Provider,
-		},
-		PodSecurityPolicy: config.Spec.PodSecurityPolicy,
-		WorkerProfiles:    config.Spec.WorkerProfiles,
-		Telemetry:         config.Spec.Telemetry,
-		Install:           config.Spec.Install,
-		Images:            config.Spec.Images,
-		Extensions:        config.Spec.Extensions,
-		Konnectivity:      config.Spec.Konnectivity,
-	}
-
-	return &v1beta1.ClusterConfig{
-		ObjectMeta: config.ObjectMeta,
-		TypeMeta:   config.TypeMeta,
-		DataDir:    config.DataDir,
-		Spec:       clusterSpec,
-		Status:     config.Status,
-	}
 }

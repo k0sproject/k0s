@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
@@ -36,8 +35,6 @@ type LeaderElector interface {
 }
 
 type leaderElector struct {
-	ClusterConfig *v1beta1.ClusterConfig
-
 	L *logrus.Entry
 
 	stopCh            chan struct{}
@@ -50,11 +47,10 @@ type leaderElector struct {
 }
 
 // NewLeaderElector creates new leader elector
-func NewLeaderElector(c *v1beta1.ClusterConfig, kubeClientFactory kubeutil.ClientFactoryInterface) LeaderElector {
+func NewLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) LeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
 	return &leaderElector{
-		ClusterConfig:     c,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		L:                 logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),

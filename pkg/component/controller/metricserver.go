@@ -23,6 +23,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -245,11 +247,15 @@ type metricsConfig struct {
 }
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
+func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
+	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	if err != nil {
+		return nil, err
+	}
 	return &MetricServer{
 		log:               log,
-		clusterConfig:     clusterConfig,
+		clusterConfig:     cfg,
 		K0sVars:           k0sVars,
 		kubeClientFactory: kubeClientFactory,
 	}, nil

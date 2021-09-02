@@ -28,26 +28,26 @@ import (
 
 // Manager manages components
 type Manager struct {
-	components []Component
+	Components []Component
 	sync       map[string]struct{}
 }
 
 // NewManager creates a manager
 func NewManager() *Manager {
 	return &Manager{
-		components: []Component{},
+		Components: []Component{},
 		sync:       map[string]struct{}{},
 	}
 }
 
 // Add adds a component to the manager
 func (m *Manager) Add(component Component) {
-	m.components = append(m.components, component)
+	m.Components = append(m.Components, component)
 }
 
 // AddSync adds a component to the manager that should be initialized synchronously
 func (m *Manager) AddSync(component Component) {
-	m.components = append(m.components, component)
+	m.Components = append(m.Components, component)
 	compName := reflect.TypeOf(component).Elem().Name()
 	m.sync[compName] = struct{}{}
 }
@@ -56,7 +56,7 @@ func (m *Manager) AddSync(component Component) {
 func (m *Manager) Init() error {
 	var g errgroup.Group
 
-	for _, comp := range m.components {
+	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		logrus.Infof("initializing %v\n", compName)
 		c := comp
@@ -76,11 +76,10 @@ func (m *Manager) Init() error {
 // Start starts all managed components
 func (m *Manager) Start(ctx context.Context) error {
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
-	for _, comp := range m.components {
+	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
-
 		if err := comp.Run(); err != nil {
 			return err
 		}
@@ -96,8 +95,8 @@ func (m *Manager) Start(ctx context.Context) error {
 // Stop stops all managed components
 func (m *Manager) Stop() error {
 	var ret error
-	for i := len(m.components) - 1; i >= 0; i-- {
-		if err := m.components[i].Stop(); err != nil {
+	for i := len(m.Components) - 1; i >= 0; i-- {
+		if err := m.Components[i].Stop(); err != nil {
 			logrus.Errorf("failed to stop component: %s", err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to stop components")
@@ -110,8 +109,8 @@ func (m *Manager) Stop() error {
 // Reoncile reconciles all managed components
 func (m *Manager) Reconcile() error {
 	var ret error
-	for i := len(m.components) - 1; i >= 0; i-- {
-		if err := m.components[i].Reconcile(); err != nil {
+	for i := len(m.Components) - 1; i >= 0; i-- {
+		if err := m.Components[i].Reconcile(); err != nil {
 			logrus.Errorf("failed to reconcile component: %s", err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to reconcile components")

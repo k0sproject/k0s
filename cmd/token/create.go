@@ -42,7 +42,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(clusterConfig, c.K0sVars, createTokenRole, expiry)
+				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(cfg, c.K0sVars, createTokenRole, expiry)
 
 				return err
 			})

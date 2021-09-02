@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +19,8 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -29,7 +29,7 @@ import (
 // Helm watch for Chart crd
 type HelmAddons struct {
 	Client            clientset.ChartV1Beta1Interface
-	ClusterConfig     *config.ClusterConfig
+	ClusterConfig     *k0sAPI.ClusterConfig
 	saver             manifestsSaver
 	L                 *logrus.Entry
 	stopCh            chan struct{}
@@ -41,9 +41,13 @@ type HelmAddons struct {
 }
 
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *config.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
+func NewHelmAddons(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
+	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	if err != nil {
+		return nil
+	}
 	return &HelmAddons{
-		ClusterConfig:     c,
+		ClusterConfig:     cfg,
 		saver:             s,
 		L:                 logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:            make(chan struct{}),
@@ -291,7 +295,7 @@ func (h *HelmAddons) reconcile(objectID string) error {
 	return nil
 }
 
-func (h *HelmAddons) addRepo(repo config.Repository) error {
+func (h *HelmAddons) addRepo(repo k0sAPI.Repository) error {
 	return h.helm.AddRepository(repo)
 }
 

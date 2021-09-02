@@ -60,11 +60,11 @@ func NewAPICmd() *cobra.Command {
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}
-			c.ClusterConfig = cfg
+			c.NodeConfig = cfg
 			return c.startAPI()
 		},
 	}
@@ -83,7 +83,7 @@ func (c *CmdOpts) startAPI() error {
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
 
-	if c.ClusterConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
+	if c.NodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		// Only mount the etcd handler if we're running on etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
@@ -91,7 +91,7 @@ func (c *CmdOpts) startAPI() error {
 		)
 	}
 
-	if c.ClusterConfig.Spec.Storage.IsJoinable() {
+	if c.NodeConfig.Spec.Storage.IsJoinable() {
 		router.Path(prefix + "/ca").Methods("GET").Handler(
 			c.controllerHandler(c.caHandler()),
 		)
@@ -102,7 +102,7 @@ func (c *CmdOpts) startAPI() error {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         fmt.Sprintf(":%d", c.ClusterConfig.Spec.API.K0sAPIPort),
+		Addr:         fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -221,7 +221,7 @@ users:
 				Token     string
 				Namespace string
 			}{
-				Server:    c.ClusterConfig.Spec.API.APIAddressURL(),
+				Server:    c.NodeConfig.Spec.API.APIAddressURL(),
 				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
 				Token:     string(secretWithToken.Data["token"]),
 				Namespace: string(secretWithToken.Data["namespace"]),
