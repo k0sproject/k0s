@@ -547,6 +547,26 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#os-dependencies" class="md-nav__link">
+    OS dependencies
+  </a>
+  
+    <nav class="md-nav" aria-label="OS dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
+    ContainerD needs apparmor_parser
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1163,6 +1183,26 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#os-dependencies" class="md-nav__link">
+    OS dependencies
+  </a>
+  
+    <nav class="md-nav" aria-label="OS dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
+    ContainerD needs apparmor_parser
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1248,6 +1288,11 @@ in addition to the k0s part.</p>
 </ul>
 <h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
 <p>For information on the ports that k0s needs to function, refer to <a href="../networking/">networking</a>.</p>
+<h2 id="os-dependencies">OS dependencies<a class="headerlink" href="#os-dependencies" title="Permanent link">#</a></h2>
+<p>k0s is packaged as a fully statically linked binary which contains all other needed components also as statically linked binaries. This means that in typical use cases there's no OS level dependencies.</p>
+<p>However some of the underlying components <em>may</em> have dependencies to OS level tools and packages in certain circumstances. The known cases are documented in below.</p>
+<h3 id="containerd-needs-apparmor_parser">ContainerD needs <code>apparmor_parser</code><a class="headerlink" href="#containerd-needs-apparmor_parser" title="Permanent link">#</a></h3>
+<p>If containerD <a href="https://github.com/containerd/containerd/blob/587fc092598791ab58bfa275958ce20cc5d80783/pkg/apparmor/apparmor_linux.go#L35-L44">detects</a> that the system is configured to use <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a> it will require a tool called <code>apparmor_parser</code> to be installed on the system.</p>
                 
               
               
