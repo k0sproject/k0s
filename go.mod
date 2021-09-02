@@ -9,7 +9,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.4.1
+	github.com/containerd/containerd v1.4.9
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/libnetwork v0.5.6
@@ -87,7 +87,7 @@ replace (
 replace (
 	github.com/containerd/cgroups => github.com/containerd/cgroups v0.0.0-20200531161412-0dbf7f05ba59
 	github.com/containerd/console => github.com/containerd/console v1.0.0
-	github.com/containerd/containerd => github.com/containerd/containerd v1.4.1
+	github.com/containerd/containerd => github.com/containerd/containerd v1.4.9
 	github.com/containerd/continuity => github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc
 	github.com/containerd/fifo => github.com/containerd/fifo v0.0.0-20190226154929-a9fb20d87448
 	github.com/containerd/go-runc => github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
