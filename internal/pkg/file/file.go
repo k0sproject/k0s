@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package file
 
 import (
 	"fmt"
@@ -22,26 +22,19 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/k0sproject/k0s/internal/pkg/users"
+
 	"github.com/sirupsen/logrus"
 )
 
-// FileExists checks if a file exists and is not a directory before we
+// Exists checks if a file exists and is not a directory before we
 // try using it to prevent further errors.
-func FileExists(fileName string) bool {
+func Exists(fileName string) bool {
 	info, err := os.Stat(fileName)
 	if os.IsNotExist(err) {
 		return false
 	}
 	return !info.IsDir()
-}
-
-// DirExists checks if a directory exists before we try using it
-func DirExists(dirName string) bool {
-	info, err := os.Stat(dirName)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return info.IsDir()
 }
 
 // CheckPathPermissions checks the correct permissions are for a path (file or directory)
@@ -71,10 +64,10 @@ func GetExecPath(fileName string) (*string, error) {
 	return &path, nil
 }
 
-// ChownFile changes file mode
-func ChownFile(file, owner string, permissions os.FileMode) error {
+// Chown changes file/dir mode
+func Chown(file, owner string, permissions os.FileMode) error {
 	// Chown the file properly for the owner
-	uid, _ := GetUID(owner)
+	uid, _ := users.GetUID(owner)
 	err := os.Chown(file, uid, -1)
 	if err != nil && os.Geteuid() == 0 {
 		return err
@@ -86,8 +79,8 @@ func ChownFile(file, owner string, permissions os.FileMode) error {
 	return nil
 }
 
-// FileCopy copies file from src to dst
-func FileCopy(src, dst string) error {
+// Copy copies file from src to dst
+func Copy(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -105,16 +98,6 @@ func FileCopy(src, dst string) error {
 	err = os.WriteFile(dst, input, sourceFileStat.Mode())
 	if err != nil {
 		return fmt.Errorf("error writing destination file (%v): %v", dst, err)
-	}
-	return nil
-}
-
-// DirCopy copies the content of a folder
-func DirCopy(src string, dst string) error {
-	cmd := exec.Command("cp", "-r", src, dst)
-	err := cmd.Run()
-	if err != nil {
-		return err
 	}
 	return nil
 }

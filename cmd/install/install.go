@@ -22,7 +22,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 )
@@ -50,7 +51,7 @@ func (c *CmdOpts) setup(role string, args []string) error {
 	}
 
 	// if cfgFile is not provided k0s will handle this so no need to check if the file exists.
-	if c.CfgFile != "" && !util.IsDirectory(c.CfgFile) && !util.FileExists(c.CfgFile) {
+	if c.CfgFile != "" && !dir.IsDirectory(c.CfgFile) && !file.Exists(c.CfgFile) {
 		return fmt.Errorf("file %s does not exist", c.CfgFile)
 	}
 	if role == "controller" {
@@ -92,7 +93,7 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 		if err != nil {
 			return err
 		}
-		if !util.FileExists(c.TokenFile) {
+		if !file.Exists(c.TokenFile) {
 			return fmt.Errorf("%s does not exist", c.TokenFile)
 		}
 	}

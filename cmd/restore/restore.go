@@ -24,7 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -81,12 +82,12 @@ func (c *CmdOpts) restore(path string) error {
 		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
-	if !util.FileExists(path) {
+	if !file.Exists(path) {
 		return fmt.Errorf("given file %s does not exist", path)
 	}
 
-	if !util.DirExists(c.K0sVars.DataDir) {
-		if err := util.InitDirectory(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
+	if !dir.Exists(c.K0sVars.DataDir) {
+		if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 			return err
 		}
 	}

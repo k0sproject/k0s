@@ -23,9 +23,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/sirupsen/logrus"
-
-	"github.com/k0sproject/k0s/internal/util"
 )
 
 // ExecutableIsOlder return true if currently running executable is older than given filepath
@@ -69,7 +68,7 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 	p := filepath.Join(dataDir, name)
 	logrus.Infof("Staging %s", p)
 
-	err := util.InitDirectory(filepath.Dir(p), filemode)
+	err := dir.Init(filepath.Dir(p), filemode)
 	if err != nil {
 		return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(p), err)
 	}

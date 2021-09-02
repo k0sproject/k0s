@@ -26,7 +26,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -276,7 +277,7 @@ func (c *CoreDNS) Init() error {
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
 	corednsDir := path.Join(c.K0sVars.ManifestsDir, "coredns")
-	err := util.InitDirectory(corednsDir, constant.ManifestsDirMode)
+	err := dir.Init(corednsDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
@@ -299,7 +300,7 @@ func (c *CoreDNS) Run() error {
 					c.log.Infof("current cfg matches existing, not gonna do anything")
 					continue
 				}
-				tw := util.TemplateWriter{
+				tw := templatewriter.TemplateWriter{
 					Name:     "coredns",
 					Template: coreDNSTemplate,
 					Data:     cfg,

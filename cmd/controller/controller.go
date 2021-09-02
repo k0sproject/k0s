@@ -31,7 +31,10 @@ import (
 	"github.com/spf13/cobra"
 
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -72,7 +75,7 @@ func NewControllerCmd() *cobra.Command {
 			}
 			if len(c.DisableComponents) > 0 {
 				for _, component := range c.DisableComponents {
-					if !util.StringSliceContains(config.AvailableComponents(), component) {
+					if !stringslice.Contains(config.AvailableComponents(), component) {
 						return fmt.Errorf("unknown component %s", component)
 					}
 				}
@@ -88,7 +91,7 @@ func NewControllerCmd() *cobra.Command {
 				c.EnableWorker = true
 				c.K0sVars.DefaultStorageType = "kine"
 			}
-			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
+			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -109,8 +112,8 @@ func NewControllerCmd() *cobra.Command {
 
 // If we've got CA in place we assume the node has already joined previously
 func (c *CmdOpts) needToJoin() bool {
-	if util.FileExists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
-		util.FileExists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
+	if file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
+		file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
 		return false
 	}
 	return true
@@ -164,10 +167,10 @@ func (c *CmdOpts) startController() error {
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
 	// create directories early with the proper permissions
-	if err := util.InitDirectory(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
+	if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 		return err
 	}
-	if err := util.InitDirectory(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+	if err := dir.Init(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 		return err
 	}
 
@@ -236,7 +239,7 @@ func (c *CmdOpts) startController() error {
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-	if !c.SingleNode && !util.StringSliceContains(c.DisableComponents, constant.KonnectivityServerComponentName) {
+	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName) {
 		componentManager.Add(&controller.Konnectivity{
 			ClusterConfig:     c.ClusterConfig,
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
@@ -244,14 +247,14 @@ func (c *CmdOpts) startController() error {
 			KubeClientFactory: adminClientFactory,
 		})
 	}
-	if !util.StringSliceContains(c.DisableComponents, constant.KubeSchedulerComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		componentManager.Add(&controller.Scheduler{
 			ClusterConfig: c.ClusterConfig,
 			LogLevel:      c.Logging[constant.KubeSchedulerComponentName],
 			K0sVars:       c.K0sVars,
 		})
 	}
-	if !util.StringSliceContains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
 		componentManager.Add(&controller.Manager{
 			ClusterConfig: c.ClusterConfig,
 			LogLevel:      c.Logging[constant.KubeControllerManagerComponentName],
@@ -274,7 +277,7 @@ func (c *CmdOpts) startController() error {
 		LeaderElector:     leaderElector,
 	})
 
-	if !c.SingleNode && !util.StringSliceContains(c.DisableComponents, constant.ControlAPIComponentName) {
+	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
 		componentManager.Add(&controller.K0SControlAPI{
 			ConfigPath: c.CfgFile,
 			K0sVars:    c.K0sVars,
@@ -297,7 +300,7 @@ func (c *CmdOpts) startController() error {
 		))
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.CsrApproverComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
 		componentManager.Add(controller.NewCSRApprover(c.ClusterConfig,
 			leaderElector,
 			adminClientFactory))
@@ -425,7 +428,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 	reconcilers := make(map[string]component.Component)
 	clusterSpec := c.ClusterConfig.Spec
 
-	if !util.StringSliceContains(c.DisableComponents, constant.DefaultPspComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
 		defaultPSP, err := controller.NewDefaultPSP(clusterSpec, c.K0sVars)
 		if err != nil {
 			logrus.Warnf("failed to initialize default PSP reconciler: %s", err.Error())
@@ -434,7 +437,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		}
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.KubeProxyComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
 		proxy, err := controller.NewKubeProxy(c.ClusterConfig, c.K0sVars)
 		if err != nil {
 			logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())
@@ -443,7 +446,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		}
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.CoreDNSComponentname) {
+	if !stringslice.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
 		coreDNS, err := controller.NewCoreDNS(c.ClusterConfig, c.K0sVars, cf)
 		if err != nil {
 			logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
@@ -452,7 +455,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		}
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.NetworkProviderComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
 		logrus.Infof("initializing network reconciler for provider %s", c.ClusterConfig.Spec.Network.Provider)
 		switch c.ClusterConfig.Spec.Network.Provider {
 		case "custom":
@@ -468,7 +471,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		}
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.HelmComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.HelmComponentName) {
 		manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
 		if err != nil {
 			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
@@ -478,7 +481,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		reconcilers["helmAddons"] = controller.NewHelmAddons(c.ClusterConfig, manifestsSaver, c.K0sVars, cf, leaderElector)
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.MetricsServerComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
 		metricServer, err := controller.NewMetricServer(c.ClusterConfig, c.K0sVars, cf)
 		if err != nil {
 			logrus.Warnf("failed to initialize metrics-server reconciler: %s", err.Error())
@@ -487,7 +490,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		reconcilers["metricServer"] = metricServer
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.KubeletConfigComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
 		kubeletConfig, err := controller.NewKubeletConfig(clusterSpec, c.K0sVars)
 		if err != nil {
 			logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
@@ -496,7 +499,7 @@ func (c *CmdOpts) createClusterReconcilers(cf kubernetes.ClientFactory, leaderEl
 		reconcilers["kubeletConfig"] = kubeletConfig
 	}
 
-	if !util.StringSliceContains(c.DisableComponents, constant.SystemRbacComponentName) {
+	if !stringslice.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
 		systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
 		if err != nil {
 			logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
@@ -547,12 +550,12 @@ func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) err
 
 func (c *CmdOpts) existingCNIProvider() string {
 	calicoManifestPath := path.Join(c.K0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
-	if util.FileExists(calicoManifestPath) {
+	if file.Exists(calicoManifestPath) {
 		return "calico"
 	}
 
 	kubeRouterManifestPath := path.Join(c.K0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")
-	if util.FileExists(kubeRouterManifestPath) {
+	if file.Exists(kubeRouterManifestPath) {
 		return "kuberouter"
 	}
 
@@ -561,10 +564,10 @@ func (c *CmdOpts) existingCNIProvider() string {
 
 func (c *CmdOpts) startControllerWorker(_ context.Context, profile string) error {
 	var bootstrapConfig string
-	if !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
+	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
 		err := retry.Do(func() error {
-			if !util.FileExists(c.K0sVars.AdminKubeConfigPath) {
+			if !file.Exists(c.K0sVars.AdminKubeConfigPath) {
 				return fmt.Errorf("file does not exist: %s", c.K0sVars.AdminKubeConfigPath)
 			}
 			return nil

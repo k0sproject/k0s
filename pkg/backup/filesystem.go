@@ -8,7 +8,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,9 +62,9 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, objectPathInRestored)
 	if stat.IsDir() {
-		return util.DirCopy(objectPathInArchive, objectPathInRestored)
+		return dir.Copy(objectPathInArchive, objectPathInRestored)
 	}
-	return util.FileCopy(objectPathInArchive, objectPathInRestored)
+	return file.Copy(objectPathInArchive, objectPathInRestored)
 }
 
 // NewFilesystemStep constructor

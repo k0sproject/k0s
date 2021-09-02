@@ -33,13 +33,12 @@ import (
 	"time"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/k0sproject/k0s/internal/pkg/random"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/k0sproject/k0s/internal/util"
 
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
@@ -204,7 +203,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 			s.T().Logf("failed to marshall footloose yaml: %s", err.Error())
 			return
 		}
-		filename := path.Join(os.TempDir(), util.RandomString(8)+"-footloose.yaml")
+		filename := path.Join(os.TempDir(), random.String(8)+"-footloose.yaml")
 		err = os.WriteFile(filename, footlooseYaml, 0700)
 		if err != nil {
 			s.T().Logf("failed to write footloose yaml: %s", err.Error())

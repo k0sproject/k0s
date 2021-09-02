@@ -9,7 +9,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -29,7 +29,7 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 }
 
 func (a *OCIBundleReconciler) Init() error {
-	return util.InitDirectory(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
+	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
 func (a *OCIBundleReconciler) Run() error {

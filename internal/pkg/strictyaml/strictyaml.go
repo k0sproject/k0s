@@ -1,9 +1,11 @@
-package util
+package strictyaml
 
 import (
-	"gopkg.in/yaml.v2"
 	"regexp"
 	"strings"
+
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	"gopkg.in/yaml.v2"
 )
 
 var fieldNamePattern = regexp.MustCompile("field ([^ ]+)")
@@ -29,7 +31,7 @@ func YamlUnmarshalStrictIgnoringFields(in []byte, out interface{}, ignore []stri
 			return errYaml
 		}
 
-		if StringSliceContains(ignore, match[1]) {
+		if stringslice.Contains(ignore, match[1]) {
 			continue
 		}
 		// we have type error but not for the masked fields, return error

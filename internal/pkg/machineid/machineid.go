@@ -1,4 +1,4 @@
-package util
+package machineid
 
 import (
 	"crypto/md5"
@@ -8,17 +8,17 @@ import (
 	"github.com/denisbrodbeck/machineid"
 )
 
-// MachineID returns protected id for the current machine
-func MachineID() (string, error) {
+// Generate returns protected id for the current machine
+func Generate() (string, error) {
 	id, err := machineid.ProtectedID("k0sproject-k0s")
 	if err != nil {
-		return MachineIDFromHostname()
+		return fromHostname()
 	}
 	return id, err
 }
 
-// MachineIDFromHostname generates a machine id hash from hostname
-func MachineIDFromHostname() (string, error) {
+// fromHostname generates a machine id hash from hostname
+func fromHostname() (string, error) {
 	name, err := os.Hostname()
 	if err != nil {
 		return "", err

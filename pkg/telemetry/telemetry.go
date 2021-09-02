@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/machineid"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/etcd"
 )
@@ -162,6 +162,6 @@ func (c Component) sendTelemetry() {
 }
 
 func machineID() string {
-	id, _ := util.MachineID()
+	id, _ := machineid.Generate()
 	return id
 }
