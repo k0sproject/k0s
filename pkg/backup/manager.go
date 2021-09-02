@@ -155,7 +155,7 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 	}
 	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := config.GetYamlFromFile(configFromBackup, k0sVars)
+	cfg, err := config.GetNodeConfig(configFromBackup, k0sVars)
 	if err != nil {
 		return nil, err
 	}

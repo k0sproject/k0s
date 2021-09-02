@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -255,8 +257,12 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*CoreDNS, error) {
+func NewCoreDNS(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*CoreDNS, error) {
 	client, err := clientFactory.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	clusterConfig, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return nil, err
 	}

@@ -55,7 +55,7 @@ func (c *CmdOpts) setup(role string, args []string) error {
 		return fmt.Errorf("file %s does not exist", c.CfgFile)
 	}
 	if role == "controller" {
-		cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+		cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 		if err != nil {
 			return err
 		}

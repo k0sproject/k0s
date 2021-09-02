@@ -32,7 +32,7 @@ func NewEtcdCmd() *cobra.Command {
 		Short: "Manage etcd cluster",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}

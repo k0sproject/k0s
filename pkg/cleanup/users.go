@@ -18,12 +18,12 @@ func (u *users) Name() string {
 
 // NeedsToRun detects controller users
 func (u *users) NeedsToRun() bool {
-	clusterConfig, err := config.GetYamlFromFile(u.Config.cfgFile, u.Config.k0sVars)
+	cfg, err := config.GetNodeConfig(u.Config.cfgFile, u.Config.k0sVars)
 	if err != nil {
 		return false
 	}
 
-	users := install.GetControllerUsers(clusterConfig)
+	users := install.GetControllerUsers(cfg)
 	for _, user := range users {
 		if exists, _ := iusers.CheckIfUserExists(user); exists {
 			return true
@@ -35,11 +35,11 @@ func (u *users) NeedsToRun() bool {
 // Run removes all controller users that are present on the host
 func (u *users) Run() error {
 	logger := logrus.New()
-	clusterConfig, err := config.GetYamlFromFile(u.Config.cfgFile, u.Config.k0sVars)
+	cfg, err := config.GetNodeConfig(u.Config.cfgFile, u.Config.k0sVars)
 	if err != nil {
 		logger.Errorf("failed to get cluster setup: %v", err)
 	}
-	if err := install.DeleteControllerUsers(clusterConfig); err != nil {
+	if err := install.DeleteControllerUsers(cfg); err != nil {
 		// don't fail, just notify on delete error
 		logger.Infof("failed to delete controller users: %v", err)
 	}

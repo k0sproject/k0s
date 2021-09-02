@@ -24,6 +24,8 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -42,11 +44,15 @@ type KubeletConfig struct {
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(clusterSpec *v1beta1.ClusterSpec, k0sVars constant.CfgVars) (*KubeletConfig, error) {
+func NewKubeletConfig(k0sVars constant.CfgVars) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
+	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	if err != nil {
+		return nil, err
+	}
 	return &KubeletConfig{
 		log:         log,
-		clusterSpec: clusterSpec,
+		clusterSpec: cfg.Spec,
 		k0sVars:     k0sVars,
 	}, nil
 }

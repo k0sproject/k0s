@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -39,11 +41,15 @@ type KubeProxy struct {
 }
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(clusterSpec *v1beta1.ClusterConfig, k0sVars constant.CfgVars) (*KubeProxy, error) {
+func NewKubeProxy(configFile string, k0sVars constant.CfgVars) (*KubeProxy, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
+	cfg, err := config.GetFullConfig(configFile, k0sVars)
+	if err != nil {
+		return nil, err
+	}
 	return &KubeProxy{
 		log:         log,
-		clusterConf: clusterSpec,
+		clusterConf: cfg,
 		K0sVars:     k0sVars,
 	}, nil
 }
