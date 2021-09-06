@@ -89,8 +89,8 @@ func (a *Manager) Run() error {
 	}
 
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
-		if args[name] != "" && name != "profiling" {
-			return fmt.Errorf("cannot override kube-controller-manager flag: %s", name)
+		if args[name] != "" {
+			logrus.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
