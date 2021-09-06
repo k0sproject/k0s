@@ -13,15 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package ctr
+package cli
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CliSuite struct {
@@ -48,14 +50,14 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 	// k0s stop should fail if service is not installed
 	_, err = ssh.ExecWithOutput("k0s stop")
 	s.Require().Error(err)
-
 }
 
-func (s *CliSuite) TestK0sCliKubectlCommand() {
+func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	ssh, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
+	s.T().Log("running k0s install command")
 	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker")
 	s.Require().NoError(err)
 
@@ -79,8 +81,35 @@ func (s *CliSuite) TestK0sCliKubectlCommand() {
 	s.Equal("kube-public", namespaces.Items[2].Metadata.Name)
 	s.Equal("kube-system", namespaces.Items[3].Metadata.Name)
 
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.NoError(err)
+
+	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
+	s.NoError(err)
+
+	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
+		Limit: 100,
+	})
+	s.NoError(err)
+
+	podCount := len(pods.Items)
+
+	s.T().Logf("found %d pods in kube-system", podCount)
+	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+
 	_, err = ssh.ExecWithOutput("k0s stop")
 	s.Require().NoError(err)
+
+	s.T().Log("running k0s reset command")
+	// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
+	// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
+	_, _ = ssh.ExecWithOutput("k0s reset --debug")
+
+	fileCount, _ := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
+	s.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
+
+	newPodCount, _ := ssh.ExecWithOutput("ps aux | grep '[c]ontainerd-shim-runc-v2' | wc -l")
+	s.Equal("0", newPodCount, "expected to see 0 pods after reset command")
 }
 
 func TestCliCommandSuite(t *testing.T) {
