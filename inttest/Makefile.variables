@@ -17,5 +17,6 @@ smoketests := \
 	check-airgap \
 	check-k0scloudprovider \
 	check-cli \
-	check-disabledcomponents
+	check-disabledcomponents \
+	check-extraargs
 
