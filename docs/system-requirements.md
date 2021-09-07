@@ -44,10 +44,4 @@ For information on the ports that k0s needs to function, refer to [networking](n
 
 ## OS dependencies
 
-k0s is packaged as a fully statically linked binary which contains all other needed components also as statically linked binaries. This means that in typical use cases there's no OS level dependencies.
-
-However some of the underlying components _may_ have dependencies to OS level tools and packages in certain circumstances. The known cases are documented in below.
-
-### ContainerD needs `apparmor_parser`
-
-If containerD [detects](https://github.com/containerd/containerd/blob/587fc092598791ab58bfa275958ce20cc5d80783/pkg/apparmor/apparmor_linux.go#L35-L44) that the system is configured to use [AppArmor](https://wiki.ubuntu.com/AppArmor) it will require a tool called `apparmor_parser` to be installed on the system.
+In most cases k0s does NOT have any OS level dependencies. The needed kernel configurations are documented [here](os-deps.md).
