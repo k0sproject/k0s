@@ -41,6 +41,7 @@ spec:
   api:
     address: 192.168.68.104
     port: 6443
+    bindAddress: 0.0.0.0
     k0sApiPort: 9443
     externalAddress: my-lb-address.example.com
     sans:
@@ -125,7 +126,8 @@ spec:
 | Element           | Description                                                                                                                                                                                                                 |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `externalAddress` | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster. |
-| `address`         | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                  |
+| `address`         | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                 |
+| `bindAddress`     | Local address on which to bind the kube-apiserver. Defaults to 0.0.0.0.    |
 | `sans`            | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                |
 | `extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
 | `port`¹           | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
