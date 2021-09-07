@@ -23,3 +23,14 @@ func (s *FootlooseSuite) PutFile(node, path, content string) {
 
 	s.Require().NoError(err)
 }
+
+// AppendFile appends content to file on given node
+func (s *FootlooseSuite) AppendFile(node, path, content string) {
+	ssh, err := s.SSH(node)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	// TODO: send data via pipe instead, so we can write data with single quotes '
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >> %s", content, path))
+
+	s.Require().NoError(err)
+}
