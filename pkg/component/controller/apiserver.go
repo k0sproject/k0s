@@ -128,8 +128,8 @@ func (a *APIServer) Run() error {
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
-		if args[name] != "" && name != "profiling" {
-			return fmt.Errorf("cannot override apiserver flag: %s", name)
+		if args[name] != "" {
+			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
