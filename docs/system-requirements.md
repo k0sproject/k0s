@@ -41,3 +41,10 @@ in addition to the k0s part.
 ## Networking
 
 For information on the ports that k0s needs to function, refer to [networking](networking.md).
+<<<<<<< HEAD
+=======
+
+## OS dependencies
+
+In most cases k0s does NOT have any OS level dependencies. The needed kernel configurations are documented [here](os-deps.md).
+>>>>>>> Document needed kernel configs
