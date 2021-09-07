@@ -23,10 +23,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
+	dirutil "github.com/k0sproject/k0s/internal/pkg/dir"
+	fileutil "github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
+
+const confTmpl = `
+# This is a placeholder configuration for k0s managed containerD.
+# If you wish to customize the config replace this file with your custom configuration.
+# For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+version = 2
+`
+const confPath = "/etc/k0s/containerd.toml"
 
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
@@ -53,6 +63,11 @@ func (c *ContainerD) Init() error {
 // Run runs containerD
 func (c *ContainerD) Run() error {
 	logrus.Info("Starting containerD")
+
+	if err := c.setupConfig(); err != nil {
+		return err
+	}
+
 	c.supervisor = supervisor.Supervisor{
 		Name:    "containerd",
 		BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
@@ -63,21 +78,23 @@ func (c *ContainerD) Run() error {
 			fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
 			fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
 			fmt.Sprintf("--log-level=%s", c.LogLevel),
+			fmt.Sprintf("--config=%s", confPath),
 		},
 	}
 
-	const conf string = "/etc/k0s/containerd.toml"
-	_, err := os.Stat(conf)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-	} else {
-		c.supervisor.Args = append(c.supervisor.Args, fmt.Sprintf("--config=%s", conf))
-	}
-	// TODO We need to dump the config file suited for k0s use
-
 	return c.supervisor.Supervise()
+}
+
+func (c *ContainerD) setupConfig() error {
+	// If the config file exists, use it as-is
+	if fileutil.Exists(confPath) {
+		return nil
+	}
+
+	if err := dirutil.Init(filepath.Dir(confPath), 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(confPath, []byte(confTmpl), 0644)
 }
 
 // Stop stops containerD
