@@ -50,7 +50,7 @@ func NewConfig(k0sVars constant.CfgVars, cfgFile string, criSocketPath string) (
 	var runtimeType string
 
 	if criSocketPath == "" {
-		criSocketPath = fmt.Sprintf("unix:///%s/containerd.sock", runDir)
+		criSocketPath = fmt.Sprintf("unix://%s/containerd.sock", runDir)
 		containerdCfg = &containerdConfig{
 			binPath:    fmt.Sprintf("%s/%s", k0sVars.DataDir, "bin/containerd"),
 			socketPath: fmt.Sprintf("%s/containerd.sock", runDir),
