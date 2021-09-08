@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package util
+package archive
 
 import (
 	"archive/tar"
@@ -35,8 +35,8 @@ func sanitizeExtractPath(dstDir string, filePath string) (string, error) {
 	return dstFile, nil
 }
 
-// ExtractArchive extracts the given tar.gz archive to given dst path
-func ExtractArchive(path, dst string) error {
+// Extract the given tar.gz archive to given dst path
+func Extract(path, dst string) error {
 	input, err := os.Open(path)
 	if err != nil {
 		return err

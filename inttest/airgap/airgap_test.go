@@ -34,11 +34,21 @@ spec:
     default_pull_policy: Never
 `
 
+const etcHosts = `
+127.0.0.8 docker.io
+127.0.0.8 gcr.io
+127.0.0.8 k8s.gcr.io
+127.0.0.8 us.gcr.io
+127.0.0.8 quay.io
+`
+
 type AirgapSuite struct {
 	common.FootlooseSuite
 }
 
 func (s *AirgapSuite) TestK0sGetsUp() {
+	s.AppendFile(s.ControllerNode(0), "/etc/hosts", etcHosts)
+	s.AppendFile(s.WorkerNode(0), "/etc/hosts", etcHosts)
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10 --image-gc-high-threshold=100"`))

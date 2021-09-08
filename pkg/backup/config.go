@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 type configurationStep struct {
@@ -43,12 +43,12 @@ func (c configurationStep) Backup() (StepResult, error) {
 func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 	objectPathInArchive := path.Join(restoreFrom, "k0s.yaml")
 
-	if !util.FileExists(objectPathInArchive) {
+	if !file.Exists(objectPathInArchive) {
 		logrus.Infof("%s does not exist in the backup file", objectPathInArchive)
 		return nil
 	}
 	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
 
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, c.restoredConfigPath)
-	return util.FileCopy(objectPathInArchive, c.restoredConfigPath)
+	return file.Copy(objectPathInArchive, c.restoredConfigPath)
 }

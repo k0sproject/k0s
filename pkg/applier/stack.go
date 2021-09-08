@@ -24,6 +24,7 @@ import (
 	"time"
 
 	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/sirupsen/logrus"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -34,8 +35,6 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
-
-	"github.com/k0sproject/k0s/internal/util"
 )
 
 const (
@@ -201,10 +200,10 @@ func (s *Stack) findPruneableResources(ctx context.Context, mapper *restmapper.D
 	for _, apiResourceList := range apiResourceLists {
 		for _, apiResource := range apiResourceList.APIResources {
 			key := fmt.Sprintf("%s:%s", apiResourceList.GroupVersion, apiResource.Kind)
-			if !util.StringSliceContains(apiResource.Verbs, "delete") {
+			if !stringslice.Contains(apiResource.Verbs, "delete") {
 				continue
 			}
-			if util.StringSliceContains(ignoredResources, key) {
+			if stringslice.Contains(ignoredResources, key) {
 				s.log.Debugf("skipping resource %s from prune", key)
 				continue
 			}

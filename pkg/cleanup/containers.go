@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
+
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
 )
@@ -92,7 +94,9 @@ func (c *containers) startContainerd() error {
 		fmt.Sprintf("--root=%s", filepath.Join(c.Config.dataDir, "containerd")),
 		fmt.Sprintf("--state=%s", filepath.Join(c.Config.runDir, "containerd")),
 		fmt.Sprintf("--address=%s", c.Config.containerd.socketPath),
-		"--config=/etc/k0s/containerd.toml",
+	}
+	if file.Exists("/etc/k0s/containerd.toml") {
+		args = append(args, "--config=/etc/k0s/containerd.toml")
 	}
 	cmd := exec.Command(c.Config.containerd.binPath, args...)
 	if err := cmd.Start(); err != nil {
@@ -147,7 +151,6 @@ func (c *containers) stopAllContainers() error {
 				// on a single node instance, we will see "connection refused" error. this is to be expected
 				// since we're deleting the API pod itself. so we're ignoring this error
 				logrus.Debugf("ignoring container stop err: %v", err.Error())
-
 			} else {
 				fmtError := fmt.Errorf("failed to stop running pod %v: err: %v", pod, err)
 				logrus.Debug(fmtError)
@@ -157,7 +160,6 @@ func (c *containers) stopAllContainers() error {
 		err = c.Config.containerRuntime.RemoveContainer(pod)
 		if err != nil {
 			msg = append(msg, fmt.Errorf("failed to remove pod %v: err: %v", pod, err))
-
 		}
 	}
 

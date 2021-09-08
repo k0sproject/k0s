@@ -27,7 +27,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -59,17 +62,17 @@ func (e *Etcd) Init() error {
 		return err
 	}
 
-	e.uid, err = util.GetUID(constant.EtcdUser)
+	e.uid, err = users.GetUID(constant.EtcdUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running etcd as root: %w", err))
 	}
 
-	err = util.InitDirectory(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
+	err = dir.Init(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", e.K0sVars.EtcdDataDir, err)
 	}
 
-	err = util.InitDirectory(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
+	err = dir.Init(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 	if err != nil {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
@@ -100,7 +103,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 
 	logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 	// Write etcd ca cert&key
-	if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
+	if file.Exists(etcdCaCert) && file.Exists(etcdCaCertKey) {
 		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 	} else {
 		err = os.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
@@ -141,7 +144,7 @@ func (e *Etcd) Run() error {
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
 
-	args := util.MappedArgs{
+	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
 		"--listen-client-urls":          "https://127.0.0.1:2379",
 		"--advertise-client-urls":       "https://127.0.0.1:2379",
@@ -160,7 +163,7 @@ func (e *Etcd) Run() error {
 		"--enable-pprof":                "false",
 	}
 
-	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
+	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
 		initialCluster, err := e.syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey)
@@ -176,7 +179,7 @@ func (e *Etcd) Run() error {
 	}
 
 	// In case this is upgrade/restart, the sign key is not created
-	if util.FileExists(etcdSignKey) && util.FileExists(etcdSignPub) {
+	if file.Exists(etcdSignKey) && file.Exists(etcdSignPub) {
 		auth := fmt.Sprintf("jwt,pub-key=%s,priv-key=%s,sign-method=RS512,ttl=10m", etcdSignPub, etcdSignKey)
 		args["--auth-token"] = auth
 	}
@@ -290,7 +293,7 @@ func chown(name string, uid int, gid int) error {
 	if uid == 0 {
 		return nil
 	}
-	if util.IsDirectory(name) {
+	if dir.IsDirectory(name) {
 		if err := filepath.Walk(name, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err

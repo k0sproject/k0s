@@ -24,6 +24,7 @@ nav:
       - Backup/Restore:                   backup.md
       - Uninstall/Reset:                  reset.md
       - System Requirements:              system-requirements.md
+      - OS Dependencies:                  os-deps.md
   - Usage:
       - Configuration Options:            configuration.md
       - Configuration Validation:         configuration-validation.md

@@ -27,7 +27,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/archive"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -61,7 +62,7 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	}
 	srcBackupFile := filepath.Join(bm.tmpDir, backupFileName)
 	destBackupFile := filepath.Join(savePathDir, backupFileName)
-	if err := util.FileCopy(srcBackupFile, destBackupFile); err != nil {
+	if err := file.Copy(srcBackupFile, destBackupFile); err != nil {
 		return fmt.Errorf("failed to rename temporary archive: %v", err)
 	}
 	logrus.Infof("archive %s created successfully", destBackupFile)
@@ -117,7 +118,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 	}
 
 	destinationFile := filepath.Join(bm.tmpDir, backupFileName)
-	err = util.FileCopy(archiveFile, destinationFile)
+	err = file.Copy(archiveFile, destinationFile)
 	if err != nil {
 		return fmt.Errorf("failed to copy archive file from temporary directory: %v", err)
 	}
@@ -126,7 +127,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 
 // RunRestore restores cluster
 func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
-	if err := util.ExtractArchive(archivePath, bm.tmpDir); err != nil {
+	if err := archive.Extract(archivePath, bm.tmpDir); err != nil {
 		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)

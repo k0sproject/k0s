@@ -23,7 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -54,7 +54,7 @@ var cmDefaultArgs = map[string]string{
 func (a *Manager) Init() error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
-	a.uid, err = util.GetUID(constant.ApiserverUser)
+	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-controller-manager as root: %w", err))
 	}
@@ -89,8 +89,8 @@ func (a *Manager) Run() error {
 	}
 
 	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
-		if args[name] != "" && name != "profiling" {
-			return fmt.Errorf("cannot override kube-controller-manager flag: %s", name)
+		if args[name] != "" {
+			logrus.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
