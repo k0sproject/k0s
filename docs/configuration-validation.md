@@ -9,6 +9,6 @@ k0s validate config --config path/to/config/file
 `validate config` sub-command can validate the following:
 
 1. YAML formatting
-2. [SAN addresses](/configuration/#specapi)
-3. [Network providers](/configuration/#specnetwork)
-4. [Worker profiles](/configuration/#specworkerprofiles)
+2. [SAN addresses](/main/configuration/#specapi)
+3. [Network providers](/main/configuration/#specnetwork)
+4. [Worker profiles](/main/configuration/#specworkerprofiles)
