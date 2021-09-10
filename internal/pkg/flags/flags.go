@@ -24,7 +24,7 @@ import (
 // Split splits arbitrary set of flags into StringMap struct
 func Split(input string) stringmap.StringMap {
 	mArgs := stringmap.StringMap{}
-	args := strings.Split(input, " ")
+	args := strings.Fields(input)
 	for _, a := range args {
 		av := strings.SplitN(a, "=", 2)
 		if len(av) < 1 {
