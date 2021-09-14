@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/static"
 
 	"github.com/k0sproject/k0s/pkg/component"
 
@@ -35,12 +36,13 @@ type ClusterConfigReconciler struct {
 	leaderElector   LeaderElector
 	log             *logrus.Entry
 	resourceVersion string
+	saver           manifestsSaver
 
 	tickerDone chan struct{}
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager) (*ClusterConfigReconciler, error) {
+func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver) (*ClusterConfigReconciler, error) {
 	d := atomic.Value{}
 	d.Store(true)
 
@@ -55,6 +57,7 @@ func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0s
 		kubeConfig:    k0sVars.AdminKubeConfigPath,
 		leaderElector: leaderElector,
 		log:           logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
+		saver:         s,
 	}, nil
 }
 
@@ -63,6 +66,10 @@ func (r *ClusterConfigReconciler) Init() error {
 }
 
 func (r *ClusterConfigReconciler) Run() error {
+	err := r.writeCRD()
+	if err != nil {
+		return fmt.Errorf("failed to write api-config CRD to API: %v", err)
+	}
 	c, err := cfgClient.NewForConfig(r.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
@@ -162,5 +169,29 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
 	}
 	r.resourceVersion = clusterConfig.ResourceVersion
 	r.log.Info("successfully wrote cluster-config to API")
+	return nil
+}
+
+func (r *ClusterConfigReconciler) writeCRD() error {
+	if !r.leaderElector.IsLeader() {
+		r.log.Debug("I am not the leader, not reconciling cluster configuration")
+		return nil
+	}
+
+	crd, err := static.AssetDir("manifests/v1beta1/CustomResourceDefinition")
+	if err != nil {
+		r.log.Errorf("error retrieving api-config manifests: %s. will retry", err.Error())
+	}
+	for _, filename := range crd {
+		content, err := static.Asset(fmt.Sprintf("manifests/v1beta1/CustomResourceDefinition/%s", filename))
+		if err != nil {
+			return fmt.Errorf("failed to fetch crd `%s`: %v", filename, err)
+		}
+		err = r.saver.Save(filename, content)
+		if err != nil {
+			return fmt.Errorf("error writing api-config CRD, will NOT retry: %v", err)
+		}
+	}
+
 	return nil
 }
