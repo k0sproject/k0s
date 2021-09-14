@@ -447,6 +447,22 @@ func (c *CmdOpts) startClusterReconcilers(ctx context.Context, reconcilers map[s
 func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector) error {
 	reconcilers := make(map[string]component.Component)
 
+	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
+		logrus.Debug("starting api-config reconciler")
+		manifestSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
+		if err != nil {
+			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
+			return err
+		}
+
+		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver)
+		if err != nil {
+			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["clusterConfig"] = cfgReconciler
+	}
+
 	if !stringslice.Contains(c.DisableComponents, constant.HelmComponentName) {
 		logrus.Debug("starting manifest saver")
 		manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
@@ -456,17 +472,6 @@ func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface
 		}
 		reconcilers["helmCrd"] = controller.NewCRD(manifestsSaver)
 		reconcilers["helmAddons"] = controller.NewHelmAddons(manifestsSaver, c.K0sVars, cf, leaderElector)
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
-		logrus.Debug("starting api-config reconciler")
-
-		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents)
-		if err != nil {
-			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["clusterConfig"] = cfgReconciler
 	}
 
 	// Start all reconcilers
