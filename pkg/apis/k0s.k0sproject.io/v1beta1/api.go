@@ -32,6 +32,9 @@ type APISpec struct {
 	// Local address on which to bind an API
 	Address string `json:"address"`
 
+	// Local address on which to bind the kube-apiserver. Defaults to 0.0.0.0.
+	BindAddress string `json:"bindAddress,omitempty"`
+
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
 	ExternalAddress string `json:"externalAddress,omitempty"`
 	// TunneledNetworkingMode indicates if we access to KAS through konnectivity tunnel

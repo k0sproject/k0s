@@ -162,6 +162,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 
 	logrus.Infof("using api address: %s", c.NodeConfig.Spec.API.Address)
+	logrus.Infof("using api bind-address: %s", c.NodeConfig.Spec.API.BindAddress)
 	logrus.Infof("using listen port: %d", c.NodeConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", c.NodeConfig.Spec.API.SANs)
 	dnsAddress, err := c.NodeConfig.Spec.Network.DNSAddress()
