@@ -58,8 +58,8 @@ func (c *Calico) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.IPAutodetectionMethod = ""
 	c.IPv6AutodetectionMethod = ""
 
-	type ycalico Calico
-	yc := (*ycalico)(c)
+	type calico Calico
+	yc := (*calico)(c)
 	if err := unmarshal(yc); err != nil {
 		return err
 	}

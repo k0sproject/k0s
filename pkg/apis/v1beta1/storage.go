@@ -84,8 +84,8 @@ func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	s.Type = EtcdStorageType
 	s.Etcd = DefaultEtcdConfig()
 
-	type ystorageconfig StorageSpec
-	yc := (*ystorageconfig)(s)
+	type storage StorageSpec
+	yc := (*storage)(s)
 
 	if err := unmarshal(yc); err != nil {
 		return err
