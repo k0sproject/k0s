@@ -35,18 +35,18 @@ In order to run the conformance test, you will need to set the tested k0s versio
 In the same directory as your `main.tf` file, create an additional file `terraform.tfvars` with the following input:
 
 ```terraform
-k0s_version=v0.9.0
-k8s_version=v1.22.1
-onobuoy_version=0.20.0
+k0s_version=v1.22.2+k0s.0
+k8s_version=v1.22.2
+sonobuoy_version=0.53.2
 ```
 
 ### 2. Environment variables
 
 ```shell
-TF_VAR_k0s_version=v0.7.0-beta1 TF_VAR_sonobuoy_version=0.18.0 TF_VAR_k8s_version=v1.22.1 terraform apply
+TF_VAR_k0s_version=v1.22.2+k0s.0 TF_VAR_sonobuoy_version=0.20.0 TF_VAR_k8s_version=v1.22.2 terraform apply
 ```
 
-**NOTE:** By default, terraform will fetch sonobuoy version **0.20.0**. If you want to use a different version you can override this with one of the above methods.
+**NOTE:** By default, terraform will fetch sonobuoy version **0.53.2**. If you want to use a different version you can override this with one of the above methods.
 
 ## Fetching Sonobuoy's results
 
@@ -56,25 +56,24 @@ Once provisioning of the cluster finishes you can get the results by SSH'ing int
 $ ssh -i .terraform/modules/k0s-sonobuoy/inttest/terraform/test-cluster/aws_private.pem ubuntu@[controller_ip]
 
 ubuntu@controller-0:~$ export KUBECONFIG=/var/lib/k0s/pki/admin.conf
-ubuntu@controller-0:~$ sonobuoy status
-         PLUGIN     STATUS   RESULT   COUNT
-            e2e    running                1
-   systemd-logs   complete                2
-   systemd-logs    running                1
+ubuntu@controller-0:~$ sudo --preserve-env=KUBECONFIG sonobuoy status
+         PLUGIN     STATUS   RESULT   COUNT               PROGRESS
+            e2e    running                1   128/346 (0 failures)
+   systemd-logs   complete                3
 
-Sonobuoy is still running. Runs can take up to 60 minutes.
+Sonobuoy is still running. Runs can take 60 minutes or more depending on cluster and plugin configuration.
 ```
 
 Once sonobuoy finishes to retieve results run following command on the cluster host:
 
 ```shell
-result=$(sonobuoy retrieve)
+result=$(sudo --preserve-env=KUBECONFIG sonobuoy retrieve)
 ```
 
 Analyze results:
 
 ```shell
-$ sonobuoy results $results
+$ sudo --preserve-env=KUBECONFIG sonobuoy results $results
 Plugin: systemd-logs
 Status: passed
 Total: 3

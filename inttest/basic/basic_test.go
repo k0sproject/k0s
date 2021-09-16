@@ -39,7 +39,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
 	s.NoError(err)
-	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10"`))
+	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args=" --address=0.0.0.0  --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	s.NoError(err)
