@@ -96,7 +96,7 @@ func (m *Manager) Start(ctx context.Context) error {
 
 // Stop stops all managed components
 func (m *Manager) Stop() error {
-	var ret error = nil
+	var ret error
 	for i := len(m.components) - 1; i >= 0; i-- {
 		if err := m.components[i].Stop(); err != nil {
 			logrus.Errorf("failed to stop component: %s", err.Error())

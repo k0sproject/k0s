@@ -122,7 +122,7 @@ func (s *FootlooseSuite) SetupSuite() {
 
 	// set up signal handler so we teardown on SIGINT or SIGTERM
 
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 3)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-c
