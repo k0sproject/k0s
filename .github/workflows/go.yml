@@ -1002,23 +1002,3 @@ jobs:
           path: |
             /tmp/*.log
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v2
-      - name: codegen
-        run: |
-          make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-
-      - name: go modules check
-        run: make lint-gomod
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
-          config: .golangci.yml

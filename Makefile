@@ -93,7 +93,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 	printf "%s\n\n%s\n%s\n" \
 		"package assets" \
 		"var BinData = map[string]struct{ offset, size int64 }{}" \
-		"var BinDataSize int64 = 0" \
+		"var BinDataSize int64" \
 		> $@
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
@@ -132,14 +132,10 @@ k0s.exe k0s: $(GO_SRCS)
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
-SKIP_GOMOD_LINT ?= false
-ifeq ($(SKIP_GOMOD_LINT), false)
-GOMODLINT=lint-gomod
-endif
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go ${GOMODLINT}
-	$(golint) run ./...
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go 
+	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
@@ -185,21 +181,4 @@ image-bundle/image.list: k0s
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
-
-
-GOMODTIDYLINT=sh -c '\
-if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
-	echo "Run \`go mod tidy\` and commit the result"; \
-	exit 1; \
-fi ; \
-${GO} mod tidy; \
-if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
- git checkout go.mod go.sum ; \
- echo "Linter failure: go.mod and go.sum have unused deps. Run \`go mod tidy\` and commit the result"; \
- exit 2; \
-fi \
- ; ' GOMODTIDYLINT
-
-lint-gomod:
-	@${GOMODTIDYLINT}
 
