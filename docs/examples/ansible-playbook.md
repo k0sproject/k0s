@@ -210,7 +210,7 @@ k0s-7   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.61   <none>        U
 **Note**: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command:
 
 ```shell
-$ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
+$ ansible k0s-1 --become -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
 {
   "level": "info",
   "members": {
