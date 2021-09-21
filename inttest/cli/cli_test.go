@@ -97,7 +97,8 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	_, err = ssh.ExecWithOutput("k0s stop")
+	// Stop and actually wait till k0s dies
+	_, err = ssh.ExecWithOutput("k0s stop && while pidof k0s containerd; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
 	s.T().Log("running k0s reset command")
