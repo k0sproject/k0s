@@ -134,8 +134,8 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	n.Provider = "calico"
 
-	type ynetwork Network
-	yc := (*ynetwork)(n)
+	type network Network
+	yc := (*network)(n)
 
 	if err := unmarshal(yc); err != nil {
 		return err

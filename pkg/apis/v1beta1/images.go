@@ -48,8 +48,8 @@ type ClusterImages struct {
 }
 
 func (ci *ClusterImages) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type wrapper ClusterImages
-	imagesWrapper := (*wrapper)(ci)
+	type images ClusterImages
+	imagesWrapper := (*images)(ci)
 	if err := unmarshal(imagesWrapper); err != nil {
 		return err
 	}
