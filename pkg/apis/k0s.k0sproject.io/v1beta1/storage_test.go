@@ -17,6 +17,9 @@ package v1beta1
 
 import (
 	"testing"
+
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStorageSpec_IsJoinable(t *testing.T) {
@@ -80,4 +83,17 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKinePartialConfigLoading(t *testing.T) {
+	yaml := `
+spec:
+  storage:
+    type: kine
+`
+	c, err := configFromString(yaml, constant.DataDirDefault)
+	assert.NoError(t, err)
+	assert.Equal(t, "kine", c.Spec.Storage.Type)
+	assert.NotNil(t, c.Spec.Storage.Kine)
+	assert.Equal(t, "sqlite:///var/lib/k0s/db/state.db?more=rwc&_journal=WAL&cache=shared", c.Spec.Storage.Kine.DataSource)
 }

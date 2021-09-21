@@ -124,6 +124,7 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 	}
 
 	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
+		logrus.Warn("storage type is kine but no config given, setting up defaults")
 		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
 	}
 	if clusterConfig.Spec.Install == nil {
@@ -195,6 +196,7 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 			Etcd: &v1beta1.EtcdConfig{
 				PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
 			},
+			Kine: cfg.Spec.Storage.Kine,
 		},
 		Network: &v1beta1.Network{
 			ServiceCIDR: cfg.Spec.Network.ServiceCIDR,

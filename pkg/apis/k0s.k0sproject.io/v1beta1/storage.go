@@ -95,6 +95,10 @@ func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, jc); err != nil {
 		return err
 	}
+
+	if jc.Type == KineStorageType && jc.Kine == nil {
+		jc.Kine = DefaultKineConfig(constant.DataDirDefault)
+	}
 	return nil
 }
 
