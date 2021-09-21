@@ -2,6 +2,8 @@
 
 You can configure k0s with the [Ambassador API Gateway](https://www.getambassador.io/products/api-gateway/) and a [MetalLB service loadbalancer](https://metallb.universe.tf/). To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the `k0s.yaml` file during cluster configuration.
 
+Note: Currently Ambassador API Gateway does not support Kubernetes v1.22 or above. See [here](https://github.com/emissary-ingress/emissary/issues/3735#issuecomment-916278895) for details.
+
 ## Use Docker for non-native k0s platforms
 
 With Docker you can run k0s on platforms that the distribution does not natively support (refer to [Run k0s in Docker](../k0s-in-docker.md)). Skip this section if you are on a platform that k0s natively supports.
