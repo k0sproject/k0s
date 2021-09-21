@@ -57,8 +57,9 @@ func TestCalicoManifests(t *testing.T) {
 		crdSaver := inMemorySaver{}
 		calico, err := NewCalico(clusterConfig, crdSaver, saver)
 		require.NoError(t, err)
-
-		_ = calico.processConfigChanges(calicoConfig{})
+		cfg, err := calico.getConfig(clusterConfig)
+		require.NoError(t, err)
+		_ = calico.processConfigChanges(cfg)
 
 		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 		require.True(t, foundRaw, "must have daemon set for calico")
@@ -74,7 +75,9 @@ func TestCalicoManifests(t *testing.T) {
 		calico, err := NewCalico(clusterConfig, crdSaver, saver)
 		require.NoError(t, err)
 
-		_ = calico.processConfigChanges(calicoConfig{})
+		cfg, err := calico.getConfig(clusterConfig)
+		require.NoError(t, err)
+		_ = calico.processConfigChanges(cfg)
 
 		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 		require.True(t, foundRaw, "must have daemon set for calico")
@@ -90,11 +93,13 @@ func TestCalicoManifests(t *testing.T) {
 			crdSaver := inMemorySaver{}
 			calico, err := NewCalico(clusterConfig, crdSaver, saver)
 			require.NoError(t, err)
-			templateContext, err := calico.getConfig()
+			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
 			require.Equal(t, templateContext.IPV6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
-			_ = calico.processConfigChanges(calicoConfig{})
+			cfg, err := calico.getConfig(clusterConfig)
+			require.NoError(t, err)
+			_ = calico.processConfigChanges(cfg)
 			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 			require.True(t, foundRaw, "must have daemon set for calico")
 
@@ -110,11 +115,13 @@ func TestCalicoManifests(t *testing.T) {
 			crdSaver := inMemorySaver{}
 			calico, err := NewCalico(clusterConfig, crdSaver, saver)
 			require.NoError(t, err)
-			templateContext, err := calico.getConfig()
+			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPAutodetectionMethod, templateContext.IPAutodetectionMethod)
 			require.Equal(t, clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod, templateContext.IPV6AutodetectionMethod)
-			_ = calico.processConfigChanges(calicoConfig{})
+			cfg, err := calico.getConfig(clusterConfig)
+			require.NoError(t, err)
+			_ = calico.processConfigChanges(cfg)
 			daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
 
 			require.True(t, foundRaw, "must have daemon set for calico")

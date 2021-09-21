@@ -36,7 +36,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			// we don't need warning messages in case of default config
 			logrus.SetLevel(logrus.ErrorLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetConfigFromAPI(c.K0sVars.AdminKubeConfigPath)
+			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}

@@ -17,12 +17,12 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"path"
 	"path/filepath"
-	"time"
 
-	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -239,13 +239,17 @@ spec:
 
 const HostsPerExtraReplica = 10.0
 
+var _ component.Component = &CoreDNS{}
+var _ component.ReconcilerComponent = &CoreDNS{}
+
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	client        kubernetes.Interface
-	tickerDone    chan struct{}
-	log           *logrus.Entry
-	clusterConfig *v1beta1.ClusterConfig
-	K0sVars       constant.CfgVars
+	client         kubernetes.Interface
+	tickerDone     chan struct{}
+	log            *logrus.Entry
+	manifestDir    string
+	K0sVars        constant.CfgVars
+	previousConfig coreDNSConfig
 }
 
 type coreDNSConfig struct {
@@ -258,78 +262,33 @@ type coreDNSConfig struct {
 
 // NewCoreDNS creates new instance of CoreDNS component
 func NewCoreDNS(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*CoreDNS, error) {
+	manifestDir := path.Join(k0sVars.ManifestsDir, "coredns")
+
 	client, err := clientFactory.GetClient()
-	if err != nil {
-		return nil, err
-	}
-	clusterConfig, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	log := logrus.WithFields(logrus.Fields{"component": "coredns"})
 	return &CoreDNS{
-		client:        client,
-		log:           log,
-		clusterConfig: clusterConfig,
-		K0sVars:       k0sVars,
+		client:      client,
+		log:         log,
+		K0sVars:     k0sVars,
+		manifestDir: manifestDir,
 	}, nil
 }
 
 // Init does nothing
 func (c *CoreDNS) Init() error {
-	return nil
+	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
 }
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
-	corednsDir := path.Join(c.K0sVars.ManifestsDir, "coredns")
-	err := dir.Init(corednsDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
-
-	c.tickerDone = make(chan struct{})
-
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-		previousConfig := coreDNSConfig{}
-		for {
-			select {
-			case <-ticker.C:
-				cfg, err := c.getConfig()
-				if err != nil {
-					c.log.Errorf("error calculating coredns configs: %s. will retry", err.Error())
-					continue
-				}
-				if cfg == previousConfig {
-					c.log.Infof("current cfg matches existing, not gonna do anything")
-					continue
-				}
-				tw := templatewriter.TemplateWriter{
-					Name:     "coredns",
-					Template: coreDNSTemplate,
-					Data:     cfg,
-					Path:     filepath.Join(corednsDir, "coredns.yaml"),
-				}
-				err = tw.Write()
-				if err != nil {
-					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error())
-					continue
-				}
-				previousConfig = cfg
-			case <-c.tickerDone:
-				c.log.Info("coredns reconciler done")
-				return
-			}
-		}
-	}()
-
 	return nil
 }
 
-func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
-	dns, err := c.clusterConfig.Spec.Network.DNSAddress()
+func (c *CoreDNS) getConfig(clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
+	dns, err := clusterConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -346,8 +305,8 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		Replicas:      replicas,
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
-		Image:         c.clusterConfig.Spec.Images.CoreDNS.URI(),
-		PullPolicy:    c.clusterConfig.Spec.Images.DefaultPullPolicy,
+		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	return config, nil
@@ -372,8 +331,27 @@ func (c *CoreDNS) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *CoreDNS) Reconcile() error {
+func (c *CoreDNS) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: CoreDNS")
+	cfg, err := c.getConfig(clusterConfig)
+	if err != nil {
+		return fmt.Errorf("error calculating coredns configs: %v. will retry", err)
+	}
+	if cfg == c.previousConfig {
+		c.log.Infof("current cfg matches existing, not gonna do anything")
+		return nil
+	}
+	tw := templatewriter.TemplateWriter{
+		Name:     "coredns",
+		Template: coreDNSTemplate,
+		Data:     cfg,
+		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
+	}
+	err = tw.Write()
+	if err != nil {
+		return fmt.Errorf("error writing coredns manifests: %v. will retry", err)
+	}
+	c.previousConfig = cfg
 	return nil
 }
 

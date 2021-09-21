@@ -32,7 +32,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
@@ -212,8 +211,7 @@ func (c *CmdOpts) startController() error {
 	}
 
 	if c.NodeConfig.Spec.API.ExternalAddress != "" {
-		c.NodeComponents.Add(controller.NewEndpointReconciler(
-			c.NodeConfig,
+		c.ClusterComponents.Add(controller.NewEndpointReconciler(
 			leaderElector,
 			adminClientFactory,
 		))
@@ -290,30 +288,12 @@ func (c *CmdOpts) startController() error {
 		ch <- syscall.SIGTERM
 	}
 
-	// start Bootstrapping Reconcilers
-	err = c.startBootstrapReconcilers(adminClientFactory, leaderElector)
-	if err != nil {
-		logrus.Errorf("failed to start bootstrapping reconcilers: %v", err)
-		ch <- syscall.SIGTERM
-	}
-
 	// in-cluster component reconcilers
-	reconcilers, err := c.createClusterReconcilers(ctx, adminClientFactory)
+	err = c.createClusterReconcilers(ctx, adminClientFactory)
 	if err != nil {
 		logrus.Errorf("failed to start reconcilers: %v", err)
 		ch <- syscall.SIGTERM
 	}
-
-	c.Reconcilers = reconcilers
-	perfTimer.Checkpoint("starting-reconcilers")
-
-	// Start all reconcilers
-	err = c.startClusterReconcilers(ctx, reconcilers)
-	if err != nil {
-		logrus.Errorf("failed to start cluster reconcilers: %v", err)
-		ch <- syscall.SIGTERM
-	}
-	perfTimer.Checkpoint("started-reconcilers")
 
 	existingCNI := c.existingCNIProvider()
 	if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
@@ -322,7 +302,6 @@ func (c *CmdOpts) startController() error {
 
 	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName) {
 		c.ClusterComponents.Add(&controller.Konnectivity{
-			ClusterConfig:     c.ClusterConfig,
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
@@ -330,27 +309,23 @@ func (c *CmdOpts) startController() error {
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		c.ClusterComponents.Add(&controller.Scheduler{
-			ClusterConfig: c.ClusterConfig,
-			LogLevel:      c.Logging[constant.KubeSchedulerComponentName],
-			K0sVars:       c.K0sVars,
+			LogLevel: c.Logging[constant.KubeSchedulerComponentName],
+			K0sVars:  c.K0sVars,
 		})
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
 		c.ClusterComponents.Add(&controller.Manager{
-			ClusterConfig: c.ClusterConfig,
-			LogLevel:      c.Logging[constant.KubeControllerManagerComponentName],
-			K0sVars:       c.K0sVars,
+			LogLevel: c.Logging[constant.KubeControllerManagerComponentName],
+			K0sVars:  c.K0sVars,
 		})
 
-		if c.ClusterConfig.Spec.Telemetry.Enabled {
-			c.ClusterComponents.Add(&telemetry.Component{
-				ClusterConfig:     c.ClusterConfig,
-				Version:           build.Version,
-				K0sVars:           c.K0sVars,
-				KubeClientFactory: adminClientFactory,
-			})
-		}
 	}
+
+	c.ClusterComponents.Add(&telemetry.Component{
+		Version:           build.Version,
+		K0sVars:           c.K0sVars,
+		KubeClientFactory: adminClientFactory,
+	})
 
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
@@ -358,6 +333,13 @@ func (c *CmdOpts) startController() error {
 		return err
 	}
 	perfTimer.Checkpoint("finished cluster-component-init")
+
+	// start Bootstrapping Reconcilers
+	err = c.startBootstrapReconcilers(adminClientFactory, leaderElector)
+	if err != nil {
+		logrus.Errorf("failed to start bootstrapping reconcilers: %v", err)
+		ch <- syscall.SIGTERM
+	}
 
 	err = c.startClusterComponents(ctx)
 	if err != nil {
@@ -391,13 +373,6 @@ func (c *CmdOpts) startController() error {
 
 	perfTimer.Output()
 
-	// Stop all reconcilers first
-	for _, reconciler := range c.Reconcilers {
-		if err := reconciler.Stop(); err != nil {
-			logrus.Warningf("failed to stop reconciler: %s", err.Error())
-		}
-	}
-
 	// Stop components
 	if err := c.ClusterComponents.Stop(); err != nil {
 		logrus.Errorf("error while stopping node component %s", err)
@@ -412,36 +387,7 @@ func (c *CmdOpts) startController() error {
 }
 
 func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
-	errs, ctx := errgroup.WithContext(ctx)
-
-	// number of components to start
-	num := len(c.ClusterComponents.Components)
-
-	for i := 0; i < num; i++ {
-		errs.Go(func() error {
-			err := c.ClusterComponents.Start(ctx)
-			return fmt.Errorf("error starting cluster components, bailing", err)
-		})
-	}
-
-	// Wait for completion and return the first error (if any)
-	return errs.Wait()
-}
-
-func (c *CmdOpts) startClusterReconcilers(ctx context.Context, reconcilers map[string]component.Component) error {
-	errs, ctx := errgroup.WithContext(ctx)
-
-	// Start all reconcilers
-	for name, reconciler := range reconcilers {
-		logrus.Infof("running reconciler: %s", name)
-		errs.Go(func() error {
-			err := reconciler.Run()
-			return fmt.Errorf("failed to start reconciler: %s", err.Error())
-		})
-	}
-
-	// Wait for completion and return the first error (if any)
-	return errs.Wait()
+	return c.ClusterComponents.Start(ctx)
 }
 
 func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector) error {
@@ -472,9 +418,17 @@ func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface
 		}
 		reconcilers["helmCrd"] = controller.NewCRD(manifestsSaver)
 		reconcilers["helmAddons"] = controller.NewHelmAddons(manifestsSaver, c.K0sVars, cf, leaderElector)
+		c.ClusterComponents.Add(reconcilers["helmAddons"])
 	}
 
 	// Start all reconcilers
+	for name, reconciler := range reconcilers {
+		logrus.Infof("initing bootstrap reconciler: %s", name)
+		err := reconciler.Init()
+		if err != nil {
+			return fmt.Errorf("failed to initialize reconciler: %s", err.Error())
+		}
+	}
 	for name, reconciler := range reconcilers {
 		logrus.Infof("running bootstrap reconciler: %s", name)
 		err := reconciler.Run()
@@ -483,116 +437,88 @@ func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface
 		}
 	}
 
-	clusterConfig, err := config.GetConfigFromAPI(c.K0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return err
-	}
-	c.ClusterConfig = clusterConfig
-
 	return nil
 }
 
-func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface) (map[string]component.Component, error) {
-	var err error
-	errs, ctx := errgroup.WithContext(ctx)
+func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface) error {
 
 	reconcilers := make(map[string]component.Component)
 
 	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
-		errs.Go(func() error {
-			defaultPSP, err := controller.NewDefaultPSP(c.K0sVars)
-			if err != nil {
-				logrus.Warnf("failed to initialize default PSP reconciler: %s", err.Error())
-			} else {
-				reconcilers["default-psp"] = defaultPSP
-			}
-			return nil
-		})
+		defaultPSP, err := controller.NewDefaultPSP(c.K0sVars)
+		if err != nil {
+			return fmt.Errorf("failed to initialize default PSP reconciler: %s", err.Error())
+		}
+		reconcilers["default-psp"] = defaultPSP
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
-		errs.Go(func() error {
-			proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars)
-			if err != nil {
-				logrus.Warnf("failed to initialize kube-proxy reconciler: %s", err.Error())
-			} else {
-				reconcilers["kube-proxy"] = proxy
-			}
-			return nil
-		})
+		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars)
+		if err != nil {
+			return fmt.Errorf("failed to initialize kube-proxy reconciler: %s", err.Error())
+
+		}
+		reconcilers["kube-proxy"] = proxy
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
-		errs.Go(func() error {
-			coreDNS, err := controller.NewCoreDNS(c.K0sVars, cf)
-			if err != nil {
-				logrus.Warnf("failed to initialize CoreDNS reconciler: %s", err.Error())
-			} else {
-				reconcilers["coredns"] = coreDNS
-			}
-			return nil
-		})
+		coreDNS, err := controller.NewCoreDNS(c.K0sVars, cf)
+		if err != nil {
+			return fmt.Errorf("failed to initialize CoreDNS reconciler: %s", err.Error())
+		}
+		reconcilers["coredns"] = coreDNS
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
-		errs.Go(func() error {
-			logrus.Infof("initializing network reconciler for provider %s", c.ClusterConfig.Spec.Network.Provider)
-			switch c.ClusterConfig.Spec.Network.Provider {
-			case "custom":
-				logrus.Warnf("network provider set to custom, k0s will not manage it")
-			case "calico":
-				err = c.initCalico(reconcilers)
-			case "kuberouter":
-				err = c.initKubeRouter(reconcilers)
-				if err != nil {
-					logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
-					return err
-				}
-			}
-			return nil
-		})
-		return reconcilers, errs.Wait()
+		logrus.Infof("initializing network reconcilers")
+		if err := c.initCalico(reconcilers); err != nil {
+			logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
+		}
+		if err := c.initKubeRouter(reconcilers); err != nil {
+			logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
+		}
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
-		errs.Go(func() error {
-			metricServer, err := controller.NewMetricServer(c.K0sVars, cf)
-			if err != nil {
-				logrus.Warnf("failed to initialize metrics-server reconciler: %s", err.Error())
-				return err
-			}
-			reconcilers["metricServer"] = metricServer
-			return nil
-		})
-		return reconcilers, errs.Wait()
+
+		metricServer, err := controller.NewMetricServer(c.K0sVars, cf)
+		if err != nil {
+			logrus.Warnf("failed to initialize metrics-server reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["metricServer"] = metricServer
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
-		errs.Go(func() error {
-			kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars)
-			if err != nil {
-				logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
-				return err
-			}
-			reconcilers["kubeletConfig"] = kubeletConfig
-			return nil
-		})
-		return reconcilers, errs.Wait()
+
+		kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars)
+		if err != nil {
+			logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["kubeletConfig"] = kubeletConfig
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
-		errs.Go(func() error {
-			systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
-			if err != nil {
-				logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
-				return err
-			}
-			reconcilers["systemRBAC"] = systemRBAC
-			return nil
-		})
-		return reconcilers, errs.Wait()
+
+		systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
+		if err != nil {
+			logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["systemRBAC"] = systemRBAC
+
 	}
-	return reconcilers, nil
+	// Init and add all components to clusterComponents manager
+	for name, comp := range reconcilers {
+		err := comp.Init()
+		if err != nil {
+			logrus.Infof("failed to initialize %s, component may not work properly: %v", name, err)
+		}
+		logrus.Infof("adding %s as clusterComponent so it'll be reconciled based on config object changes", name)
+		c.ClusterComponents.Add(comp)
+	}
+	return nil
 }
 
 func (c *CmdOpts) initCalico(reconcilers map[string]component.Component) error {
@@ -622,7 +548,7 @@ func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) err
 		logrus.Warnf("failed to initialize kube-router manifests saver: %s", err.Error())
 		return err
 	}
-	kubeRouter, err := controller.NewKubeRouter(c.ClusterConfig, mfSaver)
+	kubeRouter, err := controller.NewKubeRouter(mfSaver)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-router reconciler: %s", err.Error())
 		return err

@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -246,16 +246,14 @@ type metricsConfig struct {
 	MEMRequest string
 }
 
+var _ component.Component = &MetricServer{}
+var _ component.ReconcilerComponent = &MetricServer{}
+
 // NewMetricServer creates new MetricServer reconciler
 func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
-	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return nil, err
-	}
 	return &MetricServer{
 		log:               log,
-		clusterConfig:     cfg,
 		K0sVars:           k0sVars,
 		kubeClientFactory: kubeClientFactory,
 	}, nil
@@ -286,6 +284,7 @@ func (m *MetricServer) Run() error {
 				newConfig, err := m.getConfig()
 				if err != nil {
 					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
+					continue
 				}
 				if previousConfig == newConfig {
 					continue
@@ -321,8 +320,10 @@ func (m *MetricServer) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (m *MetricServer) Reconcile() error {
+func (m *MetricServer) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: MetricServer")
+	// We just store the last known config, the main reconciler ticker will reconcile config based on number of nodes etc.
+	m.clusterConfig = clusterConfig
 	return nil
 }
 
@@ -335,6 +336,9 @@ func (m *MetricServer) Healthy() error { return nil }
 // - 300MiB of memory
 // So that's 10m CPU and 30MiB mem per 10 nodes
 func (m *MetricServer) getConfig() (metricsConfig, error) {
+	if m.clusterConfig == nil {
+		return metricsConfig{}, fmt.Errorf("cluster config not available yet")
+	}
 	cfg := metricsConfig{
 		Image:      m.clusterConfig.Spec.Images.MetricsServer.URI(),
 		PullPolicy: m.clusterConfig.Spec.Images.DefaultPullPolicy,

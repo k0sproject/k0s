@@ -37,9 +37,10 @@ var (
 	getOpts      = v1.GetOptions{TypeMeta: resourceType}
 )
 
-func GetConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
+func getConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
 	timeout := time.After(120 * time.Second)
-	tick := time.Tick(3 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
 	// Keep trying until we're timed out or got a result or got an error
 	for {
 		select {
@@ -47,7 +48,7 @@ func GetConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
 		case <-timeout:
 			return nil, fmt.Errorf("timed out waiting for API to return cluster-config")
 		// Got a tick, we should check on doSomething()
-		case <-tick:
+		case <-ticker.C:
 			logrus.Debug("fetching cluster-config from API...")
 			cfg, err := configRequest(kubeConfig)
 			if err != nil {
@@ -69,7 +70,7 @@ func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1b
 		return nil, err
 	}
 
-	apiConfig, err := GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	apiConfig, err := getConfigFromAPI(k0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return nil, err
 	}

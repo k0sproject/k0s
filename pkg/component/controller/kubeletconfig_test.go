@@ -32,12 +32,16 @@ var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr := "dns.local"
-
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig(dataDir).Spec, k0sVars)
+		k, err := NewKubeletConfig(k0sVars)
 		require.NoError(t, err)
+		k.clusterSpec = cfg.Spec
+		t.Log("starting to run...")
 		buf, err := k.run(dnsAddr)
 		require.NoError(t, err)
+		if err != nil {
+			t.FailNow()
+		}
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		t.Run("output_must_have_3_manifests", func(t *testing.T) {
 			require.Len(t, manifestYamls, 4, "Must have exactly 4 generated manifests per profile")
@@ -105,8 +109,9 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig(dataDir).Spec, k0sVars)
+	k, err := NewKubeletConfig(k0sVars)
 	require.NoError(t, err)
+	k.clusterSpec = cfg.Spec
 
 	cfgProfileX := map[string]interface{}{
 		"authentication": map[string]interface{}{

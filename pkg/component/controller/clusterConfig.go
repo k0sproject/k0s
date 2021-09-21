@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -31,21 +30,18 @@ type ClusterConfigReconciler struct {
 	YamlConfig       *v1beta1.ClusterConfig
 	ComponentManager *component.Manager
 
-	configClient    cfgClient.ClusterConfigInterface
-	kubeConfig      string
-	leaderElector   LeaderElector
-	log             *logrus.Entry
-	resourceVersion string
-	saver           manifestsSaver
+	configClient                cfgClient.ClusterConfigInterface
+	kubeConfig                  string
+	leaderElector               LeaderElector
+	log                         *logrus.Entry
+	lastReconciledConfigVersion string
+	saver                       manifestsSaver
 
 	tickerDone chan struct{}
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
 func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver) (*ClusterConfigReconciler, error) {
-	d := atomic.Value{}
-	d.Store(true)
-
 	cfg, err := config.GetYamlFromFile(cfgFile, k0sVars)
 	if err != nil {
 		return nil, err
@@ -62,14 +58,15 @@ func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0s
 }
 
 func (r *ClusterConfigReconciler) Init() error {
-	return nil
-}
-
-func (r *ClusterConfigReconciler) Run() error {
 	err := r.writeCRD()
 	if err != nil {
 		return fmt.Errorf("failed to write api-config CRD to API: %v", err)
 	}
+	return nil
+}
+
+func (r *ClusterConfigReconciler) Run() error {
+
 	c, err := cfgClient.NewForConfig(r.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
@@ -78,13 +75,13 @@ func (r *ClusterConfigReconciler) Run() error {
 	r.tickerDone = make(chan struct{})
 
 	// check if a CR already exists, and if so, populate the current resourceVersion
-	cfg, err := r.configClient.Get(context.Background(), "k0s", getOpts)
-	if err == nil {
-		r.resourceVersion = cfg.ResourceVersion
-	}
+	// cfg, err := r.configClient.Get(context.Background(), "k0s", getOpts)
+	// if err == nil {
+	// 	r.resourceVersion = cfg.ResourceVersion
+	// }
 
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
@@ -122,26 +119,26 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 		if errors.IsNotFound(err) {
 			// ClusterConfig CR cannot be found, which means we can create it
 			r.log.Debugf("didn't find cluster-config object: %v", err)
-			err := r.copyRunningConfigToCR()
+			clusterConfig, err = r.copyRunningConfigToCR()
 			if err != nil {
 				r.log.Errorf("failed to save cluster-config  %v\n", err)
+				return err
 			}
-		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			r.log.Errorf("error getting cluster-config %v\n", statusError.ErrStatus.Message)
-		}
-		r.log.Errorf("failed to reconcile config status: %v", err)
-		return err
-	}
-	// watch the clusterConfig resource for changes
-	if clusterConfig.ResourceVersion > r.resourceVersion {
-		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.resourceVersion, clusterConfig.ResourceVersion)
-		r.resourceVersion = clusterConfig.ResourceVersion
-		err = r.ComponentManager.Reconcile()
-		if err != nil {
+		} else {
+			r.log.Errorf("error getting cluster-config: %v", err)
 			return err
 		}
 	}
-	r.log.Debugf("reconciling cluster-config (nothing to do!)")
+	// watch the clusterConfig resource for changes
+	if clusterConfig.ResourceVersion != r.lastReconciledConfigVersion {
+		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.lastReconciledConfigVersion, clusterConfig.ResourceVersion)
+		err = r.ComponentManager.Reconcile(clusterConfig)
+		if err != nil {
+			return err
+		}
+		r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
+	}
+	r.log.Debugf("reconciling cluster-config done")
 	return nil
 }
 
@@ -157,27 +154,22 @@ func (r *ClusterConfigReconciler) Healthy() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) copyRunningConfigToCR() error {
-	if !r.leaderElector.IsLeader() {
-		r.log.Debug("I am not the leader, not reconciling cluster configuration")
-		return nil
-	}
+func (r *ClusterConfigReconciler) copyRunningConfigToCR() (*v1beta1.ClusterConfig, error) {
 	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig)
 	clusterConfig, err := r.configClient.Create(context.Background(), clusterWideConfig, cOpts)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	r.resourceVersion = clusterConfig.ResourceVersion
+	if !r.leaderElector.IsLeader() {
+		r.log.Debug("I am not the leader, not writing cluster configuration")
+		return clusterConfig, nil
+	}
+
 	r.log.Info("successfully wrote cluster-config to API")
-	return nil
+	return clusterConfig, nil
 }
 
 func (r *ClusterConfigReconciler) writeCRD() error {
-	if !r.leaderElector.IsLeader() {
-		r.log.Debug("I am not the leader, not reconciling cluster configuration")
-		return nil
-	}
-
 	crd, err := static.AssetDir("manifests/v1beta1/CustomResourceDefinition")
 	if err != nil {
 		r.log.Errorf("error retrieving api-config manifests: %s. will retry", err.Error())
@@ -192,6 +184,5 @@ func (r *ClusterConfigReconciler) writeCRD() error {
 			return fmt.Errorf("error writing api-config CRD, will NOT retry: %v", err)
 		}
 	}
-
 	return nil
 }

@@ -130,7 +130,7 @@ func ConfigFromStdin(dataDir string) (*ClusterConfig, error) {
 }
 
 func configFromString(yml string, dataDir string) (*ClusterConfig, error) {
-	config := &ClusterConfig{}
+	config := DefaultClusterConfig(dataDir)
 	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, []string{"interval"})
 	if err != nil {
 		return config, err

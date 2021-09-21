@@ -20,17 +20,21 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // KubeRouter implements the kube-router reconciler component
 type KubeRouter struct {
-	clusterConf *v1beta1.ClusterConfig
-	log         *logrus.Entry
+	log *logrus.Entry
 
-	saver manifestsSaver
+	saver          manifestsSaver
+	previousConfig kubeRouterConfig
 }
+
+var _ component.Component = &KubeRouter{}
+var _ component.ReconcilerComponent = &KubeRouter{}
 
 type kubeRouterConfig struct {
 	MTU               int
@@ -43,12 +47,11 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(clusterConf *v1beta1.ClusterConfig, manifestsSaver manifestsSaver) (*KubeRouter, error) {
+func NewKubeRouter(manifestsSaver manifestsSaver) (*KubeRouter, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kube-router"})
 	return &KubeRouter{
-		clusterConf: clusterConf,
-		saver:       manifestsSaver,
-		log:         log,
+		saver: manifestsSaver,
+		log:   log,
 	}, nil
 }
 
@@ -62,23 +65,24 @@ func (k *KubeRouter) Healthy() error { return nil }
 func (k *KubeRouter) Stop() error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (k *KubeRouter) Reconcile() error {
+func (k *KubeRouter) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: KubeRouter")
-	return nil
-}
-
-// Run runs the kube-router reconciler
-func (k *KubeRouter) Run() error {
-	k.log.Info("starting to dump manifests")
-
+	if clusterConfig.Spec.Network.Provider != "kuberouter" {
+		return nil
+	}
 	cfg := kubeRouterConfig{
-		AutoMTU:           k.clusterConf.Spec.Network.KubeRouter.AutoMTU,
-		MTU:               k.clusterConf.Spec.Network.KubeRouter.MTU,
-		PeerRouterIPs:     k.clusterConf.Spec.Network.KubeRouter.PeerRouterIPs,
-		PeerRouterASNs:    k.clusterConf.Spec.Network.KubeRouter.PeerRouterASNs,
-		CNIImage:          k.clusterConf.Spec.Images.KubeRouter.CNI.URI(),
-		CNIInstallerImage: k.clusterConf.Spec.Images.KubeRouter.CNIInstaller.URI(),
-		PullPolicy:        k.clusterConf.Spec.Images.DefaultPullPolicy,
+		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
+		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
+		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
+		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
+		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
+		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
+		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
+	}
+
+	if cfg == k.previousConfig {
+		k.log.Info("config matches with previous, not reconciling anything")
+		return nil
 	}
 
 	output := bytes.NewBuffer([]byte{})
@@ -97,6 +101,12 @@ func (k *KubeRouter) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
 	}
+	return nil
+}
+
+// Run runs the kube-router reconciler
+func (k *KubeRouter) Run() error {
+	k.log.Info("starting to dump manifests")
 
 	return nil
 }

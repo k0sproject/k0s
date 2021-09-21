@@ -24,8 +24,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/pkg/config"
-
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -33,8 +31,13 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
+
+// Dummy checks so we catch easily if we miss some interface implementation
+var _ component.ReconcilerComponent = &KubeletConfig{}
+var _ component.Component = &KubeletConfig{}
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {
@@ -46,14 +49,14 @@ type KubeletConfig struct {
 // NewKubeletConfig creates new KubeletConfig reconciler
 func NewKubeletConfig(k0sVars constant.CfgVars) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
-	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return nil, err
-	}
+	// cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return &KubeletConfig{
-		log:         log,
-		clusterSpec: cfg.Spec,
-		k0sVars:     k0sVars,
+		log: log,
+		// clusterSpec: cfg.Spec,
+		k0sVars: k0sVars,
 	}, nil
 }
 
@@ -69,6 +72,14 @@ func (k *KubeletConfig) Stop() error {
 
 // Run dumps the needed manifest objects
 func (k *KubeletConfig) Run() error {
+
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeletConfig) Reconcile(cfg *v1beta1.ClusterConfig) error {
+	logrus.Debug("reconcile method called for: KubeletConfig")
+	k.clusterSpec = cfg.Spec
 	dnsAddress, err := k.clusterSpec.Network.DNSAddress()
 	if err != nil {
 		return fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
@@ -86,12 +97,7 @@ func (k *KubeletConfig) Run() error {
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
-func (k *KubeletConfig) Reconcile() error {
-	logrus.Debug("reconcile method called for: KubeletConfig")
-	return nil
-}
-
+// TODO Maybe rename, "run" is slightly confusing...
 func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 	manifest := bytes.NewBuffer([]byte{})
 	defaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
