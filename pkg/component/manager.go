@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -30,6 +31,8 @@ import (
 type Manager struct {
 	Components []Component
 	sync       map[string]struct{}
+
+	lastReconciledConfig *v1beta1.ClusterConfig
 }
 
 // NewManager creates a manager
@@ -43,6 +46,11 @@ func NewManager() *Manager {
 // Add adds a component to the manager
 func (m *Manager) Add(component Component) {
 	m.Components = append(m.Components, component)
+	if isReconcileComponent(component) && m.lastReconciledConfig != nil {
+		if err := m.reconcileComponent(component, m.lastReconciledConfig); err != nil {
+			logrus.Warnf("component reconciler failed: %v", err)
+		}
+	}
 }
 
 // AddSync adds a component to the manager that should be initialized synchronously
@@ -95,8 +103,8 @@ func (m *Manager) Start(ctx context.Context) error {
 // Stop stops all managed components
 func (m *Manager) Stop() error {
 	var ret error
-	for i := len(m.Components) - 1; i >= 0; i-- {
-		if err := m.Components[i].Stop(); err != nil {
+	for _, component := range m.Components {
+		if err := component.Stop(); err != nil {
 			logrus.Errorf("failed to stop component: %s", err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to stop components")
@@ -107,17 +115,37 @@ func (m *Manager) Stop() error {
 }
 
 // Reoncile reconciles all managed components
-func (m *Manager) Reconcile() error {
+func (m *Manager) Reconcile(cfg *v1beta1.ClusterConfig) error {
 	var ret error
-	for i := len(m.Components) - 1; i >= 0; i-- {
-		if err := m.Components[i].Reconcile(); err != nil {
-			logrus.Errorf("failed to reconcile component: %s", err.Error())
-			if ret == nil {
-				ret = fmt.Errorf("failed to reconcile components")
-			}
+	logrus.Infof("starting component reconciling for %d components", len(m.Components))
+	for _, component := range m.Components {
+		if err := m.reconcileComponent(component, cfg); err != nil {
+			// TODO return or continue in case of error
+			ret = err
 		}
 	}
+	m.lastReconciledConfig = cfg
 	return ret
+}
+
+func (m *Manager) reconcileComponent(component Component, cfg *v1beta1.ClusterConfig) error {
+	clusterComponent, ok := component.(ReconcilerComponent)
+	compName := reflect.TypeOf(component).String()
+	if !ok {
+		logrus.Debugf("%s does not implement the ReconcileComponent interface --> not reconciling it", compName)
+		return nil
+	}
+	logrus.Infof("starting to reconcile %s", compName)
+	if err := clusterComponent.Reconcile(cfg); err != nil {
+		logrus.Errorf("failed to reconcile component: %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func isReconcileComponent(component Component) bool {
+	_, ok := component.(ReconcilerComponent)
+	return ok
 }
 
 // waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false

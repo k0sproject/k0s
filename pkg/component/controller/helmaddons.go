@@ -20,7 +20,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -28,8 +28,8 @@ import (
 
 // Helm watch for Chart crd
 type HelmAddons struct {
-	Client            clientset.ChartV1Beta1Interface
-	ClusterConfig     *k0sAPI.ClusterConfig
+	Client clientset.ChartV1Beta1Interface
+
 	saver             manifestsSaver
 	L                 *logrus.Entry
 	stopCh            chan struct{}
@@ -40,14 +40,12 @@ type HelmAddons struct {
 	leaderElector     LeaderElector
 }
 
+var _ component.Component = &HelmAddons{}
+var _ component.ReconcilerComponent = &HelmAddons{}
+
 // NewHelmAddons builds new HelmAddons
 func NewHelmAddons(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
-	cfg, err := config.GetConfigFromAPI(k0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return nil
-	}
 	return &HelmAddons{
-		ClusterConfig:     cfg,
 		saver:             s,
 		L:                 logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:            make(chan struct{}),
@@ -67,9 +65,9 @@ const (
 )
 
 // Run runs the helm controller
-func (h *HelmAddons) Run() error {
+func (h *HelmAddons) Reconcile(clusterConfig *k0sAPI.ClusterConfig) error {
 	h.L.Info("run begin")
-	if h.ClusterConfig.Spec.Extensions == nil || h.ClusterConfig.Spec.Extensions.Helm == nil {
+	if clusterConfig.Spec.Extensions == nil || clusterConfig.Spec.Extensions.Helm == nil {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
 		return nil
 	}
@@ -81,7 +79,7 @@ func (h *HelmAddons) Run() error {
 
 	h.Client = client
 
-	if err := h.initHelm(); err != nil {
+	if err := h.initHelm(clusterConfig); err != nil {
 		return fmt.Errorf("can't init helm: %v", err)
 	}
 
@@ -95,14 +93,14 @@ func (h *HelmAddons) Run() error {
 	return nil
 }
 
-func (h *HelmAddons) initHelm() error {
-	for _, repo := range h.ClusterConfig.Spec.Extensions.Helm.Repositories {
+func (h *HelmAddons) initHelm(clusterConfig *k0sAPI.ClusterConfig) error {
+	for _, repo := range clusterConfig.Spec.Extensions.Helm.Repositories {
 		if err := h.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
 		}
 	}
 
-	for _, addon := range h.ClusterConfig.Spec.Extensions.Helm.Charts {
+	for _, addon := range clusterConfig.Spec.Extensions.Helm.Charts {
 		tw := templatewriter.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
@@ -313,20 +311,19 @@ spec:
   namespace: {{ .TargetNS }}
 `
 
-// Run
+// Init
 func (h *HelmAddons) Init() error {
+	return nil
+}
+
+// Run
+func (h *HelmAddons) Run() error {
 	return nil
 }
 
 // Stop
 func (h *HelmAddons) Stop() error {
 	close(h.stopCh)
-	return nil
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (h *HelmAddons) Reconcile() error {
-	logrus.Debug("reconcile method called for: HelmAddons")
 	return nil
 }
 

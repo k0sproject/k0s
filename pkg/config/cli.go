@@ -20,13 +20,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/component"
-
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -68,7 +67,7 @@ type ControllerOptions struct {
 	K0sCloudProviderPort            int
 	K0sCloudProviderUpdateFrequency time.Duration
 	NodeComponents                  *component.Manager
-	Reconcilers                     map[string]component.Component
+	// Reconcilers                     map[string]component.Component
 }
 
 // Shared worker cli flags

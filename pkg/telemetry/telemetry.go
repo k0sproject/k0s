@@ -71,9 +71,9 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 }
 
 func (c Component) getStorageType() string {
-	switch c.ClusterConfig.Spec.Storage.Type {
+	switch c.clusterConfig.Spec.Storage.Type {
 	case v1beta1.EtcdStorageType, v1beta1.KineStorageType:
-		return c.ClusterConfig.Spec.Storage.Type
+		return c.clusterConfig.Spec.Storage.Type
 	}
 	return "unknown"
 }
@@ -114,7 +114,7 @@ func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 }
 
 func (c Component) getControlPlaneNodeCount() (int, error) {
-	switch c.ClusterConfig.Spec.Storage.Type {
+	switch c.clusterConfig.Spec.Storage.Type {
 	case v1beta1.EtcdStorageType:
 		cl, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
 		if err != nil {
@@ -126,7 +126,7 @@ func (c Component) getControlPlaneNodeCount() (int, error) {
 		}
 		return len(data), nil
 	default:
-		c.log.WithField("storageType", c.ClusterConfig.Spec.Storage.Type).Warning("can't get control planes count, unknown storage type")
+		c.log.WithField("storageType", c.clusterConfig.Spec.Storage.Type).Warning("can't get control planes count, unknown storage type")
 		return -1, nil
 	}
 }

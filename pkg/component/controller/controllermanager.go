@@ -23,24 +23,26 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // Manager implement the component interface to run kube scheduler
 type Manager struct {
-	ClusterConfig *v1beta1.ClusterConfig
-	gid           int
-	K0sVars       constant.CfgVars
-	LogLevel      string
-	supervisor    supervisor.Supervisor
-	uid           int
+	gid            int
+	K0sVars        constant.CfgVars
+	LogLevel       string
+	supervisor     *supervisor.Supervisor
+	uid            int
+	previousConfig stringmap.StringMap
 }
 
-var cmDefaultArgs = map[string]string{
+var cmDefaultArgs = stringmap.StringMap{
 	"allocate-node-cidrs":             "true",
 	"bind-address":                    "127.0.0.1",
 	"cluster-name":                    "k0s",
@@ -49,6 +51,9 @@ var cmDefaultArgs = map[string]string{
 	"leader-elect":                    "true",
 	"use-service-account-credentials": "true",
 }
+
+var _ component.Component = &Manager{}
+var _ component.ReconcilerComponent = &Manager{}
 
 // Init extracts the needed binaries
 func (a *Manager) Init() error {
@@ -68,10 +73,13 @@ func (a *Manager) Init() error {
 }
 
 // Run runs kube Manager
-func (a *Manager) Run() error {
+func (a *Manager) Run() error { return nil }
+
+// Reconcile detects changes in configuration and applies them to the component
+func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Info("Starting kube-controller-manager")
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
-	args := map[string]string{
+	args := stringmap.StringMap{
 		"authentication-kubeconfig":        ccmAuthConf,
 		"authorization-kubeconfig":         ccmAuthConf,
 		"kubeconfig":                       ccmAuthConf,
@@ -81,46 +89,51 @@ func (a *Manager) Run() error {
 		"requestheader-client-ca-file":     path.Join(a.K0sVars.CertRootDir, "front-proxy-ca.crt"),
 		"root-ca-file":                     path.Join(a.K0sVars.CertRootDir, "ca.crt"),
 		"service-account-private-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
-		"cluster-cidr":                     a.ClusterConfig.Spec.Network.BuildPodCIDR(),
-		"service-cluster-ip-range":         a.ClusterConfig.Spec.Network.BuildServiceCIDR(a.ClusterConfig.Spec.API.Address),
+		"cluster-cidr":                     clusterConfig.Spec.Network.BuildPodCIDR(),
+		"service-cluster-ip-range":         clusterConfig.Spec.Network.BuildServiceCIDR(clusterConfig.Spec.API.Address),
 		"profiling":                        "false",
 		"terminated-pod-gc-threshold":      "12500",
 		"v":                                a.LogLevel,
 	}
 
-	for name, value := range a.ClusterConfig.Spec.ControllerManager.ExtraArgs {
+	for name, value := range clusterConfig.Spec.ControllerManager.ExtraArgs {
 		if args[name] != "" {
 			logrus.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
-	if a.ClusterConfig.Spec.Network.DualStack.Enabled {
+	if clusterConfig.Spec.Network.DualStack.Enabled {
 		args["node-cidr-mask-size-ipv6"] = "110"
 		args["node-cidr-mask-size-ipv4"] = "24"
 	} else {
 		args["node-cidr-mask-size"] = "24"
 	}
-	a.ClusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
+	clusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
 	for name, value := range cmDefaultArgs {
 		if args[name] == "" {
 			args[name] = value
 		}
 	}
-	var cmArgs []string
-	for name, value := range args {
-		cmArgs = append(cmArgs, fmt.Sprintf("--%s=%s", name, value))
+
+	if clusterConfig.Spec.API.ExternalAddress == "" {
+		args["leader-elect"] = "false"
 	}
 
-	if a.ClusterConfig.Spec.API.ExternalAddress == "" {
-		cmArgs = append(cmArgs, "--leader-elect=false")
+	if args.Equals(a.previousConfig) {
+		// no changes and supervisor already running, do nothing
+		return nil
+	}
+	// Stop in case there's process running already and we need to change the config
+	if a.supervisor != nil {
+		return a.supervisor.Stop()
 	}
 
-	a.supervisor = supervisor.Supervisor{
+	a.supervisor = &supervisor.Supervisor{
 		Name:    "kube-controller-manager",
 		BinPath: assets.BinPath("kube-controller-manager", a.K0sVars.BinDir),
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
-		Args:    cmArgs,
+		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
 		GID:     a.gid,
 	}
@@ -130,12 +143,9 @@ func (a *Manager) Run() error {
 
 // Stop stops Manager
 func (a *Manager) Stop() error {
-	return a.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (a *Manager) Reconcile() error {
-	logrus.Debug("reconcile method called for: ControllerManager")
+	if a.supervisor != nil {
+		return a.supervisor.Stop()
+	}
 	return nil
 }
 
