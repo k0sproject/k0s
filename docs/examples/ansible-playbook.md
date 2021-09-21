@@ -130,7 +130,7 @@ You will require the following tools to install k0s on local virtual machines:
     Run the following command to test the connection to your hosts:
 
     ```shell
-    $ ansible -i inventory/multipass/inventory.yml -m ping
+    $ ansible -i inventory/multipass/inventory.yml -m ping all
     k0s-4 | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
