@@ -1207,11 +1207,11 @@
     <span class="nt">charts</span><span class="p">:</span>
     <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik</span>
       <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;9.11.0&quot;</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;10.3.2&quot;</span>
       <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
     <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">metallb</span>
       <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bitnami/metallb</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;1.0.1&quot;</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;2.5.4&quot;</span>
       <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
       <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|2</span>
         <span class="no">configInline:</span>
@@ -1281,7 +1281,7 @@ service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.10
 <p><em>Output</em>:</p>
 <div class="highlight"><pre><span></span><code>ingressroute.traefik.containo.us/dashboard created
 </code></pre></div>
-<p>At this point you should be able to access the dashboard using the <code>EXTERNAL-IP</code> that you noted above by visiting <code>http://192.168.0.5</code> in your browser:</p>
+<p>At this point you should be able to access the dashboard using the <code>EXTERNAL-IP</code> that you noted above by visiting <code>http://192.168.0.5/dashboard/</code> in your browser:</p>
 <p><img alt="Traefik Dashboard" src="../../img/traefik-dashboard.png" /></p>
 </li>
 <li>

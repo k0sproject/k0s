@@ -1401,6 +1401,7 @@ ls -l
   <span class="na">default</span> <span class="o">=</span> <span class="s2">&quot;t3.small&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>Open <code>main.tf</code> to check or modify k0s version near the end of the file.</p>
 <p>You can also configure a different name to your cluster and change the default VM type. <code>t3.small</code> (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.</p>
 <h3 id="2-create-the-vms">2. Create the VMs<a class="headerlink" href="#2-create-the-vms" title="Permanent link">#</a></h3>
 <p>For AWS, you need an account. Terraform will use the following environment variable: <code>AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN</code>. You can easily copy-paste them from the AWS portal. For more information, see <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html">the AWS documentation</a>.</p>
@@ -1451,7 +1452,7 @@ sudo k0s kubectl get nodes
 </code></pre></div>
 <h3 id="6-deploy-rook">6. Deploy Rook<a class="headerlink" href="#6-deploy-rook" title="Permanent link">#</a></h3>
 <p>To get started with Rook, let's first clone the Rook GitHub repo:</p>
-<div class="highlight"><pre><span></span><code>git clone --single-branch --branch v1.6.0 https://github.com/rook/rook.git
+<div class="highlight"><pre><span></span><code>git clone --single-branch --branch release-1.7 https://github.com/rook/rook.git
 <span class="nb">cd</span> rook/cluster/examples/kubernetes/ceph
 </code></pre></div>
 <p>We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in <code>operator.yaml</code> like this</p>
@@ -1524,7 +1525,7 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   <span class="m">0</
 <div class="highlight"><pre><span></span><code>$ kubectl get pvc
 
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
-mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   3Gi        RWO            rook-ceph-block   6s
+mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO            rook-ceph-block   6s
 </code></pre></div>
 <h3 id="10-deploy-an-example-application">10. Deploy an example application<a class="headerlink" href="#10-deploy-an-example-application" title="Permanent link">#</a></h3>
 <p>Let's deploy a Mongo database to verify the Ceph storage. Create a new file <code>mongo.yaml</code> with the following content:</p>

@@ -1226,8 +1226,8 @@
 <p>MetalLB implements the Kubernetes service of type LoadBalancer. When a LoadBalancer service is requested, MetalLB allocates an IP address from the configured range and makes the network aware that the IP “lives” in the cluster.</p>
 <p><img alt="k0s_metallb_loadbalancer" src="../../img/k0s_metallb_loadbalancer.png" /></p>
 <p>One of the benefits of MetalLB is that you avoid all cloud provider dependencies. That's why MetalLB is typically used for bare-metal deployments.</p>
-<p>See the MetalLB requirements in the <a href="https://metallb.universe.tf/#requirements">MetalLB's official documentation</a>. By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router, you need to enable strict ARP mode. See <a href="https://metallb.universe.tf/installation/#preparation">MetalLB preparations</a>.</p>
-<p>Port 7946 (TCP &amp; UDP) must be allowed between the nodes.</p>
+<p>See the MetalLB requirements in the <a href="https://metallb.universe.tf/#requirements">MetalLB's official documentation</a>. By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router and you are using kube-proxy in IPVS mode, you need to enable strict ARP mode in kube-proxy. See <a href="https://metallb.universe.tf/installation/#preparation">MetalLB preparations</a>.</p>
+<p>Port 7946 (TCP &amp; UDP) must be allowed between the nodes. In addition, before installing MetalLB, make sure there is no other software running on port 7946 on the nodes, such as docker daemon.</p>
 <h3 id="install-metallb">Install MetalLB<a class="headerlink" href="#install-metallb" title="Permanent link">#</a></h3>
 <ol>
 <li>

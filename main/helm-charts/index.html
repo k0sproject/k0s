@@ -1185,11 +1185,14 @@
       <span class="nt">charts</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
         <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-        <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;11.16.8&quot;</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;14.6.1&quot;</span>
         <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
-          <span class="no">storageSpec:</span>
-            <span class="no">emptyDir:</span>
-              <span class="no">medium: Memory</span>
+          <span class="no">alertmanager:</span>
+            <span class="no">persistentVolume:</span>
+              <span class="no">enabled: false</span>
+          <span class="no">server:</span>
+            <span class="no">persistentVolume:</span>
+              <span class="no">enabled: false</span>
         <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
 </code></pre></div>
 <p>Example extensions that you can use with Helm charts include:</p>

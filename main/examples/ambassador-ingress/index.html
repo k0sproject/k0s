@@ -1179,6 +1179,7 @@
                 
                 <h1 id="installing-ambassador-api-gateway">Installing Ambassador API Gateway<a class="headerlink" href="#installing-ambassador-api-gateway" title="Permanent link">#</a></h1>
 <p>You can configure k0s with the <a href="https://www.getambassador.io/products/api-gateway/">Ambassador API Gateway</a> and a <a href="https://metallb.universe.tf/">MetalLB service loadbalancer</a>. To do this you leverage Helm's extensible bootstrapping functionality to add the correct extensions to the <code>k0s.yaml</code> file during cluster configuration.</p>
+<p>Note: Currently Ambassador API Gateway does not support Kubernetes v1.22 or above. See <a href="https://github.com/emissary-ingress/emissary/issues/3735#issuecomment-916278895">here</a> for details.</p>
 <h2 id="use-docker-for-non-native-k0s-platforms">Use Docker for non-native k0s platforms<a class="headerlink" href="#use-docker-for-non-native-k0s-platforms" title="Permanent link">#</a></h2>
 <p>With Docker you can run k0s on platforms that the distribution does not natively support (refer to <a href="../../k0s-in-docker/">Run k0s in Docker</a>). Skip this section if you are on a platform that k0s natively supports.</p>
 <p>As you need to create a custom configuration file to install Ambassador Gateway, you will first need to map that file into the k0s container and to expose the ports Ambassador needs for outside access.</p>
