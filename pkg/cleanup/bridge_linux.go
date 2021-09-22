@@ -7,9 +7,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-type bridge struct {
-	link netlink.Link
-}
+type bridge struct{}
 
 // Name returns the name of the step
 func (b *bridge) Name() string {
@@ -18,32 +16,27 @@ func (b *bridge) Name() string {
 
 // NeedsToRun checks if there are and kube-bridge leftovers
 func (b *bridge) NeedsToRun() bool {
-	if runtime.GOOS == "windows" {
-		return false
-	}
-	linkName := "kube-bridge"
-	lnks, err := netlink.LinkList()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return false
-	}
-
-	for _, l := range lnks {
-		if l.Attrs().Name == linkName {
-			b.link = l
-			return true
-		}
-
-	}
-
-	return false
+	return true
 }
 
 // Run removes found kube-bridge leftovers
 func (b *bridge) Run() error {
-	err := netlink.LinkDel(b.link)
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+
+	lnks, err := netlink.LinkList()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get link list from netlink: %v", err)
+	}
+
+	for _, l := range lnks {
+		if l.Attrs().Name == "kube-bridge" {
+			err := netlink.LinkDel(l)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
