@@ -1,6 +1,12 @@
 package supervisor
 
-import "testing"
+import (
+	"fmt"
+	"os"
+	"sort"
+	"strings"
+	"testing"
+)
 
 type SupervisorTest struct {
 	shouldFail bool
@@ -55,5 +61,34 @@ func TestSupervisor(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to stop %s: %v", s.proc.Name, err)
 		}
+	}
+}
+
+func TestGetEnv(t *testing.T) {
+	// backup environment vars
+	oldEnv := os.Environ()
+
+	os.Clearenv()
+	os.Setenv("k3", "v3")
+	os.Setenv("PATH", "/bin")
+	os.Setenv("k2", "v2")
+	os.Setenv("FOO_k3", "foo_v3")
+	os.Setenv("k4", "v4")
+	os.Setenv("FOO_k2", "foo_v2")
+	os.Setenv("k1", "v1")
+	os.Setenv("FOO_PATH", "/usr/local/bin")
+	env := getEnv("/var/lib/k0s", "foo")
+	sort.Strings(env)
+	expected := "[PATH=/var/lib/k0s/bin:/usr/local/bin k1=v1 k2=foo_v2 k3=foo_v3 k4=v4]"
+	actual := fmt.Sprintf("%s", env)
+	if actual != expected {
+		t.Errorf("Failed in env processing, expected: %q, actual: %q", expected, actual)
+	}
+
+	//restore environment vars
+	os.Clearenv()
+	for _, e := range oldEnv {
+		kv := strings.SplitN(e, "=", 2)
+		os.Setenv(kv[0], kv[1])
 	}
 }
