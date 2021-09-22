@@ -20,13 +20,7 @@ func (d *directories) Name() string {
 
 // NeedsToRun checks if dataDir and runDir are present on the host
 func (d *directories) NeedsToRun() bool {
-	if _, err := os.Stat(d.Config.dataDir); err == nil {
-		return true
-	}
-	if _, err := os.Stat(d.Config.runDir); err == nil {
-		return true
-	}
-	return false
+	return true
 }
 
 // Run removes all kubelet mounts and deletes generated dataDir and runDir
