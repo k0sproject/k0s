@@ -174,6 +174,7 @@ func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.Cluste
 		Konnectivity:      config.Spec.Konnectivity,
 		API: &v1beta1.APISpec{
 			ExternalAddress: config.Spec.API.ExternalAddress,
+			Address:         config.Spec.API.Address,
 			Port:            config.Spec.API.Port,
 		},
 	}
