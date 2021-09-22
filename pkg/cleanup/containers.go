@@ -10,6 +10,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
 )
@@ -44,8 +45,6 @@ func (c *containers) Run() error {
 			return err
 		}
 	}
-
-	time.Sleep(5 * time.Second)
 
 	if err := c.stopAllContainers(); err != nil {
 		logrus.Debugf("error stopping containers: %v", err)
@@ -129,7 +128,16 @@ func (c *containers) stopContainerd() {
 func (c *containers) stopAllContainers() error {
 	var msg []error
 	logrus.Debugf("trying to list all pods")
-	pods, err := c.Config.containerRuntime.ListContainers()
+
+	var pods []string
+	err := retry.Do(func() error {
+		var err error
+		pods, err = c.Config.containerRuntime.ListContainers()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		logrus.Debugf("failed at listing pods %v", err)
 		return err
