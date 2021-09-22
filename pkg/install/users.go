@@ -25,7 +25,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -72,7 +71,7 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 // EnsureUser checks if a user exists, and creates it, if it doesn't
 // TODO: we should also consider modifying the user, if the user exists, but with wrong settings
 func EnsureUser(name string, homeDir string) error {
-	shell, err := file.GetExecPath("nologin")
+	shell, err := exec.LookPath("nologin")
 	if err != nil {
 		return err
 	}
@@ -81,7 +80,7 @@ func EnsureUser(name string, homeDir string) error {
 	// User doesn't exist
 	if !exists && err == nil {
 		// Create the User
-		if err := CreateUser(name, homeDir, *shell); err != nil {
+		if err := CreateUser(name, homeDir, shell); err != nil {
 			return err
 		}
 		// User perhaps exists, but cannot be fetched
@@ -102,7 +101,7 @@ func CreateUser(userName string, homeDir string, shell string) error {
 	var userCmdArgs []string
 
 	logrus.Infof("creating user: %s", userName)
-	_, err := file.GetExecPath("useradd")
+	_, err := exec.LookPath("useradd")
 	if err == nil {
 		userCmd = "useradd"
 		userCmdArgs = []string{`--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName}
@@ -124,7 +123,7 @@ func DeleteUser(userName string) error {
 	var userCmdArgs []string
 
 	logrus.Debugf("deleting user: %s", userName)
-	_, err := file.GetExecPath("userdel")
+	_, err := exec.LookPath("userdel")
 	if err == nil {
 		userCmd = "userdel"
 		userCmdArgs = []string{userName}
