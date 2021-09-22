@@ -16,11 +16,6 @@ func (u *users) Name() string {
 	return "remove k0s users step:"
 }
 
-// NeedsToRun detects controller users
-func (u *users) NeedsToRun() bool {
-	return true
-}
-
 // Run removes all controller users that are present on the host
 func (u *users) Run() error {
 	logger := logrus.New()

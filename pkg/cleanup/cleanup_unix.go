@@ -85,13 +85,11 @@ func (c *Config) Cleanup() error {
 	}
 
 	for _, step := range cleanupSteps {
-		if step.NeedsToRun() {
-			logrus.Info("* ", step.Name())
-			err := step.Run()
-			if err != nil {
-				logrus.Debug(err)
-				msg = append(msg, err)
-			}
+		logrus.Info("* ", step.Name())
+		err := step.Run()
+		if err != nil {
+			logrus.Debug(err)
+			msg = append(msg, err)
 		}
 	}
 	if len(msg) > 0 {
@@ -102,8 +100,6 @@ func (c *Config) Cleanup() error {
 
 // Step interface is used to implement cleanup steps
 type Step interface {
-	// NeedsToRun checks if the step needs to run
-	NeedsToRun() bool
 	// Run impelements specific cleanup operations
 	Run() error
 	// Name returns name of the step for conveninece

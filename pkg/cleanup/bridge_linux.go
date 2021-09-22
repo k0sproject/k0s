@@ -14,11 +14,6 @@ func (b *bridge) Name() string {
 	return "kube-bridge leftovers cleanup step"
 }
 
-// NeedsToRun checks if there are and kube-bridge leftovers
-func (b *bridge) NeedsToRun() bool {
-	return true
-}
-
 // Run removes found kube-bridge leftovers
 func (b *bridge) Run() error {
 	if runtime.GOOS == "windows" {
