@@ -58,6 +58,7 @@ type Konnectivity struct {
 	clusterConfig       *v1beta1.ClusterConfig
 	log                 *logrus.Entry
 	leaseCounterRunning bool
+	previousConfig      konnectivityAgentConfig
 }
 
 var _ component.Component = &Konnectivity{}
@@ -205,6 +206,18 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		return err
 	}
 
+	cfg := konnectivityAgentConfig{
+		APIAddress: k.NodeConfig.Spec.API.APIAddress(),
+		AgentPort:  k.clusterConfig.Spec.Konnectivity.AgentPort,
+		Image:      k.clusterConfig.Spec.Images.Konnectivity.URI(),
+		PullPolicy: k.clusterConfig.Spec.Images.DefaultPullPolicy,
+	}
+
+	if cfg == k.previousConfig {
+		k.log.Debug("agent configs match, no need to reconcile")
+		return nil
+	}
+
 	tw := templatewriter.TemplateWriter{
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
@@ -220,6 +233,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	if err != nil {
 		return fmt.Errorf("failed to write konnectivity agent manifest: %v", err)
 	}
+	k.previousConfig = cfg
 	return nil
 }
 
