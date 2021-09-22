@@ -52,7 +52,6 @@ func NewResetCmd() *cobra.Command {
 func (c *CmdOpts) reset() error {
 	logger := logrus.New()
 	textFormatter := new(logrus.TextFormatter)
-	textFormatter.ForceColors = true
 	textFormatter.DisableTimestamp = true
 
 	logger.SetFormatter(textFormatter)
