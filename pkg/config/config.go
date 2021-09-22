@@ -145,19 +145,14 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 // HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
 // this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
 // This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-//		- APISpec
-//		- StorageSpec
-//		- Network.ServiceCIDR
-//  		Install
-// TODO: separate bootstrapping configuration from node-specific configuration
+// - APISpec
+// - StorageSpec
+// - Network.ServiceCIDR
+// - Install
 func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.ClusterConfig {
 	clusterSpec := &v1beta1.ClusterSpec{
 		ControllerManager: config.Spec.ControllerManager,
 		Scheduler:         config.Spec.Scheduler,
-		Storage: &v1beta1.StorageSpec{
-			Kine: config.Spec.Storage.Kine,
-			Type: config.Spec.Storage.Type,
-		},
 		Network: &v1beta1.Network{
 			Calico:     config.Spec.Network.Calico,
 			DualStack:  config.Spec.Network.DualStack,

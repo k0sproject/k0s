@@ -202,3 +202,14 @@ spec:
 		}
 	}
 }
+
+func TestStripDefaults(t *testing.T) {
+	defaultConfig := DefaultClusterConfig("")
+	stripped := defaultConfig.StripDefaults()
+	a := assert.New(t)
+	a.Nil(stripped.Spec.API)
+	a.Nil(stripped.Spec.ControllerManager)
+	a.Nil(stripped.Spec.Scheduler)
+	a.Nil(stripped.Spec.Network)
+	a.Nil(stripped.Spec.PodSecurityPolicy)
+}

@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -68,6 +70,39 @@ type ClusterConfig struct {
 	Status  ClusterConfigStatus `json:"status,omitempty"`
 }
 
+// StripDefaults returns a copy of the config where the default values a nilled out
+func (c *ClusterConfig) StripDefaults() *ClusterConfig {
+	copy := c.DeepCopy()
+	if reflect.DeepEqual(copy.Spec.API, DefaultAPISpec()) {
+		copy.Spec.API = nil
+	}
+	if reflect.DeepEqual(copy.Spec.ControllerManager, DefaultControllerManagerSpec()) {
+		copy.Spec.ControllerManager = nil
+	}
+	if reflect.DeepEqual(copy.Spec.Scheduler, DefaultSchedulerSpec()) {
+		copy.Spec.Scheduler = nil
+	}
+	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec(constant.DataDirDefault)) {
+		c.Spec.ControllerManager = nil
+	}
+	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
+		copy.Spec.Network = nil
+	}
+	if reflect.DeepEqual(copy.Spec.PodSecurityPolicy, DefaultPodSecurityPolicy()) {
+		copy.Spec.PodSecurityPolicy = nil
+	}
+	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
+		copy.Spec.Telemetry = nil
+	}
+	if reflect.DeepEqual(copy.Spec.Images, DefaultClusterImages()) {
+		copy.Spec.Images = nil
+	}
+	if reflect.DeepEqual(copy.Spec.Konnectivity, DefaultKonnectivitySpec()) {
+		copy.Spec.Konnectivity = nil
+	}
+	return copy
+}
+
 // InstallSpec defines the required fields for the `k0s install` command
 type InstallSpec struct {
 	SystemUsers *SystemUser `json:"users,omitempty"`
@@ -79,10 +114,22 @@ type ControllerManagerSpec struct {
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
+func DefaultControllerManagerSpec() *ControllerManagerSpec {
+	return &ControllerManagerSpec{
+		ExtraArgs: make(map[string]string),
+	}
+}
+
 // SchedulerSpec defines the fields for the Scheduler
 type SchedulerSpec struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to Kubernetes scheduler process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+}
+
+func DefaultSchedulerSpec() *SchedulerSpec {
+	return &SchedulerSpec{
+		ExtraArgs: make(map[string]string),
+	}
 }
 
 //+kubebuilder:object:root=true
@@ -175,15 +222,11 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 // DefaultClusterSpec default settings
 func DefaultClusterSpec(dataDir string) *ClusterSpec {
 	return &ClusterSpec{
-		Storage: DefaultStorageSpec(dataDir),
-		Network: DefaultNetwork(),
-		API:     DefaultAPISpec(),
-		ControllerManager: &ControllerManagerSpec{
-			ExtraArgs: make(map[string]string),
-		},
-		Scheduler: &SchedulerSpec{
-			ExtraArgs: make(map[string]string),
-		},
+		Storage:           DefaultStorageSpec(dataDir),
+		Network:           DefaultNetwork(),
+		API:               DefaultAPISpec(),
+		ControllerManager: DefaultControllerManagerSpec(),
+		Scheduler:         DefaultSchedulerSpec(),
 		PodSecurityPolicy: DefaultPodSecurityPolicy(),
 		Install:           DefaultInstallSpec(),
 		Images:            DefaultClusterImages(),

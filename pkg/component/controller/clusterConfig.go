@@ -155,7 +155,7 @@ func (r *ClusterConfigReconciler) Healthy() error {
 }
 
 func (r *ClusterConfigReconciler) copyRunningConfigToCR() (*v1beta1.ClusterConfig, error) {
-	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig)
+	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig).StripDefaults()
 	clusterConfig, err := r.configClient.Create(context.Background(), clusterWideConfig, cOpts)
 	if err != nil {
 		return nil, err
