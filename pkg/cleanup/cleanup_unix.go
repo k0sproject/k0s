@@ -80,7 +80,7 @@ func (c *Config) Cleanup() error {
 		&users{Config: c},
 		&services{Config: c},
 		&directories{Config: c},
-		&cni{Config: c},
+		&cni{},
 		&bridge{},
 	}
 
