@@ -18,11 +18,6 @@ func (s *services) Name() string {
 	return "uninstall service step"
 }
 
-// NeedsToRun checks if k0s service files are persent on the host
-func (s *services) NeedsToRun() bool {
-	return true
-}
-
 // Run uninstalls k0s services that are found on the host
 func (s *services) Run() error {
 	var msg []string

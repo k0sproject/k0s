@@ -26,11 +26,6 @@ func (c *containers) Name() string {
 	return "containers steps"
 }
 
-// NeedsToRun checks if custom CRI is used, otherwise checks if containerd is present on the host
-func (c *containers) NeedsToRun() bool {
-	return true
-}
-
 // Run removes all the pods and mounts and stops containers afterwards
 // Run starts containerd if custom CRI is not configured
 func (c *containers) Run() error {
