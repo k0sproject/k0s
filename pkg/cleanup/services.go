@@ -2,15 +2,14 @@ package cleanup
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/install"
-	"github.com/sirupsen/logrus"
 )
 
 type services struct {
 	Config *Config
-	roles  []string
 }
 
 // Name returns the name of the step
@@ -20,24 +19,15 @@ func (s *services) Name() string {
 
 // NeedsToRun checks if k0s service files are persent on the host
 func (s *services) NeedsToRun() bool {
-	possibleRoles := []string{
-		"controller", "worker",
-	}
-	for _, prole := range possibleRoles {
-		if _, stub, err := install.GetSysInit(prole); err == nil && stub != "" {
-			s.roles = append(s.roles, prole)
-		}
-	}
-
-	return len(s.roles) > 0
+	return true
 }
 
 // Run uninstalls k0s services that are found on the host
 func (s *services) Run() error {
 	var msg []string
-	for _, role := range s.roles {
-		if err := install.UninstallService(role); err != nil {
-			logrus.Debugf("Tried removing service: %v", err)
+
+	for _, role := range []string{"controller", "worker"} {
+		if err := install.UninstallService(role); err != nil && !os.IsNotExist(err) {
 			msg = append(msg, err.Error())
 		}
 	}
