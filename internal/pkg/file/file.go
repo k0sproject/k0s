@@ -19,7 +19,6 @@ package file
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -52,16 +51,6 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 		return nil
 	}
 	return nil
-}
-
-// GetExecPath find the path for a given file (similar to `which`)
-func GetExecPath(fileName string) (*string, error) {
-	path, err := exec.LookPath(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &path, nil
 }
 
 // Chown changes file/dir mode
