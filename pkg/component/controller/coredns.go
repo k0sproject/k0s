@@ -21,6 +21,7 @@ import (
 	"math"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/component"
 
@@ -244,12 +245,14 @@ var _ component.ReconcilerComponent = &CoreDNS{}
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	client         kubernetes.Interface
-	tickerDone     chan struct{}
-	log            *logrus.Entry
-	manifestDir    string
-	K0sVars        constant.CfgVars
-	previousConfig coreDNSConfig
+	client                 kubernetes.Interface
+	log                    *logrus.Entry
+	manifestDir            string
+	K0sVars                constant.CfgVars
+	previousConfig         coreDNSConfig
+	stopCtx                context.Context
+	stopFunc               context.CancelFunc
+	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
 
 type coreDNSConfig struct {
@@ -284,6 +287,29 @@ func (c *CoreDNS) Init() error {
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run() error {
+	c.stopCtx, c.stopFunc = context.WithCancel(context.Background())
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if c.lastKnownClusterConfig == nil {
+					// We cannot figure out the full config without having the last known cluster config from CR
+					continue
+				}
+				err := c.Reconcile(c.lastKnownClusterConfig)
+				if err != nil {
+					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
+				}
+			case <-c.stopCtx.Done():
+				c.log.Info("coredns node reconciler done")
+				return
+			}
+		}
+	}()
+
 	return nil
 }
 
@@ -324,8 +350,9 @@ func replicaCount(nodeCount int) int {
 
 // Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
-	if c.tickerDone != nil {
-		close(c.tickerDone)
+	if c.stopFunc != nil {
+		logrus.Debug("closing coreDNS component context")
+		c.stopFunc()
 	}
 	return nil
 }
@@ -352,6 +379,7 @@ func (c *CoreDNS) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 		return fmt.Errorf("error writing coredns manifests: %v. will retry", err)
 	}
 	c.previousConfig = cfg
+	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }
 
