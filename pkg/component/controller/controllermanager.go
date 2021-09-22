@@ -144,7 +144,7 @@ func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 		UID:     a.uid,
 		GID:     a.gid,
 	}
-
+	a.previousConfig = args
 	return a.supervisor.Supervise()
 }
 

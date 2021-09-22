@@ -116,8 +116,7 @@ func (a *Scheduler) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 		UID:     a.uid,
 		GID:     a.gid,
 	}
-	// TODO We need to dump the config file suited for k0s use
-
+	a.previousConfig = args
 	return a.supervisor.Supervise()
 }
 
