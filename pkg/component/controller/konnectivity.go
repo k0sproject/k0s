@@ -43,14 +43,14 @@ import (
 
 // Konnectivity implements the component interface of konnectivity server
 type Konnectivity struct {
-	K0sVars    constant.CfgVars
-	LogLevel   string
-	supervisor *supervisor.Supervisor
-	uid        int
-
+	K0sVars  constant.CfgVars
+	LogLevel string
 	// used for lease lock
 	KubeClientFactory k8sutil.ClientFactoryInterface
+	NodeConfig        *v1beta1.ClusterConfig
 
+	supervisor          *supervisor.Supervisor
+	uid                 int
 	serverCount         int
 	serverCountChan     chan int
 	stopCtx             context.Context
@@ -100,7 +100,7 @@ func (k *Konnectivity) Run() error {
 // Reconcile detects changes in configuration and applies them to the component
 func (k *Konnectivity) Reconcile(clusterCfg *v1beta1.ClusterConfig) error {
 	k.clusterConfig = clusterCfg
-	if clusterCfg.Spec.API.ExternalAddress != "" {
+	if k.NodeConfig.Spec.API.ExternalAddress != "" {
 		go k.runLeaseCounter()
 	} else {
 		// It's a buffered channel so once we start the runServer routine it'll pick this up and just sees it never changing
@@ -140,6 +140,7 @@ func (k *Konnectivity) runServer() {
 	for {
 		select {
 		case <-k.stopCtx.Done():
+			logrus.Info("stopping konnectivity server reconfig loop")
 			return
 		case count := <-k.serverCountChan:
 			// restart only if the count actually changes and we've got the global config
@@ -180,11 +181,13 @@ func (k *Konnectivity) runServer() {
 // Stop stops
 func (k *Konnectivity) Stop() error {
 	if k.stopFunc != nil {
+		logrus.Debug("closing konnectivity component context")
 		k.stopFunc()
 	}
 	if k.supervisor == nil {
 		return nil
 	}
+	logrus.Debug("about to stop konnectivity supervisor")
 	return k.supervisor.Stop()
 }
 
@@ -206,7 +209,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{
-			APIAddress: k.clusterConfig.Spec.API.APIAddress(),
+			APIAddress: k.NodeConfig.Spec.API.APIAddress(),
 			AgentPort:  k.clusterConfig.Spec.Konnectivity.AgentPort,
 			Image:      k.clusterConfig.Spec.Images.Konnectivity.URI(),
 			PullPolicy: k.clusterConfig.Spec.Images.DefaultPullPolicy,
@@ -231,6 +234,7 @@ func (k *Konnectivity) runLeaseCounter() {
 	for {
 		select {
 		case <-k.stopCtx.Done():
+			logrus.Info("stopping konnectivity lease counter")
 			return
 		case <-ticker.C:
 			count, err := k.countLeaseHolders()

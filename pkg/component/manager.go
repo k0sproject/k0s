@@ -104,12 +104,15 @@ func (m *Manager) Start(ctx context.Context) error {
 func (m *Manager) Stop() error {
 	var ret error
 	for _, component := range m.Components {
+		compName := reflect.TypeOf(component).Elem().Name()
+		logrus.Infof("stopping component %s", compName)
 		if err := component.Stop(); err != nil {
 			logrus.Errorf("failed to stop component: %s", err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to stop components")
 			}
 		}
+		logrus.Infof("stopped component %s", compName)
 	}
 	return ret
 }

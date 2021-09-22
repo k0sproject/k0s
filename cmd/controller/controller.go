@@ -295,16 +295,18 @@ func (c *CmdOpts) startController() error {
 		ch <- syscall.SIGTERM
 	}
 
-	existingCNI := c.existingCNIProvider()
-	if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
-		logrus.Errorf("cannot change CNI from %v to %v", existingCNI, c.ClusterConfig.Spec.Network.Provider)
-	}
+	// FIXME This needs to be implemented on the kube-router and calico component reconcilers
+	// existingCNI := c.existingCNIProvider()
+	// if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
+	// 	logrus.Errorf("cannot change CNI from %v to %v", existingCNI, c.ClusterConfig.Spec.Network.Provider)
+	// }
 
 	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName) {
 		c.ClusterComponents.Add(&controller.Konnectivity{
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
+			NodeConfig:        c.NodeConfig,
 		})
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
@@ -377,11 +379,13 @@ func (c *CmdOpts) startController() error {
 	if err := c.ClusterComponents.Stop(); err != nil {
 		logrus.Errorf("error while stopping node component %s", err)
 	}
+	logrus.Info("all cluster components stopped")
 
 	// Stop components
 	if err := c.NodeComponents.Stop(); err != nil {
 		logrus.Errorf("error while stopping node component %s", err)
 	}
+	logrus.Info("all node components stopped")
 
 	return nil
 }

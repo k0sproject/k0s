@@ -92,13 +92,19 @@ func (a *Scheduler) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 		args["leader-elect"] = "false"
 	}
 
-	if args.Equals(a.previousConfig) {
+	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing
+		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
 		return nil
 	}
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
-		return a.supervisor.Stop()
+		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
+		err := a.supervisor.Stop()
+		a.supervisor = nil
+		if err != nil {
+			return err
+		}
 	}
 
 	a.supervisor = &supervisor.Supervisor{

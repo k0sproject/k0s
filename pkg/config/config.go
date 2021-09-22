@@ -172,6 +172,9 @@ func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.Cluste
 		Images:            config.Spec.Images,
 		Extensions:        config.Spec.Extensions,
 		Konnectivity:      config.Spec.Konnectivity,
+		API: &v1beta1.APISpec{
+			ExternalAddress: config.Spec.API.ExternalAddress,
+		},
 	}
 
 	return &v1beta1.ClusterConfig{

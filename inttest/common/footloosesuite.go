@@ -473,7 +473,7 @@ func (s *FootlooseSuite) StopController(name string) error {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	s.T().Log("killing k0s")
-	_, err = ssh.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+	_, err = ssh.ExecWithOutput(`kill $(pidof k0s | tr " " "\n" | sort -n | head -n1) && while pidof k0s; do sleep 0.1s; done`)
 	return err
 }
 

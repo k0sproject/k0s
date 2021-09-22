@@ -77,7 +77,8 @@ func (a *Manager) Run() error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
-	logrus.Info("Starting kube-controller-manager")
+	logger := logrus.WithField("component", "kube-controller-manager")
+	logger.Info("Starting reconcile")
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
 	args := stringmap.StringMap{
 		"authentication-kubeconfig":        ccmAuthConf,
@@ -98,7 +99,7 @@ func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 
 	for name, value := range clusterConfig.Spec.ControllerManager.ExtraArgs {
 		if args[name] != "" {
-			logrus.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
+			logger.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
@@ -119,13 +120,19 @@ func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 		args["leader-elect"] = "false"
 	}
 
-	if args.Equals(a.previousConfig) {
+	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing
+		logger.Info("reconcile has nothing to do")
 		return nil
 	}
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
-		return a.supervisor.Stop()
+		logger.Info("reconcile has nothing to do")
+		err := a.supervisor.Stop()
+		a.supervisor = nil
+		if err != nil {
+			return err
+		}
 	}
 
 	a.supervisor = &supervisor.Supervisor{
