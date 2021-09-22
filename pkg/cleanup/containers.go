@@ -1,7 +1,9 @@
 package cleanup
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,13 +28,6 @@ func (c *containers) Name() string {
 
 // NeedsToRun checks if custom CRI is used, otherwise checks if containerd is present on the host
 func (c *containers) NeedsToRun() bool {
-	if c.isCustomCriUsed() {
-		return true
-	}
-	if _, err := os.Stat(c.Config.containerd.binPath); err != nil {
-		logrus.Debugf("could not find containerd binary at %v errored with: %v", c.Config.containerd.binPath, err)
-		return false
-	}
 	return true
 }
 
@@ -41,8 +36,11 @@ func (c *containers) NeedsToRun() bool {
 func (c *containers) Run() error {
 	if !c.isCustomCriUsed() {
 		if err := c.startContainerd(); err != nil {
-			logrus.Debugf("error starting containerd: %v", err)
-			return err
+			if errors.Is(err, fs.ErrNotExist) || errors.Is(err, exec.ErrNotFound) {
+				logrus.Debugf("containerd binary not found. Skipping container cleanup")
+				return nil
+			}
+			return fmt.Errorf("failed to start containerd: %w", err)
 		}
 	}
 
@@ -99,7 +97,7 @@ func (c *containers) startContainerd() error {
 	}
 	cmd := exec.Command(c.Config.containerd.binPath, args...)
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start containerd: %v", err)
+		return err
 	}
 
 	c.Config.containerd.cmd = cmd
