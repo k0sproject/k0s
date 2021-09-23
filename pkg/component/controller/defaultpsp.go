@@ -36,8 +36,9 @@ import (
 Depending on user config, we select either of the above rule sets to be the default
 */
 type DefaultPSP struct {
-	k0sVars     constant.CfgVars
-	manifestDir string
+	k0sVars        constant.CfgVars
+	manifestDir    string
+	previousPolicy string
 }
 
 var _ component.Component = &DefaultPSP{}
@@ -73,7 +74,13 @@ func (d *DefaultPSP) Stop() error {
 
 // Reconcile detects changes in configuration and applies them to the component
 func (d *DefaultPSP) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
-	logrus.Debug("reconcile method called for: DefaultPSP")
+	log := logrus.WithField("component", "DefaultPSP")
+	log.Debug("reconcile method called for: DefaultPSP")
+	if d.previousPolicy == clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy {
+		log.Debug("new PSP matches existing, no reconcile needed")
+		return nil
+	}
+	log.Debugf("policy changed from %s to %s", d.previousPolicy, clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy)
 	tw := templatewriter.TemplateWriter{
 		Name:     "default-psp",
 		Template: defaultPSPTemplate,
@@ -86,6 +93,7 @@ func (d *DefaultPSP) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	if err != nil {
 		return fmt.Errorf("error writing default PSP manifests, will NOT retry: %w", err)
 	}
+	d.previousPolicy = clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy
 	return nil
 }
 
