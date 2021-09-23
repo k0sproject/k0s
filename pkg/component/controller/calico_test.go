@@ -26,7 +26,7 @@ func TestCalicoManifests(t *testing.T) {
 	t.Run("must_write_crd_during_bootstrap", func(t *testing.T) {
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
-		calico, err := NewCalico(clusterConfig, crdSaver, saver)
+		calico, err := NewCalico(crdSaver, saver)
 		require.NoError(t, err)
 		require.NoError(t, calico.Run())
 		require.NoError(t, calico.Stop())
@@ -40,7 +40,7 @@ func TestCalicoManifests(t *testing.T) {
 	t.Run("must_write_only_non_crd_on_change", func(t *testing.T) {
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
-		calico, err := NewCalico(clusterConfig, crdSaver, saver)
+		calico, err := NewCalico(crdSaver, saver)
 		require.NoError(t, err)
 
 		_ = calico.processConfigChanges(calicoConfig{})
@@ -55,7 +55,7 @@ func TestCalicoManifests(t *testing.T) {
 		clusterConfig.Spec.Network.Calico.EnableWireguard = true
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
-		calico, err := NewCalico(clusterConfig, crdSaver, saver)
+		calico, err := NewCalico(crdSaver, saver)
 		require.NoError(t, err)
 		cfg, err := calico.getConfig(clusterConfig)
 		require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestCalicoManifests(t *testing.T) {
 		clusterConfig.Spec.Network.Calico.EnableWireguard = false
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
-		calico, err := NewCalico(clusterConfig, crdSaver, saver)
+		calico, err := NewCalico(crdSaver, saver)
 		require.NoError(t, err)
 
 		cfg, err := calico.getConfig(clusterConfig)
@@ -91,7 +91,7 @@ func TestCalicoManifests(t *testing.T) {
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
-			calico, err := NewCalico(clusterConfig, crdSaver, saver)
+			calico, err := NewCalico(crdSaver, saver)
 			require.NoError(t, err)
 			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestCalicoManifests(t *testing.T) {
 			clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod = "anothermethod"
 			saver := inMemorySaver{}
 			crdSaver := inMemorySaver{}
-			calico, err := NewCalico(clusterConfig, crdSaver, saver)
+			calico, err := NewCalico(crdSaver, saver)
 			require.NoError(t, err)
 			templateContext, err := calico.getConfig(clusterConfig)
 			require.NoError(t, err)

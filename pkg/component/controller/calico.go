@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -35,11 +36,11 @@ import (
 var _ component.Component = &Calico{}
 var _ component.ReconcilerComponent = &Calico{}
 
+var calicoCRDOnce sync.Once
+
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
-	clusterConf *v1beta1.ClusterConfig
-	tickerDone  chan struct{}
-	log         *logrus.Entry
+	log *logrus.Entry
 
 	crdSaver   manifestsSaver
 	saver      manifestsSaver
@@ -72,14 +73,13 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(clusterConf *v1beta1.ClusterConfig, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
+func NewCalico(crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
-		clusterConf: clusterConf,
-		log:         log,
-		crdSaver:    crdSaver,
-		saver:       manifestsSaver,
-		prevConfig:  calicoConfig{},
+		log:        log,
+		crdSaver:   crdSaver,
+		saver:      manifestsSaver,
+		prevConfig: calicoConfig{},
 	}, nil
 }
 
@@ -88,9 +88,12 @@ func (c *Calico) Init() error {
 	return nil
 }
 
-// Run runs the calico reconciler
+// Run nothing really running, all logic based on reactive reconcile
 func (c *Calico) Run() error {
-	c.tickerDone = make(chan struct{})
+	return nil
+}
+
+func (c *Calico) dumpCRDs() error {
 	var emptyStruct struct{}
 
 	// Write the CRD definitions only at "boot", they do not change during runtime
@@ -199,18 +202,20 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 
 // Stop stops the calico reconciler
 func (c *Calico) Stop() error {
-	if c.tickerDone != nil {
-		close(c.tickerDone)
-	}
 	return nil
 }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (c *Calico) Reconcile(cfg *v1beta1.ClusterConfig) error {
-	logrus.Debug("reconcile method called for: Calico")
+	c.log.Debug("reconcile method called for: Calico")
 	if cfg.Spec.Network.Provider != "calico" {
 		return nil
 	}
+	calicoCRDOnce.Do(func() {
+		if err := c.dumpCRDs(); err != nil {
+			c.log.Errorf("error dumping Calico CRDs: %v", err)
+		}
+	})
 	newConfig, err := c.getConfig(cfg)
 	if err != nil {
 		return err

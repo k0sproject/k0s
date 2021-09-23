@@ -536,7 +536,7 @@ func (c *CmdOpts) initCalico(reconcilers map[string]component.Component) error {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 		return err
 	}
-	calico, err := controller.NewCalico(c.ClusterConfig, calicoInitSaver, calicoSaver)
+	calico, err := controller.NewCalico(calicoInitSaver, calicoSaver)
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 		return err
