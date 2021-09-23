@@ -79,10 +79,11 @@ func (k *KubeProxy) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	}
 	cfg, err := k.getConfig(clusterConfig)
 	if err != nil {
-		k.log.Errorf("error calculating proxy configs: %s. will retry", err.Error())
+		return err
 	}
 	if cfg == k.previousConfig {
 		k.log.Infof("current cfg matches existing, not gonna do anything")
+		return nil
 	}
 	tw := templatewriter.TemplateWriter{
 		Name:     "kube-proxy",
