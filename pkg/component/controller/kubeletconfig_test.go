@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -31,13 +32,13 @@ import (
 var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
-	dnsAddr := "dns.local"
+	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(k0sVars)
+		k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 		require.NoError(t, err)
-		k.clusterSpec = cfg.Spec
+
 		t.Log("starting to run...")
-		buf, err := k.run(dnsAddr)
+		buf, err := k.createProfiles(cfg)
 		require.NoError(t, err)
 		if err != nil {
 			t.FailNow()
@@ -62,7 +63,7 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
 		k := defaultConfigWithUserProvidedProfiles(t)
-		buf, err := k.run(dnsAddr)
+		buf, err := k.createProfiles(cfg)
 		require.NoError(t, err)
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		expectedManifestsCount := 6
@@ -109,9 +110,8 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(k0sVars)
+	k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 	require.NoError(t, err)
-	k.clusterSpec = cfg.Spec
 
 	cfgProfileX := map[string]interface{}{
 		"authentication": map[string]interface{}{
@@ -124,7 +124,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 	if err != nil {
 		t.Fatal(err)
 	}
-	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
+	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
 		config.WorkerProfile{
 			Name:   "profile_XXX",
 			Config: wcx,
@@ -144,7 +144,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 		t.Fatal(err)
 	}
 
-	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
+	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
 		config.WorkerProfile{
 			Name:   "profile_YYY",
 			Config: wcy,

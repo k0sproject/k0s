@@ -495,7 +495,7 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
 
-		kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars)
+		kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars, cf)
 		if err != nil {
 			logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
 			return err
