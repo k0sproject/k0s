@@ -8,7 +8,7 @@ ARG BUILD_GO_FLAGS
 ARG BUILD_GO_LDFLAGS
 ARG BUILD_GO_LDFLAGS_EXTRA
 
-RUN apk add build-base git make
+RUN apk add build-base git make protoc
 
 RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
