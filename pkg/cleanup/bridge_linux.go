@@ -7,43 +7,31 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-type bridge struct {
-	link netlink.Link
-}
+type bridge struct{}
 
 // Name returns the name of the step
 func (b *bridge) Name() string {
 	return "kube-bridge leftovers cleanup step"
 }
 
-// NeedsToRun checks if there are and kube-bridge leftovers
-func (b *bridge) NeedsToRun() bool {
+// Run removes found kube-bridge leftovers
+func (b *bridge) Run() error {
 	if runtime.GOOS == "windows" {
-		return false
+		return nil
 	}
-	linkName := "kube-bridge"
+
 	lnks, err := netlink.LinkList()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return false
+		return fmt.Errorf("failed to get link list from netlink: %v", err)
 	}
 
 	for _, l := range lnks {
-		if l.Attrs().Name == linkName {
-			b.link = l
-			return true
+		if l.Attrs().Name == "kube-bridge" {
+			err := netlink.LinkDel(l)
+			if err != nil {
+				return err
+			}
 		}
-
-	}
-
-	return false
-}
-
-// Run removes found kube-bridge leftovers
-func (b *bridge) Run() error {
-	err := netlink.LinkDel(b.link)
-	if err != nil {
-		return err
 	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
 )
@@ -23,29 +24,18 @@ func (c *containers) Name() string {
 	return "containers steps"
 }
 
-// NeedsToRun checks if custom CRI is used, otherwise checks if containerd is present on the host
-func (c *containers) NeedsToRun() bool {
-	if c.isCustomCriUsed() {
-		return true
-	}
-	if _, err := os.Stat(c.Config.containerd.binPath); err != nil {
-		logrus.Debugf("could not find containerd binary at %v errored with: %v", c.Config.containerd.binPath, err)
-		return false
-	}
-	return true
-}
-
 // Run removes all the pods and mounts and stops containers afterwards
 // Run starts containerd if custom CRI is not configured
 func (c *containers) Run() error {
 	if !c.isCustomCriUsed() {
 		if err := c.startContainerd(); err != nil {
-			logrus.Debugf("error starting containerd: %v", err)
-			return err
+			if os.IsNotExist(err) {
+				logrus.Debugf("containerd binary not found. Skipping container cleanup")
+				return nil
+			}
+			return fmt.Errorf("failed to start containerd: %v", err)
 		}
 	}
-
-	time.Sleep(5 * time.Second)
 
 	if err := c.stopAllContainers(); err != nil {
 		logrus.Debugf("error stopping containers: %v", err)
@@ -100,7 +90,7 @@ func (c *containers) startContainerd() error {
 	}
 	cmd := exec.Command(c.Config.containerd.binPath, args...)
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start containerd: %v", err)
+		return err
 	}
 
 	c.Config.containerd.cmd = cmd
@@ -129,7 +119,16 @@ func (c *containers) stopContainerd() {
 func (c *containers) stopAllContainers() error {
 	var msg []error
 	logrus.Debugf("trying to list all pods")
-	pods, err := c.Config.containerRuntime.ListContainers()
+
+	var pods []string
+	err := retry.Do(func() error {
+		var err error
+		pods, err = c.Config.containerRuntime.ListContainers()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		logrus.Debugf("failed at listing pods %v", err)
 		return err
