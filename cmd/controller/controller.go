@@ -536,7 +536,7 @@ func (c *CmdOpts) initCalico(reconcilers map[string]component.Component) error {
 		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
 		return err
 	}
-	calico, err := controller.NewCalico(calicoInitSaver, calicoSaver)
+	calico, err := controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver)
 	if err != nil {
 		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
 		return err
@@ -552,7 +552,7 @@ func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) err
 		logrus.Warnf("failed to initialize kube-router manifests saver: %s", err.Error())
 		return err
 	}
-	kubeRouter, err := controller.NewKubeRouter(mfSaver)
+	kubeRouter, err := controller.NewKubeRouter(c.K0sVars, mfSaver)
 	if err != nil {
 		logrus.Warnf("failed to initialize kube-router reconciler: %s", err.Error())
 		return err

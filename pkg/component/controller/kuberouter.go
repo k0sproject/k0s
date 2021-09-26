@@ -17,10 +17,12 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -31,6 +33,7 @@ type KubeRouter struct {
 
 	saver          manifestsSaver
 	previousConfig kubeRouterConfig
+	k0sVars        constant.CfgVars
 }
 
 var _ component.Component = &KubeRouter{}
@@ -47,11 +50,12 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(manifestsSaver manifestsSaver) (*KubeRouter, error) {
+func NewKubeRouter(k0sVars constant.CfgVars, manifestsSaver manifestsSaver) (*KubeRouter, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kube-router"})
 	return &KubeRouter{
-		saver: manifestsSaver,
-		log:   log,
+		saver:   manifestsSaver,
+		log:     log,
+		k0sVars: k0sVars,
 	}, nil
 }
 
@@ -67,9 +71,15 @@ func (k *KubeRouter) Stop() error { return nil }
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeRouter) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: KubeRouter")
-	if clusterConfig.Spec.Network.Provider != "kuberouter" {
+	if clusterConfig.Spec.Network.Provider != constant.CNIProviderKubeRouter {
 		return nil
 	}
+
+	existingCNI := existingCNIProvider(k.k0sVars.ManifestsDir)
+	if existingCNI != "" && existingCNI != constant.CNIProviderKubeRouter {
+		return fmt.Errorf("cannot change CNI provider from %s to %s", existingCNI, constant.CNIProviderKubeRouter)
+	}
+
 	cfg := kubeRouterConfig{
 		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,

@@ -26,7 +26,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
 
 	saver := inMemorySaver{}
-	kr, err := NewKubeRouter(saver)
+	kr, err := NewKubeRouter(k0sVars, saver)
 	require.NoError(t, err)
 	require.NoError(t, kr.Reconcile(cfg))
 	require.NoError(t, kr.Stop())
@@ -58,7 +58,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	saver := inMemorySaver{}
-	kr, err := NewKubeRouter(saver)
+	kr, err := NewKubeRouter(k0sVars, saver)
 	require.NoError(t, err)
 	require.NoError(t, kr.Reconcile(cfg))
 	require.NoError(t, kr.Stop())

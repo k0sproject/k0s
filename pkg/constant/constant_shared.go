@@ -25,6 +25,12 @@ import (
 // this one is defined here because it is used not only on windows worker but also during the control plane bootstrap
 const WinDataDirDefault = "C:\\var\\lib\\k0s"
 
+// Network providers
+const (
+	CNIProviderCalico     = "calico"
+	CNIProviderKubeRouter = "kuberouter"
+)
+
 const (
 
 	// DataDirMode is the expected directory permissions for DataDirDefault

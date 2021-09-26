@@ -24,6 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/k0sproject/k0s/static"
 
@@ -45,6 +46,7 @@ type Calico struct {
 	crdSaver   manifestsSaver
 	saver      manifestsSaver
 	prevConfig calicoConfig
+	k0sVars    constant.CfgVars
 }
 
 type manifestsSaver interface {
@@ -73,13 +75,14 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
+func NewCalico(k0sVars constant.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "calico"})
 	return &Calico{
 		log:        log,
 		crdSaver:   crdSaver,
 		saver:      manifestsSaver,
 		prevConfig: calicoConfig{},
+		k0sVars:    k0sVars,
 	}, nil
 }
 
@@ -211,6 +214,12 @@ func (c *Calico) Reconcile(cfg *v1beta1.ClusterConfig) error {
 	if cfg.Spec.Network.Provider != "calico" {
 		return nil
 	}
+
+	existingCNI := existingCNIProvider(c.k0sVars.ManifestsDir)
+	if existingCNI != "" && existingCNI != constant.CNIProviderCalico {
+		return fmt.Errorf("cannot change CNI provider from %s to %s", existingCNI, constant.CNIProviderCalico)
+	}
+
 	calicoCRDOnce.Do(func() {
 		if err := c.dumpCRDs(); err != nil {
 			c.log.Errorf("error dumping Calico CRDs: %v", err)
