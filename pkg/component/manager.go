@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -117,17 +118,37 @@ func (m *Manager) Stop() error {
 	return ret
 }
 
-// Reoncile reconciles all managed components
+// ReconcileError is just a wrapper for possible many errors
+type ReconcileError struct {
+	Errors []error
+}
+
+// Error returns the stringified error message
+func (r ReconcileError) Error() string {
+	messages := make([]string, len(r.Errors))
+	for i, e := range r.Errors {
+		messages[i] = e.Error()
+	}
+	return strings.Join(messages, "\n")
+}
+
+// Reconcile reconciles all managed components
 func (m *Manager) Reconcile(cfg *v1beta1.ClusterConfig) error {
+	errors := make([]error, 0)
 	var ret error
 	logrus.Infof("starting component reconciling for %d components", len(m.Components))
 	for _, component := range m.Components {
 		if err := m.reconcileComponent(component, cfg); err != nil {
-			// TODO return or continue in case of error
-			ret = err
+			errors = append(errors, err)
 		}
 	}
 	m.lastReconciledConfig = cfg
+	if len(errors) > 0 {
+		ret = ReconcileError{
+			Errors: errors,
+		}
+	}
+	logrus.Debugf("all component reconciled, result: %v", ret)
 	return ret
 }
 
@@ -140,7 +161,7 @@ func (m *Manager) reconcileComponent(component Component, cfg *v1beta1.ClusterCo
 	}
 	logrus.Infof("starting to reconcile %s", compName)
 	if err := clusterComponent.Reconcile(cfg); err != nil {
-		logrus.Errorf("failed to reconcile component: %s", err.Error())
+		logrus.Errorf("failed to reconcile component %s: %s", compName, err.Error())
 		return err
 	}
 	return nil

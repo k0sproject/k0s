@@ -3,14 +3,17 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/static"
 
 	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -27,8 +30,9 @@ var (
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
 type ClusterConfigReconciler struct {
-	YamlConfig       *v1beta1.ClusterConfig
-	ComponentManager *component.Manager
+	YamlConfig        *v1beta1.ClusterConfig
+	ComponentManager  *component.Manager
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	configClient                cfgClient.ClusterConfigInterface
 	kubeConfig                  string
@@ -41,19 +45,19 @@ type ClusterConfigReconciler struct {
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver) (*ClusterConfigReconciler, error) {
+func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface) (*ClusterConfigReconciler, error) {
 	cfg, err := config.GetYamlFromFile(cfgFile, k0sVars)
 	if err != nil {
 		return nil, err
 	}
 	return &ClusterConfigReconciler{
-		ComponentManager: mgr,
-		YamlConfig:       cfg,
-
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
-		leaderElector: leaderElector,
-		log:           logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
-		saver:         s,
+		ComponentManager:  mgr,
+		YamlConfig:        cfg,
+		KubeClientFactory: kubeClientFactory,
+		kubeConfig:        k0sVars.AdminKubeConfigPath,
+		leaderElector:     leaderElector,
+		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
+		saver:             s,
 	}, nil
 }
 
@@ -133,12 +137,15 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 	if clusterConfig.ResourceVersion != r.lastReconciledConfigVersion {
 		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.lastReconciledConfigVersion, clusterConfig.ResourceVersion)
 		err = r.ComponentManager.Reconcile(clusterConfig)
+		// "store" the version even when errors so we don't reconcile in a loop with the same broken config
+		r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
+		r.reportStatus(clusterConfig, err)
 		if err != nil {
+			r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
 			return err
 		}
-		r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
+		r.log.Debugf("reconciling cluster-config done")
 	}
-	r.log.Debugf("reconciling cluster-config done")
 	return nil
 }
 
@@ -152,6 +159,51 @@ func (r *ClusterConfigReconciler) Stop() error {
 
 func (r *ClusterConfigReconciler) Healthy() error {
 	return nil
+}
+
+func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, reconcileError error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		r.log.Error("failed to get hostname:", err)
+		hostname = ""
+	}
+	// TODO We need to design proper status field(s) to the cluster cfg object, now just send event
+	client, err := r.KubeClientFactory.GetClient()
+	if err != nil {
+		r.log.Error("failed to get kube client:", err)
+	}
+	e := &corev1.Event{
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: "k0s.",
+		},
+		EventTime:      v1.NowMicro(),
+		FirstTimestamp: v1.Now(),
+		LastTimestamp:  v1.Now(),
+		InvolvedObject: corev1.ObjectReference{
+			Kind:            v1beta1.ClusterConfigKind,
+			Namespace:       config.Namespace,
+			Name:            config.Name,
+			UID:             config.UID,
+			APIVersion:      v1beta1.ClusterConfigAPIVersion,
+			ResourceVersion: config.ResourceVersion,
+		},
+		Action:              "ConfigReconciling",
+		ReportingController: "k0s-controller",
+		ReportingInstance:   hostname,
+	}
+	if reconcileError != nil {
+		e.Reason = "FailedReconciling"
+		e.Message = reconcileError.Error()
+		e.Type = corev1.EventTypeWarning
+	} else {
+		e.Reason = "SuccessfulReconcile"
+		e.Message = "Succesfully reconciler cluster config"
+		e.Type = corev1.EventTypeNormal
+	}
+	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(context.TODO(), e, v1.CreateOptions{})
+	if err != nil {
+		r.log.Error("failed to create event for config reconcile:", err)
+	}
 }
 
 func (r *ClusterConfigReconciler) copyRunningConfigToCR() (*v1beta1.ClusterConfig, error) {

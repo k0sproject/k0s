@@ -405,7 +405,7 @@ func (c *CmdOpts) startBootstrapReconcilers(cf kubernetes.ClientFactoryInterface
 			return err
 		}
 
-		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver)
+		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf)
 		if err != nil {
 			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
 			return err
