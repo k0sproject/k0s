@@ -69,7 +69,7 @@ func (r *ClusterConfigReconciler) Init() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) Run() error {
+func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 
 	c, err := cfgClient.NewForConfig(r.kubeConfig)
 	if err != nil {
@@ -90,7 +90,7 @@ func (r *ClusterConfigReconciler) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				err := r.Reconcile()
+				err := r.Reconcile(ctx)
 				if err != nil {
 					r.log.Warnf("cluster-config reconciliation failed: %s", err.Error())
 				}
@@ -117,8 +117,8 @@ func (r *ClusterConfigReconciler) Run() error {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *ClusterConfigReconciler) Reconcile() error {
-	clusterConfig, err := r.configClient.Get(context.Background(), "k0s", getOpts)
+func (r *ClusterConfigReconciler) Reconcile(ctx context.Context) error {
+	clusterConfig, err := r.configClient.Get(ctx, "k0s", getOpts)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// ClusterConfig CR cannot be found, which means we can create it
@@ -140,7 +140,7 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 		if len(errors) > 0 {
 			err = fmt.Errorf("failed to validate config: %v", errors)
 		} else {
-			err = r.ComponentManager.Reconcile(clusterConfig)
+			err = r.ComponentManager.Reconcile(ctx, clusterConfig)
 			// "store" the version even when errors so we don't reconcile in a loop with the same broken config
 			r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
 		}

@@ -73,7 +73,7 @@ func (m *Manager) Init() error {
 }
 
 // Run runs the Manager
-func (m *Manager) Run() error {
+func (m *Manager) Run(_ context.Context) error {
 	return nil
 }
 

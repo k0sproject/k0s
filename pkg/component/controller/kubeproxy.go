@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"os"
 	"path"
 	"path/filepath"
@@ -66,10 +67,10 @@ func (k *KubeProxy) Init() error {
 }
 
 // Run runs the kube-proxy reconciler
-func (k *KubeProxy) Run() error { return nil }
+func (k *KubeProxy) Run(_ context.Context) error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (k *KubeProxy) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	if clusterConfig.Spec.Network.KubeProxy.Disabled {
 		return os.RemoveAll(k.manifestDir)
 	}

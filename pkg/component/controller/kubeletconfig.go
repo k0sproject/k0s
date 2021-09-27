@@ -74,13 +74,13 @@ func (k *KubeletConfig) Stop() error {
 }
 
 // Run dumps the needed manifest objects
-func (k *KubeletConfig) Run() error {
+func (k *KubeletConfig) Run(_ context.Context) error {
 
 	return nil
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (k *KubeletConfig) Reconcile(clusterSpec *v1beta1.ClusterConfig) error {
+func (k *KubeletConfig) Reconcile(_ context.Context, clusterSpec *v1beta1.ClusterConfig) error {
 	k.log.Debug("reconcile method called for: KubeletConfig")
 	// Check if we actually need to reconcile anything
 	defaultProfilesExist, err := k.defaultProfilesExist()

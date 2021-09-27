@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -73,10 +74,10 @@ func (a *Manager) Init() error {
 }
 
 // Run runs kube Manager
-func (a *Manager) Run() error { return nil }
+func (a *Manager) Run(_ context.Context) error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (a *Manager) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logger := logrus.WithField("component", "kube-controller-manager")
 	logger.Info("Starting reconcile")
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")

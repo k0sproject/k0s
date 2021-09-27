@@ -98,14 +98,14 @@ func (a *CSRApprover) Init() error {
 }
 
 // Run every 10 seconds checks for newly issued CSRs and approves them
-func (a *CSRApprover) Run() error {
+func (a *CSRApprover) Run(ctx context.Context) error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second) // TODO: sometimes this should be refactored so it watches instead of polls for CSRs
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ticker.C:
-				err := a.approveCSR()
+				err := a.approveCSR(ctx)
 				if err != nil {
 					a.L.Warnf("CSR approval failed: %s", err.Error())
 				}
@@ -120,7 +120,7 @@ func (a *CSRApprover) Run() error {
 }
 
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
-func (a *CSRApprover) approveCSR() error {
+func (a *CSRApprover) approveCSR(ctx context.Context) error {
 	if !a.leaderElector.IsLeader() {
 		a.L.Debug("not the leader, can't approve certificates")
 		return nil
@@ -130,7 +130,7 @@ func (a *CSRApprover) approveCSR() error {
 		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
 	}
 
-	csrs, err := a.clientset.CertificatesV1().CertificateSigningRequests().List(context.TODO(), opts)
+	csrs, err := a.clientset.CertificatesV1().CertificateSigningRequests().List(ctx, opts)
 	if err != nil {
 		a.L.Errorf("can't fetch CSRs: %v", err)
 		return fmt.Errorf("can't fetch CSRs: %v", err)
@@ -153,7 +153,7 @@ func (a *CSRApprover) approveCSR() error {
 				continue
 			}
 
-			approved, err := a.authorize(&csr, recognizer.permission)
+			approved, err := a.authorize(ctx, &csr, recognizer.permission)
 			if err != nil {
 				a.L.Warningf("SubjectAccessReview failed: %s", err)
 				return err
@@ -162,7 +162,7 @@ func (a *CSRApprover) approveCSR() error {
 			if approved {
 				a.L.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
 				appendApprovalCondition(&csr, recognizer.successMessage)
-				_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(context.TODO(), csr.Name, &csr, metav1.UpdateOptions{})
+				_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
 				if err != nil {
 					a.L.Errorf("error updating approval for csr: %v", err)
 					return fmt.Errorf("error updating approval for csr: %v", err)
@@ -177,7 +177,7 @@ func (a *CSRApprover) approveCSR() error {
 	return nil
 }
 
-func (a *CSRApprover) authorize(csr *v1.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
+func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningRequest, rattrs authorization.ResourceAttributes) (bool, error) {
 	extra := make(map[string]authorization.ExtraValue)
 	for k, v := range csr.Spec.Extra {
 		extra[k] = authorization.ExtraValue(v)
@@ -194,7 +194,7 @@ func (a *CSRApprover) authorize(csr *v1.CertificateSigningRequest, rattrs author
 	}
 
 	opts := metav1.CreateOptions{}
-	sar, err := a.clientset.AuthorizationV1().SubjectAccessReviews().Create(context.TODO(), sar, opts)
+	sar, err := a.clientset.AuthorizationV1().SubjectAccessReviews().Create(ctx, sar, opts)
 	if err != nil {
 		return false, err
 	}

@@ -163,30 +163,14 @@ func (c *CmdOpts) StartWorker() error {
 
 	worker.KernelSetup()
 
-	// Set up signal handling. Use buffered channel so we dont miss
-	// signals during startup
-	ctx, cancel := context.WithCancel(context.Background())
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer func() {
-		signal.Stop(ch)
-		cancel()
-	}()
-
-	go func() {
-		select {
-		case <-ch:
-			logrus.Info("Shutting down k0s worker")
-			cancel()
-		case <-ctx.Done():
-			logrus.Debug("Context done in go-routine")
-		}
-	}()
+	// Set up signal handling
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	err = componentManager.Start(ctx)
 	if err != nil {
 		logrus.WithError(err).Error("failed to start some of the worker components")
-		ch <- syscall.SIGTERM
+		cancel()
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()

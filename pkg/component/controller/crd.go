@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/component"
@@ -47,7 +48,7 @@ func (c CRD) Init() error {
 }
 
 // Run unpacks manifests from bindata
-func (c CRD) Run() error {
+func (c CRD) Run(_ context.Context) error {
 	for _, bundle := range bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
 		if err != nil {

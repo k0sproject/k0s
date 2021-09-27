@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -39,7 +40,7 @@ func (m *K0SControlAPI) Init() error {
 }
 
 // Run runs k0s control api as separate process
-func (m *K0SControlAPI) Run() error {
+func (m *K0SControlAPI) Run(_ context.Context) error {
 	// TODO: Make the api process to use some other user
 
 	selfExe, err := os.Executable()

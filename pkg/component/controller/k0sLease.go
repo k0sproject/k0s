@@ -30,8 +30,8 @@ func (l *K0sLease) Init() error {
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
-func (l *K0sLease) Run() error {
-	l.cancelCtx, l.cancelFunc = context.WithCancel(context.Background())
+func (l *K0sLease) Run(ctx context.Context) error {
+	l.cancelCtx, l.cancelFunc = context.WithCancel(ctx)
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
 	client, err := l.KubeClientFactory.GetClient()
 	if err != nil {

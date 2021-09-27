@@ -18,6 +18,7 @@ package controller
 import (
 	"bytes"
 	"fmt"
+	"context"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -69,7 +70,7 @@ func (k *KubeRouter) Healthy() error { return nil }
 func (k *KubeRouter) Stop() error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (k *KubeRouter) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: KubeRouter")
 	if clusterConfig.Spec.Network.Provider != constant.CNIProviderKubeRouter {
 		return nil
@@ -115,7 +116,7 @@ func (k *KubeRouter) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 }
 
 // Run runs the kube-router reconciler
-func (k *KubeRouter) Run() error {
+func (k *KubeRouter) Run(_ context.Context) error {
 	k.log.Info("starting to dump manifests")
 
 	return nil

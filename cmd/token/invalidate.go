@@ -40,7 +40,7 @@ func tokenInvalidateCmd() *cobra.Command {
 			}
 
 			for _, id := range args {
-				err := manager.Remove(id)
+				err := manager.Remove(cmd.Context(), id)
 				if err != nil {
 					return err
 				}

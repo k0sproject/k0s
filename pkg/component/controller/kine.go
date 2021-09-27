@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -81,7 +82,7 @@ func (k *Kine) Init() error {
 }
 
 // Run runs kine
-func (k *Kine) Run() error {
+func (k *Kine) Run(_ context.Context) error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
 

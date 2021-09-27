@@ -17,6 +17,7 @@ package token
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -54,7 +55,7 @@ users:
     token: {{.Token}}
 `))
 
-func CreateKubeletBootstrapConfig(nodeConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
+func CreateKubeletBootstrapConfig(ctx context.Context, nodeConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
 	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 	caCert, err := os.ReadFile(crtFile)
 	if err != nil {
@@ -64,7 +65,7 @@ func CreateKubeletBootstrapConfig(nodeConfig *v1beta1.ClusterConfig, k0sVars con
 	if err != nil {
 		return "", err
 	}
-	tokenString, err := manager.Create(expiry, role)
+	tokenString, err := manager.Create(ctx, expiry, role)
 	if err != nil {
 		return "", err
 	}

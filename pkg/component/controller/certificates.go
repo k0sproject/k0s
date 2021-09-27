@@ -237,7 +237,7 @@ func (c *Certificates) Init() error {
 }
 
 // Run does nothing, the cert component only needs to be initialized
-func (c *Certificates) Run() error {
+func (c *Certificates) Run(_ context.Context) error {
 	return nil
 }
 

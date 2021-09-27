@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component"
@@ -67,7 +68,7 @@ func (c *k0sCloudProvider) Init() error {
 
 // Run will create a k0s-cloud-provider command, and run it on a goroutine.
 // Failures to create this command will be returned as an error.
-func (c *k0sCloudProvider) Run() error {
+func (c *k0sCloudProvider) Run(_ context.Context) error {
 	command, err := c.commandBuilder()
 	if err != nil {
 		return err

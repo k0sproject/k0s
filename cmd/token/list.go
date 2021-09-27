@@ -41,7 +41,7 @@ func tokenListCmd() *cobra.Command {
 				return err
 			}
 
-			tokens, err := manager.List(listTokenRole)
+			tokens, err := manager.List(cmd.Context(), listTokenRole)
 			if err != nil {
 				return err
 			}

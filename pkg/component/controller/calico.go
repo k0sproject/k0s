@@ -17,6 +17,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -92,7 +93,7 @@ func (c *Calico) Init() error {
 }
 
 // Run nothing really running, all logic based on reactive reconcile
-func (c *Calico) Run() error {
+func (c *Calico) Run(_ context.Context) error {
 	return nil
 }
 
@@ -209,7 +210,7 @@ func (c *Calico) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *Calico) Reconcile(cfg *v1beta1.ClusterConfig) error {
+func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
 	c.log.Debug("reconcile method called for: Calico")
 	if cfg.Spec.Network.Provider != "calico" {
 		return nil

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -74,7 +75,7 @@ func (suite *K0sCloudProviderSuite) TestInit() {
 // `Stop()`, without worrying about what was actually running.
 func (suite *K0sCloudProviderSuite) TestRunStop() {
 	assert.Nil(suite.T(), suite.ccp.Init())
-	assert.Nil(suite.T(), suite.ccp.Run())
+	assert.Nil(suite.T(), suite.ccp.Run(context.Background()))
 
 	// Ensures that the stopping mechanism actually closes the stop channel.
 	assert.Nil(suite.T(), suite.ccp.Stop())

@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"context"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -57,7 +58,7 @@ func (c *Component) retrieveKubeClient(ch chan struct{}) {
 }
 
 // Run runs work cycle
-func (c *Component) Run() error {
+func (c *Component) Run(_ context.Context) error {
 	return nil
 }
 
@@ -77,7 +78,7 @@ func (c *Component) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *Component) Reconcile(clusterCfg *v1beta1.ClusterConfig) error {
+func (c *Component) Reconcile(_ context.Context, clusterCfg *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Telemetry")
 	if !clusterCfg.Spec.Telemetry.Enabled {
 		return c.Stop()
