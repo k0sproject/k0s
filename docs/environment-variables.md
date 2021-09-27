@@ -1,7 +1,10 @@
 # Environment variables
 
 `k0s install` does not support environment variables.
-Setting environment variable for a component used by k0s depends on used init system.
+
+Setting environment variables for components used by k0s depends on the used init system. The environment variables set in `k0scontroller` or `k0sworker` service will be inherited by k0s components, such as `etcd`, `containerd`, etc.
+
+Component specific environment variables can be set in `k0scontroller` or `k0sworker` service. For example: `CONTAINERD_HTTPS_PROXY` will be converted to `HTTPS_PROXY` in the `containerd` process while other components are not affected.
 
 ## SystemD
 
