@@ -17,37 +17,49 @@ package controller
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
-
-	"io"
+	"reflect"
 
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
+
+// Dummy checks so we catch easily if we miss some interface implementation
+var _ component.ReconcilerComponent = &KubeletConfig{}
+var _ component.Component = &KubeletConfig{}
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {
-	clusterSpec *config.ClusterSpec
-	log         *logrus.Entry
-	k0sVars     constant.CfgVars
+	kubeClientFactory k8sutil.ClientFactoryInterface
+
+	log              *logrus.Entry
+	k0sVars          constant.CfgVars
+	previousProfiles v1beta1.WorkerProfiles
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*KubeletConfig, error) {
+func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*KubeletConfig, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
 	return &KubeletConfig{
-		log:         log,
-		clusterSpec: clusterSpec,
-		k0sVars:     k0sVars,
+		kubeClientFactory: clientFactory,
+		log:               log,
+		k0sVars:           k0sVars,
 	}, nil
 }
 
@@ -63,12 +75,24 @@ func (k *KubeletConfig) Stop() error {
 
 // Run dumps the needed manifest objects
 func (k *KubeletConfig) Run() error {
-	dnsAddress, err := k.clusterSpec.Network.DNSAddress()
+
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeletConfig) Reconcile(clusterSpec *v1beta1.ClusterConfig) error {
+	k.log.Debug("reconcile method called for: KubeletConfig")
+	// Check if we actually need to reconcile anything
+	defaultProfilesExist, err := k.defaultProfilesExist()
 	if err != nil {
-		return fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
+		return err
+	}
+	if defaultProfilesExist && reflect.DeepEqual(k.previousProfiles, clusterSpec.Spec.WorkerProfiles) {
+		k.log.Debugf("default profiles exist and no change in user specified profiles, nothing to reconcile")
+		return nil
 	}
 
-	manifest, err := k.run(dnsAddress)
+	manifest, err := k.createProfiles(clusterSpec)
 	if err != nil {
 		return fmt.Errorf("failed to build final manifest: %v", err)
 	}
@@ -76,17 +100,37 @@ func (k *KubeletConfig) Run() error {
 	if err := k.save(manifest.Bytes()); err != nil {
 		return fmt.Errorf("can't write manifest with config maps: %v", err)
 	}
+	k.previousProfiles = clusterSpec.Spec.WorkerProfiles
 
 	return nil
 }
 
-func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
+func (k *KubeletConfig) defaultProfilesExist() (bool, error) {
+	c, err := k.kubeClientFactory.GetClient()
+	if err != nil {
+		return false, err
+	}
+	defaultProfileName := formatProfileName("default")
+	_, err = c.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), defaultProfileName, v1.GetOptions{})
+	if err != nil && errors.IsNotFound(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*bytes.Buffer, error) {
+	dnsAddress, err := clusterSpec.Spec.Network.DNSAddress()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
+	}
 	manifest := bytes.NewBuffer([]byte{})
-	defaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
+	defaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled)
 	defaultProfile["cgroupsPerQOS"] = true
 	defaultProfile["resolvConf"] = "{{.ResolvConf}}"
 
-	winDefaultProfile := getDefaultProfile(dnsAddress, k.clusterSpec.Network.DualStack.Enabled)
+	winDefaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled)
 	winDefaultProfile["cgroupsPerQOS"] = false
 
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
@@ -99,9 +143,15 @@ func (k *KubeletConfig) run(dnsAddress string) (*bytes.Buffer, error) {
 		formatProfileName("default"),
 		formatProfileName("default-windows"),
 	}
-	for _, profile := range k.clusterSpec.WorkerProfiles {
+	for _, profile := range clusterSpec.Spec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, false) // Do not add dualstack feature gate to the custom profiles
-		merged, err := mergeProfiles(&profileConfig, profile.Values)
+
+		var workerValues unstructuredYamlObject
+		err := json.Unmarshal(profile.Config, &workerValues)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode worker profile values: %v", err)
+		}
+		merged, err := mergeProfiles(&profileConfig, workerValues)
 		if err != nil {
 			return nil, fmt.Errorf("can't merge profile `%s` with default profile: %v", profile.Name, err)
 		}

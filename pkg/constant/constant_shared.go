@@ -1,3 +1,18 @@
+/*
+Copyright 2021 k0s authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package constant
 
 import (
@@ -9,6 +24,12 @@ import (
 // WinDataDirDefault default data-dir for windows
 // this one is defined here because it is used not only on windows worker but also during the control plane bootstrap
 const WinDataDirDefault = "C:\\var\\lib\\k0s"
+
+// Network providers
+const (
+	CNIProviderCalico     = "calico"
+	CNIProviderKubeRouter = "kuberouter"
+)
 
 const (
 
@@ -72,19 +93,23 @@ const (
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
 
 	// Controller component names
-	KonnectivityServerComponentName    = "konnectivity-server"
-	KubeSchedulerComponentName         = "kube-scheduler"
-	KubeControllerManagerComponentName = "kube-controller-manager"
+	APIConfigComponentName             = "api-config"
 	ControlAPIComponentName            = "control-api"
+	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
 	DefaultPspComponentName            = "default-psp"
-	KubeProxyComponentName             = "kube-proxy"
-	CoreDNSComponentname               = "coredns"
-	NetworkProviderComponentName       = "network-provider"
 	HelmComponentName                  = "helm"
-	MetricsServerComponentName         = "metrics-server"
+	KonnectivityServerComponentName    = "konnectivity-server"
+	KubeControllerManagerComponentName = "kube-controller-manager"
+	KubeProxyComponentName             = "kube-proxy"
+	KubeSchedulerComponentName         = "kube-scheduler"
 	KubeletConfigComponentName         = "kubelet-config"
+	MetricsServerComponentName         = "metrics-server"
+	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
+
+	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
+	ClusterConfigNamespace = "kube-system"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s

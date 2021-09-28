@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -26,13 +27,17 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	PodCIDR     string      `yaml:"podCIDR"`
-	ServiceCIDR string      `yaml:"serviceCIDR"`
-	Provider    string      `yaml:"provider"`
-	Calico      *Calico     `yaml:"calico"`
-	KubeRouter  *KubeRouter `yaml:"kuberouter"`
-	DualStack   DualStack   `yaml:"dualStack,omitempty"`
-	KubeProxy   *KubeProxy  `yaml:"kubeProxy"`
+	Calico     *Calico     `json:"calico"`
+	DualStack  DualStack   `json:"dualStack,omitempty"`
+	KubeProxy  *KubeProxy  `json:"kubeProxy"`
+	KubeRouter *KubeRouter `json:"kuberouter"`
+
+	// Pod network CIDR to use in the cluster
+	PodCIDR string `json:"podCIDR"`
+	// Network provider (valid values: calico, kuberouter, or custom)
+	Provider string `json:"provider"`
+	// Network CIDR to use for cluster VIP services
+	ServiceCIDR string `json:"serviceCIDR,omitempty"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
@@ -130,14 +135,14 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 	return stringifiedAddresses, nil
 }
 
-// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
-func (n *Network) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+func (n *Network) UnmarshalJSON(data []byte) error {
 	n.Provider = "calico"
 
 	type network Network
-	yc := (*network)(n)
+	jc := (*network)(n)
 
-	if err := unmarshal(yc); err != nil {
+	if err := json.Unmarshal(data, jc); err != nil {
 		return err
 	}
 

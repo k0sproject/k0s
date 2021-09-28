@@ -19,12 +19,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/k0sproject/k0s/internal/testutil"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 )
 
 var expectedAddresses = []string{
@@ -46,7 +47,8 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: false}, fakeFactory)
+	r := NewEndpointReconciler(&DummyLeaderElector{Leader: false}, fakeFactory)
+	r.ClusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -57,7 +59,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
-	//verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	// verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
@@ -71,7 +73,8 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r.ClusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -105,7 +108,8 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r.ClusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -146,7 +150,8 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 			},
 		},
 	}
-	r := NewEndpointReconciler(config, &DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r.ClusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -156,7 +161,6 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 }
 
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFactory testutil.FakeClientFactory) *corev1.Endpoints {
-
 	fakeClient, _ := fakeFactory.GetClient()
 	ep, err := fakeClient.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
 	assert.NoError(t, err)

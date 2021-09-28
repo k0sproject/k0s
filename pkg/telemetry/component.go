@@ -3,7 +3,9 @@ package telemetry
 import (
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
@@ -13,10 +15,10 @@ import (
 
 // Component is a telemetry component for k0s component manager
 type Component struct {
-	ClusterConfig     *config.ClusterConfig
+	clusterConfig     *v1beta1.ClusterConfig
 	K0sVars           constant.CfgVars
 	Version           string
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	kubernetesClient kubernetes.Interface
 	analyticsClient  analyticsClient
@@ -24,6 +26,9 @@ type Component struct {
 	log    *logrus.Entry
 	stopCh chan struct{}
 }
+
+var _ component.Component = &Component{}
+var _ component.ReconcilerComponent = &Component{}
 
 var interval = time.Minute * 10
 
@@ -36,8 +41,6 @@ func (c *Component) Init() error {
 		return nil
 	}
 
-	c.stopCh = make(chan struct{})
-	c.log.Info("kube client has been init")
 	c.analyticsClient = newSegmentClient(segmentToken)
 	c.log.Info("segment client has been init")
 	return nil
@@ -55,15 +58,6 @@ func (c *Component) retrieveKubeClient(ch chan struct{}) {
 
 // Run runs work cycle
 func (c *Component) Run() error {
-	if segmentToken == "" {
-		c.log.Info("no token, telemetry is disabled")
-		return nil
-	}
-	initedCh := make(chan struct{})
-	wait.Until(func() {
-		c.retrieveKubeClient(initedCh)
-	}, time.Second, initedCh)
-	go c.run()
 	return nil
 }
 
@@ -73,10 +67,35 @@ func (c *Component) Stop() error {
 		c.log.Info("no token, telemetry is disabled")
 		return nil
 	}
-	close(c.stopCh)
+	if c.stopCh != nil {
+		close(c.stopCh)
+	}
 	if c.analyticsClient != nil {
 		_ = c.analyticsClient.Close()
 	}
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (c *Component) Reconcile(clusterCfg *v1beta1.ClusterConfig) error {
+	logrus.Debug("reconcile method called for: Telemetry")
+	if !clusterCfg.Spec.Telemetry.Enabled {
+		return c.Stop()
+	}
+	if c.stopCh != nil {
+		// We must have the worker stuff already running, do nothing
+		return nil
+	}
+	if segmentToken == "" {
+		c.log.Info("no token, telemetry is disabled")
+		return nil
+	}
+	c.clusterConfig = clusterCfg
+	initedCh := make(chan struct{})
+	wait.Until(func() {
+		c.retrieveKubeClient(initedCh)
+	}, time.Second, initedCh)
+	go c.run()
 	return nil
 }
 
@@ -86,7 +105,9 @@ func (c *Component) Healthy() error {
 }
 
 func (c Component) run() {
+	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:

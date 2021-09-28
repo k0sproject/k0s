@@ -102,5 +102,11 @@ func (c *ContainerD) Stop() error {
 	return c.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (c *ContainerD) Reconcile() error {
+	logrus.Debug("reconcile method called for: ContainerD")
+	return nil
+}
+
 // Health-check interface
 func (c *ContainerD) Healthy() error { return nil }

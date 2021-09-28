@@ -25,7 +25,8 @@ var _ Validateable = (*PodSecurityPolicy)(nil)
 
 // PodSecurityPolicy defines the config options for setting system level default PSP
 type PodSecurityPolicy struct {
-	DefaultPolicy string `yaml:"defaultPolicy"`
+	// default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
+	DefaultPolicy string `json:"defaultPolicy"`
 }
 
 // DefaultPodSecurityPolicy creates new PodSecurityPolicy with sane defaults

@@ -89,6 +89,8 @@ func (a *OCIBundleReconciler) Stop() error {
 	return nil
 }
 
-func (a *OCIBundleReconciler) Healthy() error {
+func (a *OCIBundleReconciler) Reconcile() error {
+	logrus.Debug("reconcile method called for: OCIBundleReconciler")
 	return nil
 }
+func (a *OCIBundleReconciler) Healthy() error { return nil }

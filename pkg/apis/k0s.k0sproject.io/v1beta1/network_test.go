@@ -66,7 +66,6 @@ func (s *NetworkSuite) TestAddresses() {
 		t.Run("single_stack_default", func(t *testing.T) {
 			n := DefaultNetwork()
 			s.Equal(n.ServiceCIDR, n.BuildServiceCIDR("10.96.0.249"))
-
 		})
 		t.Run("dual_stack_api_listens_on_ipv4", func(t *testing.T) {
 			n := DefaultNetwork()
@@ -103,7 +102,7 @@ spec:
     calico:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -117,7 +116,7 @@ spec:
 func (s *NetworkSuite) TestKubeRouterDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -126,7 +125,7 @@ spec:
     kuberouter:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	n := c.Spec.Network
 
@@ -143,13 +142,13 @@ spec:
 func (s *NetworkSuite) TestKubeProxyDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	p := c.Spec.Network.KubeProxy
 
@@ -160,7 +159,7 @@ spec:
 func (s *NetworkSuite) TestKubeProxyDisabling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -169,7 +168,7 @@ spec:
       disabled: true
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	s.NoError(err)
 	p := c.Spec.Network.KubeProxy
 

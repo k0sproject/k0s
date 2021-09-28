@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -34,22 +35,26 @@ var _ Validateable = (*StorageSpec)(nil)
 
 // StorageSpec defines the storage related config options
 type StorageSpec struct {
-	Type string      `yaml:"type"`
-	Kine *KineConfig `yaml:"kine,omitempty"`
-	Etcd *EtcdConfig `yaml:"etcd"`
+	Etcd *EtcdConfig `json:"etcd"`
+	Kine *KineConfig `json:"kine,omitempty"`
+
+	// Type of the data store (valid values:etcd or kine)
+	Type string `json:"type"`
 }
 
 // KineConfig defines the Kine related config options
 type KineConfig struct {
-	DataSource string `yaml:"dataSource"`
+	// kine datasource URL
+	DataSource string `json:"dataSource"`
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
-func DefaultStorageSpec(k0sVars constant.CfgVars) *StorageSpec {
+func DefaultStorageSpec(dataDir string) *StorageSpec {
+	k0sVars := constant.GetConfig(dataDir)
 	if k0sVars.DefaultStorageType == KineStorageType {
 		return &StorageSpec{
 			Type: KineStorageType,
-			Kine: DefaultKineConfig(k0sVars.DataDir),
+			Kine: DefaultKineConfig(dataDir),
 		}
 	}
 	return &StorageSpec{
@@ -79,16 +84,20 @@ func (s *StorageSpec) IsJoinable() bool {
 	return false
 }
 
-// UnmarshalYAML sets in some sane defaults when unmarshaling the data from yaml
-func (s *StorageSpec) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
+func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 	s.Type = EtcdStorageType
 	s.Etcd = DefaultEtcdConfig()
 
 	type storage StorageSpec
-	yc := (*storage)(s)
+	jc := (*storage)(s)
 
-	if err := unmarshal(yc); err != nil {
+	if err := json.Unmarshal(data, jc); err != nil {
 		return err
+	}
+
+	if jc.Type == KineStorageType && jc.Kine == nil {
+		jc.Kine = DefaultKineConfig(constant.DataDirDefault)
 	}
 	return nil
 }
@@ -100,7 +109,8 @@ func (s *StorageSpec) Validate() []error {
 
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
-	PeerAddress string `yaml:"peerAddress"`
+	// Node address used for etcd cluster peering
+	PeerAddress string `json:"peerAddress"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults

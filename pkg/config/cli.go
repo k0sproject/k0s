@@ -24,7 +24,8 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -46,6 +47,7 @@ type CLIOptions struct {
 	ControllerOptions
 	CfgFile          string
 	ClusterConfig    *v1beta1.ClusterConfig
+	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
 	DebugListenOn    string
 	DefaultLogLevels map[string]string
@@ -60,9 +62,12 @@ type ControllerOptions struct {
 	SingleNode        bool
 	DisableComponents []string
 
+	ClusterComponents               *component.Manager
 	EnableK0sCloudProvider          bool
-	K0sCloudProviderUpdateFrequency time.Duration
 	K0sCloudProviderPort            int
+	K0sCloudProviderUpdateFrequency time.Duration
+	NodeComponents                  *component.Manager
+	// Reconcilers                     map[string]component.Component
 }
 
 // Shared worker cli flags

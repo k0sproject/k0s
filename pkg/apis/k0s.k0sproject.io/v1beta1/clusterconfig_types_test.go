@@ -16,35 +16,30 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/stretchr/testify/assert"
 )
 
-var (
-	k0sVars = constant.CfgVars{}
-)
+var dataDir string
 
 func TestClusterDefaults(t *testing.T) {
-	c, err := configFromString("apiVersion: k0s.k0sproject.io/v1beta1", k0sVars)
+	c, err := configFromString("apiVersion: k0s.k0sproject.io/v1beta1", dataDir)
 	assert.NoError(t, err)
-	assert.NotNil(t, c.Metadata)
-	assert.Equal(t, "k0s", c.Metadata.Name)
-	assert.Equal(t, DefaultStorageSpec(constant.GetConfig("")), c.Spec.Storage)
+	assert.Equal(t, DefaultStorageSpec(dataDir), c.Spec.Storage)
 }
 
 func TestStorageDefaults(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -55,7 +50,7 @@ metadata:
 func TestEtcdDefaults(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -63,7 +58,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -74,7 +69,7 @@ spec:
 func TestNetworkValidation_Custom(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -84,7 +79,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -93,7 +88,7 @@ spec:
 func TestNetworkValidation_Calico(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -103,7 +98,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -112,7 +107,7 @@ spec:
 func TestNetworkValidation_Invalid(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -122,7 +117,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 1, len(errors))
@@ -132,7 +127,7 @@ spec:
 func TestApiExternalAddress(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -141,7 +136,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -150,7 +145,7 @@ spec:
 func TestApiNoExternalAddress(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -158,8 +153,63 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := configFromString(yamlData, k0sVars)
+	c, err := configFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
+}
+
+func TestWorkerProfileConfig(t *testing.T) {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  workerProfiles:
+  - profile_XXX:
+    name: profile_XXX
+    values:
+      authentication:
+        anonymous:
+          enabled: true
+        webhook:
+          cacheTTL: 2m0s
+          enabled: true
+  - profile_YYY:
+    name: profile_YYY
+    values:
+      apiVersion: v2
+      authentication:
+        anonymous:
+          enabled: false
+`
+	c, err := configFromString(yamlData, dataDir)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
+	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
+	assert.Equal(t, "profile_YYY", c.Spec.WorkerProfiles[1].Name)
+
+	j := c.Spec.WorkerProfiles[1].Config
+	var parsed map[string]interface{}
+
+	err = json.Unmarshal(j, &parsed)
+	assert.NoError(t, err)
+
+	for field, value := range parsed {
+		if field == "apiVersion" {
+			assert.Equal(t, "v2", value)
+		}
+	}
+}
+
+func TestStripDefaults(t *testing.T) {
+	defaultConfig := DefaultClusterConfig("")
+	stripped := defaultConfig.StripDefaults()
+	a := assert.New(t)
+	a.Nil(stripped.Spec.API)
+	a.Nil(stripped.Spec.ControllerManager)
+	a.Nil(stripped.Spec.Scheduler)
+	a.Nil(stripped.Spec.Network)
+	a.Nil(stripped.Spec.PodSecurityPolicy)
 }

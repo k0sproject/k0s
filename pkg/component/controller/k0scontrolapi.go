@@ -19,17 +19,17 @@ import (
 	"fmt"
 	"os"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath    string
-	ClusterConfig *config.ClusterConfig
-	K0sVars       constant.CfgVars
-	supervisor    supervisor.Supervisor
+	ConfigPath string
+	K0sVars    constant.CfgVars
+	supervisor supervisor.Supervisor
 }
 
 // Init does currently nothing
@@ -64,6 +64,12 @@ func (m *K0SControlAPI) Run() error {
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (m *K0SControlAPI) Reconcile() error {
+	logrus.Debug("reconcile method called for: K0SControlAPI")
+	return nil
 }
 
 // Healthy for health-check interface

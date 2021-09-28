@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -37,8 +38,10 @@ func (wps WorkerProfiles) Validate() []error {
 
 // WorkerProfile worker profile
 type WorkerProfile struct {
-	Name   string                 `yaml:"name"`
-	Values map[string]interface{} `yaml:"values"`
+	// String; name to use as profile selector for the worker process
+	Name string `json:"name"`
+	// Worker Mapping object
+	Config json.RawMessage `json:"values"`
 }
 
 var lockedFields = map[string]struct{}{
@@ -50,7 +53,14 @@ var lockedFields = map[string]struct{}{
 
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
-	for field := range wp.Values {
+	var parsed map[string]interface{}
+
+	err := json.Unmarshal(wp.Config, &parsed)
+	if err != nil {
+		return err
+	}
+
+	for field := range parsed {
 		if _, found := lockedFields[field]; found {
 			return fmt.Errorf("field `%s` is prohibited to override in worker profile", field)
 		}

@@ -16,11 +16,13 @@ limitations under the License.
 package controller
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"gopkg.in/yaml.v2"
 
@@ -30,13 +32,17 @@ import (
 var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
-	dnsAddr := "dns.local"
-
+	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
+		k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 		require.NoError(t, err)
-		buf, err := k.run(dnsAddr)
+
+		t.Log("starting to run...")
+		buf, err := k.createProfiles(cfg)
 		require.NoError(t, err)
+		if err != nil {
+			t.FailNow()
+		}
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		t.Run("output_must_have_3_manifests", func(t *testing.T) {
 			require.Len(t, manifestYamls, 4, "Must have exactly 4 generated manifests per profile")
@@ -57,7 +63,7 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
 		k := defaultConfigWithUserProvidedProfiles(t)
-		buf, err := k.run(dnsAddr)
+		buf, err := k.createProfiles(cfg)
 		require.NoError(t, err)
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		expectedManifestsCount := 6
@@ -74,7 +80,6 @@ func Test_KubeletConfig(t *testing.T) {
 			requireRole(t, manifestYamls[len(resourceNamesForRole)], resourceNamesForRole)
 		})
 		t.Run("user_profile_X_must_be_merged_with_default_profile", func(t *testing.T) {
-
 			profileXXX := struct {
 				Data map[string]string `yaml:"data"`
 			}{}
@@ -105,32 +110,44 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(config.DefaultClusterConfig(k0sVars).Spec, k0sVars)
+	k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 	require.NoError(t, err)
 
-	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
-		config.WorkerProfile{
-			Name: "profile_XXX",
-			Values: map[string]interface{}{
-				"authentication": map[string]interface{}{
-					"anonymous": map[string]interface{}{
-						"enabled": false,
-					},
-				},
+	cfgProfileX := map[string]interface{}{
+		"authentication": map[string]interface{}{
+			"anonymous": map[string]interface{}{
+				"enabled": false,
 			},
+		},
+	}
+	wcx, err := json.Marshal(cfgProfileX)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
+		config.WorkerProfile{
+			Name:   "profile_XXX",
+			Config: wcx,
 		},
 	)
 
-	k.clusterSpec.WorkerProfiles = append(k.clusterSpec.WorkerProfiles,
-		config.WorkerProfile{
-			Name: "profile_YYY",
-			Values: map[string]interface{}{
-				"authentication": map[string]interface{}{
-					"webhook": map[string]interface{}{
-						"cacheTTL": "15s",
-					},
-				},
+	cfgProfileY := map[string]interface{}{
+		"authentication": map[string]interface{}{
+			"webhook": map[string]interface{}{
+				"cacheTTL": "15s",
 			},
+		},
+	}
+
+	wcy, err := json.Marshal(cfgProfileY)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
+		config.WorkerProfile{
+			Name:   "profile_YYY",
+			Config: wcy,
 		},
 	)
 	return k

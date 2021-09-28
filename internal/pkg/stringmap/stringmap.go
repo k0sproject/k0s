@@ -39,6 +39,16 @@ func (m StringMap) ToArgs() []string {
 	return args
 }
 
+func (m StringMap) ToDashedArgs() []string {
+	args := make([]string, len(m))
+	idx := 0
+	for k, v := range m {
+		args[idx] = fmt.Sprintf("--%s=%s", k, v)
+		idx++
+	}
+	return args
+}
+
 // Merge merges two maps together
 func (m StringMap) Merge(other StringMap) {
 	if len(other) > 0 {
@@ -46,4 +56,20 @@ func (m StringMap) Merge(other StringMap) {
 			m[k] = v
 		}
 	}
+}
+
+func (m StringMap) Equals(other StringMap) bool {
+	if m == nil && other == nil {
+		return true
+	}
+	if len(m) != len(other) {
+		return false
+	}
+	for k, v := range m {
+		val, ok := other[k]
+		if !ok || val != v {
+			return false
+		}
+	}
+	return true
 }

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
 	"github.com/sirupsen/logrus"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
@@ -15,8 +16,8 @@ import (
 // ControllerLease implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sLease struct {
-	ClusterConfig     *config.ClusterConfig
-	KubeClientFactory kubeutil.ClientFactory
+	ClusterConfig     *v1beta1.ClusterConfig
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	cancelCtx   context.Context
 	cancelFunc  context.CancelFunc
@@ -45,7 +46,6 @@ func (l *K0sLease) Run() error {
 	leaseID := fmt.Sprintf("k0s-ctrl-%s", holderIdentity)
 
 	leasePool, err := leaderelection.NewLeasePool(client, leaseID, leaderelection.WithLogger(log))
-
 	if err != nil {
 		return err
 	}
@@ -80,6 +80,12 @@ func (l *K0sLease) Stop() error {
 	if l.cancelFunc != nil {
 		l.cancelFunc()
 	}
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (l *K0sLease) Reconcile() error {
+	logrus.Debug("reconcile method called for: K0sLease")
 	return nil
 }
 

@@ -37,7 +37,7 @@ type StackApplier struct {
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactory) (*StackApplier, error) {
+func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInterface) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err

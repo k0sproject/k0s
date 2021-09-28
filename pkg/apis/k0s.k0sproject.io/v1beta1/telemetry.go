@@ -13,26 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package v1beta1
 
-var _ Validateable = (*KonnectivitySpec)(nil)
+var _ Validateable = (*ClusterTelemetry)(nil)
 
-// KonnectivitySpec ...
-type KonnectivitySpec struct {
-	AgentPort int64 `yaml:"agentPort,omitempty"`
-	AdminPort int64 `yaml:"adminPort,omitempty"`
+// ClusterTelemetry holds telemetry related settings
+type ClusterTelemetry struct {
+	Enabled bool `json:"enabled"`
 }
 
-// DefaultKonnectivitySpec builds default KonnectivitySpec
-func DefaultKonnectivitySpec() *KonnectivitySpec {
-	return &KonnectivitySpec{
-		AdminPort: 8133,
-		AgentPort: 8132,
+// DefaultClusterTelemetry default settings
+func DefaultClusterTelemetry() *ClusterTelemetry {
+	return &ClusterTelemetry{
+		Enabled: true,
 	}
 }
 
 // Validate stub for Validateable interface
-func (k *KonnectivitySpec) Validate() []error {
+func (c *ClusterTelemetry) Validate() []error {
 	return nil
 }
