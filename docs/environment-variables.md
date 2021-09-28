@@ -2,9 +2,13 @@
 
 `k0s install` does not support environment variables.
 
-Setting environment variables for components used by k0s depends on the used init system. The environment variables set in `k0scontroller` or `k0sworker` service will be inherited by k0s components, such as `etcd`, `containerd`, etc.
+Setting environment variables for components used by k0s depends on the used init system. The environment variables set in `k0scontroller` or `k0sworker` service will be inherited by k0s components, such as `etcd`, `containerd`, `konnectivity`, etc.
 
-Component specific environment variables can be set in `k0scontroller` or `k0sworker` service. For example: `CONTAINERD_HTTPS_PROXY` will be converted to `HTTPS_PROXY` in the `containerd` process while other components are not affected.
+Component specific environment variables can be set in `k0scontroller` or `k0sworker` service. For example: for `CONTAINERD_HTTPS_PROXY`, the prefix `CONTAINERD_` will be stripped and converted to `HTTPS_PROXY` in the `containerd` process.
+
+For those components having env prefix convention such as `ETCD_xxx`, they are handled specially, i.e. the prefix will not be stripped. For example, `ETCD_MAX_WALS` will still be `ETCD_MAX_WALS` in etcd process.
+
+The proxy envs `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` are always overridden by component specific environment variables, so `ETCD_HTTPS_PROXY` will still be converted to `HTTPS_PROXY` in etcd process.
 
 ## SystemD
 
