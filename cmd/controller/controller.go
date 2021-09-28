@@ -171,12 +171,13 @@ func (c *CmdOpts) startController() error {
 
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars)
+	enableKonnectivity := !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
 	c.NodeComponents.Add(&controller.APIServer{
 		ClusterConfig:      c.NodeConfig,
 		K0sVars:            c.K0sVars,
 		LogLevel:           c.Logging["kube-apiserver"],
 		Storage:            storageBackend,
-		EnableKonnectivity: !c.SingleNode,
+		EnableKonnectivity: enableKonnectivity,
 	})
 
 	if c.NodeConfig.Spec.API.ExternalAddress != "" {
@@ -294,7 +295,7 @@ func (c *CmdOpts) startController() error {
 		ch <- syscall.SIGTERM
 	}
 
-	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName) {
+	if enableKonnectivity {
 		c.ClusterComponents.Add(&controller.Konnectivity{
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:           c.K0sVars,
