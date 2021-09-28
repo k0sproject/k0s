@@ -166,7 +166,13 @@ func (s *Supervisor) Supervise() error {
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
 	if s.quit != nil {
+		if s.log != nil {
+			s.log.Debug("Sending stop message")
+		}
 		s.quit <- true
+		if s.log != nil {
+			s.log.Debug("Waiting for stopping is done")
+		}
 		<-s.done
 	}
 	return nil
@@ -216,4 +222,9 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	}
 
 	return env[:i]
+}
+
+// GetProcess returns the last started process
+func (s *Supervisor) GetProcess() *os.Process {
+	return s.cmd.Process
 }

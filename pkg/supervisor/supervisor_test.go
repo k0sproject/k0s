@@ -5,7 +5,9 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 type SupervisorTest struct {
@@ -13,7 +15,7 @@ type SupervisorTest struct {
 	proc       Supervisor
 }
 
-func TestSupervisor(t *testing.T) {
+func TestSupervisorStart(t *testing.T) {
 	var testSupervisors = []SupervisorTest{
 		SupervisorTest{
 			shouldFail: false,
@@ -102,5 +104,64 @@ func TestGetEnv(t *testing.T) {
 	for _, e := range oldEnv {
 		kv := strings.SplitN(e, "=", 2)
 		os.Setenv(kv[0], kv[1])
+	}
+}
+
+func TestRespawn(t *testing.T) {
+	s := Supervisor{
+		Name:           "supervisor-test-respawn",
+		BinPath:        "/bin/true",
+		RunDir:         ".",
+		Args:           []string{},
+		TimeoutRespawn: 10 * time.Millisecond,
+	}
+	err := s.Supervise()
+	if err != nil {
+		t.Errorf("Failed to start %s: %v", s.Name, err)
+	}
+
+	// wait til the process exits
+	process := s.GetProcess()
+	for process != nil && process.Signal(syscall.Signal(0)) == nil {
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// wait enought time for new process to be respawned
+	time.Sleep(s.TimeoutRespawn)
+
+	// test that a new process got re-spawned
+	if process.Pid == s.GetProcess().Pid {
+		t.Errorf("Respawn failed: %s", s.Name)
+	}
+
+	err = s.Stop()
+	if err != nil {
+		t.Errorf("Failed to stop %s: %v", s.Name, err)
+	}
+}
+
+func TestStopWhileRespawn(t *testing.T) {
+	s := Supervisor{
+		Name:           "supervisor-test-stop-while-respawn",
+		BinPath:        "/bin/false",
+		RunDir:         ".",
+		Args:           []string{},
+		TimeoutRespawn: 1 * time.Second,
+	}
+	err := s.Supervise()
+	if err != nil {
+		t.Errorf("Failed to start %s: %v", s.Name, err)
+	}
+
+	// wait til the process exits
+	process := s.GetProcess()
+	for process != nil && process.Signal(syscall.Signal(0)) == nil {
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// try stop while waiting for respawn
+	err = s.Stop()
+	if err != nil {
+		t.Errorf("Failed to stop %s: %v", s.Name, err)
 	}
 }
