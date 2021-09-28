@@ -39,6 +39,7 @@ type ClusterConfigsGetter interface {
 // ClusterConfigInterface has methods to work with ClusterConfig resources.
 type ClusterConfigInterface interface {
 	Create(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.CreateOptions) (*v1beta1.ClusterConfig, error)
+	Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (*v1beta1.ClusterConfig, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.ClusterConfig, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1beta1.ClusterConfigList, error)
@@ -111,6 +112,20 @@ func (c *clusterConfigs) Create(ctx context.Context, clusterConfig *v1beta1.Clus
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("clusterconfigs").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(clusterConfig).
+		Do(ctx).
+		Into(result)
+	return
+}
+
+// Update takes the representation of a clusterConfig and updates it. Returns the server's representation of the clusterConfig, and an error, if there is any.
+func (c *clusterConfigs) Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (result *v1beta1.ClusterConfig, err error) {
+	result = &v1beta1.ClusterConfig{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("clusterconfigs").
+		Name(clusterConfig.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(clusterConfig).
 		Do(ctx).

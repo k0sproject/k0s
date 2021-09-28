@@ -74,7 +74,7 @@ func NewForConfig(cfgPath string) (*K0sV1beta1Client, error) {
 
 // NewForConfigOrDie creates a new K0sV1beta1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOqrDie(cfgPath string) *K0sV1beta1Client {
+func NewForConfigOrDie(cfgPath string) *K0sV1beta1Client {
 	client, err := NewForConfig(cfgPath)
 	if err != nil {
 		panic(err)
