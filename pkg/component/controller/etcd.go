@@ -187,13 +187,14 @@ func (e *Etcd) Run() error {
 	logrus.Infof("starting etcd with args: %v", args)
 
 	e.supervisor = supervisor.Supervisor{
-		Name:    "etcd",
-		BinPath: assets.BinPath("etcd", e.K0sVars.BinDir),
-		RunDir:  e.K0sVars.RunDir,
-		DataDir: e.K0sVars.DataDir,
-		Args:    args.ToArgs(),
-		UID:     e.uid,
-		GID:     e.gid,
+		Name:          "etcd",
+		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		RunDir:        e.K0sVars.RunDir,
+		DataDir:       e.K0sVars.DataDir,
+		Args:          args.ToArgs(),
+		UID:           e.uid,
+		GID:           e.gid,
+		KeepEnvPrefix: true,
 	}
 
 	return e.supervisor.Supervise()
