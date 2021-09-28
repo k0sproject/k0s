@@ -1,7 +1,7 @@
 # options for analysis running
 run:
 
-  timeout: 5m
+  timeout: 8m
 
   skip-dirs-use-default: false
   skip-dirs:
