@@ -21,7 +21,6 @@ import (
 	"io/fs"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -295,12 +294,6 @@ func (c *CmdOpts) startController() error {
 		ch <- syscall.SIGTERM
 	}
 
-	// FIXME This needs to be implemented on the kube-router and calico component reconcilers
-	// existingCNI := c.existingCNIProvider()
-	// if existingCNI != "" && existingCNI != c.ClusterConfig.Spec.Network.Provider {
-	// 	logrus.Errorf("cannot change CNI from %v to %v", existingCNI, c.ClusterConfig.Spec.Network.Provider)
-	// }
-
 	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName) {
 		c.ClusterComponents.Add(&controller.Konnectivity{
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
@@ -560,20 +553,6 @@ func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) err
 	reconcilers["kube-router"] = kubeRouter
 
 	return nil
-}
-
-func (c *CmdOpts) existingCNIProvider() string {
-	calicoManifestPath := path.Join(c.K0sVars.ManifestsDir, "calico", "calico-DaemonSet-calico-node.yaml")
-	if file.Exists(calicoManifestPath) {
-		return "calico"
-	}
-
-	kubeRouterManifestPath := path.Join(c.K0sVars.ManifestsDir, "kuberouter", "kube-router.yaml")
-	if file.Exists(kubeRouterManifestPath) {
-		return "kuberouter"
-	}
-
-	return ""
 }
 
 func (c *CmdOpts) startControllerWorker(_ context.Context, profile string) error {
