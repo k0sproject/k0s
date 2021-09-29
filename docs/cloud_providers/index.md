@@ -12,7 +12,7 @@ Even when all components are built with providerless mode, you must be able to e
 
 The easiest way to deploy cloud provider controllers is on the k0s cluster.
 
-Use the built-in [manifest deployer](manifests.md) built into k0s to deploy your cloud provider as a k0s-managed stack. Next, just drop all required manifests into the `/var/lib/k0s/manifests/aws/` directory, and k0s will handle the deployment.
+Use the built-in [manifest deployer](../manifests.md) built into k0s to deploy your cloud provider as a k0s-managed stack. Next, just drop all required manifests into the `/var/lib/k0s/manifests/aws/` directory, and k0s will handle the deployment.
 
 **Note**: The prerequisites for the various cloud providers can vary (for example, several require that configuration files be present on all of the nodes). Refer to your chosen cloud provider's documentation as necessary.
 

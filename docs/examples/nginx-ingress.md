@@ -150,7 +150,7 @@ In this example you'll install NGINX Ingress controller using LoadBalancer on k0
     There are two alternatives to install LoadBalancer on k0s. Follow the links in order to install LoadBalancer.
 
     - [MetalLB](metallb-loadbalancer.md) as a pure SW solution running internally in the k0s cluster
-    - [Cloud provider's](../cloud-providers.md) load balancer running outside of the k0s cluster
+    - [Cloud provider's](../cloud_providers/index.md) load balancer running outside of the k0s cluster
 
 2. Verify LoadBalancer
 

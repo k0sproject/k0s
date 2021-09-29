@@ -34,7 +34,6 @@ nav:
       - Storage (CSI):                    storage.md
       - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
-      - Cloud Providers:                  cloud-providers.md
       - IPv4/IPv6 Dual-Stack:             dual-stack.md
       - Control Plane High Availability:  high-availability.md
       - Shell Completion:                 shell-completion.md
@@ -46,6 +45,9 @@ nav:
       - Traefik Ingress Controller:       examples/traefik-ingress.md
       - Ambassador API Gateway:           examples/ambassador-ingress.md
       - Ceph Storage with Rook:           examples/rook-ceph.md
+      - Cloud Providers:
+        - Overview: cloud_providers/index.md
+        - AWS: cloud_providers/aws/index.md
   - Troubleshooting:
       - FAQ:                              FAQ.md
       - Common Pitfalls:                  troubleshooting.md

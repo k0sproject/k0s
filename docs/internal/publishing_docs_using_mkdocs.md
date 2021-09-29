@@ -23,7 +23,7 @@ nav:
       - Architecture: architecture.md
       - Networking: networking.md
       - Configuration Options: configuration.md
-      - Using Cloud Providers: cloud-providers.md
+      - Using Cloud Providers: cloud_providers/index.md
       - Running k0s with Traefik: examples/traefik-ingress.md
       - Running k0s as a service: install.md
       - k0s CLI Help Pages: cli/k0s.md

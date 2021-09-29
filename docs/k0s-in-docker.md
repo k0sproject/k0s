@@ -92,5 +92,5 @@ Currently, k0s nodes cannot be run if the containers are configured to use custo
 - [Install using k0sctl](k0sctl-install.md): Deploy multi-node clusters using just one command
 - [Control plane configuration options](configuration.md): Networking and datastore configuration
 - [Worker node configuration options](worker-node-config.md): Node labels and kubelet arguments
-- [Support for cloud providers](cloud-providers.md): Load balancer or storage configuration
+- [Support for cloud providers](cloud_providers/index.md): Load balancer or storage configuration
 - [Installing the Traefik Ingress Controller](examples/traefik-ingress.md): Ingress deployment information

@@ -6,7 +6,7 @@ This tutorial covers the installation of MetalLB load balancer on k0s. k0s doesn
 
 Load balancers can be used for exposing applications to the external network. Load balancer provides a single IP address to route incoming requests to your app. In order to successfully create Kubernetes services of type LoadBalancer, you need to have the load balancer (implementation) available for Kubernetes.
 
-Load balancer can be implemented by a [cloud provider](../cloud-providers.md) as an external service (with additional cost). This can also be implemented internally in the Kubernetes cluster (pure SW solution) with MetalLB.
+Load balancer can be implemented by a [cloud provider](../cloud_providers/index.md) as an external service (with additional cost). This can also be implemented internally in the Kubernetes cluster (pure SW solution) with MetalLB.
 
 ## MetalLB
 
@@ -117,4 +117,4 @@ For more information about MetalLB installation, take a look at [the official Me
 
 ## Alternative examples
 
-Get load balancer using [cloud provider](../cloud-providers.md).
+Get load balancer using [cloud provider](../cloud_providers/index.md).
