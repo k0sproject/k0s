@@ -62,15 +62,6 @@ func Init(path string, perm os.FileMode) error {
 	return nil
 }
 
-// Exists checks if a directory exists before we try using it
-func Exists(dirName string) bool {
-	info, err := os.Stat(dirName)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return info.IsDir()
-}
-
 // Copy copies the content of a folder
 func Copy(src string, dst string) error {
 	cmd := exec.Command("cp", "-r", src, dst)
