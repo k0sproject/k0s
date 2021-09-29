@@ -17,8 +17,8 @@ package controller
 
 import (
 	"bytes"
-	"fmt"
 	"context"
+	"fmt"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
