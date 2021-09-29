@@ -45,10 +45,10 @@ func NewManager() *Manager {
 }
 
 // Add adds a component to the manager
-func (m *Manager) Add(component Component) {
+func (m *Manager) Add(ctx context.Context, component Component) {
 	m.Components = append(m.Components, component)
 	if isReconcileComponent(component) && m.lastReconciledConfig != nil {
-		if err := m.reconcileComponent(context.TODO(), component, m.lastReconciledConfig); err != nil {
+		if err := m.reconcileComponent(ctx, component, m.lastReconciledConfig); err != nil {
 			logrus.Warnf("component reconciler failed: %v", err)
 		}
 	}

@@ -74,7 +74,7 @@ func (d *DefaultPSP) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (d *DefaultPSP) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (d *DefaultPSP) Reconcile(_ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	log := logrus.WithField("component", "DefaultPSP")
 	log.Debug("reconcile method called for: DefaultPSP")
 	if d.previousPolicy == clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy {

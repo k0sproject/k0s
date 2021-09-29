@@ -68,7 +68,7 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = string(bytes)
 			}
 			cmd.SilenceUsage = true
-			return c.StartWorker()
+			return c.StartWorker(cmd.Context())
 		},
 	}
 
@@ -79,7 +79,7 @@ func NewWorkerCmd() *cobra.Command {
 }
 
 // StartWorker starts the worker components based on the CmdOpts config
-func (c *CmdOpts) StartWorker() error {
+func (c *CmdOpts) StartWorker(ctx context.Context) error {
 
 	worker.KernelSetup()
 	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
@@ -103,18 +103,18 @@ func (c *CmdOpts) StartWorker() error {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}
 	if c.CriSocket == "" {
-		componentManager.Add(&worker.ContainerD{
+		componentManager.Add(ctx, &worker.ContainerD{
 			LogLevel: c.Logging["containerd"],
 			K0sVars:  c.K0sVars,
 		})
 	}
 
-	componentManager.Add(worker.NewOCIBundleReconciler(c.K0sVars))
+	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
 	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
 		c.WorkerProfile = "default-windows"
 	}
 
-	componentManager.Add(&worker.Kubelet{
+	componentManager.Add(ctx, &worker.Kubelet{
 		CRISocket:           c.CriSocket,
 		EnableCloudProvider: c.CloudProvider,
 		K0sVars:             c.K0sVars,
@@ -129,12 +129,12 @@ func (c *CmdOpts) StartWorker() error {
 		if c.TokenArg == "" {
 			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
 		}
-		componentManager.Add(&worker.KubeProxy{
+		componentManager.Add(ctx, &worker.KubeProxy{
 			K0sVars:   c.K0sVars,
 			LogLevel:  c.Logging["kube-proxy"],
 			CIDRRange: c.CIDRRange,
 		})
-		componentManager.Add(&worker.CalicoInstaller{
+		componentManager.Add(ctx, &worker.CalicoInstaller{
 			Token:      c.TokenArg,
 			APIAddress: c.APIServer,
 			CIDRRange:  c.CIDRRange,
@@ -143,7 +143,7 @@ func (c *CmdOpts) StartWorker() error {
 	}
 
 	if !c.SingleNode && !c.EnableWorker {
-		componentManager.Add(&status.Status{
+		componentManager.Add(ctx, &status.Status{
 			StatusInformation: install.K0sStatus{
 				Pid:           os.Getpid(),
 				Role:          "worker",
