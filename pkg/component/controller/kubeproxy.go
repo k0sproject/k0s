@@ -71,7 +71,7 @@ func (k *KubeProxy) Run() error { return nil }
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeProxy) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 	if clusterConfig.Spec.Network.KubeProxy.Disabled {
-		return k.removeKubeProxy(k.manifestDir)
+		return os.RemoveAll(k.manifestDir)
 	}
 	err := dir.Init(k.manifestDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -103,13 +103,6 @@ func (k *KubeProxy) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
 // Stop stop the reconcilier
 func (k *KubeProxy) Stop() error {
 	return nil
-}
-
-func (k *KubeProxy) removeKubeProxy(manifestDir string) error {
-	if !dir.Exists(manifestDir) {
-		return nil
-	}
-	return os.RemoveAll(manifestDir)
 }
 
 func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig, error) {
