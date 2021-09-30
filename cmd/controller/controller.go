@@ -261,7 +261,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	// Set up signal handling. Use buffered channel so we dont miss
 	// signals during startup
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	perfTimer.Checkpoint("starting-node-components")

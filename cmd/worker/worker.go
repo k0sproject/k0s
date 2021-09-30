@@ -164,7 +164,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	worker.KernelSetup()
 
 	// Set up signal handling
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	err = componentManager.Start(ctx)
