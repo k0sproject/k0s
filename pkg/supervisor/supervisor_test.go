@@ -28,8 +28,9 @@ func TestSupervisor(t *testing.T) {
 			shouldFail: false,
 			proc: Supervisor{
 				Name:    "supervisor-test-fail",
-				BinPath: "/bin/false",
+				BinPath: "/bin/sh",
 				RunDir:  ".",
+				Args:	[]string{"-c", "false"},
 			},
 		},
 		SupervisorTest{
