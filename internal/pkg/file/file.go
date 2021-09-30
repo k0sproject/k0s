@@ -19,7 +19,6 @@ package file
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
@@ -31,7 +30,7 @@ import (
 // try using it to prevent further errors.
 func Exists(fileName string) bool {
 	info, err := os.Stat(fileName)
-	if os.IsNotExist(err) {
+	if err != nil {
 		return false
 	}
 	return !info.IsDir()
@@ -52,16 +51,6 @@ func CheckPathPermissions(path string, perm os.FileMode) error {
 		return nil
 	}
 	return nil
-}
-
-// GetExecPath find the path for a given file (similar to `which`)
-func GetExecPath(fileName string) (*string, error) {
-	path, err := exec.LookPath(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &path, nil
 }
 
 // Chown changes file/dir mode
