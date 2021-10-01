@@ -4,13 +4,13 @@ go 1.16
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/Microsoft/hcsshim v0.8.18
+	github.com/Microsoft/hcsshim v0.8.21
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.5.4
+	github.com/containerd/containerd v1.5.6
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/docker/libnetwork v0.5.6
+	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5
@@ -22,7 +22,6 @@ require (
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.8.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v0.0.0-20210528155034-8dc8788f37db
@@ -64,11 +63,6 @@ require (
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176
 	sigs.k8s.io/controller-runtime v0.10.0
 	sigs.k8s.io/yaml v1.2.0
-)
-
-replace (
-	github.com/Microsoft/go-winio => github.com/Microsoft/go-winio v0.4.19
-	github.com/docker/libnetwork => github.com/moby/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 )
 
 // backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
