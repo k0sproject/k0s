@@ -136,9 +136,14 @@ func (r *ClusterConfigReconciler) Reconcile() error {
 	// watch the clusterConfig resource for changes
 	if clusterConfig.ResourceVersion != r.lastReconciledConfigVersion {
 		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.lastReconciledConfigVersion, clusterConfig.ResourceVersion)
-		err = r.ComponentManager.Reconcile(clusterConfig)
-		// "store" the version even when errors so we don't reconcile in a loop with the same broken config
-		r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
+		errors := clusterConfig.Validate()
+		if len(errors) > 0 {
+			err = fmt.Errorf("failed to validate config: %v", errors)
+		} else {
+			err = r.ComponentManager.Reconcile(clusterConfig)
+			// "store" the version even when errors so we don't reconcile in a loop with the same broken config
+			r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
+		}
 		r.reportStatus(clusterConfig, err)
 		if err != nil {
 			r.log.Errorf("cluster-config reconcile failed: %s", err.Error())

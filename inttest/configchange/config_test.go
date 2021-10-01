@@ -96,13 +96,29 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		s.Equal("cannot change CNI provider from kuberouter to calico", event.Message)
 	})
 
+	s.T().Run("setting bad ip address should fail", func(t *testing.T) {
+		originalConfig, err := cfgClient.ClusterConfigs("kube-system").Get(context.Background(), "k0s", metav1.GetOptions{})
+		s.NoError(err)
+		newConfig := originalConfig.DeepCopy()
+		newConfig.Spec.Network = v1beta1.DefaultNetwork()
+		newConfig.Spec.Network.PodCIDR = "invalid ip address"
+		_, err = cfgClient.ClusterConfigs("kube-system").Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		s.NoError(err)
+
+		// Check that we see proper event for failed reconcile
+		event, err := s.waitForReconcileEvent(eventWatch)
+		s.NoError(err)
+
+		s.T().Logf("the event is %+v", event)
+		s.Equal("Warning", event.Type)
+		s.Equal("FailedReconciling", event.Reason)
+	})
+
 	s.T().Run("changing kuberouter MTU should work", func(t *testing.T) {
 		originalConfig, err := cfgClient.ClusterConfigs("kube-system").Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
-		newConfig.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
-		newConfig.Spec.Network.Provider = constant.CNIProviderKubeRouter
-		newConfig.Spec.Network.Calico = nil
+		newConfig.Spec.Network = v1beta1.DefaultNetwork()
 		newConfig.Spec.Network.KubeRouter.AutoMTU = false
 		newConfig.Spec.Network.KubeRouter.MTU = 1300
 
