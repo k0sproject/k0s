@@ -16,8 +16,6 @@ limitations under the License.
 package validate
 
 import (
-	"fmt"
-
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
 )
@@ -43,11 +41,10 @@ func validateConfigCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			_, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				fmt.Println(err)
-			}
-			return nil
+			return err
 		},
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	// append flags
