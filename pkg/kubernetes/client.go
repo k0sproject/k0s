@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"sync"
 
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -33,6 +35,7 @@ type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
@@ -52,6 +55,7 @@ type ClientFactory struct {
 	dynamicClient   dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
 	restConfig      *rest.Config
+	configClient    cfgClient.ClusterConfigInterface
 
 	mutex sync.Mutex
 }
@@ -140,6 +144,28 @@ func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 	c.discoveryClient = cachedDiscoveryClient
 
 	return c.discoveryClient, nil
+}
+
+func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var err error
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		}
+	}
+	if c.configClient != nil {
+		return c.configClient, nil
+	}
+
+	configClient, err := cfgClient.NewForConfig(c.restConfig)
+	if err != nil {
+		return nil, err
+	}
+	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
+	return c.configClient, nil
 }
 
 // NewClient creates new k8s client based of the given kubeconfig

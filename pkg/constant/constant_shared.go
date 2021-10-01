@@ -109,7 +109,8 @@ const (
 	SystemRbacComponentName            = "system-rbac"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
-	ClusterConfigNamespace = "kube-system"
+	ClusterConfigNamespace  = "kube-system"
+	ClusterConfigObjectName = "k0s"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s

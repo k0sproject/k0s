@@ -67,7 +67,7 @@ type ControllerOptions struct {
 	K0sCloudProviderPort            int
 	K0sCloudProviderUpdateFrequency time.Duration
 	NodeComponents                  *component.Manager
-	// Reconcilers                     map[string]component.Component
+	EnableDynamicConfig             bool
 }
 
 // Shared worker cli flags
@@ -171,6 +171,7 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.DurationVar(&controllerOpts.K0sCloudProviderUpdateFrequency, "k0s-cloud-provider-update-frequency", 2*time.Minute, "the frequency of k0s-cloud-provider node updates")
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
+	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
 
 	return flagset
 }

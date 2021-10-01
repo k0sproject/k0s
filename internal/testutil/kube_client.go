@@ -1,6 +1,8 @@
 package testutil
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -11,6 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	kubetesting "k8s.io/client-go/testing"
+
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 )
 
 // NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface
@@ -53,4 +57,8 @@ func (f FakeClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 
 func (f FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	return f.DiscoveryClient, nil
+}
+
+func (f FakeClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+	return nil, fmt.Errorf("NOT IMPLEMENTED")
 }

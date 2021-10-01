@@ -9,7 +9,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/static"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/pkg/component"
 
@@ -17,10 +16,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 )
 
 var (
@@ -35,22 +37,26 @@ type ClusterConfigReconciler struct {
 	ComponentManager  *component.Manager
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	configClient                cfgClient.ClusterConfigInterface
-	kubeConfig                  string
-	leaderElector               LeaderElector
-	log                         *logrus.Entry
-	lastReconciledConfigVersion string
-	saver                       manifestsSaver
-
-	tickerDone chan struct{}
+	configClient  cfgClient.ClusterConfigInterface
+	kubeConfig    string
+	leaderElector LeaderElector
+	log           *logrus.Entry
+	saver         manifestsSaver
+	configSource  clusterconfig.ConfigSource
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface) (*ClusterConfigReconciler, error) {
+func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
 	cfg, err := config.GetYamlFromFile(cfgFile, k0sVars)
 	if err != nil {
 		return nil, err
 	}
+
+	configClient, err := kubeClientFactory.GetConfigClient()
+	if err != nil {
+		return nil, err
+	}
+
 	return &ClusterConfigReconciler{
 		ComponentManager:  mgr,
 		YamlConfig:        cfg,
@@ -59,10 +65,16 @@ func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0s
 		leaderElector:     leaderElector,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
 		saver:             s,
+		configSource:      configSource,
+		configClient:      configClient,
 	}, nil
 }
 
 func (r *ClusterConfigReconciler) Init() error {
+	// If we do not need to store the config in API we do not need the CRDs either
+	if !r.configSource.NeedToStoreInitialConfig() {
+		return nil
+	}
 	err := r.writeCRD()
 	if err != nil {
 		return fmt.Errorf("failed to write api-config CRD to API: %v", err)
@@ -71,35 +83,58 @@ func (r *ClusterConfigReconciler) Init() error {
 }
 
 func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
-	config, err := clientcmd.BuildConfigFromFlags("", r.kubeConfig)
-	if err != nil {
-		return fmt.Errorf("can't read kubeconfig: %v", err)
-	}
-	c, err := cfgClient.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
-	}
-	r.configClient = c.ClusterConfigs(constant.ClusterConfigNamespace)
-	r.tickerDone = make(chan struct{})
+	if r.configSource.NeedToStoreInitialConfig() {
+		// We need to wait until we either succees getting the object or creating it
+		err := wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {
+			timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			// Create the config object if it does not exist already
+			_, e := r.configClient.Get(timeoutCtx, constant.ClusterConfigObjectName, getOpts)
+			if e != nil {
+				if errors.IsNotFound(e) {
+					// ClusterConfig CR cannot be found, which means we can create it
+					r.log.Debugf("didn't find cluster-config object: %v", err)
+					_, e = r.copyRunningConfigToCR(ctx)
+					if e != nil {
+						r.log.Errorf("failed to save cluster-config  %v\n", err)
+						return false, nil
+					}
+				} else {
+					r.log.Errorf("error getting cluster-config: %v", err)
+					return false, nil
+				}
+			}
+			return true, nil
+		})
 
-	// check if a CR already exists, and if so, populate the current resourceVersion
-	// cfg, err := r.configClient.Get(context.Background(), "k0s", getOpts)
-	// if err == nil {
-	// 	r.resourceVersion = cfg.ResourceVersion
-	// }
+		if err != nil {
+			return fmt.Errorf("not able to get or create the cluster config: %v", err)
+		}
+	}
 
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
+		r.log.Debug("start listening changes from config source")
 		for {
 			select {
-			case <-ticker.C:
-				err := r.Reconcile(ctx)
-				if err != nil {
-					r.log.Warnf("cluster-config reconciliation failed: %s", err.Error())
+			case cfg, ok := <-r.configSource.ResultChan():
+				if !ok {
+					// Recv channel close, we can stop now
+					r.log.Debug("config source closed channel")
+					return
 				}
-			case <-r.tickerDone:
-				r.log.Info("cluster-config reconciler done")
+				errors := cfg.Validate()
+				var err error
+				if len(errors) > 0 {
+					err = fmt.Errorf("failed to validate config: %v", errors)
+				} else {
+					err = r.ComponentManager.Reconcile(ctx, cfg)
+				}
+				r.reportStatus(cfg, err)
+				if err != nil {
+					r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
+				}
+				r.log.Debugf("reconciling cluster-config done")
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -108,61 +143,10 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 	return nil
 }
 
-//+kubebuilder:rbac:groups=k0s.k0sproject.io,resources=clusterconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=k0s.k0sproject.io,resources=clusterconfigs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=k0s.k0sproject.io,resources=clusterconfigs/finalizers,verbs=update
-
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the ClusterConfig object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *ClusterConfigReconciler) Reconcile(ctx context.Context) error {
-	clusterConfig, err := r.configClient.Get(ctx, "k0s", getOpts)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// ClusterConfig CR cannot be found, which means we can create it
-			r.log.Debugf("didn't find cluster-config object: %v", err)
-			clusterConfig, err = r.copyRunningConfigToCR()
-			if err != nil {
-				r.log.Errorf("failed to save cluster-config  %v\n", err)
-				return err
-			}
-		} else {
-			r.log.Errorf("error getting cluster-config: %v", err)
-			return err
-		}
-	}
-	// watch the clusterConfig resource for changes
-	if clusterConfig.ResourceVersion != r.lastReconciledConfigVersion {
-		r.log.Debugf("detected change in cluster-config custom resource: previous resourceVersion: %s, new resourceVersion: %s", r.lastReconciledConfigVersion, clusterConfig.ResourceVersion)
-		errors := clusterConfig.Validate()
-		if len(errors) > 0 {
-			err = fmt.Errorf("failed to validate config: %v", errors)
-		} else {
-			err = r.ComponentManager.Reconcile(ctx, clusterConfig)
-			// "store" the version even when errors so we don't reconcile in a loop with the same broken config
-			r.lastReconciledConfigVersion = clusterConfig.ResourceVersion
-		}
-		r.reportStatus(clusterConfig, err)
-		if err != nil {
-			r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
-			return err
-		}
-		r.log.Debugf("reconciling cluster-config done")
-	}
-	return nil
-}
-
 // Stop stops
 func (r *ClusterConfigReconciler) Stop() error {
-	if r.tickerDone != nil {
-		close(r.tickerDone)
-	}
+	// Nothing really to stop, the main ConfigSource "watch" channel go-routine is stopped
+	// via the main Context's Done channel in the Run function
 	return nil
 }
 
@@ -215,9 +199,11 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 	}
 }
 
-func (r *ClusterConfigReconciler) copyRunningConfigToCR() (*v1beta1.ClusterConfig, error) {
+func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context) (*v1beta1.ClusterConfig, error) {
+	ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
+	defer cancel()
 	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig).StripDefaults()
-	clusterConfig, err := r.configClient.Create(context.Background(), clusterWideConfig, cOpts)
+	clusterConfig, err := r.configClient.Create(ctx, clusterWideConfig, cOpts)
 	if err != nil {
 		return nil, err
 	}
