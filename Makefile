@@ -87,14 +87,14 @@ endif
 all: k0s k0s.exe
 
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
+print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
+			"package assets" \
+			"var BinData = map[string]struct{ offset, size int64 }{}" \
+			"var BinDataSize int64"
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
 	rm -f bindata_$(zz_os) && touch bindata_$(zz_os)
-	printf "%s\n\n%s\n%s\n" \
-		"package assets" \
-		"var BinData = map[string]struct{ offset, size int64 }{}" \
-		"var BinDataSize int64" \
-		> $@
+	$(print_empty_generated_offsets) > $@
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
@@ -103,6 +103,10 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
+
+# needed for unit tests on macos
+pkg/assets/zz_generated_offsets_darwin.go:
+	$(print_empty_generated_offsets) > $@
 
 
 k0s: TARGET_OS = linux
@@ -147,7 +151,7 @@ smoketests:  $(smoketests)
 
 
 .PHONY: check-unit
-check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go
+check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go
 	go test -race ./pkg/... ./internal/...
 
 .PHONY: clean-gocache
