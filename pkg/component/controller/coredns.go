@@ -250,7 +250,6 @@ type CoreDNS struct {
 	manifestDir            string
 	K0sVars                constant.CfgVars
 	previousConfig         coreDNSConfig
-	stopCtx                context.Context
 	stopFunc               context.CancelFunc
 	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
@@ -287,7 +286,7 @@ func (c *CoreDNS) Init() error {
 
 // Run runs the CoreDNS reconciler component
 func (c *CoreDNS) Run(ctx context.Context) error {
-	c.stopCtx, c.stopFunc = context.WithCancel(ctx)
+	ctx, c.stopFunc = context.WithCancel(ctx)
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -299,11 +298,11 @@ func (c *CoreDNS) Run(ctx context.Context) error {
 					// We cannot figure out the full config without having the last known cluster config from CR
 					continue
 				}
-				err := c.Reconcile(c.stopCtx, c.lastKnownClusterConfig)
+				err := c.Reconcile(ctx, c.lastKnownClusterConfig)
 				if err != nil {
 					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
 				}
-			case <-c.stopCtx.Done():
+			case <-ctx.Done():
 				c.log.Info("coredns node reconciler done")
 				return
 			}
