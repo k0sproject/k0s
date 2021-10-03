@@ -360,6 +360,21 @@ spec:
                   etcd:
                     description: EtcdConfig defines etcd related config options
                     properties:
+                      externalCluster:
+                        description: ExternalCluster defines external etcd cluster
+                          related config options
+                        properties:
+                          endpoints:
+                            description: Endpoints of external etcd cluster used to
+                              connect by k0s
+                            items:
+                              type: string
+                            type: array
+                          etcdPrefix:
+                            description: EtcdPrefix is a prefix to prepend to all
+                              resource paths in etcd
+                            type: string
+                        type: object
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string

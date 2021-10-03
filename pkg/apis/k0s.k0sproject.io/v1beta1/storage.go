@@ -102,8 +102,20 @@ func (s *StorageSpec) Validate() []error {
 
 // EtcdConfig defines etcd related config options
 type EtcdConfig struct {
+	// ExternalCluster defines external etcd cluster related config options
+	ExternalCluster *ExternalCluster `json:"externalCluster"`
+
 	// Node address used for etcd cluster peering
 	PeerAddress string `json:"peerAddress"`
+}
+
+// ExternalCluster defines external etcd cluster related config options
+type ExternalCluster struct {
+	// Endpoints of external etcd cluster used to connect by k0s
+	Endpoints []string `json:"endpoints"`
+
+	// EtcdPrefix is a prefix to prepend to all resource paths in etcd
+	EtcdPrefix string `json:"etcdPrefix"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults
@@ -114,7 +126,8 @@ func DefaultEtcdConfig() *EtcdConfig {
 		addr = "127.0.0.1"
 	}
 	return &EtcdConfig{
-		PeerAddress: addr,
+		ExternalCluster: nil,
+		PeerAddress:     addr,
 	}
 }
 
