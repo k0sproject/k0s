@@ -5,11 +5,11 @@ go 1.16
 require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/Microsoft/hcsshim v0.8.18
+	github.com/Microsoft/hcsshim v0.8.21
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.5.4
+	github.com/containerd/containerd v1.5.7
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.5.6
 	github.com/evanphx/json-patch v4.11.0+incompatible
@@ -18,7 +18,7 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/xstrings v1.3.2 // indirect
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/k0sproject/dig v0.1.0
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
@@ -26,7 +26,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.14.1 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.8.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
