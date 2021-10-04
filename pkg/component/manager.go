@@ -45,10 +45,10 @@ func NewManager() *Manager {
 }
 
 // Add adds a component to the manager
-func (m *Manager) Add(component Component) {
+func (m *Manager) Add(ctx context.Context, component Component) {
 	m.Components = append(m.Components, component)
 	if isReconcileComponent(component) && m.lastReconciledConfig != nil {
-		if err := m.reconcileComponent(component, m.lastReconciledConfig); err != nil {
+		if err := m.reconcileComponent(ctx, component, m.lastReconciledConfig); err != nil {
 			logrus.Warnf("component reconciler failed: %v", err)
 		}
 	}
@@ -89,7 +89,7 @@ func (m *Manager) Start(ctx context.Context) error {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
-		if err := comp.Run(); err != nil {
+		if err := comp.Run(ctx); err != nil {
 			return err
 		}
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
@@ -133,12 +133,12 @@ func (r ReconcileError) Error() string {
 }
 
 // Reconcile reconciles all managed components
-func (m *Manager) Reconcile(cfg *v1beta1.ClusterConfig) error {
+func (m *Manager) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
 	errors := make([]error, 0)
 	var ret error
 	logrus.Infof("starting component reconciling for %d components", len(m.Components))
 	for _, component := range m.Components {
-		if err := m.reconcileComponent(component, cfg); err != nil {
+		if err := m.reconcileComponent(ctx, component, cfg); err != nil {
 			errors = append(errors, err)
 		}
 	}
@@ -152,7 +152,7 @@ func (m *Manager) Reconcile(cfg *v1beta1.ClusterConfig) error {
 	return ret
 }
 
-func (m *Manager) reconcileComponent(component Component, cfg *v1beta1.ClusterConfig) error {
+func (m *Manager) reconcileComponent(ctx context.Context, component Component, cfg *v1beta1.ClusterConfig) error {
 	clusterComponent, ok := component.(ReconcilerComponent)
 	compName := reflect.TypeOf(component).String()
 	if !ok {
@@ -160,7 +160,7 @@ func (m *Manager) reconcileComponent(component Component, cfg *v1beta1.ClusterCo
 		return nil
 	}
 	logrus.Infof("starting to reconcile %s", compName)
-	if err := clusterComponent.Reconcile(cfg); err != nil {
+	if err := clusterComponent.Reconcile(ctx, cfg); err != nil {
 		logrus.Errorf("failed to reconcile component %s: %s", compName, err.Error())
 		return err
 	}

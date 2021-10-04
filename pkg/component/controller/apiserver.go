@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -85,7 +86,7 @@ func (a *APIServer) Init() error {
 }
 
 // Run runs kube api
-func (a *APIServer) Run() error {
+func (a *APIServer) Run(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,

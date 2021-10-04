@@ -52,7 +52,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 	assert.NoError(t, r.Init())
 
-	assert.NoError(t, r.reconcileEndpoints())
+	assert.NoError(t, r.reconcileEndpoints(context.Background()))
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
 	_, err = client.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
@@ -78,7 +78,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 
 	assert.NoError(t, r.Init())
 
-	assert.NoError(t, r.reconcileEndpoints())
+	assert.NoError(t, r.reconcileEndpoints(context.Background()))
 	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
@@ -113,7 +113,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 
 	assert.NoError(t, r.Init())
 
-	assert.NoError(t, r.reconcileEndpoints())
+	assert.NoError(t, r.reconcileEndpoints(context.Background()))
 	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
@@ -155,7 +155,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	assert.NoError(t, r.Init())
 
-	assert.NoError(t, r.reconcileEndpoints())
+	assert.NoError(t, r.reconcileEndpoints(context.Background()))
 	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }

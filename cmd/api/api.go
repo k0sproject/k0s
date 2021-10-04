@@ -279,7 +279,7 @@ We need to validate:
 - that we find a secret with the ID
 - that the token matches whats inside the secret
 */
-func (c *CmdOpts) isValidToken(token string, role string) bool {
+func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -287,7 +287,7 @@ func (c *CmdOpts) isValidToken(token string, role string) bool {
 	}
 
 	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
-	secret, err := c.KubeClient.CoreV1().Secrets("kube-system").Get(context.TODO(), secretName, v1.GetOptions{})
+	secret, err := c.KubeClient.CoreV1().Secrets("kube-system").Get(ctx, secretName, v1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
 		return false
@@ -316,7 +316,7 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) == 2 {
 			token := parts[1]
-			if !c.isValidToken(token, role) {
+			if !c.isValidToken(r.Context(), token, role) {
 				sendError(fmt.Errorf("go away"), w, http.StatusUnauthorized)
 				return
 			}

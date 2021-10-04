@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -54,7 +55,7 @@ func (a *Scheduler) Init() error {
 }
 
 // Run runs kube scheduler
-func (a *Scheduler) Run() error {
+func (a *Scheduler) Run(_ context.Context) error {
 	return nil
 }
 
@@ -67,7 +68,7 @@ func (a *Scheduler) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (a *Scheduler) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Scheduler")
 
 	logrus.Info("Starting kube-scheduler")

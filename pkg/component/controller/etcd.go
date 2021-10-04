@@ -125,7 +125,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 }
 
 // Run runs etcd
-func (e *Etcd) Run() error {
+func (e *Etcd) Run(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 	etcdServerCert := filepath.Join(e.K0sVars.EtcdCertDir, "server.crt")
@@ -174,7 +174,7 @@ func (e *Etcd) Run() error {
 		args["--initial-cluster-state"] = "existing"
 	}
 
-	if err := e.setupCerts(); err != nil {
+	if err := e.setupCerts(ctx); err != nil {
 		return fmt.Errorf("failed to create etcd certs: %w", err)
 	}
 
@@ -211,7 +211,7 @@ func (e *Etcd) Reconcile() error {
 	return nil
 }
 
-func (e *Etcd) setupCerts() error {
+func (e *Etcd) setupCerts(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 
@@ -219,7 +219,7 @@ func (e *Etcd) setupCerts() error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	eg, _ := errgroup.WithContext(context.Background())
+	var eg errgroup.Group
 
 	eg.Go(func() error {
 		// etcd client cert

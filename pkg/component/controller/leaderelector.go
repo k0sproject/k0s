@@ -62,7 +62,7 @@ func (l *leaderElector) Init() error {
 	return nil
 }
 
-func (l *leaderElector) Run() error {
+func (l *leaderElector) Run(_ context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)

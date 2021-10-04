@@ -250,7 +250,6 @@ type CoreDNS struct {
 	manifestDir            string
 	K0sVars                constant.CfgVars
 	previousConfig         coreDNSConfig
-	stopCtx                context.Context
 	stopFunc               context.CancelFunc
 	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
@@ -286,8 +285,8 @@ func (c *CoreDNS) Init() error {
 }
 
 // Run runs the CoreDNS reconciler component
-func (c *CoreDNS) Run() error {
-	c.stopCtx, c.stopFunc = context.WithCancel(context.Background())
+func (c *CoreDNS) Run(ctx context.Context) error {
+	ctx, c.stopFunc = context.WithCancel(ctx)
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -299,11 +298,11 @@ func (c *CoreDNS) Run() error {
 					// We cannot figure out the full config without having the last known cluster config from CR
 					continue
 				}
-				err := c.Reconcile(c.lastKnownClusterConfig)
+				err := c.Reconcile(ctx, c.lastKnownClusterConfig)
 				if err != nil {
 					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
 				}
-			case <-c.stopCtx.Done():
+			case <-ctx.Done():
 				c.log.Info("coredns node reconciler done")
 				return
 			}
@@ -313,13 +312,13 @@ func (c *CoreDNS) Run() error {
 	return nil
 }
 
-func (c *CoreDNS) getConfig(clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
+func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
 	dns, err := clusterConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
 
-	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	nodes, err := c.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -358,9 +357,9 @@ func (c *CoreDNS) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *CoreDNS) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: CoreDNS")
-	cfg, err := c.getConfig(clusterConfig)
+	cfg, err := c.getConfig(ctx, clusterConfig)
 	if err != nil {
 		return fmt.Errorf("error calculating coredns configs: %v. will retry", err)
 	}

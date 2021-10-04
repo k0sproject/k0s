@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -63,7 +64,7 @@ func (d *DefaultPSP) Init() error {
 }
 
 // Run reconciles the k0s default PSP rules
-func (d *DefaultPSP) Run() error {
+func (d *DefaultPSP) Run(_ context.Context) error {
 	return nil
 }
 
@@ -73,7 +74,7 @@ func (d *DefaultPSP) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (d *DefaultPSP) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (d *DefaultPSP) Reconcile(_ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	log := logrus.WithField("component", "DefaultPSP")
 	log.Debug("reconcile method called for: DefaultPSP")
 	if d.previousPolicy == clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy {

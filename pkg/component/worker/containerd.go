@@ -16,6 +16,7 @@ limitations under the License.
 package worker
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,7 +62,7 @@ func (c *ContainerD) Init() error {
 }
 
 // Run runs containerD
-func (c *ContainerD) Run() error {
+func (c *ContainerD) Run(_ context.Context) error {
 	logrus.Info("Starting containerD")
 
 	if err := c.setupConfig(); err != nil {

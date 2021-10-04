@@ -43,9 +43,9 @@ func NewKubeletConfigClient(kubeconfigPath string) (*KubeletConfigClient, error)
 }
 
 // Get reads the config from kube api
-func (k *KubeletConfigClient) Get(profile string) (string, error) {
+func (k *KubeletConfigClient) Get(ctx context.Context, profile string) (string, error) {
 	cmName := fmt.Sprintf("kubelet-config-%s-%s", profile, constant.KubernetesMajorMinorVersion)
-	cm, err := k.kubeClient.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), cmName, v1.GetOptions{})
+	cm, err := k.kubeClient.CoreV1().ConfigMaps("kube-system").Get(ctx, cmName, v1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get kubelet config from API: %w", err)
 	}

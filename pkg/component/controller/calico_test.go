@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -28,7 +29,7 @@ func TestCalicoManifests(t *testing.T) {
 		crdSaver := inMemorySaver{}
 		calico, err := NewCalico(k0sVars, crdSaver, saver)
 		require.NoError(t, err)
-		require.NoError(t, calico.Run())
+		require.NoError(t, calico.Run(context.Background()))
 		require.NoError(t, calico.Stop())
 
 		for k := range crdSaver {

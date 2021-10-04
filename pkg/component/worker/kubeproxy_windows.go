@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -22,8 +23,8 @@ func (k KubeProxy) Init() error {
 	return assets.Stage(k.K0sVars.BinDir, "kube-proxy.exe", constant.BinDirMode)
 }
 
-func (k KubeProxy) Run() error {
-	node, err := getNodeName()
+func (k KubeProxy) Run(ctx context.Context) error {
+	node, err := getNodeName(ctx)
 	if err != nil {
 		return fmt.Errorf("can't get hostname: %v", err)
 	}

@@ -19,7 +19,6 @@ type K0sLease struct {
 	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	cancelCtx   context.Context
 	cancelFunc  context.CancelFunc
 	leaseCancel context.CancelFunc
 }
@@ -30,8 +29,8 @@ func (l *K0sLease) Init() error {
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
-func (l *K0sLease) Run() error {
-	l.cancelCtx, l.cancelFunc = context.WithCancel(context.Background())
+func (l *K0sLease) Run(ctx context.Context) error {
+	ctx, l.cancelFunc = context.WithCancel(ctx)
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
 	client, err := l.KubeClientFactory.GetClient()
 	if err != nil {
@@ -63,7 +62,7 @@ func (l *K0sLease) Run() error {
 				log.Info("acquired leader lease")
 			case <-events.LostLease:
 				log.Error("lost leader lease, this should not really happen!?!?!?")
-			case <-l.cancelCtx.Done():
+			case <-ctx.Done():
 				return
 			}
 		}

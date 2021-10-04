@@ -48,7 +48,7 @@ func (s *Status) Init() error {
 }
 
 // Run runs the component
-func (s *Status) Run() error {
+func (s *Status) Run(_ context.Context) error {
 	go func() {
 		if err := s.httpserver.Serve(s.listener); err != nil {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)

@@ -265,7 +265,7 @@ func (m *MetricServer) Init() error {
 }
 
 // Run runs the metric server reconciler
-func (m *MetricServer) Run() error {
+func (m *MetricServer) Run(ctx context.Context) error {
 	m.tickerDone = make(chan struct{})
 
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
@@ -281,7 +281,7 @@ func (m *MetricServer) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				newConfig, err := m.getConfig()
+				newConfig, err := m.getConfig(ctx)
 				if err != nil {
 					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
 					continue
@@ -320,7 +320,7 @@ func (m *MetricServer) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (m *MetricServer) Reconcile(clusterConfig *v1beta1.ClusterConfig) error {
+func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: MetricServer")
 	// We just store the last known config, the main reconciler ticker will reconcile config based on number of nodes etc.
 	m.clusterConfig = clusterConfig
@@ -335,7 +335,7 @@ func (m *MetricServer) Healthy() error { return nil }
 // - 100m core of CPU
 // - 300MiB of memory
 // So that's 10m CPU and 30MiB mem per 10 nodes
-func (m *MetricServer) getConfig() (metricsConfig, error) {
+func (m *MetricServer) getConfig(ctx context.Context) (metricsConfig, error) {
 	if m.clusterConfig == nil {
 		return metricsConfig{}, fmt.Errorf("cluster config not available yet")
 	}
@@ -349,7 +349,7 @@ func (m *MetricServer) getConfig() (metricsConfig, error) {
 		return cfg, err
 	}
 
-	nodeList, err := kubeClient.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return cfg, err
 	}

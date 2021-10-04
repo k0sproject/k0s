@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -44,7 +45,7 @@ func (s *SystemRBAC) Init() error {
 }
 
 // Run reconciles the k0s related system RBAC rules
-func (s *SystemRBAC) Run() error {
+func (s *SystemRBAC) Run(_ context.Context) error {
 	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
 	err := dir.Init(rbacDir, constant.ManifestsDirMode)
 	if err != nil {

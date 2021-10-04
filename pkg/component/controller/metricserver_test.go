@@ -16,11 +16,12 @@ var cfg = v1beta1.DefaultClusterConfig("")
 
 func TestGetConfigWithZeroNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
+	ctx := context.Background()
 
 	metrics, err := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, err)
-	require.NoError(t, metrics.Reconcile(cfg))
-	cfg, err := metrics.getConfig()
+	require.NoError(t, metrics.Reconcile(ctx, cfg))
+	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "10m", cfg.CPURequest)
 	require.Equal(t, "30M", cfg.MEMRequest)
@@ -29,6 +30,7 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 func TestGetConfigWithSomeNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	fakeClient, _ := fakeFactory.GetClient()
+	ctx := context.Background()
 
 	for i := 1; i <= 100; i++ {
 		n := &corev1.Node{
@@ -42,8 +44,8 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 
 	metrics, err := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, err)
-	require.NoError(t, metrics.Reconcile(cfg))
-	cfg, err := metrics.getConfig()
+	require.NoError(t, metrics.Reconcile(ctx, cfg))
+	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "100m", cfg.CPURequest)
 	require.Equal(t, "300M", cfg.MEMRequest)
