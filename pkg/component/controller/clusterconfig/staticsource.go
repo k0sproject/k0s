@@ -38,7 +38,6 @@ func NewStaticSource(staticConfig *v1beta1.ClusterConfig) (ConfigSource, error) 
 }
 
 func (s *staticSource) Release(_ context.Context) error {
-	// time.Sleep(10 * time.Second)
 	logrus.WithField("component", "static-config-source").Debug("sending static config via channel")
 	s.resultChan <- s.staticConfig
 	return nil
