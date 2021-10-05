@@ -9,6 +9,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/static"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/pkg/component"
 
@@ -17,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -70,8 +71,11 @@ func (r *ClusterConfigReconciler) Init() error {
 }
 
 func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
-
-	c, err := cfgClient.NewForConfig(r.kubeConfig)
+	config, err := clientcmd.BuildConfigFromFlags("", r.kubeConfig)
+	if err != nil {
+		return fmt.Errorf("can't read kubeconfig: %v", err)
+	}
+	c, err := cfgClient.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
 	}

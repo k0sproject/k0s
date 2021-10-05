@@ -188,6 +188,12 @@ static/gen_manifests.go: $(shell find static/manifests -type f)
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
+.PHONY: generate-APIClient
+
+# install with go get k8s.io/code-generator/cmd/client-gen@v0.22.2
+generate-APIClient:
+	client-gen --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+
 image-bundle/image.list: k0s
 	./k0s airgap list-images > image-bundle/image.list
 

@@ -23,12 +23,12 @@ import (
 
 	"github.com/imdario/mergo"
 
-	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -82,15 +82,20 @@ func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1b
 
 // fetch cluster-config from API
 func configRequest(kubeConfig string) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	c, err := cfgClient.NewForConfig(kubeConfig)
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	if err != nil {
+		return nil, fmt.Errorf("can't read kubeconfig: %v", err)
+	}
+	c, err := cfgClient.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
 	}
-	configClient := c.ClusterConfigs(constant.ClusterConfigNamespace)
+
+	clusterConfigs := c.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace)
 	ctxWithTimeout, cancelFunction := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
 	defer cancelFunction()
 
-	cfg, err := configClient.Get(ctxWithTimeout, "k0s", getOpts)
+	cfg, err := clusterConfigs.Get(ctxWithTimeout, "k0s", getOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch cluster-config from API: %v", err)
 	}

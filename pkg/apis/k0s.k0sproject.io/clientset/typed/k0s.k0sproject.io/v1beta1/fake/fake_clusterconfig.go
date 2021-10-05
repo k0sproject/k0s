@@ -76,6 +76,7 @@ func (c *FakeClusterConfigs) List(ctx context.Context, opts v1.ListOptions) (res
 func (c *FakeClusterConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(clusterconfigsResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a clusterConfig and creates it.  Returns the server's representation of the clusterConfig, and an error, if there is any.
@@ -89,8 +90,8 @@ func (c *FakeClusterConfigs) Create(ctx context.Context, clusterConfig *v1beta1.
 	return obj.(*v1beta1.ClusterConfig), err
 }
 
-// Create takes the representation of a clusterConfig and updates it. Returns the server's representation of the clusterConfig, and an error, if there is any.
-func (c *FakeClusterConfigs) Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (*v1beta1.ClusterConfig, error) {
+// Update takes the representation of a clusterConfig and updates it. Returns the server's representation of the clusterConfig, and an error, if there is any.
+func (c *FakeClusterConfigs) Update(ctx context.Context, clusterConfig *v1beta1.ClusterConfig, opts v1.UpdateOptions) (result *v1beta1.ClusterConfig, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(clusterconfigsResource, c.ns, clusterConfig), &v1beta1.ClusterConfig{})
 
