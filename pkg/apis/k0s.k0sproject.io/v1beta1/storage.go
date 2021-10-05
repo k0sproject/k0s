@@ -137,3 +137,16 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 		DataSource: "sqlite://" + dataDir + "/db/state.db?more=rwc&_journal=WAL&cache=shared",
 	}
 }
+
+// GetEndpoints returns comma-separated list of external cluster endpoints if exist
+// or internal etcd address which is https://127.0.0.1:2379
+func (e *EtcdConfig) GetEndpoints() string {
+	if e.IsExternalClusterUsed() {
+		return strings.Join(e.ExternalCluster.Endpoints, ",")
+	}
+	return "https://127.0.0.1:2379"
+}
+
+func (e *EtcdConfig) IsExternalClusterUsed() bool {
+	return e.ExternalCluster != nil
+}

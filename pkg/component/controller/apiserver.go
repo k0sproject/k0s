@@ -169,10 +169,14 @@ func (a *APIServer) Run(_ context.Context) error {
 			fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
 	case v1beta1.EtcdStorageType:
 		a.supervisor.Args = append(a.supervisor.Args,
-			"--etcd-servers=https://127.0.0.1:2379",
+			fmt.Sprintf("--etcd-servers=%s", a.ClusterConfig.Spec.Storage.Etcd.GetEndpoints()),
 			fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
 			fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
 			fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
+		if a.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+			a.supervisor.Args = append(a.supervisor.Args,
+				fmt.Sprintf("--etcd-prefix=%s", a.ClusterConfig.Spec.Storage.Etcd.ExternalCluster.EtcdPrefix))
+		}
 	default:
 		return fmt.Errorf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type)
 	}
