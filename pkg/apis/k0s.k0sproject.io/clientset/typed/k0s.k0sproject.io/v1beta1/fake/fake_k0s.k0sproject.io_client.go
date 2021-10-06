@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
+	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
@@ -28,11 +28,11 @@ type FakeK0sV1beta1 struct {
 	*testing.Fake
 }
 
-func (c *FakeK0sV1beta1) ClusterConfigs(namespace string) clientset.ClusterConfigInterface {
+func (c *FakeK0sV1beta1) ClusterConfigs(namespace string) v1beta1.ClusterConfigInterface {
 	return &FakeClusterConfigs{c, namespace}
 }
 
-func (c *FakeK0sV1beta1) ClusterConfigLists(namespace string) clientset.ClusterConfigListInterface {
+func (c *FakeK0sV1beta1) ClusterConfigLists(namespace string) v1beta1.ClusterConfigListInterface {
 	return &FakeClusterConfigLists{c, namespace}
 }
 

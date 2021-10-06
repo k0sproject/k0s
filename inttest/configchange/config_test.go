@@ -32,7 +32,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -52,7 +52,6 @@ func TestConfigSuite(t *testing.T) {
 }
 
 func (s *ConfigSuite) TestK0sGetsUp() {
-
 	s.NoError(s.InitController(0))
 	s.NoError(s.RunWorkers())
 
@@ -78,13 +77,13 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	defer eventWatch.Stop()
 
 	s.T().Run("changing cni should fail", func(t *testing.T) {
-		originalConfig, err := cfgClient.ClusterConfigs("kube-system").Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network.Provider = constant.CNIProviderCalico
 		newConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 		newConfig.Spec.Network.KubeRouter = nil
-		_, err = cfgClient.ClusterConfigs("kube-system").Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 
 		// Check that we see proper event for failed reconcile
@@ -97,12 +96,12 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	})
 
 	s.T().Run("setting bad ip address should fail", func(t *testing.T) {
-		originalConfig, err := cfgClient.ClusterConfigs("kube-system").Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network = v1beta1.DefaultNetwork()
 		newConfig.Spec.Network.PodCIDR = "invalid ip address"
-		_, err = cfgClient.ClusterConfigs("kube-system").Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 
 		// Check that we see proper event for failed reconcile
@@ -115,7 +114,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	})
 
 	s.T().Run("changing kuberouter MTU should work", func(t *testing.T) {
-		originalConfig, err := cfgClient.ClusterConfigs("kube-system").Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network = v1beta1.DefaultNetwork()
@@ -128,7 +127,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		})
 		s.NoError(err)
 
-		_, err = cfgClient.ClusterConfigs("kube-system").Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 		event, err := s.waitForReconcileEvent(eventWatch)
 		s.NoError(err)
@@ -154,7 +153,6 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		case <-timeout:
 			t.FailNow()
 		}
-
 	})
 }
 
@@ -167,7 +165,6 @@ func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*v1.Eve
 	case <-timeout:
 		return nil, fmt.Errorf("timeout waiting for reconcile event")
 	}
-
 }
 
 func (s *ConfigSuite) clearConfigEvents(kc *kubernetes.Clientset) error {
@@ -175,7 +172,7 @@ func (s *ConfigSuite) clearConfigEvents(kc *kubernetes.Clientset) error {
 }
 
 // Helper to dump the kubeconfig into temp file so we can load the clusterconfig client with it
-func (s *ConfigSuite) getConfigClient() (*config.K0sV1beta1Client, error) {
+func (s *ConfigSuite) getConfigClient() (cfgClient.ClusterConfigInterface, error) {
 	kubeConfig, err := s.GetKubeClientConfig(s.ControllerNode(0))
 	if err != nil {
 		return nil, err
@@ -193,5 +190,13 @@ func (s *ConfigSuite) getConfigClient() (*config.K0sV1beta1Client, error) {
 		return nil, err
 	}
 
-	return config.NewForConfig(f.Name())
+	config, err := clientcmd.BuildConfigFromFlags("", f.Name())
+	if err != nil {
+		return nil, fmt.Errorf("can't read kubeconfig: %v", err)
+	}
+	c, err := cfgClient.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
+	}
+	return c.ClusterConfigs(constant.ClusterConfigNamespace), nil
 }
