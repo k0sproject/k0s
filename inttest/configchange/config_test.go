@@ -52,7 +52,8 @@ func TestConfigSuite(t *testing.T) {
 }
 
 func (s *ConfigSuite) TestK0sGetsUp() {
-	s.NoError(s.InitController(0))
+
+	s.NoError(s.InitController(0, "--enable-dynamic-config"))
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))

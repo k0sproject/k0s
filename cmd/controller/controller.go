@@ -43,6 +43,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
+	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -316,8 +317,33 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	perfTimer.Checkpoint("finished cluster-component-init")
 
+	var cfgSource clusterconfig.ConfigSource
+	// For backwards compatibility, use file as config source by default
+	if c.EnableDynamicConfig {
+		cfgSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
+		if err != nil {
+			return err
+		}
+	} else {
+		fullCfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+		if err != nil {
+			return err
+		}
+		cfgSource, err = clusterconfig.NewStaticSource(fullCfg)
+		if err != nil {
+			return err
+		}
+	}
+	defer func() {
+		if cfgSource != nil {
+			if err := cfgSource.Stop(); err != nil {
+				logrus.Warnf("error while stopping ConfigSource: %s", err.Error())
+			}
+		}
+	}()
+
 	// start Bootstrapping Reconcilers
-	err = c.startBootstrapReconcilers(ctx, adminClientFactory, leaderElector)
+	err = c.startBootstrapReconcilers(ctx, adminClientFactory, leaderElector, cfgSource)
 	if err != nil {
 		logrus.Errorf("failed to start bootstrapping reconcilers: %v", err)
 		cancel()
@@ -329,6 +355,15 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		cancel()
 	}
 	perfTimer.Checkpoint("finished-starting-cluster-components")
+
+	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
+	go func() {
+		if err := cfgSource.Release(ctx); err != nil {
+			// If the config release does not work, nothing is going to work
+			logrus.Errorf("failed to release configuration for reconcilers: %s", err)
+			cancel()
+		}
+	}()
 
 	if err == nil && c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
@@ -375,7 +410,7 @@ func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
 	return c.ClusterComponents.Start(ctx)
 }
 
-func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector) error {
+func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector, configSource clusterconfig.ConfigSource) error {
 	reconcilers := make(map[string]component.Component)
 
 	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
@@ -386,7 +421,7 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 			return err
 		}
 
-		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf)
+		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf, configSource)
 		if err != nil {
 			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
 			return err
