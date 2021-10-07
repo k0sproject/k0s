@@ -17,6 +17,8 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
+	"k8s.io/utils/strings/slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -97,7 +99,20 @@ func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 
 // Validate validates storage specs correctness
 func (s *StorageSpec) Validate() []error {
-	return nil
+	var errors []error
+
+	if s.Etcd != nil && s.Etcd.ExternalCluster != nil {
+		if s.Etcd.ExternalCluster.Endpoints == nil || len(s.Etcd.ExternalCluster.Endpoints) == 0 {
+			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
+		} else if slices.Contains(s.Etcd.ExternalCluster.Endpoints, "") {
+			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
+		}
+		if s.Etcd.ExternalCluster.EtcdPrefix == "" {
+			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
+		}
+	}
+
+	return errors
 }
 
 // EtcdConfig defines etcd related config options

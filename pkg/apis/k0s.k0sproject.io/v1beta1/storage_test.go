@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestStorageSpec_IsJoinable(t *testing.T) {
@@ -95,4 +96,92 @@ spec:
 	assert.Equal(t, "kine", c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
 	assert.Equal(t, "sqlite:///var/lib/k0s/db/state.db?more=rwc&_journal=WAL&cache=shared", c.Spec.Storage.Kine.DataSource)
+}
+
+type storageSuite struct {
+	suite.Suite
+}
+
+func (s *storageSuite) TestValidation() {
+	s.T().Run("default_storage_spec_is_valid", func(t *testing.T) {
+		spec := DefaultStorageSpec(constant.DataDirDefault)
+
+		s.Nil(spec.Validate())
+	})
+
+	s.T().Run("external_cluster_spec_is_valid", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:  []string{"http://192.168.10.10"},
+					EtcdPrefix: "tenant-1",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		s.Nil(spec.Validate())
+	})
+
+	s.T().Run("external_cluster_endpoints_and_etcd_prefix_cannot_be_empty", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:  []string{},
+					EtcdPrefix: "",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		errs := spec.Validate()
+		s.NotNil(errs)
+		s.Len(errs, 2)
+		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster.endpoints cannot be null or empty")
+		s.Contains(errs[1].Error(), "spec.storage.etcd.externalCluster.etcdPrefix cannot be empty")
+	})
+
+	s.T().Run("external_cluster_endpoints_cannot_be_null", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:  nil,
+					EtcdPrefix: "tenant-1",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		errs := spec.Validate()
+		s.NotNil(errs)
+		s.Len(errs, 1)
+		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster.endpoints cannot be null or empty")
+	})
+
+	s.T().Run("external_cluster_endpoints_cannot_contain_empty_strings", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:  []string{"http://192.168.10.2:2379", ""},
+					EtcdPrefix: "tenant-1",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		errs := spec.Validate()
+		s.NotNil(errs)
+		s.Len(errs, 1)
+		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster.endpoints cannot contain empty strings")
+	})
+}
+
+func TestStorageSuite(t *testing.T) {
+	storageSuite := &storageSuite{}
+
+	suite.Run(t, storageSuite)
 }
