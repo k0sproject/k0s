@@ -38,8 +38,8 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/k8s-artifacts-prod/kas-network-proxy/proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k8s-staging-metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/kas-network-proxy/proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/coredns/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/calico/cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
@@ -58,7 +58,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
 			require.Equal(t, fmt.Sprintf("my.repo/my-custom-image:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
-			require.Equal(t, fmt.Sprintf("my.repo/k8s-staging-metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/coredns/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/calico/cni:%s", constant.CalicoComponentImagesVersion), testingConfig.Spec.Images.Calico.CNI.URI())
