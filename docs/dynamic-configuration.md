@@ -36,7 +36,11 @@ This will change the kube-router related configmap and thus make kube-router to 
 
 The configuration object is a 1-to-1 mapping with the existing [configuration YAML](configuration.md). All the configuration options EXCEPT options under `spec.api` and `spec.storage` are dynamically reconciled.
 
-As with any Kubernetes cluster there are certain things that just cannot be changed on-the-fly such as pod and service CIDRs.
+As with any Kubernetes cluster there are certain things that just cannot be changed on-the-fly, this is the list of non-changeable options:
+
+- `network.podCIDR`
+- `network.serviceCIDR`
+- `network.provider`
 
 ## Configuration status
 
