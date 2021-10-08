@@ -79,7 +79,7 @@ func (h *HelmAddons) Reconcile(ctx context.Context, clusterConfig *k0sAPI.Cluste
 
 	h.Client = client
 
-	if err := h.initHelm(clusterConfig); err != nil {
+	if err := h.reconcileHelmSettings(clusterConfig); err != nil {
 		return fmt.Errorf("can't init helm: %v", err)
 	}
 
@@ -93,7 +93,7 @@ func (h *HelmAddons) Reconcile(ctx context.Context, clusterConfig *k0sAPI.Cluste
 	return nil
 }
 
-func (h *HelmAddons) initHelm(clusterConfig *k0sAPI.ClusterConfig) error {
+func (h *HelmAddons) reconcileHelmSettings(clusterConfig *k0sAPI.ClusterConfig) error {
 	for _, repo := range clusterConfig.Spec.Extensions.Helm.Repositories {
 		if err := h.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)

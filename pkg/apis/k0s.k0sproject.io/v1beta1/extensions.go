@@ -15,6 +15,8 @@ limitations under the License.
 */
 package v1beta1
 
+import "errors"
+
 var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
@@ -24,8 +26,57 @@ type ClusterExtensions struct {
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	Repositories []Repository `json:"repositories"`
-	Charts       []Chart      `json:"charts"`
+	Repositories RepositoriesSettings `json:"repositories"`
+	Charts       ChartsSettings       `json:"charts"`
+}
+
+// RepositoriesSettings repository settings
+type RepositoriesSettings []Repository
+
+// ChartsSettings charts settings
+type ChartsSettings []Chart
+
+// Validate performs validation
+func (rs RepositoriesSettings) Validate() []error {
+	var errs []error
+	for _, r := range rs {
+		if err := r.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+// Validate performs validation
+func (cs ChartsSettings) Validate() []error {
+	var errs []error
+	for _, c := range cs {
+		if err := c.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
+}
+
+// Validate performs validation
+func (he HelmExtensions) Validate() []error {
+	var errs []error
+	if rErrs := he.Repositories.Validate(); rErrs != nil {
+		errs = append(errs, rErrs...)
+	}
+	if cErrs := he.Charts.Validate(); cErrs != nil {
+		errs = append(errs, cErrs...)
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 // Chart single helm addon
@@ -35,6 +86,20 @@ type Chart struct {
 	Version   string `json:"version"`
 	Values    string `json:"values"`
 	TargetNS  string `json:"namespace"`
+}
+
+// Validate performs validation
+func (c Chart) Validate() error {
+	if c.Name == "" {
+		return errors.New("chart must have Name field not empty")
+	}
+	if c.ChartName == "" {
+		return errors.New("chart must have ChartName field not empty")
+	}
+	if c.TargetNS == "" {
+		return errors.New("chart must have TargetNS field not empty")
+	}
+	return nil
 }
 
 // Repository describes single repository entry. Fields map to the CLI flags for the "helm add" command
@@ -49,7 +114,27 @@ type Repository struct {
 	Password string `json:"password"`
 }
 
+// Validate performs validation
+func (r Repository) Validate() error {
+	if r.Name == "" {
+		return errors.New("repository must have Name field not empty")
+	}
+	if r.URL == "" {
+		return errors.New("repository must have URL field not empty")
+	}
+	return nil
+}
+
 // Validate stub for Validateable interface
 func (e *ClusterExtensions) Validate() []error {
+	if e == nil {
+		return nil
+	}
+	if e.Helm != nil {
+		if err := e.Helm.Validate(); err != nil {
+			return err
+		}
+
+	}
 	return nil
 }
