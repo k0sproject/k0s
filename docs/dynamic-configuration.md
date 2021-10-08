@@ -10,6 +10,15 @@ The existing and enabled-by-default method is what we call static configuration.
 
 In dynamic configuration mode the first controller to boot up when the cluster is created will use the given config YAML as a bootstrap configuration and stores it in the Kubernetes API. All the other controllers will find the config existing on the API and will use it as the source-of-truth for configuring all the components except for etcd and kube-apiserver. After the initial cluster bootstrap the source of truth for all controllers is the configuration object in the Kubernetes API.
 
+## Cluster configuration vs. controller node configuration
+
+In the [k0s configuration options](configuration.md) there are some options that are cluster-wide and some that are specific to each controller node in the cluster. The following list outlines which options are controller node specific and needs to be configured only via the local file:
+
+- `spec.api` - these options configure how to local Kubernetes api-server is setup
+- `spec.storage` - these options configure how the local storage (etcd or sqlite) is setup
+
+In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes api-server running.
+
 ## Configuration location
 
 The cluster wide configuration is stored in the Kubernetes API as a custom resource called `clusterconfig`. There's currently only one instance named `k0s`. You can edit the configuration with what ever means possible, for example with:
