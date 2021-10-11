@@ -268,6 +268,21 @@ func (s *NetworkSuite) TestValidation() {
 		s.Len(errors, 1)
 		s.Contains(errors[0].Error(), "dual-stack requires kube-proxy in ipvs mode")
 	})
+
+	s.T().Run("valid_proxy_disabled_for_dualstack", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.Calico = DefaultCalico()
+		n.Calico.Mode = "bird"
+		n.DualStack = DefaultDualStack()
+		n.DualStack.Enabled = true
+		n.KubeProxy.Disabled = true
+		n.KubeProxy.Mode = "iptables"
+		n.DualStack.IPv6PodCIDR = "fd00::/108"
+		n.DualStack.IPv6ServiceCIDR = "fd01::/108"
+
+		errors := n.Validate()
+		s.Nil(errors)
+	})
 }
 
 func TestNetworkSuite(t *testing.T) {
