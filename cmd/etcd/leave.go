@@ -37,7 +37,12 @@ func etcdLeaveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			c.ClusterConfig = cfg
+			if c.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+				return fmt.Errorf("can't leave etcd cluster: external cluster is used")
+			}
+
 			ctx := context.Background()
 			if etcdPeerAddress == "" {
 				etcdPeerAddress = c.ClusterConfig.Spec.Storage.Etcd.PeerAddress
@@ -47,7 +52,7 @@ func etcdLeaveCmd() *cobra.Command {
 			}
 
 			peerURL := fmt.Sprintf("https://%s:2380", etcdPeerAddress)
-			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
+			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, nil)
 			if err != nil {
 				return fmt.Errorf("can't connect to the etcd: %v", err)
 			}

@@ -36,6 +36,20 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "etcd",
+			storage: StorageSpec{
+				Type: "etcd",
+				Etcd: &EtcdConfig{
+					ExternalCluster: &ExternalCluster{
+						Endpoints:  []string{"https://192.168.10.2:2379"},
+						EtcdPrefix: "k0s-tenant-1",
+					},
+					PeerAddress: "",
+				},
+			},
+			want: false,
+		},
+		{
 			name: "kine-sqlite",
 			storage: StorageSpec{
 				Type: "kine",

@@ -18,6 +18,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"path/filepath"
 
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
@@ -33,7 +34,7 @@ type Client struct {
 }
 
 // NewClient creates new Client
-func NewClient(certDir string, etcdCertDir string) (*Client, error) {
+func NewClient(certDir string, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
 	client.tlsInfo = transport.TLSInfo{
 		CertFile:      filepath.Join(certDir, "apiserver-etcd-client.crt"),
@@ -47,7 +48,7 @@ func NewClient(certDir string, etcdCertDir string) (*Client, error) {
 	}
 
 	cfg := clientv3.Config{
-		Endpoints: []string{"https://127.0.0.1:2379"},
+		Endpoints: etcdConf.GetEndpoints(),
 		TLS:       tlsConfig,
 	}
 	cli, _ := clientv3.New(cfg)

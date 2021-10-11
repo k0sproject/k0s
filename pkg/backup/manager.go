@@ -71,12 +71,12 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 }
 
 func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
-	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
+	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType && !clusterSpec.Storage.Etcd.IsExternalClusterUsed() {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
 		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
 	} else {
-		logrus.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
+		logrus.Warnf("only internal etcd and sqlite %s are supported. Other storage backends must be backed-up/restored manually.", action)
 	}
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{

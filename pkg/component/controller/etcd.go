@@ -282,7 +282,7 @@ func (e *Etcd) Healthy() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
 	return err
 }
 

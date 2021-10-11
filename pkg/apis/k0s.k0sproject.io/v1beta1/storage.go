@@ -61,6 +61,9 @@ func DefaultStorageSpec() *StorageSpec {
 // IsJoinable returns true only if the storage config is such that another controller can join the cluster
 func (s *StorageSpec) IsJoinable() bool {
 	if s.Type == EtcdStorageType {
+		if s.Etcd.IsExternalClusterUsed() {
+			return false
+		}
 		return true
 	}
 
@@ -153,15 +156,24 @@ func DefaultKineConfig(dataDir string) *KineConfig {
 	}
 }
 
-// GetEndpoints returns comma-separated list of external cluster endpoints if exist
+// GetEndpointsAsString returns comma-separated list of external cluster endpoints if exist
 // or internal etcd address which is https://127.0.0.1:2379
-func (e *EtcdConfig) GetEndpoints() string {
-	if e.IsExternalClusterUsed() {
+func (e *EtcdConfig) GetEndpointsAsString() string {
+	if e != nil && e.IsExternalClusterUsed() {
 		return strings.Join(e.ExternalCluster.Endpoints, ",")
 	}
 	return "https://127.0.0.1:2379"
 }
 
+// GetEndpointsAsString returns external cluster endpoints if exist
+// or internal etcd address which is https://127.0.0.1:2379
+func (e *EtcdConfig) GetEndpoints() []string {
+	if e != nil && e.IsExternalClusterUsed() {
+		return e.ExternalCluster.Endpoints
+	}
+	return []string{"https://127.0.0.1:2379"}
+}
+
 func (e *EtcdConfig) IsExternalClusterUsed() bool {
-	return e.ExternalCluster != nil
+	return e != nil && e.ExternalCluster != nil
 }
