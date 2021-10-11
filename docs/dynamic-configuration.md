@@ -2,22 +2,22 @@
 
 k0s comes with the option to enable dynamic configuration for cluster level components. This covers all the components other than etcd (or sqlite) and the Kubernetes api-server. This option enables k0s configuration directly via Kubernetes API as opposed to using a configuration file for all cluster configuration.
 
-This feature needs to be separately enabled for all controllers using `k0s controller --enable-dynamic-config`.
+This feature has to be separately enabled for all controllers using `k0s controller --enable-dynamic-config`.
 
 ## Dynamic vs. static configuration
 
-The existing and enabled-by-default method is what we call static configuration. That's the way where the k0s process reads the config from the given YAML file (or uses the default config if no config is given by user) and configures every component accordingly. This means that for any configuration change the cluster admin needs to restart all controllers on the cluster and have matching configs on each controller node.
+The existing and enabled-by-default method is what we call static configuration. That's the way where the k0s process reads the config from the given YAML file (or uses the default config if no config is given by user) and configures every component accordingly. This means that for any configuration change the cluster admin has to restart all controllers on the cluster and have matching configs on each controller node.
 
 In dynamic configuration mode the first controller to boot up when the cluster is created will use the given config YAML as a bootstrap configuration and stores it in the Kubernetes API. All the other controllers will find the config existing on the API and will use it as the source-of-truth for configuring all the components except for etcd and kube-apiserver. After the initial cluster bootstrap the source of truth for all controllers is the configuration object in the Kubernetes API.
 
 ## Cluster configuration vs. controller node configuration
 
-In the [k0s configuration options](configuration.md) there are some options that are cluster-wide and some that are specific to each controller node in the cluster. The following list outlines which options are controller node specific and needs to be configured only via the local file:
+In the [k0s configuration options](configuration.md) there are some options that are cluster-wide and some that are specific to each controller node in the cluster. The following list outlines which options are controller node specific and have to be configured only via the local file:
 
-- `spec.api` - these options configure how to local Kubernetes api-server is setup
+- `spec.api` - these options configure how the local Kubernetes API server is setup
 - `spec.storage` - these options configure how the local storage (etcd or sqlite) is setup
 
-In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes api-server running.
+In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.
 
 ## Configuration location
 
@@ -27,11 +27,11 @@ The cluster wide configuration is stored in the Kubernetes API as a custom resou
 kubectl -n kube-system edit clusterconfig k0s
 ```
 
-This will open the configuration object for editing in our systems default editor.
+This will open the configuration object for editing in your system's default editor.
 
 ## Configuration reconciliation
 
-The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected how different components are configured. So say you want to change the MTU setting for kube-router CNI networking you'd change the config to contain e.g.:
+The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected to how different components are configured. So say you want to change the MTU setting for kube-router CNI networking you'd change the config to contain e.g.:
 
 ```yaml
     kuberouter:
