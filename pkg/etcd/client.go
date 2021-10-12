@@ -17,10 +17,9 @@ package etcd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"path/filepath"
-
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -36,15 +35,20 @@ type Client struct {
 // NewClient creates new Client
 func NewClient(certDir string, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
-	client.tlsInfo = transport.TLSInfo{
-		CertFile:      filepath.Join(certDir, "apiserver-etcd-client.crt"),
-		KeyFile:       filepath.Join(certDir, "apiserver-etcd-client.key"),
-		TrustedCAFile: filepath.Join(etcdCertDir, "ca.crt"),
-	}
 
-	tlsConfig, err := client.tlsInfo.ClientConfig()
-	if err != nil {
-		return nil, err
+	var tlsConfig *tls.Config
+	if etcdConf.IsTLSEnabled() {
+		client.tlsInfo = transport.TLSInfo{
+			CertFile:      etcdConf.GetCertFilePath(certDir),
+			KeyFile:       etcdConf.GetKeyFilePath(certDir),
+			TrustedCAFile: etcdConf.GetCaFilePath(etcdCertDir),
+		}
+
+		var err error
+		tlsConfig, err = client.tlsInfo.ClientConfig()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	cfg := clientv3.Config{

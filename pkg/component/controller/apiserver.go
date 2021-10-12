@@ -168,14 +168,18 @@ func (a *APIServer) Run(_ context.Context) error {
 		a.supervisor.Args = append(a.supervisor.Args,
 			fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
 	case v1beta1.EtcdStorageType:
+		etcdConf := a.ClusterConfig.Spec.Storage.Etcd
 		a.supervisor.Args = append(a.supervisor.Args,
-			fmt.Sprintf("--etcd-servers=%s", a.ClusterConfig.Spec.Storage.Etcd.GetEndpointsAsString()),
-			fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
-			fmt.Sprintf("--etcd-certfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.crt")),
-			fmt.Sprintf("--etcd-keyfile=%s", path.Join(a.K0sVars.CertRootDir, "apiserver-etcd-client.key")))
-		if a.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+			fmt.Sprintf("--etcd-servers=%s", etcdConf.GetEndpointsAsString()))
+		if etcdConf.IsTLSEnabled() {
 			a.supervisor.Args = append(a.supervisor.Args,
-				fmt.Sprintf("--etcd-prefix=%s", a.ClusterConfig.Spec.Storage.Etcd.ExternalCluster.EtcdPrefix))
+				fmt.Sprintf("--etcd-cafile=%s", etcdConf.GetCaFilePath(a.K0sVars.EtcdCertDir)),
+				fmt.Sprintf("--etcd-certfile=%s", etcdConf.GetCertFilePath(a.K0sVars.CertRootDir)),
+				fmt.Sprintf("--etcd-keyfile=%s", etcdConf.GetKeyFilePath(a.K0sVars.CertRootDir)))
+		}
+		if etcdConf.IsExternalClusterUsed() {
+			a.supervisor.Args = append(a.supervisor.Args,
+				fmt.Sprintf("--etcd-prefix=%s", etcdConf.ExternalCluster.EtcdPrefix))
 		}
 	default:
 		return fmt.Errorf("invalid storage type: %s", a.ClusterConfig.Spec.Storage.Type)

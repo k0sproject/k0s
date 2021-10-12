@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"k8s.io/utils/strings/slices"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -61,10 +62,7 @@ func DefaultStorageSpec() *StorageSpec {
 // IsJoinable returns true only if the storage config is such that another controller can join the cluster
 func (s *StorageSpec) IsJoinable() bool {
 	if s.Type == EtcdStorageType {
-		if s.Etcd.IsExternalClusterUsed() {
-			return false
-		}
-		return true
+		return !s.Etcd.IsExternalClusterUsed()
 	}
 
 	if strings.HasPrefix(s.Kine.DataSource, "sqlite://") {
@@ -176,4 +174,20 @@ func (e *EtcdConfig) GetEndpoints() []string {
 
 func (e *EtcdConfig) IsExternalClusterUsed() bool {
 	return e != nil && e.ExternalCluster != nil
+}
+
+func (e *EtcdConfig) IsTLSEnabled() bool {
+	return !e.IsExternalClusterUsed()
+}
+
+func (e *EtcdConfig) GetCertFilePath(certDir string) string {
+	return filepath.Join(certDir, "apiserver-etcd-client.crt")
+}
+
+func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
+	return filepath.Join(certDir, "apiserver-etcd-client.key")
+}
+
+func (e *EtcdConfig) GetCaFilePath(certDir string) string {
+	return filepath.Join(certDir, "ca.crt")
 }
