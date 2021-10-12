@@ -271,15 +271,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	err = c.NodeComponents.Start(ctx)
 	perfTimer.Checkpoint("finished-starting-node-components")
 	if err != nil {
-		logrus.Errorf("failed to start controller node components: %v", err)
-		cancel()
+		return fmt.Errorf("failed to start controller node components: %w", err)
 	}
 
 	// in-cluster component reconcilers
 	err = c.createClusterReconcilers(ctx, adminClientFactory)
 	if err != nil {
-		logrus.Errorf("failed to start reconcilers: %v", err)
-		cancel()
+		return fmt.Errorf("failed to start reconcilers: %w", err)
 	}
 
 	if enableKonnectivity {
@@ -345,14 +343,12 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// start Bootstrapping Reconcilers
 	err = c.startBootstrapReconcilers(ctx, adminClientFactory, leaderElector, cfgSource)
 	if err != nil {
-		logrus.Errorf("failed to start bootstrapping reconcilers: %v", err)
-		cancel()
+		return fmt.Errorf("failed to start bootstrapping reconcilers: %w", err)
 	}
 
 	err = c.startClusterComponents(ctx)
 	if err != nil {
-		logrus.Errorf("failed to start cluster components: %s", err)
-		cancel()
+		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
 	perfTimer.Checkpoint("finished-starting-cluster-components")
 
@@ -365,7 +361,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		}
 	}()
 
-	if err == nil && c.EnableWorker {
+	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
 
 		err = c.startControllerWorker(ctx, c.WorkerProfile)
