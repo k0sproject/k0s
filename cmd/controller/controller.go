@@ -264,6 +264,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// signals during startup
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
+	errCh := make(chan error)
 
 	perfTimer.Checkpoint("starting-node-components")
 
@@ -356,8 +357,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	go func() {
 		if err := cfgSource.Release(ctx); err != nil {
 			// If the config release does not work, nothing is going to work
-			logrus.Errorf("failed to release configuration for reconcilers: %s", err)
-			cancel()
+			errCh <- fmt.Errorf("failed to release configuration for reconcilers: %w", err)
 		}
 	}()
 
@@ -381,7 +381,11 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	perfTimer.Output()
 
 	// Wait for k0s process termination
-	<-ctx.Done()
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+	}
 	logrus.Debug("Context done in main")
 	logrus.Info("Shutting down k0s controller")
 
