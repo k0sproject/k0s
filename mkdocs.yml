@@ -27,6 +27,7 @@ nav:
       - OS Dependencies:                  os-deps.md
   - Usage:
       - Configuration Options:            configuration.md
+      - Dynamic Configuration:            dynamic-configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
       - Networking (CNI):                 networking.md
