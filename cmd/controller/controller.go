@@ -264,7 +264,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// signals during startup
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
-	errCh := make(chan error)
+	errCh := make(chan error, 1)
 
 	perfTimer.Checkpoint("starting-node-components")
 
@@ -366,14 +366,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 		err = c.startControllerWorker(ctx, c.WorkerProfile)
 		if err != nil {
-			logrus.Errorf("failed to start worker components: %s", err)
-			if err := c.ClusterComponents.Stop(); err != nil {
-				logrus.Errorf("ClusterComponents.Stop: %s", err)
-			}
-			if err := c.NodeComponents.Stop(); err != nil {
-				logrus.Errorf("NodeCompnents.Stop: %s", err)
-			}
-			return err
+			errCh <- fmt.Errorf("failed to start worker components: %w", err)
 		}
 	}
 	perfTimer.Checkpoint("started-worker")
@@ -382,28 +375,28 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	// Wait for k0s process termination
 	select {
-	case err := <-errCh:
-		return err
+	case err = <-errCh:
+		logrus.Error(err)
 	case <-ctx.Done():
+		logrus.Debug("Context done in main")
 	}
-	logrus.Debug("Context done in main")
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
 
 	// Stop components
-	if err := c.ClusterComponents.Stop(); err != nil {
-		logrus.Errorf("error while stopping node component %s", err)
+	if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
+		logrus.Errorf("error while stopping node component %s", stopErr)
 	}
 	logrus.Info("all cluster components stopped")
 
 	// Stop components
-	if err := c.NodeComponents.Stop(); err != nil {
-		logrus.Errorf("error while stopping node component %s", err)
+	if stopErr := c.NodeComponents.Stop(); stopErr != nil {
+		logrus.Errorf("error while stopping node component %s", stopErr)
 	}
 	logrus.Info("all node components stopped")
 
-	return nil
+	return err
 }
 
 func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
