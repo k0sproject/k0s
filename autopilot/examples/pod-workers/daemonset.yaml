@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: autopilot
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: autopilot
+  template:
+    metadata:
+      labels:
+        name: autopilot
+    spec:
+      # `hostPID` is required for the container to have access to the PIDs
+      # running on the worker host. (used for signaling k0s restarts)
+      hostPID: true
+
+      serviceAccountName: autopilot
+
+      # Ensure that the pods can run anywhere
+      tolerations:
+      - operator: "Exists"
+
+      containers:
+      - name: autopilot
+        image: quay.io/k0sproject/autopilot:edge
+        args:
+          - "--mode=worker"
+
+        # `privileged` is required in order to send signals (ie. SIGTERM) to the
+        # `k0s` process running on the host.
+        securityContext:
+          privileged: true
+          runAsUser: 0
+
+        # Provide the name of the host as the 'hostname' for the autopilot instance
+        # running on this host.
+        env:
+        - name: AUTOPILOT_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+        volumeMounts:
+        # Provide the `status.sock` domain socket so that `autopilot` can determine
+        # the PID of the `k0s` process.
+        - name: autopilot-run
+          mountPath: /run/k0s
+          readOnly: true
+
+        # The binary update is downloaded `/usr/local/bin`.
+        - name: autopilot-usrlocalbin
+          mountPath: /usr/local/bin
+          readOnly: false
+
+        # Liveness and readiness probes
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10802
+          initialDelaySeconds: 3
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 10802
+          initialDelaySeconds: 3
+          periodSeconds: 10
+
+      volumes:
+      - name: autopilot-run
+        hostPath:
+          path: /run/k0s
+
+      - name: autopilot-usrlocalbin
+        hostPath:
+          path: /usr/local/bin

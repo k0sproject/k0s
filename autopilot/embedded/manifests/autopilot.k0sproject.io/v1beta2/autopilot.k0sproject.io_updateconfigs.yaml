@@ -1,0 +1,226 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  creationTimestamp: null
+  name: updateconfigs.autopilot.k0sproject.io
+spec:
+  group: autopilot.k0sproject.io
+  names:
+    kind: UpdateConfig
+    listKind: UpdateConfigList
+    plural: updateconfigs
+    singular: updateconfig
+  scope: Cluster
+  versions:
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              channel:
+                type: string
+              planSpec:
+                description: PlanSpec describes the behavior of the `Plan`
+                properties:
+                  commands:
+                    description: Commands are a collection of all of the commands
+                      that need to be executed in order for this plan to transition
+                      to Completed.
+                    items:
+                      description: PlanCommand is a command that can be run within
+                        a `Plan`
+                      properties:
+                        k0supdate:
+                          description: K0sUpdate is the `K0sUpdate` command which
+                            is responsible for updating a k0s node (controller/worker)
+                          properties:
+                            platforms:
+                              additionalProperties:
+                                description: PlanResourceUrl is a remote Url resource.
+                                properties:
+                                  sha256:
+                                    description: Sha256 provides an optional SHA256
+                                      hash of the Url's content for verification.
+                                    type: string
+                                  url:
+                                    description: Url is the Url of a downloadable
+                                      resource.
+                                    type: string
+                                required:
+                                - url
+                                type: object
+                              description: Platforms is a map of PlanResourceUrls
+                                to platform identifiers, allowing a single k0s version
+                                to have multiple Url resources based on platform.
+                              type: object
+                            targets:
+                              description: Targets defines how the controllers/workers
+                                should be discovered and upgraded.
+                              properties:
+                                controllers:
+                                  description: Controllers defines how k0s controllers
+                                    will be discovered and executed.
+                                  properties:
+                                    discovery:
+                                      description: Discovery details how nodes for
+                                        this target should be discovered.
+                                      properties:
+                                        selector:
+                                          description: Selector provides a kubernetes
+                                            'selector' means of identifying target
+                                            signal nodes.
+                                          properties:
+                                            fields:
+                                              description: Fields is a standard kubernetes
+                                                field selector (key=value,key=value,...)
+                                              type: string
+                                            labels:
+                                              description: Labels is a standard kubernetes
+                                                label selector (key=value,key=value,...)
+                                              type: string
+                                          type: object
+                                        static:
+                                          description: Static provides a static means
+                                            of identifying target signal nodes.
+                                          properties:
+                                            nodes:
+                                              description: Nodes provides a static
+                                                set of target signal nodes.
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                      type: object
+                                    limits:
+                                      default:
+                                        concurrent: 1
+                                      description: Limits impose various limits and
+                                        restrictions on how discovery and execution
+                                        should behave.
+                                      properties:
+                                        concurrent:
+                                          default: 1
+                                          description: Concurrent specifies the number
+                                            of concurrent target executions that can
+                                            be performed within this target. (ie.
+                                            '2' == at most have 2 execute at the same
+                                            time)
+                                          type: integer
+                                      type: object
+                                  required:
+                                  - discovery
+                                  type: object
+                                workers:
+                                  description: Workers defines how k0s workers will
+                                    be discovered and executed.
+                                  properties:
+                                    discovery:
+                                      description: Discovery details how nodes for
+                                        this target should be discovered.
+                                      properties:
+                                        selector:
+                                          description: Selector provides a kubernetes
+                                            'selector' means of identifying target
+                                            signal nodes.
+                                          properties:
+                                            fields:
+                                              description: Fields is a standard kubernetes
+                                                field selector (key=value,key=value,...)
+                                              type: string
+                                            labels:
+                                              description: Labels is a standard kubernetes
+                                                label selector (key=value,key=value,...)
+                                              type: string
+                                          type: object
+                                        static:
+                                          description: Static provides a static means
+                                            of identifying target signal nodes.
+                                          properties:
+                                            nodes:
+                                              description: Nodes provides a static
+                                                set of target signal nodes.
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                      type: object
+                                    limits:
+                                      default:
+                                        concurrent: 1
+                                      description: Limits impose various limits and
+                                        restrictions on how discovery and execution
+                                        should behave.
+                                      properties:
+                                        concurrent:
+                                          default: 1
+                                          description: Concurrent specifies the number
+                                            of concurrent target executions that can
+                                            be performed within this target. (ie.
+                                            '2' == at most have 2 execute at the same
+                                            time)
+                                          type: integer
+                                      type: object
+                                  required:
+                                  - discovery
+                                  type: object
+                              type: object
+                            version:
+                              description: Version is the version that `K0sUpdate`
+                                will be upgrading to.
+                              type: string
+                          required:
+                          - platforms
+                          - targets
+                          - version
+                          type: object
+                      type: object
+                    type: array
+                  id:
+                    description: Id is a user-provided identifier for this plan.
+                    type: string
+                  timestamp:
+                    description: Timestamp is a user-provided time that the plan was
+                      created.
+                    type: string
+                required:
+                - commands
+                - id
+                - timestamp
+                type: object
+              updateServer:
+                type: string
+              upgradeStrategy:
+                properties:
+                  cron:
+                    type: string
+                required:
+                - cron
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -1,0 +1,19 @@
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: UpdaterConfig
+metadata:
+  name: example
+spec:
+  channel: stable
+  updateServer: https://updates.k0sproject.io/
+  upgradeStrategy:
+    cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
+  
+  planSpec: # the needed bits to be able to create the actual Plan object
+    command: update
+    targets:
+      controllers:
+        discovery:
+          selector:
+      workers:
+        discovery:
+          selector:
