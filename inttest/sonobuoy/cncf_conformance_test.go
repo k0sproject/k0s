@@ -102,8 +102,8 @@ func (s *ConformanceSuite) TestConformance() {
 	s.Equal(0, results.Failed)
 	if results.Status != "passed" {
 		s.T().Logf("sonobuoy run failed. will attempt to re-run failed tests")
+		err = s.reRunFailedTests(results.ResultPath)
 	}
-	err = s.reRunFailedTests(results.ResultPath)
 	s.NoError(err)
 }
 

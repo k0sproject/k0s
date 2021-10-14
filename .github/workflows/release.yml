@@ -1,7 +1,6 @@
 name: Release
 
 on:
-  pull_request:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -10,276 +9,277 @@ env:
   GO_VERSION_WIN: ^1.13
 
 jobs:
-#  release:
-#    name: release
-#    runs-on: ubuntu-latest
-#    outputs:
-#      upload_url: ${{ steps.create_release.outputs.upload_url }}
-#      tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
-#    steps:
-#      # Ugly hack to get the tag name
-#      # github.ref gives the full reference like refs.tags.v0.0.1-beta1
-#      - name: Branch name
-#        id: branch_name
-#        run: |
-#          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
-#      - name: Create Release
-#        id: create_release
-#        uses: actions/create-release@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          tag_name: ${{ github.ref }}
-#          release_name: ${{ github.ref }}
-#          draft: true # So we can manually edit before publishing
-#          prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
-#
-#  x64:
-#    needs: release
-#    runs-on: [self-hosted,linux,x64]
-#    env:
-#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-#    steps:
-#      - name: Check out code into the Go module directory
-#        uses: actions/checkout@v2
-#
-#      - name: Set up Go 1.16
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: ${{ env.GO_VERSION }}
-#        id: go
-#
-#      - name: Build
-#        run: make EMBEDDED_BINS_BUILDMODE=docker
-#        env:
-#          VERSION: ${{ needs.release.outputs.tag_name }}
-#      - name: Clean Docker
-#        run: |
-#          docker system prune --all --volumes --force
-#
-#      - name: Run basic smoke test
-#        run: make check-basic
-#
-#      - name: Build bundle for air gap installation
-#        run: make image-bundle/bundle.tar
-#
-#      - name: Collect smoke test logs
-#        if: failure()
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: logs
-#          path: tests/*.log
-#
-#      - name: Upload Release Assets - Binary
-#        id: upload-release-asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./k0s
-#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
-#          asset_content_type: application/octet-stream
-#
-#      - name: Upload Release Assets - Bundle
-#        id: upload-release-asset-images
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./image-bundle/bundle.tar
-#          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
-#          asset_content_type: application/octet-stream
-#
-#      - name: Prepare tags
-#        id: prep
-#        # Basically just replace the '+' with '-' as '+' is not allowed in tags
-#        run: |
-#          TAGS=${{ needs.release.outputs.tag_name }}
-#          TAGS=${TAGS//+/-}
-#          echo ::set-output name=tags::${TAGS}
-#
-#      - name: Build image and push to GitHub image registry
-#        uses: docker/build-push-action@v1
-#        with:
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#          registry: docker.pkg.github.com
-#          repository: k0sproject/k0s/k0s
-#          tags: ${{ steps.prep.outputs.tags }}
-#
-#      - name: Build image and push to Docker hub
-#        uses: docker/build-push-action@v1
-#        with:
-#          username: ${{ secrets.DOCKER_USERNAME }}
-#          password: ${{ secrets.DOCKER_PASSWORD }}
-#          registry: docker.io
-#          repository: k0sproject/k0s
-#          tags: ${{ steps.prep.outputs.tags }}
-#
-#      # Need to remove this from maintenance branches
-#      # Done as separate step for better control when we push latest
-#      - name: Build image and push to Docker hub
-#        if: "!contains(github.ref, '-')"
-#        uses: docker/build-push-action@v1
-#        with:
-#          username: ${{ secrets.DOCKER_USERNAME }}
-#          password: ${{ secrets.DOCKER_PASSWORD }}
-#          registry: docker.io
-#          repository: k0sproject/k0s
-#          tags: latest
-#
-#  windows:
-#    needs: release
-#    runs-on: [self-hosted,linux,x64]
-#    env:
-#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-#      TARGET_OS: windows
-#    steps:
-#      - name: Check out code into the Go module directory
-#        uses: actions/checkout@v2
-#
-#      - name: Set up Go 1.x
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: ${{ env.GO_VERSION }}
-#        id: go
-#
-#      - name: Build
-#        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
-#        env:
-#          VERSION: ${{ needs.release.outputs.tag_name }}
-#
-#      - name: Clean Docker
-#        run: |
-#          docker system prune --all --volumes --force
-#
-#      - name: Upload Release Assets
-#        id: upload-release-asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./k0s.exe
-#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
-#          asset_content_type: application/octet-stream
-#
-#  arm64:
-#    needs: release
-#    runs-on: [self-hosted,linux,arm64]
-#    env:
-#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-#    steps:
-#      - name: Check out code into the Go module directory
-#        uses: actions/checkout@v2
-#
-#      - name: Set up Go 1.x
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: ${{ env.GO_VERSION }}
-#        id: go
-#
-#      - name: Build
-#        run: make EMBEDDED_BINS_BUILDMODE=docker
-#        env:
-#          VERSION: ${{ needs.release.outputs.tag_name }}
-#      - name: Clean Docker
-#        run: |
-#          docker system prune --all --volumes --force
-#
-#      - name: Run basic smoke test
-#        run: make check-basic
-#
-#
-#      - name: Build bundle for air gap installation
-#        run: make image-bundle/bundle.tar
-#
-#      - name: Collect smoke test logs
-#        if: failure()
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: logs
-#          path: tests/*.log
-#
-#      - name: Upload Release Assets - Binary
-#        id: upload-release-asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./k0s
-#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
-#          asset_content_type: application/octet-stream
-#
-#      - name: Upload Release Assets - Bundle
-#        id: upload-release-asset-images
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./image-bundle/bundle.tar
-#          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
-#          asset_content_type: application/octet-stream
-#
-#
-#  armv7:
-#    needs: release
-#    runs-on: [self-hosted,linux,arm,lxc]
-#    env:
-#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-#    steps:
-#      - name: Check out code into the Go module directory
-#        uses: actions/checkout@v2
-#
-#      - name: Build
-#        run: make EMBEDDED_BINS_BUILDMODE=docker
-#        env:
-#          VERSION: ${{ needs.release.outputs.tag_name }}
-#
-#      - name: Run basic smoke test
-#        run: make check-basic
-#
-#      - name: Build bundle for air gap installation
-#        run: make image-bundle/bundle.tar
-#
-#      - name: Collect smoke test logs
-#        if: failure()
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: logs
-#          path: tests/*.log
-#
-#      - name: Upload Release Assets - Binary
-#        id: upload-release-asset
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./k0s
-#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
-#          asset_content_type: application/octet-stream
-#
-#      - name: Upload Release Assets - Bundle
-#        id: upload-release-asset-images
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-#        with:
-#          upload_url: ${{ needs.release.outputs.upload_url }}
-#          asset_path: ./image-bundle/bundle.tar
-#          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
-#          asset_content_type: application/octet-stream
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
+    steps:
+      # Ugly hack to get the tag name
+      # github.ref gives the full reference like refs.tags.v0.0.1-beta1
+      - name: Branch name
+        id: branch_name
+        run: |
+          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true # So we can manually edit before publishing
+          prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
+
+  x64:
+    needs: release
+    runs-on: [self-hosted,linux,x64]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Build
+        run: make EMBEDDED_BINS_BUILDMODE=docker
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+      - name: Clean Docker
+        run: |
+          docker system prune --all --volumes --force
+
+      - name: Run basic smoke test
+        run: make check-basic
+
+      - name: Build bundle for air gap installation
+        run: make image-bundle/bundle.tar
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
+
+      - name: Upload Release Assets - Binary
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset-images
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./image-bundle/bundle.tar
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Prepare tags
+        id: prep
+        # Basically just replace the '+' with '-' as '+' is not allowed in tags
+        run: |
+          TAGS=${{ needs.release.outputs.tag_name }}
+          TAGS=${TAGS//+/-}
+          echo ::set-output name=tags::${TAGS}
+
+      - name: Build image and push to GitHub image registry
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: k0sproject/k0s/k0s
+          tags: ${{ steps.prep.outputs.tags }}
+
+      - name: Build image and push to Docker hub
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: docker.io
+          repository: k0sproject/k0s
+          tags: ${{ steps.prep.outputs.tags }}
+
+      # Need to remove this from maintenance branches
+      # Done as separate step for better control when we push latest
+      - name: Build image and push to Docker hub
+        if: "!contains(github.ref, '-')"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: docker.io
+          repository: k0sproject/k0s
+          tags: latest
+
+  windows:
+    needs: release
+    runs-on: [self-hosted,linux,x64]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+      TARGET_OS: windows
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Build
+        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+
+      - name: Clean Docker
+        run: |
+          docker system prune --all --volumes --force
+
+      - name: Upload Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s.exe
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
+          asset_content_type: application/octet-stream
+
+  arm64:
+    needs: release
+    runs-on: [self-hosted,linux,arm64]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Build
+        run: make EMBEDDED_BINS_BUILDMODE=docker
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+      - name: Clean Docker
+        run: |
+          docker system prune --all --volumes --force
+
+      - name: Run basic smoke test
+        run: make check-basic
+
+
+      - name: Build bundle for air gap installation
+        run: make image-bundle/bundle.tar
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
+
+      - name: Upload Release Assets - Binary
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset-images
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./image-bundle/bundle.tar
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
+          asset_content_type: application/octet-stream
+
+
+  armv7:
+    needs: release
+    runs-on: [self-hosted,linux,arm,lxc]
+    env:
+      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: make EMBEDDED_BINS_BUILDMODE=docker
+        env:
+          VERSION: ${{ needs.release.outputs.tag_name }}
+
+      - name: Run basic smoke test
+        run: make check-basic
+
+      - name: Build bundle for air gap installation
+        run: make image-bundle/bundle.tar
+
+      - name: Collect smoke test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: tests/*.log
+
+      - name: Upload Release Assets - Binary
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Bundle
+        id: upload-release-asset-images
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./image-bundle/bundle.tar
+          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
+          asset_content_type: application/octet-stream
 
   conformance-test:
+    needs: release
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -310,8 +310,7 @@ jobs:
 
       - name: Launch Test Environment
         env:
-          #K0S_VER: ${{ needs.release.outputs.tag_name }}
-          KOS_VER: v1.22.2+k0s.1 # test line
+          K0S_VER: ${{ needs.release.outputs.tag_name }}
         run: |
           # Start SSH Agent
           eval `ssh-agent -s`
@@ -326,21 +325,28 @@ jobs:
       - name: Set Outputs
         id: vars
         env:
-          K0S_VER: v1.22.2+k0s.1 # test line
+          K0S_VER: ${{ needs.release.outputs.tag_name }}
         run: echo ::set-output name=k8s_version::$(echo ${K0S_VER} | sed 's/\+.*//')
 
       - name: Run Full Conformance Check
         env:
           K8S_VERSION: ${{ steps.vars.outputs.k8s_version }}
         run: |
-          echo ${K8S_VERSION}
           make check-conformance
         working-directory: ./inttest
 
+      - name: Upload conformance results
+        id: upload-conformance-results
+        uses: actions/upload-artifact@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+        with:
+          path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
+          name: sonoboy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
+
       - name: Clean-Up Environment
         env:
-          #K0S_VER: ${{ needs.release.outputs.tag_name }}
-          K0S_VER: v1.22.2+k0s.1 # test line
+          K0S_VER: ${{ needs.release.outputs.tag_name }}
         run: |
           export TF_VAR_k0s_version=${K0S_VER}
 
