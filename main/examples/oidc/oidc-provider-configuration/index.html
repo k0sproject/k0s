@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/environment-variables/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/examples/oidc/oidc-provider-configuration/">
       
       
         
       
-      <link rel="icon" href="../img/k0s_social.png">
+      <link rel="icon" href="../../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Configuration of Environment Variables - Documentation</title>
+        <title>Providers - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e="../../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#environment-variables" class="md-skip">
+        <a href="#providers" class="md-skip">
           Skip to content
         </a>
       
@@ -103,9 +103,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Configuration of Environment Variables
+              Providers
             
           </span>
         </div>
@@ -226,9 +226,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -312,7 +312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -352,7 +352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -366,7 +366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -380,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -394,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -408,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -422,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -443,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -457,7 +457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -471,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -485,7 +485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -499,7 +499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../os-deps/" class="md-nav__link">
+      <a href="../../../os-deps/" class="md-nav__link">
         OS Dependencies
       </a>
     </li>
@@ -519,14 +519,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
       
       
       
@@ -549,7 +547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -563,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../../dynamic-configuration/" class="md-nav__link">
         Dynamic Configuration
       </a>
     </li>
@@ -577,7 +575,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -591,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -605,7 +603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -619,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -633,7 +631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -647,7 +645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -661,7 +659,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -675,7 +673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -689,7 +687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -703,7 +701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -717,7 +715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -731,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -743,58 +741,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Configuration of Environment Variables
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../environment-variables/" class="md-nav__link">
         Configuration of Environment Variables
       </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    SystemD
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#openrc" class="md-nav__link">
-    OpenRC
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -806,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../oidc-cluster-configuration/" class="md-nav__link">
         OpenID Connect
       </a>
     </li>
@@ -854,7 +805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -868,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -882,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -896,7 +847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../../ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -910,7 +861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -958,7 +909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../../../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -972,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../../../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -1020,7 +971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -1034,7 +985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../../cis_benchmark/" class="md-nav__link">
         CIS Benchmark
       </a>
     </li>
@@ -1056,7 +1007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1097,7 +1048,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/overview/" class="md-nav__link">
+      <a href="../../../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1111,7 +1062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1125,7 +1076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1139,7 +1090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1179,16 +1130,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    SystemD
+  <a href="#notes-on-stand-alone-providers" class="md-nav__link">
+    Notes on stand-alone providers
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#openrc" class="md-nav__link">
-    OpenRC
+  <a href="#google-cloud" class="md-nav__link">
+    Google Cloud
   </a>
+  
+    <nav class="md-nav" aria-label="Google Cloud">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-an-application" class="md-nav__link">
+    Creating an application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-user-credentials" class="md-nav__link">
+    Creating a user credentials
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-kubeconfig-user-record" class="md-nav__link">
+    Creating kubeconfig user record
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-kubelogin" class="md-nav__link">
+    Using kubelogin
+  </a>
+  
+    <nav class="md-nav" aria-label="Using kubelogin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#google-cloud-example-using-kubelogin" class="md-nav__link">
+    Google Cloud example using kubelogin
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1206,24 +1204,54 @@
                 
                 
                 
-                <h1 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">#</a></h1>
-<p><code>k0s install</code> does not support environment variables.</p>
-<p>Setting environment variables for components used by k0s depends on the used init system. The environment variables set in <code>k0scontroller</code> or <code>k0sworker</code> service will be inherited by k0s components, such as <code>etcd</code>, <code>containerd</code>, <code>konnectivity</code>, etc.</p>
-<p>Component specific environment variables can be set in <code>k0scontroller</code> or <code>k0sworker</code> service. For example: for <code>CONTAINERD_HTTPS_PROXY</code>, the prefix <code>CONTAINERD_</code> will be stripped and converted to <code>HTTPS_PROXY</code> in the <code>containerd</code> process.</p>
-<p>For those components having env prefix convention such as <code>ETCD_xxx</code>, they are handled specially, i.e. the prefix will not be stripped. For example, <code>ETCD_MAX_WALS</code> will still be <code>ETCD_MAX_WALS</code> in etcd process.</p>
-<p>The proxy envs <code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>NO_PROXY</code> are always overridden by component specific environment variables, so <code>ETCD_HTTPS_PROXY</code> will still be converted to <code>HTTPS_PROXY</code> in etcd process.</p>
-<h2 id="systemd">SystemD<a class="headerlink" href="#systemd" title="Permanent link">#</a></h2>
-<p>Create a drop-in directory and add config file with a desired environment variable:</p>
-<div class="highlight"><pre><span></span><code>mkdir -p /etc/systemd/system/k0scontroller.service.d
-tee -a /etc/systemd/system/k0scontroller.service.d/http-proxy.conf <span class="s">&lt;&lt;EOT</span>
-<span class="s">[Service]</span>
-<span class="s">Environment=HTTP_PROXY=192.168.33.10:3128</span>
-<span class="s">EOT</span>
+                <h1 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">#</a></h1>
+<p>We use Google Cloud as a provider for the sake of the example. Check your vendor documentation in case if you use some other vendor.</p>
+<h2 id="notes-on-stand-alone-providers">Notes on stand-alone providers<a class="headerlink" href="#notes-on-stand-alone-providers" title="Permanent link">#</a></h2>
+<p>If you are using stand-alone OIDC provider, you might need to specify <code>oidc-ca-file</code> argument for the kube-api.</p>
+<h2 id="google-cloud">Google Cloud<a class="headerlink" href="#google-cloud" title="Permanent link">#</a></h2>
+<p>We use <a href="https://github.com/micahhausler/k8s-oidc-helper">k8s-oidc-helper</a> tool to create proper kubeconfig user record.</p>
+<p>The issuer URL for the Google cloud is <code>https://accounts.google.com</code></p>
+<h3 id="creating-an-application">Creating an application<a class="headerlink" href="#creating-an-application" title="Permanent link">#</a></h3>
+<ul>
+<li>Go to the <a href="https://console.developers.google.com/apis/dashboard">Google Cloud Dashboard</a></li>
+<li>Create a new project in your organization</li>
+<li>Go to the "Credentials" page</li>
+<li>Create "OAuth consent screen"</li>
+</ul>
+<h3 id="creating-a-user-credentials">Creating a user credentials<a class="headerlink" href="#creating-a-user-credentials" title="Permanent link">#</a></h3>
+<ul>
+<li>Go to the <a href="https://console.developers.google.com/apis/dashboard">Google Cloud Dashboard</a></li>
+<li>Go to the "Credentials" page</li>
+<li>Create new credentials. Select "OAuth client ID" as a type.</li>
+<li>Select "Desktop" app as an application type.</li>
+<li>Save client ID and client secret</li>
+</ul>
+<h3 id="creating-kubeconfig-user-record">Creating kubeconfig user record<a class="headerlink" href="#creating-kubeconfig-user-record" title="Permanent link">#</a></h3>
+<p>Use the command and follow the instructions:</p>
+<div class="highlight"><pre><span></span><code>k8s-oidc-helper --client-id<span class="o">=</span>&lt;CLIENT_ID&gt; <span class="se">\</span>
+  --client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt; <span class="se">\</span>
+  --write<span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
-<h2 id="openrc">OpenRC<a class="headerlink" href="#openrc" title="Permanent link">#</a></h2>
-<p>Export desired environment variable overriding service configuration in /etc/conf.d directory:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s1">&#39;export HTTP_PROXY=&quot;192.168.33.10:3128&quot;&#39;</span> &gt; /etc/conf.d/k0scontroller
+<h2 id="using-kubelogin">Using kubelogin<a class="headerlink" href="#using-kubelogin" title="Permanent link">#</a></h2>
+<p>For other OIDC providers it is possible to use <code>kubelogin</code> plugin.
+Please refer to the <a href="https://github.com/int128/kubelogin/blob/master/docs/setup.md">setup guide</a> for details.</p>
+<h3 id="google-cloud-example-using-kubelogin">Google Cloud example using <code>kubelogin</code><a class="headerlink" href="#google-cloud-example-using-kubelogin" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>kubectl oidc-login setup <span class="se">\</span>
+  --oidc-issuer-url<span class="o">=</span>https://accounts.google.com <span class="se">\</span>
+  --oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt; <span class="se">\</span>
+  --oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
+
+  kubectl config set-credentials oidc <span class="se">\</span>
+  --exec-api-version<span class="o">=</span>client.authentication.k8s.io/v1beta1 <span class="se">\</span>
+  --exec-command<span class="o">=</span>kubectl <span class="se">\</span>
+  --exec-arg<span class="o">=</span>oidc-login <span class="se">\</span>
+  --exec-arg<span class="o">=</span>get-token <span class="se">\</span>
+  --exec-arg<span class="o">=</span>--oidc-issuer-url<span class="o">=</span>https://accounts.google.com <span class="se">\</span>
+  --exec-arg<span class="o">=</span>--oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt;  <span class="se">\</span>
+  --exec-arg<span class="o">=</span>--oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
 </code></pre></div>
+<p>You can switch the current context to oidc.</p>
+<p><code>kubectl config set-context --current --user=oidc</code></p>
                 
               
               
@@ -1240,41 +1268,6 @@ tee -a /etc/systemd/system/k0scontroller.service.d/http-proxy.conf <span class="
       
         
 <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
-      
-        
-        <a href="../user-management/" class="md-footer__link md-footer__link--prev" aria-label="Previous: User Management" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              User Management
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../examples/oidc/oidc-cluster-configuration/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenID Connect" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              OpenID Connect
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1324,10 +1317,10 @@ tee -a /etc/systemd/system/k0scontroller.service.d/http-proxy.conf <span class="
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>
