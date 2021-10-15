@@ -58,7 +58,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	defer ssh.Disconnect()
 
 	s.T().Log("running k0s install command")
-	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker")
+	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server")
 	s.Require().NoError(err)
 
 	_, err = ssh.ExecWithOutput("k0s start")
@@ -97,14 +97,21 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
+	// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
+	s.Require().NoError(common.WaitForDaemonSet(kc, "kube-proxy"))
+	s.Require().NoError(common.WaitForKubeRouterReady(kc))
+	s.Require().NoError(common.WaitForDeployment(kc, "coredns"))
+
 	// Stop and actually wait till k0s dies
-	_, err = ssh.ExecWithOutput("k0s stop && while pidof k0s containerd; do sleep 0.1s; done")
+	_, err = ssh.ExecWithOutput("k0s stop && while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
 	s.T().Log("running k0s reset command")
 	// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
 	// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
-	_, _ = ssh.ExecWithOutput("k0s reset --debug")
+	resetOutput, _ := ssh.ExecWithOutput("k0s reset --debug")
+
+	s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
 	fileCount, _ := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
 	s.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
