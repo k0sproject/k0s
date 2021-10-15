@@ -48,7 +48,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	}
 
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: false}, fakeFactory)
-	r.ClusterConfig = config
+	r.clusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -74,7 +74,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 	}
 
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
-	r.ClusterConfig = config
+	r.clusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -109,7 +109,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	}
 
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
-	r.ClusterConfig = config
+	r.clusterConfig = config
 
 	assert.NoError(t, r.Init())
 
@@ -151,7 +151,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 		},
 	}
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
-	r.ClusterConfig = config
+	r.clusterConfig = config
 
 	assert.NoError(t, r.Init())
 

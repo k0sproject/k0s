@@ -38,9 +38,9 @@ var _ component.ReconcilerComponent = &APIEndpointReconciler{}
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {
-	ClusterConfig *v1beta1.ClusterConfig
+	clusterConfig *v1beta1.ClusterConfig
 
-	L *logrus.Entry
+	logger *logrus.Entry
 
 	leaderElector     LeaderElector
 	stopCh            chan struct{}
@@ -53,17 +53,12 @@ func NewEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8suti
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
-		L:                 logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
+		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
 	}
 }
 
 // Init initializes the APIEndpointReconciler
 func (a *APIEndpointReconciler) Init() error {
-	// _, err := net.LookupIP(a.ClusterConfig.Spec.API.ExternalAddress)
-	// if err != nil {
-	// 	return fmt.Errorf("cannot resolve api.externalAddress: %w", err)
-	// }
-
 	return nil
 }
 
@@ -78,10 +73,10 @@ func (a *APIEndpointReconciler) Run(ctx context.Context) error {
 			case <-ticker.C:
 				err := a.reconcileEndpoints(ctx)
 				if err != nil {
-					a.L.Warnf("external API address reconciliation failed: %s", err.Error())
+					a.logger.Warnf("external API address reconciliation failed: %s", err.Error())
 				}
 			case <-a.stopCh:
-				a.L.Info("endpoint reconciler done")
+				a.logger.Info("endpoint reconciler done")
 				return
 			}
 		}
@@ -98,7 +93,7 @@ func (a *APIEndpointReconciler) Stop() error {
 
 // Reconcile detects changes in configuration and applies them to the component
 func (a *APIEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
-	a.ClusterConfig = cfg
+	a.clusterConfig = cfg
 	return a.reconcileEndpoints(ctx)
 }
 
@@ -106,18 +101,18 @@ func (a *APIEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.Clus
 func (a *APIEndpointReconciler) Healthy() error { return nil }
 
 func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
-	if a.ClusterConfig == nil {
+	if a.clusterConfig == nil {
 		return nil
 	}
 
 	if !a.leaderElector.IsLeader() {
-		a.L.Debug("we're not the leader, not reconciling api endpoints")
+		a.logger.Debug("we're not the leader, not reconciling api endpoints")
 		return nil
 	}
 
-	ips, err := net.LookupIP(a.ClusterConfig.Spec.API.ExternalAddress)
+	ips, err := net.LookupIP(a.clusterConfig.Spec.API.ExternalAddress)
 	if err != nil {
-		a.L.Errorf("cannot resolve api.externalAddress: %s", err.Error())
+		a.logger.Errorf("cannot resolve api.externalAddress: %s", err.Error())
 		return err
 	}
 	// Sort the addresses so we can more easily tell if we need to update the endpoints or not
@@ -152,7 +147,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 					corev1.EndpointPort{
 						Name:     "https",
 						Protocol: "TCP",
-						Port:     int32(a.ClusterConfig.Spec.API.Port),
+						Port:     int32(a.clusterConfig.Spec.API.Port),
 					},
 				},
 			},
@@ -183,7 +178,7 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 					corev1.EndpointPort{
 						Name:     "https",
 						Protocol: "TCP",
-						Port:     int32(a.ClusterConfig.Spec.API.Port),
+						Port:     int32(a.clusterConfig.Spec.API.Port),
 					},
 				},
 			},

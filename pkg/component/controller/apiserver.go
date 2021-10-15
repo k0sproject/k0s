@@ -141,7 +141,7 @@ func (a *APIServer) Run(_ context.Context) error {
 			args[name] = value
 		}
 	}
-	if a.ClusterConfig.Spec.API.ExternalAddress != "" {
+	if a.ClusterConfig.Spec.API.ExternalAddress != "" || a.ClusterConfig.Spec.API.TunneledNetworkingMode {
 		args["endpoint-reconciler-type"] = "none"
 	}
 	var apiServerArgs []string

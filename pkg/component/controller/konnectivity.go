@@ -196,11 +196,12 @@ func (k *Konnectivity) Stop() error {
 }
 
 type konnectivityAgentConfig struct {
-	APIAddress  string
-	AgentPort   int64
-	Image       string
-	ServerCount int
-	PullPolicy  string
+	APIAddress             string
+	AgentPort              int64
+	Image                  string
+	ServerCount            int
+	PullPolicy             string
+	TunneledNetworkingMode bool
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
@@ -211,13 +212,13 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	if err != nil {
 		return err
 	}
-
 	cfg := konnectivityAgentConfig{
-		APIAddress:  k.NodeConfig.Spec.API.APIAddress(),
-		AgentPort:   k.clusterConfig.Spec.Konnectivity.AgentPort,
-		Image:       k.clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount: k.serverCount,
-		PullPolicy:  k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		APIAddress:             k.NodeConfig.Spec.API.APIAddress(),
+		AgentPort:              k.clusterConfig.Spec.Konnectivity.AgentPort,
+		Image:                  k.clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount:            k.serverCount,
+		PullPolicy:             k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		TunneledNetworkingMode: k.clusterConfig.Spec.API.TunneledNetworkingMode,
 	}
 
 	if cfg == k.previousConfig {
@@ -323,6 +324,12 @@ spec:
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoSchedule"
+        {{ if .TunneledNetworkingMode }}
+        - operator: Exists
+        {{ end }}
+      {{ if .TunneledNetworkingMode }}
+      hostNetwork: true
+      {{ end }}
       containers:
         - image: {{ .Image }}
           imagePullPolicy: {{ .PullPolicy }}
@@ -333,6 +340,7 @@ spec:
               # we need it to have agent restarted on server count change
               - name: K0S_CONTROLLER_COUNT
                 value: "{{ .ServerCount }}"
+
           args: [
                   "--logtostderr=true",
                   "--ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
