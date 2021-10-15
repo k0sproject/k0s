@@ -25,14 +25,6 @@ resource "null_resource" "controller" {
     agent       = true
     user        = "ubuntu"
   }
-
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo curl -SsLf get.k0s.sh | sudo K0S_VERSION=${var.k0s_version} sh",
-      "sudo snap install kubectl --classic"
-    ]
-  }
 }
 
 resource "null_resource" "configure_worker1" {
@@ -50,12 +42,6 @@ resource "null_resource" "configure_worker1" {
     source      = module.k0s-sonobuoy.controller_pem.filename
     destination = "/home/ubuntu/.ssh/id_rsa"
   }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo curl -SsLf get.k0s.sh | sudo K0S_VERSION=${var.k0s_version} sh",
-    ]
-  }
 }
 
 resource "null_resource" "configure_worker2" {
@@ -71,12 +57,6 @@ resource "null_resource" "configure_worker2" {
   provisioner "file" {
     source      = module.k0s-sonobuoy.controller_pem.filename
     destination = "/home/ubuntu/.ssh/id_rsa"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo curl -SsLf get.k0s.sh | sudo K0S_VERSION=${var.k0s_version} sh",
-    ]
   }
 }
 

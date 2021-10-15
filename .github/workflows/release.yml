@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  #pull_request:
 env:
   GO_VERSION: ^1.16
   GO_VERSION_WIN: ^1.13
@@ -80,6 +81,12 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
+
+      - name: Upload Artifact for use in other Jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: k0s-amd64
+          path: ./k0s
 
       - name: Upload Release Assets - Bundle
         id: upload-release-asset-images
@@ -279,7 +286,9 @@ jobs:
           asset_content_type: application/octet-stream
 
   conformance-test:
-    needs: release
+    needs:
+      - release
+      - x64
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -308,6 +317,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Fetch k0s Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: k0s-amd64
+
       - name: Launch Test Environment
         env:
           K0S_VER: ${{ needs.release.outputs.tag_name }}
@@ -322,6 +336,9 @@ jobs:
       - name: Get Terraform Output Data
         run: ./get_outputs.sh
 
+      - name: Deploy k0s to Hosts
+        run: ./deploy-k0s.sh
+
       - name: Set Outputs
         id: vars
         env:
@@ -335,14 +352,15 @@ jobs:
           make check-conformance
         working-directory: ./inttest
 
-      - name: Upload conformance results
-        id: upload-conformance-results
-        uses: actions/upload-artifact@v2
+      - name: Upload conformance test result to Release Assets
+        uses: shogo82148/actions-upload-release-asset@v1.3.2 # Allows us to upload a file with wildcard patterns
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
-          name: sonoboy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
+          asset_name: sonoboy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip
 
       - name: Clean-Up Environment
         env:
