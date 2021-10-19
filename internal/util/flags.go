@@ -13,23 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package random
+package util
 
-import "crypto/rand"
+import "strings"
 
-var letters = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-// String generates a random string with given length
-func String(length int) string {
-
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		// Not much we can do on broken system
-		panic("random is broken: " + err.Error())
+// SplitFlags splits arbitrary set of flags into MappedArgs struct
+func SplitFlags(input string) MappedArgs {
+	mArgs := MappedArgs{}
+	args := strings.Split(input, " ")
+	for _, a := range args {
+		av := strings.SplitN(a, "=", 2)
+		if len(av) < 1 {
+			continue
+		}
+		if len(av) == 1 {
+			mArgs[av[0]] = ""
+		} else {
+			mArgs[av[0]] = av[1]
+		}
 	}
 
-	for i, b := range bytes {
-		bytes[i] = letters[b%byte(len(letters))]
-	}
-	return string(bytes)
+	return mArgs
 }

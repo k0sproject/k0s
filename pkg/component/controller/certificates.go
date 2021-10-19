@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -275,7 +275,7 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 		return err
 	}
 
-	return file.Chown(output.Name(), owner, constant.CertSecureMode)
+	return util.ChownFile(output.Name(), owner, constant.CertSecureMode)
 }
 
 // Health-check interface

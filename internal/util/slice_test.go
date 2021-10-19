@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package stringslice
+package util
 
 import (
 	"testing"
@@ -50,7 +50,7 @@ func TestStringSliceContains(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Contains(tt.args.strSlice, tt.args.str); got != tt.want {
+			if got := StringSliceContains(tt.args.strSlice, tt.args.str); got != tt.want {
 				t.Errorf("StringSliceContains() = %v, want %v", got, tt.want)
 			}
 		})
@@ -86,7 +86,7 @@ func TestArrayIsEqual(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsEqual(tt.args.arrayString, tt.args.arrayStringComp); got != tt.want {
+			if got := IsStringArrayEqual(tt.args.arrayString, tt.args.arrayStringComp); got != tt.want {
 				t.Errorf("IsStringArrayEqual() = %v, want %v", got, tt.want)
 			}
 		})

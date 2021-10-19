@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,9 +26,9 @@ func (c *cni) NeedsToRun() bool {
 		"/etc/cni/net.d/10-kuberouter.conflist",
 	}
 
-	for _, f := range files {
-		if file.Exists(f) {
-			c.toRemove = append(c.toRemove, f)
+	for _, file := range files {
+		if util.FileExists(file) {
+			c.toRemove = append(c.toRemove, file)
 		}
 	}
 	return len(c.toRemove) > 0
@@ -42,10 +42,10 @@ func (c *cni) Run() error {
 func removeCNILeftovers(files []string) error {
 	var msg []error
 
-	for _, f := range files {
-		if file.Exists(f) {
-			if err := os.Remove(f); err != nil {
-				logrus.Debug("failed to remove", f, err)
+	for _, file := range files {
+		if util.FileExists(file) {
+			if err := os.Remove(file); err != nil {
+				logrus.Debug("failed to remove", file, err)
 				msg = append(msg, err)
 			}
 		}

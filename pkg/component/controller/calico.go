@@ -26,7 +26,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
@@ -104,7 +104,7 @@ func (c *Calico) Run() error {
 			return fmt.Errorf("failed to fetch crd %s: %w", filename, err)
 		}
 
-		tw := templatewriter.TemplateWriter{
+		tw := util.TemplateWriter{
 			Name:     fmt.Sprintf("calico-crd-%s", strings.TrimSuffix(filename, filepath.Ext(filename))),
 			Template: string(contents),
 			Data:     emptyStruct,
@@ -183,7 +183,7 @@ func (c *Calico) processConfigChanges(previousConfig calicoConfig) *calicoConfig
 				return nil
 			}
 
-			tw := templatewriter.TemplateWriter{
+			tw := util.TemplateWriter{
 				Name:     fmt.Sprintf("calico-%s-%s", dir, strings.TrimSuffix(filename, filepath.Ext(filename))),
 				Template: string(contents),
 				Data:     cfg,

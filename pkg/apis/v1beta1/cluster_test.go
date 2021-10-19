@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/k0sproject/k0s/internal/pkg/iface"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -47,7 +47,7 @@ metadata:
 	c, err := configFromString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
-	addr, err := iface.FirstPublicAddress()
+	addr, err := util.FirstPublicAddress()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }
@@ -66,7 +66,7 @@ spec:
 	c, err := configFromString(yamlData, k0sVars)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
-	addr, err := iface.FirstPublicAddress()
+	addr, err := util.FirstPublicAddress()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, c.Spec.Storage.Etcd.PeerAddress)
 }

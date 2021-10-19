@@ -26,8 +26,7 @@ import (
 	"github.com/rqlite/rqlite/db"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -78,7 +77,7 @@ func (s *sqliteStep) Backup() (StepResult, error) {
 
 func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 	snapshotPath := filepath.Join(restoreFrom, kineBackup)
-	if !file.Exists(snapshotPath) {
+	if !util.FileExists(snapshotPath) {
 		return fmt.Errorf("sqlite snapshot not found at %s", snapshotPath)
 	}
 	dbPath, err := s.getKineDBPath()
@@ -88,11 +87,11 @@ func (s *sqliteStep) Restore(restoreFrom string, _ string) error {
 
 	// make sure DB dir exists. if not, create it.
 	dbPathDir := filepath.Dir(dbPath)
-	if err = dir.Init(dbPathDir, constant.KineDBDirMode); err != nil {
+	if err = util.InitDirectory(dbPathDir, constant.KineDBDirMode); err != nil {
 		return err
 	}
 	logrus.Infof("restoring sqlite db to `%s`", dbPath)
-	if err := file.Copy(snapshotPath, dbPath); err != nil {
+	if err := util.FileCopy(snapshotPath, dbPath); err != nil {
 		logrus.Errorf("failed to restore snapshot from disk: %v", err)
 	}
 	return nil

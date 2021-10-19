@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/util"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
@@ -63,7 +63,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 }
 
 func (hc *Commands) AddRepository(repoCfg k0sv1beta1.Repository) error {
-	err := dir.Init(filepath.Dir(hc.repoFile), constant.DataDirMode)
+	err := util.InitDirectory(filepath.Dir(hc.repoFile), constant.DataDirMode)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("can't add repository to %s: %v", hc.repoFile, err)
 	}
@@ -164,7 +164,7 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 	//	name = chartURL
 	//}
 
-	if err := dir.Init(hc.helmCacheDir, constant.DataDirMode); err != nil {
+	if err := util.InitDirectory(hc.helmCacheDir, constant.DataDirMode); err != nil {
 		return "", fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
 	}
 

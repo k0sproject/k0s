@@ -13,29 +13,29 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package flags
+package util
 
 import (
-	"strings"
-
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"os/user"
+	"strconv"
 )
 
-// Split splits arbitrary set of flags into StringMap struct
-func Split(input string) stringmap.StringMap {
-	mArgs := stringmap.StringMap{}
-	args := strings.Fields(input)
-	for _, a := range args {
-		av := strings.SplitN(a, "=", 2)
-		if len(av) < 1 {
-			continue
-		}
-		if len(av) == 1 {
-			mArgs[av[0]] = ""
-		} else {
-			mArgs[av[0]] = av[1]
-		}
+// GetUID returns uid of given username and logs a warning if its missing
+func GetUID(name string) (int, error) {
+	entry, err := user.Lookup(name)
+	if err != nil {
+		return 0, err
 	}
+	return strconv.Atoi(entry.Uid)
+}
 
-	return mArgs
+func CheckIfUserExists(name string) (bool, error) {
+	_, err := user.Lookup(name)
+	if _, ok := err.(user.UnknownUserError); ok {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

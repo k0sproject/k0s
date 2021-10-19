@@ -13,15 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package stringslice
+package util
 
 import (
 	"reflect"
 	"sort"
 )
 
-// Contains check whether the given string slice contains the other string
-func Contains(strSlice []string, str string) bool {
+// StringSliceContains check whether the given string slice contains the other string
+func StringSliceContains(strSlice []string, str string) bool {
 	for _, s := range strSlice {
 		if s == str {
 			return true
@@ -31,8 +31,8 @@ func Contains(strSlice []string, str string) bool {
 	return false
 }
 
-// IsEqual returns true if an array of strings is equal, regardless of order
-func IsEqual(a1 []string, a2 []string) bool {
+// IsStringArrayEqual returns true if an array of strings is equal, regardless of order
+func IsStringArrayEqual(a1 []string, a2 []string) bool {
 	sort.Strings(a1)
 	sort.Strings(a2)
 	if len(a1) == len(a2) {

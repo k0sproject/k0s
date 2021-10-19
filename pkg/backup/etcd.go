@@ -23,10 +23,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/k0sproject/k0s/internal/util"
+
 	"go.etcd.io/etcd/client/v3/snapshot"
 	"go.uber.org/zap"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/etcd"
 
 	utilsnapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
@@ -72,7 +73,7 @@ func (e etcdStep) Backup() (StepResult, error) {
 
 func (e etcdStep) Restore(restoreFrom, _ string) error {
 	snapshotPath := filepath.Join(restoreFrom, etcdBackup)
-	if !file.Exists(snapshotPath) {
+	if !util.FileExists(snapshotPath) {
 		return fmt.Errorf("etcd snapshot not found at %s", snapshotPath)
 	}
 

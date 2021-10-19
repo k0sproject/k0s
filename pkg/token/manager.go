@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/pkg/random"
+	"github.com/k0sproject/k0s/internal/util"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
@@ -59,8 +59,8 @@ type Manager struct {
 
 // Create creates a new bootstrap token
 func (m *Manager) Create(valid time.Duration, role string) (string, error) {
-	tokenID := random.String(6)
-	tokenSecret := random.String(16)
+	tokenID := util.RandomString(6)
+	tokenSecret := util.RandomString(16)
 
 	token := fmt.Sprintf("%s.%s", tokenID, tokenSecret)
 

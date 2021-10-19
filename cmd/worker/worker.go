@@ -26,8 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -55,7 +54,7 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = args[0]
 			}
 
-			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
+			c.Logging = util.MapMerge(c.CmdLogLevels, c.DefaultLogLevels)
 			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s worker [token]' or as a flag 'k0s worker --token-file [path]'")
 			}
@@ -82,12 +81,12 @@ func NewWorkerCmd() *cobra.Command {
 func (c *CmdOpts) StartWorker() error {
 
 	worker.KernelSetup()
-	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
+	if c.TokenArg == "" && !util.FileExists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
 
 	// Dump join token into kubelet-bootstrap kubeconfig if it does not already exist
-	if c.TokenArg != "" && !file.Exists(c.K0sVars.KubeletBootstrapConfigPath) {
+	if c.TokenArg != "" && !util.FileExists(c.K0sVars.KubeletBootstrapConfigPath) {
 		if err := worker.HandleKubeletBootstrapToken(c.TokenArg, c.K0sVars); err != nil {
 			return err
 		}

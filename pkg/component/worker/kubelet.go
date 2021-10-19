@@ -30,10 +30,7 @@ import (
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/flags"
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -93,7 +90,7 @@ func (k *Kubelet) Init() error {
 	}
 
 	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
-	err := dir.Init(k.dataDir, constant.DataDirMode)
+	err := util.InitDirectory(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)
 	}
@@ -121,7 +118,7 @@ func (k *Kubelet) Run() error {
 	// this will return /run/systemd/resolve/resolv.conf
 	resolvConfPath := resolvconf.Path()
 
-	args := stringmap.StringMap{
+	args := util.MappedArgs{
 		"--root-dir":             k.dataDir,
 		"--config":               kubeletConfigPath,
 		"--bootstrap-kubeconfig": k.K0sVars.KubeletBootstrapConfigPath,
@@ -187,7 +184,7 @@ func (k *Kubelet) Run() error {
 
 	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
 	if k.ExtraArgs != "" {
-		extras := flags.Split(k.ExtraArgs)
+		extras := util.SplitFlags(k.ExtraArgs)
 		args.Merge(extras)
 	}
 
@@ -206,7 +203,7 @@ func (k *Kubelet) Run() error {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
 		}
-		tw := templatewriter.TemplateWriter{
+		tw := util.TemplateWriter{
 			Name:     "kubelet-config",
 			Template: kubeletconfig,
 			Data:     kubeletConfigData,
