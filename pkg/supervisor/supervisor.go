@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -47,10 +48,11 @@ type Supervisor struct {
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
 
-	cmd  *exec.Cmd
-	quit chan bool
-	done chan bool
-	log  *logrus.Entry
+	cmd   *exec.Cmd
+	quit  chan bool
+	done  chan bool
+	log   *logrus.Entry
+	mutex sync.Mutex
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
@@ -113,6 +115,7 @@ func (s *Supervisor) Supervise() error {
 	go func() {
 		s.log.Info("Starting to supervise")
 		for {
+			s.mutex.Lock()
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 			s.cmd.Dir = s.DataDir
 			s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
@@ -125,6 +128,7 @@ func (s *Supervisor) Supervise() error {
 			s.cmd.Stderr = s.log.Writer()
 
 			err := s.cmd.Start()
+			s.mutex.Unlock()
 			if err != nil {
 				s.log.Warnf("Failed to start: %s", err)
 				if s.quit == nil {
@@ -166,7 +170,13 @@ func (s *Supervisor) Supervise() error {
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
 	if s.quit != nil {
+		if s.log != nil {
+			s.log.Debug("Sending stop message")
+		}
 		s.quit <- true
+		if s.log != nil {
+			s.log.Debug("Waiting for stopping is done")
+		}
 		<-s.done
 	}
 	return nil
@@ -216,4 +226,11 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	}
 
 	return env[:i]
+}
+
+// GetProcess returns the last started process
+func (s *Supervisor) GetProcess() *os.Process {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.cmd.Process
 }
