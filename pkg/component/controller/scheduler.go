@@ -16,32 +16,38 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
-	ClusterConfig *config.ClusterConfig
-	gid           int
-	K0sVars       constant.CfgVars
-	LogLevel      string
-	supervisor    supervisor.Supervisor
-	uid           int
+	gid            int
+	K0sVars        constant.CfgVars
+	LogLevel       string
+	supervisor     *supervisor.Supervisor
+	uid            int
+	previousConfig stringmap.StringMap
 }
+
+var _ component.Component = &Scheduler{}
+var _ component.ReconcilerComponent = &Scheduler{}
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init() error {
 	var err error
-	a.uid, err = util.GetUID(constant.SchedulerUser)
+	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}
@@ -49,10 +55,25 @@ func (a *Scheduler) Init() error {
 }
 
 // Run runs kube scheduler
-func (a *Scheduler) Run() error {
+func (a *Scheduler) Run(_ context.Context) error {
+	return nil
+}
+
+// Stop stops Scheduler
+func (a *Scheduler) Stop() error {
+	if a.supervisor != nil {
+		return a.supervisor.Stop()
+	}
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	logrus.Debug("reconcile method called for: Scheduler")
+
 	logrus.Info("Starting kube-scheduler")
 	schedulerAuthConf := filepath.Join(a.K0sVars.CertRootDir, "scheduler.conf")
-	args := map[string]string{
+	args := stringmap.StringMap{
 		"authentication-kubeconfig": schedulerAuthConf,
 		"authorization-kubeconfig":  schedulerAuthConf,
 		"kubeconfig":                schedulerAuthConf,
@@ -61,37 +82,43 @@ func (a *Scheduler) Run() error {
 		"profiling":                 "false",
 		"v":                         a.LogLevel,
 	}
-	for name, value := range a.ClusterConfig.Spec.Scheduler.ExtraArgs {
+	for name, value := range clusterConfig.Spec.Scheduler.ExtraArgs {
 		if args[name] != "" {
 			logrus.Warnf("overriding kube-scheduler flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
-	var schedulerArgs []string
-	for name, value := range args {
-		schedulerArgs = append(schedulerArgs, fmt.Sprintf("--%s=%s", name, value))
-	}
-	if a.ClusterConfig.Spec.API.ExternalAddress == "" {
-		schedulerArgs = append(schedulerArgs, "--leader-elect=false")
+
+	if clusterConfig.Spec.API.ExternalAddress == "" {
+		args["leader-elect"] = "false"
 	}
 
-	a.supervisor = supervisor.Supervisor{
+	if args.Equals(a.previousConfig) && a.supervisor != nil {
+		// no changes and supervisor already running, do nothing
+		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
+		return nil
+	}
+	// Stop in case there's process running already and we need to change the config
+	if a.supervisor != nil {
+		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
+		err := a.supervisor.Stop()
+		a.supervisor = nil
+		if err != nil {
+			return err
+		}
+	}
+
+	a.supervisor = &supervisor.Supervisor{
 		Name:    "kube-scheduler",
 		BinPath: assets.BinPath("kube-scheduler", a.K0sVars.BinDir),
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
-		Args:    schedulerArgs,
+		Args:    args.ToDashedArgs(),
 		UID:     a.uid,
 		GID:     a.gid,
 	}
-	// TODO We need to dump the config file suited for k0s use
-
+	a.previousConfig = args
 	return a.supervisor.Supervise()
-}
-
-// Stop stops Scheduler
-func (a *Scheduler) Stop() error {
-	return a.supervisor.Stop()
 }
 
 // Health-check interface

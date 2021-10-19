@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -26,7 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -69,11 +70,11 @@ func (c *CmdOpts) backup() error {
 		logger.Fatal("this command must be run as root!")
 	}
 
-	if !util.DirExists(savePath) {
+	if !dir.IsDirectory(savePath) {
 		return fmt.Errorf("the save-path directory (%v) does not exist", savePath)
 	}
 
-	if !util.DirExists(c.K0sVars.DataDir) {
+	if !dir.IsDirectory(c.K0sVars.DataDir) {
 		return fmt.Errorf("cannot find data-dir (%v). check your environment and/or command input and try again", c.K0sVars.DataDir)
 	}
 

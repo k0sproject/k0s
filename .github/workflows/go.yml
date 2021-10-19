@@ -901,6 +901,41 @@ jobs:
           path: |
             /tmp/*.log
 
+  smoketest-configchange:
+    name: Smoke test for CRD based config changes
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+        id: go
+      - name: Get PR Reference and Set Cache Name
+        run: |
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Cache compiled binary for smoke testing
+        uses: actions/cache@v2
+        id: restore-compiled-binary
+        with:
+          path: |
+            k0s
+          key: build-${{env.cachePrefix}}
+
+      - name: Run smoke test for config changes
+        run: make -C inttest check-configchange
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            /tmp/*.log
 
   smoketest-arm:
     name: Smoke test on arm64
@@ -1002,23 +1037,3 @@ jobs:
           path: |
             /tmp/*.log
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v2
-      - name: codegen
-        run: |
-          make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
-        env:
-          EMBEDDED_BINS_BUILDMODE: none
-
-      - name: go modules check
-        run: make lint-gomod
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.29
-          config: .golangci.yml

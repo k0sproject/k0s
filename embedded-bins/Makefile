@@ -39,8 +39,6 @@ clean:
 $(bindir):
 	mkdir -p $@
 
-ifeq ($(buildmode),docker)
-
 dockerfiles := $(wildcard */Dockerfile)
 images := $(patsubst %/Dockerfile,%,$(dockerfiles))
 
@@ -88,41 +86,3 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 		-f $< .
 	touch $@
 
-else
-# fetch official binaires
-#
-curl = curl --silent -L
-
-runc_url = https://github.com/opencontainers/runc/releases/download/v$(runc_version)/runc.$(arch)
-kubelet_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kubelet
-kube-apiserver_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-apiserver
-kube-scheduler_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-scheduler
-kube-controller-manager_url = https://storage.googleapis.com/kubernetes-release/release/v$(kubernetes_version)/bin/linux/$(arch)/kube-controller-manager
-kine_url = https://github.com/k3s-io/kine/releases/download/v$(kine_version)/kine-amd64
-
-containerd_url = https://github.com/containerd/containerd/releases/download/v$(containerd_version)/containerd-$(containerd_version)-linux-$(arch).tar.gz
-etcd_url = https://github.com/etcd-io/etcd/releases/download/v$(etcd_version)/etcd-v$(etcd_version)-linux-$(arch).tar.gz
-
-containerd_extract = bin/containerd bin/containerd-shim bin/containerd-shim-runc-v1 bin/containerd-shim-runc-v2
-etcd_extract = etcd-v$(etcd_version)-linux-$(arch)/etcd
-
-tmpdir ?= .tmp
-arch = amd64
-
-
-$(addprefix $(bindir)/, runc kubelet kube-apiserver kube-scheduler kube-controller-manager kine): | $(bindir)
-	$(curl) -o $@ $($(notdir $@)_url)
-
-$(addprefix $(bindir)/, containerd etcd): | $(bindir)
-	$(curl) $($(notdir $@)_url) | tar -C $(bindir)/ -zxv --strip-components=1 $($(notdir $@)_extract)
-
-# konnectivity does not ship precompiled binaries so lets build it from source
-$(bindir)/konnectivity-server: | $(bindir)
-	if ! [ -d $(tmpdir)/apiserver-network-proxy ]; then \
-		mkdir -p $(tmpdir) \
-			&& cd $(tmpdir) \
-			&& git clone -b v$(konnectivity_version) --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git; \
-	fi
-	cd $(tmpdir)/apiserver-network-proxy && make bin/proxy-server && cp bin/proxy-server $(CURDIR)/$@
-
-endif

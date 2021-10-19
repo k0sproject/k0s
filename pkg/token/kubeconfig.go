@@ -17,6 +17,7 @@ package token
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -24,7 +25,7 @@ import (
 	"path/filepath"
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -33,8 +34,7 @@ const (
 	workerRole     = "worker"
 )
 
-var (
-	kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
+var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
 apiVersion: v1
 clusters:
 - cluster:
@@ -54,9 +54,8 @@ users:
   user:
     token: {{.Token}}
 `))
-)
 
-func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
+func CreateKubeletBootstrapConfig(ctx context.Context, nodeConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
 	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 	caCert, err := os.ReadFile(crtFile)
 	if err != nil {
@@ -66,7 +65,7 @@ func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars c
 	if err != nil {
 		return "", err
 	}
-	tokenString, err := manager.Create(expiry, role)
+	tokenString, err := manager.Create(ctx, expiry, role)
 	if err != nil {
 		return "", err
 	}
@@ -82,10 +81,10 @@ func CreateKubeletBootstrapConfig(clusterConfig *config.ClusterConfig, k0sVars c
 	}
 	if role == workerRole {
 		data.User = "kubelet-bootstrap"
-		data.JoinURL = clusterConfig.Spec.API.APIAddressURL()
+		data.JoinURL = nodeConfig.Spec.API.APIAddressURL()
 	} else if role == controllerRole {
 		data.User = "controller-bootstrap"
-		data.JoinURL = clusterConfig.Spec.API.K0sControlPlaneAPIAddress()
+		data.JoinURL = nodeConfig.Spec.API.K0sControlPlaneAPIAddress()
 	} else {
 		return "", fmt.Errorf("unsupported role %s only supported roles are %q and %q", role, controllerRole, workerRole)
 	}

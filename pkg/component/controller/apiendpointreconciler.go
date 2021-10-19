@@ -17,38 +17,39 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"reflect"
 	"sort"
-	"sync/atomic"
 	"time"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
+
+// Dummy checks so we catch easily if we miss some interface implementation
+var _ component.Component = &APIEndpointReconciler{}
+var _ component.ReconcilerComponent = &APIEndpointReconciler{}
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {
-	ClusterConfig *config.ClusterConfig
+	ClusterConfig *v1beta1.ClusterConfig
 
 	L *logrus.Entry
 
 	leaderElector     LeaderElector
 	stopCh            chan struct{}
-	kubeClientFactory k8sutil.ClientFactory
+	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(c *config.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactory) *APIEndpointReconciler {
-	d := atomic.Value{}
-	d.Store(true)
+func NewEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *APIEndpointReconciler {
 	return &APIEndpointReconciler{
-		ClusterConfig:     c,
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
@@ -58,16 +59,16 @@ func NewEndpointReconciler(c *config.ClusterConfig, leaderElector LeaderElector,
 
 // Init initializes the APIEndpointReconciler
 func (a *APIEndpointReconciler) Init() error {
-	_, err := net.LookupIP(a.ClusterConfig.Spec.API.ExternalAddress)
-	if err != nil {
-		return fmt.Errorf("cannot resolve api.externalAddress: %w", err)
-	}
+	// _, err := net.LookupIP(a.ClusterConfig.Spec.API.ExternalAddress)
+	// if err != nil {
+	// 	return fmt.Errorf("cannot resolve api.externalAddress: %w", err)
+	// }
 
 	return nil
 }
 
 // Run runs the main loop for reconciling the externalAddress
-func (a *APIEndpointReconciler) Run() error {
+func (a *APIEndpointReconciler) Run(ctx context.Context) error {
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
@@ -75,7 +76,7 @@ func (a *APIEndpointReconciler) Run() error {
 		for {
 			select {
 			case <-ticker.C:
-				err := a.reconcileEndpoints()
+				err := a.reconcileEndpoints(ctx)
 				if err != nil {
 					a.L.Warnf("external API address reconciliation failed: %s", err.Error())
 				}
@@ -95,10 +96,19 @@ func (a *APIEndpointReconciler) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (a *APIEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
+	a.ClusterConfig = cfg
+	return a.reconcileEndpoints(ctx)
+}
+
 // Healthy dummy implementation
 func (a *APIEndpointReconciler) Healthy() error { return nil }
 
-func (a *APIEndpointReconciler) reconcileEndpoints() error {
+func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
+	if a.ClusterConfig == nil {
+		return nil
+	}
 
 	if !a.leaderElector.IsLeader() {
 		a.L.Debug("we're not the leader, not reconciling api endpoints")
@@ -124,10 +134,10 @@ func (a *APIEndpointReconciler) reconcileEndpoints() error {
 
 	epClient := c.CoreV1().Endpoints("default")
 
-	ep, err := epClient.Get(context.TODO(), "kubernetes", v1.GetOptions{})
+	ep, err := epClient.Get(ctx, "kubernetes", v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			err := a.createEndpoint(ipStrings)
+			err := a.createEndpoint(ctx, ipStrings)
 			return err
 		}
 
@@ -148,17 +158,16 @@ func (a *APIEndpointReconciler) reconcileEndpoints() error {
 			},
 		}
 
-		_, err := epClient.Update(context.TODO(), ep, v1.UpdateOptions{})
+		_, err := epClient.Update(ctx, ep, v1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-
 }
 
-func (a *APIEndpointReconciler) createEndpoint(addresses []string) error {
+func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []string) error {
 	ep := &corev1.Endpoints{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Endpoints",
@@ -186,7 +195,7 @@ func (a *APIEndpointReconciler) createEndpoint(addresses []string) error {
 		return err
 	}
 
-	_, err = c.CoreV1().Endpoints("default").Create(context.TODO(), ep, v1.CreateOptions{})
+	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, v1.CreateOptions{})
 	if err != nil {
 		return err
 	}

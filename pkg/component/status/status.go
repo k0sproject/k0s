@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
 )
@@ -32,7 +32,7 @@ func (s *Status) Init() error {
 	s.httpserver = http.Server{
 		Handler: &statusHandler{Status: s},
 	}
-	err = util.InitDirectory(s.StatusInformation.K0sVars.RunDir, 0755)
+	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}
@@ -48,7 +48,7 @@ func (s *Status) Init() error {
 }
 
 // Run runs the component
-func (s *Status) Run() error {
+func (s *Status) Run(_ context.Context) error {
 	go func() {
 		if err := s.httpserver.Serve(s.listener); err != nil {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)
@@ -63,6 +63,12 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(context.TODO()); err != nil {
 		return err
 	}
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (s *Status) Reconcile() error {
+	logrus.Debug("reconcile method called for: Status")
 	return nil
 }
 

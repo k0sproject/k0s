@@ -15,10 +15,22 @@ limitations under the License.
 */
 package component
 
+import (
+	"context"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+)
+
 // Component defines the interface each managed component implements
 type Component interface {
 	Init() error
-	Run() error
+	Run(context.Context) error
 	Stop() error
 	Healthy() error
+}
+
+// ReconcilerComponent defines the component interface that is reconciled based
+// on changes on the global config CR object changes
+type ReconcilerComponent interface {
+	Reconcile(context.Context, *v1beta1.ClusterConfig) error
 }

@@ -24,7 +24,8 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -46,6 +47,7 @@ type CLIOptions struct {
 	ControllerOptions
 	CfgFile          string
 	ClusterConfig    *v1beta1.ClusterConfig
+	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
 	DebugListenOn    string
 	DefaultLogLevels map[string]string
@@ -60,9 +62,12 @@ type ControllerOptions struct {
 	SingleNode        bool
 	DisableComponents []string
 
+	ClusterComponents               *component.Manager
 	EnableK0sCloudProvider          bool
-	K0sCloudProviderUpdateFrequency time.Duration
 	K0sCloudProviderPort            int
+	K0sCloudProviderUpdateFrequency time.Duration
+	NodeComponents                  *component.Manager
+	EnableDynamicConfig             bool
 }
 
 // Shared worker cli flags
@@ -166,6 +171,7 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.DurationVar(&controllerOpts.K0sCloudProviderUpdateFrequency, "k0s-cloud-provider-update-frequency", 2*time.Minute, "the frequency of k0s-cloud-provider node updates")
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
+	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
 
 	return flagset
 }

@@ -5,7 +5,6 @@ GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
-#   fetch	fetch precompiled binaries from internet
 #   none	does not embed any binaries
 
 EMBEDDED_BINS_BUILDMODE ?= docker
@@ -88,14 +87,14 @@ endif
 all: k0s k0s.exe
 
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
+print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
+			"package assets" \
+			"var BinData = map[string]struct{ offset, size int64 }{}" \
+			"var BinDataSize int64"
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
 	rm -f bindata_$(zz_os) && touch bindata_$(zz_os)
-	printf "%s\n\n%s\n%s\n" \
-		"package assets" \
-		"var BinData = map[string]struct{ offset, size int64 }{}" \
-		"var BinDataSize int64 = 0" \
-		> $@
+	$(print_empty_generated_offsets) > $@
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
@@ -104,6 +103,10 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
+
+# needed for unit tests on macos
+pkg/assets/zz_generated_offsets_darwin.go:
+	$(print_empty_generated_offsets) > $@
 
 
 k0s: TARGET_OS = linux
@@ -133,14 +136,10 @@ k0s.exe k0s: $(GO_SRCS)
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
-SKIP_GOMOD_LINT ?= false
-ifeq ($(SKIP_GOMOD_LINT), false)
-GOMODLINT=lint-gomod
-endif
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go ${GOMODLINT}
-	$(golint) run ./...
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go 
+	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
@@ -152,7 +151,7 @@ smoketests:  $(smoketests)
 
 
 .PHONY: check-unit
-check-unit: pkg/assets/zz_generated_offsets_$(TARGET_OS).go static/gen_manifests.go
+check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go
 	go test -race ./pkg/... ./internal/...
 
 .PHONY: clean-gocache
@@ -172,8 +171,16 @@ clean: clean-gocache clean-docker-image
 	-$(MAKE) -C inttest clean
 
 .PHONY: manifests
-manifests:
-	controller-gen crd paths="./..." output:crd:artifacts:config=static/manifests/helm/CustomResourceDefinition object
+
+ROOT_DIR := $(shell pwd)
+
+manifests: .helmCRD .cfgCRD
+
+.helmCRD:
+	cd $(ROOT_DIR)/pkg/apis/helm.k0sproject.io/ && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)static/manifests/helm/CustomResourceDefinition object
+
+.cfgCRD:
+	cd $(ROOT_DIR)/pkg/apis/k0s.k0sproject.io/v1beta1 && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
 	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
@@ -181,26 +188,15 @@ static/gen_manifests.go: $(shell find static/manifests -type f)
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
+.PHONY: generate-APIClient
+
+# install with go get k8s.io/code-generator/cmd/client-gen@v0.22.2
+generate-APIClient:
+	client-gen --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+
 image-bundle/image.list: k0s
 	./k0s airgap list-images > image-bundle/image.list
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
-
-
-GOMODTIDYLINT=sh -c '\
-if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
-	echo "Run \`go mod tidy\` and commit the result"; \
-	exit 1; \
-fi ; \
-${GO} mod tidy; \
-if [ `git diff go.mod go.sum | wc -l` -gt "0" ]; then \
- git checkout go.mod go.sum ; \
- echo "Linter failure: go.mod and go.sum have unused deps. Run \`go mod tidy\` and commit the result"; \
- exit 2; \
-fi \
- ; ' GOMODTIDYLINT
-
-lint-gomod:
-	@${GOMODTIDYLINT}
 

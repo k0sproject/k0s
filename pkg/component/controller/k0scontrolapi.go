@@ -16,20 +16,21 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/sirupsen/logrus"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath    string
-	ClusterConfig *config.ClusterConfig
-	K0sVars       constant.CfgVars
-	supervisor    supervisor.Supervisor
+	ConfigPath string
+	K0sVars    constant.CfgVars
+	supervisor supervisor.Supervisor
 }
 
 // Init does currently nothing
@@ -39,7 +40,7 @@ func (m *K0SControlAPI) Init() error {
 }
 
 // Run runs k0s control api as separate process
-func (m *K0SControlAPI) Run() error {
+func (m *K0SControlAPI) Run(_ context.Context) error {
 	// TODO: Make the api process to use some other user
 
 	selfExe, err := os.Executable()
@@ -64,6 +65,12 @@ func (m *K0SControlAPI) Run() error {
 // Stop stops k0s api
 func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (m *K0SControlAPI) Reconcile() error {
+	logrus.Debug("reconcile method called for: K0SControlAPI")
+	return nil
 }
 
 // Healthy for health-check interface

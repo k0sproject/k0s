@@ -22,10 +22,10 @@ NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud
 
 Installing NGINX using NodePort is the most simple example for Ingress Controller as we can avoid the load balancer dependency. NodePort is used for exposing the NGINX Ingress to the external network.
 
-1. Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)
+1. Install NGINX Ingress Controller (using the official manifests of version `v1.0.0` by the ingress-nginx project, supports Kubernetes versions >= `v1.19`)
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/baremetal/deploy.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
     ```
 
 2. Check that the Ingress controller pods have started
@@ -40,7 +40,23 @@ Installing NGINX using NodePort is the most simple example for Ingress Controlle
     kubectl get services -n ingress-nginx
     ```
 
-4. Try connecting the Ingress controller using the NodePort from the previous step (in the range of 30000-32767)
+4. From version `v1.0.0` of the Ingress-NGINX Controller, [a ingressclass object is required](https://kubernetes.github.io/ingress-nginx/#what-is-an-ingressclass-and-why-is-it-important-for-users-of-ingress-nginx-controller-now).
+
+    In the default installation, an ingressclass object named `nginx` has already been created.
+
+    ```shell
+    $ kubectl -n ingress-nginx get ingressclasses
+    NAME    CONTROLLER             PARAMETERS   AGE
+    nginx   k8s.io/ingress-nginx   <none>       162m
+    ```
+  
+    If this is only instance of the Ingresss-NGINX controller, you should [add the annotation](https://kubernetes.github.io/ingress-nginx/#i-have-only-one-instance-of-the-ingresss-nginx-controller-in-my-cluster-what-should-i-do) `ingressclass.kubernetes.io/is-default-class` in your ingress class:
+
+    ```shell
+    kubectl -n ingress-nginx annotate ingressclasses nginx ingressclass.kubernetes.io/is-default-class="true"
+    ```
+
+5. Try connecting the Ingress controller using the NodePort from the previous step (in the range of 30000-32767)
 
     ```shell
     curl <worker-external-ip>:<node-port>
@@ -48,7 +64,7 @@ Installing NGINX using NodePort is the most simple example for Ingress Controlle
 
     If you don't yet have any backend service configured, you should see "404 Not Found" from nginx. This is ok for now. If you see a response from nginx, the Ingress Controller is running and you can reach it.
 
-5. Deploy a small test application (httpd web server) to verify your Ingress controller.
+6. Deploy a small test application (httpd web server) to verify your Ingress controller.
 
     Create the following YAML file and name it "simple-web-server-with-ingress.yaml":
 
@@ -97,6 +113,7 @@ Installing NGINX using NodePort is the most simple example for Ingress Controlle
       name: web-server-ingress
       namespace: web
     spec:
+      ingressClassName: nginx
       rules:
       - host: web.example.com
         http:
@@ -116,7 +133,7 @@ Installing NGINX using NodePort is the most simple example for Ingress Controlle
     kubectl apply -f simple-web-server-with-ingress.yaml
     ```
 
-6. Verify that you can access your application using the NodePort from step 3.
+7. Verify that you can access your application using the NodePort from step 3.
 
     ```shell
     curl <worker-external-ip>:<node-port> -H 'Host: web.example.com'
@@ -174,11 +191,7 @@ In this example you'll install NGINX Ingress controller using LoadBalancer on k0
     kubectl delete -f example-load-balancer.yaml
     ```
 
-3. Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)
-
-    ```shell
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/baremetal/deploy.yaml
-    ```
+3. Install NGINX Ingress Controller by following the steps in the previous chapter (step 1 to step 4).
 
 4. Edit the NGINX Ingress Controller to use LoadBalancer instead of NodePort
 
@@ -206,7 +219,7 @@ In this example you'll install NGINX Ingress controller using LoadBalancer on k0
 
 7. Deploy a small test application (httpd web server) to verify your Ingress.
 
-    Create the YAML file "simple-web-server-with-ingress.yaml" as described in the previous chapter (step 5) and deploy it.
+    Create the YAML file "simple-web-server-with-ingress.yaml" as described in the previous chapter (step 6) and deploy it.
 
     ```shell
     kubectl apply -f simple-web-server-with-ingress.yaml

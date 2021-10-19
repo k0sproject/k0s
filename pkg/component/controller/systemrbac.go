@@ -16,12 +16,15 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
 )
 
 // SystemRBAC implements system RBAC reconciler
@@ -42,13 +45,13 @@ func (s *SystemRBAC) Init() error {
 }
 
 // Run reconciles the k0s related system RBAC rules
-func (s *SystemRBAC) Run() error {
+func (s *SystemRBAC) Run(_ context.Context) error {
 	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
-	err := util.InitDirectory(rbacDir, constant.ManifestsDirMode)
+	err := dir.Init(rbacDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
-	tw := util.TemplateWriter{
+	tw := templatewriter.TemplateWriter{
 		Name:     "bootstrap-rbac",
 		Template: bootstrapRBACTemplate,
 		Data:     struct{}{},
@@ -57,13 +60,18 @@ func (s *SystemRBAC) Run() error {
 	err = tw.Write()
 	if err != nil {
 		return fmt.Errorf("error writing bootstrap-rbac manifests, will NOT retry: %w", err)
-
 	}
 	return nil
 }
 
 // Stop does currently nothing
 func (s *SystemRBAC) Stop() error {
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (s *SystemRBAC) Reconcile() error {
+	logrus.Debug("reconcile method called for: SystemRBAC")
 	return nil
 }
 

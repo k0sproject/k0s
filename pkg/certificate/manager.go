@@ -33,7 +33,8 @@ import (
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -63,7 +64,7 @@ func (m *Manager) EnsureCA(name, cn string) error {
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", name))
 
-	if util.FileExists(keyFile) && util.FileExists(certFile) {
+	if file.Exists(keyFile) && file.Exists(certFile) {
 		return nil
 	}
 
@@ -99,7 +100,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 	keyFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.key", certReq.Name))
 	certFile := filepath.Join(m.K0sVars.CertRootDir, fmt.Sprintf("%s.crt", certReq.Name))
 
-	uid, _ := util.GetUID(ownerName)
+	uid, _ := users.GetUID(ownerName)
 
 	// if regenerateCert returns true, it means we need to create the certs
 	if m.regenerateCert(certReq, keyFile, certFile) {
@@ -193,7 +194,7 @@ func (m *Manager) regenerateCert(certReq Request, keyFile string, certFile strin
 	var err error
 
 	// if certificate & key don't exist, return true, in order to generate certificates
-	if !util.FileExists(keyFile) && !util.FileExists(certFile) {
+	if !file.Exists(keyFile) && !file.Exists(certFile) {
 		return true
 	}
 
@@ -228,8 +229,8 @@ func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner str
 	keyFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.key", name))
 	pubFile := filepath.Join(k0sVars.CertRootDir, fmt.Sprintf("%s.pub", name))
 
-	if util.FileExists(keyFile) && util.FileExists(pubFile) {
-		return util.ChownFile(keyFile, owner, constant.CertSecureMode)
+	if file.Exists(keyFile) && file.Exists(pubFile) {
+		return file.Chown(keyFile, owner, constant.CertSecureMode)
 	}
 
 	reader := rand.Reader
@@ -251,7 +252,7 @@ func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner str
 	}
 	defer outFile.Close()
 
-	err = util.ChownFile(keyFile, owner, constant.CertSecureMode)
+	err = file.Chown(keyFile, owner, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}

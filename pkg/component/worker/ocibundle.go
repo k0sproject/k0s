@@ -9,7 +9,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -29,10 +29,10 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 }
 
 func (a *OCIBundleReconciler) Init() error {
-	return util.InitDirectory(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
+	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
-func (a *OCIBundleReconciler) Run() error {
+func (a *OCIBundleReconciler) Run(ctx context.Context) error {
 	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
 	if err != nil {
 		return fmt.Errorf("can't read bundles directory")
@@ -48,7 +48,7 @@ func (a *OCIBundleReconciler) Run() error {
 			logrus.WithError(err).Errorf("can't connect to containerd socket %s", sock)
 			return err
 		}
-		_, err := client.ListImages(context.Background())
+		_, err := client.ListImages(ctx)
 		if err != nil {
 			logrus.WithError(err).Errorf("can't use containerd client")
 			return err
@@ -61,7 +61,7 @@ func (a *OCIBundleReconciler) Run() error {
 	defer client.Close()
 
 	for _, file := range files {
-		if err := a.unpackBundle(client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
+		if err := a.unpackBundle(ctx, client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
 			logrus.WithError(err).Errorf("can't unpack bundle %s", file.Name())
 			return fmt.Errorf("can't unpack bundle %s: %w", file.Name(), err)
 		}
@@ -69,13 +69,13 @@ func (a *OCIBundleReconciler) Run() error {
 	return nil
 }
 
-func (a OCIBundleReconciler) unpackBundle(client *containerd.Client, bundlePath string) error {
+func (a OCIBundleReconciler) unpackBundle(ctx context.Context, client *containerd.Client, bundlePath string) error {
 	r, err := os.Open(bundlePath)
 	if err != nil {
 		return fmt.Errorf("can't open bundle file %s: %v", bundlePath, err)
 	}
 	defer r.Close()
-	images, err := client.Import(context.Background(), r)
+	images, err := client.Import(ctx, r)
 	if err != nil {
 		return fmt.Errorf("can't import bundle: %v", err)
 	}
@@ -89,6 +89,8 @@ func (a *OCIBundleReconciler) Stop() error {
 	return nil
 }
 
-func (a *OCIBundleReconciler) Healthy() error {
+func (a *OCIBundleReconciler) Reconcile() error {
+	logrus.Debug("reconcile method called for: OCIBundleReconciler")
 	return nil
 }
+func (a *OCIBundleReconciler) Healthy() error { return nil }

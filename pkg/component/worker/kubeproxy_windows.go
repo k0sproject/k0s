@@ -1,12 +1,14 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+	"github.com/sirupsen/logrus"
 )
 
 type KubeProxy struct {
@@ -21,8 +23,8 @@ func (k KubeProxy) Init() error {
 	return assets.Stage(k.K0sVars.BinDir, "kube-proxy.exe", constant.BinDirMode)
 }
 
-func (k KubeProxy) Run() error {
-	node, err := getNodeName()
+func (k KubeProxy) Run(ctx context.Context) error {
+	node, err := getNodeName(ctx)
 	if err != nil {
 		return fmt.Errorf("can't get hostname: %v", err)
 	}
@@ -56,6 +58,12 @@ func (k KubeProxy) Run() error {
 
 func (k KubeProxy) Stop() error {
 	return k.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k KubeProxy) Reconcile() error {
+	logrus.Debug("reconcile method called for: worker KubeProxy")
+	return nil
 }
 
 func (k KubeProxy) Healthy() error {

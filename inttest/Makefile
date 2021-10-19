@@ -39,6 +39,9 @@ check-metrics: TIMEOUT=6m
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
 check-customports: TIMEOUT=6m
 
+# Config change smoke runs actually many cases hence a bit longer timeout
+check-configchange: TIMEOUT=8m
+
 .PHONY: $(smoketests)
 include Makefile.variables
 

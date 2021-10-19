@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -46,14 +46,12 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-var (
-	longDesc string
-)
+var longDesc string
 
 type cliOpts config.CLIOptions
 
@@ -197,7 +195,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 }
 
 func (c *cliOpts) buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(c.K0sVars))
+	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(config.DataDir))
 	fmt.Print(string(conf))
 	return nil
 }

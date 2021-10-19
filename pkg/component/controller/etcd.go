@@ -27,8 +27,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/k0sproject/k0s/internal/util"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -40,7 +43,7 @@ import (
 // Etcd implement the component interface to run etcd
 type Etcd struct {
 	CertManager certificate.Manager
-	Config      *config.EtcdConfig
+	Config      *v1beta1.EtcdConfig
 	JoinClient  *token.JoinClient
 	K0sVars     constant.CfgVars
 	LogLevel    string
@@ -59,17 +62,17 @@ func (e *Etcd) Init() error {
 		return err
 	}
 
-	e.uid, err = util.GetUID(constant.EtcdUser)
+	e.uid, err = users.GetUID(constant.EtcdUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running etcd as root: %w", err))
 	}
 
-	err = util.InitDirectory(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
+	err = dir.Init(e.K0sVars.EtcdDataDir, constant.EtcdDataDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-1.1.11/
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", e.K0sVars.EtcdDataDir, err)
 	}
 
-	err = util.InitDirectory(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
+	err = dir.Init(e.K0sVars.EtcdCertDir, constant.EtcdCertDirMode) // https://docs.datadoghq.com/security_monitoring/default_rules/cis-kubernetes-1.5.1-4.1.7/
 	if err != nil {
 		return fmt.Errorf("failed to create etcd cert dir: %w", err)
 	}
@@ -84,7 +87,7 @@ func (e *Etcd) Init() error {
 }
 
 func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]string, error) {
-	var etcdResponse config.EtcdResponse
+	var etcdResponse v1beta1.EtcdResponse
 	var err error
 	for i := 0; i < 20; i++ {
 		logrus.Infof("trying to sync etcd config")
@@ -100,7 +103,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 
 	logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
 	// Write etcd ca cert&key
-	if util.FileExists(etcdCaCert) && util.FileExists(etcdCaCertKey) {
+	if file.Exists(etcdCaCert) && file.Exists(etcdCaCertKey) {
 		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 	} else {
 		err = os.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
@@ -122,7 +125,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 }
 
 // Run runs etcd
-func (e *Etcd) Run() error {
+func (e *Etcd) Run(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 	etcdServerCert := filepath.Join(e.K0sVars.EtcdCertDir, "server.crt")
@@ -141,7 +144,7 @@ func (e *Etcd) Run() error {
 
 	peerURL := fmt.Sprintf("https://%s:2380", e.Config.PeerAddress)
 
-	args := util.MappedArgs{
+	args := stringmap.StringMap{
 		"--data-dir":                    e.K0sVars.EtcdDataDir,
 		"--listen-client-urls":          "https://127.0.0.1:2379",
 		"--advertise-client-urls":       "https://127.0.0.1:2379",
@@ -160,7 +163,7 @@ func (e *Etcd) Run() error {
 		"--enable-pprof":                "false",
 	}
 
-	if util.FileExists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
+	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
 		logrus.Warnf("etcd db file(s) already exist, not gonna run join process")
 	} else if e.JoinClient != nil {
 		initialCluster, err := e.syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey)
@@ -171,12 +174,12 @@ func (e *Etcd) Run() error {
 		args["--initial-cluster-state"] = "existing"
 	}
 
-	if err := e.setupCerts(); err != nil {
+	if err := e.setupCerts(ctx); err != nil {
 		return fmt.Errorf("failed to create etcd certs: %w", err)
 	}
 
 	// In case this is upgrade/restart, the sign key is not created
-	if util.FileExists(etcdSignKey) && util.FileExists(etcdSignPub) {
+	if file.Exists(etcdSignKey) && file.Exists(etcdSignPub) {
 		auth := fmt.Sprintf("jwt,pub-key=%s,priv-key=%s,sign-method=RS512,ttl=10m", etcdSignPub, etcdSignKey)
 		args["--auth-token"] = auth
 	}
@@ -184,13 +187,14 @@ func (e *Etcd) Run() error {
 	logrus.Infof("starting etcd with args: %v", args)
 
 	e.supervisor = supervisor.Supervisor{
-		Name:    "etcd",
-		BinPath: assets.BinPath("etcd", e.K0sVars.BinDir),
-		RunDir:  e.K0sVars.RunDir,
-		DataDir: e.K0sVars.DataDir,
-		Args:    args.ToArgs(),
-		UID:     e.uid,
-		GID:     e.gid,
+		Name:          "etcd",
+		BinPath:       assets.BinPath("etcd", e.K0sVars.BinDir),
+		RunDir:        e.K0sVars.RunDir,
+		DataDir:       e.K0sVars.DataDir,
+		Args:          args.ToArgs(),
+		UID:           e.uid,
+		GID:           e.gid,
+		KeepEnvPrefix: true,
 	}
 
 	return e.supervisor.Supervise()
@@ -201,7 +205,13 @@ func (e *Etcd) Stop() error {
 	return e.supervisor.Stop()
 }
 
-func (e *Etcd) setupCerts() error {
+// Reconcile detects changes in configuration and applies them to the component
+func (e *Etcd) Reconcile() error {
+	logrus.Debug("reconcile method called for: Etcd")
+	return nil
+}
+
+func (e *Etcd) setupCerts(ctx context.Context) error {
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 
@@ -209,7 +219,7 @@ func (e *Etcd) setupCerts() error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	eg, _ := errgroup.WithContext(context.Background())
+	var eg errgroup.Group
 
 	eg.Go(func() error {
 		// etcd client cert
@@ -290,7 +300,7 @@ func chown(name string, uid int, gid int) error {
 	if uid == 0 {
 		return nil
 	}
-	if util.IsDirectory(name) {
+	if dir.IsDirectory(name) {
 		if err := filepath.Walk(name, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err

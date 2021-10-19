@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"sync"
 
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -28,35 +30,37 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// ClientFactory defines a factory interface to load a kube client
-type ClientFactory interface {
+// ClientFactoryInterface defines a factory interface to load a kube client
+type ClientFactoryInterface interface {
 	GetClient() (kubernetes.Interface, error)
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
+	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
-func NewAdminClientFactory(k0sVars constant.CfgVars) ClientFactory {
-	return &clientFactory{
+func NewAdminClientFactory(k0sVars constant.CfgVars) ClientFactoryInterface {
+	return &ClientFactory{
 		configPath: k0sVars.AdminKubeConfigPath,
 	}
 }
 
-// clientFactory implements a cached and lazy-loading ClientFactory for all the different types of kube clients we use
+// ClientFactory implements a cached and lazy-loading ClientFactory for all the different types of kube clients we use
 // It's imoplemented as lazy-loading so we can create the factory itself before we have the api, etcd and other components up so we can pass
 // the factory itself to components needing kube clients and creation time.
-type clientFactory struct {
+type ClientFactory struct {
 	configPath string
 
 	client          kubernetes.Interface
 	dynamicClient   dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
 	restConfig      *rest.Config
+	configClient    cfgClient.ClusterConfigInterface
 
 	mutex sync.Mutex
 }
 
-func (c *clientFactory) GetClient() (kubernetes.Interface, error) {
+func (c *ClientFactory) GetClient() (kubernetes.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var err error
@@ -85,10 +89,9 @@ func (c *clientFactory) GetClient() (kubernetes.Interface, error) {
 	c.client = client
 
 	return c.client, nil
-
 }
 
-func (c *clientFactory) GetDynamicClient() (dynamic.Interface, error) {
+func (c *ClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var err error
@@ -118,7 +121,7 @@ func (c *clientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	return c.dynamicClient, nil
 }
 
-func (c *clientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+func (c *ClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	var err error
@@ -141,6 +144,28 @@ func (c *clientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterface
 	c.discoveryClient = cachedDiscoveryClient
 
 	return c.discoveryClient, nil
+}
+
+func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var err error
+	if c.restConfig == nil {
+		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		}
+	}
+	if c.configClient != nil {
+		return c.configClient, nil
+	}
+
+	configClient, err := cfgClient.NewForConfig(c.restConfig)
+	if err != nil {
+		return nil, err
+	}
+	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
+	return c.configClient, nil
 }
 
 // NewClient creates new k8s client based of the given kubeconfig
