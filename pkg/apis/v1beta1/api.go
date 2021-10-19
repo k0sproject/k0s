@@ -20,8 +20,7 @@ import (
 	"net"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 var _ Validateable = (*APISpec)(nil)
@@ -39,8 +38,8 @@ type APISpec struct {
 // DefaultAPISpec default settings for api
 func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
-	addresses, _ := iface.AllAddresses()
-	publicAddress, _ := iface.FirstPublicAddress()
+	addresses, _ := util.AllAddresses()
+	publicAddress, _ := util.FirstPublicAddress()
 	return &APISpec{
 		Port:       6443,
 		K0sAPIPort: 9443,
@@ -87,14 +86,14 @@ func (a *APISpec) getExternalURIForPort(port int) string {
 
 // Sans return the given SANS plus all local adresses and externalAddress if given
 func (a *APISpec) Sans() []string {
-	sans, _ := iface.AllAddresses()
+	sans, _ := util.AllAddresses()
 	sans = append(sans, a.Address)
 	sans = append(sans, a.SANs...)
 	if a.ExternalAddress != "" {
 		sans = append(sans, a.ExternalAddress)
 	}
 
-	return stringslice.Unique(sans)
+	return util.Unique(sans)
 }
 
 // Validate validates APISpec struct

@@ -25,9 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
-	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -53,10 +51,10 @@ func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constan
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
 func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
-	cfgUsers := getUserList(*clusterConfig.Spec.Install.SystemUsers)
+	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
-	for _, v := range cfgUsers {
-		if exists, _ := users.CheckIfUserExists(v); exists {
+	for _, v := range users {
+		if exists, _ := util.CheckIfUserExists(v); exists {
 			if err := DeleteUser(v); err != nil {
 				messages = append(messages, err.Error())
 			}
@@ -72,12 +70,12 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 // EnsureUser checks if a user exists, and creates it, if it doesn't
 // TODO: we should also consider modifying the user, if the user exists, but with wrong settings
 func EnsureUser(name string, homeDir string) error {
-	shell, err := file.GetExecPath("nologin")
+	shell, err := util.GetExecPath("nologin")
 	if err != nil {
 		return err
 	}
 
-	exists, err := users.CheckIfUserExists(name)
+	exists, err := util.CheckIfUserExists(name)
 	// User doesn't exist
 	if !exists && err == nil {
 		// Create the User
@@ -102,7 +100,7 @@ func CreateUser(userName string, homeDir string, shell string) error {
 	var userCmdArgs []string
 
 	logrus.Infof("creating user: %s", userName)
-	_, err := file.GetExecPath("useradd")
+	_, err := util.GetExecPath("useradd")
 	if err == nil {
 		userCmd = "useradd"
 		userCmdArgs = []string{`--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName}
@@ -124,7 +122,7 @@ func DeleteUser(userName string) error {
 	var userCmdArgs []string
 
 	logrus.Debugf("deleting user: %s", userName)
-	_, err := file.GetExecPath("userdel")
+	_, err := util.GetExecPath("userdel")
 	if err == nil {
 		userCmd = "userdel"
 		userCmdArgs = []string{userName}
@@ -173,5 +171,5 @@ func getUserList(sysUsers v1beta1.SystemUser) []string {
 	for i := 0; i < v.NumField(); i++ {
 		values[i] = v.Field(i).String()
 	}
-	return stringslice.Unique(values)
+	return util.Unique(values)
 }

@@ -20,8 +20,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -53,11 +52,11 @@ func (d *DefaultPSP) Init() error {
 // Run reconciles the k0s default PSP rules
 func (d *DefaultPSP) Run() error {
 	pspDir := path.Join(d.k0sVars.ManifestsDir, "defaultpsp")
-	err := dir.Init(pspDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(pspDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
-	tw := templatewriter.TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "default-psp",
 		Template: defaultPSPTemplate,
 		Data: struct{ DefaultPSP string }{

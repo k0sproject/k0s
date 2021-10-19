@@ -23,8 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -63,7 +62,7 @@ func (k *KubeProxy) Run() error {
 
 	k.tickerDone = make(chan struct{})
 
-	err := dir.Init(proxyDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(proxyDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,7 @@ func (k *KubeProxy) Run() error {
 					k.log.Infof("current cfg matches existing, not gonna do anything")
 					continue
 				}
-				tw := templatewriter.TemplateWriter{
+				tw := util.TemplateWriter{
 					Name:     "kube-proxy",
 					Template: proxyTemplate,
 					Data:     cfg,
@@ -115,7 +114,7 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) removeKubeProxy(manifestDir string) error {
-	if !dir.Exists(manifestDir) {
+	if !util.DirExists(manifestDir) {
 		return nil
 	}
 	return os.RemoveAll(manifestDir)

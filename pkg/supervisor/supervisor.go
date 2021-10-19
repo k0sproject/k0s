@@ -27,7 +27,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -94,7 +94,7 @@ func (s *Supervisor) processWaitQuit() bool {
 func (s *Supervisor) Supervise() error {
 	s.log = logrus.WithField("component", s.Name)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
-	if err := dir.Init(s.RunDir, constant.RunDirMode); err != nil {
+	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
 		s.log.Warnf("failed to initialize dir: %v", err)
 		return err
 	}

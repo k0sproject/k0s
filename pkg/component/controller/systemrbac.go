@@ -20,8 +20,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -45,11 +44,11 @@ func (s *SystemRBAC) Init() error {
 // Run reconciles the k0s related system RBAC rules
 func (s *SystemRBAC) Run() error {
 	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
-	err := dir.Init(rbacDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(rbacDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
-	tw := templatewriter.TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "bootstrap-rbac",
 		Template: bootstrapRBACTemplate,
 		Data:     struct{}{},

@@ -27,11 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/machineid"
-	"github.com/k0sproject/k0s/internal/pkg/stringmap"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -63,11 +59,11 @@ type Konnectivity struct {
 // Init ...
 func (k *Konnectivity) Init() error {
 	var err error
-	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
+	k.uid, err = util.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
 	}
-	err = dir.Init(k.K0sVars.KonnectivitySocketDir, 0755)
+	err = util.InitDirectory(k.K0sVars.KonnectivitySocketDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to initialize directory %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
@@ -102,12 +98,12 @@ func (k *Konnectivity) Run() error {
 	return k.writeKonnectivityAgent()
 }
 
-func (k *Konnectivity) defaultArgs() stringmap.StringMap {
-	serverID, err := machineid.Generate()
+func (k *Konnectivity) defaultArgs() util.MappedArgs {
+	serverID, err := util.MachineID()
 	if err != nil {
 		logrus.Errorf("failed to fetch server ID for konnectivity-server")
 	}
-	return stringmap.StringMap{
+	return util.MappedArgs{
 		"--uds-name":                filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
 		"--cluster-cert":            filepath.Join(k.K0sVars.CertRootDir, "server.crt"),
 		"--cluster-key":             filepath.Join(k.K0sVars.CertRootDir, "server.key"),
@@ -186,12 +182,12 @@ type konnectivityAgentConfig struct {
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
-	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
 
-	tw := templatewriter.TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
 		Data: konnectivityAgentConfig{

@@ -13,14 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package dir
+package util
 
 import (
 	"fmt"
 	"os"
-	"os/exec"
-
-	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 // IsDirectory check the given path exists and is a directory
@@ -29,8 +26,8 @@ func IsDirectory(name string) bool {
 	return err == nil && fi.Mode().IsDir()
 }
 
-// GetAll return a list of dirs in given base path
-func GetAll(base string) ([]string, error) {
+// GetAllDirs return a list of dirs in given base path
+func GetAllDirs(base string) ([]string, error) {
 	var dirs []string
 	if !IsDirectory(base) {
 		return dirs, fmt.Errorf("%s is not a directory", base)
@@ -48,35 +45,16 @@ func GetAll(base string) ([]string, error) {
 	return dirs, nil
 }
 
-// Init creates a path if it does not exist, and verifies its permissions, if it does
-func Init(path string, perm os.FileMode) error {
+// InitDirectory creates a path if it does not exist, and verifies its permissions, if it does
+func InitDirectory(path string, perm os.FileMode) error {
 	// if directory doesn't exist, this will create it
 	if err := os.MkdirAll(path, perm); err != nil {
 		return err
 	}
 	// Check permissions in case directory already existed
-	if err := file.CheckPathPermissions(path, perm); err != nil {
+	if err := CheckPathPermissions(path, perm); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// Exists checks if a directory exists before we try using it
-func Exists(dirName string) bool {
-	info, err := os.Stat(dirName)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return info.IsDir()
-}
-
-// Copy copies the content of a folder
-func Copy(src string, dst string) error {
-	cmd := exec.Command("cp", "-r", src, dst)
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
 	return nil
 }

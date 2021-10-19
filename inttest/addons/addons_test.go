@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
@@ -166,7 +166,7 @@ func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]in
 	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/addon_crd_manifest_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)
-	tw := templatewriter.TemplateWriter{
+	tw := util.TemplateWriter{
 		Name:     "testChartUpdate",
 		Template: chartCrdTemplate,
 		Data: struct {

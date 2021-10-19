@@ -23,8 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/users"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -44,13 +43,13 @@ type Kine struct {
 // Init extracts the needed binaries
 func (k *Kine) Init() error {
 	var err error
-	k.uid, err = users.GetUID(constant.KineUser)
+	k.uid, err = util.GetUID(constant.KineUser)
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kine as root: %w", err))
 	}
 
 	kineSocketDir := filepath.Dir(k.K0sVars.KineSocketPath)
-	err = dir.Init(kineSocketDir, 0755)
+	err = util.InitDirectory(kineSocketDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", kineSocketDir, err)
 	}
@@ -64,7 +63,7 @@ func (k *Kine) Init() error {
 	}
 	if dsURL.Scheme == "sqlite" {
 		// Make sure the db basedir exists
-		err = dir.Init(filepath.Dir(dsURL.Path), constant.KineDBDirMode)
+		err = util.InitDirectory(filepath.Dir(dsURL.Path), constant.KineDBDirMode)
 		if err != nil {
 			return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(dsURL.Path), err)
 		}

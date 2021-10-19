@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
@@ -98,7 +98,7 @@ func (h *HelmAddons) initHelm() error {
 	}
 
 	for _, addon := range h.ClusterConfig.Spec.Extensions.Helm.Charts {
-		tw := templatewriter.TemplateWriter{
+		tw := util.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
 			Data:     addon,

@@ -20,12 +20,13 @@ import (
 	"time"
 
 	"github.com/cloudflare/cfssl/log"
-	"github.com/k0sproject/k0s/internal/pkg/machineid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+
+	"github.com/k0sproject/k0s/internal/util"
 )
 
 // The LeasePool represents a single lease accessed by multiple clients (considered part of the "pool")
@@ -127,7 +128,7 @@ func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*
 
 	// we default to the machine ID unless the user explicitly set an identity
 	if leaseConfig.identity == "" {
-		machineID, err := machineid.Generate()
+		machineID, err := util.MachineID()
 
 		if err != nil {
 			return nil, err

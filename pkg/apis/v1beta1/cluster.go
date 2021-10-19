@@ -20,7 +20,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
+	"github.com/k0sproject/k0s/internal/util"
+
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -149,7 +150,7 @@ func ConfigFromStdin(k0sVars constant.CfgVars) (*ClusterConfig, error) {
 
 func configFromString(yml string, k0sVars constant.CfgVars) (*ClusterConfig, error) {
 	config := &ClusterConfig{k0sVars: k0sVars}
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), &config, []string{"interval"})
+	err := util.YamlUnmarshalStrictIgnoringFields([]byte(yml), &config, []string{"interval"})
 	if err != nil {
 		return config, err
 	}

@@ -26,8 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -265,7 +264,7 @@ func (m *MetricServer) Run() error {
 	m.tickerDone = make(chan struct{})
 
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
-	err := dir.Init(msDir, constant.ManifestsDirMode)
+	err := util.InitDirectory(msDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
@@ -284,7 +283,7 @@ func (m *MetricServer) Run() error {
 				if previousConfig == newConfig {
 					continue
 				}
-				tw := templatewriter.TemplateWriter{
+				tw := util.TemplateWriter{
 					Name:     "metricServer",
 					Template: metricServerTemplate,
 					Data:     newConfig,

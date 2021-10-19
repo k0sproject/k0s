@@ -13,23 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package machineid
+package util
 
-import "testing"
+import (
+	"testing"
 
-func TestMachineIDFromHostname(t *testing.T) {
-	id, err := fromHostname()
-	if err != nil {
-		t.Errorf("fromHostname() unexpctedly returned error")
-	} else if len(id) != 32 {
-		t.Errorf("len(fromHostname()) = %d, want %d", len(id), 32)
-	}
+	"github.com/stretchr/testify/assert"
+)
 
-	// test that id does not change
-	id2, err := fromHostname()
-	if err != nil {
-		t.Errorf("fromHostname() unexpectedly returned error")
-	} else if id != id2 {
-		t.Errorf("fromHostname() = %s, want %s", id2, id)
-	}
+func TestFlagSplitting(t *testing.T) {
+	args := "--foo=bar --foobar=xyz,asd --bool-flag"
+
+	m := SplitFlags(args)
+
+	assert.Equal(t, 3, len(m))
+	assert.Equal(t, "bar", m["--foo"])
+	assert.Equal(t, "xyz,asd", m["--foobar"])
+	assert.Equal(t, "", m["--bool-flag"])
+}
+
+func TestFlagSplittingBoolFlags(t *testing.T) {
+	args := "--bool-flag"
+
+	m := SplitFlags(args)
+
+	assert.Equal(t, 1, len(m))
+	assert.Equal(t, "", m["--bool-flag"])
 }

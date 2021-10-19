@@ -35,7 +35,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
@@ -214,7 +214,7 @@ users:
 			return
 		}
 
-		tw := templatewriter.TemplateWriter{
+		tw := util.TemplateWriter{
 			Name:     "kube-config",
 			Template: tpl,
 			Data: struct {

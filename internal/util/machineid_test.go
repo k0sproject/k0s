@@ -13,29 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package users
+package util
 
-import (
-	"os/user"
-	"strconv"
-)
+import "testing"
 
-// GetUID returns uid of given username and logs a warning if its missing
-func GetUID(name string) (int, error) {
-	entry, err := user.Lookup(name)
+func TestMachineIDFromHostname(t *testing.T) {
+	id, err := MachineIDFromHostname()
 	if err != nil {
-		return 0, err
+		t.Errorf("machineIDFromHostname() unexpctedly returned error")
+	} else if len(id) != 32 {
+		t.Errorf("len(machineIDFromHostname()) = %d, want %d", len(id), 32)
 	}
-	return strconv.Atoi(entry.Uid)
-}
 
-func CheckIfUserExists(name string) (bool, error) {
-	_, err := user.Lookup(name)
-	if _, ok := err.(user.UnknownUserError); ok {
-		return false, nil
-	}
+	// test that id does not change
+	id2, err := MachineIDFromHostname()
 	if err != nil {
-		return false, err
+		t.Errorf("machineIDFromHostname() unexpectedly returned error")
+	} else if id != id2 {
+		t.Errorf("machineIDFromHostname() = %s, want %s", id2, id)
 	}
-	return true, nil
 }

@@ -7,8 +7,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/util"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
 )
@@ -25,8 +24,8 @@ func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) 
 		return fmt.Errorf("failed to parse kubelet bootstrap auth from token: %w", err)
 	}
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
-	if !file.Exists(kubeletCAPath) {
-		if err := dir.Init(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
+	if !util.FileExists(kubeletCAPath) {
+		if err := util.InitDirectory(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 			return fmt.Errorf("failed to initialize directory '%s': %w", k0sVars.CertRootDir, err)
 		}
 		err = os.WriteFile(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
@@ -46,7 +45,7 @@ func LoadKubeletConfigClient(k0svars constant.CfgVars) (*KubeletConfigClient, er
 	var kubeletConfigClient *KubeletConfigClient
 	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
 	clientConfigPath := k0svars.KubeletBootstrapConfigPath
-	if file.Exists(k0svars.KubeletAuthConfigPath) {
+	if util.FileExists(k0svars.KubeletAuthConfigPath) {
 		clientConfigPath = k0svars.KubeletAuthConfigPath
 	}
 
