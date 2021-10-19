@@ -110,7 +110,9 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	} else {
 		args["node-cidr-mask-size"] = "24"
 	}
-	clusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
+	if clusterConfig.Spec.Network.DualStack.Enabled {
+		args = v1beta1.EnableFeatureGate(args, v1beta1.DualStackFeatureGate)
+	}
 	for name, value := range cmDefaultArgs {
 		if args[name] == "" {
 			args[name] = value

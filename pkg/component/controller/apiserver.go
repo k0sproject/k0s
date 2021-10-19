@@ -28,6 +28,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -88,7 +89,7 @@ func (a *APIServer) Init() error {
 // Run runs kube api
 func (a *APIServer) Run(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
-	args := map[string]string{
+	args := stringmap.StringMap{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
 		"secure-port":                      fmt.Sprintf("%d", a.ClusterConfig.Spec.API.Port),
 		"authorization-mode":               "Node,RBAC",
@@ -134,8 +135,11 @@ func (a *APIServer) Run(_ context.Context) error {
 		}
 		args[name] = value
 	}
-	a.ClusterConfig.Spec.Network.DualStack.EnableDualStackFeatureGate(args)
 
+	if a.ClusterConfig.Spec.Network.DualStack.Enabled {
+		args = v1beta1.EnableFeatureGate(args, v1beta1.DualStackFeatureGate)
+	}
+	args = v1beta1.EnableFeatureGate(args, v1beta1.ServiceInternalTrafficPolicyFeatureGate)
 	for name, value := range apiDefaultArgs {
 		if args[name] == "" {
 			args[name] = value
@@ -144,6 +148,7 @@ func (a *APIServer) Run(_ context.Context) error {
 	if a.ClusterConfig.Spec.API.ExternalAddress != "" || a.ClusterConfig.Spec.API.TunneledNetworkingMode {
 		args["endpoint-reconciler-type"] = "none"
 	}
+
 	var apiServerArgs []string
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
