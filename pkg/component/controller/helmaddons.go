@@ -19,7 +19,8 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -27,22 +28,24 @@ import (
 
 // Helm watch for Chart crd
 type HelmAddons struct {
-	Client            clientset.ChartV1Beta1Interface
-	ClusterConfig     *k0sv1beta1.ClusterConfig
+	Client clientset.ChartV1Beta1Interface
+
 	saver             manifestsSaver
 	L                 *logrus.Entry
 	stopCh            chan struct{}
 	informer          cache.SharedIndexInformer
 	helm              *helm.Commands
 	kubeConfig        string
-	kubeClientFactory kubeutil.ClientFactory
+	kubeClientFactory kubeutil.ClientFactoryInterface
 	leaderElector     LeaderElector
 }
 
+var _ component.Component = &HelmAddons{}
+var _ component.ReconcilerComponent = &HelmAddons{}
+
 // NewHelmAddons builds new HelmAddons
-func NewHelmAddons(c *k0sv1beta1.ClusterConfig, s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactory, leaderElector LeaderElector) *HelmAddons {
+func NewHelmAddons(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
 	return &HelmAddons{
-		ClusterConfig:     c,
 		saver:             s,
 		L:                 logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:            make(chan struct{}),
@@ -62,9 +65,9 @@ const (
 )
 
 // Run runs the helm controller
-func (h *HelmAddons) Run() error {
+func (h *HelmAddons) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
 	h.L.Info("run begin")
-	if h.ClusterConfig.Spec.Extensions == nil || h.ClusterConfig.Spec.Extensions.Helm == nil {
+	if clusterConfig.Spec.Extensions == nil || clusterConfig.Spec.Extensions.Helm == nil {
 		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
 		return nil
 	}
@@ -76,7 +79,7 @@ func (h *HelmAddons) Run() error {
 
 	h.Client = client
 
-	if err := h.initHelm(); err != nil {
+	if err := h.reconcileHelmSettings(clusterConfig); err != nil {
 		return fmt.Errorf("can't init helm: %v", err)
 	}
 
@@ -86,18 +89,18 @@ func (h *HelmAddons) Run() error {
 	}
 	h.L.Info("Successfully synced controller cache")
 
-	go h.CrdControlLoop()
+	go h.CrdControlLoop(ctx)
 	return nil
 }
 
-func (h *HelmAddons) initHelm() error {
-	for _, repo := range h.ClusterConfig.Spec.Extensions.Helm.Repositories {
+func (h *HelmAddons) reconcileHelmSettings(clusterConfig *k0sAPI.ClusterConfig) error {
+	for _, repo := range clusterConfig.Spec.Extensions.Helm.Repositories {
 		if err := h.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
 		}
 	}
 
-	for _, addon := range h.ClusterConfig.Spec.Extensions.Helm.Charts {
+	for _, addon := range clusterConfig.Spec.Extensions.Helm.Charts {
 		tw := templatewriter.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
@@ -120,16 +123,16 @@ type queueJob struct {
 	operation string
 }
 
-func (h *HelmAddons) CrdControlLoop() {
+func (h *HelmAddons) CrdControlLoop(ctx context.Context) {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	defer queue.ShutDown()
 	h.informer = cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(lo metav1.ListOptions) (result runtime.Object, err error) {
-				return h.Client.Charts(namespaceToWatch).List(context.Background())
+				return h.Client.Charts(namespaceToWatch).List(ctx)
 			},
 			WatchFunc: func(lo metav1.ListOptions) (watch.Interface, error) {
-				return h.Client.Charts(namespaceToWatch).Watch(context.Background(), lo)
+				return h.Client.Charts(namespaceToWatch).Watch(ctx, lo)
 			},
 		},
 		&v1beta1.Chart{},
@@ -174,14 +177,14 @@ func (h *HelmAddons) CrdControlLoop() {
 	go h.informer.Run(h.stopCh)
 	wait.Until(func() {
 		for {
-			h.processMessage(queue)
+			h.processMessage(ctx, queue)
 		}
 	}, time.Second, h.stopCh)
 }
 
 const maxRetries = 5
 
-func (h *HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
+func (h *HelmAddons) processMessage(ctx context.Context, q workqueue.RateLimitingInterface) {
 	jobI, quit := q.Get()
 	job := jobI.(queueJob)
 
@@ -196,7 +199,7 @@ func (h *HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
 	case operationDelete:
 		err = h.uninstall(job.key)
 	case operationAdd, operationUpdate:
-		err = h.reconcile(job.key)
+		err = h.reconcile(ctx, job.key)
 	}
 
 	if err != nil {
@@ -205,18 +208,17 @@ func (h *HelmAddons) processMessage(q workqueue.RateLimitingInterface) {
 			q.AddRateLimited(job)
 			return
 		}
-		h.saveError(err, job.key)
+		h.saveError(ctx, err, job.key)
 		h.L.WithError(err).Errorf("Error processing %s (giving up)", job.key)
 
 	}
 
 	q.Forget(job)
-
 }
 
-func (h *HelmAddons) saveError(origErr error, objectID string) {
+func (h *HelmAddons) saveError(ctx context.Context, origErr error, objectID string) {
 	name := strings.Split(objectID, "/")[1]
-	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
+	chart, err := h.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
 		return
@@ -225,7 +227,7 @@ func (h *HelmAddons) saveError(origErr error, objectID string) {
 		return
 	}
 	chart.Status.Error = origErr.Error()
-	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(context.Background(), chart, metav1.UpdateOptions{})
+	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
 	if err != nil {
 		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
 	}
@@ -244,15 +246,13 @@ func (h *HelmAddons) uninstall(id string) error {
 	return nil
 }
 
-func (h *HelmAddons) reconcile(objectID string) error {
-
+func (h *HelmAddons) reconcile(ctx context.Context, objectID string) error {
 	if !h.leaderElector.IsLeader() {
 		h.L.Info("dry run, doesn't reconcile")
 		return nil
 	}
 	name := strings.Split(objectID, "/")[1]
-	chart, err := h.Client.Charts(namespaceToWatch).Get(context.Background(), name, metav1.GetOptions{})
-
+	chart, err := h.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("can't reconcile chart `%s`: %v", objectID, err)
 	}
@@ -286,14 +286,14 @@ func (h *HelmAddons) reconcile(objectID string) error {
 	chart.Status.Revision = int64(chartRelease.Version)
 	chart.Status.Namespace = chartRelease.Namespace
 	chart.Status.Error = ""
-	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(context.Background(), chart, metav1.UpdateOptions{})
+	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("can't update status for `%s`: %v", objectID, err)
 	}
 	return nil
 }
 
-func (h *HelmAddons) addRepo(repo k0sv1beta1.Repository) error {
+func (h *HelmAddons) addRepo(repo k0sAPI.Repository) error {
 	return h.helm.AddRepository(repo)
 }
 
@@ -311,8 +311,13 @@ spec:
   namespace: {{ .TargetNS }}
 `
 
-// Run
+// Init
 func (h *HelmAddons) Init() error {
+	return nil
+}
+
+// Run
+func (h *HelmAddons) Run(_ context.Context) error {
 	return nil
 }
 

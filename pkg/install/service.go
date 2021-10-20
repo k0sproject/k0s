@@ -119,13 +119,8 @@ func UninstallService(role string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Info("Uninstalling the k0s service")
 
-	err = s.Uninstall()
-	if err != nil {
-		return fmt.Errorf("failed to remove the k0s service: %v", err)
-	}
-	return nil
+	return s.Uninstall()
 }
 
 // GetSysInit returns the sys init platform name, and the stub file path for a system

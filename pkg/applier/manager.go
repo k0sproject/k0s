@@ -32,9 +32,9 @@ import (
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
 	K0sVars           constant.CfgVars
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	//client               kubernetes.Interface
+	// client               kubernetes.Interface
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc
@@ -73,7 +73,7 @@ func (m *Manager) Init() error {
 }
 
 // Run runs the Manager
-func (m *Manager) Run() error {
+func (m *Manager) Run(_ context.Context) error {
 	return nil
 }
 
@@ -82,6 +82,12 @@ func (m *Manager) Stop() error {
 	if m.cancelWatcher != nil {
 		m.cancelWatcher()
 	}
+	return nil
+}
+
+// Reconcile reconciles the Manager
+func (m *Manager) Reconcile() error {
+	logrus.Debug("reconcile method called for: Manager")
 	return nil
 }
 

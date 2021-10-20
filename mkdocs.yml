@@ -9,7 +9,7 @@ copyright: Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</
     - All rights reserved.
 edit_uri: ""
 nav:
-  - Overview: README.md
+  - Overview:                             README.md
   - Install:
       - Quick Start Guide:                install.md
       - Install using k0sctl:             k0sctl-install.md
@@ -27,6 +27,7 @@ nav:
       - OS Dependencies:                  os-deps.md
   - Usage:
       - Configuration Options:            configuration.md
+      - Dynamic Configuration:            dynamic-configuration.md
       - Configuration Validation:         configuration-validation.md
       - Worker Node Configuration:        worker-node-config.md
       - Networking (CNI):                 networking.md
@@ -40,6 +41,7 @@ nav:
       - Shell Completion:                 shell-completion.md
       - User Management:                  user-management.md
       - Configuration of Environment Variables: environment-variables.md
+      - OpenID Connect: ./examples/oidc/oidc-cluster-configuration.md
   - Extensions:
       - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
       - NGINX Ingress Controller:         examples/nginx-ingress.md
@@ -52,6 +54,7 @@ nav:
   - Reference:
       - Architecture:                     architecture.md
       - CIS Benchmark:                    cis_benchmark.md
+  - Releases:                             releases.md
   - Contributing:
       - Overview:                         contributors/overview.md
       - GitHub Workflow:                  contributors/github_workflow.md

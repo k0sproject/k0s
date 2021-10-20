@@ -16,6 +16,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -29,7 +30,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -38,7 +39,7 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig      *config.ClusterConfig
+	ClusterConfig      *v1beta1.ClusterConfig
 	K0sVars            constant.CfgVars
 	LogLevel           string
 	Storage            component.Component
@@ -85,7 +86,7 @@ func (a *APIServer) Init() error {
 }
 
 // Run runs kube api
-func (a *APIServer) Run() error {
+func (a *APIServer) Run(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := map[string]string{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,
@@ -158,10 +159,10 @@ func (a *APIServer) Run() error {
 		GID:     a.gid,
 	}
 	switch a.ClusterConfig.Spec.Storage.Type {
-	case config.KineStorageType:
+	case v1beta1.KineStorageType:
 		a.supervisor.Args = append(a.supervisor.Args,
 			fmt.Sprintf("--etcd-servers=unix://%s", a.K0sVars.KineSocketPath)) // kine endpoint
-	case config.EtcdStorageType:
+	case v1beta1.EtcdStorageType:
 		a.supervisor.Args = append(a.supervisor.Args,
 			"--etcd-servers=https://127.0.0.1:2379",
 			fmt.Sprintf("--etcd-cafile=%s", path.Join(a.K0sVars.CertRootDir, "etcd/ca.crt")),
@@ -193,6 +194,12 @@ func (a *APIServer) writeKonnectivityConfig() error {
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (a *APIServer) Reconcile() error {
+	logrus.Debug("reconcile method called for: APIServer")
+	return nil
 }
 
 // Health-check interface

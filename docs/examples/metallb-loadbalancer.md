@@ -16,9 +16,9 @@ MetalLB implements the Kubernetes service of type LoadBalancer. When a LoadBalan
 
 One of the benefits of MetalLB is that you avoid all cloud provider dependencies. That's why MetalLB is typically used for bare-metal deployments.
 
-See the MetalLB requirements in the [MetalLB's official documentation](https://metallb.universe.tf/#requirements). By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router, you need to enable strict ARP mode. See [MetalLB preparations](https://metallb.universe.tf/installation/#preparation).
+See the MetalLB requirements in the [MetalLB's official documentation](https://metallb.universe.tf/#requirements). By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router and you are using kube-proxy in IPVS mode, you need to enable strict ARP mode in kube-proxy. See [MetalLB preparations](https://metallb.universe.tf/installation/#preparation).
 
-Port 7946 (TCP & UDP) must be allowed between the nodes.
+Port 7946 (TCP & UDP) must be allowed between the nodes. In addition, before installing MetalLB, make sure there is no other software running on port 7946 on the nodes, such as docker daemon.
 
 ### Install MetalLB
 

@@ -2,7 +2,7 @@
 ARCH = $(shell go env GOARCH)
 OS = $(shell go env GOOS)
 
-sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.20.0/sonobuoy_0.20.0_$(OS)_$(ARCH).tar.gz
+sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.53.2/sonobuoy_0.53.2_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
 
@@ -27,8 +27,11 @@ check-network: bin/sonobuoy .footloose-alpine.stamp
 
 check-network-vm: bin/sonobuoy
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
-		go test -count=1 -v -timeout 30m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite$
+		go test -count=1 -v -timeout 30m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestVMNetworkSuite -kubernetes-version=$(K8S_VERSION)
 
+check-conformance: bin/sonobuoy
+	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
+		go test -count=1 -v -timeout 240m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestConformanceSuite -kubernetes-version=$(K8S_VERSION)
 TIMEOUT ?= 4m
 
 check-ctr: TIMEOUT=10m
@@ -38,6 +41,9 @@ check-metrics: TIMEOUT=6m
 
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
 check-customports: TIMEOUT=6m
+
+# Config change smoke runs actually many cases hence a bit longer timeout
+check-configchange: TIMEOUT=8m
 
 .PHONY: $(smoketests)
 include Makefile.variables

@@ -16,10 +16,12 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
+	"github.com/sirupsen/logrus"
 )
 
 type k0sCloudProvider struct {
@@ -66,7 +68,7 @@ func (c *k0sCloudProvider) Init() error {
 
 // Run will create a k0s-cloud-provider command, and run it on a goroutine.
 // Failures to create this command will be returned as an error.
-func (c *k0sCloudProvider) Run() error {
+func (c *k0sCloudProvider) Run(_ context.Context) error {
 	command, err := c.commandBuilder()
 	if err != nil {
 		return err
@@ -81,6 +83,12 @@ func (c *k0sCloudProvider) Run() error {
 func (c *k0sCloudProvider) Stop() error {
 	close(c.stopCh)
 
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (c *k0sCloudProvider) Reconcile() error {
+	logrus.Debug("reconcile method called for: k0sCloudProvider")
 	return nil
 }
 

@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -29,7 +30,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/archive"
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -67,7 +68,6 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	}
 	logrus.Infof("archive %s created successfully", destBackupFile)
 	return nil
-
 }
 
 func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
@@ -151,11 +151,11 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
 	_, err := os.Stat(configFromBackup)
 	if os.IsNotExist(err) {
-		return v1beta1.DefaultClusterConfig(k0sVars), nil
+		return v1beta1.DefaultClusterConfig(bm.dataDir), nil
 	}
 	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := config.GetYamlFromFile(configFromBackup, k0sVars)
+	cfg, err := config.GetNodeConfig(configFromBackup, k0sVars)
 	if err != nil {
 		return nil, err
 	}

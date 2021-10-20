@@ -16,6 +16,7 @@ limitations under the License.
 package worker
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,7 +62,7 @@ func (c *ContainerD) Init() error {
 }
 
 // Run runs containerD
-func (c *ContainerD) Run() error {
+func (c *ContainerD) Run(_ context.Context) error {
 	logrus.Info("Starting containerD")
 
 	if err := c.setupConfig(); err != nil {
@@ -100,6 +101,12 @@ func (c *ContainerD) setupConfig() error {
 // Stop stops containerD
 func (c *ContainerD) Stop() error {
 	return c.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (c *ContainerD) Reconcile() error {
+	logrus.Debug("reconcile method called for: ContainerD")
+	return nil
 }
 
 // Health-check interface

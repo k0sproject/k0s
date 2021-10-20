@@ -16,10 +16,13 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 
 	"github.com/sirupsen/logrus"
 
@@ -28,13 +31,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
-
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
 )
 
 // Kine implement the component interface to run kine
 type Kine struct {
-	Config     *config.KineConfig
+	Config     *v1beta1.KineConfig
 	gid        int
 	K0sVars    constant.CfgVars
 	supervisor supervisor.Supervisor
@@ -43,6 +44,7 @@ type Kine struct {
 
 // Init extracts the needed binaries
 func (k *Kine) Init() error {
+	logrus.Infof("initializing kine with config: %+v", k.Config)
 	var err error
 	k.uid, err = users.GetUID(constant.KineUser)
 	if err != nil {
@@ -80,7 +82,7 @@ func (k *Kine) Init() error {
 }
 
 // Run runs kine
-func (k *Kine) Run() error {
+func (k *Kine) Run(_ context.Context) error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
 
@@ -103,6 +105,12 @@ func (k *Kine) Run() error {
 // Stop stops kine
 func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Kine) Reconcile() error {
+	logrus.Debug("reconcile method called for: Kine")
+	return nil
 }
 
 // Health-check interface

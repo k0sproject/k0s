@@ -36,4 +36,7 @@ resource "aws_eip" "controller-ext" {
   count    = var.controller_count
   instance = aws_instance.cluster-controller[count.index].id
   vpc      = true
+  tags = {
+    Name = format("%s-controller-ip-%d", var.cluster_name, count.index)
+  }
 }

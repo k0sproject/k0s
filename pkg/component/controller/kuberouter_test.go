@@ -1,14 +1,14 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestKubeRouterConfig(t *testing.T) {
-	cfg := v1beta1.DefaultClusterConfig(constant.CfgVars{})
+	cfg := v1beta1.DefaultClusterConfig(dataDir)
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
@@ -27,9 +27,9 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
 
 	saver := inMemorySaver{}
-	kr, err := NewKubeRouter(cfg, saver)
+	kr, err := NewKubeRouter(k0sVars, saver)
 	require.NoError(t, err)
-	require.NoError(t, kr.Run())
+	require.NoError(t, kr.Reconcile(context.Background(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]
@@ -54,15 +54,14 @@ func TestKubeRouterConfig(t *testing.T) {
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
-
-	cfg := v1beta1.DefaultClusterConfig(constant.CfgVars{})
+	cfg := v1beta1.DefaultClusterConfig(dataDir)
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
 	saver := inMemorySaver{}
-	kr, err := NewKubeRouter(cfg, saver)
+	kr, err := NewKubeRouter(k0sVars, saver)
 	require.NoError(t, err)
-	require.NoError(t, kr.Run())
+	require.NoError(t, kr.Reconcile(context.Background(), cfg))
 	require.NoError(t, kr.Stop())
 
 	manifestData, foundRaw := saver["kube-router.yaml"]

@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -48,12 +49,6 @@ func NewRestoreCmd() *cobra.Command {
 			if len(args) != 1 {
 				return fmt.Errorf("path to backup archive expected")
 			}
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-
-			c.ClusterConfig = cfg
 			return c.restore(args[0])
 		},
 		PreRunE: preRunValidateConfig,
@@ -86,7 +81,7 @@ func (c *CmdOpts) restore(path string) error {
 		return fmt.Errorf("given file %s does not exist", path)
 	}
 
-	if !dir.Exists(c.K0sVars.DataDir) {
+	if !dir.IsDirectory(c.K0sVars.DataDir) {
 		if err := dir.Init(c.K0sVars.DataDir, constant.DataDirMode); err != nil {
 			return err
 		}

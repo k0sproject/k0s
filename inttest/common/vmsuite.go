@@ -51,11 +51,15 @@ type VMSuite struct {
 	config       TerraformMachineData
 	ControllerIP string
 	WorkerIPs    []string
-	keyDir       string
+	KeyDir       string
 }
 
 func (s *VMSuite) GetConfig() {
-	tfDataFile, err := os.Open("../terraform/test-cluster/out.json")
+	if s.KeyDir == "" {
+		s.KeyDir = "../terraform/test-cluster"
+	}
+
+	tfDataFile, err := os.Open(path.Join(s.KeyDir, "out.json"))
 	if err != nil {
 		s.T().Logf("failed to read terraform output: %s", err.Error())
 		return
@@ -72,7 +76,6 @@ func (s *VMSuite) GetConfig() {
 	// set our VMSuite configuration
 	s.config = tfMachineData
 	s.ControllerIP = tfMachineData.Controllers.IP[0]
-	s.keyDir = "../terraform/test-cluster"
 	s.WorkerIPs = tfMachineData.Workers.IP
 }
 
@@ -118,7 +121,7 @@ func (s *VMSuite) SSH(ip string) (*SSHConnection, error) {
 		Address: ip,
 		User:    "ubuntu",
 		Port:    22,
-		KeyPath: path.Join(s.keyDir, "aws_private.pem"),
+		KeyPath: path.Join(s.KeyDir, "aws_private.pem"),
 	}
 
 	err := ssh.Connect()
@@ -177,7 +180,6 @@ func (s *VMSuite) GetJoinToken(role string) (string, error) {
 	// in case of no k0s.conf given, there might be warnings on the first few lines
 	token = outputParts[len(outputParts)-1]
 	return token, nil
-
 }
 
 // WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API

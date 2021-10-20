@@ -60,6 +60,8 @@ variable "cluster_flavor" {
 }
 ```
 
+Open `main.tf` to check or modify k0s version near the end of the file.
+
 You can also configure a different name to your cluster and change the default VM type. `t3.small` (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.
 
 ### 2. Create the VMs
@@ -143,7 +145,7 @@ sudo k0s kubectl get nodes
 To get started with Rook, let's first clone the Rook GitHub repo:
 
 ```shell
-git clone --single-branch --branch v1.6.0 https://github.com/rook/rook.git
+git clone --single-branch --branch release-1.7 https://github.com/rook/rook.git
 cd rook/cluster/examples/kubernetes/ceph
 ```
 
@@ -249,7 +251,7 @@ When the PVC gets the requested volume reserved (bound), it should look like thi
 $ kubectl get pvc
 
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
-mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   3Gi        RWO            rook-ceph-block   6s
+mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO            rook-ceph-block   6s
 ```
 
 ### 10. Deploy an example application

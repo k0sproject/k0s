@@ -16,6 +16,7 @@ limitations under the License.
 package worker
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -102,7 +103,7 @@ func (k *Kubelet) Init() error {
 }
 
 // Run runs kubelet
-func (k *Kubelet) Run() error {
+func (k *Kubelet) Run(ctx context.Context) error {
 	cmd := "kubelet"
 
 	kubeletConfigData := kubeletConfig{
@@ -136,7 +137,7 @@ func (k *Kubelet) Run() error {
 	}
 
 	if runtime.GOOS == "windows" {
-		node, err := getNodeName()
+		node, err := getNodeName(ctx)
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %v", err)
 		}
@@ -201,7 +202,7 @@ func (k *Kubelet) Run() error {
 	}
 
 	err := retry.Do(func() error {
-		kubeletconfig, err := k.KubeletConfigClient.Get(k.Profile)
+		kubeletconfig, err := k.KubeletConfigClient.Get(ctx, k.Profile)
 		if err != nil {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
@@ -233,16 +234,23 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Kubelet) Reconcile() error {
+	logrus.Debug("reconcile method called for: Kubelet")
+	return nil
+}
+
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
 
 const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
 
-func getNodeName() (string, error) {
+func getNodeName(ctx context.Context) (string, error) {
 	req, err := http.NewRequest("GET", awsMetaInformationURI, nil)
 	if err != nil {
 		return "", err
 	}
+	req = req.WithContext(ctx)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return os.Hostname()

@@ -17,10 +17,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +31,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -237,13 +240,18 @@ spec:
 
 const HostsPerExtraReplica = 10.0
 
+var _ component.Component = &CoreDNS{}
+var _ component.ReconcilerComponent = &CoreDNS{}
+
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
-	client        kubernetes.Interface
-	tickerDone    chan struct{}
-	log           *logrus.Entry
-	clusterConfig *config.ClusterConfig
-	K0sVars       constant.CfgVars
+	client                 kubernetes.Interface
+	log                    *logrus.Entry
+	manifestDir            string
+	K0sVars                constant.CfgVars
+	previousConfig         coreDNSConfig
+	stopFunc               context.CancelFunc
+	lastKnownClusterConfig *v1beta1.ClusterConfig
 }
 
 type coreDNSConfig struct {
@@ -255,65 +263,47 @@ type coreDNSConfig struct {
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
-func NewCoreDNS(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactory) (*CoreDNS, error) {
+func NewCoreDNS(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*CoreDNS, error) {
+	manifestDir := path.Join(k0sVars.ManifestsDir, "coredns")
+
 	client, err := clientFactory.GetClient()
 	if err != nil {
 		return nil, err
 	}
 	log := logrus.WithFields(logrus.Fields{"component": "coredns"})
 	return &CoreDNS{
-		client:        client,
-		log:           log,
-		clusterConfig: clusterConfig,
-		K0sVars:       k0sVars,
+		client:      client,
+		log:         log,
+		K0sVars:     k0sVars,
+		manifestDir: manifestDir,
 	}, nil
 }
 
 // Init does nothing
 func (c *CoreDNS) Init() error {
-	return nil
+	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
 }
 
 // Run runs the CoreDNS reconciler component
-func (c *CoreDNS) Run() error {
-	corednsDir := path.Join(c.K0sVars.ManifestsDir, "coredns")
-	err := dir.Init(corednsDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
-
-	c.tickerDone = make(chan struct{})
+func (c *CoreDNS) Run(ctx context.Context) error {
+	ctx, c.stopFunc = context.WithCancel(ctx)
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = coreDNSConfig{}
 		for {
 			select {
 			case <-ticker.C:
-				cfg, err := c.getConfig()
+				if c.lastKnownClusterConfig == nil {
+					// We cannot figure out the full config without having the last known cluster config from CR
+					continue
+				}
+				err := c.Reconcile(ctx, c.lastKnownClusterConfig)
 				if err != nil {
-					c.log.Errorf("error calculating coredns configs: %s. will retry", err.Error())
-					continue
+					c.log.Warnf("failed to reconcile coredns based on node count: %v", err)
 				}
-				if cfg == previousConfig {
-					c.log.Infof("current cfg matches existing, not gonna do anything")
-					continue
-				}
-				tw := templatewriter.TemplateWriter{
-					Name:     "coredns",
-					Template: coreDNSTemplate,
-					Data:     cfg,
-					Path:     filepath.Join(corednsDir, "coredns.yaml"),
-				}
-				err = tw.Write()
-				if err != nil {
-					c.log.Errorf("error writing coredns manifests: %s. will retry", err.Error())
-					continue
-				}
-				previousConfig = cfg
-			case <-c.tickerDone:
-				c.log.Info("coredns reconciler done")
+			case <-ctx.Done():
+				c.log.Info("coredns node reconciler done")
 				return
 			}
 		}
@@ -322,13 +312,13 @@ func (c *CoreDNS) Run() error {
 	return nil
 }
 
-func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
-	dns, err := c.clusterConfig.Spec.Network.DNSAddress()
+func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) (coreDNSConfig, error) {
+	dns, err := clusterConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
 
-	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	nodes, err := c.client.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return coreDNSConfig{}, err
 	}
@@ -340,8 +330,8 @@ func (c *CoreDNS) getConfig() (coreDNSConfig, error) {
 		Replicas:      replicas,
 		ClusterDomain: "cluster.local",
 		ClusterDNSIP:  dns,
-		Image:         c.clusterConfig.Spec.Images.CoreDNS.URI(),
-		PullPolicy:    c.clusterConfig.Spec.Images.DefaultPullPolicy,
+		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
+		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	return config, nil
@@ -359,9 +349,36 @@ func replicaCount(nodeCount int) int {
 
 // Stop stops the CoreDNS reconciler
 func (c *CoreDNS) Stop() error {
-	if c.tickerDone != nil {
-		close(c.tickerDone)
+	if c.stopFunc != nil {
+		logrus.Debug("closing coreDNS component context")
+		c.stopFunc()
 	}
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	logrus.Debug("reconcile method called for: CoreDNS")
+	cfg, err := c.getConfig(ctx, clusterConfig)
+	if err != nil {
+		return fmt.Errorf("error calculating coredns configs: %v. will retry", err)
+	}
+	if cfg == c.previousConfig {
+		c.log.Infof("current cfg matches existing, not gonna do anything")
+		return nil
+	}
+	tw := templatewriter.TemplateWriter{
+		Name:     "coredns",
+		Template: coreDNSTemplate,
+		Data:     cfg,
+		Path:     filepath.Join(c.manifestDir, "coredns.yaml"),
+	}
+	err = tw.Write()
+	if err != nil {
+		return fmt.Errorf("error writing coredns manifests: %v. will retry", err)
+	}
+	c.previousConfig = cfg
+	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }
 

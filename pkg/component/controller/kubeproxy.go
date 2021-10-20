@@ -16,36 +16,48 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"os"
 	"path"
 	"path/filepath"
-	"time"
+
+	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // KubeProxy is the component implementation to manage kube-proxy
 type KubeProxy struct {
-	//client     *kubernetes.Clientset
-	tickerDone  chan struct{}
-	log         *logrus.Entry
-	clusterConf *config.ClusterConfig
-	K0sVars     constant.CfgVars
+	log            *logrus.Entry
+	nodeConf       *v1beta1.ClusterConfig
+	K0sVars        constant.CfgVars
+	previousConfig proxyConfig
+	manifestDir    string
 }
 
-// NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(clusterSpec *config.ClusterConfig, k0sVars constant.CfgVars) (*KubeProxy, error) {
+var _ component.Component = &KubeProxy{}
+var _ component.ReconcilerComponent = &KubeProxy{}
 
+// NewKubeProxy creates new KubeProxy component
+func NewKubeProxy(configFile string, k0sVars constant.CfgVars) (*KubeProxy, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
+	cfg, err := config.GetNodeConfig(configFile, k0sVars)
+	if err != nil {
+		return nil, err
+	}
+	proxyDir := path.Join(k0sVars.ManifestsDir, "kubeproxy")
 	return &KubeProxy{
-		log:         log,
-		clusterConf: clusterSpec,
-		K0sVars:     k0sVars,
+		log:            log,
+		nodeConf:       cfg,
+		K0sVars:        k0sVars,
+		previousConfig: proxyConfig{},
+		manifestDir:    proxyDir,
 	}, nil
 }
 
@@ -55,80 +67,53 @@ func (k *KubeProxy) Init() error {
 }
 
 // Run runs the kube-proxy reconciler
-func (k *KubeProxy) Run() error {
-	proxyDir := path.Join(k.K0sVars.ManifestsDir, "kubeproxy")
-	if k.clusterConf.Spec.Network.KubeProxy.Disabled {
-		return k.removeKubeProxy(proxyDir)
+func (k *KubeProxy) Run(_ context.Context) error { return nil }
+
+// Reconcile detects changes in configuration and applies them to the component
+func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	if clusterConfig.Spec.Network.KubeProxy.Disabled {
+		return os.RemoveAll(k.manifestDir)
 	}
-
-	k.tickerDone = make(chan struct{})
-
-	err := dir.Init(proxyDir, constant.ManifestsDirMode)
+	err := dir.Init(k.manifestDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-		var previousConfig = proxyConfig{}
-		for {
-			select {
-			case <-ticker.C:
-				cfg, err := k.getConfig()
-				if err != nil {
-					k.log.Errorf("error calculating proxy configs: %s. will retry", err.Error())
-					continue
-				}
-				if cfg == previousConfig {
-					k.log.Infof("current cfg matches existing, not gonna do anything")
-					continue
-				}
-				tw := templatewriter.TemplateWriter{
-					Name:     "kube-proxy",
-					Template: proxyTemplate,
-					Data:     cfg,
-					Path:     filepath.Join(proxyDir, "kube-proxy.yaml"),
-				}
-				err = tw.Write()
-				if err != nil {
-					k.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error())
-					continue
-				}
-				previousConfig = cfg
-			case <-k.tickerDone:
-				k.log.Info("proxy reconciler done")
-				return
-			}
-		}
-	}()
+	cfg, err := k.getConfig(clusterConfig)
+	if err != nil {
+		return err
+	}
+	if cfg == k.previousConfig {
+		k.log.Infof("current cfg matches existing, not gonna do anything")
+		return nil
+	}
+	tw := templatewriter.TemplateWriter{
+		Name:     "kube-proxy",
+		Template: proxyTemplate,
+		Data:     cfg,
+		Path:     filepath.Join(k.manifestDir, "kube-proxy.yaml"),
+	}
+	err = tw.Write()
+	if err != nil {
+		k.log.Errorf("error writing kube-proxy manifests: %s. will retry", err.Error())
+	}
+	k.previousConfig = cfg
 
 	return nil
 }
 
 // Stop stop the reconcilier
 func (k *KubeProxy) Stop() error {
-	if k.tickerDone != nil {
-		close(k.tickerDone)
-	}
 	return nil
 }
 
-func (k *KubeProxy) removeKubeProxy(manifestDir string) error {
-	if !dir.Exists(manifestDir) {
-		return nil
-	}
-	return os.RemoveAll(manifestDir)
-}
-
-func (k *KubeProxy) getConfig() (proxyConfig, error) {
+func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig, error) {
 	cfg := proxyConfig{
-		ClusterCIDR:          k.clusterConf.Spec.Network.BuildPodCIDR(),
-		ControlPlaneEndpoint: k.clusterConf.Spec.API.APIAddressURL(),
-		Image:                k.clusterConf.Spec.Images.KubeProxy.URI(),
-		PullPolicy:           k.clusterConf.Spec.Images.DefaultPullPolicy,
-		DualStack:            k.clusterConf.Spec.Network.DualStack.Enabled,
-		Mode:                 k.clusterConf.Spec.Network.KubeProxy.Mode,
+		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
+		ControlPlaneEndpoint: clusterConfig.Spec.API.APIAddressURL(),
+		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
+		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
+		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
+		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
 	}
 
 	return cfg, nil

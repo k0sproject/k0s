@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -69,11 +70,11 @@ func (c *CmdOpts) backup() error {
 		logger.Fatal("this command must be run as root!")
 	}
 
-	if !dir.Exists(savePath) {
+	if !dir.IsDirectory(savePath) {
 		return fmt.Errorf("the save-path directory (%v) does not exist", savePath)
 	}
 
-	if !dir.Exists(c.K0sVars.DataDir) {
+	if !dir.IsDirectory(c.K0sVars.DataDir) {
 		return fmt.Errorf("cannot find data-dir (%v). check your environment and/or command input and try again", c.K0sVars.DataDir)
 	}
 

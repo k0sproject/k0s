@@ -6,20 +6,22 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var cfg = v1beta1.DefaultClusterConfig("")
+
 func TestGetConfigWithZeroNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
+	ctx := context.Background()
 
-	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig(""))
-	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar"), fakeFactory)
+	metrics, err := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, err)
-	cfg, err := metrics.getConfig()
+	require.NoError(t, metrics.Reconcile(ctx, cfg))
+	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "10m", cfg.CPURequest)
 	require.Equal(t, "30M", cfg.MEMRequest)
@@ -28,6 +30,7 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 func TestGetConfigWithSomeNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	fakeClient, _ := fakeFactory.GetClient()
+	ctx := context.Background()
 
 	for i := 1; i <= 100; i++ {
 		n := &corev1.Node{
@@ -39,10 +42,10 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	clusterCfg := v1beta1.DefaultClusterConfig(constant.GetConfig(""))
-	metrics, err := NewMetricServer(clusterCfg, constant.GetConfig("/foo/bar"), fakeFactory)
+	metrics, err := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, err)
-	cfg, err := metrics.getConfig()
+	require.NoError(t, metrics.Reconcile(ctx, cfg))
+	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "100m", cfg.CPURequest)
 	require.Equal(t, "300M", cfg.MEMRequest)

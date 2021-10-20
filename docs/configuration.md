@@ -71,26 +71,26 @@ spec:
       kubeSchedulerUser: kube-scheduler
   images:
     konnectivity:
-      image: us.gcr.io/k8s-artifacts-prod/kas-network-proxy/proxy-agent
-      version: v0.0.16
+      image: k8s.gcr.io/kas-network-proxy/proxy-agent
+      version: v0.0.24
     metricsserver:
-      image: gcr.io/k8s-staging-metrics-server/metrics-server
-      version: v0.3.7
+      image: k8s.gcr.io/metrics-server/metrics-server
+      version: v0.5.0
     kubeproxy:
       image: k8s.gcr.io/kube-proxy
       version: v1.22.2
     coredns:
-      image: docker.io/coredns/coredns
-      version: 1.7.0
+      image: k8s.gcr.io/coredns/coredns
+      version: v1.7.0
     calico:
       cni:
-        image: docker.io/calico/cni
+        image: quay.io/calico/cni
         version: v3.18.1
       node:
-        image: docker.io/calico/node
+        image: quay.io/calico/node
         version: v3.18.1
       kubecontrollers:
-        image: docker.io/calico/kube-controllers
+        image: quay.io/calico/kube-controllers
         version: v3.18.1
     kuberouter:
       cni:
@@ -141,7 +141,7 @@ spec:
 | Element   | Description           |
 |-----------|---------------------------|
 | `mode`      | `vxlan` (default) or `ipip`|
-| `overlay`   | Overlay mode: `Always` (default), `CrossSubnet` or `None` (requires `mode=vxlan` to disable calico overlay-network).
+| `overlay`   | Overlay mode: `Always` (default), `CrossSubnet` or `Never` (requires `mode=vxlan` to disable calico overlay-network).
 | `vxlanPort`      | The UDP port for VXLAN (default: `4789`).|
 | `vxlanVNI`      | The virtual network ID for VXLAN (default: `4096`).|
 | `mtu`      | MTU for overlay network (default: `0`, which causes Calico to detect optimal MTU during bootstrap).|
@@ -235,8 +235,8 @@ Nodes under the `images` key all have the same basic structure:
 spec:
   images:
     coredns:
-      image: docker.io/coredns/coredns
-      version: 1.7.0
+      image: quay.io/coredns/coredns
+      version: v1.7.0
 ```
 
 #### Available keys
@@ -266,11 +266,11 @@ images:
     image: calico/kube-controllers
     version: v3.16.2
   metricsserver:
-    image: gcr.io/k8s-staging-metrics-server/metrics-server
-    version: v0.3.7
+    image: k8s.gcr.io/metrics-server/metrics-server
+    version: v0.5.0
 ```
 
-In the runtime the image names are calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/k8s-staging-metrics-server/metrics-server`. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.
+In the runtime the image names are calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/metrics-server/metrics-server:v0.5.0`. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.
 
 ### `spec.extensions.helm`
 

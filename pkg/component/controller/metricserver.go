@@ -23,12 +23,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/component"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -231,10 +233,10 @@ spec:
 // MetricServer is the reconciler implementation for metrics server
 type MetricServer struct {
 	log               *logrus.Entry
-	clusterConfig     *config.ClusterConfig
+	clusterConfig     *v1beta1.ClusterConfig
 	tickerDone        chan struct{}
 	K0sVars           constant.CfgVars
-	kubeClientFactory k8sutil.ClientFactory
+	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
 type metricsConfig struct {
@@ -244,12 +246,14 @@ type metricsConfig struct {
 	MEMRequest string
 }
 
+var _ component.Component = &MetricServer{}
+var _ component.ReconcilerComponent = &MetricServer{}
+
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(clusterConfig *config.ClusterConfig, k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactory) (*MetricServer, error) {
+func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
 	return &MetricServer{
 		log:               log,
-		clusterConfig:     clusterConfig,
 		K0sVars:           k0sVars,
 		kubeClientFactory: kubeClientFactory,
 	}, nil
@@ -261,7 +265,7 @@ func (m *MetricServer) Init() error {
 }
 
 // Run runs the metric server reconciler
-func (m *MetricServer) Run() error {
+func (m *MetricServer) Run(ctx context.Context) error {
 	m.tickerDone = make(chan struct{})
 
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
@@ -273,13 +277,14 @@ func (m *MetricServer) Run() error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-		var previousConfig = metricsConfig{}
+		previousConfig := metricsConfig{}
 		for {
 			select {
 			case <-ticker.C:
-				newConfig, err := m.getConfig()
+				newConfig, err := m.getConfig(ctx)
 				if err != nil {
 					m.log.Warnf("failed to calculate metrics-server config: %s", err.Error())
+					continue
 				}
 				if previousConfig == newConfig {
 					continue
@@ -314,6 +319,14 @@ func (m *MetricServer) Stop() error {
 	return nil
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	logrus.Debug("reconcile method called for: MetricServer")
+	// We just store the last known config, the main reconciler ticker will reconcile config based on number of nodes etc.
+	m.clusterConfig = clusterConfig
+	return nil
+}
+
 // Healthy is the health-check interface
 func (m *MetricServer) Healthy() error { return nil }
 
@@ -322,7 +335,10 @@ func (m *MetricServer) Healthy() error { return nil }
 // - 100m core of CPU
 // - 300MiB of memory
 // So that's 10m CPU and 30MiB mem per 10 nodes
-func (m *MetricServer) getConfig() (metricsConfig, error) {
+func (m *MetricServer) getConfig(ctx context.Context) (metricsConfig, error) {
+	if m.clusterConfig == nil {
+		return metricsConfig{}, fmt.Errorf("cluster config not available yet")
+	}
 	cfg := metricsConfig{
 		Image:      m.clusterConfig.Spec.Images.MetricsServer.URI(),
 		PullPolicy: m.clusterConfig.Spec.Images.DefaultPullPolicy,
@@ -333,7 +349,7 @@ func (m *MetricServer) getConfig() (metricsConfig, error) {
 		return cfg, err
 	}
 
-	nodeList, err := kubeClient.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return cfg, err
 	}

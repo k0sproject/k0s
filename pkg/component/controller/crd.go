@@ -17,10 +17,14 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/static"
 )
+
+var _ component.Component = &CRD{}
 
 // CRD unpacks bundled CRD definitions to the filesystem
 type CRD struct {
@@ -44,10 +48,9 @@ func (c CRD) Init() error {
 }
 
 // Run unpacks manifests from bindata
-func (c CRD) Run() error {
+func (c CRD) Run(_ context.Context) error {
 	for _, bundle := range bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
-
 		if err != nil {
 			return fmt.Errorf("can't unbundle CRD `%s` manifests: %v", bundle, err)
 		}

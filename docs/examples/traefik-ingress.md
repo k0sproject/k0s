@@ -21,11 +21,11 @@ extensions:
     charts:
     - name: traefik
       chartname: traefik/traefik
-      version: "9.11.0"
+      version: "10.3.2"
       namespace: default
     - name: metallb
       chartname: bitnami/metallb
-      version: "1.0.1"
+      version: "2.5.4"
       namespace: default
       values: |2
         configInline:
@@ -116,7 +116,7 @@ With an available and addressable load balancer present on your cluster, now you
     ingressroute.traefik.containo.us/dashboard created
     ```
 
-    At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5` in your browser:
+    At this point you should be able to access the dashboard using the `EXTERNAL-IP` that you noted above by visiting `http://192.168.0.5/dashboard/` in your browser:
 
     ![Traefik Dashboard](../img/traefik-dashboard.png)
 

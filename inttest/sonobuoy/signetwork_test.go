@@ -16,6 +16,7 @@ limitations under the License.
 package sonobuoy
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -34,6 +35,12 @@ import (
 type NetworkSuite struct {
 	common.VMSuite
 	sonoBin string
+}
+
+var kubeConformanceImageVersion string
+
+func init() {
+	flag.StringVar(&kubeConformanceImageVersion, "kubernetes-version", "", "Kube Conformance Image Version")
 }
 
 func (s *NetworkSuite) TestSigNetwork() {
@@ -69,8 +76,9 @@ func (s *NetworkSuite) TestSigNetwork() {
 		`--e2e-focus=\[sig-network\].*\[Conformance\]`,
 		`--e2e-skip=\[Serial\]`,
 		"--e2e-parallel=y",
-		"--kube-conformance-image-version=v1.22.2",
+		fmt.Sprintf("--kubernetes-version=%s", kubeConformanceImageVersion),
 	}
+
 	s.T().Log("running sonobuoy, this may take a while")
 	sonoFinished := make(chan bool)
 	go func() {
@@ -108,7 +116,6 @@ func (s *NetworkSuite) TestSigNetwork() {
 }
 
 func (s *NetworkSuite) retrieveResults() (Result, error) {
-
 	var resultPath string
 
 	err := retry.Do(func() error {
@@ -121,7 +128,6 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 		resultPath = strings.Trim(string(retrieveOutput), "\n")
 		return nil
 	}, retry.Attempts(3))
-
 	if err != nil {
 		return Result{}, err
 	}
@@ -147,7 +153,6 @@ func (s *NetworkSuite) retrieveResults() (Result, error) {
 	result, err := ResultFromString(string(resultOutput))
 	result.ResultPath = resultPath
 	return result, err
-
 }
 
 func (s *NetworkSuite) dumpKubeConfig() string {

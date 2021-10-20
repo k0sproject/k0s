@@ -1,0 +1,58 @@
+name: Go lint
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - 'docs/**'
+      - 'examples/**'
+      - '**.md'
+      - LICENSE
+      - '**.svg'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/mkdocs-set-default-version.yml'
+      - 'mkdocs.yml'
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - 'docs/**'
+      - 'examples/**'
+      - '**.md'
+      - LICENSE
+      - README.md
+      - '**.svg'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/mkdocs-set-default-version.yml'
+      - 'mkdocs.yml'
+      - '*.md'
+
+env:
+  GO_VERSION: ^1.16
+  GO_VERSION_WIN: ^1.13
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - name: codegen
+        run: |
+          make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
+        env:
+          EMBEDDED_BINS_BUILDMODE: none
+
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42
+          skip-pkg-cache: true
+          only-new-issues: true
+          skip-build-cache: true
+          config: .golangci.yml
+          args: --verbose
