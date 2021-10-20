@@ -99,7 +99,9 @@ jobs:
           ./scripts/deploy-k0s.sh
 
       - name: Check Network
-        run: make check-network-vm
+        run: |
+          export K8S_VERSION="v1.22.2"
+          make check-network-vm
         working-directory: ./inttest
 
       - name: Terraform Destroy

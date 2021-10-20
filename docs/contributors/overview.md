@@ -38,4 +38,4 @@ Some of you might have noticed we have official community blog hosted on [Medium
 Make sure to [follow us on Twitter](https://twitter.com/k0sproject) as well 😊
 We have also agreed to share Slack with Lens IDE team. They are close friends of the k0s crew, and many of the Kubernetes users are using Lens anyway, so it felt very natural for us to share their Slack.
 
-You’ll find us on dedicated k0s channel. Please [join the k0s Slack channel](https://join.slack.com/t/k8slens/shared_invite/enQtOTc5NjAyNjYyOTk4LWU1NDQ0ZGFkOWJkNTRhYTc2YjVmZDdkM2FkNGM5MjhiYTRhMDU2NDQ1MzIyMDA4ZGZlNmExOTc0N2JmY2M3ZGI) to hear the latest news, discussions and provide your feedback!
+You’ll find us on dedicated k0s channel. Please [join the k0s Slack channel](https://join.slack.com/t/k8slens/shared_invite/zt-wcl8jq3k-68R5Wcmk1o95MLBE5igUDQ) to hear the latest news, discussions and provide your feedback!

@@ -23,7 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -32,9 +32,9 @@ import (
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
 	K0sVars           constant.CfgVars
-	KubeClientFactory kubeutil.ClientFactory
+	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	//client               kubernetes.Interface
+	// client               kubernetes.Interface
 	applier       Applier
 	bundlePath    string
 	cancelWatcher context.CancelFunc
@@ -46,7 +46,7 @@ type Manager struct {
 
 // Init initializes the Manager
 func (m *Manager) Init() error {
-	err := util.InitDirectory(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
+	err := dir.Init(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
 	}
@@ -73,7 +73,7 @@ func (m *Manager) Init() error {
 }
 
 // Run runs the Manager
-func (m *Manager) Run() error {
+func (m *Manager) Run(_ context.Context) error {
 	return nil
 }
 
@@ -85,10 +85,16 @@ func (m *Manager) Stop() error {
 	return nil
 }
 
+// Reconcile reconciles the Manager
+func (m *Manager) Reconcile() error {
+	logrus.Debug("reconcile method called for: Manager")
+	return nil
+}
+
 func (m *Manager) runWatchers(ctx context.Context) error {
 	log := logrus.WithField("component", "applier-manager")
 
-	dirs, err := util.GetAllDirs(m.bundlePath)
+	dirs, err := dir.GetAll(m.bundlePath)
 	if err != nil {
 		return err
 	}
@@ -125,7 +131,7 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 			}
 			switch event.Op {
 			case fsnotify.Create:
-				if util.IsDirectory(event.Name) {
+				if dir.IsDirectory(event.Name) {
 					if err := m.createStack(event.Name); err != nil {
 						return err
 					}

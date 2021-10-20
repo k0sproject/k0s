@@ -16,12 +16,17 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/util"
-	config "github.com/k0sproject/k0s/pkg/apis/v1beta1"
+	"github.com/sirupsen/logrus"
+
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -32,47 +37,64 @@ import (
 Depending on user config, we select either of the above rule sets to be the default
 */
 type DefaultPSP struct {
-	clusterSpec *config.ClusterSpec
-	k0sVars     constant.CfgVars
+	k0sVars        constant.CfgVars
+	manifestDir    string
+	previousPolicy string
 }
 
+var _ component.Component = &DefaultPSP{}
+var _ component.ReconcilerComponent = &DefaultPSP{}
+
 // NewDefaultPSP creates new system level RBAC reconciler
-func NewDefaultPSP(clusterSpec *config.ClusterSpec, k0sVars constant.CfgVars) (*DefaultPSP, error) {
+func NewDefaultPSP(k0sVars constant.CfgVars) (*DefaultPSP, error) {
+	manifestDir := path.Join(k0sVars.ManifestsDir, "defaultpsp")
 	return &DefaultPSP{
-		clusterSpec: clusterSpec,
 		k0sVars:     k0sVars,
+		manifestDir: manifestDir,
 	}, nil
 }
 
 // Init does currently nothing
 func (d *DefaultPSP) Init() error {
+	err := dir.Init(d.manifestDir, constant.ManifestsDirMode)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // Run reconciles the k0s default PSP rules
-func (d *DefaultPSP) Run() error {
-	pspDir := path.Join(d.k0sVars.ManifestsDir, "defaultpsp")
-	err := util.InitDirectory(pspDir, constant.ManifestsDirMode)
-	if err != nil {
-		return err
-	}
-	tw := util.TemplateWriter{
-		Name:     "default-psp",
-		Template: defaultPSPTemplate,
-		Data: struct{ DefaultPSP string }{
-			DefaultPSP: d.clusterSpec.PodSecurityPolicy.DefaultPolicy,
-		},
-		Path: filepath.Join(pspDir, "default-psp.yaml"),
-	}
-	err = tw.Write()
-	if err != nil {
-		return fmt.Errorf("error writing default PSP manifests, will NOT retry: %w", err)
-	}
+func (d *DefaultPSP) Run(_ context.Context) error {
 	return nil
 }
 
 // Stop does currently nothing
 func (d *DefaultPSP) Stop() error {
+	return nil
+}
+
+// Reconcile detects changes in configuration and applies them to the component
+func (d *DefaultPSP) Reconcile(_ctx context.Context, clusterConfig *v1beta1.ClusterConfig) error {
+	log := logrus.WithField("component", "DefaultPSP")
+	log.Debug("reconcile method called for: DefaultPSP")
+	if d.previousPolicy == clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy {
+		log.Debug("new PSP matches existing, no reconcile needed")
+		return nil
+	}
+	log.Debugf("policy changed from %s to %s", d.previousPolicy, clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy)
+	tw := templatewriter.TemplateWriter{
+		Name:     "default-psp",
+		Template: defaultPSPTemplate,
+		Data: struct{ DefaultPSP string }{
+			DefaultPSP: clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy,
+		},
+		Path: filepath.Join(d.manifestDir, "default-psp.yaml"),
+	}
+	err := tw.Write()
+	if err != nil {
+		return fmt.Errorf("error writing default PSP manifests, will NOT retry: %w", err)
+	}
+	d.previousPolicy = clusterConfig.Spec.PodSecurityPolicy.DefaultPolicy
 	return nil
 }
 

@@ -16,6 +16,7 @@ limitations under the License.
 package worker
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,7 +31,10 @@ import (
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/flags"
+	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -90,7 +94,7 @@ func (k *Kubelet) Init() error {
 	}
 
 	k.dataDir = filepath.Join(k.K0sVars.DataDir, "kubelet")
-	err := util.InitDirectory(k.dataDir, constant.DataDirMode)
+	err := dir.Init(k.dataDir, constant.DataDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", k.dataDir, err)
 	}
@@ -99,7 +103,7 @@ func (k *Kubelet) Init() error {
 }
 
 // Run runs kubelet
-func (k *Kubelet) Run() error {
+func (k *Kubelet) Run(ctx context.Context) error {
 	cmd := "kubelet"
 
 	kubeletConfigData := kubeletConfig{
@@ -118,7 +122,7 @@ func (k *Kubelet) Run() error {
 	// this will return /run/systemd/resolve/resolv.conf
 	resolvConfPath := resolvconf.Path()
 
-	args := util.MappedArgs{
+	args := stringmap.StringMap{
 		"--root-dir":             k.dataDir,
 		"--config":               kubeletConfigPath,
 		"--bootstrap-kubeconfig": k.K0sVars.KubeletBootstrapConfigPath,
@@ -133,7 +137,7 @@ func (k *Kubelet) Run() error {
 	}
 
 	if runtime.GOOS == "windows" {
-		node, err := getNodeName()
+		node, err := getNodeName(ctx)
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %v", err)
 		}
@@ -184,7 +188,7 @@ func (k *Kubelet) Run() error {
 
 	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
 	if k.ExtraArgs != "" {
-		extras := util.SplitFlags(k.ExtraArgs)
+		extras := flags.Split(k.ExtraArgs)
 		args.Merge(extras)
 	}
 
@@ -198,12 +202,12 @@ func (k *Kubelet) Run() error {
 	}
 
 	err := retry.Do(func() error {
-		kubeletconfig, err := k.KubeletConfigClient.Get(k.Profile)
+		kubeletconfig, err := k.KubeletConfigClient.Get(ctx, k.Profile)
 		if err != nil {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
 		}
-		tw := util.TemplateWriter{
+		tw := templatewriter.TemplateWriter{
 			Name:     "kubelet-config",
 			Template: kubeletconfig,
 			Data:     kubeletConfigData,
@@ -230,16 +234,23 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
+// Reconcile detects changes in configuration and applies them to the component
+func (k *Kubelet) Reconcile() error {
+	logrus.Debug("reconcile method called for: Kubelet")
+	return nil
+}
+
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
 
 const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
 
-func getNodeName() (string, error) {
+func getNodeName(ctx context.Context) (string, error) {
 	req, err := http.NewRequest("GET", awsMetaInformationURI, nil)
 	if err != nil {
 		return "", err
 	}
+	req = req.WithContext(ctx)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return os.Hostname()

@@ -1,17 +1,20 @@
 # options for analysis running
 run:
 
-  timeout: 5m
+  timeout: 8m
+
   skip-dirs-use-default: false
   skip-dirs:
     - pkg/helm
+  tests: false
+
 
   modules-download-mode: readonly
   allow-parallel-runners: true
 
 linters:
   enable:
-    - golint
+    - revive
     - gofmt
 
 linters-settings:

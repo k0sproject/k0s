@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -93,8 +94,7 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	return posh.execute(fmt.Sprintf("C:\\bootstrap.ps1 -ServiceCidr \"%s\" -DNSServerIPs \"%s\"", c.CIDRRange, c.ClusterDNS))
 }
 
-func (c CalicoInstaller) Run() error {
-
+func (c CalicoInstaller) Run(_ context.Context) error {
 	return nil
 }
 
@@ -103,6 +103,11 @@ func (c CalicoInstaller) Stop() error {
 }
 
 func (c CalicoInstaller) Healthy() error {
+	return nil
+}
+
+func (c CalicoInstaller) Reconcile() error {
+	logrus.Debug("reconcile method called for: CalicoInstaller")
 	return nil
 }
 

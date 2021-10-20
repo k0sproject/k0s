@@ -16,7 +16,9 @@ limitations under the License.
 package basic
 
 import (
+	"bytes"
 	"context"
+	"html/template"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -28,12 +30,39 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const configWithExternaladdress = `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: k0s
+spec:
+  api:
+    externalAddress: {{ .Address }}
+`
+
 type BackupSuite struct {
 	common.FootlooseSuite
 }
 
+func (s *BackupSuite) getControllerConfig(ipAddress string) string {
+	data := struct {
+		Address string
+	}{
+		Address: ipAddress,
+	}
+	content := bytes.NewBuffer([]byte{})
+	s.Require().NoError(template.Must(template.New("k0s.yaml").Parse(configWithExternaladdress)).Execute(content, data), "can't execute k0s.yaml template")
+	return content.String()
+}
+
 func (s *BackupSuite) TestK0sGetsUp() {
-	s.Require().NoError(s.InitController(0))
+	ipAddress := s.GetControllerIPAddress(0)
+	s.T().Logf("ip address: %s", ipAddress)
+	config := s.getControllerConfig(ipAddress)
+	s.PutFile("controller0", "/tmp/k0s.yaml", config)
+	s.PutFile("controller1", "/tmp/k0s.yaml", config)
+
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -41,7 +70,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 	token, err := s.GetJoinToken("controller")
 	s.Require().NoError(err)
-	s.Require().NoError(s.InitController(1, token))
+	s.Require().NoError(s.InitController(1, token, "--config=/tmp/k0s.yaml"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)

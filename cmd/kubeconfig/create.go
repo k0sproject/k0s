@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-
 	"html/template"
 	"os"
 	"path"
@@ -77,10 +76,9 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			if len(args) == 0 {
 				return fmt.Errorf("username is mandatory")
 			}
-			var username = args[0]
+			username := args[0]
 			c := CmdOpts(config.GetCmdOpts())
 			clusterAPIURL, err := c.getAPIURL()
-
 			if err != nil {
 				return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
 			}
@@ -140,9 +138,9 @@ func (c *CmdOpts) getAPIURL() (string, error) {
 	// Disable logrus
 	logrus.SetLevel(logrus.FatalLevel)
 
-	clusterConfig, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+	cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return "", err
 	}
-	return clusterConfig.Spec.API.APIAddressURL(), nil
+	return cfg.Spec.API.APIAddressURL(), nil
 }

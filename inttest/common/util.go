@@ -56,6 +56,18 @@ func WaitForDaemonSet(kc *kubernetes.Clientset, name string) error {
 	})
 }
 
+// WaitForDaemonSet waits for daemon set be ready
+func WaitForDeployment(kc *kubernetes.Clientset, name string) error {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		dep, err := kc.AppsV1().Deployments("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		return *dep.Spec.Replicas == dep.Status.ReadyReplicas, nil
+	})
+}
+
 // WaitForPod waits for pod be running
 func WaitForPod(kc *kubernetes.Clientset, name, namespace string) error {
 	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {

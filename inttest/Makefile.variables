@@ -18,5 +18,6 @@ smoketests := \
 	check-k0scloudprovider \
 	check-cli \
 	check-disabledcomponents \
-	check-extraargs
+	check-extraargs \
+	check-configchange
 

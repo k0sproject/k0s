@@ -33,7 +33,7 @@ func etcdLeaveCmd() *cobra.Command {
 		Short: "Sign off a given etc node from etcd cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
 			}

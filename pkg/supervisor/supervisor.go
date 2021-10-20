@@ -20,14 +20,16 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -43,11 +45,14 @@ type Supervisor struct {
 	GID            int
 	TimeoutStop    time.Duration
 	TimeoutRespawn time.Duration
+	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
+	KeepEnvPrefix bool
 
-	cmd  *exec.Cmd
-	quit chan bool
-	done chan bool
-	log  *logrus.Entry
+	cmd   *exec.Cmd
+	quit  chan bool
+	done  chan bool
+	log   *logrus.Entry
+	mutex sync.Mutex
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
@@ -94,7 +99,7 @@ func (s *Supervisor) processWaitQuit() bool {
 func (s *Supervisor) Supervise() error {
 	s.log = logrus.WithField("component", s.Name)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
-	if err := util.InitDirectory(s.RunDir, constant.RunDirMode); err != nil {
+	if err := dir.Init(s.RunDir, constant.RunDirMode); err != nil {
 		s.log.Warnf("failed to initialize dir: %v", err)
 		return err
 	}
@@ -110,9 +115,10 @@ func (s *Supervisor) Supervise() error {
 	go func() {
 		s.log.Info("Starting to supervise")
 		for {
+			s.mutex.Lock()
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 			s.cmd.Dir = s.DataDir
-			s.cmd.Env = getEnv(s.DataDir)
+			s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
 
 			// detach from the process group so children don't
 			// get signals sent directly to parent.
@@ -122,6 +128,7 @@ func (s *Supervisor) Supervise() error {
 			s.cmd.Stderr = s.log.Writer()
 
 			err := s.cmd.Start()
+			s.mutex.Unlock()
 			if err != nil {
 				s.log.Warnf("Failed to start: %s", err)
 				if s.quit == nil {
@@ -163,19 +170,67 @@ func (s *Supervisor) Supervise() error {
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
 	if s.quit != nil {
+		if s.log != nil {
+			s.log.Debug("Sending stop message")
+		}
 		s.quit <- true
+		if s.log != nil {
+			s.log.Debug("Waiting for stopping is done")
+		}
 		<-s.done
 	}
 	return nil
 }
 
-// Modifies the current processes env so that we inject k0s embedded bins into path
-func getEnv(dataDir string) []string {
+// Prepare the env for exec:
+// - handle component specific env
+// - inject k0s embedded bins into path
+func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 	env := os.Environ()
-	for i, e := range env {
-		if strings.HasPrefix(e, "PATH=") {
-			env[i] = fmt.Sprintf("PATH=%s:%s", path.Join(dataDir, "bin"), os.Getenv("PATH"))
+	componentPrefix := fmt.Sprintf("%s_", strings.ToUpper(component))
+
+	// put the component specific env vars in the front.
+	sort.Slice(env, func(i, j int) bool { return strings.HasPrefix(env[i], componentPrefix) })
+
+	overrides := map[string]struct{}{}
+	i := 0
+	for _, e := range env {
+		kv := strings.SplitN(e, "=", 2)
+		k, v := kv[0], kv[1]
+		// if there is already a correspondent component specific env, skip it.
+		if _, ok := overrides[k]; ok {
+			continue
 		}
+		if strings.HasPrefix(k, componentPrefix) {
+			var shouldOverride bool
+			k1 := strings.TrimPrefix(k, componentPrefix)
+			switch k1 {
+			// always override proxy env
+			case "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY":
+				shouldOverride = true
+			default:
+				if !keepEnvPrefix {
+					shouldOverride = true
+				}
+			}
+			if shouldOverride {
+				k = k1
+				overrides[k] = struct{}{}
+			}
+		}
+		env[i] = fmt.Sprintf("%s=%s", k, v)
+		if k == "PATH" {
+			env[i] = fmt.Sprintf("PATH=%s:%s", path.Join(dataDir, "bin"), v)
+		}
+		i++
 	}
-	return env
+
+	return env[:i]
+}
+
+// GetProcess returns the last started process
+func (s *Supervisor) GetProcess() *os.Process {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.cmd.Process
 }

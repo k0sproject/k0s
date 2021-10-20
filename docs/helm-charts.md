@@ -27,11 +27,14 @@ spec:
       charts:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus
-        version: "11.16.8"
+        version: "14.6.1"
         values: |
-          storageSpec:
-            emptyDir:
-              medium: Memory
+          alertmanager:
+            persistentVolume:
+              enabled: false
+          server:
+            persistentVolume:
+              enabled: false
         namespace: default
 ```
 

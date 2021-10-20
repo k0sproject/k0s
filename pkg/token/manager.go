@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/util"
+	"github.com/k0sproject/k0s/internal/pkg/random"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
@@ -58,9 +58,9 @@ type Manager struct {
 }
 
 // Create creates a new bootstrap token
-func (m *Manager) Create(valid time.Duration, role string) (string, error) {
-	tokenID := util.RandomString(6)
-	tokenSecret := util.RandomString(16)
+func (m *Manager) Create(ctx context.Context, valid time.Duration, role string) (string, error) {
+	tokenID := random.String(6)
+	tokenSecret := random.String(16)
 
 	token := fmt.Sprintf("%s.%s", tokenID, tokenSecret)
 
@@ -98,7 +98,7 @@ func (m *Manager) Create(valid time.Duration, role string) (string, error) {
 		StringData: data,
 	}
 
-	_, err := m.client.CoreV1().Secrets("kube-system").Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err := m.client.CoreV1().Secrets("kube-system").Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -107,8 +107,8 @@ func (m *Manager) Create(valid time.Duration, role string) (string, error) {
 }
 
 // List returns all the join tokens for given role. If role == "" then it returns all join tokens
-func (m *Manager) List(role string) ([]Token, error) {
-	tokenList, err := m.client.CoreV1().Secrets("kube-system").List(context.TODO(), metav1.ListOptions{
+func (m *Manager) List(ctx context.Context, role string) ([]Token, error) {
+	tokenList, err := m.client.CoreV1().Secrets("kube-system").List(ctx, metav1.ListOptions{
 		FieldSelector: "type=bootstrap.kubernetes.io/token",
 	})
 	if err != nil {
@@ -132,8 +132,8 @@ func (m *Manager) List(role string) ([]Token, error) {
 	return tokens, nil
 }
 
-func (m *Manager) Remove(tokenID string) error {
-	err := m.client.CoreV1().Secrets("kube-system").Delete(context.TODO(), fmt.Sprintf("bootstrap-token-%s", tokenID), metav1.DeleteOptions{})
+func (m *Manager) Remove(ctx context.Context, tokenID string) error {
+	err := m.client.CoreV1().Secrets("kube-system").Delete(ctx, fmt.Sprintf("bootstrap-token-%s", tokenID), metav1.DeleteOptions{})
 	if errors.IsNotFound(err) {
 		return nil
 	}
