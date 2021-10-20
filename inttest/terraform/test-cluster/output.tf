@@ -8,5 +8,6 @@ output "worker_external_ip" {
 
 
 output "controller_pem" {
-  value = local_file.aws_private_pem
+  value       = local_file.aws_private_pem
+  sensitive   = true
 }
