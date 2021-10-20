@@ -88,7 +88,7 @@ func getRuntimeClient(addr string) (pb.RuntimeServiceClient, *grpc.ClientConn, e
 }
 
 func getRuntimeClientConnection(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		errMsg := fmt.Errorf("connect endpoint %s, make sure you are running as root and the endpoint has been started: %w", addr, err)
 		logrus.Error(errMsg)
