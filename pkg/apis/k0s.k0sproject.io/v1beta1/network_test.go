@@ -93,7 +93,7 @@ func (s *NetworkSuite) TestNetworkDefaults() {
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:

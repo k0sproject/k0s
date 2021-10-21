@@ -36,7 +36,7 @@ type Suite struct {
 
 const configWithExternaladdress = `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: k0s
 spec:
@@ -49,13 +49,14 @@ spec:
     adminPort: {{ .KonnectivityAdminPort }}
 `
 
-const kubeAPIPort = 7443
-const k0sAPIPort = 9743
-const agentPort = 9132
-const adminPort = 9133
+const (
+	kubeAPIPort = 7443
+	k0sAPIPort  = 9743
+	agentPort   = 9132
+	adminPort   = 9133
+)
 
 func TestSuite(t *testing.T) {
-
 	s := Suite{
 		common.FootlooseSuite{
 			ControllerCount:       3,
@@ -91,7 +92,6 @@ func (ds *Suite) getControllerConfig(ipAddress string) string {
 }
 
 func (ds *Suite) TestControllerJoinsWithCustomPort() {
-
 	ipAddress := ds.GetControllerIPAddress(0)
 	ds.T().Logf("ip address: %s", ipAddress)
 	config := ds.getControllerConfig(ipAddress)
