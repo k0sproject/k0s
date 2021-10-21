@@ -188,7 +188,7 @@ func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.Cluste
 	}
 }
 
-// GetNodeConfig takes a config-file parameter and returns a ClsuterConfig stripped of Cluster-Wide Settings
+// GetNodeConfig takes a config-file parameter and returns a ClusterConfig stripped of Cluster-Wide Settings
 func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
 	cfg, err := GetYamlFromFile(cfgPath, k0sVars)
 	if err != nil {
