@@ -106,8 +106,11 @@ k0s token create --role=controller --expiry=1h > token-file
 On the new controller, run:
 
 ```shell
-sudo k0s install controller --token-file /path/to/token/file
+sudo k0s install controller --token-file /path/to/token/file -c k0s.yaml
 ```
+
+Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
+If your configuration file includes IP addresses (node address, sans, etcd peerAddress), remember to update them accordingly for this specific controller node.
 
 ```shell
 k0s start
