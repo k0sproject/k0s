@@ -132,6 +132,15 @@ type ExternalCluster struct {
 
 	// EtcdPrefix is a prefix to prepend to all resource paths in etcd
 	EtcdPrefix string `json:"etcdPrefix"`
+
+	// CaFile is the host path to a file with CA certificate
+	CaFile string `json:"caFile"`
+
+	// ClientCertFile is the host path to a file with TLS certificate for etcd client
+	ClientCertFile string `json:"clientCertFile"`
+
+	// ClientKeyFile is the host path to a file with TLS key for etcd client
+	ClientKeyFile string `json:"clientKeyFile"`
 }
 
 // DefaultEtcdConfig creates EtcdConfig with sane defaults
