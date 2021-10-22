@@ -38,13 +38,14 @@ curl -sSLf https://get.k0s.sh | sudo K0S_VERSION=v1.22.2+k0s.0 sh
 Create a configuration file:
 
 ```shell
-k0s default-config > k0s.yaml
+mkdir -p /etc/k0s
+k0s default-config > /etc/k0s/k0s.yaml
 ```
 
 **Note**: For information on settings modification, refer to the [configuration](configuration.md) documentation.
 
 ```shell
-sudo k0s install controller -c k0s.yaml
+sudo k0s install controller -c /etc/k0s/k0s.yaml
 ```
 
 ```shell
@@ -106,7 +107,7 @@ k0s token create --role=controller --expiry=1h > token-file
 On the new controller, run:
 
 ```shell
-sudo k0s install controller --token-file /path/to/token/file -c k0s.yaml
+sudo k0s install controller --token-file /path/to/token/file -c /etc/k0s/k0s.yaml
 ```
 
 Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
