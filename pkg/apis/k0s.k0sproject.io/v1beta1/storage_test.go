@@ -91,7 +91,7 @@ spec:
   storage:
     type: kine
 `
-	c, err := configFromString(yaml, constant.DataDirDefault)
+	c, err := ConfigFromString(yaml, constant.DataDirDefault)
 	assert.NoError(t, err)
 	assert.Equal(t, "kine", c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)

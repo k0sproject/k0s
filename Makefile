@@ -152,7 +152,7 @@ smoketests:  $(smoketests)
 
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go
-	go test -race ./pkg/... ./internal/...
+	go test -race ./pkg/... ./internal/...  ./cmd/...
 
 .PHONY: clean-gocache
 clean-gocache:
