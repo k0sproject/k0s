@@ -1240,7 +1240,7 @@
 <li>
 <p>Export the cluster config, so you can access it using kubectl:</p>
 <div class="highlight"><pre><span></span><code>docker <span class="nb">exec</span> k0s cat /var/lib/k0s/pki/admin.conf &gt; k0s-cluster.conf
-<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$KUBECONFIG</span>:&lt;absolute path to k0s-cluster.conf&gt;
+<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$KUBECONFIG</span><span class="s2">:</span><span class="nv">$PWD</span><span class="s2">/k0s-cluster.conf&quot;</span>
 </code></pre></div>
 </li>
 </ol>
@@ -1287,7 +1287,7 @@ docker rm k0s
 </li>
 <li>
 <p>Retart your k0s container, this time with additional ports and the above config file mapped into it:</p>
-<div class="highlight"><pre><span></span><code>docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v &lt;path to k0s.yaml file&gt;:/k0s.yaml -p <span class="m">6443</span>:6443 -p <span class="m">80</span>:80 -p <span class="m">443</span>:443 -p <span class="m">8080</span>:8080 docker.io/k0sproject/k0s:latest
+<div class="highlight"><pre><span></span><code>docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">&quot;</span>/k0s.yaml:/k0s.yaml -p <span class="m">6443</span>:6443 -p <span class="m">80</span>:80 -p <span class="m">443</span>:443 -p <span class="m">8080</span>:8080 docker.io/k0sproject/k0s:latest
 </code></pre></div>
 <p>After some time, you will be able to list the Ambassador Services:</p>
 <div class="highlight"><pre><span></span><code>kubectl get services -n ambassador
