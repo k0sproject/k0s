@@ -26,7 +26,7 @@ import (
 var dataDir string
 
 func TestClusterDefaults(t *testing.T) {
-	c, err := configFromString("apiVersion: k0s.k0sproject.io/v1beta1", dataDir)
+	c, err := ConfigFromString("apiVersion: k0s.k0sproject.io/v1beta1", dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultStorageSpec(dataDir), c.Spec.Storage)
 }
@@ -39,7 +39,7 @@ metadata:
   name: foobar
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -58,7 +58,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -79,7 +79,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -98,7 +98,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -117,7 +117,7 @@ spec:
     type: etcd
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 1, len(errors))
@@ -136,7 +136,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -153,7 +153,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -184,7 +184,7 @@ spec:
         anonymous:
           enabled: false
 `
-	c, err := configFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData, dataDir)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
 	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
