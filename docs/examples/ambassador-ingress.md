@@ -26,7 +26,7 @@ As you need to create a custom configuration file to install Ambassador Gateway,
 
     ```shell
     docker exec k0s cat /var/lib/k0s/pki/admin.conf > k0s-cluster.conf
-    export KUBECONFIG=$KUBECONFIG:<absolute path to k0s-cluster.conf>
+    export KUBECONFIG="$KUBECONFIG:$PWD/k0s-cluster.conf"
     ```
 
 ## Configure `k0s.yaml` for Ambassador Gateway
@@ -77,7 +77,7 @@ As you need to create a custom configuration file to install Ambassador Gateway,
 3. Retart your k0s container, this time with additional ports and the above config file mapped into it:
 
     ```shell
-    docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v <path to k0s.yaml file>:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.io/k0sproject/k0s:latest
+    docker run --name k0s --hostname k0s --privileged -v /var/lib/k0s -v "$PWD"/k0s.yaml:/k0s.yaml -p 6443:6443 -p 80:80 -p 443:443 -p 8080:8080 docker.io/k0sproject/k0s:latest
     ```
 
     After some time, you will be able to list the Ambassador Services:
