@@ -123,13 +123,31 @@ func (s *storageSuite) TestValidation() {
 		s.Nil(spec.Validate())
 	})
 
-	s.T().Run("external_cluster_spec_is_valid", func(t *testing.T) {
+	s.T().Run("external_cluster_spec_without_tls_is_valid", func(t *testing.T) {
 		spec := &StorageSpec{
 			Type: EtcdStorageType,
 			Etcd: &EtcdConfig{
 				ExternalCluster: &ExternalCluster{
 					Endpoints:  []string{"http://192.168.10.10"},
 					EtcdPrefix: "tenant-1",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		s.Nil(spec.Validate())
+	})
+
+	s.T().Run("external_cluster_spec_with_tls_is_valid", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:      []string{"http://192.168.10.10"},
+					EtcdPrefix:     "tenant-1",
+					CaFile:         "/etc/pki/CA/ca.crt",
+					ClientCertFile: "/etc/pki/tls/certs/etcd-client.crt",
+					ClientKeyFile:  "/etc/pki/tls/private/etcd-client.key",
 				},
 				PeerAddress: "",
 			},
@@ -191,6 +209,28 @@ func (s *storageSuite) TestValidation() {
 		s.NotNil(errs)
 		s.Len(errs, 1)
 		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster.endpoints cannot contain empty strings")
+	})
+
+	s.T().Run("external_cluster_must_have_configured_all_tls_properties_or_none_of_them", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:      []string{"http://192.168.10.10"},
+					EtcdPrefix:     "tenant-1",
+					CaFile:         "",
+					ClientCertFile: "/etc/pki/tls/certs/etcd-client.crt",
+					ClientKeyFile:  "",
+				},
+				PeerAddress: "",
+			},
+		}
+
+		errs := spec.Validate()
+		s.NotNil(errs)
+		s.Len(errs, 1)
+		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster is invalid: "+
+			"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")
 	})
 }
 

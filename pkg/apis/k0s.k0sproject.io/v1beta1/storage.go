@@ -103,14 +103,8 @@ func (s *StorageSpec) Validate() []error {
 	var errors []error
 
 	if s.Etcd != nil && s.Etcd.ExternalCluster != nil {
-		if s.Etcd.ExternalCluster.Endpoints == nil || len(s.Etcd.ExternalCluster.Endpoints) == 0 {
-			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
-		} else if slices.Contains(s.Etcd.ExternalCluster.Endpoints, "") {
-			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
-		}
-		if s.Etcd.ExternalCluster.EtcdPrefix == "" {
-			errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
-		}
+		errors = append(errors, validateRequiredProperties(s.Etcd.ExternalCluster)...)
+		errors = append(errors, validateOptionalTLSProperties(s.Etcd.ExternalCluster)...)
 	}
 
 	return errors
@@ -199,4 +193,31 @@ func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
 
 func (e *EtcdConfig) GetCaFilePath(certDir string) string {
 	return filepath.Join(certDir, "ca.crt")
+}
+
+func validateRequiredProperties(e *ExternalCluster) []error {
+	var errors []error
+
+	if e.Endpoints == nil || len(e.Endpoints) == 0 {
+		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot be null or empty"))
+	} else if slices.Contains(e.Endpoints, "") {
+		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.endpoints cannot contain empty strings"))
+	}
+
+	if e.EtcdPrefix == "" {
+		errors = append(errors, fmt.Errorf("spec.storage.etcd.externalCluster.etcdPrefix cannot be empty"))
+	}
+
+	return errors
+}
+
+func validateOptionalTLSProperties(e *ExternalCluster) []error {
+	noTLSPropertyDefined := e.CaFile == "" && e.ClientCertFile == "" && e.ClientKeyFile == ""
+	allTLSPropertiesDefined := e.CaFile != "" && e.ClientCertFile != "" && e.ClientKeyFile != ""
+
+	if allTLSPropertiesDefined || noTLSPropertyDefined {
+		return nil
+	}
+	return []error{fmt.Errorf("spec.storage.etcd.externalCluster is invalid: " +
+		"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")}
 }
