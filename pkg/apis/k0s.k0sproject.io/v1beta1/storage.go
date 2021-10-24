@@ -180,18 +180,27 @@ func (e *EtcdConfig) IsExternalClusterUsed() bool {
 }
 
 func (e *EtcdConfig) IsTLSEnabled() bool {
-	return !e.IsExternalClusterUsed()
+	return !e.IsExternalClusterUsed() || e.ExternalCluster.hasAllTLSPropertiesDefined()
 }
 
 func (e *EtcdConfig) GetCertFilePath(certDir string) string {
+	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
+		return e.ExternalCluster.ClientCertFile
+	}
 	return filepath.Join(certDir, "apiserver-etcd-client.crt")
 }
 
 func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
+	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
+		return e.ExternalCluster.ClientKeyFile
+	}
 	return filepath.Join(certDir, "apiserver-etcd-client.key")
 }
 
 func (e *EtcdConfig) GetCaFilePath(certDir string) string {
+	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
+		return e.ExternalCluster.CaFile
+	}
 	return filepath.Join(certDir, "ca.crt")
 }
 
@@ -213,11 +222,14 @@ func validateRequiredProperties(e *ExternalCluster) []error {
 
 func validateOptionalTLSProperties(e *ExternalCluster) []error {
 	noTLSPropertyDefined := e.CaFile == "" && e.ClientCertFile == "" && e.ClientKeyFile == ""
-	allTLSPropertiesDefined := e.CaFile != "" && e.ClientCertFile != "" && e.ClientKeyFile != ""
 
-	if allTLSPropertiesDefined || noTLSPropertyDefined {
+	if noTLSPropertyDefined || e.hasAllTLSPropertiesDefined() {
 		return nil
 	}
 	return []error{fmt.Errorf("spec.storage.etcd.externalCluster is invalid: " +
 		"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")}
+}
+
+func (e *ExternalCluster) hasAllTLSPropertiesDefined() bool {
+	return e.CaFile != "" && e.ClientCertFile != "" && e.ClientKeyFile != ""
 }
