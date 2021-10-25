@@ -175,14 +175,28 @@ func (e *EtcdConfig) GetEndpoints() []string {
 	return []string{"https://127.0.0.1:2379"}
 }
 
+// IsExternalClusterUsed returns true if `spec.storage.etcd.externalCluster` is defined, otherwise returns false.
 func (e *EtcdConfig) IsExternalClusterUsed() bool {
 	return e != nil && e.ExternalCluster != nil
 }
 
+// IsTLSEnabled returns true if external cluster is not configured or external cluster is configured
+// with all TLS properties: caFile, clientCertFile, clientKeyFile. Otherwise it returns false.
 func (e *EtcdConfig) IsTLSEnabled() bool {
 	return !e.IsExternalClusterUsed() || e.ExternalCluster.hasAllTLSPropertiesDefined()
 }
 
+// GetCaFilePath returns the host path to a file with CA certificate if external cluster has configured all TLS properties,
+// otherwise it returns the host path to a default CA certificate in a given certDir directory.
+func (e *EtcdConfig) GetCaFilePath(certDir string) string {
+	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
+		return e.ExternalCluster.CaFile
+	}
+	return filepath.Join(certDir, "ca.crt")
+}
+
+// GetCertFilePath returns the host path to a file with a client certificate if external cluster has configured all TLS properties,
+// otherwise it returns the host path to a default client certificate in a given certDir directory.
 func (e *EtcdConfig) GetCertFilePath(certDir string) string {
 	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
 		return e.ExternalCluster.ClientCertFile
@@ -190,18 +204,13 @@ func (e *EtcdConfig) GetCertFilePath(certDir string) string {
 	return filepath.Join(certDir, "apiserver-etcd-client.crt")
 }
 
+// GetCaFilePath returns the host path to a file with client private key if external cluster has configured all TLS properties,
+// otherwise it returns the host path to a default client private key in a given certDir directory.
 func (e *EtcdConfig) GetKeyFilePath(certDir string) string {
 	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
 		return e.ExternalCluster.ClientKeyFile
 	}
 	return filepath.Join(certDir, "apiserver-etcd-client.key")
-}
-
-func (e *EtcdConfig) GetCaFilePath(certDir string) string {
-	if e.IsExternalClusterUsed() && e.ExternalCluster.hasAllTLSPropertiesDefined() {
-		return e.ExternalCluster.CaFile
-	}
-	return filepath.Join(certDir, "ca.crt")
 }
 
 func validateRequiredProperties(e *ExternalCluster) []error {

@@ -123,6 +123,17 @@ func (s *storageSuite) TestValidation() {
 		s.Nil(spec.Validate())
 	})
 
+	s.T().Run("internal_cluster_spec_is_valid", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				PeerAddress: "192.168.10.10",
+			},
+		}
+
+		s.Nil(spec.Validate())
+	})
+
 	s.T().Run("external_cluster_spec_without_tls_is_valid", func(t *testing.T) {
 		spec := &StorageSpec{
 			Type: EtcdStorageType,
@@ -131,7 +142,6 @@ func (s *storageSuite) TestValidation() {
 					Endpoints:  []string{"http://192.168.10.10"},
 					EtcdPrefix: "tenant-1",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -149,7 +159,6 @@ func (s *storageSuite) TestValidation() {
 					ClientCertFile: "/etc/pki/tls/certs/etcd-client.crt",
 					ClientKeyFile:  "/etc/pki/tls/private/etcd-client.key",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -164,7 +173,6 @@ func (s *storageSuite) TestValidation() {
 					Endpoints:  []string{},
 					EtcdPrefix: "",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -183,7 +191,6 @@ func (s *storageSuite) TestValidation() {
 					Endpoints:  nil,
 					EtcdPrefix: "tenant-1",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -201,7 +208,6 @@ func (s *storageSuite) TestValidation() {
 					Endpoints:  []string{"http://192.168.10.2:2379", ""},
 					EtcdPrefix: "tenant-1",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -222,7 +228,6 @@ func (s *storageSuite) TestValidation() {
 					ClientCertFile: "/etc/pki/tls/certs/etcd-client.crt",
 					ClientKeyFile:  "",
 				},
-				PeerAddress: "",
 			},
 		}
 
@@ -231,6 +236,69 @@ func (s *storageSuite) TestValidation() {
 		s.Len(errs, 1)
 		s.Contains(errs[0].Error(), "spec.storage.etcd.externalCluster is invalid: "+
 			"all TLS properties [caFile,clientCertFile,clientKeyFile] must be defined or none of those")
+	})
+}
+
+func (s *storageSuite) TestIsTLSEnabled() {
+	s.T().Run("is_TLS_enabled_returns_true_when_internal_cluster_is_used", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				PeerAddress: "192.168.10.10",
+			},
+		}
+
+		result := spec.Etcd.IsTLSEnabled()
+		s.True(result)
+	})
+
+	s.T().Run("is_TLS_enabled_returns_true_when_external_cluster_is_used_and_has_set_all_TLS_properties", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:      []string{"http://192.168.10.10"},
+					EtcdPrefix:     "tenant-1",
+					CaFile:         "/etc/pki/CA/ca.crt",
+					ClientCertFile: "/etc/pki/tls/certs/etcd-client.crt",
+					ClientKeyFile:  "/etc/pki/tls/private/etcd-client.key",
+				},
+			},
+		}
+
+		result := spec.Etcd.IsTLSEnabled()
+		s.True(result)
+	})
+
+	s.T().Run("is_TLS_enabled_returns_false_when_external_cluster_is_used_but_has_no_TLS_properties", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:      []string{"http://192.168.10.10"},
+					EtcdPrefix:     "tenant-1",
+				},
+			},
+		}
+
+		result := spec.Etcd.IsTLSEnabled()
+		s.False(result)
+	})
+
+	s.T().Run("is_TLS_enabled_returns_false_when_external_cluster_is_used_but_TLS_properties_are_configured_partially", func(t *testing.T) {
+		spec := &StorageSpec{
+			Type: EtcdStorageType,
+			Etcd: &EtcdConfig{
+				ExternalCluster: &ExternalCluster{
+					Endpoints:      []string{"http://192.168.10.10"},
+					EtcdPrefix:     "tenant-1",
+					CaFile:         "/etc/pki/CA/ca.crt",
+				},
+			},
+		}
+
+		result := spec.Etcd.IsTLSEnabled()
+		s.False(result)
 	})
 }
 
