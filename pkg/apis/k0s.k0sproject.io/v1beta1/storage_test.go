@@ -275,8 +275,8 @@ func (s *storageSuite) TestIsTLSEnabled() {
 			Type: EtcdStorageType,
 			Etcd: &EtcdConfig{
 				ExternalCluster: &ExternalCluster{
-					Endpoints:      []string{"http://192.168.10.10"},
-					EtcdPrefix:     "tenant-1",
+					Endpoints:  []string{"http://192.168.10.10"},
+					EtcdPrefix: "tenant-1",
 				},
 			},
 		}
@@ -290,9 +290,9 @@ func (s *storageSuite) TestIsTLSEnabled() {
 			Type: EtcdStorageType,
 			Etcd: &EtcdConfig{
 				ExternalCluster: &ExternalCluster{
-					Endpoints:      []string{"http://192.168.10.10"},
-					EtcdPrefix:     "tenant-1",
-					CaFile:         "/etc/pki/CA/ca.crt",
+					Endpoints:  []string{"http://192.168.10.10"},
+					EtcdPrefix: "tenant-1",
+					CaFile:     "/etc/pki/CA/ca.crt",
 				},
 			},
 		}
