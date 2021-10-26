@@ -100,7 +100,6 @@ jobs:
 
       - name: Check Network
         run: |
-          export K8S_VERSION="v1.22.2"
           make check-network-vm
         working-directory: ./inttest
 
