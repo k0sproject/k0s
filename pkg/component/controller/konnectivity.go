@@ -198,6 +198,7 @@ func (k *Konnectivity) Stop() error {
 type konnectivityAgentConfig struct {
 	APIAddress             string
 	AgentPort              int64
+	KASPort                int64
 	Image                  string
 	ServerCount            int
 	PullPolicy             string
@@ -213,8 +214,9 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		return err
 	}
 	cfg := konnectivityAgentConfig{
-		APIAddress:             k.NodeConfig.Spec.API.APIAddress(),
+		APIAddress:             k.NodeConfig.Spec.API.APIAddress(), // TODO: should it be an APIAddress?
 		AgentPort:              k.clusterConfig.Spec.Konnectivity.AgentPort,
+		KASPort:                int64(k.clusterConfig.Spec.API.Port),
 		Image:                  k.clusterConfig.Spec.Images.Konnectivity.URI(),
 		ServerCount:            k.serverCount,
 		PullPolicy:             k.clusterConfig.Spec.Images.DefaultPullPolicy,
@@ -341,6 +343,10 @@ spec:
               - name: K0S_CONTROLLER_COUNT
                 value: "{{ .ServerCount }}"
 
+              - name: NODE_IP
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.hostIP
           args: [
                   "--logtostderr=true",
                   "--ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
@@ -349,6 +355,11 @@ spec:
                   "--proxy-server-host={{ .APIAddress }}",
                   "--proxy-server-port={{ .AgentPort }}",
                   "--service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token"
+                  {{ if .TunneledNetworkingMode }},
+                  # agent need to listen on the node ip to be on pair with the tunneled network reconciler
+                  "--bind-address=$(NODE_IP)",
+                  "--apiserver-port-mapping=6443:localhost:{{.KASPort}}"
+                  {{ end }} 
                   ]
           volumeMounts:
             - mountPath: /var/run/secrets/tokens
@@ -367,6 +378,25 @@ spec:
               - serviceAccountToken:
                   path: konnectivity-agent-token
                   audience: system:konnectivity-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: konnectivity-agent
+  name: konnectivity-agent
+  namespace: kube-system
+spec:
+  internalTrafficPolicy: Local
+  ports:
+  - name: agent
+    port: 6443
+    protocol: TCP
+    targetPort: 6443
+  selector:
+    k8s-app: konnectivity-agent
+  sessionAffinity: None
+  type: ClusterIP
 `
 
 // Healthy is a no-op check

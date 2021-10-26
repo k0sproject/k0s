@@ -1,0 +1,214 @@
+package controller
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/sirupsen/logrus"
+	v1core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+)
+
+type TunneledEndpointReconciler struct {
+	cfg *v1beta1.ClusterConfig
+
+	logger *logrus.Entry
+
+	leaderElector     LeaderElector
+	kubeClientFactory k8sutil.ClientFactoryInterface
+}
+
+func (ep TunneledEndpointReconciler) Init() error {
+	return nil
+}
+
+func (ep *TunneledEndpointReconciler) Run(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				err := ep.reconcile(ctx)
+				if err != nil {
+					ep.logger.Warnf("external API address reconciliation failed: %s", err.Error())
+				}
+			case <-ctx.Done():
+				ep.logger.Info("endpoint reconciler done")
+				return
+			}
+		}
+	}()
+	return nil
+}
+
+func (ep *TunneledEndpointReconciler) Stop() error {
+	return nil
+}
+
+func (ep *TunneledEndpointReconciler) Healthy() error {
+	return nil
+}
+
+func (ep *TunneledEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
+	ep.cfg = cfg
+	return nil
+}
+
+func (ep TunneledEndpointReconciler) reconcile(ctx context.Context) error {
+	if ep.cfg == nil {
+		return nil
+	}
+	if !ep.leaderElector.IsLeader() {
+		ep.logger.Debug("we're not the leader, not reconciling api endpoints")
+		return nil
+	}
+
+	if !ep.cfg.Spec.API.TunneledNetworkingMode {
+		return fmt.Errorf("impossible to disable tunneled networking for the KAS server on the fly, restart the node")
+	}
+
+	if err := ep.makeDefaultServiceInternalOnly(ctx); err != nil {
+		return fmt.Errorf("can't make `kubernetes` service be internal only: %w", err)
+	}
+
+	if err := ep.reconcileEndpoint(ctx); err != nil {
+		return fmt.Errorf("can't reconcile endpoint for the default service: %w", err)
+	}
+	return nil
+}
+
+func (ep TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) error {
+	c, err := ep.kubeClientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+
+	epClient := c.CoreV1().Endpoints("default")
+
+	addresses, err := makeNodesAddresses(ctx, c)
+	if err != nil {
+		return err
+	}
+	if len(addresses) == 0 {
+		return nil
+	}
+	subsets := []v1core.EndpointSubset{
+		v1core.EndpointSubset{
+			Addresses: addresses,
+			Ports: []v1core.EndpointPort{
+				v1core.EndpointPort{
+					Name:     "https",
+					Protocol: "TCP",
+					Port:     6443,
+				},
+			},
+		},
+	}
+	kubernetesEndpoint, err := epClient.Get(ctx, "kubernetes", v1.GetOptions{})
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ep.createEndpoint(ctx, subsets)
+		}
+		return err
+	}
+
+	kubernetesEndpoint.Subsets = subsets
+	_, err = epClient.Update(ctx, kubernetesEndpoint, v1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.EndpointAddress, error) {
+	nodes, err := c.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("can't list nodes: %w", err)
+	}
+
+	addresses := make([]v1core.EndpointAddress, 0, len(nodes.Items))
+	var ipAddr string
+	for _, node := range nodes.Items {
+		node := node
+		ipAddr = ""
+		for _, addr := range node.Status.Addresses {
+			if addr.Type != v1core.NodeInternalIP {
+				continue
+			}
+			ipAddr = addr.Address
+		}
+		if ipAddr == "" {
+			continue
+		}
+		addresses = append(addresses, v1core.EndpointAddress{
+			IP:       ipAddr,
+			NodeName: &node.Name,
+		})
+	}
+	return addresses, nil
+}
+
+func (r TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets []v1core.EndpointSubset) error {
+
+	ep := &v1core.Endpoints{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Endpoints",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name: "kubernetes",
+		},
+		Subsets: subsets,
+	}
+
+	c, err := r.kubeClientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, v1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("can't create new endpoints for kubernetes serice: %w", err)
+	}
+
+	return nil
+}
+
+func (ep TunneledEndpointReconciler) makeDefaultServiceInternalOnly(ctx context.Context) error {
+	c, err := ep.kubeClientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+
+	svcClient := c.CoreV1().Services("default")
+
+	svc, err := svcClient.Get(ctx, "kubernetes", v1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("can't get default service: %w", err)
+	}
+
+	newSvc := svc.DeepCopy()
+	p := v1core.ServiceInternalTrafficPolicyLocal
+	newSvc.Spec.InternalTrafficPolicy = &p
+
+	if _, err := svcClient.Update(ctx, newSvc, v1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("can't update default service: %w", err)
+	}
+	return nil
+}
+
+func NewTunneledEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *TunneledEndpointReconciler {
+	return &TunneledEndpointReconciler{
+		leaderElector:     leaderElector,
+		kubeClientFactory: kubeClientFactory,
+		logger:            logrus.WithFields(logrus.Fields{"component": "tunneled_endpoint_reconciler"}),
+	}
+}
