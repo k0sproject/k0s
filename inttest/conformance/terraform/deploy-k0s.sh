@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -x
-K0S_BIN="${GITHUB_WORKSPACE}/k0s-amd64"
+K0S_BIN="${GITHUB_WORKSPACE}/k0s"
 PRIVATE_KEY="${GITHUB_WORKSPACE}/inttest/conformance/terraform/aws_private.pem"
 SSH_OPTS="-o StrictHostKeyChecking=no"
 
@@ -23,11 +23,11 @@ echo $worker_ips > WORKER_IPS
 for controller in "${controller_ips[@]}"
 do
   scp ${SSH_OPTS} -i ${PRIVATE_KEY} $K0S_BIN ubuntu@"${controller}":
-  ssh ${SSH_OPTS} -i ${PRIVATE_KEY} ubuntu@"${controller}" "sudo scp k0s-amd64 /usr/local/bin/k0s"
+  ssh ${SSH_OPTS} -i ${PRIVATE_KEY} ubuntu@"${controller}" "sudo scp k0s /usr/local/bin/k0s"
 done
 
 for worker in "${worker_ips[@]}"
 do
   scp ${SSH_OPTS} -i ${PRIVATE_KEY} $K0S_BIN ubuntu@"${worker}":
-  ssh ${SSH_OPTS} -i ${PRIVATE_KEY} ubuntu@"${worker}" "sudo scp k0s-amd64 /usr/local/bin/k0s"
+  ssh ${SSH_OPTS} -i ${PRIVATE_KEY} ubuntu@"${worker}" "sudo scp k0s /usr/local/bin/k0s"
 done
