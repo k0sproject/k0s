@@ -339,15 +339,7 @@ jobs:
       - name: Deploy k0s to Hosts
         run: ./deploy-k0s.sh
 
-      - name: Set Outputs
-        id: vars
-        env:
-          K0S_VER: ${{ needs.release.outputs.tag_name }}
-        run: echo ::set-output name=k8s_version::$(echo ${K0S_VER} | sed 's/\+.*//')
-
       - name: Run Full Conformance Check
-        env:
-          K8S_VERSION: ${{ steps.vars.outputs.k8s_version }}
         run: |
           make check-conformance
         working-directory: ./inttest
