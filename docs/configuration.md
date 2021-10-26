@@ -7,7 +7,8 @@ k0s can be installed without a config file. In that case the default configurati
 1. Generate a yaml config file that uses the default settings.
 
     ```shell
-    k0s default-config > k0s.yaml
+    mkdir -p /etc/k0s
+    k0s default-config > /etc/k0s/k0s.yaml
     ```
 
 2. Modify the new yaml config file according to your needs, refer to [Configuration file reference](#configuration-file-reference) below.
@@ -15,7 +16,7 @@ k0s can be installed without a config file. In that case the default configurati
 3. Install k0s with your new config file.
 
     ```shell
-    sudo k0s install controller -c /path/to/your/config/file
+    sudo k0s install controller -c /etc/k0s/k0s.yaml
     ```
 
 4. If you need to modify your existing configuration later on, you can change your config file also when k0s is running, but remember to restart k0s to apply your configuration changes.
