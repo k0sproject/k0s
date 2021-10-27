@@ -19,5 +19,6 @@ smoketests := \
 	check-cli \
 	check-disabledcomponents \
 	check-extraargs \
-	check-configchange
+	check-configchange \
+	check-upgrade
 
