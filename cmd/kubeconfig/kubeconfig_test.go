@@ -18,14 +18,14 @@ package kubeconfig
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -39,31 +39,19 @@ type CLITestSuite struct {
 	suite.Suite
 }
 
-func (s *CLITestSuite) TestKubeConfigExternalAddress() {
+func (s *CLITestSuite) TestKubeConfigCreate() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 spec:
   api:
-    externalAddress: 1.2.3.4
+    externalAddress: 10.0.0.86
 `
-	c := CmdOpts(config.GetCmdOpts())
-	cfgFilePath, err := writeTmpFile(yamlData, "k0s-config")
+	cfgFilePath, err := file.WriteTmpFile(yamlData, "k0s-config")
 	s.NoError(err)
+
+	c := CmdOpts(config.GetCmdOpts())
 	c.CfgFile = cfgFilePath
-
-	cfg, err := v1beta1.ConfigFromString(yamlData, "")
-	s.NoError(err)
-	a := cfg.Spec.API
-
-	s.Equal("1.2.3.4", a.ExternalAddress)
-	clusterAPIURL, err := c.getAPIURL()
-	s.NoError(err)
-	s.Equal("https://1.2.3.4:6443", clusterAPIURL)
-}
-
-func (s *CLITestSuite) TestKubeConfigCreate() {
-	c := CmdOpts(config.GetCmdOpts())
 
 	caCert := `
 -----BEGIN CERTIFICATE-----
@@ -86,7 +74,7 @@ K3icRdyke+TCLl+YqsCKG2n95cK4CMMEm8a1KVWRZKwDqLD7rFdemNdmzCNlpFW/
 nzXu8A==
 -----END CERTIFICATE-----
 `
-	caCertPath, err := writeTmpFile(caCert, "ca-cert")
+	caCertPath, err := file.WriteTmpFile(caCert, "ca-cert")
 	s.NoError(err)
 
 	caCertKey := `
@@ -118,7 +106,7 @@ z+5UodDFCnUsfprMjfTdY2Vk99PT4++SrJ5iTOn7xgKRrd1MPkBv7SXwnPtxCBAK
 yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 -----END RSA PRIVATE KEY-----
 `
-	caKeyPath, err := writeTmpFile(caCertKey, "ca-key")
+	caKeyPath, err := file.WriteTmpFile(caCertKey, "ca-key")
 	s.NoError(err)
 
 	userReq := certificate.Request{
@@ -158,22 +146,15 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 
 	err = userKubeconfigTemplate.Execute(&buf, &data)
 	s.NoError(err)
+	kubeconfigPath, err := file.WriteTmpFile(buf.String(), "kubeconfig")
+	s.NoError(err)
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	s.NoError(err)
+	s.Equal("https://10.0.0.86:6443", config.Host)
+	_, err = v1beta1.ConfigFromString(yamlData, "")
+	s.NoError(err)
 }
 
 func TestCLITestSuite(t *testing.T) {
 	suite.Run(t, new(CLITestSuite))
-}
-
-func writeTmpFile(data string, prefix string) (path string, err error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%v-", prefix))
-	if err != nil {
-		return "", fmt.Errorf("cannot create temporary file: %v", err)
-	}
-
-	text := []byte(data)
-	if _, err = tmpFile.Write(text); err != nil {
-		return "", fmt.Errorf("failed to write to temporary file: %v", err)
-	}
-
-	return tmpFile.Name(), nil
 }

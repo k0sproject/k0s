@@ -16,9 +16,6 @@ limitations under the License.
 package airgap
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -54,18 +51,4 @@ spec:
 
 func TestCLITestSuite(t *testing.T) {
 	suite.Run(t, new(CLITestSuite))
-}
-
-func writeTmpFile(data string, prefix string) (path string, err error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%v-", prefix))
-	if err != nil {
-		return "", fmt.Errorf("cannot create temporary file: %v", err)
-	}
-
-	text := []byte(data)
-	if _, err = tmpFile.Write(text); err != nil {
-		return "", fmt.Errorf("failed to write to temporary file: %v", err)
-	}
-
-	return tmpFile.Name(), nil
 }
