@@ -72,4 +72,7 @@ replace (
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.2+incompatible
+
+	// make sure we don't have CVE-2020-28852
+	golang.org/x/text => golang.org/x/text v0.3.6
 )
