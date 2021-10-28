@@ -93,5 +93,8 @@ replace (
 	github.com/containerd/go-runc => github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
 	github.com/containerd/ttrpc => github.com/containerd/ttrpc v1.0.2
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
+
+	// make sure we don't have CVE-2020-28852
+	golang.org/x/text => golang.org/x/text v0.3.6
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 )
