@@ -121,6 +121,7 @@ With the `kubeconfig`, you can access your cluster using either kubectl or [Lens
 ```shell
 kubectl get pods --kubeconfig kubeconfig -A
 ```
+
 ```shell
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   1/1     Running   0          3m50s
