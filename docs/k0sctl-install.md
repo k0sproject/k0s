@@ -58,8 +58,10 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
 Run `k0sctl apply` to perform the cluster deployment:
 
 ```shell
-$ k0sctl apply --config k0sctl.yaml
+k0sctl apply --config k0sctl.yaml
+```
 
+```shell
 ⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
 ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
@@ -117,7 +119,10 @@ k0sctl kubeconfig > kubeconfig
 With the `kubeconfig`, you can access your cluster using either kubectl or [Lens](https://k8slens.dev/).
 
 ```shell
-$ kubectl get pods --kubeconfig kubeconfig -A
+kubectl get pods --kubeconfig kubeconfig -A
+```
+
+```shell
 NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   1/1     Running   0          3m50s
 kube-system   calico-node-vd7lx                          1/1     Running   0          3m44s
