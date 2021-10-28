@@ -48,11 +48,11 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 		if err != nil {
 			return err
 		}
-		_, err = ssh.ExecWithOutput("k0s install controller")
+		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install controller")
 		if err != nil {
 			return err
 		}
-		_, err = ssh.ExecWithOutput("k0s start")
+		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s start")
 		if err != nil {
 			return err
 		}
@@ -90,10 +90,11 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 			}
 			defer ssh.Disconnect()
 			s.PutFile(node, "/etc/k0s.token", token)
-			_, err = ssh.ExecWithOutput("k0s install worker --token-file /etc/k0s.token")
+			_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install worker --token-file /etc/k0s.token")
 			if err != nil {
 				return err
 			}
+			// plain "k0s start" does not seem to work on open-rc
 			_, err = ssh.ExecWithOutput("service k0sworker start")
 			if err != nil {
 				return err
@@ -135,7 +136,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
@@ -154,7 +155,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
