@@ -17,8 +17,6 @@ package airgap
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/k0sproject/k0s/pkg/config"
 )
 
 func NewAirgapCmd() *cobra.Command {
@@ -29,6 +27,5 @@ func NewAirgapCmd() *cobra.Command {
 
 	cmd.SilenceUsage = true
 	cmd.AddCommand(NewAirgapListImagesCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

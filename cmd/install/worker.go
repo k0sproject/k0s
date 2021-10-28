@@ -48,8 +48,11 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 		PreRunE: preRunValidateConfig,
 	}
 	// append flags
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
+	cmd.PersistentFlags().AddFlagSet(config.GetDebugFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetDataDirFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetStatusSocketFlagSet())
+
+	cmd.Flags().AddFlagSet(config.GetWorkerFlags())
 
 	return cmd
 }

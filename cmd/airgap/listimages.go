@@ -33,9 +33,11 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// we don't need warning messages in case of default config
-			logrus.SetLevel(logrus.ErrorLevel)
 			c := CmdOpts(config.GetCmdOpts())
+			if !c.Debug {
+				// we don't need warning messages in case of default config
+				logrus.SetLevel(logrus.ErrorLevel)
+			}
 			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
 			if err != nil {
 				return err
@@ -47,6 +49,6 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.PersistentFlags().AddFlagSet(config.GetDebugFlagSet())
 	return cmd
 }

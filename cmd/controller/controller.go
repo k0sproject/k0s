@@ -99,9 +99,9 @@ func NewControllerCmd() *cobra.Command {
 	}
 
 	// append flags
-	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
-	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.GetControllerFlags())
+	cmd.Flags().AddFlagSet(config.GetWorkerFlags())
 	return cmd
 }
 

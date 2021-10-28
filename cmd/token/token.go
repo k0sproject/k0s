@@ -43,6 +43,5 @@ func NewTokenCmd() *cobra.Command {
 	cmd.AddCommand(tokenCreateCmd())
 	cmd.AddCommand(tokenListCmd())
 	cmd.AddCommand(tokenInvalidateCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

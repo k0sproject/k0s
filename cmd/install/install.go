@@ -38,7 +38,6 @@ func NewInstallCmd() *cobra.Command {
 
 	cmd.AddCommand(installControllerCmd())
 	cmd.AddCommand(installWorkerCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 

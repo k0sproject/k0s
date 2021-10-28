@@ -33,6 +33,5 @@ func NewKubeConfigCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 	cmd.AddCommand(kubeconfigCreateCmd())
 	cmd.AddCommand(kubeConfigAdminCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
