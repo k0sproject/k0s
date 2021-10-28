@@ -1345,9 +1345,9 @@
 <p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications.</p>
 <h3 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h3>
 <p>Run <code>k0sctl apply</code> to perform the cluster deployment:</p>
-<div class="highlight"><pre><span></span><code>$ k0sctl apply --config k0sctl.yaml
-
-⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
+<div class="highlight"><pre><span></span><code>k0sctl apply --config k0sctl.yaml
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
 ⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
@@ -1397,8 +1397,9 @@ INFO      k0sctl kubeconfig
 <div class="highlight"><pre><span></span><code>k0sctl kubeconfig &gt; kubeconfig
 </code></pre></div>
 <p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>.</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get pods --kubeconfig kubeconfig -A
-NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+<div class="highlight"><pre><span></span><code>kubectl get pods --kubeconfig kubeconfig -A
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
 kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
 kube-system   calico-node-vd7lx                          <span class="m">1</span>/1     Running   <span class="m">0</span>          3m44s
 kube-system   coredns-5c98d7d4d8-tmrwv                   <span class="m">1</span>/1     Running   <span class="m">0</span>          4m10s
