@@ -35,6 +35,7 @@ import (
 	"github.com/go-openapi/jsonpointer"
 	"github.com/k0sproject/k0s/internal/pkg/random"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -134,19 +135,39 @@ func (s *FootlooseSuite) SetupSuite() {
 	s.waitForSSH()
 }
 
+// waitForSSH waits to get a SSH connection to all footloose machines defined as part of the test suite.
+// Each node is tried in parallel for ~30secs max
 func (s *FootlooseSuite) waitForSSH() {
-	var err error
-	// SSH through cluster should wait until we actually can get it through, but it doesn't
-	for i := 0; i < 30; i++ {
-		err = s.Cluster.SSH(s.ControllerNode(0), "root", "hostname")
-		if err == nil {
-			break
-		}
-		s.T().Logf("retrying ssh to %s", s.ControllerNode(0))
-		time.Sleep(1 * time.Second)
+	nodes := []string{}
+	for i := 0; i < s.ControllerCount; i++ {
+		nodes = append(nodes, s.ControllerNode(i))
 	}
+	for i := 0; i < s.WorkerCount; i++ {
+		nodes = append(nodes, s.WorkerNode(i))
+	}
+
+	s.T().Logf("total of %d nodes: %v", len(nodes), nodes)
+
+	g := errgroup.Group{}
+	for _, node := range nodes {
+		nodeName := node
+		g.Go(func() error {
+			for i := 0; i < 30; i++ {
+				err := s.Cluster.SSH(nodeName, "root", "hostname")
+				if err == nil {
+					return nil
+				}
+				s.T().Logf("retrying ssh to %s", nodeName)
+				time.Sleep(1 * time.Second)
+			}
+			return fmt.Errorf("failed to get working SSH connection to %s", nodeName)
+		})
+	}
+
+	err := g.Wait()
+
 	if err != nil {
-		s.FailNowf("failed to ssh to %s: %s", s.ControllerNode(0), err.Error())
+		s.FailNowf("failed to ssh one or many nodes: %s", err.Error())
 		s.T().FailNow()
 		return
 	}
