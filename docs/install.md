@@ -48,10 +48,10 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     $ sudo k0s status
-    Version: v0.11.0
+    Version: v1.22.2+k0s.1
     Process ID: 436
-    Parent Process ID: 1
-    Role: controller+worker
+    Role: controller
+    Workloads: true
     Init System: linux-systemd
     ```
 
