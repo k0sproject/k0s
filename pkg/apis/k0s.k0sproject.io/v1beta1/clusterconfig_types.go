@@ -39,16 +39,16 @@ const (
 
 // ClusterSpec defines the desired state of ClusterConfig
 type ClusterSpec struct {
-	API               *APISpec               `json:"api"`
+	API               *APISpec               `json:"api,omitempty"`
 	ControllerManager *ControllerManagerSpec `json:"controllerManager,omitempty"`
 	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty"`
-	Storage           *StorageSpec           `json:"storage"`
-	Network           *Network               `json:"network"`
-	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy"`
+	Storage           *StorageSpec           `json:"storage,omitempty"`
+	Network           *Network               `json:"network,omitempty"`
+	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy,omitempty"`
 	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
-	Telemetry         *ClusterTelemetry      `json:"telemetry"`
+	Telemetry         *ClusterTelemetry      `json:"telemetry,omitempty"`
 	Install           *InstallSpec           `json:"installConfig,omitempty"`
-	Images            *ClusterImages         `json:"images"`
+	Images            *ClusterImages         `json:"images,omitempty"`
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
 }
@@ -223,6 +223,73 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	decoder.DisallowUnknownFields()
 
 	return decoder.Decode(jc)
+}
+
+// GetBootstrappingConfig returns a ClusterConfig object stripped of Cluster-Wide Settings
+func (c *ClusterConfig) GetBootstrappingConfig() *ClusterConfig {
+	return &ClusterConfig{
+		ObjectMeta: c.ObjectMeta,
+		TypeMeta:   c.TypeMeta,
+		DataDir:    c.DataDir,
+		Spec: &ClusterSpec{
+			API: &APISpec{
+				Address:    c.Spec.API.Address,
+				ExtraArgs:  c.Spec.API.ExtraArgs,
+				K0sAPIPort: c.Spec.API.K0sAPIPort,
+				SANs:       c.Spec.API.SANs,
+			},
+			Storage: &StorageSpec{
+				Type: c.Spec.Storage.Type,
+				Etcd: &EtcdConfig{
+					PeerAddress: c.Spec.Storage.Etcd.PeerAddress,
+				},
+				Kine: c.Spec.Storage.Kine,
+			},
+			Network: &Network{
+				ServiceCIDR: c.Spec.Network.ServiceCIDR,
+			},
+			Install: c.Spec.Install,
+		},
+		Status: c.Status,
+	}
+}
+
+// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
+// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
+// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
+// - APISpec
+// - StorageSpec
+// - Network.ServiceCIDR
+// - Install
+func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
+	return &ClusterConfig{
+		ObjectMeta: c.ObjectMeta,
+		TypeMeta:   c.TypeMeta,
+		DataDir:    c.DataDir,
+		Spec: &ClusterSpec{
+			API: &APISpec{
+				ExternalAddress: c.Spec.API.ExternalAddress,
+				Port:            c.Spec.API.Port,
+			},
+			ControllerManager: c.Spec.ControllerManager,
+			Scheduler:         c.Spec.Scheduler,
+			Network: &Network{
+				Calico:     c.Spec.Network.Calico,
+				DualStack:  c.Spec.Network.DualStack,
+				KubeProxy:  c.Spec.Network.KubeProxy,
+				KubeRouter: c.Spec.Network.KubeRouter,
+				PodCIDR:    c.Spec.Network.PodCIDR,
+				Provider:   c.Spec.Network.Provider,
+			},
+			PodSecurityPolicy: c.Spec.PodSecurityPolicy,
+			WorkerProfiles:    c.Spec.WorkerProfiles,
+			Telemetry:         c.Spec.Telemetry,
+			Images:            c.Spec.Images,
+			Extensions:        c.Spec.Extensions,
+			Konnectivity:      c.Spec.Konnectivity,
+		},
+		Status: c.Status,
+	}
 }
 
 // DefaultClusterSpec default settings

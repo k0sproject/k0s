@@ -91,6 +91,14 @@ func Copy(src, dst string) error {
 	return nil
 }
 
+func CreateSymlink(src string, dst string) error {
+	err := os.Symlink(src, dst)
+	if err != nil {
+		return fmt.Errorf("error creating symlink (%v): %v", dst, err)
+	}
+	return nil
+}
+
 func WriteTmpFile(data string, prefix string) (path string, err error) {
 	tmpFile, err := os.CreateTemp("", prefix)
 	if err != nil {

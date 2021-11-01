@@ -27,15 +27,15 @@ var _ Validateable = (*Network)(nil)
 
 // Network defines the network related config options
 type Network struct {
-	Calico     *Calico     `json:"calico"`
+	Calico     *Calico     `json:"calico,omitempty"`
 	DualStack  DualStack   `json:"dualStack,omitempty"`
-	KubeProxy  *KubeProxy  `json:"kubeProxy"`
-	KubeRouter *KubeRouter `json:"kuberouter"`
+	KubeProxy  *KubeProxy  `json:"kubeProxy,omitempty"`
+	KubeRouter *KubeRouter `json:"kuberouter,omitempty"`
 
 	// Pod network CIDR to use in the cluster
-	PodCIDR string `json:"podCIDR"`
+	PodCIDR string `json:"podCIDR,omitempty"`
 	// Network provider (valid values: calico, kuberouter, or custom)
-	Provider string `json:"provider"`
+	Provider string `json:"provider,omitempty"`
 	// Network CIDR to use for cluster VIP services
 	ServiceCIDR string `json:"serviceCIDR,omitempty"`
 }

@@ -16,205 +16,123 @@ limitations under the License.
 package config
 
 import (
-	"context"
 	"fmt"
-	"strings"
-	"time"
 
-	"github.com/imdario/mergo"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
 )
 
-var (
-	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
-	getOpts      = v1.GetOptions{TypeMeta: resourceType}
-)
+// general interface for config related methods
+type Loader interface {
+	BootstrapConfig() (*v1beta1.ClusterConfig, error)
+	ClusterConfig() (*v1beta1.ClusterConfig, error)
+	IsAPIConfig() bool
+	IsDefaultConfig() bool
+	Load() (*v1beta1.ClusterConfig, error)
+}
 
-func getConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
-	timeout := time.After(120 * time.Second)
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-	// Keep trying until we're timed out or got a result or got an error
-	for {
-		select {
-		// Got a timeout! fail with a timeout error
-		case <-timeout:
-			return nil, fmt.Errorf("timed out waiting for API to return cluster-config")
-		// Got a tick, we should check on doSomething()
-		case <-ticker.C:
-			logrus.Debug("fetching cluster-config from API...")
-			cfg, err := configRequest(kubeConfig)
-			if err != nil {
-				continue
-			}
-			return cfg, nil
+type K0sConfigGetter struct {
+	k0sConfigGetter Getter
+}
+
+func (g *K0sConfigGetter) IsAPIConfig() bool {
+	return false
+}
+
+func (g *K0sConfigGetter) IsDefaultConfig() bool {
+	return false
+}
+
+func (g *K0sConfigGetter) BootstrapConfig() (*v1beta1.ClusterConfig, error) {
+	return g.k0sConfigGetter()
+}
+
+func (g *K0sConfigGetter) Load() (*v1beta1.ClusterConfig, error) {
+	return g.k0sConfigGetter()
+}
+
+type Getter func() (*v1beta1.ClusterConfig, error)
+
+var _ Loader = &ClientConfigLoadingRules{}
+
+type ClientConfigLoadingRules struct {
+	// APIClient is an optional field for passing a kubernetes API client, to fetch the API config
+	// mostly used by tests, to pass a fake client
+	APIClient k0sv1beta1.K0sV1beta1Interface
+
+	// Nodeconfig is an optional field indicating if provided config-file is a node-config or a standard cluster-config file.
+	Nodeconfig bool
+
+	// RuntimeConfigPath is an optional field indicating the location of the runtime config file (default: /run/k0s/k0s.yaml)
+	// this parameter is mainly used for testing purposes, to override the default location on local dev system
+	RuntimeConfigPath string
+
+	// CfgFileOverride is an optional field for overriding the CfgFile parameter from cobra. Used mainly for testing purposes.
+	CfgFileOverride string
+}
+
+func (rules *ClientConfigLoadingRules) BootstrapConfig() (*v1beta1.ClusterConfig, error) {
+	return rules.fetchNodeConfig()
+}
+
+// ClusterConfig generates a client and queries the API for the cluster config
+func (rules *ClientConfigLoadingRules) ClusterConfig() (*v1beta1.ClusterConfig, error) {
+	if rules.APIClient == nil {
+		// generate a kubernetes client from AdminKubeConfigPath
+		config, err := clientcmd.BuildConfigFromFlags("", K0sVars.AdminKubeConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("can't read kubeconfig: %v", err)
 		}
-	}
-}
-
-// GetFullConfig returns the combined node & cluster config
-func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	if cfgPath == "" {
-		// no config file exists, using defaults
-		logrus.Info("no config file given, using defaults")
-	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
-	if err != nil {
-		return nil, err
-	}
-
-	apiConfig, err := getConfigFromAPI(k0sVars.AdminKubeConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	if err := mergo.Merge(cfg, apiConfig, mergo.WithOverride); err != nil {
-		return nil, err
-	}
-	return cfg, nil
-}
-
-// fetch cluster-config from API
-func configRequest(kubeConfig string) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		return nil, fmt.Errorf("can't read kubeconfig: %v", err)
-	}
-	c, err := cfgClient.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
-	}
-
-	clusterConfigs := c.K0sV1beta1().ClusterConfigs(constant.ClusterConfigNamespace)
-	ctxWithTimeout, cancelFunction := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
-	defer cancelFunction()
-
-	cfg, err := clusterConfigs.Get(ctxWithTimeout, "k0s", getOpts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch cluster-config from API: %v", err)
-	}
-	return cfg, nil
-}
-
-// GetYamlFromFile parses a yaml file into a ClusterConfig object
-func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	if cfgPath == "" {
-		// no config file exists, using defaults
-		logrus.Info("no config file given, using defaults")
-	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	switch cfgPath {
-	case "-":
-		clusterConfig, err = v1beta1.ConfigFromStdin(k0sVars.DataDir)
-	case "":
-		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars.DataDir)
-	default:
-		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, k0sVars.DataDir)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
-		logrus.Warn("storage type is kine but no config given, setting up defaults")
-		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
-	}
-	if clusterConfig.Spec.Install == nil {
-		clusterConfig.Spec.Install = v1beta1.DefaultInstallSpec()
-	}
-
-	errors := clusterConfig.Validate()
-	if len(errors) > 0 {
-		messages := make([]string, len(errors))
-		for _, e := range errors {
-			messages = append(messages, e.Error())
+		client, err := cfgClient.NewForConfig(config)
+		if err != nil {
+			return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
 		}
-		return nil, fmt.Errorf(strings.Join(messages, "\n"))
+
+		rules.APIClient = client.K0sV1beta1()
 	}
-	return clusterConfig, nil
+	return rules.getConfigFromAPI(rules.APIClient)
 }
 
-// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
-// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-// - APISpec
-// - StorageSpec
-// - Network.ServiceCIDR
-// - Install
-func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.ClusterConfig {
-	clusterSpec := &v1beta1.ClusterSpec{
-		ControllerManager: config.Spec.ControllerManager,
-		Scheduler:         config.Spec.Scheduler,
-		Network: &v1beta1.Network{
-			Calico:     config.Spec.Network.Calico,
-			DualStack:  config.Spec.Network.DualStack,
-			KubeProxy:  config.Spec.Network.KubeProxy,
-			KubeRouter: config.Spec.Network.KubeRouter,
-			PodCIDR:    config.Spec.Network.PodCIDR,
-			Provider:   config.Spec.Network.Provider,
-		},
-		PodSecurityPolicy: config.Spec.PodSecurityPolicy,
-		WorkerProfiles:    config.Spec.WorkerProfiles,
-		Telemetry:         config.Spec.Telemetry,
-		Images:            config.Spec.Images,
-		Extensions:        config.Spec.Extensions,
-		Konnectivity:      config.Spec.Konnectivity,
-		API: &v1beta1.APISpec{
-			ExternalAddress: config.Spec.API.ExternalAddress,
-			Address:         config.Spec.API.Address,
-			Port:            config.Spec.API.Port,
-		},
-	}
-
-	return &v1beta1.ClusterConfig{
-		ObjectMeta: config.ObjectMeta,
-		TypeMeta:   config.TypeMeta,
-		DataDir:    config.DataDir,
-		Spec:       clusterSpec,
-		Status:     config.Status,
-	}
+func (rules *ClientConfigLoadingRules) IsAPIConfig() bool {
+	return controllerOpts.EnableDynamicConfig
 }
 
-// GetNodeConfig takes a config-file parameter and returns a ClusterConfig stripped of Cluster-Wide Settings
-func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
-	cfg, err := GetYamlFromFile(cfgPath, k0sVars)
-	if err != nil {
-		return nil, err
+func (rules *ClientConfigLoadingRules) IsDefaultConfig() bool {
+	// if no custom-value is provided as a config file, and no config-file exists in the default location
+	// we assume we need to generate configuration defaults
+	if CfgFile == constant.K0sConfigPathDefault && !file.Exists(constant.K0sConfigPathDefault) {
+		return true
 	}
-	clusterSpec := &v1beta1.ClusterSpec{
-		API: cfg.Spec.API,
-		Storage: &v1beta1.StorageSpec{
-			Type: cfg.Spec.Storage.Type,
-			Etcd: &v1beta1.EtcdConfig{
-				PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
-			},
-			Kine: cfg.Spec.Storage.Kine,
-		},
-		Network: &v1beta1.Network{
-			ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
-			DualStack:   cfg.Spec.Network.DualStack,
-		},
-		Install: cfg.Spec.Install,
+	return false
+}
+
+func (rules *ClientConfigLoadingRules) Load() (*v1beta1.ClusterConfig, error) {
+	if rules.CfgFileOverride != "" {
+		CfgFile = rules.CfgFileOverride
 	}
-	nodeConfig := &v1beta1.ClusterConfig{
-		ObjectMeta: cfg.ObjectMeta,
-		TypeMeta:   cfg.TypeMeta,
-		DataDir:    cfg.DataDir,
-		Spec:       clusterSpec,
-		Status:     cfg.Status,
+
+	if rules.Nodeconfig {
+		return rules.fetchNodeConfig()
 	}
-	return nodeConfig, nil
+	if !rules.IsAPIConfig() {
+		return rules.readRuntimeConfig()
+	}
+	if rules.IsAPIConfig() {
+		nodeConfig, err := rules.BootstrapConfig()
+		if err != nil {
+			return nil, err
+		}
+		apiConfig, err := rules.ClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		// get node config from the config-file and cluster-wide settings from the API and return a combined result
+		return rules.mergeNodeAndClusterconfig(nodeConfig, apiConfig)
+	}
+	return nil, nil
 }

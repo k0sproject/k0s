@@ -277,7 +277,7 @@ func (c *CmdOpts) caHandler() http.Handler {
 - foobar: the token itself
 We need to validate:
 - that we find a secret with the ID
-- that the token matches whats inside the secret
+- that the token matches whatever is inside the secret
 */
 func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) bool {
 	parts := strings.Split(token, ".")

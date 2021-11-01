@@ -119,6 +119,10 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return err
 	}
 
+	// Initialize runtime config
+	if err := config.InitConfig(); err != nil {
+		return fmt.Errorf("failed to initialize config: %v", err)
+	}
 	nodeConfig, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err
@@ -300,7 +304,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			LogLevel: c.Logging[constant.KubeControllerManagerComponentName],
 			K0sVars:  c.K0sVars,
 		})
-
 	}
 
 	c.ClusterComponents.Add(ctx, &telemetry.Component{
@@ -454,7 +457,6 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 }
 
 func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface) error {
-
 	reconcilers := make(map[string]component.Component)
 
 	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
@@ -469,7 +471,6 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars)
 		if err != nil {
 			return fmt.Errorf("failed to initialize kube-proxy reconciler: %s", err.Error())
-
 		}
 		reconcilers["kube-proxy"] = proxy
 	}

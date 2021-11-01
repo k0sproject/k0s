@@ -21,13 +21,13 @@ var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
-	Helm *HelmExtensions `json:"helm"`
+	Helm *HelmExtensions `json:"helm,omitempty"`
 }
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	Repositories RepositoriesSettings `json:"repositories"`
-	Charts       ChartsSettings       `json:"charts"`
+	Repositories RepositoriesSettings `json:"repositories,omitempty"`
+	Charts       ChartsSettings       `json:"charts,omitempty"`
 }
 
 // RepositoriesSettings repository settings
@@ -134,7 +134,6 @@ func (e *ClusterExtensions) Validate() []error {
 		if err := e.Helm.Validate(); err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

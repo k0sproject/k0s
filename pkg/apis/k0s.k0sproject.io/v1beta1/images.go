@@ -36,13 +36,13 @@ func (is ImageSpec) URI() string {
 
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
-	Konnectivity  ImageSpec `json:"konnectivity"`
-	MetricsServer ImageSpec `json:"metricsserver"`
-	KubeProxy     ImageSpec `json:"kubeproxy"`
-	CoreDNS       ImageSpec `json:"coredns"`
+	Konnectivity  ImageSpec `json:"konnectivity,omitempty"`
+	MetricsServer ImageSpec `json:"metricsserver,omitempty"`
+	KubeProxy     ImageSpec `json:"kubeproxy,omitempty"`
+	CoreDNS       ImageSpec `json:"coredns,omitempty"`
 
-	Calico     CalicoImageSpec     `json:"calico"`
-	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
+	Calico     CalicoImageSpec     `json:"calico,omitempty"`
+	KubeRouter KubeRouterImageSpec `json:"kuberouter,omitempty"`
 
 	Repository        string `json:"repository,omitempty"`
 	DefaultPullPolicy string `json:"default_pull_policy,omitempty"`
@@ -79,15 +79,15 @@ func (ci *ClusterImages) overrideImageRepositories() {
 
 // CalicoImageSpec config group for calico related image settings
 type CalicoImageSpec struct {
-	CNI             ImageSpec `json:"cni"`
-	Node            ImageSpec `json:"node"`
-	KubeControllers ImageSpec `json:"kubecontrollers"`
+	CNI             ImageSpec `json:"cni,omitempty"`
+	Node            ImageSpec `json:"node,omitempty"`
+	KubeControllers ImageSpec `json:"kubecontrollers,omitempty"`
 }
 
 // KubeRouterImageSpec config group for kube-router related images
 type KubeRouterImageSpec struct {
-	CNI          ImageSpec `json:"cni"`
-	CNIInstaller ImageSpec `json:"cniInstaller"`
+	CNI          ImageSpec `json:"cni,omitempty"`
+	CNIInstaller ImageSpec `json:"cniInstaller,omitempty"`
 }
 
 // DefaultClusterImages default image settings

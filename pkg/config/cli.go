@@ -102,7 +102,7 @@ func DefaultLogLevels() map[string]string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
+	flagset.StringVarP(&CfgFile, "config", "c", "/etc/k0s/k0s.yaml", "config file, use '-' to read the config from stdin [ Default: /etc/k0s/k0s.yaml ]")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	flagset.StringVar(&StatusSocket, "status-socket", filepath.Join(K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")

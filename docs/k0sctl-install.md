@@ -32,7 +32,7 @@ k0sctl is a single binary, the instructions for downloading and installing of wh
 
     ```yaml
     apiVersion: k0sctl.k0sproject.io/v1beta1
-    kind: Cluster
+    kind: ClusterConfig
     metadata:
       name: k0s-cluster
     spec:
