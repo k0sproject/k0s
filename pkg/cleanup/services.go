@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os/exec"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/install"
@@ -23,7 +24,7 @@ func (s *services) Run() error {
 	var msg []string
 
 	for _, role := range []string{"controller", "worker"} {
-		if err := install.UninstallService(role); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		if err := install.UninstallService(role); err != nil && !(errors.Is(err, fs.ErrNotExist) || isExitCode(err, 1)) {
 			msg = append(msg, err.Error())
 		}
 	}
@@ -31,4 +32,9 @@ func (s *services) Run() error {
 		return fmt.Errorf("%v", strings.Join(msg, "\n"))
 	}
 	return nil
+}
+
+func isExitCode(err error, exitcode int) bool {
+	var e *exec.ExitError
+	return errors.As(err, &e) && e.ProcessState.ExitCode() == exitcode
 }
