@@ -73,34 +73,43 @@ func DeleteControllerUsers(clusterConfig *v1beta1.ClusterConfig) error {
 // EnsureUser checks if a user exists, and creates it, if it doesn't
 // TODO: we should also consider modifying the user, if the user exists, but with wrong settings
 func EnsureUser(name string, homeDir string) error {
-	shell, err := exec.LookPath("nologin")
+	exists, err := users.CheckIfUserExists(name)
 	if err != nil {
 		return err
 	}
 
-	exists, err := users.CheckIfUserExists(name)
-	// User doesn't exist
-	if !exists && err == nil {
-		// Create the User
-		logrus.Infof("creating user: %s", name)
-		if err := createUser(name, homeDir, shell); err != nil {
-			return err
-		}
-		// User perhaps exists, but cannot be fetched
-	} else if err != nil {
+	if exists {
+		return nil
+	}
+
+	logrus.Infof("creating user: %s", name)
+	if err := createUser(name, homeDir); err != nil {
 		return err
 	}
+
 	// verify that user can be fetched, and exists
 	_, err = user.Lookup(name)
-	if err != nil {
-		return err
+	return err
+}
+
+// nologinShell returns the path to /sbin/nologin, /bin/false or equivalent or an error if neither is available
+func nologinShell() (string, error) {
+	for _, p := range []string{"nologin", "false"} {
+		if shell, err := exec.LookPath(p); err == nil {
+			return shell, nil
+		}
 	}
-	return nil
+	return "", errors.New("failed to locate a nologin shell for creating users")
 }
 
 // CreateUser creates a system user with either `adduser` or `useradd` command
-func createUser(userName string, homeDir string, shell string) error {
-	_, err := exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
+func createUser(userName string, homeDir string) error {
+	shell, err := nologinShell()
+	if err != nil {
+		return err
+	}
+
+	_, err = exec.Command("useradd", `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	if errors.Is(err, exec.ErrNotFound) {
 		_, err = exec.Command("adduser", `--disabled-password`, `--gecos`, `""`, `--home`, homeDir, `--shell`, shell, `--system`, `--no-create-home`, userName).Output()
 	}
