@@ -1185,13 +1185,13 @@
                   <h1>K0s install controller</h1>
                 
                 <h2 id="k0s-install-controller">k0s install controller<a class="headerlink" href="#k0s-install-controller" title="Permanent link">#</a></h2>
-<p>Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)</p>
+<p>Install k0s controller on a brand-new system. Must be run as root (or with sudo)</p>
 <div class="highlight"><pre><span></span><code>k0s install controller <span class="o">[</span>flags<span class="o">]</span>
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
 <p>All default values of controller command will be passed to the service stub unless overriden.</p>
-<p>With controller subcommand you can setup a single node cluster by running:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller --enable-worker
+<p>With the controller subcommand you can setup a single node cluster by running:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s install controller --single
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --cri-socket string   contrainer runtime socket to use, default to internal containerd. Format: <span class="o">[</span>remote<span class="p">|</span>docker<span class="o">]</span>:<span class="o">[</span>path-to-socket<span class="o">]</span>
@@ -1209,7 +1209,7 @@
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s_install/">k0s install</a> - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)</li>
+<li><a href="../k0s_install/">k0s install</a> - Install k0s on a brand-new system. Must be run as root (or with sudo)</li>
 </ul>
                 
               
