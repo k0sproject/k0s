@@ -37,7 +37,7 @@ var (
 func NewStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "status",
-		Short:   "Helper command for get general information about k0s",
+		Short:   "Get k0s instance status information",
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
