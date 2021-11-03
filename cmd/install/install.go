@@ -33,7 +33,7 @@ type CmdOpts config.CLIOptions
 func NewInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
-		Short: "Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)",
+		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
 	}
 
 	cmd.AddCommand(installControllerCmd())

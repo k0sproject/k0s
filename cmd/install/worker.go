@@ -24,8 +24,8 @@ import (
 func installWorkerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "worker",
-		Short: "Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)",
-		Example: `Worker subcommand allows you to pass in all available worker parameters. 
+		Short: "Install k0s worker on a brand-new system. Must be run as root (or with sudo)",
+		Example: `Worker subcommand allows you to pass in all available worker parameters.
 All default values of worker command will be passed to the service stub unless overriden.
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,

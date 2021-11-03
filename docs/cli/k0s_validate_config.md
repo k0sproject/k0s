@@ -1,6 +1,6 @@
 ## k0s validate config
 
-Helper command for validating the config file
+Validate k0s configuration
 
 ```shell
 k0s validate config [flags]
@@ -30,4 +30,4 @@ k0s validate config [flags]
 
 ### SEE ALSO
 
-* [k0s validate](k0s_validate.md) - Helper command for validating the config file
+* [k0s validate](k0s_validate.md) - Validation related sub-commands
