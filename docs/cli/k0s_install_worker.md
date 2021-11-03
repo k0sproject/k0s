@@ -1,6 +1,6 @@
 ## k0s install worker
 
-Helper command for setting up k0s as a worker node on a brand-new system. Must be run as root (or with sudo)
+Install k0s worker on a brand-new system. Must be run as root (or with sudo)
 
 ```shell
 k0s install worker [flags]
@@ -39,4 +39,4 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 
 ### SEE ALSO
 
-* [k0s install](k0s_install.md) - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)
+* [k0s install](k0s_install.md) - Install k0s on a brand-new system. Must be run as root (or with sudo)

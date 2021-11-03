@@ -33,7 +33,7 @@ type CmdOpts config.CLIOptions
 func NewResetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reset",
-		Short: "Helper command for uninstalling k0s. Must be run as root (or with sudo)",
+		Short: "Uninstall k0s. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")

@@ -1,6 +1,6 @@
 ## k0s status
 
-Helper command for get general information about k0s
+Get k0s instance status information
 
 ```shell
 k0s status [flags]
