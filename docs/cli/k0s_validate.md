@@ -1,6 +1,6 @@
 ## k0s validate
 
-Helper command for validating the config file
+Validation related sub-commands
 
 ### Options
 
@@ -21,4 +21,4 @@ Helper command for validating the config file
 ### SEE ALSO
 
 * [k0s](k0s.md) - k0s - Zero Friction Kubernetes
-* [k0s validate config](k0s_validate_config.md) - Helper command for validating the config file
+* [k0s validate config](k0s_validate_config.md) - Validate k0s configuration

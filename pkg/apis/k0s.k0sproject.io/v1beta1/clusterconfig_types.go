@@ -169,7 +169,7 @@ func ConfigFromFile(filename string, dataDir string) (*ClusterConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
-	return configFromString(string(buf), dataDir)
+	return ConfigFromString(string(buf), dataDir)
 }
 
 // ConfigFromStdin tries to read k0s.yaml config from stdin
@@ -178,10 +178,10 @@ func ConfigFromStdin(dataDir string) (*ClusterConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}
-	return configFromString(string(input), dataDir)
+	return ConfigFromString(string(input), dataDir)
 }
 
-func configFromString(yml string, dataDir string) (*ClusterConfig, error) {
+func ConfigFromString(yml string, dataDir string) (*ClusterConfig, error) {
 	config := DefaultClusterConfig(dataDir)
 	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, []string{"interval"})
 	if err != nil {

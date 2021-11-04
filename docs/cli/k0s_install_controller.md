@@ -1,6 +1,6 @@
 ## k0s install controller
 
-Helper command for setting up k0s as controller node on a brand-new system. Must be run as root (or with sudo)
+Install k0s controller on a brand-new system. Must be run as root (or with sudo)
 
 ```shell
 k0s install controller [flags]
@@ -10,10 +10,10 @@ k0s install controller [flags]
 
 All default values of controller command will be passed to the service stub unless overriden.
 
-With controller subcommand you can setup a single node cluster by running:
+With the controller subcommand you can setup a single node cluster by running:
 
 ```shell
-sudo k0s install controller --enable-worker
+sudo k0s install controller --single
 ```
 
 ### Options
@@ -38,4 +38,4 @@ sudo k0s install controller --enable-worker
 
 ### SEE ALSO
 
-* [k0s install](k0s_install.md) - Helper command for setting up k0s on a brand-new system. Must be run as root (or with sudo)
+* [k0s install](k0s_install.md) - Install k0s on a brand-new system. Must be run as root (or with sudo)

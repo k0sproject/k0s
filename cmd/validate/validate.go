@@ -25,7 +25,7 @@ type CmdOpts config.CLIOptions
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
-		Short: "Helper command for validating the config file",
+		Short: "Validation related sub-commands",
 	}
 	cmd.AddCommand(validateConfigCmd())
 	cmd.SilenceUsage = true
@@ -35,7 +35,7 @@ func NewValidateCmd() *cobra.Command {
 func validateConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "Helper command for validating the config file",
+		Short: "Validate k0s configuration",
 		Long: `Example:
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {

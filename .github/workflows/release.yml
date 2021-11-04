@@ -351,9 +351,9 @@ jobs:
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
-          asset_name: sonoboy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
+          asset_name: sonobuoy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
-
+        if: ${{ always() }}
       - name: Clean-Up Environment
         env:
           K0S_VER: ${{ needs.release.outputs.tag_name }}
