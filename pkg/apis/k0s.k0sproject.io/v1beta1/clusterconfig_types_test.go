@@ -31,6 +31,15 @@ func TestClusterDefaults(t *testing.T) {
 	assert.Equal(t, DefaultStorageSpec(dataDir), c.Spec.Storage)
 }
 
+func TestUnknownFieldValidation(t *testing.T) {
+	_, err := ConfigFromString(`
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+unknown: 1`, dataDir)
+
+	assert.Error(t, err)
+}
+
 func TestStorageDefaults(t *testing.T) {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
@@ -167,8 +176,7 @@ metadata:
   name: foobar
 spec:
   workerProfiles:
-  - profile_XXX:
-    name: profile_XXX
+  - name: profile_XXX
     values:
       authentication:
         anonymous:
@@ -176,8 +184,7 @@ spec:
         webhook:
           cacheTTL: 2m0s
           enabled: true
-  - profile_YYY:
-    name: profile_YYY
+  - name: profile_YYY
     values:
       apiVersion: v2
       authentication:
