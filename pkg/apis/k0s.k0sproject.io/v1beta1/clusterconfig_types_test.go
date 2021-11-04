@@ -17,6 +17,7 @@ package v1beta1
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
@@ -36,6 +37,24 @@ kind: ClusterConfig
 unknown: 1`)
 
 	assert.Error(t, err)
+}
+
+func TestAPIVersionValidation(t *testing.T) {
+	c, _ := ConfigFromString("apiVersion: "+ClusterConfigAPIVersion, dataDir)
+	assert.Len(t, c.Validate(), 0)
+	c, _ = ConfigFromString("apiVersion: k0sctl.k0sproject.io/v1beta1", dataDir)
+	errors := c.Validate()
+	assert.Len(t, errors, 1)
+	assert.Contains(t, errors[0].Error(), "k0sctl.k0sproject.io")
+}
+
+func TestKindValidation(t *testing.T) {
+	c, _ := ConfigFromString(fmt.Sprintf("apiVersion: %s\nkind: %s", ClusterConfigAPIVersion, ClusterConfigKind), dataDir)
+	assert.Len(t, c.Validate(), 0)
+	c, _ = ConfigFromString(fmt.Sprintf("apiVersion: %s\nkind: %s", ClusterConfigAPIVersion, "UnsupportedKind"), dataDir)
+	errors := c.Validate()
+	assert.Len(t, errors, 1)
+	assert.Contains(t, errors[0].Error(), "UnsupportedKind")
 }
 
 func TestStorageDefaults(t *testing.T) {

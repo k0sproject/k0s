@@ -1,6 +1,6 @@
 
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -10,6 +10,6 @@ spec:
       dataSource: mysql://root:kine@tcp(172.17.0.4)/kine
   api:
     address: 172.17.0.2 # Address where the k8s API is accessed at (nodes public IP or LB)
-    
+
 
 

@@ -36,7 +36,7 @@ type Suite struct {
 
 const configWithExternaladdress = `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: k0s
 spec:

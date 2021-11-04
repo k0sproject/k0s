@@ -166,9 +166,11 @@ func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfi
 	if err != nil {
 		return config, err
 	}
+
 	if config.Spec == nil {
 		config.Spec = DefaultClusterSpec(defaultStorage...)
 	}
+
 	return config, nil
 }
 
@@ -186,8 +188,8 @@ func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 	return &ClusterConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "k0s.k0sproject.io/v1beta1",
-			Kind:       "ClusterConfig",
+			APIVersion: ClusterConfigAPIVersion,
+			Kind:       ClusterConfigKind,
 		},
 		Spec: DefaultClusterSpec(defaultStorage...),
 	}
@@ -195,9 +197,6 @@ func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
 func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
-	if c.Kind == "" {
-		c.Kind = "ClusterConfig"
-	}
 	if c.ClusterName == "" {
 		c.ClusterName = "k0s"
 	}
@@ -262,6 +261,14 @@ type Validateable interface {
 // Validate validates cluster config
 func (c *ClusterConfig) Validate() []error {
 	var errors []error
+
+	if c.APIVersion != ClusterConfigAPIVersion {
+		errors = append(errors, fmt.Errorf("expected apiVersion: %s but found %s", ClusterConfigAPIVersion, c.APIVersion))
+	}
+
+	if c.Kind != ClusterConfigKind {
+		errors = append(errors, fmt.Errorf("expected kind: %s but found %s", ClusterConfigKind, c.Kind))
+	}
 
 	errors = append(errors, validateSpecs(c.Spec.API)...)
 	errors = append(errors, validateSpecs(c.Spec.ControllerManager)...)

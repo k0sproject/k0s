@@ -75,7 +75,7 @@ services:
     environment:
       K0S_CONFIG: |-
         apiVersion: k0s.k0sproject.io/v1beta1
-        kind: Cluster
+        kind: ClusterConfig
         metadata:
           name: k0s
         # Any additional configuration goes here ...

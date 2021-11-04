@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
+	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "ClusterConfig"}
 	cOpts        = v1.CreateOptions{TypeMeta: resourceType}
 	getOpts      = v1.GetOptions{TypeMeta: resourceType}
 )
@@ -172,11 +172,11 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 		FirstTimestamp: v1.Now(),
 		LastTimestamp:  v1.Now(),
 		InvolvedObject: corev1.ObjectReference{
-			Kind:            v1beta1.ClusterConfigKind,
+			Kind:            config.Kind,
 			Namespace:       config.Namespace,
 			Name:            config.Name,
 			UID:             config.UID,
-			APIVersion:      v1beta1.ClusterConfigAPIVersion,
+			APIVersion:      config.APIVersion,
 			ResourceVersion: config.ResourceVersion,
 		},
 		Action:              "ConfigReconciling",

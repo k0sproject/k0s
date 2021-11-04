@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
+	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "ClusterConfig"}
 	getOpts      = v1.GetOptions{TypeMeta: resourceType}
 )
 
