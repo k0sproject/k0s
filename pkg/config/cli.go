@@ -45,7 +45,6 @@ var (
 type CLIOptions struct {
 	WorkerOptions
 	ControllerOptions
-	CfgFile          string
 	ClusterConfig    *v1beta1.ClusterConfig
 	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
@@ -63,6 +62,7 @@ type ControllerOptions struct {
 	NoTaints          bool
 	DisableComponents []string
 
+	CfgFile                         string
 	ClusterComponents               *component.Manager
 	EnableK0sCloudProvider          bool
 	K0sCloudProviderPort            int
@@ -102,7 +102,7 @@ func DefaultLogLevels() map[string]string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", "/etc/k0s/k0s.yaml", "config file, use '-' to read the config from stdin [ Default: /etc/k0s/k0s.yaml ]")
+	flagset.MarkDeprecated("config", "config flag as a global flag has been deprecated. It is not used only as a flag for the 'controller' command")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
 	flagset.StringVar(&StatusSocket, "status-socket", filepath.Join(K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
@@ -164,6 +164,7 @@ func AvailableComponents() []string {
 func GetControllerFlags() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 
+	flagset.StringVarP(&CfgFile, "config", "c", "/etc/k0s/k0s.yaml", "config file, use '-' to read the config from stdin [ Default: /etc/k0s/k0s.yaml ]")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
 	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(AvailableComponents()[:], ",")+")")
@@ -187,7 +188,6 @@ func GetCmdOpts() CLIOptions {
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
 
-		CfgFile:          CfgFile,
 		Debug:            Debug,
 		DefaultLogLevels: DefaultLogLevels(),
 		K0sVars:          K0sVars,
