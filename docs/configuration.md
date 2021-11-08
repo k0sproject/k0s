@@ -73,7 +73,7 @@ spec:
   images:
     konnectivity:
       image: k8s.gcr.io/kas-network-proxy/proxy-agent
-      version: v0.0.24
+      version: v0.0.25
     metricsserver:
       image: k8s.gcr.io/metrics-server/metrics-server
       version: v0.5.0

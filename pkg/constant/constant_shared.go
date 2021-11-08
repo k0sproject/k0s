@@ -76,7 +76,7 @@ const (
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
 	KonnectivityImage                  = "k8s.gcr.io/kas-network-proxy/proxy-agent"
-	KonnectivityImageVersion           = "v0.0.24"
+	KonnectivityImageVersion           = "v0.0.25"
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.5.0"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
