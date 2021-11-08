@@ -18,7 +18,6 @@ package file
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 
@@ -93,7 +92,7 @@ func Copy(src, dst string) error {
 }
 
 func WriteTmpFile(data string, prefix string) (path string, err error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%v-", prefix))
+	tmpFile, err := os.CreateTemp("", prefix)
 	if err != nil {
 		return "", fmt.Errorf("cannot create temporary file: %v", err)
 	}
