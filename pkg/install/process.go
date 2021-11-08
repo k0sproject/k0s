@@ -35,6 +35,7 @@ type K0sStatus struct {
 	StubFile      string
 	Output        string
 	Workloads     bool
+	SingleNode    bool
 	Args          []string
 	ClusterConfig *config.ClusterConfig
 	K0sVars       constant.CfgVars

@@ -78,6 +78,7 @@ func printStatus(status *install.K0sStatus, output string) {
 		fmt.Println("Process ID:", status.Pid)
 		fmt.Println("Role:", status.Role)
 		fmt.Println("Workloads:", status.Workloads)
+		fmt.Println("SingleNode:", status.SingleNode)
 
 		if status.SysInit != "" {
 			fmt.Println("Init System:", status.SysInit)

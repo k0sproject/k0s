@@ -235,18 +235,14 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		)
 	}
 
-	workload := false
-	if c.SingleNode || c.EnableWorker {
-		workload = true
-	}
-
 	c.NodeComponents.Add(ctx, &status.Status{
 		StatusInformation: install.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
 			Args:          os.Args,
 			Version:       build.Version,
-			Workloads:     workload,
+			Workloads:     c.SingleNode || c.EnableWorker,
+			SingleNode:    c.SingleNode,
 			K0sVars:       c.K0sVars,
 			ClusterConfig: c.NodeConfig,
 		},
