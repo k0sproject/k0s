@@ -88,7 +88,7 @@ const (
 	CalicoNodeImage                    = "quay.io/calico/node"
 	KubeControllerImage                = "quay.io/calico/kube-controllers"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
-	KubeRouterCNIImageVersion          = "v1.3.1"
+	KubeRouterCNIImageVersion          = "v1.3.2"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
 
