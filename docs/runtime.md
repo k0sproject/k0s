@@ -122,9 +122,23 @@ Finally, if you want to change CRI look into:
 By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing `runc` with `nvidia-container-runtime`:
 
 ```toml
-[plugins."io.containerd.runtime.v1.linux"]
-    shim = "containerd-shim"
-    runtime = "nvidia-container-runtime"
+[plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
+runtime_type = "io.containerd.runtime.v1.linux"
+runtime_engine = ""
+runtime_root = ""
+privileged_without_host_devices = false
+base_runtime_spec = ""
+[plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
+Runtime = "nvidia-container-runtime"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvdia]
+runtime_type = "io.containerd.runtime.v1.linux"
+runtime_engine = ""
+runtime_root = ""
+privileged_without_host_devices = false
+base_runtime_spec = ""
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvdia.options]
+Runtime = "nvidia-container-runtime"
 ```
 
 **Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://josephb.org/blog/containerd-nvidia/).
