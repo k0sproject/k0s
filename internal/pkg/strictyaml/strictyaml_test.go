@@ -20,7 +20,7 @@ stringC:
   key: value
 `
 		tgt := testConfig{}
-		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt, []string{"stringC", "stringB"})
+		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt, "stringC", "stringB")
 		assert.NoError(t, err)
 		assert.Equal(t, "stringValue", tgt.StringA)
 	})
@@ -33,7 +33,7 @@ stringC:
   key: value
 `
 		tgt := testConfig{}
-		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt, []string{"stringC"})
+		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt, "stringC")
 		assert.Error(t, err)
 	})
 
@@ -41,11 +41,11 @@ stringC:
 		input := `
 	stringA: stringValue
 stringB: shouldGiveErrorBecauseNotMasked
-stringC: 
+stringC:
   key: value
 `
 		tgt := testConfig{}
-		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt, []string{""})
+		err := YamlUnmarshalStrictIgnoringFields([]byte(input), &tgt)
 		assert.Error(t, err)
 	})
 }
