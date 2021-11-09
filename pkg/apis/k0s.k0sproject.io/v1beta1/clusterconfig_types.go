@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -183,7 +184,7 @@ func ConfigFromStdin(dataDir string) (*ClusterConfig, error) {
 
 func ConfigFromString(yml string, dataDir string) (*ClusterConfig, error) {
 	config := DefaultClusterConfig(dataDir)
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, []string{"interval"})
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval")
 	if err != nil {
 		return config, err
 	}
@@ -218,10 +219,10 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	type config ClusterConfig
 	jc := (*config)(c)
 
-	if err := json.Unmarshal(data, jc); err != nil {
-		return err
-	}
-	return nil
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+
+	return decoder.Decode(jc)
 }
 
 // DefaultClusterSpec default settings
