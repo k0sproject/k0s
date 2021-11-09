@@ -28,7 +28,6 @@ import (
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath string
 	K0sVars    constant.CfgVars
 	supervisor supervisor.Supervisor
 }
@@ -54,7 +53,6 @@ func (m *K0SControlAPI) Run(_ context.Context) error {
 		DataDir: m.K0sVars.DataDir,
 		Args: []string{
 			"api",
-			fmt.Sprintf("--config=%s", m.ConfigPath),
 			fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
 		},
 	}

@@ -43,8 +43,8 @@ type Manager struct {
 }
 
 // RunBackup backups cluster
-func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
-	bm.discoverSteps(cfgPath, clusterSpec, vars, "backup", "")
+func (bm *Manager) RunBackup(clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
+	bm.discoverSteps(clusterSpec, vars, "backup", "")
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -70,7 +70,7 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	return nil
 }
 
-func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
+func (bm *Manager) discoverSteps(clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
 	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {

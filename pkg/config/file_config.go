@@ -44,7 +44,7 @@ func (rules *ClientConfigLoadingRules) readRuntimeConfig() (clusterConfig *v1bet
 }
 
 // validate accepts a ClusterConfig object and validates config fields
-func (rules *ClientConfigLoadingRules) validate(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
+func (rules *ClientConfigLoadingRules) Validate(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
 	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
 		logrus.Warn("storage type is kine but no config given, setting up defaults")
 		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)

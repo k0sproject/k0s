@@ -119,15 +119,23 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return err
 	}
 
-	// Initialize runtime config
-	if err := config.InitConfig(); err != nil {
-		return fmt.Errorf("failed to initialize config: %v", err)
-	}
-	nodeConfig, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-	if err != nil {
+	// get bootstrapping config first
+	// we first need to make sure our run-dir exists
+	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
+		logrus.Fatalf("failed to initialize dir: %v", err)
 		return err
 	}
-	c.NodeConfig = nodeConfig
+	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+	err := loadingRules.InitRuntimeConfig()
+	if err != nil {
+		logrus.Fatalf("failed to initialize k0s runtime config: %s", err.Error())
+	}
+
+	c.NodeConfig, err = loadingRules.Load()
+	if err != nil {
+		logrus.Fatalf("failed to fetch controller's bootstrapping config: %s", err.Error())
+	}
+
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
 	var joinClient *token.JoinClient
@@ -210,8 +218,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
 		c.NodeComponents.Add(ctx, &controller.K0SControlAPI{
-			ConfigPath: c.CfgFile,
-			K0sVars:    c.K0sVars,
+			K0sVars: c.K0sVars,
 		})
 	}
 
@@ -327,9 +334,11 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			return err
 		}
 	} else {
-		fullCfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+		loadingRules := config.ClientConfigLoadingRules{}
+
+		fullCfg, err := loadingRules.Load()
 		if err != nil {
-			return err
+			logrus.Fatalf("failed to fetch controller's config: %s", err.Error())
 		}
 		cfgSource, err = clusterconfig.NewStaticSource(fullCfg)
 		if err != nil {
@@ -468,7 +477,7 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
-		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars)
+		proxy, err := controller.NewKubeProxy(c.NodeConfig, c.K0sVars)
 		if err != nil {
 			return fmt.Errorf("failed to initialize kube-proxy reconciler: %s", err.Error())
 		}
@@ -673,4 +682,7 @@ func joinController(tokenArg string, certRootDir string) (*token.JoinClient, err
 		return nil, err
 	}
 	return joinClient, writeCerts(caData, certRootDir)
+}
+
+func getConfig() {
 }

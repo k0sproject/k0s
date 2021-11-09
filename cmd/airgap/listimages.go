@@ -35,8 +35,10 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// we don't need warning messages in case of default config
 			logrus.SetLevel(logrus.ErrorLevel)
-			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+
+			// get k0s config
+			loadingRules := config.ClientConfigLoadingRules{}
+			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}

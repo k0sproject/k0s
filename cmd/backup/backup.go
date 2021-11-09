@@ -1,4 +1,4 @@
-//go:build !windows
+// go:build !windows
 // +build !windows
 
 /*
@@ -43,7 +43,10 @@ func NewBackupCmd() *cobra.Command {
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
+
+			// get k0s config
+			loadingRules := config.ClientConfigLoadingRules{}
+			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}
@@ -96,7 +99,15 @@ func (c *CmdOpts) backup() error {
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+
+	// get k0s config
+	loadingRules := config.ClientConfigLoadingRules{}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return err
+	}
+
+	_, err = loadingRules.Validate(cfg, c.K0sVars)
 	if err != nil {
 		return err
 	}

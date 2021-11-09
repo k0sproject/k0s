@@ -60,11 +60,6 @@ func NewAPICmd() *cobra.Command {
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-			c.NodeConfig = cfg
 			return c.startAPI()
 		},
 	}
