@@ -22,30 +22,34 @@ The load balancer can be implemented in many different ways and k0s doesn't have
 
 ### Example configuration: HAProxy
 
-Change the default mode to tcp under the 'defaults' section of haproxy.cfg.
-
 Add the following lines to the end of the haproxy.cfg:
 
 ```txt
 frontend kubeAPI
     bind :6443
+    mode tcp
     default_backend kubeAPI_backend
 frontend konnectivity
     bind :8132
+    mode tcp
     default_backend konnectivity_backend
 frontend controllerJoinAPI
     bind :9443
+    mode tcp
     default_backend controllerJoinAPI_backend
 
 backend kubeAPI_backend
+    mode tcp
     server k0s-controller1 <ip-address1>:6443 check check-ssl verify none
     server k0s-controller2 <ip-address2>:6443 check check-ssl verify none
     server k0s-controller3 <ip-address3>:6443 check check-ssl verify none
 backend konnectivity_backend
+    mode tcp
     server k0s-controller1 <ip-address1>:8132 check check-ssl verify none
     server k0s-controller2 <ip-address2>:8132 check check-ssl verify none
     server k0s-controller3 <ip-address3>:8132 check check-ssl verify none
 backend controllerJoinAPI_backend
+    mode tcp
     server k0s-controller1 <ip-address1>:9443 check check-ssl verify none
     server k0s-controller2 <ip-address2>:9443 check check-ssl verify none
     server k0s-controller3 <ip-address3>:9443 check check-ssl verify none
