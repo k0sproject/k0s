@@ -76,7 +76,7 @@ const (
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
 	KonnectivityImage                  = "k8s.gcr.io/kas-network-proxy/proxy-agent"
-	KonnectivityImageVersion           = "v0.0.24"
+	KonnectivityImageVersion           = "v0.0.25"
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.5.0"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
@@ -88,7 +88,7 @@ const (
 	CalicoNodeImage                    = "quay.io/calico/node"
 	KubeControllerImage                = "quay.io/calico/kube-controllers"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
-	KubeRouterCNIImageVersion          = "v1.3.1"
+	KubeRouterCNIImageVersion          = "v1.3.2"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
 
