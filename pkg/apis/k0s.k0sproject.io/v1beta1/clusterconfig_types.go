@@ -283,6 +283,16 @@ func (c *ClusterConfig) Validate() []error {
 	return errors
 }
 
+// CRValidator is used to make sure a config CR is created with correct values
+func (c *ClusterConfig) CRValidator() *ClusterConfig {
+	copy := c.DeepCopy()
+	copy.ClusterName = "k0s"
+	copy.ObjectMeta.Name = "k0s"
+	copy.ObjectMeta.Namespace = "kube-system"
+
+	return copy
+}
+
 // validateSpecs invokes validator Validate function
 func validateSpecs(v Validateable) []error {
 	return v.Validate()
