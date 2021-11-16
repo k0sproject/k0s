@@ -26,7 +26,7 @@ func (c *cni) Run() error {
 		"/etc/cni/net.d/10-kuberouter.conflist",
 	}
 	for _, f := range files {
-		if err := os.Remove(f); !errors.Is(err, fs.ErrNotExist) {
+		if err := os.Remove(f); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			logrus.Debug("failed to remove", f, err)
 			msg = append(msg, err)
 		}
