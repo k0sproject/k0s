@@ -26,8 +26,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -45,12 +47,12 @@ func NewBackupCmd() *cobra.Command {
 			c := CmdOpts(config.GetCmdOpts())
 
 			// get k0s config
-			loadingRules := config.ClientConfigLoadingRules{}
+			loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
 			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}
-			c.ClusterConfig = cfg
+			c.NodeConfig = cfg
 			return c.backup()
 		},
 		PreRunE: preRunValidateConfig,
@@ -92,7 +94,9 @@ func (c *CmdOpts) backup() error {
 		if err != nil {
 			return err
 		}
-		return mgr.RunBackup(c.CfgFile, c.ClusterConfig.Spec, c.K0sVars, savePath)
+
+		cfgFilePath := saveClusterConfigFile()
+		return mgr.RunBackup(cfgFilePath, c.NodeConfig.Spec, c.K0sVars, savePath)
 	}
 	return fmt.Errorf("backup command must be run on the controller node, have `%s`", status.Role)
 }
@@ -102,7 +106,7 @@ func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 
 	// get k0s config
 	loadingRules := config.ClientConfigLoadingRules{}
-	cfg, err := loadingRules.Load()
+	cfg, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
 		return err
 	}
@@ -112,4 +116,22 @@ func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return nil
+}
+
+func saveClusterConfigFile() string {
+	// get full k0s config and save it to a temporary directory, for backup
+	loadingRulesFull := config.ClientConfigLoadingRules{}
+	fullcfg, err := loadingRulesFull.Load()
+	if err != nil {
+		logrus.Errorf("failed to fetch cluster-config for backup: %v", err)
+		return ""
+	}
+	conf, _ := yaml.Marshal(fullcfg)
+
+	cfgFilePath, err := file.WriteTmpFile(string(conf), "k0s-config")
+	if err != nil {
+		logrus.Errorf("Error creating tempfile: %v", err)
+		return ""
+	}
+	return cfgFilePath
 }

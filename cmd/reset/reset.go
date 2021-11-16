@@ -66,7 +66,7 @@ func (c *CmdOpts) reset() error {
 	}
 
 	// Get Cleanup Config
-	cfg, err := cleanup.NewConfig(c.K0sVars, c.CfgFile, c.WorkerOptions.CriSocket)
+	cfg, err := cleanup.NewConfig(c.K0sVars, c.WorkerOptions.CriSocket)
 	if err != nil {
 		return fmt.Errorf("failed to configure cleanup: %v", err)
 	}
@@ -79,7 +79,15 @@ func (c *CmdOpts) reset() error {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+
+	// get k0s config
+	loadingRules := config.ClientConfigLoadingRules{}
+	cfg, err := loadingRules.ParseRuntimeConfig()
+	if err != nil {
+		return err
+	}
+
+	_, err = loadingRules.Validate(cfg, c.K0sVars)
 	if err != nil {
 		return err
 	}

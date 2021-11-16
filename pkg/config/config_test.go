@@ -18,6 +18,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -60,8 +61,9 @@ spec:
 func TestGetConfigFromFile(t *testing.T) {
 	cfgFilePath := writeConfigFile(fileYaml)
 	CfgFile = cfgFilePath
+	defer os.Remove(configPathRuntimeTest)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: "/tmp/k0s.yaml"}
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
 	err := loadingRules.InitRuntimeConfig()
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -96,7 +98,9 @@ func TestGetConfigFromFile(t *testing.T) {
 // Test using config from a yaml file
 func TestConfigFromDefaults(t *testing.T) {
 	CfgFile = constant.K0sConfigPathDefault // this path doesn't exist, so default values should be generated
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: "/tmp/k0s.yaml"}
+	defer os.Remove(configPathRuntimeTest)
+
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
 	err := loadingRules.InitRuntimeConfig()
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -135,7 +139,9 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 
 	// if API config is enabled, Nodeconfig will be stripped of any cluster-wide-config settings
 	controllerOpts.EnableDynamicConfig = true
-	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, RuntimeConfigPath: "/tmp/k0s.yaml"}
+	defer os.Remove(configPathRuntimeTest)
+
+	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, RuntimeConfigPath: configPathRuntimeTest}
 
 	err := loadingRules.InitRuntimeConfig()
 	if err != nil {
@@ -181,9 +187,9 @@ func TestAPIConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create API config: %s", err.Error())
 	}
+	defer os.Remove(configPathRuntimeTest)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: "/tmp/k0s.yaml", APIClient: client.K0sV1beta1()}
-
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, APIClient: client.K0sV1beta1()}
 	err = loadingRules.InitRuntimeConfig()
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())

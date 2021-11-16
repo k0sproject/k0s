@@ -81,9 +81,5 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 
 	type calico Calico
 	jc := (*calico)(c)
-	if err := json.Unmarshal(data, jc); err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal(data, jc)
 }

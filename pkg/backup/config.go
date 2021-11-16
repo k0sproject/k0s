@@ -6,21 +6,19 @@ package backup
 import (
 	"path"
 
-	"sigs.k8s.io/yaml"
-
-	"github.com/k0sproject/k0s/pkg/config"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 type configurationStep struct {
+	cfgPath            string
 	restoredConfigPath string
 }
 
-func newConfigurationStep(path string, restoredConfigPath string) *configurationStep {
+func newConfigurationStep(cfgPath string, restoredConfigPath string) *configurationStep {
 	return &configurationStep{
+		cfgPath:            cfgPath,
 		restoredConfigPath: restoredConfigPath,
 	}
 }
@@ -30,24 +28,7 @@ func (c configurationStep) Name() string {
 }
 
 func (c configurationStep) Backup() (StepResult, error) {
-	loadingrules := config.ClientConfigLoadingRules{}
-	if loadingrules.IsDefaultConfig() {
-		logrus.Info("default k0s config is used. not adding it to backup")
-		return StepResult{}, nil
-	}
-	cfg, err := loadingrules.Load()
-	if err != nil {
-		logrus.Errorf("failed to fetch k0s config: %v", err)
-	}
-	cfgData, err := yaml.Marshal(cfg)
-	if err != nil {
-		logrus.Errorf("failed to marshal k0s config data: %v", err)
-	}
-	configPath, err := file.WriteTmpFile(string(cfgData), "k0s-config-backup")
-	if err != nil {
-		logrus.Errorf("failed to save config to file: %v", err)
-	}
-	return StepResult{filesForBackup: []string{configPath}}, nil
+	return StepResult{filesForBackup: []string{c.cfgPath}}, nil
 }
 
 func (c configurationStep) Restore(restoreFrom, restoreTo string) error {

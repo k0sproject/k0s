@@ -33,14 +33,16 @@ func etcdLeaveCmd() *cobra.Command {
 		Short: "Sign off a given etc node from etcd cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+			// get k0s config
+			loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}
-			c.ClusterConfig = cfg
+			c.NodeConfig = cfg
 			ctx := context.Background()
 			if etcdPeerAddress == "" {
-				etcdPeerAddress = c.ClusterConfig.Spec.Storage.Etcd.PeerAddress
+				etcdPeerAddress = c.NodeConfig.Spec.Storage.Etcd.PeerAddress
 			}
 			if etcdPeerAddress == "" {
 				return fmt.Errorf("can't leave etcd cluster: peer address is empty, check the config file or use cli argument")

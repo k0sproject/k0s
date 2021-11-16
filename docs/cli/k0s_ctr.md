@@ -1,17 +1,22 @@
-## k0s api
+## k0s ctr
 
-Run the controller api
+containerd CLI
+
+### Synopsis
+
+ctr is an unsupported debug and administrative client for interacting
+with the containerd daemon. Because it is unsupported, the commands,
+options, and operations are not guaranteed to be backward compatible or
+stable from release to release of the containerd project.
 
 ```shell
-k0s api [flags]
+k0s ctr [flags]
 ```
 
 ### Options
 
 ```shell
-      --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
-  -h, --help                   help for api
-      --status-socket string   Full file path to the socket file. (default "/var/lib/k0s/run/status.sock")
+  -h, --help   help for ctr
 ```
 
 ### Options inherited from parent commands

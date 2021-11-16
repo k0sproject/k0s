@@ -39,8 +39,8 @@ func validateConfigCmd() *cobra.Command {
 		Long: `Example:
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
-			_, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+			loadingRules := config.ClientConfigLoadingRules{}
+			_, err := loadingRules.Load()
 			return err
 		},
 		SilenceUsage:  true,

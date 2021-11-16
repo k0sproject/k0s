@@ -32,12 +32,14 @@ func NewEtcdCmd() *cobra.Command {
 		Short: "Manage etcd cluster",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+			// get k0s config
+			loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}
-			c.ClusterConfig = cfg
-			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
+			c.NodeConfig = cfg
+			if c.NodeConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
 				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
 			}
 			return nil

@@ -69,6 +69,14 @@ func NewAPICmd() *cobra.Command {
 }
 
 func (c *CmdOpts) startAPI() error {
+	// get k0s config
+	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return err
+	}
+
+	c.NodeConfig = cfg
 	// Single kube client for whole lifetime of the API
 	kc, err := kubernetes.NewClient(c.K0sVars.AdminKubeConfigPath)
 	if err != nil {

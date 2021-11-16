@@ -32,7 +32,7 @@ func TestSupervisorStart(t *testing.T) {
 				Name:    "supervisor-test-fail",
 				BinPath: "/bin/sh",
 				RunDir:  ".",
-				Args:	[]string{"-c", "false"},
+				Args:    []string{"-c", "false"},
 			},
 		},
 		SupervisorTest{

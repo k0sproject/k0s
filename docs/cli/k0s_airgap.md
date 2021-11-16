@@ -1,16 +1,12 @@
-## k0s api
+## k0s airgap
 
-Run the controller api
-
-```shell
-k0s api [flags]
-```
+Manage airgap setup
 
 ### Options
 
 ```shell
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
-  -h, --help                   help for api
+  -h, --help                   help for airgap
       --status-socket string   Full file path to the socket file. (default "/var/lib/k0s/run/status.sock")
 ```
 
@@ -26,3 +22,4 @@ k0s api [flags]
 ### SEE ALSO
 
 * [k0s](k0s.md) - k0s - Zero Friction Kubernetes
+* [k0s airgap list-images](k0s_airgap_list-images.md) - List image names and version needed for air-gap install

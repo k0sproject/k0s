@@ -133,10 +133,7 @@ func newDefaultConfigCmd() *cobra.Command {
 		Short: "Output the default k0s configuration yaml to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := cliOpts(config.GetCmdOpts())
-			if err := c.buildConfig(); err != nil {
-				return err
-			}
-			return nil
+			return c.buildConfig()
 		},
 	}
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())

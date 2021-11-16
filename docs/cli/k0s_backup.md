@@ -1,16 +1,17 @@
-## k0s api
+## k0s backup
 
-Run the controller api
+Back-Up k0s configuration. Must be run as root (or with sudo)
 
 ```shell
-k0s api [flags]
+k0s backup [flags]
 ```
 
 ### Options
 
 ```shell
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
-  -h, --help                   help for api
+  -h, --help                   help for backup
+      --save-path string       destination directory path for backup assets
       --status-socket string   Full file path to the socket file. (default "/var/lib/k0s/run/status.sock")
 ```
 

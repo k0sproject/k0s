@@ -42,7 +42,14 @@ func kubeConfigAdminCmd() *cobra.Command {
 					log.Fatal(err)
 				}
 
-				clusterAPIURL, err := c.getAPIURL()
+				// get k0s config
+				loadingRules := config.ClientConfigLoadingRules{}
+				cfg, err := loadingRules.Load()
+				if err != nil {
+					return err
+				}
+
+				clusterAPIURL := cfg.Spec.API.APIAddressURL()
 				if err != nil {
 					return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
 				}

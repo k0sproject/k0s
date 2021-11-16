@@ -42,7 +42,10 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.FatalLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVarspkg/component/controller/clusterConfig.go
+
+			// get k0s config
+			loadingRules := config.ClientConfigLoadingRules{}
+			cfg, err := loadingRules.Load()
 			if err != nil {
 				return err
 			}

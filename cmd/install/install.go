@@ -55,12 +55,14 @@ func (c *CmdOpts) setup(role string, args []string) error {
 		return fmt.Errorf("file %s does not exist", c.CfgFile)
 	}
 	if role == "controller" {
-		cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+		// get k0s config
+		loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+		cfg, err := loadingRules.ParseRuntimeConfig()
 		if err != nil {
 			return err
 		}
-		c.ClusterConfig = cfg
-		if err := install.CreateControllerUsers(c.ClusterConfig, c.K0sVars); err != nil {
+		c.NodeConfig = cfg
+		if err := install.CreateControllerUsers(c.NodeConfig, c.K0sVars); err != nil {
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
@@ -102,9 +104,17 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+
+	// get k0s config
+	loadingRules := config.ClientConfigLoadingRules{}
+	cfg, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("error in config loading: %v", err)
+	}
+
+	_, err = loadingRules.Validate(cfg, c.K0sVars)
+	if err != nil {
+		return fmt.Errorf("error in config validation: %v", err)
 	}
 	return nil
 }

@@ -1,16 +1,21 @@
-## k0s etcd leave
+## k0s airgap list-images
 
-Sign off a given etc node from etcd cluster
+List image names and version needed for air-gap install
 
 ```shell
-k0s etcd leave [flags]
+k0s airgap list-images [flags]
+```
+
+### Examples
+
+```shell
+k0s airgap list-images
 ```
 
 ### Options
 
 ```shell
-  -h, --help                  help for leave
-      --peer-address string   etcd peer address
+  -h, --help   help for list-images
 ```
 
 ### Options inherited from parent commands
@@ -26,4 +31,4 @@ k0s etcd leave [flags]
 
 ### SEE ALSO
 
-* [k0s etcd](k0s_etcd.md) - Manage etcd cluster
+* [k0s airgap](k0s_airgap.md) - Manage airgap setup

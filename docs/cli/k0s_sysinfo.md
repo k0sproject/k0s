@@ -1,17 +1,15 @@
-## k0s api
+## k0s sysinfo
 
-Run the controller api
+Display system information
 
 ```shell
-k0s api [flags]
+k0s sysinfo [flags]
 ```
 
 ### Options
 
 ```shell
-      --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
-  -h, --help                   help for api
-      --status-socket string   Full file path to the socket file. (default "/var/lib/k0s/run/status.sock")
+  -h, --help   help for sysinfo
 ```
 
 ### Options inherited from parent commands

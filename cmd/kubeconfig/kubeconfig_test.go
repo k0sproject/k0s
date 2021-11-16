@@ -26,9 +26,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -47,12 +47,11 @@ spec:
   api:
     externalAddress: 10.0.0.86
 `
-	cfgFilePath, err := file.WriteTmpFile(yamlData, "k0s-config")
+	configGetter := testutil.NewConfigGetter(yamlData, false)
+	cfg, err := configGetter.FakeConfigFromFile()
 	s.NoError(err)
 
-	c := CmdOpts(config.GetCmdOpts())
-	c.CfgFile = cfgFilePath
-
+	defer os.Remove(testutil.RuntimeFakePath)
 	caCert := `
 -----BEGIN CERTIFICATE-----
 MIIDADCCAeigAwIBAgIUW+2hawM8HgHrfxmDRV51wOq95icwDQYJKoZIhvcNAQEL
@@ -121,12 +120,11 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	certManager := certificate.Manager{
 		K0sVars: k0sVars,
 	}
-	err = os.Mkdir(path.Join(k0sVars.CertRootDir), 0755)
+	err = os.Mkdir(path.Join(k0sVars.CertRootDir), 0o755)
 
 	userCert, err := certManager.EnsureCertificate(userReq, "root")
 	s.NoError(err)
-	clusterAPIURL, err := c.getAPIURL()
-	s.NoError(err)
+	clusterAPIURL := cfg.Spec.API.APIAddressURL()
 
 	data := struct {
 		CACert     string

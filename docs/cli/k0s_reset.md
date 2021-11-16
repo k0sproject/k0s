@@ -1,16 +1,17 @@
-## k0s api
+## k0s reset
 
-Run the controller api
+Uninstall k0s. Must be run as root (or with sudo)
 
 ```shell
-k0s api [flags]
+k0s reset [flags]
 ```
 
 ### Options
 
 ```shell
+      --cri-socket string      container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
-  -h, --help                   help for api
+  -h, --help                   help for reset
       --status-socket string   Full file path to the socket file. (default "/var/lib/k0s/run/status.sock")
 ```
 

@@ -60,10 +60,7 @@ func (s *Status) Run(ctx context.Context) error {
 
 // Stop stops status component and removes the unix socket
 func (s *Status) Stop() error {
-	if err := s.httpserver.Shutdown(s.runCtx); err != nil {
-		return err
-	}
-	return nil
+	return s.httpserver.Shutdown(s.runCtx)
 }
 
 // Reconcile detects changes in configuration and applies them to the component

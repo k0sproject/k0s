@@ -21,9 +21,6 @@ package restore
 import (
 	"fmt"
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -55,12 +52,12 @@ func NewRestoreCmd() *cobra.Command {
 	}
 
 	cmd.SilenceUsage = true
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: ${cwd}/k0s_<archive timestamp>.yaml)")
+	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "/etc/k0s/k0s.yaml", "Specify desired name and full path for the restored k0s.yaml file (default: /etc/k0s/k0s.yaml)")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
-func (c *CmdOpts) restore(path string) error {
+func (c *CmdOpts) restore(archivePath string) error {
 	logger := logrus.New()
 	textFormatter := new(logrus.TextFormatter)
 	textFormatter.ForceColors = true
@@ -77,8 +74,8 @@ func (c *CmdOpts) restore(path string) error {
 		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
-	if !file.Exists(path) {
-		return fmt.Errorf("given file %s does not exist", path)
+	if !file.Exists(archivePath) {
+		return fmt.Errorf("given file %s does not exist", archivePath)
 	}
 
 	if !dir.IsDirectory(c.K0sVars.DataDir) {
@@ -91,36 +88,24 @@ func (c *CmdOpts) restore(path string) error {
 	if err != nil {
 		return err
 	}
-	// c.CfgFile, c.ClusterConfig.Spec, c.K0sVars
 
-	if restoredConfigPath == "" {
-		restoredConfigPath = defaultConfigFileOutputPath(path)
-	}
-	return mgr.RunRestore(path, c.K0sVars, restoredConfigPath)
+	return mgr.RunRestore(archivePath, c.K0sVars, restoredConfigPath)
 }
 
 // TODO Need to move to some common place, now it's defined in restore and backup commands
-func preRunValidateConfig(_ *cobra.Command, _ []string) error {
+func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+
+	// get k0s config
+	loadingRules := config.ClientConfigLoadingRules{}
+	cfg, err := loadingRules.ParseRuntimeConfig()
+	if err != nil {
+		return err
+	}
+
+	_, err = loadingRules.Validate(cfg, c.K0sVars)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-// set output config file name and path according to input archive Timestamps
-// the default location for the restore operation is the currently running cwd
-// this can be override, by using the --config-out flag
-func defaultConfigFileOutputPath(archivePath string) string {
-	f := filepath.Base(archivePath)
-	nameWithoutExt := strings.Split(f, ".")[0]
-	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")
-	restoredFileName := fmt.Sprintf("k0s_%s.yaml", fName)
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	return path.Join(cwd, restoredFileName)
 }

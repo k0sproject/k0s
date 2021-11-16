@@ -1,22 +1,26 @@
 ## k0s stop
 
-Stop the k0s service after it has been installed using `k0s install`. Must be run as root (or with sudo).
+Stop the k0s service configured on this host. Must be run as root (or with sudo)
+
+```shell
+k0s stop [flags]
+```
 
 ### Options
 
 ```shell
-  -h, --help   help for start
+  -h, --help   help for stop
 ```
 
 ### Options inherited from parent commands
 
 ```shell
-  -d, --debug                    Debug logging (default: false)
+      --data-dir string                Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+      --debug                          Debug logging (default: false)
+      --log-flush-frequency duration   Maximum number of seconds between log flushes (default 5s)
+      --version version[=true]         Print version information and quit
 ```
 
 ### SEE ALSO
 
-* [k0s start](k0s_stop.md) - Start the k0s service after it has been installed using `k0s install`. Must be run as root (or with sudo)
-* [k0s install](k0s_install.md) - Install k0s on a brand-new system. Must be run as root (or with sudo)
-* [k0s install controller](k0s_install_controller.md) - Install k0s controller on a brand-new system. Must be run as root (or with sudo)
-* [k0s install worker](k0s_install_worker.md) - Install k0s worker on a brand-new system. Must be run as root (or with sudo)
+* [k0s](k0s.md) - k0s - Zero Friction Kubernetes

@@ -136,11 +136,7 @@ func (c *Certificates) Init() error {
 		if err != nil {
 			return err
 		}
-		if err := kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser); err != nil {
-			return err
-		}
-
-		return nil
+		return kubeConfig(c.K0sVars.KonnectivityKubeConfigPath, kubeConfigAPIUrl, c.CACert, konnectivityCert.Cert, konnectivityCert.Key, constant.KonnectivityServerUser)
 	})
 
 	eg.Go(func() error {

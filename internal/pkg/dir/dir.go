@@ -55,11 +55,7 @@ func Init(path string, perm os.FileMode) error {
 		return err
 	}
 	// Check permissions in case directory already existed
-	if err := file.CheckPathPermissions(path, perm); err != nil {
-		return err
-	}
-
-	return nil
+	return file.CheckPathPermissions(path, perm)
 }
 
 // Copy copies the content of a folder

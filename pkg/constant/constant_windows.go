@@ -36,6 +36,7 @@ const (
 	KineSocket                     = "kine\\kine.sock:2379"
 	KubePauseContainerImage        = "mcr.microsoft.com/oss/kubernetes/pause"
 	KubePauseContainerImageVersion = "1.4.1"
+	K0sConfigPathDefault           = "C:\\etc\\k0s\\k0s.yaml"
 )
 
 func formatPath(dir string, file string) string {

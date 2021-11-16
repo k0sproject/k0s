@@ -1,16 +1,21 @@
-## k0s etcd leave
+## k0s token invalidate
 
-Sign off a given etc node from etcd cluster
+Invalidates existing join token
 
 ```shell
-k0s etcd leave [flags]
+k0s token invalidate [flags]
+```
+
+### Examples
+
+```shell
+k0s token invalidate xyz123
 ```
 
 ### Options
 
 ```shell
-  -h, --help                  help for leave
-      --peer-address string   etcd peer address
+  -h, --help   help for invalidate
 ```
 
 ### Options inherited from parent commands
@@ -26,4 +31,4 @@ k0s etcd leave [flags]
 
 ### SEE ALSO
 
-* [k0s etcd](k0s_etcd.md) - Manage etcd cluster
+* [k0s token](k0s_token.md) - Manage join tokens

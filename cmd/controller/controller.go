@@ -125,13 +125,18 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		logrus.Fatalf("failed to initialize dir: %v", err)
 		return err
 	}
+
+	// initialize runtime config
 	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
 	err := loadingRules.InitRuntimeConfig()
 	if err != nil {
 		logrus.Fatalf("failed to initialize k0s runtime config: %s", err.Error())
 	}
+	c.CfgFile = loadingRules.RuntimeConfigPath
 
-	c.NodeConfig, err = loadingRules.Load()
+	// fetch config after init (this iteration fetches the config from the runtime file)
+	bootstrapCfg := config.ClientConfigLoadingRules{Nodeconfig: true}
+	c.NodeConfig, err = bootstrapCfg.Load()
 	if err != nil {
 		logrus.Fatalf("failed to fetch controller's bootstrapping config: %s", err.Error())
 	}
@@ -407,8 +412,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		logrus.Errorf("error while stopping node component %s", stopErr)
 	}
 	logrus.Info("all node components stopped")
-
-	return err
+	return os.Remove(c.CfgFile)
 }
 
 func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
@@ -682,7 +686,4 @@ func joinController(tokenArg string, certRootDir string) (*token.JoinClient, err
 		return nil, err
 	}
 	return joinClient, writeCerts(caData, certRootDir)
-}
-
-func getConfig() {
 }

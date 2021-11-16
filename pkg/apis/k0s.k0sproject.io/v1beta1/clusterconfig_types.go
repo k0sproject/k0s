@@ -236,6 +236,7 @@ func (c *ClusterConfig) GetBootstrappingConfig() *ClusterConfig {
 				Address:    c.Spec.API.Address,
 				ExtraArgs:  c.Spec.API.ExtraArgs,
 				K0sAPIPort: c.Spec.API.K0sAPIPort,
+				Port:       c.Spec.API.Port,
 				SANs:       c.Spec.API.SANs,
 			},
 			Storage: &StorageSpec{
@@ -269,7 +270,6 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 		Spec: &ClusterSpec{
 			API: &APISpec{
 				ExternalAddress: c.Spec.API.ExternalAddress,
-				Port:            c.Spec.API.Port,
 			},
 			ControllerManager: c.Spec.ControllerManager,
 			Scheduler:         c.Spec.Scheduler,
