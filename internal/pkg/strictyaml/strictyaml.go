@@ -10,7 +10,7 @@ import (
 // var fieldNamePattern = regexp.MustCompile("field ([^ ]+)")
 
 // YamlUnmarshalStrictIgnoringFields does UnmarshalStrict but ignores type errors for given fields
-func YamlUnmarshalStrictIgnoringFields(in []byte, out interface{}, ignore []string) (err error) {
+func YamlUnmarshalStrictIgnoringFields(in []byte, out interface{}, ignore ...string) (err error) {
 	err = yaml.UnmarshalStrict(in, out)
 	if err != nil {
 		// parse errors for unknown field errors

@@ -32,7 +32,7 @@ type UpgradeSuite struct {
 	common.FootlooseSuite
 }
 
-const previousVersion = "v1.22.2+k0s.1"
+const previousVersion = "v1.22.3+k0s.0"
 
 func (s *UpgradeSuite) TestK0sGetsUp() {
 

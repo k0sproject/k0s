@@ -73,13 +73,13 @@ spec:
   images:
     konnectivity:
       image: k8s.gcr.io/kas-network-proxy/proxy-agent
-      version: v0.0.24
+      version: v0.0.25
     metricsserver:
       image: k8s.gcr.io/metrics-server/metrics-server
       version: v0.5.0
     kubeproxy:
       image: k8s.gcr.io/kube-proxy
-      version: v1.22.3
+      version: v1.22.4
     coredns:
       image: k8s.gcr.io/coredns/coredns
       version: v1.7.0

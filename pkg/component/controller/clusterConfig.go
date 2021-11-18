@@ -106,7 +106,6 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 			}
 			return true, nil
 		})
-
 		if err != nil {
 			return fmt.Errorf("not able to get or create the cluster config: %v", err)
 		}
@@ -202,7 +201,7 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context) (*v1beta1.ClusterConfig, error) {
 	ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
 	defer cancel()
-	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig).StripDefaults()
+	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig).StripDefaults().CRValidator()
 	clusterConfig, err := r.configClient.Create(ctx, clusterWideConfig, cOpts)
 	if err != nil {
 		return nil, err
