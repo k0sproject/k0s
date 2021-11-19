@@ -1,14 +1,20 @@
 # OS dependencies
 
-k0s is packaged as a single binary, which includes all the needed components. All the binaries are statically linked which means in typical use cases there's no OS level dependencies.
+k0s is packaged as a single binary, which includes all the needed components. All the binaries are statically linked which means that in typical use cases there are no OS level dependencies.
 
-However some of the underlying components _may_ have dependencies to OS level tools and packages in certain circumstances. The known cases are documented in below.
+However, some of the underlying components _may_ have dependencies on OS level tools and packages in certain circumstances. The known cases are documented below.
 
 ## Kernel configuration
 
-Needless to say, as k0s operates Kubernetes there's a certain number of needed Linux kernel modules and configuration that we need on the system. This basically stems from the need to run both containers and also to be able setup networking for the containers.
+Needless to say, as k0s operates Kubernetes there's a certain number of needed Linux kernel modules and configurations that we need in the system. This basically stems from the need to run both containers and also be able to set up networking for the containers.
 
-The list of needed kernel modules is listed below. The list covers ONLY the k0s/kubernetes components needs, your own workloads may require more.
+The following command checks the kernel and the available modules from the host:
+
+```shell
+k0s sysinfo
+```
+
+The list of the needed kernel modules is shown below. The list covers ONLY the k0s/kubernetes components’ needs. Your own workload may require more.
 
 ```csv
 CONFIG_NAMESPACES
