@@ -22,6 +22,7 @@ require (
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/selinux v1.8.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v0.0.0-20210528155034-8dc8788f37db
