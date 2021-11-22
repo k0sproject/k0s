@@ -79,13 +79,11 @@ jobs:
       - name: Run unit tests
         run: make check-unit
 
-      - name: Cache compiled binary for further testing
-        uses: actions/cache@v2
-        id: cache-compiled-binary
+      - name: Cache compiled binary for smoke testing
+        uses: actions/upload-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s
+          path: k0s
 
   build_windows:
     name: Build windows
@@ -177,13 +175,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
+      - name: Restore compiled binary for smoke testing
+        uses: actions/download-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s
+          path: .
+
+      - name: Make binary executable
+        run: chmod +x k0s
 
       - name: Run test .
         run: make -C inttest ${{ matrix.smoke-suite }}
@@ -215,15 +214,16 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
+      - name: Restore compiled binary for smoke testing
+        uses: actions/download-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s
+          path: .
 
-          # We need the bindata cache too so the makefile targets and deps work properly
+      - name: Make binary executable
+        run: chmod +x k0s
+
+      # We need the bindata cache too so the makefile targets and deps work properly
       - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
