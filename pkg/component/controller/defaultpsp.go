@@ -109,7 +109,6 @@ metadata:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
   labels:
     kubernetes.io/cluster-service: "true"
-    addonmanager.kubernetes.io/mode: Reconcile
 spec:
   privileged: true
   allowPrivilegeEscalation: true
@@ -139,7 +138,6 @@ metadata:
   name: k0s:podsecuritypolicy:privileged
   labels:
     kubernetes.io/cluster-service: "true"
-    addonmanager.kubernetes.io/mode: Reconcile
 rules:
 - apiGroups:
   - policy

@@ -291,7 +291,6 @@ metadata:
   name: system:konnectivity-server
   labels:
     kubernetes.io/cluster-service: "true"
-    addonmanager.kubernetes.io/mode: Reconcile
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -308,7 +307,6 @@ metadata:
   namespace: kube-system
   labels:
     kubernetes.io/cluster-service: "true"
-    addonmanager.kubernetes.io/mode: Reconcile
 ---
 apiVersion: apps/v1
 # Alternatively, you can deploy the agents as Deployments. It is not necessary
@@ -316,7 +314,6 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    addonmanager.kubernetes.io/mode: Reconcile
     k8s-app: konnectivity-agent
   namespace: kube-system
   name: konnectivity-agent
