@@ -131,11 +131,25 @@ func newDefaultConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "default-config",
 		Short: "Output the default k0s configuration yaml to stdout",
+		Long:  "If a config file is passed via [-c|--config], its contents will be merged with the default config",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := cliOpts(config.GetCmdOpts())
-			if err := c.buildConfig(); err != nil {
+			var conf *v1beta1.ClusterConfig
+			if c.CfgFile != "" {
+				nodeConfig, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+				if err != nil {
+					return err
+				}
+				conf = nodeConfig
+			} else {
+				conf = v1beta1.DefaultClusterConfig(c.K0sVars.DataDir)
+			}
+
+			plain, err := yaml.Marshal(conf)
+			if err != nil {
 				return err
 			}
+			fmt.Print(string(plain))
 			return nil
 		},
 	}
@@ -192,12 +206,6 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 			return nil
 		},
 	}
-}
-
-func (c *cliOpts) buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(config.DataDir))
-	fmt.Print(string(conf))
-	return nil
 }
 
 func Execute() {

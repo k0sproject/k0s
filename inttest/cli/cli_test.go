@@ -52,6 +52,31 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 	s.Require().Error(err)
 }
 
+func (s *CliSuite) TestK0sDefaultConfig() {
+	ssh, err := s.SSH(s.ControllerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	// k0s default-config should output a k0s configuration
+	output, err := ssh.ExecWithOutput("k0s default-config")
+	s.Require().NoError(err)
+	s.Contains(output, "apiVersion:")
+	s.Contains(output, "kind: ClusterConfig")
+	s.Contains(output, "port: 6443")
+
+	// k0s default-config with --config should output a merged k0s configuration.
+	// The sed here first cuts the config when encountering the
+	// `spec.api.port: 6443` and then replaces it with port 1234. The partial
+	// config output is then fed back to k0s using the `-` to read the config
+	// from stdin.
+	output, err = ssh.ExecWithOutput("k0s default-config | sed '/ port: 6443/q' | sed 's/6443/1234/' | k0s default-config --config -")
+	s.Require().NoError(err)
+	s.Contains(output, "port: 1234")
+	s.Contains(output, "apiVersion:")
+	s.Contains(output, "kind: ClusterConfig")
+	s.Contains(output, "etcdUser: etcd")
+}
+
 func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	ssh, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
