@@ -76,13 +76,7 @@ With strong enough arguments we might take in new addons, but in general those s
 
 ## Build
 
-`k0s` can be built in 3 different ways:
-
-Fetch official binaries (except `konnectivity-server`, which are built from source):
-
-```shell
-make EMBEDDED_BINS_BUILDMODE=fetch
-```
+`k0s` can be built in two different ways:
 
 Build Kubernetes components from source as static binaries (requires docker):
 
@@ -90,8 +84,7 @@ Build Kubernetes components from source as static binaries (requires docker):
 make EMBEDDED_BINS_BUILDMODE=docker
 ```
 
-Build k0s without any embedded binaries (requires that Kubernetes
-binaries are pre-installed on the runtime system):
+Build k0s without any embedded binaries (requires that Kubernetes binaries are pre-installed on the runtime system):
 
 ```shell
 make EMBEDDED_BINS_BUILDMODE=none
