@@ -264,25 +264,18 @@ jobs:
             /tmp/*.log
 
   smoketest-arm:
-    name: Smoke test on arm
-    strategy:
-      matrix:
-        runs-on:
-          - [self-hosted,linux,arm64]
-          - [self-hosted,linux,arm,lxc]
-    runs-on: ${{ matrix.runs-on }}
+    name: Smoke test on arm64
+    runs-on: [self-hosted,linux,arm64]
 
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      # We cannot rely on this as it's not working on arm, see https://github.com/actions/setup-go/issues/106
-      # Instead we must have proper golang version setup at system level.
-      # - name: Set up Go 1.x
-      #   uses: actions/setup-go@v2
-      #   with:
-      #     go-version: ${{ env.GO_VERSION }}
-      #   id: go
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
 
       - uses: actions/cache@v2
         name: Go modules cache
@@ -291,7 +284,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
       - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
@@ -302,11 +294,9 @@ jobs:
             bindata_linux
             pkg/assets/zz_generated_offsets_linux.go
             embedded-bins/Makefile.variables
-
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-${{ matrix.runs-on }}
+          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-${{ matrix.runs-on }}
-
+            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
       - name: Build
         run: make build
 
@@ -317,6 +307,53 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.cachePrefix }}-logs-check-basic-arm-${{ matrix.runs-on }}-${{ github.run_number }}
+          name: ${{ env.cachePrefix }}-logs-check-basic-arm-${{ github.run_number }}
+          path: |
+            /tmp/*.log
+  smoketest-armv7:
+    name: Smoke test on armv7
+    runs-on: [self-hosted,linux,arm,lxc]
+    steps:
+      # We cannot rely on this as it's not working on arm, see https://github.com/actions/setup-go/issues/106
+      # Instead we must have proper golang version setup at system level.
+      # - name: Set up Go 1.x
+      #   uses: actions/setup-go@v2
+      #   with:
+      #     go-version: ${{ env.GO_VERSION }}
+      #   id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Bindata cache
+        uses: actions/cache@v2
+        id: generated-bindata
+        with:
+          path: |
+            .bins.linux.stamp
+            embedded-bins/staging/linux/bin/
+            bindata_linux
+            pkg/assets/zz_generated_offsets_linux.go
+            embedded-bins/Makefile.variables
+          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
+      - name: Build
+        run: make build
+
+      - name: Run test .
+        run: TIMEOUT=15m make -C inttest check-basic
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.cachePrefix }}-logs-check-basic-armv7-${{ github.run_number }}
           path: |
             /tmp/*.log
