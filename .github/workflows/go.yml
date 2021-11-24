@@ -165,6 +165,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-basic-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -202,6 +203,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-cli-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -239,6 +241,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-customports-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -276,6 +279,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-calico-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -313,6 +317,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-cnichange-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -350,6 +355,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-ctr-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -387,6 +393,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-hacontrolplane-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -424,6 +431,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-byocri-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -461,6 +469,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-addons-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -498,6 +507,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-singlenode-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -535,6 +545,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-kine-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -574,6 +585,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-etcd-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -611,6 +623,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-dualstack-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -648,6 +661,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-multicontroller-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -716,6 +730,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-airgap-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -753,6 +768,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-backup-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -789,6 +805,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-k0scloudprovider-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -826,6 +843,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-metrics-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -862,6 +880,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-disabledcomponents-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -898,6 +917,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-extraargs-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -934,6 +954,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-configchange-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -970,6 +991,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-upgrade-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -1021,6 +1043,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-basic-arm-${{ github.run_number }}
           path: |
             /tmp/*.log
 
@@ -1071,6 +1094,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
+          name: ${{ env.cachePrefix }}-logs-check-basic-armv7-${{ github.run_number }}
           path: |
             /tmp/*.log
 
