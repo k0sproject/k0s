@@ -147,7 +147,8 @@ jobs:
           - check-customports
           - check-dualstack
           - check-hacontrolplane
-          - check-install
+          # exists in inttest/Makefile.variables but there's no matching suite:
+          #- check-install
           - check-kine
           - check-metrics
           - check-multicontroller
