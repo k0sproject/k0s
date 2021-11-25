@@ -23,5 +23,5 @@ smoketests := \
 	check-upgrade \
 	check-psp \
 	check-defaultstorage \
-	check-statussocket
-
+	check-statussocket \
+	check-tunneledkas

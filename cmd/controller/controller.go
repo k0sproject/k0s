@@ -213,16 +213,17 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			K0sVars:    c.K0sVars,
 		})
 	}
-	if c.NodeConfig.Spec.API.ExternalAddress != "" {
-		if c.NodeConfig.Spec.API.TunneledNetworkingMode {
-			c.ClusterComponents.Add(ctx, controller.NewTunneledEndpointReconciler(leaderElector,
-				adminClientFactory))
-		} else {
-			c.ClusterComponents.Add(ctx, controller.NewEndpointReconciler(
-				leaderElector,
-				adminClientFactory,
-			))
-		}
+
+	if c.NodeConfig.Spec.API.TunneledNetworkingMode {
+		c.ClusterComponents.Add(ctx, controller.NewTunneledEndpointReconciler(leaderElector,
+			adminClientFactory))
+	}
+
+	if c.NodeConfig.Spec.API.ExternalAddress != "" && !c.NodeConfig.Spec.API.TunneledNetworkingMode {
+		c.ClusterComponents.Add(ctx, controller.NewEndpointReconciler(
+			leaderElector,
+			adminClientFactory,
+		))
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
 		c.NodeComponents.Add(ctx, controller.NewCSRApprover(c.NodeConfig,
