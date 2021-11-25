@@ -42,7 +42,7 @@ check-byocri: TIMEOUT=5m
 check-metrics: TIMEOUT=6m
 
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
-check-customports: TIMEOUT=6m
+check-customports: TIMEOUT=8m
 
 # Config change smoke runs actually many cases hence a bit longer timeout
 check-configchange: TIMEOUT=8m

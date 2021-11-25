@@ -163,7 +163,6 @@ func AvailableComponents() []string {
 func GetControllerFlags() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 
-	flagset.StringVarP(&CfgFile, "config", "c", "/etc/k0s/k0s.yaml", "config file, use '-' to read the config from stdin")
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
 	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(AvailableComponents()[:], ",")+")")
@@ -176,6 +175,17 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
+	flagset.AddFlagSet(FileInputFlag())
+
+	return flagset
+}
+
+// The config flag used to be a persistent, joint flag to all commands
+// now only a few commands use it. This function helps to share the flag with multiple commands without needing to define
+// it in multiple places
+func FileInputFlag() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVarP(&CfgFile, "config", "c", "/etc/k0s/k0s.yaml", "config file, use '-' to read the config from stdin")
 
 	return flagset
 }

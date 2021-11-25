@@ -105,7 +105,7 @@ func (c *ConfigGetter) initRuntimeConfig() error {
 	}
 	err = os.WriteFile(RuntimeFakePath, data, 0755)
 	if err != nil {
-		return fmt.Errorf("failed to write runtime config config to %s: %v", RuntimeFakePath, err)
+		return fmt.Errorf("failed to write runtime config to %s: %v", RuntimeFakePath, err)
 	}
 	return nil
 }

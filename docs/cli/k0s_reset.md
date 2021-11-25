@@ -9,6 +9,7 @@ k0s reset [flags]
 ### Options
 
 ```shell
+  -c, --config string          config file, use '-' to read the config from stdin (default "/etc/k0s/k0s.yaml")
       --cri-socket string      container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --debugListenOn string   Http listenOn for Debug pprof handler (default ":6060")
   -h, --help                   help for reset

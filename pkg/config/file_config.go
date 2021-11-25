@@ -137,7 +137,7 @@ func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte) error {
 	}
 	err = os.WriteFile(rules.RuntimeConfigPath, data, 0755)
 	if err != nil {
-		return fmt.Errorf("failed to write runtime config config to %s (%v): %v", K0sVars.RunDir, rules.RuntimeConfigPath, err)
+		return fmt.Errorf("failed to write runtime config to %s (%v): %v", K0sVars.RunDir, rules.RuntimeConfigPath, err)
 	}
 	return nil
 }

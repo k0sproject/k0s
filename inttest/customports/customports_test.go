@@ -103,9 +103,9 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 
-	workerToken, err := ds.GetJoinToken("worker", "", "--config=/tmp/k0s.yaml")
+	workerToken, err := ds.GetJoinToken("worker", "")
 	ds.Require().NoError(err)
-	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", workerToken, `--config="/tmp/k0s.yaml"`))
+	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", workerToken))
 
 	kc, err := ds.KubeClient("controller0", "")
 	ds.Require().NoError(err)
@@ -113,7 +113,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	err = ds.WaitForNodeReady("worker0", kc)
 	ds.Require().NoError(err)
 
-	controllerToken, err := ds.GetJoinToken("controller", "", "--config=/tmp/k0s.yaml")
+	controllerToken, err := ds.GetJoinToken("controller")
 	ds.Require().NoError(err)
 	ds.Require().NoError(ds.InitController(1, controllerToken, "", "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.InitController(2, controllerToken, "", "--config=/tmp/k0s.yaml"))

@@ -199,7 +199,7 @@ generate-APIClient:
 	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
 image-bundle/image.list: k0s
-	./k0s airgap list-images > image-bundle/image.list
+	./k0s airgap list-images | grep -v 'time=' > image-bundle/image.list
 
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar

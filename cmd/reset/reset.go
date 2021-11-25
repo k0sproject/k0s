@@ -39,12 +39,23 @@ func NewResetCmd() *cobra.Command {
 				return fmt.Errorf("currently not supported on windows")
 			}
 			c := CmdOpts(config.GetCmdOpts())
+
+			// Runtime config is removed when controller is stopped, so we're generating here again
+			// so that reset can find the required config
+			loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+			err := loadingRules.InitRuntimeConfig()
+			if err != nil {
+				logrus.Fatalf("failed to initialize k0s runtime config: %s", err.Error())
+			}
+			c.CfgFile = loadingRules.RuntimeConfigPath
+
 			return c.reset()
 		},
 		PreRunE: preRunValidateConfig,
 	}
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
 	return cmd
 }
@@ -84,7 +95,7 @@ func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	loadingRules := config.ClientConfigLoadingRules{}
 	cfg, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get config: %v", err)
 	}
 
 	_, err = loadingRules.Validate(cfg, c.K0sVars)

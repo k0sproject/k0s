@@ -18,7 +18,6 @@ package airgap
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/airgap"
@@ -34,14 +33,15 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// we don't need warning messages in case of default config
-			logrus.SetLevel(logrus.ErrorLevel)
+			// logrus.SetLevel(logrus.ErrorLevel)
 
-			// get k0s config
+			// Runtime config does not exist when the controller is stopped, so we're going to parse it from the config flag here
 			loadingRules := config.ClientConfigLoadingRules{}
-			cfg, err := loadingRules.Load()
+			cfg, err := loadingRules.ParseRuntimeConfig()
 			if err != nil {
 				return err
 			}
+
 			uris := airgap.GetImageURIs(cfg.Spec.Images)
 			for _, uri := range uris {
 				fmt.Println(uri)
@@ -49,6 +49,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
