@@ -34,7 +34,7 @@ env:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Get PR Reference and Set Cache Name
         run: |
@@ -49,29 +49,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
-
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Bindata cache
-        uses: actions/cache@v2
-        id: generated-bindata
-        with:
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
-            embedded-bins/Makefile.variables
-
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-          restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
 
       - name: Build
         run: make build
