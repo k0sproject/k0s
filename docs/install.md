@@ -48,6 +48,9 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     $ sudo k0s status
+    ```
+
+    ```shell
     Version: v1.22.4+k0s.1
     Process ID: 436
     Role: controller
@@ -63,6 +66,9 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     $ sudo k0s kubectl get nodes
+    ```
+
+    ```shell
     NAME   STATUS   ROLES    AGE    VERSION
     k0s    Ready    <none>   4m6s   v1.22.4-k0s1
     ```
