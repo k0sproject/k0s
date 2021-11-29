@@ -23,23 +23,23 @@ type TunneledEndpointReconciler struct {
 	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
-func (ep TunneledEndpointReconciler) Init() error {
+func (ter TunneledEndpointReconciler) Init() error {
 	return nil
 }
 
-func (ep *TunneledEndpointReconciler) Run(ctx context.Context) error {
+func (ter *TunneledEndpointReconciler) Run(ctx context.Context) error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ticker.C:
-				err := ep.reconcile(ctx)
+				err := ter.reconcile(ctx)
 				if err != nil {
-					ep.logger.Warnf("external API address reconciliation failed: %s", err.Error())
+					ter.logger.Warnf("external API address reconciliation failed: %s", err.Error())
 				}
 			case <-ctx.Done():
-				ep.logger.Info("endpoint reconciler done")
+				ter.logger.Info("endpoint reconciler done")
 				return
 			}
 		}
@@ -47,44 +47,44 @@ func (ep *TunneledEndpointReconciler) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ep *TunneledEndpointReconciler) Stop() error {
+func (ter *TunneledEndpointReconciler) Stop() error {
 	return nil
 }
 
-func (ep *TunneledEndpointReconciler) Healthy() error {
+func (ter *TunneledEndpointReconciler) Healthy() error {
 	return nil
 }
 
-func (ep *TunneledEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
-	ep.cfg = cfg
+func (ter *TunneledEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
+	ter.cfg = cfg
 	return nil
 }
 
-func (ep TunneledEndpointReconciler) reconcile(ctx context.Context) error {
-	if ep.cfg == nil {
+func (ter TunneledEndpointReconciler) reconcile(ctx context.Context) error {
+	if ter.cfg == nil {
 		return nil
 	}
-	if !ep.leaderElector.IsLeader() {
-		ep.logger.Debug("we're not the leader, not reconciling api endpoints")
+	if !ter.leaderElector.IsLeader() {
+		ter.logger.Debug("we're not the leader, not reconciling api endpoints")
 		return nil
 	}
 
-	if !ep.cfg.Spec.API.TunneledNetworkingMode {
+	if !ter.cfg.Spec.API.TunneledNetworkingMode {
 		return fmt.Errorf("impossible to disable tunneled networking for the KAS server on the fly, restart the node")
 	}
 
-	if err := ep.makeDefaultServiceInternalOnly(ctx); err != nil {
+	if err := ter.makeDefaultServiceInternalOnly(ctx); err != nil {
 		return fmt.Errorf("can't make `kubernetes` service be internal only: %w", err)
 	}
 
-	if err := ep.reconcileEndpoint(ctx); err != nil {
+	if err := ter.reconcileEndpoint(ctx); err != nil {
 		return fmt.Errorf("can't reconcile endpoint for the default service: %w", err)
 	}
 	return nil
 }
 
-func (ep TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) error {
-	c, err := ep.kubeClientFactory.GetClient()
+func (ter TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) error {
+	c, err := ter.kubeClientFactory.GetClient()
 	if err != nil {
 		return err
 	}
@@ -99,10 +99,10 @@ func (ep TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) erro
 		return nil
 	}
 	subsets := []v1core.EndpointSubset{
-		v1core.EndpointSubset{
+		{
 			Addresses: addresses,
 			Ports: []v1core.EndpointPort{
-				v1core.EndpointPort{
+				{
 					Name:     "https",
 					Protocol: "TCP",
 					Port:     6443,
@@ -114,7 +114,7 @@ func (ep TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) erro
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return ep.createEndpoint(ctx, subsets)
+			return ter.createEndpoint(ctx, subsets)
 		}
 		return err
 	}
@@ -156,7 +156,7 @@ func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.E
 	return addresses, nil
 }
 
-func (r TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets []v1core.EndpointSubset) error {
+func (ter TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets []v1core.EndpointSubset) error {
 
 	ep := &v1core.Endpoints{
 		TypeMeta: v1.TypeMeta{
@@ -169,7 +169,7 @@ func (r TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets 
 		Subsets: subsets,
 	}
 
-	c, err := r.kubeClientFactory.GetClient()
+	c, err := ter.kubeClientFactory.GetClient()
 	if err != nil {
 		return err
 	}
@@ -182,8 +182,8 @@ func (r TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets 
 	return nil
 }
 
-func (ep TunneledEndpointReconciler) makeDefaultServiceInternalOnly(ctx context.Context) error {
-	c, err := ep.kubeClientFactory.GetClient()
+func (ter TunneledEndpointReconciler) makeDefaultServiceInternalOnly(ctx context.Context) error {
+	c, err := ter.kubeClientFactory.GetClient()
 	if err != nil {
 		return err
 	}

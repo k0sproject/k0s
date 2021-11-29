@@ -378,25 +378,6 @@ spec:
               - serviceAccountToken:
                   path: konnectivity-agent-token
                   audience: system:konnectivity-server
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    k8s-app: konnectivity-agent
-  name: konnectivity-agent
-  namespace: kube-system
-spec:
-  internalTrafficPolicy: Local
-  ports:
-  - name: agent
-    port: 6443
-    protocol: TCP
-    targetPort: 6443
-  selector:
-    k8s-app: konnectivity-agent
-  sessionAffinity: None
-  type: ClusterIP
 `
 
 // Healthy is a no-op check

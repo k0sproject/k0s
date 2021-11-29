@@ -58,7 +58,7 @@ func DefaultAPISpec() *APISpec {
 		SANs:                   addresses,
 		Address:                publicAddress,
 		ExtraArgs:              make(map[string]string),
-		TunneledNetworkingMode: true,
+		TunneledNetworkingMode: false,
 	}
 }
 

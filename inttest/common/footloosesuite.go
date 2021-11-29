@@ -580,6 +580,7 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	s.Require().NoError(err)
 
 	hostURL, err := url.Parse(cfg.Host)
+	fmt.Println("BEFORE REMAP", node, hostURL)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Host, err)
 	}
@@ -628,6 +629,7 @@ func (s *FootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	if err != nil {
 		return nil, fmt.Errorf("footloose machine has to have %d port mapped: %w", port, err)
 	}
+	fmt.Println("API HOST", cfg.Host, node)
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil
 }
@@ -841,7 +843,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 
 	cfg := config.Config{
 		Cluster: config.Cluster{
-			Name:       s.T().Name(),
+			Name:       s.T().Name() + "DEBUGBRANCH",
 			PrivateKey: path.Join(s.keyDir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
