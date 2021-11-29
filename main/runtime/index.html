@@ -1330,9 +1330,23 @@
 </ol>
 <h2 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h2>
 <p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
-    <span class="n">shim</span> <span class="o">=</span> <span class="s">&quot;containerd-shim&quot;</span>
-    <span class="n">runtime</span> <span class="o">=</span> <span class="s">&quot;nvidia-container-runtime&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.default_runtime]</span>
+<span class="n">runtime_type</span> <span class="o">=</span> <span class="s">&quot;io.containerd.runtime.v1.linux&quot;</span>
+<span class="n">runtime_engine</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">runtime_root</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">privileged_without_host_devices</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">base_runtime_spec</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.default_runtime.options]</span>
+<span class="n">Runtime</span> <span class="o">=</span> <span class="s">&quot;nvidia-container-runtime&quot;</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes]</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvdia]</span>
+<span class="n">runtime_type</span> <span class="o">=</span> <span class="s">&quot;io.containerd.runtime.v1.linux&quot;</span>
+<span class="n">runtime_engine</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">runtime_root</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">privileged_without_host_devices</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">base_runtime_spec</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvdia.options]</span>
+<span class="n">Runtime</span> <span class="o">=</span> <span class="s">&quot;nvidia-container-runtime&quot;</span>
 </code></pre></div>
 <p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://josephb.org/blog/containerd-nvidia/">here</a>.</p>
 <p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>
