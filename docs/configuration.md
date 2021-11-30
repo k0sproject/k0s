@@ -85,13 +85,13 @@ spec:
       version: v1.7.0
     calico:
       cni:
-        image: quay.io/calico/cni
+        image: docker.io/calico/cni
         version: v3.18.1
       node:
-        image: quay.io/calico/node
+        image: docker.io/calico/node
         version: v3.18.1
       kubecontrollers:
-        image: quay.io/calico/kube-controllers
+        image: docker.io/calico/kube-controllers
         version: v3.18.1
     kuberouter:
       cni:
