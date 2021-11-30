@@ -8,12 +8,12 @@ ARG BUILD_GO_FLAGS
 ARG BUILD_GO_LDFLAGS
 ARG BUILD_GO_LDFLAGS_EXTRA
 
-RUN apk add build-base git make
+RUN apk add build-base git make protoc
 
 RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 RUN go version
-RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 && \
+RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 github.com/golang/protobuf/protoc-gen-go@v1.4.3 && \
     make gen && \
     CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     GOOS=linux \
