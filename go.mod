@@ -9,8 +9,10 @@ require (
 	github.com/avast/retry-go v2.6.0+incompatible
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.8
+	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
+	github.com/estesp/manifest-tool/v2 v2.0.0-beta.1
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5
@@ -22,6 +24,7 @@ require (
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/image-spec v1.0.1
 	github.com/opencontainers/selinux v1.8.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v0.0.0-20210528155034-8dc8788f37db
