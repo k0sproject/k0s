@@ -201,10 +201,7 @@ func (c *cliOpts) buildConfig() error {
 }
 
 func Execute() {
-	// just a hack to trick linter which requires to check for errors
-	// cobra itself already prints out all errors that happen in subcommands
-	err := NewRootCmd().Execute()
-	if err != nil {
-		log.Fatal(err)
+	if err := NewRootCmd().Execute(); err != nil {
+		os.Exit(1)
 	}
 }
