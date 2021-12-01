@@ -53,14 +53,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -111,14 +111,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-win-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-win-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -187,14 +187,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -251,14 +251,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -342,14 +342,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-arm-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-arm-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-arm-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-arm-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -396,14 +396,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-armv7-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-armv7-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-armv7-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-armv7-
 
       - name: Bindata cache
         uses: actions/cache@v2

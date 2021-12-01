@@ -44,14 +44,14 @@ jobs:
       - uses: actions/cache@v2
         name: Go modules cache
         with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
 
       - name: codegen
         run: |
