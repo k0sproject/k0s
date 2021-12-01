@@ -183,6 +183,15 @@ func (s *FootlooseSuite) WorkerNode(idx int) string {
 	return fmt.Sprintf(s.footlooseConfig.Machines[1].Spec.Name, idx)
 }
 
+// LBNode gets the node of given LB index
+func (s *FootlooseSuite) LBNode(idx int) string {
+	if !s.WithLB {
+		s.T().Log("Can't get Loadbalancer address because LB is not enabled for this suit")
+		s.T().FailNow()
+	}
+	return fmt.Sprintf(s.footlooseConfig.Machines[2].Spec.Name, idx)
+}
+
 // TearDownSuite does the cleanup work, namely destroy the footloose boxes
 func (s *FootlooseSuite) TearDownSuite() {
 	// Make sure we don't fire the timer based teardown anymore
@@ -337,6 +346,13 @@ backend agent
 {{ range $addr := .IPAddresses }}
 	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAgentPort }}
 {{ end }}
+
+listen stats
+   bind *:9000
+   mode http
+   stats enable
+   stats uri /
+
 `
 	content := bytes.NewBuffer([]byte{})
 	s.Assert().NoError(template.Must(template.New("haproxy").Parse(tpl)).Execute(content, struct {
@@ -834,6 +850,16 @@ func getTestTimeout() time.Duration {
 // GetMainIPAddress returns controller ip address
 func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
 	ssh, err := s.SSH(s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput("hostname -i")
+	s.Require().NoError(err)
+	return ipAddress
+}
+
+func (s *FootlooseSuite) GetLBAddress() string {
+	ssh, err := s.SSH(s.LBNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
