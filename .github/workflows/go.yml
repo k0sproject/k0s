@@ -58,6 +58,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -78,14 +79,6 @@ jobs:
 
       - name: Docker Layer Caching
         uses: satackey/action-docker-layer-caching@v0.0.11
-
-      - name: Docker volumes cache
-        uses: actions/cache@v2
-        with:
-          path: /var/lib/docker/volumes/
-          key: ${{ runner.os }}-docker-volumes
-          restore-keys: |
-            ${{ runner.os }}-docker-volumes
 
       - name: Build
         run: make build
@@ -127,6 +120,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-win-
@@ -205,6 +199,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -269,6 +264,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -344,6 +340,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-arm-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-arm-
@@ -401,6 +398,7 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
+            k0sbuild.gocache
           key: ${{ runner.os }}-go-armv7-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-armv7-

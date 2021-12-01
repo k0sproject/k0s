@@ -55,9 +55,8 @@ go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/...
 endif
 
 GOLANG_IMAGE = golang:1.16-alpine
-GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
+GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/k0sbuild.gocache/build GOMODCACHE="/go/src/github.com/k0sproject/k0s/k0sbuild.gocache/mod" docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
-	-v k0sbuild.gocache:/gocache \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
@@ -78,10 +77,9 @@ endif
 	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
 	touch $@
 
-.k0sbuild.docker-vol.gocache:
-	docker volume create k0sbuild.gocache
-	docker run --rm -v k0sbuild.gocache:/gocache alpine:latest install -d -o $$(id -u) -g $$(id -g) /gocache/mod /gocache/build
-	touch $@
+.PHONY: k0sbuild.gocache
+k0sbuild.gocache:
+	mkdir -p k0sbuild.gocache/mod k0sbuild.gocache/build
 
 .PHONY: all
 all: k0s k0s.exe
@@ -98,7 +96,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s .k0sbuild.docker-vol.gocache
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s k0sbuild.gocache
 	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
@@ -115,13 +113,13 @@ k0s: BUILD_GO_CGO_ENABLED = 1
 k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
 k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
 k0s: .k0sbuild.docker-image.k0s
-k0s: .k0sbuild.docker-vol.gocache
+k0s: k0sbuild.gocache
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 k0s.exe: GOLANG_IMAGE = golang:1.16-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
-k0s.exe: .k0sbuild.docker-vol.gocache
+k0s.exe: .k0sbuild.gocache
 
 k0s.exe k0s: static/gen_manifests.go
 
@@ -138,7 +136,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go 
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
@@ -156,8 +154,7 @@ check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_m
 
 .PHONY: clean-gocache
 clean-gocache:
-	-docker volume rm k0sbuild.gocache
-	-rm .k0sbuild.docker-vol.gocache
+	rm -rf k0sbuild.gocache
 
 clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f
