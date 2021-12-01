@@ -40,12 +40,24 @@ jobs:
     if: github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ~/Library/Caches/go-build
+          %LocalAppData%\go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: codegen
         run: |
           make -j$(nproc) pkg/assets/zz_generated_offsets_linux.go static/gen_manifests.go
         env:
           EMBEDDED_BINS_BUILDMODE: none
-
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
