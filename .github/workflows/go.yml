@@ -58,9 +58,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -116,9 +116,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-win-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-win-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -130,7 +130,6 @@ jobs:
             bindata_windows
             pkg/assets/zz_generated_offsets_windows.go
             embedded-bins/Makefile.variables
-
           key: ${{ runner.os }}-embedded-bins-win-${{ hashFiles('**/embedded-bins/**/*') }}
           restore-keys: |
             ${{ runner.os }}-embedded-bins-win-
@@ -192,9 +191,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -256,9 +255,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -347,9 +346,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-arm-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-arm-
+          key: ${{ runner.os }}-go-arm-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-arm-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -401,9 +400,9 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             %LocalAppData%\go-build
-            key: ${{ runner.os }}-go-armv7-${{ hashFiles('**/go.sum') }}
-            restore-keys: |
-              ${{ runner.os }}-go-armv7-
+          key: ${{ runner.os }}-go-armv7-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-armv7-
 
       - name: Bindata cache
         uses: actions/cache@v2
