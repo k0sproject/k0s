@@ -18,6 +18,8 @@ package main
 import (
 	_ "net/http/pprof"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/k0sproject/k0s/cmd"
 	"github.com/sirupsen/logrus"
@@ -37,5 +39,12 @@ func init() {
 }
 
 func main() {
+	// Make embedded commands work through symlinks such as /usr/local/bin/kubectl (or k0s-kubectl)
+	progN := strings.TrimPrefix(path.Base(os.Args[0]), "k0s-")
+	switch progN {
+	case "kubectl", "ctr":
+		os.Args = append([]string{"k0s", progN}, os.Args[1:]...)
+	}
+
 	cmd.Execute()
 }
