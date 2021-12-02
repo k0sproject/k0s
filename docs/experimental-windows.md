@@ -10,7 +10,7 @@ The cluster must be running at least one worker node and control plane on Linux.
 
 **Note**: The k0s.exe supervises kubelet.exe and kube-proxy.exe.
 
-During the first run, the calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings.
+During the first run, the calico install script is created as `C:\bootstrap.ps1`. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.
 
 Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).
 
