@@ -318,7 +318,7 @@ jobs:
             /tmp/*.log
   smoketest-armv7:
     name: Smoke test on armv7
-    runs-on: [self-hosted,linux,arm,lxc]
+    runs-on: [self-hosted,linux,arm]
     steps:
       # We cannot rely on this as it's not working on arm, see https://github.com/actions/setup-go/issues/106
       # Instead we must have proper golang version setup at system level.
