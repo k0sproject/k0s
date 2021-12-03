@@ -54,6 +54,11 @@ ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
+go_clientgen := $(shell which client-gen)
+ifeq ($(go_clientgen),)
+go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && test -x "${GOPATH}/bin/client-gen"
+endif
+
 GOLANG_IMAGE = golang:1.16-alpine
 GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
@@ -138,7 +143,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go 
+lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
@@ -190,9 +195,8 @@ generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: generate-APIClient
 
-# install with go get k8s.io/code-generator/cmd/client-gen@v0.22.2
 generate-APIClient:
-	client-gen --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
 image-bundle/image.list: k0s
 	./k0s airgap list-images > image-bundle/image.list
