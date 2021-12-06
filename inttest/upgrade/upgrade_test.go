@@ -35,7 +35,6 @@ type UpgradeSuite struct {
 const previousVersion = "v1.22.3+k0s.0"
 
 func (s *UpgradeSuite) TestK0sGetsUp() {
-
 	dlCommand := fmt.Sprintf("curl -sSfL https://get.k0s.sh | K0S_VERSION=%s sh", previousVersion)
 	g := errgroup.Group{}
 	g.Go(func() error {
@@ -174,7 +173,6 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
-
 }
 
 func TestUpgradeSuite(t *testing.T) {
@@ -182,6 +180,7 @@ func TestUpgradeSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
+			K0sFullPath:     "/usr/local/bin/k0s",
 		},
 	}
 	suite.Run(t, &s)
