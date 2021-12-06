@@ -304,4 +304,13 @@ k0s allows completely disabling some of the system components. This allows the u
 --disable-components strings                     disable components (valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac)
 ```
 
-As seen from the component list above, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.
+If you use k0sctl just add the flag when installing the cluster for the first controller at `spec.hosts.installFlags` in the config file like e.g.:
+```yaml
+spec:
+  hosts:
+  - role: controller
+    installFlags:
+    - --disable-components metrics-server 
+```
+
+As seen from the component list, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.
