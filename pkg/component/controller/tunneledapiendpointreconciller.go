@@ -135,21 +135,29 @@ func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.E
 	}
 
 	addresses := make([]v1core.EndpointAddress, 0, len(nodes.Items))
-	var ipAddr string
 	for _, node := range nodes.Items {
+		var publicAddr string
+		var internalAddr string
 		node := node
-		ipAddr = ""
 		for _, addr := range node.Status.Addresses {
-			if addr.Type != v1core.NodeInternalIP {
-				continue
+			switch addr.Type {
+			case v1core.NodeInternalIP:
+				internalAddr = addr.Address
+			case v1core.NodeExternalIP:
+				publicAddr = addr.Address
 			}
-			ipAddr = addr.Address
 		}
-		if ipAddr == "" {
+		if publicAddr == "" && internalAddr == "" {
 			continue
 		}
+
+		// try use internal address, if not found fallback to public
+		address := internalAddr
+		if address == "" {
+			address = publicAddr
+		}
 		addresses = append(addresses, v1core.EndpointAddress{
-			IP:       ipAddr,
+			IP:       address,
 			NodeName: &node.Name,
 		})
 	}
