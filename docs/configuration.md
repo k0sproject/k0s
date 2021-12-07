@@ -305,6 +305,7 @@ k0s allows completely disabling some of the system components. This allows the u
 ```
 
 If you use k0sctl just add the flag when installing the cluster for the first controller at `spec.hosts.installFlags` in the config file like e.g.:
+
 ```yaml
 spec:
   hosts:
