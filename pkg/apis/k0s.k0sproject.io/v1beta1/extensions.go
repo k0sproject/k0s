@@ -21,7 +21,8 @@ var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
-	Helm *HelmExtensions `json:"helm"`
+	Storage *StorageExtension `json:"storage"`
+	Helm    *HelmExtensions   `json:"helm"`
 }
 
 // HelmExtensions specifies settings for cluster helm based extensions
@@ -130,11 +131,12 @@ func (e *ClusterExtensions) Validate() []error {
 	if e == nil {
 		return nil
 	}
+	var errs []error
 	if e.Helm != nil {
-		if err := e.Helm.Validate(); err != nil {
-			return err
-		}
-
+		errs = append(errs, e.Helm.Validate()...)
 	}
-	return nil
+	if e.Storage != nil {
+		errs = append(errs, e.Storage.Validate()...)
+	}
+	return errs
 }

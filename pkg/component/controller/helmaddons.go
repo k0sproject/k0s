@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,7 +28,7 @@ import (
 )
 
 // Helm watch for Chart crd
-type HelmAddons struct {
+type ExtensionsController struct {
 	Client clientset.ChartV1Beta1Interface
 
 	saver             manifestsSaver
@@ -38,14 +39,15 @@ type HelmAddons struct {
 	kubeConfig        string
 	kubeClientFactory kubeutil.ClientFactoryInterface
 	leaderElector     LeaderElector
+	crdSync           sync.Once
 }
 
-var _ component.Component = &HelmAddons{}
-var _ component.ReconcilerComponent = &HelmAddons{}
+var _ component.Component = &ExtensionsController{}
+var _ component.ReconcilerComponent = &ExtensionsController{}
 
-// NewHelmAddons builds new HelmAddons
-func NewHelmAddons(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *HelmAddons {
-	return &HelmAddons{
+// NewExtensionsController builds new HelmAddons
+func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *ExtensionsController {
+	return &ExtensionsController{
 		saver:             s,
 		L:                 logrus.WithFields(logrus.Fields{"component": "helmaddons"}),
 		stopCh:            make(chan struct{}),
@@ -64,43 +66,47 @@ const (
 	namespaceToWatch = "kube-system"
 )
 
-// Run runs the helm controller
-func (h *HelmAddons) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
-	h.L.Info("run begin")
-	if clusterConfig.Spec.Extensions == nil || clusterConfig.Spec.Extensions.Helm == nil {
-		h.L.Info("No helm addons specified, do not run HelmAddons reconciler")
-		return nil
-	}
+// Run runs the extensions controller
+func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
+	ec.L.Info("Extensions reconcilation started")
+	defer ec.L.Info("Extensions reconcilation finished")
+
 	// TODO Can we use the shared kube client factory to create the clientset for helm CRDs?
-	client, err := clientset.NewForConfig(h.kubeConfig)
+	client, err := clientset.NewForConfig(ec.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes typed Client for helm charts: %v", err)
 	}
 
-	h.Client = client
+	ec.Client = client
 
-	if err := h.reconcileHelmSettings(clusterConfig); err != nil {
-		return fmt.Errorf("can't init helm: %v", err)
+	if err := ec.reconcileHelmExtensions(clusterConfig.Spec.Extensions.Helm); err != nil {
+		return fmt.Errorf("can't reconcile helm based extensions: %v", err)
 	}
 
-	h.L.Info("Successfully inited helm")
-	if !cache.WaitForCacheSync(h.stopCh) {
+	ec.L.Info("Successfully inited helm")
+	if !cache.WaitForCacheSync(ec.stopCh) {
 		panic("Can't sync cache")
 	}
-	h.L.Info("Successfully synced controller cache")
+	ec.L.Info("Successfully synced controller cache")
 
-	go h.CrdControlLoop(ctx)
+	// temporary fix for routines leak introduced by dynamic configuration
+	ec.crdSync.Do(func() {
+		go ec.CrdControlLoop(ctx)
+	})
 	return nil
 }
 
-func (h *HelmAddons) reconcileHelmSettings(clusterConfig *k0sAPI.ClusterConfig) error {
-	for _, repo := range clusterConfig.Spec.Extensions.Helm.Repositories {
-		if err := h.addRepo(repo); err != nil {
+func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExtensions) error {
+	if helmSpec == nil {
+		return nil
+	}
+	for _, repo := range helmSpec.Repositories {
+		if err := ec.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
 		}
 	}
 
-	for _, addon := range clusterConfig.Spec.Extensions.Helm.Charts {
+	for _, addon := range helmSpec.Charts {
 		tw := templatewriter.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
@@ -108,10 +114,10 @@ func (h *HelmAddons) reconcileHelmSettings(clusterConfig *k0sAPI.ClusterConfig) 
 		}
 		buf := bytes.NewBuffer([]byte{})
 		if err := tw.WriteToBuffer(buf); err != nil {
-			h.L.WithError(err).Errorf("can't render helm addon crd template")
+			ec.L.WithError(err).Errorf("can't render helm addon crd template")
 			return fmt.Errorf("can't create addon `%s`: %v", addon.ChartName, err)
 		}
-		if err := h.saver.Save("addon_crd_manifest_"+addon.Name+".yaml", buf.Bytes()); err != nil {
+		if err := ec.saver.Save("addon_crd_manifest_"+addon.Name+".yaml", buf.Bytes()); err != nil {
 			return fmt.Errorf("can't save addon CRD manifest: %v", err)
 		}
 	}
@@ -123,27 +129,27 @@ type queueJob struct {
 	operation string
 }
 
-func (h *HelmAddons) CrdControlLoop(ctx context.Context) {
+func (ec *ExtensionsController) CrdControlLoop(ctx context.Context) {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	defer queue.ShutDown()
-	h.informer = cache.NewSharedIndexInformer(
+	ec.informer = cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(lo metav1.ListOptions) (result runtime.Object, err error) {
-				return h.Client.Charts(namespaceToWatch).List(ctx)
+				return ec.Client.Charts(namespaceToWatch).List(ctx)
 			},
 			WatchFunc: func(lo metav1.ListOptions) (watch.Interface, error) {
-				return h.Client.Charts(namespaceToWatch).Watch(ctx, lo)
+				return ec.Client.Charts(namespaceToWatch).Watch(ctx, lo)
 			},
 		},
 		&v1beta1.Chart{},
 		0,
 		cache.Indexers{},
 	)
-	h.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	ec.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err != nil {
-				h.L.WithError(err).Warning("can't build cache key for queue object")
+				ec.L.WithError(err).Warning("can't build cache key for queue object")
 				return
 			}
 			queue.Add(queueJob{key: key, operation: operationAdd})
@@ -163,7 +169,7 @@ func (h *HelmAddons) CrdControlLoop(ctx context.Context) {
 
 			key, err := cache.MetaNamespaceKeyFunc(newChart)
 			if err != nil {
-				h.L.WithError(err).Warning("can't build cache key for queue object")
+				ec.L.WithError(err).Warning("can't build cache key for queue object")
 				return
 			}
 			queue.Add(queueJob{key: key, operation: operationUpdate})
@@ -174,17 +180,17 @@ func (h *HelmAddons) CrdControlLoop(ctx context.Context) {
 			queue.Add(queueJob{key: chart.Status.Namespace + "/" + chart.Status.ReleaseName, operation: operationDelete})
 		},
 	})
-	go h.informer.Run(h.stopCh)
+	go ec.informer.Run(ec.stopCh)
 	wait.Until(func() {
 		for {
-			h.processMessage(ctx, queue)
+			ec.processMessage(ctx, queue)
 		}
-	}, time.Second, h.stopCh)
+	}, time.Second, ec.stopCh)
 }
 
 const maxRetries = 5
 
-func (h *HelmAddons) processMessage(ctx context.Context, q workqueue.RateLimitingInterface) {
+func (ec *ExtensionsController) processMessage(ctx context.Context, q workqueue.RateLimitingInterface) {
 	jobI, quit := q.Get()
 	job := jobI.(queueJob)
 
@@ -197,69 +203,69 @@ func (h *HelmAddons) processMessage(ctx context.Context, q workqueue.RateLimitin
 	var err error
 	switch job.operation {
 	case operationDelete:
-		err = h.uninstall(job.key)
+		err = ec.uninstall(job.key)
 	case operationAdd, operationUpdate:
-		err = h.reconcile(ctx, job.key)
+		err = ec.reconcile(ctx, job.key)
 	}
 
 	if err != nil {
 		if q.NumRequeues(job) < maxRetries {
-			h.L.WithError(err).Errorf("Error processing %s (will retry)", job.key)
+			ec.L.WithError(err).Errorf("Error processing %s (will retry)", job.key)
 			q.AddRateLimited(job)
 			return
 		}
-		h.saveError(ctx, err, job.key)
-		h.L.WithError(err).Errorf("Error processing %s (giving up)", job.key)
+		ec.saveError(ctx, err, job.key)
+		ec.L.WithError(err).Errorf("Error processing %s (giving up)", job.key)
 
 	}
 
 	q.Forget(job)
 }
 
-func (h *HelmAddons) saveError(ctx context.Context, origErr error, objectID string) {
+func (ec *ExtensionsController) saveError(ctx context.Context, origErr error, objectID string) {
 	name := strings.Split(objectID, "/")[1]
-	chart, err := h.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
+	chart, err := ec.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
+		ec.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
 		return
 	}
 	if chart == nil {
 		return
 	}
 	chart.Status.Error = origErr.Error()
-	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
+	_, err = ec.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
 	if err != nil {
-		h.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
+		ec.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
 	}
 }
 
-func (h *HelmAddons) uninstall(id string) error {
+func (ec *ExtensionsController) uninstall(id string) error {
 	parts := strings.Split(id, "/")
 	namespace, releaseName := parts[0], parts[1]
-	if !h.leaderElector.IsLeader() {
-		h.L.Info("dry run, doesn't uninstall")
+	if !ec.leaderElector.IsLeader() {
+		ec.L.Info("dry run, doesn't uninstall")
 		return nil
 	}
-	if err := h.helm.UninstallRelease(releaseName, namespace); err != nil {
+	if err := ec.helm.UninstallRelease(releaseName, namespace); err != nil {
 		return fmt.Errorf("can't uninstall release `%s`: %v", releaseName, err)
 	}
 	return nil
 }
 
-func (h *HelmAddons) reconcile(ctx context.Context, objectID string) error {
-	if !h.leaderElector.IsLeader() {
-		h.L.Info("dry run, doesn't reconcile")
+func (ec *ExtensionsController) reconcile(ctx context.Context, objectID string) error {
+	if !ec.leaderElector.IsLeader() {
+		ec.L.Info("dry run, doesn't reconcile")
 		return nil
 	}
 	name := strings.Split(objectID, "/")[1]
-	chart, err := h.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
+	chart, err := ec.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("can't reconcile chart `%s`: %v", objectID, err)
 	}
 	var chartRelease *release.Release
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
-		chartRelease, err = h.helm.InstallChart(chart.Spec.ChartName,
+		chartRelease, err = ec.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues())
@@ -268,7 +274,7 @@ func (h *HelmAddons) reconcile(ctx context.Context, objectID string) error {
 		}
 	} else {
 		// update
-		chartRelease, err = h.helm.UpgradeChart(chart.Spec.ChartName,
+		chartRelease, err = ec.helm.UpgradeChart(chart.Spec.ChartName,
 			chart.Status.Version,
 			chart.Status.ReleaseName,
 			chart.Status.Namespace,
@@ -286,15 +292,15 @@ func (h *HelmAddons) reconcile(ctx context.Context, objectID string) error {
 	chart.Status.Revision = int64(chartRelease.Version)
 	chart.Status.Namespace = chartRelease.Namespace
 	chart.Status.Error = ""
-	_, err = h.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
+	_, err = ec.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("can't update status for `%s`: %v", objectID, err)
 	}
 	return nil
 }
 
-func (h *HelmAddons) addRepo(repo k0sAPI.Repository) error {
-	return h.helm.AddRepository(repo)
+func (ec *ExtensionsController) addRepo(repo k0sAPI.Repository) error {
+	return ec.helm.AddRepository(repo)
 }
 
 const chartCrdTemplate = `
@@ -312,22 +318,22 @@ spec:
 `
 
 // Init
-func (h *HelmAddons) Init() error {
+func (h *ExtensionsController) Init() error {
 	return nil
 }
 
 // Run
-func (h *HelmAddons) Run(_ context.Context) error {
+func (h *ExtensionsController) Run(_ context.Context) error {
 	return nil
 }
 
 // Stop
-func (h *HelmAddons) Stop() error {
+func (h *ExtensionsController) Stop() error {
 	close(h.stopCh)
 	return nil
 }
 
 // Healthy
-func (h *HelmAddons) Healthy() error {
+func (h *ExtensionsController) Healthy() error {
 	return nil
 }

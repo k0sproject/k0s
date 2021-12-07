@@ -430,8 +430,8 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 			return err
 		}
 		reconcilers["helmCrd"] = controller.NewCRD(manifestsSaver)
-		reconcilers["helmAddons"] = controller.NewHelmAddons(manifestsSaver, c.K0sVars, cf, leaderElector)
-		c.ClusterComponents.Add(ctx, reconcilers["helmAddons"])
+		extensionsController := controller.NewExtensionsController(manifestsSaver, c.K0sVars, cf, leaderElector)
+		c.ClusterComponents.Add(ctx, extensionsController)
 	}
 
 	// Start all reconcilers
