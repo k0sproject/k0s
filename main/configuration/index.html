@@ -1805,7 +1805,14 @@ sudo k0s start
 <p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
 <div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac<span class="o">)</span>
 </code></pre></div>
-<p>As seen from the component list above, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.</p>
+<p>If you use k0sctl just add the flag when installing the cluster for the first controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">hosts</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">role</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">controller</span>
+    <span class="nt">installFlags</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">--disable-components metrics-server</span> 
+</code></pre></div>
+<p>As seen from the component list, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.</p>
                 
               
               
