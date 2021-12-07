@@ -28,6 +28,7 @@ on:
       - '.github/workflows/mkdocs-set-default-version.yml'
       - 'mkdocs.yml'
       - '*.md'
+      - 'vendor/**'
 
 env:
   GO_VERSION: ^1.16
