@@ -52,6 +52,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+var defaultK0sBinPath = "/usr/bin/k0s"
+
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose
 type FootlooseSuite struct {
 	suite.Suite
@@ -88,9 +90,6 @@ func (s *FootlooseSuite) SetupSuite() {
 	}
 	if s.KonnectivityAgentPort == 0 {
 		s.KonnectivityAgentPort = 8132
-	}
-	if s.K0sFullPath == "" {
-		s.K0sFullPath = "/usr/bin/k0s"
 	}
 
 	dir, err := os.MkdirTemp("", "footloose-keys")
@@ -728,6 +727,10 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		s.FailNow("K0S_PATH env needs to be set to k0s binary")
 	}
 
+	if s.K0sFullPath == "" {
+		s.K0sFullPath = defaultK0sBinPath
+	}
+
 	volumes := []config.Volume{
 		{
 			Type:        "bind",
@@ -737,7 +740,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		{
 			Type:        "bind",
 			Source:      binPath,
-			Destination: "/usr/bin/k0s",
+			Destination: s.K0sFullPath,
 		},
 		{
 			Type:        "volume",

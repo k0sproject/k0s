@@ -76,6 +76,9 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(g.Wait())
 
+	// use the oldVersion k0s for footloose operations
+	s.K0sFullPath = "/usr/local/bin/k0s"
+
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 	token, err := s.GetJoinToken("worker")
 	s.NoError(err)
@@ -135,7 +138,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s.new /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
@@ -154,7 +157,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s.new /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
@@ -180,7 +183,7 @@ func TestUpgradeSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
-			K0sFullPath:     "/usr/local/bin/k0s",
+			K0sFullPath:     "/usr/bin/k0s.new",
 		},
 	}
 	suite.Run(t, &s)
