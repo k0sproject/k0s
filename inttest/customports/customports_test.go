@@ -44,6 +44,8 @@ spec:
     externalAddress: {{ .Address }}
     port: {{ .KubePort }}
     k0sApiPort: {{ .K0sPort }}
+    sans:
+      - {{ .Address }}
   konnectivity:
     agentPort: {{ .KonnectivityAgentPort }}
     adminPort: {{ .KonnectivityAdminPort }}
@@ -59,7 +61,7 @@ func TestSuite(t *testing.T) {
 	s := Suite{
 		common.FootlooseSuite{
 			ControllerCount:       3,
-			WorkerCount:           1,
+			WorkerCount:           3,
 			KubeAPIExternalPort:   kubeAPIPort,
 			K0sAPIExternalPort:    k0sAPIPort,
 			KonnectivityAgentPort: agentPort,
@@ -91,8 +93,7 @@ func (ds *Suite) getControllerConfig(ipAddress string) string {
 }
 
 func (ds *Suite) TestControllerJoinsWithCustomPort() {
-
-	ipAddress := ds.GetControllerIPAddress(0)
+	ipAddress := ds.GetLBAddress()
 	ds.T().Logf("ip address: %s", ipAddress)
 	config := ds.getControllerConfig(ipAddress)
 	ds.PutFile("controller0", "/tmp/k0s.yaml", config)
@@ -127,7 +128,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	ds.T().Logf("found %d pods in kube-system", podCount)
 	ds.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	ds.T().Log("waiting to see calico pods ready")
+	ds.T().Log("waiting to see CNI pods ready")
 	ds.Require().NoError(common.WaitForKubeRouterReady(kc), "calico did not start")
 	ds.T().Log("waiting to see konnectivity-agent pods ready")
 	ds.Require().NoError(common.WaitForDaemonSet(kc, "konnectivity-agent"), "konnectivity-agent did not start")
