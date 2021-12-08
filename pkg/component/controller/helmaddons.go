@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/bombsimon/logrusr"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -70,24 +71,31 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 	if helmSpec == nil {
 		return nil
 	}
+
 	for _, repo := range helmSpec.Repositories {
 		if err := ec.addRepo(repo); err != nil {
 			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
 		}
 	}
 
-	for _, addon := range helmSpec.Charts {
+	for _, chart := range helmSpec.Charts {
 		tw := templatewriter.TemplateWriter{
 			Name:     "addon_crd_manifest",
 			Template: chartCrdTemplate,
-			Data:     addon,
+			Data: struct {
+				k0sAPI.Chart
+				Finalizer string
+			}{
+				Chart:     chart,
+				Finalizer: finalizerName,
+			},
 		}
 		buf := bytes.NewBuffer([]byte{})
 		if err := tw.WriteToBuffer(buf); err != nil {
-			ec.L.WithError(err).Errorf("can't render helm addon crd template")
-			return fmt.Errorf("can't create addon `%s`: %v", addon.ChartName, err)
+			ec.L.WithError(err).Errorf("can't create chart CR instance `%s`: %v", chart.ChartName, err)
+			return fmt.Errorf("can't create chart CR instance `%s`: %v", chart.ChartName, err)
 		}
-		if err := ec.saver.Save("addon_crd_manifest_"+addon.Name+".yaml", buf.Bytes()); err != nil {
+		if err := ec.saver.Save("addon_crd_manifest_"+chart.Name+".yaml", buf.Bytes()); err != nil {
 			return fmt.Errorf("can't save addon CRD manifest: %v", err)
 		}
 	}
@@ -98,6 +106,7 @@ type ChartReconciler struct {
 	client.Client
 	helm          *helm.Commands
 	leaderElector LeaderElector
+	L             *logrus.Entry
 }
 
 func (cr *ChartReconciler) InjectClient(c client.Client) error {
@@ -109,17 +118,37 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
+	cr.L.Tracef("Got helm chart reconcilation request: %s", req)
+	defer cr.L.Tracef("Finished processing helm chart reconcilation request: %s", req)
+
 	var chartInstance v1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
-		// how to uninstall? no meta information avaiable
-		// probably through finalizer?
+		return reconcile.Result{}, err
 	}
-
+	if !chartInstance.ObjectMeta.DeletionTimestamp.IsZero() {
+		cr.L.Tracef("Uninstall reconcilation request: %s", req)
+		// uninstall chart
+		if err := cr.uninstall(ctx, chartInstance); err != nil {
+			return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
+		}
+		controllerutil.RemoveFinalizer(&chartInstance, finalizerName)
+		if err := cr.Client.Update(ctx, &chartInstance); err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, nil
+	}
+	cr.L.Tracef("Install or update reconcilation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 	return reconcile.Result{}, nil
+}
+func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
+	if err := cr.helm.UninstallRelease(chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+		return fmt.Errorf("can't uninstall release `%s/%s`: %v", chart.Namespace, chart.Status.ReleaseName, err)
+	}
+	return nil
 }
 
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1beta1.Chart) error {
@@ -201,6 +230,8 @@ kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
   namespace: "kube-system"
+  finalizers:
+    - {{ .Finalizer }} 
 spec:
   chartName: {{ .ChartName }}
   values: |
@@ -208,6 +239,8 @@ spec:
   version: {{ .Version }}
   namespace: {{ .TargetNS }}
 `
+
+const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
 // Init
 func (h *ExtensionsController) Init() error {
@@ -223,6 +256,7 @@ func (h *ExtensionsController) Run(ctx context.Context) error {
 
 	mgr, err := manager.New(config, manager.Options{
 		MetricsBindAddress: "0",
+		Logger:             logrusr.NewLogger(h.L),
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
@@ -244,6 +278,7 @@ func (h *ExtensionsController) Run(ctx context.Context) error {
 	if err := v1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		return fmt.Errorf("can't register Chart crd: %w", err)
 	}
+
 	if err := builder.
 		ControllerManagedBy(mgr).
 		For(&v1beta1.Chart{},
@@ -258,13 +293,12 @@ func (h *ExtensionsController) Run(ctx context.Context) error {
 		Complete(&ChartReconciler{
 			leaderElector: h.leaderElector, // TODO: drop in favor of controller-runtime lease manager
 			helm:          h.helm,
+			L:             h.L.WithField("extensions_type", "helm"),
 		}); err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
-	spew.Dump("HELM: builder created")
 
 	go mgr.Start(ctx)
-	spew.Dump("HELM: Manager started")
 	return nil
 }
 
