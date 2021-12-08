@@ -25,6 +25,7 @@ package dualstack
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/stretchr/testify/suite"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,9 +50,54 @@ func (ds *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
 	}
 }
 
+func (ds *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
+	err := ds.verifyKubeApiServiceClusterIPRangeFlag(ds.ControllerNode(0))
+	ds.Require().NoError(err)
+	err = ds.verifyKubeControllerManagerServiceClusterIPRangeFlag(ds.ControllerNode(0))
+	ds.Require().NoError(err)
+}
+
+// Verifies that kube-apiserver process has a dual-stack service-cluster-ip-range configured.
+func (s *DualstackSuite) verifyKubeApiServiceClusterIPRangeFlag(node string) error {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(`grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-apiserver)/cmdline`)
+	if err != nil {
+		return err
+	}
+	if output != "--service-cluster-ip-range=10.96.0.0/12,fd01::/108" {
+		return fmt.Errorf("kube-apiserver does not have proper a dual-stack service-cluster-ip-range set.")
+	}
+
+	return nil
+}
+
+// Verifies that kube-controller-manager process has a dual-stack service-cluster-ip-range configured.
+func (s *DualstackSuite) verifyKubeControllerManagerServiceClusterIPRangeFlag(node string) error {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(`grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-controller-manager)/cmdline`)
+	if err != nil {
+		return err
+	}
+	if output != "--service-cluster-ip-range=10.96.0.0/12,fd01::/108" {
+		return fmt.Errorf("kube-controller-manager does not have proper a dual-stack service-cluster-ip-range set.")
+	}
+
+	return nil
+}
+
 func (ds *DualstackSuite) SetupSuite() {
 	ds.FootlooseSuite.SetupSuite()
-	ds.PutFile(ds.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithAddon)
+	ds.PutFile(ds.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.RunWorkers())
 	client, err := ds.KubeClient(ds.ControllerNode(0))
@@ -80,7 +126,7 @@ func TestDualStack(t *testing.T) {
 
 }
 
-const k0sConfigWithAddon = `
+const k0sConfigWithDualStack = `
 spec:
   network:
     kubeProxy:
@@ -92,4 +138,5 @@ spec:
       enabled: true
       IPv6podCIDR: "fd00::/108"
       IPv6serviceCIDR: "fd01::/108"
-`
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12`
