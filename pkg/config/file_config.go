@@ -16,7 +16,9 @@ limitations under the License.
 package config
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -33,7 +35,12 @@ var (
 	resourceType             = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
 	getOpts                  = v1.GetOptions{TypeMeta: resourceType}
 	runtimeConfigPathDefault = "/run/k0s/k0s.yaml"
+	errNoConfig              = errors.New("no configuration")
 )
+
+func IsErrNoConfig(err error) bool {
+	return err == errNoConfig
+}
 
 // readRuntimeConfig returns the configuration from the runtime configuration file
 func (rules *ClientConfigLoadingRules) readRuntimeConfig() (clusterConfig *v1beta1.ClusterConfig, err error) {
@@ -71,8 +78,6 @@ func (rules *ClientConfigLoadingRules) Validate(clusterConfig *v1beta1.ClusterCo
 // ParseRuntimeConfig parses the `--config` flag and generates a config object
 // it searches for the default config path. if it does not exist, and no other custom config-file is given, it will generate default config
 func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterConfig, error) {
-	var cfg *v1beta1.ClusterConfig
-
 	if rules.RuntimeConfigPath == "" {
 		rules.RuntimeConfigPath = runtimeConfigPathDefault
 	}
@@ -82,22 +87,14 @@ func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterCon
 		logrus.Infof("runtime config found: using %s", rules.RuntimeConfigPath)
 	}
 
-	switch CfgFile {
-	case "-":
-		// parse clusterConfig from stdin and write the contents to a temp directory
-		return rules.readFromStdin()
-	// no config-file is given, so either look for a config-file in the default location, or generate defaults
-	case constant.K0sConfigPathDefault:
-		// file doesn't exist, so we need to generate defaults
-		if rules.IsDefaultConfig() {
-			cfg = rules.generateDefaults()
-		} else {
-			return v1beta1.ConfigFromFile(constant.K0sConfigPathDefault, K0sVars.DataDir)
+	cfgReader, err := getConfigReader()
+	if err != nil {
+		if IsErrNoConfig(err) {
+			return rules.generateDefaults(), nil
 		}
-	default:
-		return v1beta1.ConfigFromFile(CfgFile, K0sVars.DataDir)
+		return nil, err
 	}
-	return cfg, nil
+	return v1beta1.ConfigFromReader(cfgReader, K0sVars.DataDir)
 }
 
 // InitRuntimeConfig generates the runtime /run/k0s/k0s.yaml
@@ -121,11 +118,6 @@ func (rules *ClientConfigLoadingRules) generateDefaults() (config *v1beta1.Clust
 	return v1beta1.DefaultClusterConfig(K0sVars.DataDir)
 }
 
-// generate config file from Stdin input
-func (rules *ClientConfigLoadingRules) readFromStdin() (config *v1beta1.ClusterConfig, err error) {
-	return v1beta1.ConfigFromStdin(K0sVars.DataDir)
-}
-
 func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte) error {
 	mergedConfig, err := v1beta1.ConfigFromString(string(yamlData), K0sVars.DataDir)
 	if err != nil {
@@ -140,4 +132,22 @@ func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte) error {
 		return fmt.Errorf("failed to write runtime config to %s (%v): %v", K0sVars.RunDir, rules.RuntimeConfigPath, err)
 	}
 	return nil
+}
+
+func getConfigReader() (io.Reader, error) {
+	switch CfgFile {
+	case "-":
+		return os.Stdin, nil
+	case "", constant.K0sConfigPathDefault:
+		f, err := os.Open(constant.K0sConfigPathDefault)
+		if err == nil {
+			return f, nil
+		}
+		if os.IsNotExist(err) {
+			return nil, errNoConfig
+		}
+		return nil, err
+	default:
+		return os.Open(CfgFile)
+	}
 }

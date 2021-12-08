@@ -3,7 +3,7 @@
 k0s command-line interface has the ability to validate config syntax:
 
 ```shell
-k0s validate config --config path/to/config/file
+k0s validate config
 ```
 
 `validate config` sub-command can validate the following:

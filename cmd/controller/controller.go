@@ -124,7 +124,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// we first need to make sure our run-dir exists
 	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
 		logrus.Fatalf("failed to initialize dir: %v", err)
-		return err
 	}
 
 	// initialize runtime config
@@ -139,7 +138,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	bootstrapCfg := config.ClientConfigLoadingRules{Nodeconfig: true}
 	c.NodeConfig, err = bootstrapCfg.Load()
 	if err != nil {
-		logrus.Fatalf("failed to fetch controller's bootstrapping config: %s", err.Error())
+		return fmt.Errorf("failed to fetch controller's bootstrapping config: %w", err)
 	}
 
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
@@ -201,7 +200,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	if c.NodeConfig.Spec.API.ExternalAddress != "" {
 		c.NodeComponents.Add(ctx, &controller.K0sLease{
-			ClusterConfig:     c.NodeConfig,
 			KubeClientFactory: adminClientFactory,
 		})
 	}
@@ -344,7 +342,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 		fullCfg, err := loadingRules.Load()
 		if err != nil {
-			logrus.Fatalf("failed to fetch controller's config: %s", err.Error())
+			return fmt.Errorf("failed to fetch controller's config: %w", err)
 		}
 		cfgSource, err = clusterconfig.NewStaticSource(fullCfg)
 		if err != nil {
@@ -411,8 +409,9 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// Stop components
 	if stopErr := c.NodeComponents.Stop(); stopErr != nil {
 		logrus.Errorf("error while stopping node component %s", stopErr)
+	} else {
+		logrus.Info("all node components stopped")
 	}
-	logrus.Info("all node components stopped")
 	return os.Remove(c.CfgFile)
 }
 

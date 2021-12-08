@@ -130,7 +130,7 @@ func saveClusterConfigFile() string {
 
 	cfgFilePath, err := file.WriteTmpFile(string(conf), "k0s-config")
 	if err != nil {
-		logrus.Errorf("Error creating tempfile: %v", err)
+		logrus.Errorf("error creating tempfile: %v", err)
 		return ""
 	}
 	return cfgFilePath

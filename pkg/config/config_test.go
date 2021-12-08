@@ -157,7 +157,7 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 		got      string
 		expected string
 	}{
-		{"API_external_address", cfg.Spec.API.ExternalAddress, ""},
+		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
 		// PodCIDR is a cluster-wide setting. It shouldn't exist in Node config
 		{"Network_PodCIDR", cfg.Spec.Network.PodCIDR, ""},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "file_service_cidr"},
@@ -205,8 +205,7 @@ func TestAPIConfig(t *testing.T) {
 		got      string
 		expected string
 	}{
-		// API Config should take precedence over Node config file
-		{"API_external_address", cfg.Spec.API.ExternalAddress, "api_external_address"},
+		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
 		{"Network_PodCIDR", cfg.Spec.Network.PodCIDR, "10.244.0.0/16"},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "file_service_cidr"},
 		{"Network_KubeProxy_Mode", cfg.Spec.Network.KubeProxy.Mode, "iptables"},

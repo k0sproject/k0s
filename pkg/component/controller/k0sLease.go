@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-
 	"github.com/sirupsen/logrus"
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -16,7 +14,6 @@ import (
 // ControllerLease implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
 type K0sLease struct {
-	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	cancelFunc  context.CancelFunc

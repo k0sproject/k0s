@@ -194,6 +194,15 @@ func ConfigFromString(yml string, dataDir string) (*ClusterConfig, error) {
 	return config, nil
 }
 
+// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
+func ConfigFromReader(r io.Reader, dataDir string) (*ClusterConfig, error) {
+	input, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return ConfigFromString(string(input), dataDir)
+}
+
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
 func DefaultClusterConfig(dataDir string) *ClusterConfig {
 	return &ClusterConfig{
@@ -232,13 +241,7 @@ func (c *ClusterConfig) GetBootstrappingConfig() *ClusterConfig {
 		TypeMeta:   c.TypeMeta,
 		DataDir:    c.DataDir,
 		Spec: &ClusterSpec{
-			API: &APISpec{
-				Address:    c.Spec.API.Address,
-				ExtraArgs:  c.Spec.API.ExtraArgs,
-				K0sAPIPort: c.Spec.API.K0sAPIPort,
-				Port:       c.Spec.API.Port,
-				SANs:       c.Spec.API.SANs,
-			},
+			API: c.Spec.API,
 			Storage: &StorageSpec{
 				Type: c.Spec.Storage.Type,
 				Etcd: &EtcdConfig{
@@ -248,6 +251,7 @@ func (c *ClusterConfig) GetBootstrappingConfig() *ClusterConfig {
 			},
 			Network: &Network{
 				ServiceCIDR: c.Spec.Network.ServiceCIDR,
+				DualStack:   c.Spec.Network.DualStack,
 			},
 			Install: c.Spec.Install,
 		},
@@ -268,14 +272,10 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 		TypeMeta:   c.TypeMeta,
 		DataDir:    c.DataDir,
 		Spec: &ClusterSpec{
-			API: &APISpec{
-				ExternalAddress: c.Spec.API.ExternalAddress,
-			},
 			ControllerManager: c.Spec.ControllerManager,
 			Scheduler:         c.Spec.Scheduler,
 			Network: &Network{
 				Calico:     c.Spec.Network.Calico,
-				DualStack:  c.Spec.Network.DualStack,
 				KubeProxy:  c.Spec.Network.KubeProxy,
 				KubeRouter: c.Spec.Network.KubeRouter,
 				PodCIDR:    c.Spec.Network.PodCIDR,
