@@ -424,13 +424,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#build-k0sexe" class="md-nav__link">
-    Build k0s.exe
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#run-k0s" class="md-nav__link">
     Run k0s
   </a>
@@ -1256,13 +1249,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#build-k0sexe" class="md-nav__link">
-    Build k0s.exe
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#run-k0s" class="md-nav__link">
     Run k0s
   </a>
@@ -1347,12 +1333,10 @@
                 <h1 id="run-k0s-worker-nodes-in-windows">Run k0s worker nodes in Windows<a class="headerlink" href="#run-k0s-worker-nodes-in-windows" title="Permanent link">#</a></h1>
 <p><strong>IMPORTANT</strong>: Windows support for k0s is under active development and <strong>must be</strong> considered experimental.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p>The cluster must be running at least one worker node and control plane on Linux. You ca use Windows to run additional worker nodes.</p>
-<h2 id="build-k0sexe">Build k0s.exe<a class="headerlink" href="#build-k0sexe" title="Permanent link">#</a></h2>
-<p>Invoke the <code>make clean k0s.exe</code> command to create k0s.exe with staged kubelet.exe and kube-proxy.exe.</p>
-<p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
-<p>During the first run, the calico install script is creaated as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and set ups vSwitch settings.</p>
+<p>The cluster must be running at least one worker node and control plane on Linux. You can use Windows to run additional worker nodes.</p>
 <h2 id="run-k0s">Run k0s<a class="headerlink" href="#run-k0s" title="Permanent link">#</a></h2>
+<p><strong>Note</strong>: The k0s.exe supervises kubelet.exe and kube-proxy.exe.</p>
+<p>During the first run, the calico install script is created as <code>C:\bootstrap.ps1</code>. This bootstrap script downloads the calico binaries, builds pause container and sets up vSwitch settings.</p>
 <p>Install Mirantis Container Runtime on the Windows node(s), as it is required for the initial Calico set up).</p>
 <div class="highlight"><pre><span></span><code>k0s worker --cri-socket<span class="o">=</span>docker:tcp://127.0.0.1:2375 --cidr-range<span class="o">=</span>&lt;cidr_range&gt; --cluster-dns<span class="o">=</span>&lt;clusterdns&gt; --api-server<span class="o">=</span>&lt;k0s api&gt; &lt;token&gt;
 </code></pre></div>
