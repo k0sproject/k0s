@@ -8,8 +8,16 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/bombsimon/logrusr"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/helm"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/release"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -18,14 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/helm"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 // Helm watch for Chart crd
@@ -60,13 +60,44 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	ec.L.Info("Extensions reconcilation started")
 	defer ec.L.Info("Extensions reconcilation finished")
 
-	if err := ec.reconcileHelmExtensions(clusterConfig.Spec.Extensions.Helm); err != nil {
+	helmSettings := clusterConfig.Spec.Extensions.Helm
+	switch clusterConfig.Spec.Extensions.Storage.Type {
+	case k0sAPI.OpenEBSLocal:
+		helmSettings = addOpenEBSHelmExtension(helmSettings)
+	default:
+	}
+
+	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
 		return fmt.Errorf("can't reconcile helm based extensions: %v", err)
 	}
 
 	return nil
 }
 
+func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions) *k0sAPI.HelmExtensions {
+	if helmSpec == nil {
+		helmSpec = &k0sAPI.HelmExtensions{
+			Repositories: k0sAPI.RepositoriesSettings{},
+			Charts:       k0sAPI.ChartsSettings{},
+		}
+	}
+	// TODO: move those constants to the constants_shared.go
+	helmSpec.Repositories = append(helmSpec.Repositories, k0sAPI.Repository{
+		Name: "openebs-internal",
+		URL:  "https://openebs.github.io/charts",
+	})
+	helmSpec.Charts = append(helmSpec.Charts, k0sAPI.Chart{
+		Name:      "openebs",
+		ChartName: "openebs-internal/openebs",
+		TargetNS:  "openebs",
+		Version:   "3.0.3",
+	})
+	return helmSpec
+}
+
+// reconcileHelmExtensions creates instance of Chart CR for each chart of the config file
+// it also reconciles repositories settings
+// the actual helm install/update/delete management is done by ChartReconciler structure
 func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExtensions) error {
 	if helmSpec == nil {
 		return nil
@@ -118,16 +149,21 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Got helm chart reconcilation request: %s", req)
-	defer cr.L.Tracef("Finished processing helm chart reconcilation request: %s", req)
+	cr.L.Errorf("Got helm chart reconcilation request: %s", req)
+	defer cr.L.Errorf("Finished processing helm chart reconcilation request: %s", req)
 
 	var chartInstance v1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
+		if errors.IsNotFound(err) {
+			cr.L.Errorf("NOT FOUND: %s", req)
+			return reconcile.Result{}, nil
+		}
 		return reconcile.Result{}, err
 	}
+
 	if !chartInstance.ObjectMeta.DeletionTimestamp.IsZero() {
-		cr.L.Tracef("Uninstall reconcilation request: %s", req)
+		cr.L.Errorf("Uninstall reconcilation request: %s", req)
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
 			return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
@@ -138,15 +174,21 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 		}
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Install or update reconcilation request: %s", req)
+	cr.L.Errorf("Install or update reconcilation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
+		// try to save error to the status first
+		// chartInstance.Status.Error = err.Error()
+		// if err := cr.Client.Status().Update(ctx, &chartInstance); err != nil {
+		// do not reque on status update to avoid busyworking
+		// cr.L.Errorf("error while saving previous error information into the Chart status: %s", err)
+		// }
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 	return reconcile.Result{}, nil
 }
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
 	if err := cr.helm.UninstallRelease(chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
-		return fmt.Errorf("can't uninstall release `%s/%s`: %v", chart.Namespace, chart.Status.ReleaseName, err)
+		return fmt.Errorf("can't uninstall release `%s/%s`: %v", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
 }
@@ -190,36 +232,6 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 	return nil
 }
 
-func (ec *ChartReconciler) saveError(ctx context.Context, origErr error, objectID string) {
-	// 	name := strings.Split(objectID, "/")[1]
-	// 	chart, err := ec.Client.Charts(namespaceToWatch).Get(ctx, name, metav1.GetOptions{})
-	// 	if err != nil {
-	// 		ec.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
-	// 		return
-	// 	}
-	// 	if chart == nil {
-	// 		return
-	// 	}
-	// 	chart.Status.Error = origErr.Error()
-	// 	_, err = ec.Client.Charts(namespaceToWatch).UpdateStatus(ctx, chart, metav1.UpdateOptions{})
-	// 	if err != nil {
-	// 		ec.L.Errorf("can't save error to the chart CRD status `%s`: %v", objectID, err)
-	// 	}
-	// }
-
-	// func (ec *ChartReconciler) uninstall(id string) error {
-	// 	parts := strings.Split(id, "/")
-	// 	namespace, releaseName := parts[0], parts[1]
-	// 	if !ec.leaderElector.IsLeader() {
-	// 		ec.L.Info("dry run, doesn't uninstall")
-	// 		return nil
-	// 	}
-	// 	if err := ec.helm.UninstallRelease(releaseName, namespace); err != nil {
-	// 		return fmt.Errorf("can't uninstall release `%s`: %v", releaseName, err)
-	// 	}
-	// return nil
-}
-
 func (ec *ExtensionsController) addRepo(repo k0sAPI.Repository) error {
 	return ec.helm.AddRepository(repo)
 }
@@ -243,36 +255,38 @@ spec:
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
 // Init
-func (h *ExtensionsController) Init() error {
+func (ec *ExtensionsController) Init() error {
 	return nil
 }
 
 // Run
-func (h *ExtensionsController) Run(ctx context.Context) error {
-	config, err := clientcmd.BuildConfigFromFlags("", h.kubeConfig)
+func (ec *ExtensionsController) Run(ctx context.Context) error {
+	config, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 
 	mgr, err := manager.New(config, manager.Options{
 		MetricsBindAddress: "0",
-		Logger:             logrusr.NewLogger(h.L),
+		Logger:             logrusr.NewLogger(ec.L),
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
-	retry.Do(func() error {
+	if err := retry.Do(func() error {
 		_, err := mgr.GetRESTMapper().RESTMapping(schema.GroupKind{
 			Group: v1beta1.GroupVersion.Group,
 			Kind:  "Chart",
 		})
 		if err != nil {
-			h.L.Warn("Extensions CRD is not yet ready, waiting before starting ExtensionsController")
+			ec.L.Warn("Extensions CRD is not yet ready, waiting before starting ExtensionsController")
 			return err
 		}
-		h.L.Info("Extensions CRD is ready, going nuts")
+		ec.L.Info("Extensions CRD is ready, going nuts")
 		return nil
-	})
+	}); err != nil {
+		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
+	}
 	// examples say to not use GetScheme in production, but it is unclear at the moment
 	// which scheme should be in use
 	if err := v1beta1.AddToScheme(mgr.GetScheme()); err != nil {
@@ -291,23 +305,28 @@ func (h *ExtensionsController) Run(ctx context.Context) error {
 			),
 		).
 		Complete(&ChartReconciler{
-			leaderElector: h.leaderElector, // TODO: drop in favor of controller-runtime lease manager
-			helm:          h.helm,
-			L:             h.L.WithField("extensions_type", "helm"),
+			leaderElector: ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
+			helm:          ec.helm,
+			L:             ec.L.WithField("extensions_type", "helm"),
 		}); err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 
-	go mgr.Start(ctx)
+	go func() {
+		if err := mgr.Start(ctx); err != nil {
+			ec.L.Errorf("controller-runtime working loop finished: %s", err)
+		}
+	}()
+
 	return nil
 }
 
 // Stop
-func (h *ExtensionsController) Stop() error {
+func (ec *ExtensionsController) Stop() error {
 	return nil
 }
 
 // Healthy
-func (h *ExtensionsController) Healthy() error {
+func (ec *ExtensionsController) Healthy() error {
 	return nil
 }

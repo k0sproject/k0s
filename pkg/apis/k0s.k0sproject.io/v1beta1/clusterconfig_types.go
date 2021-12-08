@@ -228,6 +228,7 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 // DefaultClusterSpec default settings
 func DefaultClusterSpec(dataDir string) *ClusterSpec {
 	return &ClusterSpec{
+		Extensions:        DefaultExtensions(),
 		Storage:           DefaultStorageSpec(dataDir),
 		Network:           DefaultNetwork(),
 		API:               DefaultAPISpec(),

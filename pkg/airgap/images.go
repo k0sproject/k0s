@@ -14,7 +14,6 @@ var pauseImage = v1beta1.ImageSpec{
 
 // GetImageURIs returns all image tags
 func GetImageURIs(spec *v1beta1.ClusterImages) []string {
-	panic("Add storage images")
 	images := []string{
 		spec.Konnectivity.URI(),
 		spec.CoreDNS.URI(),
