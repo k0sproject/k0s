@@ -61,12 +61,7 @@ func NewRestoreCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) restore(path string) error {
-	logger := logrus.New()
-	textFormatter := new(logrus.TextFormatter)
-	textFormatter.ForceColors = true
-	textFormatter.DisableTimestamp = true
-
-	logger.SetFormatter(textFormatter)
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true})
 
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
@@ -74,7 +69,7 @@ func (c *CmdOpts) restore(path string) error {
 
 	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		logger.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
+		logrus.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
 	if !file.Exists(path) {

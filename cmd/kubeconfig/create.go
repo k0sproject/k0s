@@ -136,7 +136,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 
 func (c *CmdOpts) getAPIURL() (string, error) {
 	// Disable logrus
-	logrus.SetLevel(logrus.FatalLevel)
+	logrus.SetLevel(logrus.WarnLevel)
 
 	cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 	if err != nil {

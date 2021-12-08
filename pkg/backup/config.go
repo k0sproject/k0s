@@ -32,7 +32,7 @@ func (c configurationStep) Name() string {
 func (c configurationStep) Backup() (StepResult, error) {
 	_, err := os.Stat(c.path)
 	if os.IsNotExist(err) {
-		logrus.Info("default k0s.yaml is used, do not back it up")
+		logrus.Warn("default k0s.yaml is used, do not back it up")
 		return StepResult{}, nil
 	}
 	if err != nil {

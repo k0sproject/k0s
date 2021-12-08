@@ -41,11 +41,10 @@ func etcdListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
-			l := logrus.New()
-			l.SetFormatter(&logrus.JSONFormatter{})
 
-			l.WithField("members", members).
-				Info("done")
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+			logrus.WithField("members", members).Info("done")
+
 			return nil
 		},
 	}

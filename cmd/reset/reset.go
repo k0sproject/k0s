@@ -50,19 +50,15 @@ func NewResetCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) reset() error {
-	logger := logrus.New()
-	textFormatter := new(logrus.TextFormatter)
-	textFormatter.DisableTimestamp = true
-
-	logger.SetFormatter(textFormatter)
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true})
 
 	if os.Geteuid() != 0 {
-		logger.Fatal("this command must be run as root!")
+		logrus.Fatal("this command must be run as root!")
 	}
 
 	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
-		logger.Fatal("k0s seems to be running! please stop k0s before reset.")
+		logrus.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}
 
 	// Get Cleanup Config
@@ -73,7 +69,7 @@ func (c *CmdOpts) reset() error {
 
 	err = cfg.Cleanup()
 
-	logger.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
+	logrus.Info("k0s cleanup operations done. To ensure a full reset, a node reboot is recommended.")
 	return err
 }
 

@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"io"
 	_ "net/http/pprof"
 	"os"
 	"path"
@@ -23,13 +24,32 @@ import (
 
 	"github.com/k0sproject/k0s/cmd"
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/writer"
 )
 
 //go:generate make generate-bindata
 
 func init() {
+	logrus.SetOutput(io.Discard) // Send all logs to nowhere by default
 
-	logrus.SetOutput(os.Stdout)
+	logrus.AddHook(&writer.Hook{ // Send logs with level higher than warning to stderr
+		Writer: os.Stderr,
+		LogLevels: []logrus.Level{
+			logrus.PanicLevel,
+			logrus.FatalLevel,
+			logrus.ErrorLevel,
+			logrus.WarnLevel,
+		},
+	})
+	logrus.AddHook(&writer.Hook{ // Send info, debug and trace logs to stdout
+		Writer: os.Stdout,
+		LogLevels: []logrus.Level{
+			logrus.InfoLevel,
+			logrus.DebugLevel,
+			logrus.TraceLevel,
+		},
+	})
+
 	logrus.SetLevel(logrus.InfoLevel)
 
 	customFormatter := new(logrus.TextFormatter)

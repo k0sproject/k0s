@@ -40,7 +40,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 		PreRunE: checkCreateTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Disable logrus for token commands
-			logrus.SetLevel(logrus.FatalLevel)
+			logrus.SetLevel(logrus.WarnLevel)
 			c := CmdOpts(config.GetCmdOpts())
 			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {

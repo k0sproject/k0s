@@ -59,15 +59,10 @@ func NewBackupCmd() *cobra.Command {
 }
 
 func (c *CmdOpts) backup() error {
-	logger := logrus.New()
-	textFormatter := new(logrus.TextFormatter)
-	textFormatter.ForceColors = true
-	textFormatter.DisableTimestamp = true
-
-	logger.SetFormatter(textFormatter)
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true})
 
 	if os.Geteuid() != 0 {
-		logger.Fatal("this command must be run as root!")
+		logrus.Fatal("this command must be run as root!")
 	}
 
 	if !dir.IsDirectory(savePath) {

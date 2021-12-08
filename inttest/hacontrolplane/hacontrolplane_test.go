@@ -38,8 +38,8 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
 	s.NoError(err)
 	defer sshCon.Disconnect()
-	output, err := sshCon.ExecWithOutput("k0s etcd member-list")
-	output = lastLine(output)
+	output, err := sshCon.ExecWithOutput("k0s etcd member-list 2>/dev/null")
+	s.T().Logf("k0s etcd member-list output: %s", output)
 	s.NoError(err)
 
 	members := struct {
