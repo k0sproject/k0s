@@ -20,6 +20,14 @@ This section attempts to provide a sanity checklist to go through and make sure
 we still have those changes applied. The code blocks in this section are **our modifications**,
 not the calico originals.
 
+To see the diff **without** CRDs, you can do something like:
+
+```sh
+git diff ':!static/manifests/calico/CustomResourceDefinition'
+```
+
+That'll make it easier to spot any needed changes.
+
 `static/manifests/calico/DaemonSet/calico-node.yaml`:
 
 - variable-based support for both vxlan and ipip (search for `ipip` to find):

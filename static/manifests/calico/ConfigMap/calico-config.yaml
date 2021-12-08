@@ -31,16 +31,13 @@ data:
           "datastore_type": "kubernetes",
           "nodename": "__KUBERNETES_NODE_NAME__",
           "mtu": __CNI_MTU__,
-
           "ipam": {
-
             {{ if .DualStack }}
-                "type": "calico-ipam",
-                "assign_ipv4": "true",
-                "assign_ipv6": "true"
-
+            "type": "calico-ipam",
+            "assign_ipv4": "true",
+            "assign_ipv6": "true"
             {{ else }}
-              "type": "calico-ipam"
+            "type": "calico-ipam"
             {{ end }}
           },
           "policy": {
