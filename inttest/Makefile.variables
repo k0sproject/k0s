@@ -8,7 +8,6 @@ smoketests := \
 	check-customports \
 	check-dualstack \
 	check-hacontrolplane \
-	check-install \
 	check-kine \
 	check-metrics \
 	check-multicontroller \
