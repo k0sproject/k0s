@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -53,12 +54,12 @@ type Konnectivity struct {
 	uid                 int
 	serverCount         int
 	serverCountChan     chan int
-	stopCtx             context.Context
 	stopFunc            context.CancelFunc
 	clusterConfig       *v1beta1.ClusterConfig
 	log                 *logrus.Entry
 	leaseCounterRunning bool
 	previousConfig      konnectivityAgentConfig
+	agentManifestLock   sync.Mutex
 }
 
 var _ component.Component = &Konnectivity{}
@@ -91,9 +92,9 @@ func (k *Konnectivity) Run(ctx context.Context) error {
 	// Buffered chan to send updates for the count of servers
 	k.serverCountChan = make(chan int, 1)
 
-	k.stopCtx, k.stopFunc = context.WithCancel(ctx)
+	ctx, k.stopFunc = context.WithCancel(ctx)
 
-	go k.runServer()
+	go k.runServer(ctx)
 
 	return nil
 }
@@ -102,7 +103,7 @@ func (k *Konnectivity) Run(ctx context.Context) error {
 func (k *Konnectivity) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterConfig) error {
 	k.clusterConfig = clusterCfg
 	if k.NodeConfig.Spec.API.ExternalAddress != "" {
-		go k.runLeaseCounter()
+		go k.runLeaseCounter(ctx)
 	} else {
 		// It's a buffered channel so once we start the runServer routine it'll pick this up and just sees it never changing
 		k.serverCountChan <- 1
@@ -136,11 +137,11 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 }
 
 // runs the supervisor and restarts if the calculated server count changes
-func (k *Konnectivity) runServer() {
+func (k *Konnectivity) runServer(ctx context.Context) {
 	previousArgs := stringmap.StringMap{}
 	for {
 		select {
-		case <-k.stopCtx.Done():
+		case <-ctx.Done():
 			logrus.Info("stopping konnectivity server reconfig loop")
 			return
 		case count := <-k.serverCountChan:
@@ -174,6 +175,10 @@ func (k *Konnectivity) runServer() {
 					continue
 				}
 				k.serverCount = count
+
+				if err := k.writeKonnectivityAgent(); err != nil {
+					logrus.Errorf("failed to update konnectivity-agent template: %s", err)
+				}
 			}
 		}
 	}
@@ -193,13 +198,16 @@ func (k *Konnectivity) Stop() error {
 }
 
 type konnectivityAgentConfig struct {
-	APIAddress string
-	AgentPort  int64
-	Image      string
-	PullPolicy string
+	APIAddress  string
+	AgentPort   int64
+	Image       string
+	ServerCount int
+	PullPolicy  string
 }
 
 func (k *Konnectivity) writeKonnectivityAgent() error {
+	k.agentManifestLock.Lock()
+	defer k.agentManifestLock.Unlock()
 	konnectivityDir := filepath.Join(k.K0sVars.ManifestsDir, "konnectivity")
 	err := dir.Init(konnectivityDir, constant.ManifestsDirMode)
 	if err != nil {
@@ -207,10 +215,11 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	}
 
 	cfg := konnectivityAgentConfig{
-		APIAddress: k.NodeConfig.Spec.API.APIAddress(),
-		AgentPort:  k.clusterConfig.Spec.Konnectivity.AgentPort,
-		Image:      k.clusterConfig.Spec.Images.Konnectivity.URI(),
-		PullPolicy: k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		APIAddress:  k.NodeConfig.Spec.API.APIAddress(),
+		AgentPort:   k.clusterConfig.Spec.Konnectivity.AgentPort,
+		Image:       k.clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount: k.serverCount,
+		PullPolicy:  k.clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
 	if cfg == k.previousConfig {
@@ -221,13 +230,8 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	tw := templatewriter.TemplateWriter{
 		Name:     "konnectivity-agent",
 		Template: konnectivityAgentTemplate,
-		Data: konnectivityAgentConfig{
-			APIAddress: k.NodeConfig.Spec.API.APIAddress(),
-			AgentPort:  k.clusterConfig.Spec.Konnectivity.AgentPort,
-			Image:      k.clusterConfig.Spec.Images.Konnectivity.URI(),
-			PullPolicy: k.clusterConfig.Spec.Images.DefaultPullPolicy,
-		},
-		Path: filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
+		Data:     cfg,
+		Path:     filepath.Join(konnectivityDir, "konnectivity-agent.yaml"),
 	}
 	err = tw.Write()
 	if err != nil {
@@ -237,7 +241,7 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	return nil
 }
 
-func (k *Konnectivity) runLeaseCounter() {
+func (k *Konnectivity) runLeaseCounter(ctx context.Context) {
 	if k.leaseCounterRunning {
 		return
 	}
@@ -247,11 +251,11 @@ func (k *Konnectivity) runLeaseCounter() {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-k.stopCtx.Done():
+		case <-ctx.Done():
 			logrus.Info("stopping konnectivity lease counter")
 			return
 		case <-ticker.C:
-			count, err := k.countLeaseHolders()
+			count, err := k.countLeaseHolders(ctx)
 			if err != nil {
 				logrus.Errorf("failed to count controller leases: %s", err)
 				continue
@@ -261,12 +265,12 @@ func (k *Konnectivity) runLeaseCounter() {
 	}
 }
 
-func (k *Konnectivity) countLeaseHolders() (int, error) {
+func (k *Konnectivity) countLeaseHolders(ctx context.Context) (int, error) {
 	client, err := k.KubeClientFactory.GetClient()
 	if err != nil {
 		return 0, err
 	}
-	ctx, cancel := context.WithTimeout(k.stopCtx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	count := 0
 	leases, err := client.CoordinationV1().Leases("kube-node-lease").List(ctx, v1.ListOptions{})
@@ -337,6 +341,11 @@ spec:
           imagePullPolicy: {{ .PullPolicy }}
           name: konnectivity-agent
           command: ["/proxy-agent"]
+          env:
+              # the variable is not in a use
+              # we need it to have agent restarted on server count change
+              - name: K0S_CONTROLLER_COUNT
+                value: "{{ .ServerCount }}"
           args: [
                   "--logtostderr=true",
                   "--ca-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
