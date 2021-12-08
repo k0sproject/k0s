@@ -99,7 +99,7 @@ func EnsureService(args []string) error {
 	svcConfig.Dependencies = deps
 	svcConfig.Arguments = args
 
-	logrus.Info("Installing k0s service")
+	logrus.Infof("Installing %s service", svcConfig.Name)
 	err = s.Install()
 	if err != nil {
 		return fmt.Errorf("failed to install service: %v", err)

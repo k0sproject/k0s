@@ -17,9 +17,10 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -41,12 +42,7 @@ func etcdListCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
-			l := logrus.New()
-			l.SetFormatter(&logrus.JSONFormatter{})
-
-			l.WithField("members", members).
-				Info("done")
-			return nil
+			return json.NewEncoder(os.Stdout).Encode(map[string]interface{}{"members": members})
 		},
 	}
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())

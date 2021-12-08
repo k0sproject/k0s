@@ -116,7 +116,7 @@ func WithNamespace(namespace string) LeaseOpt {
 func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
-		log:           logrus.NewEntry(logrus.New()),
+		log:           logrus.NewEntry(logrus.StandardLogger()),
 		duration:      60 * time.Second,
 		renewDeadline: 15 * time.Second,
 		retryPeriod:   5 * time.Second,

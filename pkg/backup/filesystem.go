@@ -26,7 +26,7 @@ func (d FileSystemStep) Name() string {
 func (d FileSystemStep) Backup() (StepResult, error) {
 	s, err := os.Stat(d.path)
 	if os.IsNotExist(err) {
-		logrus.Infof("Path `%s` does not exist, skipping...", d.path)
+		logrus.Debugf("Path `%s` does not exist, skipping...", d.path)
 		return StepResult{}, nil
 	}
 	if err != nil {
@@ -58,7 +58,7 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 	objectPathInRestored := path.Join(restoreTo, childName)
 	stat, err := os.Stat(objectPathInArchive)
 	if os.IsNotExist(err) {
-		logrus.Infof("Path `%s` not found in the archive, skipping...", objectPathInArchive)
+		logrus.Debugf("Path `%s` not found in the archive, skipping...", objectPathInArchive)
 		return nil
 	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, objectPathInRestored)

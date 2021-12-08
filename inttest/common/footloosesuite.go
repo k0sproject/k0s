@@ -419,7 +419,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("%s token create --role=%s %s", s.K0sFullPath, role, strings.Join(extraArgs, " ")))
+	token, err := ssh.ExecWithOutput(fmt.Sprintf("%s token create --role=%s %s 2>/dev/null", s.K0sFullPath, role, strings.Join(extraArgs, " ")))
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}
@@ -535,7 +535,7 @@ func (s *FootlooseSuite) GetKubeClientConfig(node string, k0sKubeconfigArgs ...s
 	}
 	defer ssh.Disconnect()
 
-	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
+	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s 2>/dev/null", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err
@@ -571,7 +571,7 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	}
 	defer ssh.Disconnect()
 
-	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
+	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s 2>/dev/null", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err

@@ -17,15 +17,14 @@ func (u *users) Name() string {
 
 // Run removes all controller users that are present on the host
 func (u *users) Run() error {
-	logger := logrus.New()
 	cfg, err := config.GetNodeConfig(u.Config.cfgFile, u.Config.k0sVars)
 	if err != nil {
-		logger.Errorf("failed to get cluster setup: %v", err)
+		logrus.Errorf("failed to get cluster setup: %v", err)
 		return nil
 	}
 	if err := install.DeleteControllerUsers(cfg); err != nil {
 		// don't fail, just notify on delete error
-		logger.Infof("failed to delete controller users: %v", err)
+		logrus.Warnf("failed to delete controller users: %v", err)
 	}
 	return nil
 }

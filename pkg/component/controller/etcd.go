@@ -90,7 +90,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 	var etcdResponse v1beta1.EtcdResponse
 	var err error
 	for i := 0; i < 20; i++ {
-		logrus.Infof("trying to sync etcd config")
+		logrus.Debugf("trying to sync etcd config")
 		etcdResponse, err = e.JoinClient.JoinEtcd(peerURL)
 		if err == nil {
 			break
@@ -101,7 +101,7 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 		return nil, err
 	}
 
-	logrus.Infof("got cluster info: %v", etcdResponse.InitialCluster)
+	logrus.Debugf("got cluster info: %v", etcdResponse.InitialCluster)
 	// Write etcd ca cert&key
 	if file.Exists(etcdCaCert) && file.Exists(etcdCaCertKey) {
 		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
@@ -184,7 +184,7 @@ func (e *Etcd) Run(ctx context.Context) error {
 		args["--auth-token"] = auth
 	}
 
-	logrus.Infof("starting etcd with args: %v", args)
+	logrus.Debugf("starting etcd with args: %v", args)
 
 	e.supervisor = supervisor.Supervisor{
 		Name:          "etcd",
