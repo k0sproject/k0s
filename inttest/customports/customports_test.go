@@ -61,7 +61,7 @@ func TestSuite(t *testing.T) {
 	s := Suite{
 		common.FootlooseSuite{
 			ControllerCount:       3,
-			WorkerCount:           3,
+			WorkerCount:           1,
 			KubeAPIExternalPort:   kubeAPIPort,
 			K0sAPIExternalPort:    k0sAPIPort,
 			KonnectivityAgentPort: agentPort,
@@ -102,20 +102,20 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 
-	token, err := ds.GetJoinToken("controller", "", "--config=/tmp/k0s.yaml")
+	workerToken, err := ds.GetJoinToken("worker", "", "--config=/tmp/k0s.yaml")
 	ds.Require().NoError(err)
-	ds.Require().NoError(ds.InitController(1, token, "", "--config=/tmp/k0s.yaml"))
-
-	ds.Require().NoError(ds.InitController(2, token, "", "--config=/tmp/k0s.yaml"))
-
-	token, err = ds.GetJoinToken("worker", "", "--config=/tmp/k0s.yaml")
-	ds.Require().NoError(err)
-	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", token, `--config="/tmp/k0s.yaml"`))
+	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", workerToken, `--config="/tmp/k0s.yaml"`))
 
 	kc, err := ds.KubeClient("controller0", "")
 	ds.Require().NoError(err)
 
 	err = ds.WaitForNodeReady("worker0", kc)
+	ds.Require().NoError(err)
+
+	controllerToken, err := ds.GetJoinToken("controller", "", "--config=/tmp/k0s.yaml")
+	ds.Require().NoError(err)
+	ds.Require().NoError(ds.InitController(1, controllerToken, "", "--config=/tmp/k0s.yaml"))
+	ds.Require().NoError(ds.InitController(2, controllerToken, "", "--config=/tmp/k0s.yaml"))
 
 	ds.Require().NoError(err)
 

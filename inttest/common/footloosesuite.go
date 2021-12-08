@@ -343,7 +343,6 @@ backend admin
 {{ end }}
 
 backend agent
-balance source
 {{ range $addr := .IPAddresses }}
 	server {{ $addr }} {{ $addr }}:{{ $OUT.KonnectivityAgentPort }}
 {{ end }}
