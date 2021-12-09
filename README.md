@@ -8,7 +8,8 @@
 
 # k0s - Zero Friction Kubernetes
 
-![k0s logo](docs/img/k0s-logo-full-color.svg)
+![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
+![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
 
 [k0s](https://k0sproject.io/) is an all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use.
 
