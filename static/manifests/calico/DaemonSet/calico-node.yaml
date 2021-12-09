@@ -44,7 +44,7 @@ spec:
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: {{ .CalicoCNIImage }}
+          image: "{{ .CalicoCNIImage }}"
           imagePullPolicy: {{ .PullPolicy }}
           command: ["/opt/cni/bin/install"]
           envFrom:
@@ -88,7 +88,7 @@ spec:
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: {{ .CalicoNodeImage }}
+          image: "{{ .CalicoNodeImage }}"
           imagePullPolicy: {{ .PullPolicy }}
           envFrom:
           - configMapRef:
@@ -205,6 +205,12 @@ spec:
           resources:
             requests:
               cpu: 250m
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/calico-node
+                - -shutdown
           livenessProbe:
             exec:
               command:
@@ -213,13 +219,19 @@ spec:
             periodSeconds: 10
             initialDelaySeconds: 10
             failureThreshold: 6
+            timeoutSeconds: 10
           readinessProbe:
             exec:
               command:
               - /bin/calico-node
               - -felix-ready
             periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
+            # For maintaining CNI plugin API credentials.
+            - mountPath: /host/etc/cni/net.d
+              name: cni-net-dir
+              readOnly: false
             - mountPath: /lib/modules
               name: lib-modules
               readOnly: true
@@ -234,6 +246,17 @@ spec:
               readOnly: false
             - name: policysync
               mountPath: /var/run/nodeagent
+            # For eBPF mode, we need to be able to mount the BPF filesystem at /sys/fs/bpf so we mount in the
+            # parent directory.
+            # @jnummelin: We do not yet support eBPF mode for calico thus these bits are commented out
+            # - name: sysfs
+            #   mountPath: /sys/fs/
+            #   # Bidirectional means that, if we mount the BPF filesystem at /sys/fs/bpf it will propagate to the host.
+            #   # If the host is known to mount that filesystem already then Bidirectional can be omitted.
+            #   mountPropagation: Bidirectional
+            - name: cni-log-dir
+              mountPath: /var/log/calico/cni
+              readOnly: true
       volumes:
         # Used by calico-node.
         - name: lib-modules
@@ -249,6 +272,12 @@ spec:
           hostPath:
             path: /run/xtables.lock
             type: FileOrCreate
+        # @jnummelin: We do not yet support eBPF mode for calico thus these bits are commented out
+        # 
+        # - name: sysfs
+        #   hostPath:
+        #     path: /sys/fs/
+        #     type: DirectoryOrCreate
         # Used to install CNI.
         - name: cni-bin-dir
           hostPath:
@@ -256,6 +285,10 @@ spec:
         - name: cni-net-dir
           hostPath:
             path: /etc/cni/net.d
+        # Used to access CNI logs.
+        - name: cni-log-dir
+          hostPath:
+            path: /var/log/calico/cni
         # Used to create per-pod Unix Domain Sockets
         - name: policysync
           hostPath:
