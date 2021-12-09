@@ -107,7 +107,6 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1
 			as.T().Log("Error while quering for chart", err)
 			return false, nil
 		}
-		found := false
 		if chart.Status.ReleaseName == "" {
 			return false, nil
 		}
@@ -117,9 +116,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1
 		if chart.Status.Revision != rev {
 			return false, nil
 		}
-		found = true
 
-		as.Require().True(found)
 		as.Require().Equal("default", chart.Status.Namespace)
 		as.Require().Equal("2.26.0", chart.Status.AppVersion)
 		as.Require().Equal("default", chart.Status.Namespace)

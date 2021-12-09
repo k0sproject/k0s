@@ -81,16 +81,15 @@ func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions) *k0sAPI.HelmExtens
 			Charts:       k0sAPI.ChartsSettings{},
 		}
 	}
-	// TODO: move those constants to the constants_shared.go
 	helmSpec.Repositories = append(helmSpec.Repositories, k0sAPI.Repository{
 		Name: "openebs-internal",
-		URL:  "https://openebs.github.io/charts",
+		URL:  constant.OpenEBSRepository,
 	})
 	helmSpec.Charts = append(helmSpec.Charts, k0sAPI.Chart{
 		Name:      "openebs",
 		ChartName: "openebs-internal/openebs",
 		TargetNS:  "openebs",
-		Version:   "3.0.3",
+		Version:   constant.OpenEBSVersion,
 	})
 	return helmSpec
 }
@@ -149,21 +148,20 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
-	cr.L.Errorf("Got helm chart reconcilation request: %s", req)
-	defer cr.L.Errorf("Finished processing helm chart reconcilation request: %s", req)
+	cr.L.Tracef("Got helm chart reconcilation request: %s", req)
+	defer cr.L.Tracef("Finished processing helm chart reconcilation request: %s", req)
 
 	var chartInstance v1beta1.Chart
 
 	if err := cr.Client.Get(ctx, req.NamespacedName, &chartInstance); err != nil {
 		if errors.IsNotFound(err) {
-			cr.L.Errorf("NOT FOUND: %s", req)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
 	if !chartInstance.ObjectMeta.DeletionTimestamp.IsZero() {
-		cr.L.Errorf("Uninstall reconcilation request: %s", req)
+		cr.L.Tracef("Uninstall reconcilation request: %s", req)
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
 			return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
@@ -174,14 +172,8 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 		}
 		return reconcile.Result{}, nil
 	}
-	cr.L.Errorf("Install or update reconcilation request: %s", req)
+	cr.L.Tracef("Install or update reconcilation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
-		// try to save error to the status first
-		// chartInstance.Status.Error = err.Error()
-		// if err := cr.Client.Status().Update(ctx, &chartInstance); err != nil {
-		// do not reque on status update to avoid busyworking
-		// cr.L.Errorf("error while saving previous error information into the Chart status: %s", err)
-		// }
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
 	}
 	return reconcile.Result{}, nil
@@ -314,7 +306,7 @@ func (ec *ExtensionsController) Run(ctx context.Context) error {
 
 	go func() {
 		if err := mgr.Start(ctx); err != nil {
-			ec.L.Errorf("controller-runtime working loop finished: %s", err)
+			ec.L.Tracef("controller-runtime working loop finished: %s", err)
 		}
 	}()
 

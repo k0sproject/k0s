@@ -91,6 +91,8 @@ const (
 	KubeRouterCNIImageVersion          = "v1.3.2"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "0.1.0"
+	OpenEBSRepository                  = "https://openebs.github.io/charts"
+	OpenEBSVersion                     = "3.0.3"
 
 	// Controller component names
 	APIConfigComponentName             = "api-config"
