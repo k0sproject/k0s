@@ -107,10 +107,14 @@ const (
 	MetricsServerComponentName         = "metrics-server"
 	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
+	NodeRoleComponentName              = "node-role"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
 	ClusterConfigNamespace  = "kube-system"
 	ClusterConfigObjectName = "k0s"
+
+	NodeRoleLabelNamespace = "node-role.kubernetes.io"
+	K0SNodeRoleLabel       = "node.k0sproject.io/role"
 )
 
 // CfgVars is a struct that holds all the config variables required for K0s

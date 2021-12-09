@@ -80,6 +80,7 @@ type WorkerOptions struct {
 	CriSocket        string
 	KubeletExtraArgs string
 	Labels           []string
+	Taints           []string
 	TokenFile        string
 	TokenArg         string
 	WorkerProfile    string
@@ -134,6 +135,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing token.")
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
+	flagset.StringSliceVarP(&workerOpts.Taints, "taints", "", []string{}, "Node taints, list of key=value:effect strings")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
 	flagset.AddFlagSet(GetCriSocketFlag())
 

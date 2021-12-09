@@ -520,8 +520,18 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 			return err
 		}
 		reconcilers["systemRBAC"] = systemRBAC
-
 	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
+
+		nodeRole, err := controller.NewNodeRole(c.K0sVars, cf)
+		if err != nil {
+			logrus.Warnf("failed to initialize node label reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["roleLabeler"] = nodeRole
+	}
+
 	// Init and add all components to clusterComponents manager
 	for name, comp := range reconcilers {
 		err := comp.Init()
@@ -608,6 +618,8 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	workerCmdOpts := *(*workercmd.CmdOpts)(c)
 	workerCmdOpts.TokenArg = bootstrapConfig
 	workerCmdOpts.WorkerProfile = profile
+	workerCmdOpts.Labels = append(workerCmdOpts.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
+	workerCmdOpts.Taints = append(workerCmdOpts.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
 	return workerCmdOpts.StartWorker(ctx)
 }
 

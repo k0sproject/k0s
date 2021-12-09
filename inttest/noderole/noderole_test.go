@@ -13,24 +13,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package singlenode
+package noderole
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type SingleNodeSuite struct {
+type NodeRoleSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *SingleNodeSuite) TestK0sGetsUp() {
-	s.NoError(s.InitController(0, "--single"))
+func (s *NodeRoleSuite) TestK0sGetsUp() {
+	ipAddress := s.GetControllerIPAddress(0)
+	s.T().Logf("ip address: %s", ipAddress)
+
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithNodeRole, ipAddress))
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
+
+	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
@@ -38,28 +46,29 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
-		Limit: 100,
-	})
+	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
 	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
-
-	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
+	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
+
+	err = s.WaitForNodeLabel(kc, s.WorkerNode(0), "node-role.kubernetes.io/worker", "true")
+	s.NoError(err)
 }
 
-func TestSingleNodeSuite(t *testing.T) {
-	s := SingleNodeSuite{
+func TestNodeRoleSuite(t *testing.T) {
+	s := NodeRoleSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
+			WorkerCount:     1,
 		},
 	}
 	suite.Run(t, &s)
 }
+
+const k0sConfigWithNodeRole = `
+spec:
+  api:
+    externalAddress: %s
+`

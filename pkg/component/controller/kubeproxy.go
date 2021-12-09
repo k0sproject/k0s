@@ -320,6 +320,9 @@ spec:
       - key: CriticalAddonsOnly
         operator: Exists
       - operator: Exists
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       nodeSelector:
         kubernetes.io/os: linux
 `
