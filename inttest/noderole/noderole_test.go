@@ -57,6 +57,43 @@ func (s *NodeRoleSuite) TestK0sGetsUp() {
 	s.NoError(err)
 }
 
+func (s *NodeRoleSuite) TestK0sSingleNode() {
+	s.InitController(0, "--single")
+
+	s.NoError(s.RunWorkers())
+
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.NoError(err)
+
+	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
+	s.NoError(err)
+
+	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
+	s.NoError(err)
+	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+
+	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
+	s.NoError(err)
+}
+
+func (s *NodeRoleSuite) TestK0sSingleNodeNoTaints() {
+	s.InitController(0, "--single", "--no-taints")
+
+	s.NoError(s.RunWorkers())
+
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.NoError(err)
+
+	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
+	s.NoError(err)
+
+	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
+	s.NoError(err)
+	s.NotContains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+
+	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
+	s.NoError(err)
+}
 func TestNodeRoleSuite(t *testing.T) {
 	s := NodeRoleSuite{
 		common.FootlooseSuite{

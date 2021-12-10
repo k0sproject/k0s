@@ -60,6 +60,7 @@ type CLIOptions struct {
 type ControllerOptions struct {
 	EnableWorker      bool
 	SingleNode        bool
+	NoTaints          bool
 	DisableComponents []string
 
 	ClusterComponents               *component.Manager
@@ -174,6 +175,7 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
+	flagset.BoolVar(&controllerOpts.NoTaints, "no-taints", false, "disable default taints for controller node")
 
 	return flagset
 }

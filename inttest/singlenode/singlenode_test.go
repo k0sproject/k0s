@@ -50,9 +50,6 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see CNI pods ready")
 	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
-
-	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
-	s.NoError(err)
 }
 
 func TestSingleNodeSuite(t *testing.T) {
