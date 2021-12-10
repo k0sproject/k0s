@@ -619,7 +619,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	workerCmdOpts.TokenArg = bootstrapConfig
 	workerCmdOpts.WorkerProfile = profile
 	workerCmdOpts.Labels = append(workerCmdOpts.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
-	if !c.NoTaints {
+	if !c.SingleNode && !c.NoTaints {
 		workerCmdOpts.Taints = append(workerCmdOpts.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
 	}
 	return workerCmdOpts.StartWorker(ctx)
