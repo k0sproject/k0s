@@ -1,4 +1,4 @@
-runc_version = 1.0.2
+runc_version = 1.0.3
 runc_buildimage = golang:1.16-alpine
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
