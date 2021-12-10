@@ -17,7 +17,6 @@ package noderole
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -27,18 +26,12 @@ import (
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
-type NodeRoleSuite struct {
+type NodeRoleSingleNoTaintsSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *NodeRoleSuite) TestK0sGetsUp() {
-	ipAddress := s.GetControllerIPAddress(0)
-	s.T().Logf("ip address: %s", ipAddress)
-
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithNodeRole, ipAddress))
-	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
-
-	s.NoError(s.RunWorkers())
+func (s *NodeRoleSingleNoTaintsSuite) TestK0sSingleNodeNoTaints() {
+	s.InitController(0, "--single", "--no-taints")
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
@@ -48,27 +41,17 @@ func (s *NodeRoleSuite) TestK0sGetsUp() {
 
 	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
 	s.NoError(err)
-	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+	s.NotContains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
-
-	err = s.WaitForNodeLabel(kc, s.WorkerNode(0), "node-role.kubernetes.io/worker", "true")
-	s.NoError(err)
 }
 
-func TestNodeRoleSuite(t *testing.T) {
-	s := NodeRoleSuite{
+func TestNodeRoleSingleNoTaintsSuite(t *testing.T) {
+	s := NodeRoleSingleNoTaintsSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
-			WorkerCount:     1,
 		},
 	}
 	suite.Run(t, &s)
 }
-
-const k0sConfigWithNodeRole = `
-spec:
-  api:
-    externalAddress: %s
-`
