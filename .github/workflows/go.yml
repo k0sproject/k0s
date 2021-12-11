@@ -50,14 +50,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata
@@ -107,14 +99,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION_WIN }}
         id: go
-
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-win-
 
       - name: Bindata cache
         uses: actions/cache@v2
@@ -283,13 +267,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Bindata cache
         uses: actions/cache@v2
         id: generated-bindata

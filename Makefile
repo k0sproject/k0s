@@ -60,7 +60,7 @@ go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-g
 endif
 
 GOLANG_IMAGE = golang:1.16-alpine
-GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
+GO ?= GOCACHE=/gocache/build docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-v k0sbuild.gocache:/gocache \
 	-w /go/src/github.com/k0sproject/k0s \
@@ -68,7 +68,6 @@ GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
 	-e CGO_ENABLED \
 	-e GOARCH \
 	-e GOCACHE \
-	-e GOMODCACHE \
 	--user $$(id -u) \
 	$(GOLANG_IMAGE) go
 
@@ -85,7 +84,7 @@ endif
 
 .k0sbuild.docker-vol.gocache:
 	docker volume create k0sbuild.gocache
-	docker run --rm -v k0sbuild.gocache:/gocache alpine:latest install -d -o $$(id -u) -g $$(id -g) /gocache/mod /gocache/build
+	docker run --rm -v k0sbuild.gocache:/gocache alpine:latest install -d -o $$(id -u) -g $$(id -g) /gocache/build
 	touch $@
 
 .PHONY: all
