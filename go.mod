@@ -64,6 +64,7 @@ require (
 	k8s.io/mount-utils v0.22.0
 	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176
+	rsc.io/qr v0.2.0
 	sigs.k8s.io/controller-runtime v0.10.0
 	sigs.k8s.io/yaml v1.2.0
 )
