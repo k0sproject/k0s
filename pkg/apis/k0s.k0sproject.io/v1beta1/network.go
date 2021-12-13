@@ -97,6 +97,10 @@ func (n *Network) DNSAddress() (string, error) {
 	}
 
 	address := ipnet.IP.To4()
+	if IsIPv6String(ipnet.IP.String()) {
+		address = ipnet.IP.To16()
+	}
+
 	prefixlen, _ := ipnet.Mask.Size()
 	if prefixlen < 29 {
 		address[3] = address[3] + 10
