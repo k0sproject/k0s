@@ -205,6 +205,7 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 		},
 		Network: &v1beta1.Network{
 			ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
+			DualStack:   cfg.Spec.Network.DualStack,
 		},
 		Install: cfg.Spec.Install,
 	}

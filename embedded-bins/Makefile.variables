@@ -1,4 +1,4 @@
-runc_version = 1.0.2
+runc_version = 1.0.3
 runc_buildimage = golang:1.16-alpine
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
@@ -23,7 +23,7 @@ kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
 kubernetes_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kine_version = 0.7.3
+kine_version = 0.8.1
 kine_buildimage = golang:1.16-alpine
 #kine_build_go_tags =
 #kine_build_go_cgo_enabled =

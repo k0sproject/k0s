@@ -206,7 +206,7 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 func needsUpdate(newAddresses []string, ep *corev1.Endpoints) bool {
 	currentAddresses := endpointAddressesToStrings(ep.Subsets[0].Addresses)
 	sort.Strings(currentAddresses)
-	return reflect.DeepEqual(currentAddresses, newAddresses)
+	return !reflect.DeepEqual(currentAddresses, newAddresses)
 }
 
 func endpointAddressesToStrings(eps []corev1.EndpointAddress) []string {

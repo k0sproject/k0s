@@ -160,6 +160,49 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }
 
+func TestReconcilerWithNeedForUpdate(t *testing.T) {
+	fakeFactory := testutil.NewFakeClientFactory()
+	existingEp := corev1.Endpoints{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Endpoints",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name: "kubernetes",
+			Annotations: map[string]string{
+				"foo": "bar",
+			},
+		},
+		Subsets: []corev1.EndpointSubset{
+			{
+				Addresses: stringsToEndpointAddresses([]string{"1.2.3.4", "1.1.1.1"}),
+			},
+		},
+	}
+
+	fakeClient, _ := fakeFactory.GetClient()
+
+	_, err := fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
+	assert.NoError(t, err)
+
+	config := &v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			API: &v1beta1.APISpec{
+				Address:         "1.2.3.4",
+				ExternalAddress: "get.k0s.sh",
+			},
+		},
+	}
+	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r.ClusterConfig = config
+
+	assert.NoError(t, r.Init())
+
+	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
+	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
+}
+
 func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFactory testutil.FakeClientFactory) *corev1.Endpoints {
 	fakeClient, _ := fakeFactory.GetClient()
 	ep, err := fakeClient.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
