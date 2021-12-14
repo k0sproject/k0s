@@ -237,7 +237,7 @@ jobs:
 
   armv7:
     needs: release
-    runs-on: [self-hosted,linux,arm,lxc]
+    runs-on: [self-hosted,linux,arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
