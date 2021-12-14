@@ -242,6 +242,11 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Install GoLang for ARMHF
+        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
+      - name: Go Version
+        run: go version
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
