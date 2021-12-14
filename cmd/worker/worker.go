@@ -122,6 +122,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		LogLevel:            c.Logging["kubelet"],
 		Profile:             c.WorkerProfile,
 		Labels:              c.Labels,
+		Taints:              c.Taints,
 		ExtraArgs:           c.KubeletExtraArgs,
 	})
 

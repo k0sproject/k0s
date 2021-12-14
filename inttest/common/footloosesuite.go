@@ -633,6 +633,24 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 	return n.Labels, nil
 }
 
+// WaitForNodeLabel waits for label be assigned to the node
+func (s *FootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelKey, labelValue string) error {
+	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
+		labels, err := s.GetNodeLabels(node, kc)
+		if err != nil {
+			return false, nil
+		}
+
+		for k, v := range labels {
+			if labelKey == k && labelValue == v {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
+}
+
 // GetNodeLabels return the labels of given node
 func (s *FootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
 	n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})

@@ -11,6 +11,7 @@ smoketests := \
 	check-kine \
 	check-metrics \
 	check-multicontroller \
+	check-noderole \
 	check-singlenode \
 	check-backup \
 	check-airgap \

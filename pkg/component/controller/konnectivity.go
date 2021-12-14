@@ -336,6 +336,9 @@ spec:
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - image: {{ .Image }}
           imagePullPolicy: {{ .PullPolicy }}

@@ -14,7 +14,28 @@ NAME      STATUS     ROLES    AGE   VERSION        LABELS
 worker0   NotReady   <none>   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
 ```
 
+Controller worker nodes are assigned `node.k0sproject.io/role=control-plane` and `node-role.kubernetes.io/control-plane=true` labels:
+
+```shell
+$ kubectl get node --show-labels
+NAME          STATUS     ROLES           AGE   VERSION        LABELS
+controller0   NotReady   control-plane   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
+```
+
 **Note:** Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.
+
+## Taints
+
+The `k0s worker` command accepts the `--taints` flag, with which you can make the newly joined worker node the register itself with the given set of taints.
+
+**Note:** Controller nodes running with `--enable-worker` are assigned `node-role.kubernetes.io/master:NoExecute` taint automatically.
+
+```shell
+$ kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+NAME          TAINTS
+controller0   [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
+worker0       <none>
+```
 
 ## Kubelet args
 

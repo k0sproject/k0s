@@ -52,6 +52,7 @@ type Kubelet struct {
 	supervisor          supervisor.Supervisor
 	ClusterDNS          string
 	Labels              []string
+	Taints              []string
 	ExtraArgs           string
 }
 
@@ -134,6 +135,10 @@ func (k *Kubelet) Run(ctx context.Context) error {
 
 	if len(k.Labels) > 0 {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
+	}
+
+	if len(k.Taints) > 0 {
+		args["--register-with-taints"] = strings.Join(k.Taints, ",")
 	}
 
 	if runtime.GOOS == "windows" {
