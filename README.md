@@ -6,12 +6,18 @@
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/k0sproject/k0s?color=blueviolet&label=Stargazers) [![Releases](https://img.shields.io/github/downloads/k0sproject/k0s/total.svg)](https://github.com/k0sproject/k0s/tags?label=Downloads)
 
-# k0s - Zero Friction Kubernetes
+# k0s - The Zero Friction Kubernetes by Team Lens
 
 ![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
 ![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
 
-[k0s](https://k0sproject.io/) is an all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use.
+## The Repository
+
+This repository ("k0s") is where Team Lens develops the [k0s](https://k8slens.dev/kubernetes) product together with the community. It is backed by a number of Kubernetes and cloud native ecosystem pioneers. This source code is available to everyone under the [Apache License 2.0](./LICENSE).
+
+## Overview
+
+[k0s](https://k8slens.dev/kubernetes) is an all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use.
 
 k0s fits well in any cloud environment, but can also be used in IoT gateways, Edge and Bare metal deployments due to its simple design, flexible deployment options and modest system requirements.
 
