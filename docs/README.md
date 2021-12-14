@@ -1,6 +1,6 @@
 # Overview
 
-![k0s logo](img/k0s-logo-full-color.svg)
+![k0s logo](img/k0s-logo-full-color-light.svg)
 
 [k0s](https://k0sproject.io/) is an all-inclusive Kubernetes distribution, which is configured with all of the features needed to build a Kubernetes cluster and packaged as a single binary for ease of use.
 
