@@ -141,13 +141,16 @@ spec:
         beta.kubernetes.io/os: linux
       # Prefer running coredns replicas on different nodes
       affinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          topologyKey: "kubernetes.io/hostname"
-          labelSelector:
-            matchExpressions:
-            - key: k8s-app
-              operator: In
-              values: ['kube-dns']
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchExpressions:
+                - key: k8s-app
+                  operator: In
+                  values: ['kube-dns']
       containers:
       - name: coredns
         image: {{ .Image }}
