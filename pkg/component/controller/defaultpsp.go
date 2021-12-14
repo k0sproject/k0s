@@ -193,11 +193,7 @@ spec:
   runAsUser:
     rule: 'MustRunAsNonRoot'
   seLinux:
-    rule: 'MustRunAs'
-    ranges:
-      # Forbid adding the root group.
-      - min: 1
-        max: 65535
+    rule: 'RunAsAny'
   supplementalGroups:
     rule: 'MustRunAs'
     ranges:
