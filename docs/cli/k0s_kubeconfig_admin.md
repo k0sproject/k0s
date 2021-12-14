@@ -7,7 +7,7 @@ Display Admin's Kubeconfig file
 Print kubeconfig for the Admin user to stdout
 
 ```shell
-k0s kubeconfig admin [command] [flags]
+k0s kubeconfig admin [flags]
 ```
 
 ### Examples

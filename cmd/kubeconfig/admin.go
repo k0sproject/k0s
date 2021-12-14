@@ -28,13 +28,13 @@ import (
 
 func kubeConfigAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "admin [command]",
+		Use:   "admin",
 		Short: "Display Admin's Kubeconfig file",
 		Long:  "Print kubeconfig for the Admin user to stdout",
 		Example: `	$ k0s kubeconfig admin > ~/.kube/config
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			if file.Exists(c.K0sVars.AdminKubeConfigPath) {
 				content, err := os.ReadFile(c.K0sVars.AdminKubeConfigPath)
