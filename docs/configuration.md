@@ -277,6 +277,12 @@ In the runtime the image names are calculated as `my.own.repo/calico/kube-contro
 
 `spec.extensions.helm` is the config file key in which you configure the list of [Helm](https://helm.sh) repositories and charts to deploy during cluster bootstrap (for more information, refer to [Helm Charts](helm-charts.md)).
 
+### `spec.extensions.storage`
+
+`spec.extensions.storage` controls bundled storage.
+The default value `external` makes no storage deployed.
+Value `openebs_local_storage` deploys OpenEBS with the local path set up.
+
 ### `spec.konnectivity`
 
 The `spec.konnectivity` key is the config file key in which you configure Konnectivity-related settings.

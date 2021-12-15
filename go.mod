@@ -7,9 +7,9 @@ require (
 	github.com/Microsoft/hcsshim v0.8.23
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
+	github.com/bombsimon/logrusr v1.1.0
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.8
-	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/estesp/manifest-tool/v2 v2.0.0-beta.1

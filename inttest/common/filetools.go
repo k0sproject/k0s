@@ -34,3 +34,12 @@ func (s *FootlooseSuite) AppendFile(node, path, content string) {
 
 	s.Require().NoError(err)
 }
+
+// Mkdir makes directory
+func (s *FootlooseSuite) MakeDir(node, path string) {
+	ssh, err := s.SSH(node)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("mkdir %s", path))
+	s.Require().NoError(err)
+}

@@ -28,10 +28,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 )
 
@@ -57,21 +58,23 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 		},
 	}
 	as.doPrometheusUpdate(addonName, values)
-	chartName, releaseName := as.waitForPrometheusRelease(addonName, 2)
-	as.Require().NoError(as.waitForPrometheusServerEnvs(releaseName))
-	as.doPrometheusDelete(chartName)
+	chart := as.waitForPrometheusRelease(addonName, 2)
+	as.Require().NoError(as.waitForPrometheusServerEnvs(chart.Status.ReleaseName))
+	as.doPrometheusDelete(chart)
 }
 
-func (as *AddonsSuite) doPrometheusDelete(chartName string) {
+func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
+	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	chartClient, err := clientset.New(cfg)
+	client, err := client.New(cfg, client.Options{})
 	as.Require().NoError(err)
-	as.Require().NoError(chartClient.Charts("kube-system").Delete(context.Background(), chartName, v1.DeleteOptions{}))
-	client, err := k8s.NewForConfig(cfg)
+	as.Require().NoError(client.Delete(context.Background(), chart))
+	k8sclient, err := k8s.NewForConfig(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		items, err := client.CoreV1().Secrets("default").List(context.Background(), v1.ListOptions{})
+		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Namespace, chart.Name)
+		items, err := k8sclient.CoreV1().Secrets("default").List(context.Background(), v1.ListOptions{})
 		if err != nil {
 			as.T().Logf("listing secrets error %s", err.Error())
 			return false, nil
@@ -79,58 +82,52 @@ func (as *AddonsSuite) doPrometheusDelete(chartName string) {
 		if len(items.Items) > 1 {
 			return false, nil
 		}
+		as.T().Log("Release uninstalled successfully")
 		return true, nil
 	}))
 }
 
-func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) (string, string) {
+func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1beta1.Chart {
 	as.T().Logf("waiting to see prometheus release ready in kube API, generation %d", rev)
+
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	chartClient, err := clientset.New(cfg)
+	v1beta1.AddToScheme(scheme.Scheme)
+	chartClient, err := client.New(cfg, client.Options{
+		Scheme: scheme.Scheme,
+	})
 	as.Require().NoError(err)
-	var chartName string
-	var releaseName string
+	var chart v1beta1.Chart
 	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		charts, err := chartClient.Charts("kube-system").List(context.Background())
+		err = chartClient.Get(context.Background(), client.ObjectKey{
+			Namespace: "kube-system",
+			Name:      fmt.Sprintf("k0s-addon-chart-%s", addonName),
+		}, &chart)
 		if err != nil {
+			as.T().Log("Error while quering for chart", err)
 			return false, nil
 		}
-		if len(charts.Items) == 0 {
+		if chart.Status.ReleaseName == "" {
 			return false, nil
 		}
-		found := false
-		var testAddonItem v1beta1.Chart
-		for _, item := range charts.Items {
-			if item.Name == fmt.Sprintf("k0s-addon-chart-%s", addonName) {
-				if item.Status.ReleaseName == "" {
-					return false, nil
-				}
-				if item.Generation != rev {
-					return false, nil
-				}
-				if item.Status.Revision != rev {
-					return false, nil
-				}
-				found = true
-				testAddonItem = item
-				break
-			}
+		if chart.Generation != rev {
+			return false, nil
 		}
-		as.Require().True(found)
-		as.Require().Equal("default", testAddonItem.Status.Namespace)
-		as.Require().Equal("2.26.0", testAddonItem.Status.AppVersion)
-		as.Require().Equal("default", testAddonItem.Status.Namespace)
-		as.Require().NotEmpty(testAddonItem.Status.ReleaseName)
-		releaseName = testAddonItem.Status.ReleaseName
-		as.Require().Empty(testAddonItem.Status.Error)
-		as.Require().Equal(rev, testAddonItem.Status.Revision)
-		as.T().Logf("found test addon release: %s\n", testAddonItem.Name)
-		as.Require().Equal(rev, testAddonItem.Generation)
-		chartName = testAddonItem.Name
+		if chart.Status.Revision != rev {
+			return false, nil
+		}
+
+		as.Require().Equal("default", chart.Status.Namespace)
+		as.Require().Equal("2.26.0", chart.Status.AppVersion)
+		as.Require().Equal("default", chart.Status.Namespace)
+		as.Require().NotEmpty(chart.Status.ReleaseName)
+		as.Require().Empty(chart.Status.Error)
+		as.Require().Equal(rev, chart.Status.Revision)
+		as.T().Logf("found test addon release: %s\n", chart.Name)
+		as.Require().Equal(rev, chart.Generation)
 		return true, nil
 	}))
-	return chartName, releaseName
+	return &chart
 }
 
 func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
@@ -146,7 +143,6 @@ func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
 		if err != nil {
 			return false, nil
 		}
-
 		for _, c := range d.Spec.Template.Spec.Containers {
 			if c.Name == "prometheus-server" {
 				for _, e := range c.Env {
@@ -218,12 +214,16 @@ spec:
             namespace: default
 `
 
+// TODO: this actually duplicates logic from the controller code
+// better to somehow handle it by programmatic api
 const chartCrdTemplate = `
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart
 metadata:
   name: k0s-addon-chart-{{ .Name }}
   namespace: "kube-system"
+  finalizers:
+    - helm.k0sproject.io/uninstall-helm-release 
 spec:
   chartName: {{ .ChartName }}
   values: |
