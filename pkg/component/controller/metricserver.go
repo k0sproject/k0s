@@ -154,6 +154,7 @@ metadata:
   name: metrics-server
   namespace: kube-system
 spec:
+  replicas: 1
   selector:
     matchLabels:
       k8s-app: metrics-server

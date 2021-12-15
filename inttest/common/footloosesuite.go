@@ -595,6 +595,43 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	return cfg, nil
 }
 
+// CreateUserAndGetKubeClientConfig creates user and returns the kubeconfig as clientcmdapi.Config struct so it can be
+// used and loaded with clientsets directly
+func (s *FootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
+	machine, err := s.MachineForName(node)
+	if err != nil {
+		return nil, err
+	}
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return nil, err
+	}
+	defer ssh.Disconnect()
+
+	kubeConfigCmd := fmt.Sprintf("%s kubeconfig create %s %s", s.K0sFullPath, username, strings.Join(k0sKubeconfigArgs, " "))
+	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConf))
+	s.Require().NoError(err)
+
+	hostURL, err := url.Parse(cfg.Host)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Host, err)
+	}
+	port, err := strconv.ParseInt(hostURL.Port(), 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse port value `%s`: %w", hostURL.Port(), err)
+	}
+	hostPort, err := machine.HostPort(int(port))
+	if err != nil {
+		return nil, fmt.Errorf("footloose machine has to have %d port mapped: %w", port, err)
+	}
+	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
+	return cfg, nil
+}
+
 // KubeClient return kube client by loading the admin access config from given node
 func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
@@ -630,6 +667,7 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 	if err != nil {
 		return nil, err
 	}
+
 	return n.Labels, nil
 }
 

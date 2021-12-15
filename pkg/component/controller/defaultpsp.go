@@ -193,9 +193,9 @@ spec:
   runAsUser:
     rule: 'MustRunAsNonRoot'
   seLinux:
-    rule: 'RunAsNonRoot'
+    rule: 'RunAsAny'
   supplementalGroups:
-    rule: 'RunAsNonRoot'
+    rule: 'MustRunAs'
     ranges:
       # Forbid adding the root group.
       - min: 1
@@ -207,15 +207,6 @@ spec:
   - 'persistentVolumeClaim'
   - 'projected'
   - 'secret'
-  hostNetwork: false
-  runAsUser:
-    rule: 'RunAsAny'
-  seLinux:
-    rule: 'RunAsAny'
-  supplementalGroups:
-    rule: 'RunAsAny'
-  fsGroup:
-    rule: 'RunAsAny'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
