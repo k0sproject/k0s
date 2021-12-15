@@ -17,6 +17,7 @@ package validate
 
 import (
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -39,15 +40,21 @@ func validateConfigCmd() *cobra.Command {
 		Long: `Example:
    k0s validate config --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			loadingRules := config.ClientConfigLoadingRules{}
+			c := CmdOpts(config.GetCmdOpts())
+
+			loadingRules := config.ClientConfigLoadingRules{RuntimeConfigPath: c.CfgFile}
 			_, err := loadingRules.Load()
-			return err
+			if err != nil {
+				return err
+			}
+			logrus.Infof("no errors found in provided config file: %v", c.CfgFile)
+			return nil
 		},
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 	}
 
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }

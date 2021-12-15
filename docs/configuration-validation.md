@@ -3,7 +3,7 @@
 k0s command-line interface has the ability to validate config syntax:
 
 ```shell
-k0s validate config
+k0s validate config --config /etc/k0s/k0s.yaml
 ```
 
 `validate config` sub-command can validate the following:

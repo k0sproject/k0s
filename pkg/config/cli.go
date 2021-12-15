@@ -45,6 +45,7 @@ var (
 type CLIOptions struct {
 	WorkerOptions
 	ControllerOptions
+	CfgFile          string
 	ClusterConfig    *v1beta1.ClusterConfig
 	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
@@ -62,7 +63,6 @@ type ControllerOptions struct {
 	NoTaints          bool
 	DisableComponents []string
 
-	CfgFile                         string
 	ClusterComponents               *component.Manager
 	EnableK0sCloudProvider          bool
 	K0sCloudProviderPort            int
@@ -197,6 +197,7 @@ func GetCmdOpts() CLIOptions {
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
 
+		CfgFile:          CfgFile,
 		Debug:            Debug,
 		DefaultLogLevels: DefaultLogLevels(),
 		K0sVars:          K0sVars,

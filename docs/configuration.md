@@ -2,9 +2,10 @@
 
 ## Using a configuration file
 
-k0s can be installed without a config file. In that case the default configuration will be used. You can, though, create and run your own non-default configuration (used by the k0s controller nodes).
+By default, k0s will look for its configuration under`/etc/k0s/k0s.yaml`. If necessary you can, however, use your own custom configuration location and direct k0s to the its path using the `--config` flag.
+If no config file is provided, k0s will start with the default configuration.
 
-1. Generate a yaml config file that uses the default settings.
+1. To Generate a yaml config file that uses the default settings, run:
 
     ```shell
     mkdir -p /etc/k0s
