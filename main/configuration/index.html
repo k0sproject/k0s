@@ -667,6 +667,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#specextensionsstorage" class="md-nav__link">
+    spec.extensions.storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#speckonnectivity" class="md-nav__link">
     spec.konnectivity
   </a>
@@ -1361,6 +1368,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#specextensionsstorage" class="md-nav__link">
+    spec.extensions.storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#speckonnectivity" class="md-nav__link">
     spec.konnectivity
   </a>
@@ -1788,6 +1802,10 @@ sudo k0s start
 <p>In the runtime the image names are calculated as <code>my.own.repo/calico/kube-controllers:v3.16.2</code> and <code>my.own.repo/metrics-server/metrics-server:v0.5.0</code>. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.</p>
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p><code>spec.extensions.helm</code> is the config file key in which you configure the list of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap (for more information, refer to <a href="../helm-charts/">Helm Charts</a>).</p>
+<h3 id="specextensionsstorage"><code>spec.extensions.storage</code><a class="headerlink" href="#specextensionsstorage" title="Permanent link">#</a></h3>
+<p><code>spec.extensions.storage</code> controls bundled storage.
+The default value <code>external</code> makes no storage deployed.
+Value <code>openebs_local_storage</code> deploys OpenEBS with the local path set up.</p>
 <h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
 <p>The <code>spec.konnectivity</code> key is the config file key in which you configure Konnectivity-related settings.</p>
 <ul>

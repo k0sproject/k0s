@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#storage-csi" class="md-skip">
+        <a href="#storage" class="md-skip">
           Skip to content
         </a>
       
@@ -666,6 +666,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#bundled-openebs-storage" class="md-nav__link">
+    Bundled OpenEBS storage
+  </a>
+  
+    <nav class="md-nav" aria-label="Bundled OpenEBS storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    Example usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csi" class="md-nav__link">
+    CSI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example-storage-solutions" class="md-nav__link">
     Example storage solutions
   </a>
@@ -1172,6 +1199,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#bundled-openebs-storage" class="md-nav__link">
+    Bundled OpenEBS storage
+  </a>
+  
+    <nav class="md-nav" aria-label="Bundled OpenEBS storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    Example usage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csi" class="md-nav__link">
+    CSI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#example-storage-solutions" class="md-nav__link">
     Example storage solutions
   </a>
@@ -1192,7 +1246,79 @@
                 
                 
                 
-                <h1 id="storage-csi">Storage (CSI)<a class="headerlink" href="#storage-csi" title="Permanent link">#</a></h1>
+                <h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h1>
+<h2 id="bundled-openebs-storage">Bundled OpenEBS storage<a class="headerlink" href="#bundled-openebs-storage" title="Permanent link">#</a></h2>
+<p>K0s comes out with bundled OpenEBS installation which can be enabled by using <a href="../configuration/">configuration file</a></p>
+<p>Use following configuration as an example:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">extensions</span><span class="p">:</span>
+    <span class="nt">storage</span><span class="p">:</span>
+      <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">openebs_local_storage</span>
+</code></pre></div>
+<p>The cluster wil have two storage classes available for you to use:</p>
+<div class="highlight"><pre><span></span><code>bash-5.1# k0s kc get sc
+NAME               PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+openebs-device     openebs.io/local   Delete          WaitForFirstConsumer   <span class="nb">false</span>                  24s
+openebs-hostpath   openebs.io/local   Delete          WaitForFirstConsumer   <span class="nb">false</span>                  24s
+</code></pre></div>
+<p>The <code>openebs-hostpath</code> is the storage class that maps to the `</p>
+<p>The <code>openebs-device</code> is not configured and could be configured by <a href="../manifests/">manifest deployer</a> accordingly to the <a href="https://docs.openebs.io/">OpenEBS documentation</a></p>
+<h3 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">#</a></h3>
+<p>Use following manifests as an example of pod with mounted volume:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">accessModes</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
+  <span class="nt">storageClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">openebs-hostpath</span>
+  <span class="nt">resources</span><span class="p">:</span>
+    <span class="nt">requests</span><span class="p">:</span>
+      <span class="nt">storage</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5Gi</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+  <span class="nt">labels</span><span class="p">:</span>
+    <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="nt">spec</span><span class="p">:</span>
+  <span class="nt">selector</span><span class="p">:</span>
+    <span class="nt">matchLabels</span><span class="p">:</span>
+      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+  <span class="nt">strategy</span><span class="p">:</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Recreate</span>
+  <span class="nt">template</span><span class="p">:</span>
+    <span class="nt">metadata</span><span class="p">:</span>
+      <span class="nt">labels</span><span class="p">:</span>
+        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+    <span class="nt">spec</span><span class="p">:</span>
+      <span class="nt">containers</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span> 
+        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx</span>
+        <span class="nt">volumeMounts</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+          <span class="nt">mountPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/var/lib/nginx</span>
+      <span class="nt">volumes</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">persistent-storage</span>
+        <span class="nt">persistentVolumeClaim</span><span class="p">:</span>
+          <span class="nt">claimName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-pvc</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>bash-5.1# k0s kc apply -f nginx.yaml
+persistentvolumeclaim/nginx-pvc created
+deployment.apps/nginx created
+bash-5.1# k0s kc get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+nginx-d95bcb7db-gzsdt   <span class="m">1</span>/1     Running   <span class="m">0</span>          30s
+bash-5.1# k0s kc get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS       REASON   AGE
+pvc-9a7fae2d-eb03-42c3-aaa9-1a807d5df12f   5Gi        RWO            Delete           Bound    default/nginx-pvc   openebs-hostpath            30s
+</code></pre></div>
+<h2 id="csi">CSI<a class="headerlink" href="#csi" title="Permanent link">#</a></h2>
+<p>K0s also supports any other Kubernetes storage solutions with CSI.</p>
 <p>k0s supports a wide range of different storage options. There are no "selected" storage in k0s. Instead, all Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
 <p>When the storage solution implements Container Storage Interface (CSI), containers can communicate with the storage for creation and configuration of persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
 <p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
@@ -1200,7 +1326,6 @@
 <p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
 <ul>
 <li>Rook-Ceph (Open Source)</li>
-<li>OpenEBS (Open Source)</li>
 <li>MinIO (Open Source)</li>
 <li>Gluster (Open Source)</li>
 <li>Longhorn (Open Source)</li>
@@ -1210,7 +1335,6 @@
 <li>Portworx</li>
 </ul>
 <p>If you are looking for a fault-tolerant storage with data replication, you can find a k0s tutorial for configuring Ceph storage with Rook <a href="../examples/rook-ceph/">in here</a>.</p>
-<p>If you are looking for a bit more simple solution and use a folder from the node local disk, you can take a look at <a href="https://docs.openebs.io/docs/next/uglocalpv-hostpath.html">OpenEBS</a>. With OpenEBS, you can either create a simple local storage or a highly available distributed storage.</p>
                 
               
               
