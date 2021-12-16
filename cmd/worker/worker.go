@@ -151,6 +151,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 				Args:          os.Args,
 				Version:       build.Version,
 				Workloads:     true,
+				SingleNode:    false,
 				K0sVars:       c.K0sVars,
 				ClusterConfig: c.ClusterConfig,
 			},
