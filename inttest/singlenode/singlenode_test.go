@@ -50,6 +50,15 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see CNI pods ready")
 	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
+
+	s.T().Log("verify that we use kine as default storage")
+	ssh, err := s.SSH(s.ControllerNode(0))
+	s.NoError(err)
+	defer ssh.Disconnect()
+
+	_, err = ssh.ExecWithOutput("test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
+	s.NoError(err)
+
 }
 
 func TestSingleNodeSuite(t *testing.T) {
