@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/bombsimon/logrusr"
+	"github.com/bombsimon/logrusr/v2"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -260,7 +260,7 @@ func (ec *ExtensionsController) Run(ctx context.Context) error {
 
 	mgr, err := manager.New(config, manager.Options{
 		MetricsBindAddress: "0",
-		Logger:             logrusr.NewLogger(ec.L),
+		Logger:             logrusr.New(ec.L),
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)

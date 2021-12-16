@@ -20,6 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -28,7 +29,14 @@ import (
 type CmdOpts config.CLIOptions
 
 func NewK0sKubectlCmd() *cobra.Command {
-	cmd := kubectl.NewKubectlCommand(os.Stdin, os.Stdout, os.Stderr)
+	args := kubectl.KubectlOptions{
+		IOStreams: genericclioptions.IOStreams{
+			In:     os.Stdin,
+			Out:    os.Stdout,
+			ErrOut: os.Stderr,
+		},
+	}
+	cmd := kubectl.NewKubectlCommand(args)
 	cmd.Aliases = []string{"kc"}
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE

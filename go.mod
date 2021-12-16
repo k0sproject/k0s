@@ -7,13 +7,14 @@ require (
 	github.com/Microsoft/hcsshim v0.8.23
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
-	github.com/bombsimon/logrusr v1.1.0
+	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.8
+	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/estesp/manifest-tool/v2 v2.0.0-beta.1
-	github.com/evanphx/json-patch v4.11.0+incompatible
+	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -45,27 +46,27 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
-	go.uber.org/zap v1.19.0
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	go.uber.org/zap v1.19.1
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.40.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.0
-	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.22.1
-	k8s.io/cli-runtime v0.22.1
-	k8s.io/client-go v0.22.1
-	k8s.io/cloud-provider v0.22.0
-	k8s.io/component-base v0.22.1
-	k8s.io/cri-api v0.22.0
-	k8s.io/kube-aggregator v0.22.0
-	k8s.io/kubectl v0.22.1
-	k8s.io/mount-utils v0.22.0
+	k8s.io/api v0.23.0
+	k8s.io/apimachinery v0.23.0
+	k8s.io/cli-runtime v0.23.0
+	k8s.io/client-go v0.23.0
+	k8s.io/cloud-provider v0.23.0
+	k8s.io/component-base v0.23.0
+	k8s.io/cri-api v0.23.0
+	k8s.io/kube-aggregator v0.23.0
+	k8s.io/kubectl v0.23.0
+	k8s.io/mount-utils v0.23.0
 	k8s.io/system-validators v1.4.0
-	k8s.io/utils v0.0.0-20210802155522-efc7438f0176
-	sigs.k8s.io/controller-runtime v0.10.0
-	sigs.k8s.io/yaml v1.2.0
+	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
+	sigs.k8s.io/controller-runtime v0.11.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 // backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors

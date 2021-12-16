@@ -30,7 +30,7 @@ on:
       - '*.md'
 
 env:
-  GO_VERSION: ^1.16
+  GO_VERSION: ^1.17
   GO_VERSION_WIN: ^1.13
 
 jobs:

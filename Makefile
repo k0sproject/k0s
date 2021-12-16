@@ -59,7 +59,7 @@ ifeq ($(go_clientgen),)
 go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && test -x "${GOPATH}/bin/client-gen"
 endif
 
-GOLANG_IMAGE = golang:1.16-alpine
+GOLANG_IMAGE = golang:1.17-alpine
 GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-v k0sbuild.gocache:/gocache \
@@ -124,7 +124,7 @@ k0s: .k0sbuild.docker-vol.gocache
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:1.16-alpine
+k0s.exe: GOLANG_IMAGE = golang:1.17-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe: .k0sbuild.docker-vol.gocache
 
