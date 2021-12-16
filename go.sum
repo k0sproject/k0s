@@ -1110,8 +1110,8 @@ github.com/yvasiyarov/gorelic v0.0.0-20141212073537-a9bba5b9ab50 h1:hlE8//ciYMzt
 github.com/yvasiyarov/gorelic v0.0.0-20141212073537-a9bba5b9ab50/go.mod h1:NUSPSUX/bi6SeDMUh6brw0nXpxHnc96TguQh0+r/ssA=
 github.com/yvasiyarov/newrelic_platform_go v0.0.0-20140908184405-b21fdbd4370f h1:ERexzlUfuTvpE74urLSbIQW0Z/6hF9t8U4NsJLaioAY=
 github.com/yvasiyarov/newrelic_platform_go v0.0.0-20140908184405-b21fdbd4370f/go.mod h1:GlGEuHIJweS1mbCqG+7vt2nvWLzLLnRHbXz5JKd/Qbg=
-github.com/zcalusic/sysinfo v0.0.0-20210226105846-b810d137e525 h1:kaA57BgcZslwF+qzEiZEQfAfx1ZE6PuaSdxGP9ZKy04=
-github.com/zcalusic/sysinfo v0.0.0-20210226105846-b810d137e525/go.mod h1:WGLNaWsjKQ2gXmAHh+MQztgu3FLFAnOFJjFzhpgShCY=
+github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900 h1:4klaqgLMtyCrRio4MV/xE8gcrMOYnvXtmbWPOLjxVBA=
+github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900/go.mod h1:Z/gPVufBrFc8X5sef3m6kkw3r3nlNFp+I6bvASfvBZQ=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
 github.com/zmap/rc2 v0.0.0-20131011165748-24b9757f5521/go.mod h1:3YZ9o3WnatTIZhuOtot4IcUfzoKVjUHqu6WALIyI0nE=
