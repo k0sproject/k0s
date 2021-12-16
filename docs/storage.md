@@ -13,16 +13,19 @@ spec:
       type: openebs_local_storage
 ```
 
-The cluster wil have two storage classes available for you to use:
+The cluster will have two storage classes available for you to use:
 
 ```shell
-bash-5.1# k0s kc get sc
+k0s kubectl get storageclass
+```
+
+```shell
 NAME               PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
 openebs-device     openebs.io/local   Delete          WaitForFirstConsumer   false                  24s
 openebs-hostpath   openebs.io/local   Delete          WaitForFirstConsumer   false                  24s
 ```
 
-The `openebs-hostpath` is the storage class that maps to the `
+The `openebs-hostpath` is the storage class that maps to the `/var/openebs/local`
 
 The `openebs-device` is not configured and could be configured by [manifest deployer](manifests.md) accordingly to the [OpenEBS documentation](https://docs.openebs.io/)
 
@@ -75,22 +78,29 @@ spec:
 ```
 
 ```shell
-bash-5.1# k0s kc apply -f nginx.yaml
+k0s kubectl apply -f nginx.yaml
+```
+
+```shell
 persistentvolumeclaim/nginx-pvc created
 deployment.apps/nginx created
 bash-5.1# k0s kc get pods
 NAME                    READY   STATUS    RESTARTS   AGE
 nginx-d95bcb7db-gzsdt   1/1     Running   0          30s
-bash-5.1# k0s kc get pv
+```
+
+```shell
+k0s kubectl get pv
+```
+
+```shell
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS       REASON   AGE
 pvc-9a7fae2d-eb03-42c3-aaa9-1a807d5df12f   5Gi        RWO            Delete           Bound    default/nginx-pvc   openebs-hostpath            30s
 ```
 
 ## CSI
 
-K0s also supports any other Kubernetes storage solutions with CSI.
-
-k0s supports a wide range of different storage options. There are no "selected" storage in k0s. Instead, all Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.
+k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.
 
 When the storage solution implements Container Storage Interface (CSI), containers can communicate with the storage for creation and configuration of persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the [Kubernetes Blog](https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/).
 
