@@ -1353,7 +1353,7 @@
 </thead>
 <tbody>
 <tr>
-<td align="left">`K0S_VERSION=v1.22.4+k0s.0</td>
+<td align="left">`K0S_VERSION=v1.23.1+k0s.0</td>
 <td align="left">Select the version of k0s to be installed</td>
 </tr>
 <tr>
@@ -1363,7 +1363,7 @@
 </tbody>
 </table>
 <p><strong>Note</strong>: If you require environment variables and use sudo, you can do:</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo <span class="nv">K0S_VERSION</span><span class="o">=</span>v1.22.4+k0s.0 sh
+<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo <span class="nv">K0S_VERSION</span><span class="o">=</span>v1.23.1+k0s.0 sh
 </code></pre></div>
 <h3 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h3>
 <p>Create a configuration file:</p>
@@ -1414,7 +1414,7 @@ If your configuration file includes IP addresses (node address, sans, etcd peerA
 <h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
 <p>To get general information about your k0s instance's status:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s status
-Version: v1.22.4+k0s.0
+Version: v1.23.1+k0s.0
 Process ID: <span class="m">2769</span>
 Parent Process ID: <span class="m">1</span>
 Role: controller
@@ -1425,7 +1425,7 @@ Service file: /etc/systemd/system/k0scontroller.service
 <p>Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:</p>
 <div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    &lt;none&gt;   4m6s   v1.22.4-k0s1
+k0s    Ready    &lt;none&gt;   4m6s   v1.23.1-k0s1
 </code></pre></div>
 <p>You can also access your cluster easily with <a href="https://k8slens.dev/">Lens</a>, simply by copying the kubeconfig and pasting it to Lens:</p>
 <div class="highlight"><pre><span></span><code>sudo cat /var/lib/k0s/pki/admin.conf
