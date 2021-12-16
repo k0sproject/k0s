@@ -7,9 +7,10 @@ require (
 	github.com/Microsoft/hcsshim v0.8.23
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v2.6.0+incompatible
-	github.com/bombsimon/logrusr v1.1.0
+	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.8
+	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/estesp/manifest-tool/v2 v2.0.0-beta.1
@@ -45,7 +46,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.40.0
@@ -64,8 +65,8 @@ require (
 	k8s.io/mount-utils v0.23.0
 	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
-	sigs.k8s.io/controller-runtime v0.10.0
-	sigs.k8s.io/yaml v1.2.0
+	sigs.k8s.io/controller-runtime v0.11.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 // backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
