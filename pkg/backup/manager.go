@@ -151,7 +151,7 @@ func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.Cluste
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
 	_, err := os.Stat(configFromBackup)
 	if os.IsNotExist(err) {
-		return v1beta1.DefaultClusterConfig(bm.dataDir), nil
+		return v1beta1.DefaultClusterConfig(), nil
 	}
 	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
 

@@ -39,7 +39,7 @@ spec:
       image: custom.io/coredns/coredns
       version: 1.0.0
 `
-	cfg, err := v1beta1.ConfigFromString(yamlData, "")
+	cfg, err := v1beta1.ConfigFromString(yamlData)
 	s.NoError(err)
 	a := cfg.Spec.Images
 

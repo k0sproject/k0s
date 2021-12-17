@@ -151,7 +151,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	s.NoError(err)
 	s.Equal("https://10.0.0.86:6443", config.Host)
-	_, err = v1beta1.ConfigFromString(yamlData, "")
+	_, err = v1beta1.ConfigFromString(yamlData)
 	s.NoError(err)
 }
 
