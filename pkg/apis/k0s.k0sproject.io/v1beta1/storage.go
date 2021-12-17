@@ -49,14 +49,7 @@ type KineConfig struct {
 }
 
 // DefaultStorageSpec creates StorageSpec with sane defaults
-func DefaultStorageSpec(dataDir string) *StorageSpec {
-	k0sVars := constant.GetConfig(dataDir)
-	if k0sVars.DefaultStorageType == KineStorageType {
-		return &StorageSpec{
-			Type: KineStorageType,
-			Kine: DefaultKineConfig(dataDir),
-		}
-	}
+func DefaultStorageSpec() *StorageSpec {
 	return &StorageSpec{
 		Type: EtcdStorageType,
 		Etcd: DefaultEtcdConfig(),

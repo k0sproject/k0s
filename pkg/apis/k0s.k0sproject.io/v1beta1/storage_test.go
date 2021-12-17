@@ -18,7 +18,6 @@ package v1beta1
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,7 +90,7 @@ spec:
   storage:
     type: kine
 `
-	c, err := ConfigFromString(yaml, constant.DataDirDefault)
+	c, err := ConfigFromString(yaml)
 	assert.NoError(t, err)
 	assert.Equal(t, "kine", c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)

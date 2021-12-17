@@ -17,7 +17,7 @@ import (
 )
 
 func TestKubeRouterConfig(t *testing.T) {
-	cfg := v1beta1.DefaultClusterConfig(dataDir)
+	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
@@ -54,7 +54,7 @@ func TestKubeRouterConfig(t *testing.T) {
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
-	cfg := v1beta1.DefaultClusterConfig(dataDir)
+	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
 	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()

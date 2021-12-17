@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 const (
@@ -71,9 +70,8 @@ type ClusterConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`
 
-	DataDir string              `json:"dataDir,omitempty"`
-	Spec    *ClusterSpec        `json:"spec,omitempty"`
-	Status  ClusterConfigStatus `json:"status,omitempty"`
+	Spec   *ClusterSpec        `json:"spec,omitempty"`
+	Status ClusterConfigStatus `json:"status,omitempty"`
 }
 
 // StripDefaults returns a copy of the config where the default values a nilled out
@@ -88,7 +86,7 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	if reflect.DeepEqual(copy.Spec.Scheduler, DefaultSchedulerSpec()) {
 		copy.Spec.Scheduler = nil
 	}
-	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec(constant.DataDirDefault)) {
+	if reflect.DeepEqual(c.Spec.Storage, DefaultStorageSpec()) {
 		c.Spec.ControllerManager = nil
 	}
 	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
@@ -165,44 +163,44 @@ func (s *SchedulerSpec) IsZero() bool {
 }
 
 // ConfigFromFile takes a file path as Input, and parses it into a ClusterConfig
-func ConfigFromFile(filename string, dataDir string) (*ClusterConfig, error) {
+func ConfigFromFile(filename string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
 	}
-	return ConfigFromString(string(buf), dataDir)
+	return ConfigFromString(string(buf), defaultStorage...)
 }
 
 // ConfigFromStdin tries to read k0s.yaml config from stdin
-func ConfigFromStdin(dataDir string) (*ClusterConfig, error) {
+func ConfigFromStdin(defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
 	}
-	return ConfigFromString(string(input), dataDir)
+	return ConfigFromString(string(input), defaultStorage...)
 }
 
-func ConfigFromString(yml string, dataDir string) (*ClusterConfig, error) {
-	config := DefaultClusterConfig(dataDir)
+func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
+	config := DefaultClusterConfig(defaultStorage...)
 	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval")
 	if err != nil {
 		return config, err
 	}
 	if config.Spec == nil {
-		config.Spec = DefaultClusterSpec(dataDir)
+		config.Spec = DefaultClusterSpec(defaultStorage...)
 	}
 	return config, nil
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
-func DefaultClusterConfig(dataDir string) *ClusterConfig {
+func DefaultClusterConfig(defaultStorage ...*StorageSpec) *ClusterConfig {
 	return &ClusterConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: "k0s"},
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "k0s.k0sproject.io/v1beta1",
 			Kind:       "ClusterConfig",
 		},
-		Spec: DefaultClusterSpec(dataDir),
+		Spec: DefaultClusterSpec(defaultStorage...),
 	}
 }
 
@@ -214,7 +212,7 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.ClusterName == "" {
 		c.ClusterName = "k0s"
 	}
-	c.Spec = DefaultClusterSpec(c.DataDir)
+	c.Spec = DefaultClusterSpec()
 
 	type config ClusterConfig
 	jc := (*config)(c)
@@ -226,10 +224,17 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultClusterSpec default settings
-func DefaultClusterSpec(dataDir string) *ClusterSpec {
+func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
+	var storage *StorageSpec
+	if defaultStorage == nil || defaultStorage[0] == nil {
+		storage = DefaultStorageSpec()
+	} else {
+		storage = defaultStorage[0]
+	}
+
 	return &ClusterSpec{
 		Extensions:        DefaultExtensions(),
-		Storage:           DefaultStorageSpec(dataDir),
+		Storage:           storage,
 		Network:           DefaultNetwork(),
 		API:               DefaultAPISpec(),
 		ControllerManager: DefaultControllerManagerSpec(),
