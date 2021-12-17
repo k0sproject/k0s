@@ -30,6 +30,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
 	"github.com/k0sproject/k0s/cmd/backup"
+	cfg "github.com/k0sproject/k0s/cmd/config"
 	"github.com/k0sproject/k0s/cmd/controller"
 	"github.com/k0sproject/k0s/cmd/ctr"
 	"github.com/k0sproject/k0s/cmd/etcd"
@@ -82,6 +83,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(backup.NewBackupCmd())
 	cmd.AddCommand(controller.NewControllerCmd())
 	cmd.AddCommand(ctr.NewCtrCommand())
+	cmd.AddCommand(cfg.NewConfigCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
@@ -93,12 +95,12 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(stop.NewStopCmd())
 	cmd.AddCommand(sysinfo.NewSysinfoCmd())
 	cmd.AddCommand(token.NewTokenCmd())
-	cmd.AddCommand(validate.NewValidateCmd())
+	cmd.AddCommand(validate.NewValidateCmd()) // hidden+deprecated
 	cmd.AddCommand(version.NewVersionCmd())
 	cmd.AddCommand(worker.NewWorkerCmd())
 
 	cmd.AddCommand(newCompletionCmd())
-	cmd.AddCommand(newDefaultConfigCmd())
+	cmd.AddCommand(newDefaultConfigCmd()) // hidden+deprecated
 	cmd.AddCommand(newDocsCmd())
 
 	cmd.DisableAutoGenTag = true
@@ -133,19 +135,10 @@ func newDocsCmd() *cobra.Command {
 }
 
 func newDefaultConfigCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "default-config",
-		Short: "Output the default k0s configuration yaml to stdout",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetLevel(logrus.ErrorLevel)
-			c := cliOpts(config.GetCmdOpts())
-			if err := c.buildConfig(); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd := cfg.NewCreateCmd()
+	cmd.Hidden = true
+	cmd.Deprecated = "use 'k0s config generate' instead"
+	cmd.Use = "default-config"
 	return cmd
 }
 

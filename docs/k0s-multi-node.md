@@ -39,7 +39,7 @@ Create a configuration file:
 
 ```shell
 mkdir -p /etc/k0s
-k0s default-config > /etc/k0s/k0s.yaml
+k0s config create > /etc/k0s/k0s.yaml
 ```
 
 **Note**: For information on settings modification, refer to the [configuration](configuration.md) documentation.
