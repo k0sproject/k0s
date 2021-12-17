@@ -116,13 +116,21 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 }
 
 func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
+	var storage *v1beta1.StorageSpec
+	if k0sVars.DefaultStorageType == "kine" {
+		storage = &v1beta1.StorageSpec{
+			Type: v1beta1.KineStorageType,
+			Kine: v1beta1.DefaultKineConfig(k0sVars.DataDir),
+		}
+
+	}
 	switch cfgPath {
 	case "-":
-		clusterConfig, err = v1beta1.ConfigFromStdin(k0sVars.DataDir)
+		clusterConfig, err = v1beta1.ConfigFromStdin(storage)
 	case "":
-		clusterConfig = v1beta1.DefaultClusterConfig(k0sVars.DataDir)
+		clusterConfig = v1beta1.DefaultClusterConfig(storage)
 	default:
-		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, k0sVars.DataDir)
+		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, storage)
 	}
 	if err != nil {
 		return nil, err
@@ -182,7 +190,6 @@ func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.Cluste
 	return &v1beta1.ClusterConfig{
 		ObjectMeta: config.ObjectMeta,
 		TypeMeta:   config.TypeMeta,
-		DataDir:    config.DataDir,
 		Spec:       clusterSpec,
 		Status:     config.Status,
 	}
@@ -194,13 +201,18 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	if err != nil {
 		return nil, err
 	}
+	var etcdConfig *v1beta1.EtcdConfig
+	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
+		etcdConfig = &v1beta1.EtcdConfig{
+			PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
+		}
+	}
+
 	clusterSpec := &v1beta1.ClusterSpec{
 		API: cfg.Spec.API,
 		Storage: &v1beta1.StorageSpec{
 			Type: cfg.Spec.Storage.Type,
-			Etcd: &v1beta1.EtcdConfig{
-				PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
-			},
+			Etcd: etcdConfig,
 			Kine: cfg.Spec.Storage.Kine,
 		},
 		Network: &v1beta1.Network{
@@ -212,7 +224,6 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	nodeConfig := &v1beta1.ClusterConfig{
 		ObjectMeta: cfg.ObjectMeta,
 		TypeMeta:   cfg.TypeMeta,
-		DataDir:    cfg.DataDir,
 		Spec:       clusterSpec,
 		Status:     cfg.Status,
 	}
