@@ -59,7 +59,7 @@ ifeq ($(go_clientgen),)
 go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && test -x "${GOPATH}/bin/client-gen"
 endif
 
-GOLANG_IMAGE = golang:1.17-alpine
+GOLANG_IMAGE = golang:$(go_version)-alpine
 GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-v k0sbuild.gocache:/gocache \
@@ -80,7 +80,9 @@ build: k0s
 endif
 
 .k0sbuild.docker-image.k0s: build/Dockerfile
-	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+	docker build --rm \
+		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		-t k0sbuild.docker-image.k0s -f build/Dockerfile .
 	touch $@
 
 .k0sbuild.docker-vol.gocache:
