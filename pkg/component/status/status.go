@@ -3,12 +3,10 @@ package status
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -40,11 +38,7 @@ func (s *Status) Init() error {
 		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}
 
-	err = checkLeftoverSocket(s.Socket)
-	if err != nil {
-		return fmt.Errorf("socket error: %w", err)
-	}
-
+	removeLeftovers(s.Socket)
 	s.listener, err = net.Listen("unix", s.Socket)
 	if err != nil {
 		s.L.Errorf("failed to create listener %s", err)
@@ -55,19 +49,12 @@ func (s *Status) Init() error {
 	return nil
 }
 
-// checkLeftoverSocket checks if there is a leftover socket from the previous runs. This usually happens on crash or SIGKILL
-func checkLeftoverSocket(socket string) error {
+// removeLeftovers tries to remove leftover sockets that nothing is listening on
+func removeLeftovers(socket string) {
 	_, err := net.Dial("unix", socket)
 	if err != nil {
-		// Socket file doesn't exist or exists but nobody is listening
-		if errors.Is(err, os.ErrNotExist) || strings.Contains(err.Error(), "connection refused") {
-			os.Remove(socket)
-			return nil
-		}
-
-		return err
+		_ = os.Remove(socket)
 	}
-	return errors.New("socket is busy")
 }
 
 // Run runs the component
