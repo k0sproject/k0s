@@ -1,3 +1,11 @@
+From b97871c4935d8baef0f4a7feb28c70bf22383268 Mon Sep 17 00:00:00 2001
+From: haoyun <yun.hao@daocloud.io>
+Date: Mon, 13 Dec 2021 14:27:21 +0800
+Subject: [PATCH] fix: atomic operations on 32-byte device
+
+Signed-off-by: haoyun <yun.hao@daocloud.io>
+---
+
 diff --git a/vendor/github.com/google/cadvisor/manager/container.go b/vendor/github.com/google/cadvisor/manager/container.go
 index db2e2b11..71684fe0 100644
 --- a/vendor/github.com/google/cadvisor/manager/container.go

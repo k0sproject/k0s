@@ -15,8 +15,7 @@ RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
 WORKDIR /go/src/github.com/kubernetes/kubernetes
-RUN cp /tmp/armv7.patch .
-RUN git apply armv7.patch
+RUN GIT_COMMITTER_EMAIL="foo@example.com" git am /tmp/armv7.patch
 RUN go version
 RUN \
 	# Ensure that all of the binaries are built with CGO \
