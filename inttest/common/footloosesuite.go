@@ -68,6 +68,7 @@ type FootlooseSuite struct {
 	KubeAPIExternalPort   int
 	WithLB                bool
 	WorkerCount           int
+	ControllerUmask       int
 
 	ExtraVolumes  []config.Volume
 	tearDownTimer *time.Timer
@@ -398,8 +399,12 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 		return err
 	}
 	defer ssh.Disconnect()
+	umaskCmd := ""
+	if s.ControllerUmask != 0 {
+		umaskCmd = fmt.Sprintf("umask %d;", s.ControllerUmask)
+	}
 	// Allow any arch for etcd in smokes
-	startCmd := fmt.Sprintf("ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", runtime.GOARCH, s.K0sFullPath, strings.Join(k0sArgs, " "))
+	startCmd := fmt.Sprintf("%s ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", umaskCmd, runtime.GOARCH, s.K0sFullPath, strings.Join(k0sArgs, " "))
 	_, err = ssh.ExecWithOutput(startCmd)
 	if err != nil {
 		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
