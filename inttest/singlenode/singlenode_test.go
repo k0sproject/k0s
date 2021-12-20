@@ -65,6 +65,7 @@ func TestSingleNodeSuite(t *testing.T) {
 	s := SingleNodeSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
+			ControllerUmask: 027,
 		},
 	}
 	suite.Run(t, &s)
