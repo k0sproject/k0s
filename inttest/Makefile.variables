@@ -22,5 +22,6 @@ smoketests := \
 	check-configchange \
 	check-upgrade \
 	check-psp \
-	check-defaultstorage
+	check-defaultstorage \
+	check-statussocket
 

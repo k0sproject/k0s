@@ -165,6 +165,7 @@ jobs:
           - check-configchange
           - check-upgrade
           - check-psp
+          - check-statussocket
           # skipped, originally titled "Smoke-test for network":
           # - check-etcd
 

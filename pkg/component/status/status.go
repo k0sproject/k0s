@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -37,6 +38,7 @@ func (s *Status) Init() error {
 		return fmt.Errorf("failed to create %s: %w", s.Socket, err)
 	}
 
+	removeLeftovers(s.Socket)
 	s.listener, err = net.Listen("unix", s.Socket)
 	if err != nil {
 		s.L.Errorf("failed to create listener %s", err)
@@ -45,6 +47,14 @@ func (s *Status) Init() error {
 	s.L.Infof("Listening address %s", s.Socket)
 
 	return nil
+}
+
+// removeLeftovers tries to remove leftover sockets that nothing is listening on
+func removeLeftovers(socket string) {
+	_, err := net.Dial("unix", socket)
+	if err != nil {
+		_ = os.Remove(socket)
+	}
 }
 
 // Run runs the component
