@@ -195,7 +195,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 }
 
 func (c *cliOpts) buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig(config.DataDir))
+	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig())
 	fmt.Print(string(conf))
 	return nil
 }

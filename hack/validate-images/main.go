@@ -34,7 +34,7 @@ func main() {
 	if len(architectures) < 1 {
 		panic("No architectures given")
 	}
-	cfg := v1beta1.DefaultClusterConfig("")
+	cfg := v1beta1.DefaultClusterConfig()
 	uris := airgap.GetImageURIs(cfg.Spec.Images)
 	if err := validateImages(uris, architectures); err != nil {
 		os.Exit(1)

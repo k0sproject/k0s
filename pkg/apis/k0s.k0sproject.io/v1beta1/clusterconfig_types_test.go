@@ -23,19 +23,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var dataDir string
-
 func TestClusterDefaults(t *testing.T) {
-	c, err := ConfigFromString("apiVersion: k0s.k0sproject.io/v1beta1", dataDir)
+	c, err := ConfigFromString("apiVersion: k0s.k0sproject.io/v1beta1")
 	assert.NoError(t, err)
-	assert.Equal(t, DefaultStorageSpec(dataDir), c.Spec.Storage)
+	assert.Equal(t, DefaultStorageSpec(), c.Spec.Storage)
 }
 
 func TestUnknownFieldValidation(t *testing.T) {
 	_, err := ConfigFromString(`
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
-unknown: 1`, dataDir)
+unknown: 1`)
 
 	assert.Error(t, err)
 }
@@ -48,7 +46,7 @@ metadata:
   name: foobar
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -67,7 +65,7 @@ spec:
     type: etcd
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "etcd", c.Spec.Storage.Type)
 	addr, err := iface.FirstPublicAddress()
@@ -88,7 +86,7 @@ spec:
     type: etcd
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -107,7 +105,7 @@ spec:
     type: etcd
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 0, len(errors))
@@ -126,7 +124,7 @@ spec:
     type: etcd
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	errors := c.Validate()
 	assert.Equal(t, 1, len(errors))
@@ -145,7 +143,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://foo.bar.com:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://foo.bar.com:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -162,7 +160,7 @@ spec:
     address: 1.2.3.4
 `
 
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://1.2.3.4:6443", c.Spec.API.APIAddressURL())
 	assert.Equal(t, "https://1.2.3.4:9443", c.Spec.API.K0sControlPlaneAPIAddress())
@@ -191,7 +189,7 @@ spec:
         anonymous:
           enabled: false
 `
-	c, err := ConfigFromString(yamlData, dataDir)
+	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(c.Spec.WorkerProfiles))
 	assert.Equal(t, "profile_XXX", c.Spec.WorkerProfiles[0].Name)
@@ -211,7 +209,7 @@ spec:
 }
 
 func TestStripDefaults(t *testing.T) {
-	defaultConfig := DefaultClusterConfig("")
+	defaultConfig := DefaultClusterConfig()
 	stripped := defaultConfig.StripDefaults()
 	a := assert.New(t)
 	a.Nil(stripped.Spec.API)

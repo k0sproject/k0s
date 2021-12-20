@@ -19,7 +19,7 @@ func (i inMemorySaver) Save(dst string, content []byte) error {
 }
 
 func TestCalicoManifests(t *testing.T) {
-	clusterConfig := v1beta1.DefaultClusterConfig(dataDir)
+	clusterConfig := v1beta1.DefaultClusterConfig()
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"
 	clusterConfig.Spec.Network.KubeRouter = nil
