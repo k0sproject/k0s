@@ -41,28 +41,29 @@ metadata:
   name:  kube-system
 `
 	template := `
-kind: ConfigMap
 apiVersion: v1
-metadata:
-  name: applier-test
-  namespace: kube-system
-  labels:
-    component: applier
-data:
-  foo: bar
-`
-	template2 := `
-kind: Pod
-apiVersion: v1
-metadata:
-  name: applier-test
-  namespace: kube-system
-  labels:
-    component: applier
-spec:
-  containers:
-    - name: nginx
-      image: nginx:1.15
+kind: List
+items:
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: applier-test
+      namespace: kube-system
+      labels:
+        component: applier
+    data:
+      foo: bar
+  - kind: Pod
+    apiVersion: v1
+    metadata:
+      name: applier-test
+      namespace: kube-system
+      labels:
+        component: applier
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.15
 `
 
 	templateDeployment := `
@@ -91,8 +92,7 @@ spec:
           - containerPort: 80
 `
 	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-ns.yaml", dir), []byte(templateNS), 0400))
-	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test.yaml", dir), []byte(template), 0400))
-	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-pod.yaml", dir), []byte(template2), 0400))
+	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-list.yaml", dir), []byte(template), 0400))
 	assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/test-deploy.yaml", dir), []byte(templateDeployment), 0400))
 
 	fakes := kubeutil.NewFakeClientFactory()

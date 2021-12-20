@@ -36,6 +36,7 @@ type ClientFactoryInterface interface {
 	GetDynamicClient() (dynamic.Interface, error)
 	GetDiscoveryClient() (discovery.CachedDiscoveryInterface, error)
 	GetConfigClient() (cfgClient.ClusterConfigInterface, error)
+	GetRESTConfig() *rest.Config
 }
 
 // NewAdminClientFactory creates a new factory that loads the admin kubeconfig based client
@@ -166,6 +167,10 @@ func (c *ClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, err
 	}
 	c.configClient = configClient.ClusterConfigs(constant.ClusterConfigNamespace)
 	return c.configClient, nil
+}
+
+func (c *ClientFactory) GetRESTConfig() *rest.Config {
+	return c.restConfig
 }
 
 // NewClient creates new k8s client based of the given kubeconfig
