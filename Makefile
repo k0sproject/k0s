@@ -55,7 +55,7 @@ ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
-GOLANG_IMAGE = golang:1.16-alpine
+GOLANG_IMAGE = golang:$(go_version)-alpine
 GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-v k0sbuild.gocache:/gocache \
@@ -76,7 +76,9 @@ build: k0s
 endif
 
 .k0sbuild.docker-image.k0s: build/Dockerfile
-	docker build --rm -t k0sbuild.docker-image.k0s -f build/Dockerfile .
+	docker build --rm \
+		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		-t k0sbuild.docker-image.k0s -f build/Dockerfile .
 	touch $@
 
 .k0sbuild.docker-vol.gocache:
