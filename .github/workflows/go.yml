@@ -155,10 +155,6 @@ jobs:
           - check-singlenode
           - check-backup
           - check-k0scloudprovider
-          - check-disabledcomponents
-          - check-extraargs
-          - check-configchange
-          - check-upgrade
           # skipped, originally titled "Smoke-test for network":
           # - check-etcd
 
