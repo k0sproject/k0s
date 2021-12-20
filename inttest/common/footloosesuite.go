@@ -734,7 +734,6 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 		defer cancel()
 		res := kc.RESTClient().Get().RequestURI("/readyz").Do(ctx)
 		if res.Error() != nil {
-			s.T().Logf("readyz error: %v", res.Error())
 			return false, nil
 		}
 		var statusCode int
