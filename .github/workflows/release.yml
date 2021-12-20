@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  #pull_request:
+env:
+  GO_VERSION: ^1.16
+  GO_VERSION_WIN: ^1.13
 
 jobs:
   release:
@@ -29,7 +33,7 @@ jobs:
           release_name: ${{ github.ref }}
           draft: true # So we can manually edit before publishing
           prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
-  
+
   x64:
     needs: release
     runs-on: [self-hosted,linux,x64]
@@ -37,13 +41,15 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.16
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
@@ -76,6 +82,12 @@ jobs:
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
 
+      - name: Upload Artifact for use in other Jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: k0s-amd64
+          path: ./k0s
+
       - name: Upload Release Assets - Bundle
         id: upload-release-asset-images
         uses: actions/upload-release-asset@v1
@@ -86,7 +98,7 @@ jobs:
           asset_path: ./image-bundle/bundle.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
-      
+
       - name: Prepare tags
         id: prep
         # Basically just replace the '+' with '-' as '+' is not allowed in tags
@@ -133,13 +145,15 @@ jobs:
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
         env:
@@ -167,14 +181,15 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.16
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
@@ -219,17 +234,22 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
 
-      
+
   armv7:
     needs: release
-    runs-on: [self-hosted,linux,arm,lxc]
+    runs-on: [self-hosted,linux,arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Install GoLang for ARMHF
+        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
+      - name: Go Version
+        run: go version
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
-      
+
       - name: Build
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
@@ -269,3 +289,91 @@ jobs:
           asset_path: ./image-bundle/bundle.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
+
+  conformance-test:
+    needs:
+      - release
+      - x64
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-west-1
+      TF_VERSION: 0.13.4
+    name: "K8s Conformance Testing"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./inttest/conformance/terraform
+    steps:
+      - name: Run git checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Fetch k0s Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: k0s-amd64
+
+      - name: Launch Test Environment
+        env:
+          K0S_VER: ${{ needs.release.outputs.tag_name }}
+        run: |
+          # Start SSH Agent
+          eval `ssh-agent -s`
+
+          export TF_VAR_k0s_version=${KOS_VER}
+
+          terraform apply -auto-approve
+
+      - name: Get Terraform Output Data
+        run: ./get_outputs.sh
+
+      - name: Deploy k0s to Hosts
+        run: ./deploy-k0s.sh
+
+      - name: Run Full Conformance Check
+        run: |
+          make check-conformance
+        working-directory: ./inttest
+
+      - name: Upload conformance test result to Release Assets
+        uses: shogo82148/actions-upload-release-asset@v1.3.2 # Allows us to upload a file with wildcard patterns
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
+          asset_name: sonobuoy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+        if: ${{ always() }}
+      - name: Clean-Up Environment
+        env:
+          K0S_VER: ${{ needs.release.outputs.tag_name }}
+        run: |
+          export TF_VAR_k0s_version=${K0S_VER}
+
+          terraform destroy -auto-approve
+        if: ${{ always() }}
+
+ #     - name: slack notify
+ #       env:
+ #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+ #       uses: 8398a7/action-slack@v3
+ #       with:
+ #         job_name: "Release - K8s Full Conformance"
+ #         status: ${{ job.status }}
+ #         fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
+ #       if: ${{ always() }} # Pick up events even if the job fails or is canceled.
