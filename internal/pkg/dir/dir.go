@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/k0sproject/k0s/internal/pkg/file"
 )
 
 // IsDirectory check the given path exists and is a directory
@@ -54,12 +52,7 @@ func Init(path string, perm os.FileMode) error {
 	if err := os.MkdirAll(path, perm); err != nil {
 		return err
 	}
-	// Check permissions in case directory already existed
-	if err := file.CheckPathPermissions(path, perm); err != nil {
-		return err
-	}
-
-	return nil
+	return os.Chmod(path, perm)
 }
 
 // Copy copies the content of a folder
