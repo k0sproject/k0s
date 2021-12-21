@@ -6,6 +6,10 @@ on:
   release:
     types:
       - published
+
+env:
+  GO_VERSION: ^1.17
+
 jobs:
   build:
     env:
@@ -37,18 +41,43 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - uses: actions/cache@v2
+        name: Go modules cache
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate CLI docs
+        run: |
+          mkdir -p docs/cli
+          go run main.go docs markdown
+          rm docs/cli/k0s_kubectl_*
+          sed -i '/\[k0s kubectl /d' docs/cli/k0s_kubectl.md
+          ln -s docs/cli/k0s.md docs/cli/README.md
+
       - name: git config
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
       - name: Using Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+
       - name: mkdocs deploy main
         if: contains(github.ref, 'refs/heads/main')
         run: |
           mike deploy --push main
+
       - name: Get the release version
         if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
         id: get_version
