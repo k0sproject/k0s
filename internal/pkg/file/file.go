@@ -19,11 +19,8 @@ package file
 import (
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Exists checks if a file exists and is not a directory before we
@@ -34,23 +31,6 @@ func Exists(fileName string) bool {
 		return false
 	}
 	return !info.IsDir()
-}
-
-// CheckPathPermissions checks the correct permissions are for a path (file or directory)
-func CheckPathPermissions(path string, perm os.FileMode) error {
-	dirInfo, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	dirMode := dirInfo.Mode().Perm()
-	if dirMode != perm {
-		if runtime.GOOS != "windows" {
-			return fmt.Errorf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
-		}
-		logrus.Warnf("directory %q exist, but the permission is %#o. The expected permission is %o", path, dirMode, perm)
-		return nil
-	}
-	return nil
 }
 
 // Chown changes file/dir mode
