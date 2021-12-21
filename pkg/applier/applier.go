@@ -16,20 +16,22 @@ limitations under the License.
 package applier
 
 import (
-	"bytes"
 	"context"
-	"os"
+	"fmt"
 	"path"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
 )
 
 // Applier manages all the "static" manifests and applies them on the k8s API
@@ -41,6 +43,9 @@ type Applier struct {
 	clientFactory   kubernetes.ClientFactoryInterface
 	client          dynamic.Interface
 	discoveryClient discovery.CachedDiscoveryInterface
+
+	restClientGetter resource.RESTClientGetter
+	resourceBuilder  *resource.Builder
 }
 
 // NewApplier creates new Applier
@@ -51,11 +56,19 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 		"bundle":    name,
 	})
 
+	clientGetter := &restClientGetter{clientFactory: kubeClientFactory}
+	resourceBuilder := resource.NewBuilder(clientGetter).
+		Unstructured().
+		ContinueOnError().
+		Flatten()
+
 	return Applier{
-		log:           log,
-		Dir:           dir,
-		Name:          name,
-		clientFactory: kubeClientFactory,
+		log:              log,
+		Dir:              dir,
+		Name:             name,
+		clientFactory:    kubeClientFactory,
+		restClientGetter: clientGetter,
+		resourceBuilder:  resourceBuilder,
 	}
 }
 
@@ -140,25 +153,50 @@ func (a *Applier) Delete() error {
 
 func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, error) {
 	var resources []*unstructured.Unstructured
-	for _, file := range files {
-		// TODO Probably better to pass in the file stream into decoder and not to read it fully to mem first
-		source, err := os.ReadFile(file)
-		if err != nil {
-			return nil, err
-		}
+	if len(files) == 0 {
+		return resources, nil
+	}
 
-		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(source), 4096)
-		var resource map[string]interface{}
-		for decoder.Decode(&resource) == nil {
-			item := &unstructured.Unstructured{
-				Object: resource,
-			}
-			if item.GetAPIVersion() != "" && item.GetKind() != "" {
-				resources = append(resources, item)
-				resource = nil
-			}
+	r := a.resourceBuilder.
+		FilenameParam(false, &resource.FilenameOptions{Filenames: files}).
+		Do()
+
+	objects, err := r.Infos()
+	if err != nil {
+		return nil, fmt.Errorf("enable to get object infos: %w", err)
+	}
+	for _, o := range objects {
+		item := o.Object.(*unstructured.Unstructured)
+		if item.GetAPIVersion() != "" && item.GetKind() != "" {
+			resources = append(resources, item)
+			o = nil
 		}
 	}
 
 	return resources, nil
+}
+
+type restClientGetter struct {
+	clientFactory kubernetes.ClientFactoryInterface
+}
+
+func (r *restClientGetter) ToRESTConfig() (*rest.Config, error) {
+	return r.clientFactory.GetRESTConfig(), nil
+}
+
+func (r *restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+	return r.clientFactory.GetDiscoveryClient()
+}
+func (r *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
+	discoveryClient, err := r.clientFactory.GetDiscoveryClient()
+	if err != nil {
+		return nil, err
+	}
+
+	// We need to invalidate the cache. Otherwise, the client will not be aware of the new CRDs deployed after client initialization.
+	discoveryClient.Invalidate()
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
+	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
+
+	return expander, nil
 }

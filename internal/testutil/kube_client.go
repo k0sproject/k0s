@@ -12,6 +12,7 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
 	kubetesting "k8s.io/client-go/testing"
 
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
@@ -61,4 +62,8 @@ func (f FakeClientFactory) GetDiscoveryClient() (discovery.CachedDiscoveryInterf
 
 func (f FakeClientFactory) GetConfigClient() (cfgClient.ClusterConfigInterface, error) {
 	return nil, fmt.Errorf("NOT IMPLEMENTED")
+}
+
+func (f FakeClientFactory) GetRESTConfig() *rest.Config {
+	return &rest.Config{}
 }
