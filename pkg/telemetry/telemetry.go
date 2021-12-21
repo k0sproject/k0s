@@ -11,7 +11,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/machineid"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/etcd"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 type telemetryData struct {
@@ -63,7 +63,7 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = c.getControlPlaneNodeCount()
+	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(context.Background(), c.kubernetesClient)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %v", err)
 	}
@@ -111,24 +111,6 @@ func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 	}
 
 	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
-}
-
-func (c Component) getControlPlaneNodeCount() (int, error) {
-	switch c.clusterConfig.Spec.Storage.Type {
-	case v1beta1.EtcdStorageType:
-		cl, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
-		if err != nil {
-			return 0, fmt.Errorf("can't get etcd client: %v", err)
-		}
-		data, err := cl.ListMembers(context.Background())
-		if err != nil {
-			return 0, fmt.Errorf("can't receive etcd cluster members: %v", err)
-		}
-		return len(data), nil
-	default:
-		c.log.WithField("storageType", c.clusterConfig.Spec.Storage.Type).Warning("can't get control planes count, unknown storage type")
-		return -1, nil
-	}
 }
 
 func (c Component) sendTelemetry() {

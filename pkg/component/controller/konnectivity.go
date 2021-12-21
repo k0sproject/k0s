@@ -21,12 +21,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/machineid"
@@ -270,22 +268,8 @@ func (k *Konnectivity) countLeaseHolders(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	count := 0
-	leases, err := client.CoordinationV1().Leases("kube-node-lease").List(ctx, v1.ListOptions{})
-	if err != nil {
-		return 0, err
-	}
-	for _, l := range leases.Items {
-		if strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl") {
-			if kubeutil.IsValidLease(l) {
-				count++
-			}
-		}
-	}
 
-	return count, nil
+	return kubeutil.GetControlPlaneNodeCount(ctx, client)
 }
 
 const konnectivityAgentTemplate = `
