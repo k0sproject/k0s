@@ -61,6 +61,11 @@ func NewRootCmd() *cobra.Command {
 		Short: "k0s - Zero Friction Kubernetes",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			c := cliOpts(config.GetCmdOpts())
+
+			if c.Verbose {
+				logrus.SetLevel(logrus.InfoLevel)
+			}
+
 			// set DEBUG from env, or from command flag
 			if viper.GetString("debug") != "" || c.Debug {
 				logrus.SetLevel(logrus.DebugLevel)
@@ -132,6 +137,7 @@ func newDefaultConfigCmd() *cobra.Command {
 		Use:   "default-config",
 		Short: "Output the default k0s configuration yaml to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logrus.SetLevel(logrus.ErrorLevel)
 			c := cliOpts(config.GetCmdOpts())
 			if err := c.buildConfig(); err != nil {
 				return err

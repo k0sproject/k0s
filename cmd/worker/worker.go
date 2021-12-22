@@ -50,6 +50,9 @@ func NewWorkerCmd() *cobra.Command {
 	$ k0s worker --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logrus.SetLevel(logrus.InfoLevel)
+			logrus.SetOutput(os.Stdout)
+
 			c := CmdOpts(config.GetCmdOpts())
 			if len(args) > 0 {
 				c.TokenArg = args[0]

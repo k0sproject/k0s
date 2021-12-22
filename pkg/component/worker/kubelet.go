@@ -197,7 +197,7 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		args.Merge(extras)
 	}
 
-	logrus.Infof("starting kubelet with args: %v", args)
+	logrus.Debugf("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,
 		BinPath: assets.BinPath(cmd, k.K0sVars.BinDir),

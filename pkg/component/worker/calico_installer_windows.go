@@ -140,7 +140,7 @@ func getSourceVip() (string, error) {
 	err := retry.Do(func() error {
 		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
 		if err != nil {
-			logrus.WithError(err).Warning("can't get Calico_ep endpoint")
+			logrus.WithError(err).Warn("can't get Calico_ep endpoint")
 			return err
 		}
 		vip = ep.IPAddress.String()

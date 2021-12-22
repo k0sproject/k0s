@@ -28,10 +28,8 @@ import (
 //go:generate make generate-bindata
 
 func init() {
-
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.InfoLevel)
-
+	logrus.SetOutput(os.Stderr)
+	logrus.SetLevel(logrus.WarnLevel)
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true

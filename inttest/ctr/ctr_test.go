@@ -49,7 +49,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
-	output, err := ssh.ExecWithOutput("k0s ctr namespaces list")
+	output, err := ssh.ExecWithOutput("k0s ctr namespaces list 2>/dev/null")
 	s.Require().NoError(err)
 
 	flatOutput := removeRedundantSpaces(output)

@@ -63,7 +63,7 @@ func getConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
 func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	if cfgPath == "" {
 		// no config file exists, using defaults
-		logrus.Info("no config file given, using defaults")
+		logrus.Warn("no config file given, using defaults")
 	}
 	cfg, err := ValidateYaml(cfgPath, k0sVars)
 	if err != nil {
@@ -106,7 +106,7 @@ func configRequest(kubeConfig string) (clusterConfig *v1beta1.ClusterConfig, err
 func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	if cfgPath == "" {
 		// no config file exists, using defaults
-		logrus.Info("no config file given, using defaults")
+		logrus.Warn("no config file given, using defaults")
 	}
 	cfg, err := ValidateYaml(cfgPath, k0sVars)
 	if err != nil {

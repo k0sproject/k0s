@@ -67,7 +67,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	err = s.WaitForKubeAPI(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	output, err := ssh.ExecWithOutput("k0s kubectl get namespaces -o json")
+	output, err := ssh.ExecWithOutput("k0s kubectl get namespaces -o json 2>/dev/null")
 	s.Require().NoError(err)
 
 	namespaces := &K8sNamespaces{}
