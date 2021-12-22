@@ -194,7 +194,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 		},
 	}
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
-	r.ClusterConfig = config
+	r.clusterConfig = config
 
 	assert.NoError(t, r.Init())
 
