@@ -8,30 +8,30 @@ body:
         Please use this template while reporting a bug and provide as much info as possible.
         Not doing so may result in your bug not being addressed in a timely manner. Thanks!
 
-    - type: checkboxes
-      description: Before creating an issue, make sure you've checked the following:
-      attributes:
-        options:
-          - label: You are running the latest released version of k0s
-            required: true
-          - label: Make sure you've searched for existing issues, both open and closed
-            required: true
-          - label: Make sure you've searched for PRs too, a fix might've been merged already
-            required: true
-          - label: |
-              You're looking at docs for the released version, `main` branch docs are usually ahead of released versions.
-              Docs for exact released version can be found at https://github.com/k0sproject/k0s/tree/<version>/docs
-            required: true
+  - type: checkboxes
+    description: Before creating an issue, make sure you've checked the following
+    attributes:
+      options:
+        - label: You are running the latest released version of k0s
+          required: true
+        - label: Make sure you've searched for existing issues, both open and closed
+          required: true
+        - label: Make sure you've searched for PRs too, a fix might've been merged already
+          required: true
+        - label: |
+            You're looking at docs for the released version, `main` branch docs are usually ahead of released versions.
+            Docs for exact released version can be found at https://github.com/k0sproject/k0s/tree/<version>/docs
+          required: true
 
   - type: textarea
     attributes:
       label: Version
-      description: Use: `k0s version`
+      description: "Use: `k0s version`"
 
   - type: textarea
     attributes:
       label: Platform
-      description: Which platform did you run k0s on? Use: `lsb_release -a`
+      description: "Which platform did you run k0s on? Use: `lsb_release -a`"
 
   - type: textarea
     attributes:
