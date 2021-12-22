@@ -608,7 +608,7 @@ func (s *FootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	}
 	defer ssh.Disconnect()
 
-	kubeConfigCmd := fmt.Sprintf("%s kubeconfig create %s %s", s.K0sFullPath, username, strings.Join(k0sKubeconfigArgs, " "))
+	kubeConfigCmd := fmt.Sprintf("%s kubeconfig create %s %s 2>/dev/null", s.K0sFullPath, username, strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
 		return nil, err
