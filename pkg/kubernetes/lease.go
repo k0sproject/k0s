@@ -16,9 +16,13 @@ limitations under the License.
 package kubernetes
 
 import (
+	"context"
+	"strings"
 	"time"
 
 	coordinationv1 "k8s.io/api/coordination/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // IsValidLease check whether or not the lease is expired
@@ -28,4 +32,23 @@ func IsValidLease(lease coordinationv1.Lease) bool {
 	leaseExpiry := lease.Spec.RenewTime.Add(leaseDur * time.Second)
 
 	return leaseExpiry.After(time.Now())
+}
+
+func GetControlPlaneNodeCount(ctx context.Context, kubeClient kubernetes.Interface) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	count := 0
+	leases, err := kubeClient.CoordinationV1().Leases("kube-node-lease").List(ctx, v1.ListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	for _, l := range leases.Items {
+		if strings.HasPrefix(l.ObjectMeta.Name, "k0s-ctrl") {
+			if IsValidLease(l) {
+				count++
+			}
+		}
+	}
+
+	return count, nil
 }
