@@ -11,7 +11,7 @@ body:
 
   - type: checkboxes
     attributes:
-      label: Before creating an issue, make sure you've checked the following:"
+      label: "Before creating an issue, make sure you've checked the following:"
       options:
         - label: You are running the latest released version of k0s
           required: true
