@@ -9,12 +9,9 @@ body:
         Please use this template while reporting a bug and provide as much info as possible.
         Not doing so may result in your bug not being addressed in a timely manner. Thanks!
 
-  - type: markdown
-    attributes:
-      value: "Before creating an issue, make sure you've checked the following:"
-
   - type: checkboxes
     attributes:
+      label: Before creating an issue, make sure you've checked the following:"
       options:
         - label: You are running the latest released version of k0s
           required: true
