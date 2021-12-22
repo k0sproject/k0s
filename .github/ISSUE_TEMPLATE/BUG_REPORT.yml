@@ -22,7 +22,7 @@ body:
         - label: You're looking at docs for the released version, "main" branch docs are usually ahead of released versions.
           required: true
 
-  - type: textarea
+  - type: input
     attributes:
       label: Version
       description: "Use: `k0s version`"
@@ -31,6 +31,7 @@ body:
     attributes:
       label: Platform
       description: "Which platform did you run k0s on? Use: `lsb_release -a`"
+      render: shell
 
   - type: textarea
     attributes:
@@ -41,7 +42,7 @@ body:
     attributes:
       label: Steps to reproduce
       description: How can we reproduce this issue? (as minimally and as precisely as possible)
-      placeholder: |
+      value: |
         1.
         2.
         3.
