@@ -22,9 +22,7 @@ body:
           required: true
         - label: Make sure you've searched for PRs too, a fix might've been merged already
           required: true
-        - label: |
-            You're looking at docs for the released version, `main` branch docs are usually ahead of released versions.
-            Docs for exact released version can be found at https://github.com/k0sproject/k0s/tree/<version>/docs
+        - label: You're looking at docs for the released version, "main" branch docs are usually ahead of released versions.
           required: true
 
   - type: textarea
