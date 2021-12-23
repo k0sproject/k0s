@@ -13,32 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package validate
+package config
 
 import (
-	configcmd "github.com/k0sproject/k0s/cmd/config"
-	"github.com/k0sproject/k0s/pkg/config"
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
-type CmdOpts config.CLIOptions
-
-// TODO deprecated, remove when appropriate
-func NewValidateCmd() *cobra.Command {
+func NewCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "validate",
-		Short:  "Validation related sub-commands",
-		Hidden: true,
+		Use:   "create",
+		Short: "Output the default k0s configuration yaml to stdout",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := yaml.Marshal(v1beta1.DefaultClusterConfig())
+			if err != nil {
+				return err
+			}
+			fmt.Printf("%s", cfg)
+			return nil
+		},
 	}
-	cmd.AddCommand(newConfigCmd())
-	cmd.SilenceUsage = true
-	return cmd
-}
-
-func newConfigCmd() *cobra.Command {
-	cmd := configcmd.NewValidateCmd()
-	cmd.Use = "config"
-	cmd.Deprecated = "use 'k0s config validate' instead"
-	cmd.Hidden = false
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

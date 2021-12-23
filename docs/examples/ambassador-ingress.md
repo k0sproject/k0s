@@ -19,7 +19,7 @@ As you need to create a custom configuration file to install Ambassador Gateway,
 2. Export the default k0s configuration file:
 
     ```shell
-    docker exec k0s k0s default-config > k0s.yaml
+    docker exec k0s k0s config create > k0s.yaml
     ```
 
 3. Export the cluster config, so you can access it using kubectl:
