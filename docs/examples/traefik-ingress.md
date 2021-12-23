@@ -78,7 +78,10 @@ service/traefik-1607085579   LoadBalancer   10.105.119.102   192.168.0.5      80
 Receiving a 404 response here is normal, as you've not configured any Ingress resources to respond yet:
 
 ```shell
-$ curl http://192.168.0.5
+curl http://192.168.0.5
+```
+
+```shell
 404 page not found
 ```
 
@@ -107,7 +110,7 @@ With an available and addressable load balancer present on your cluster, now you
 2. Deploy the resource:
 
     ```shell
-    root@k0s-host ➜ kubectl apply -f traefik-dashboard.yaml
+    kubectl apply -f traefik-dashboard.yaml
     ```
 
     *Output*:
@@ -173,7 +176,7 @@ With an available and addressable load balancer present on your cluster, now you
 4. Apply the manifests:
 
     ```shell
-    root@k0s-host ➜ kubectl apply -f whoami.yaml
+    kubectl apply -f whoami.yaml
     ```
 
     *Output*:

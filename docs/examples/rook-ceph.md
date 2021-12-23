@@ -94,7 +94,10 @@ Deploy AWS EBS volumes, one for each worker node. You can manually create three 
 After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:
 
 ```shell
-$ lsblk -f
+lsblk -f
+```
+
+```shell
 NAME        FSTYPE   LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINT
 loop0       squashfs                                                            0   100% /snap/amazon-ssm-agent/3552
 loop1       squashfs                                                            0   100% /snap/core18/1997
@@ -178,8 +181,10 @@ kubectl apply -f cluster.yaml
 It takes some minutes to prepare the volumes and create the cluster. Once this is completed you should see the following output:
 
 ```shell
-$ kubectl get pods -n rook-ceph
+kubectl get pods -n rook-ceph
+```
 
+```shell
 NAME                                                         READY   STATUS      RESTARTS   AGE
 csi-cephfsplugin-nhxc8                                       3/3     Running     0          2m48s
 csi-cephfsplugin-provisioner-db45f85f5-ldhjp                 6/6     Running     0          2m48s
@@ -248,8 +253,10 @@ kubectl get pvc
 When the PVC gets the requested volume reserved (bound), it should look like this:
 
 ```shell
-$ kubectl get pvc
+kubectl get pvc
+```
 
+```shell
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO            rook-ceph-block   6s
 ```
@@ -298,11 +305,16 @@ kubectl apply -f mongo.yaml
 Open the MongoDB shell using the mongo pod:
 
 ```shell
-$ kubectl get pods
+kubectl get pods
+```
+
+```shell
 NAME                    READY   STATUS    RESTARTS   AGE
 mongo-b87cbd5cc-4wx8t   1/1     Running   0          76s
+```
 
-$ kubectl exec -it mongo-b87cbd5cc-4wx8t -- mongo
+```shell
+kubectl exec -it mongo-b87cbd5cc-4wx8t -- mongo
 ```
 
 Create a DB and insert some data:

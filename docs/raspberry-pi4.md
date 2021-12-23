@@ -116,8 +116,11 @@ curl -sSLf https://get.k0s.sh | sudo sh
 At this point you can run `k0s`:
 
 ```shell
-$ k0s version
-v0.9.1
+k0s version
+```
+
+```shell
+v1.22.1+k0s.0
 ```
 
 ### Deploy Kubernetes
@@ -194,7 +197,10 @@ kubectl create clusterrolebinding k0s-admin-binding --clusterrole=admin --user=k
 You can now access and use the cluster:
 
 ```shell
-$ kubectl get nodes,deployments,pods -A
+kubectl get nodes,deployments,pods -A
+```
+
+```shell
 NAME         STATUS   ROLES    AGE     VERSION
 node/k8s-4   Ready    <none>   5m9s    v1.20.1-k0s1
 node/k8s-5   Ready    <none>   5m      v1.20.1-k0s1

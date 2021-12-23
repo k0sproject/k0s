@@ -9,7 +9,10 @@ The `k0s worker` command accepts the `--labels` flag, with which you can make th
 For example, running the worker with `k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"` results in:
 
 ```shell
-$ kubectl get node --show-labels
+kubectl get node --show-labels
+```
+
+```shell
 NAME      STATUS     ROLES    AGE   VERSION        LABELS
 worker0   NotReady   <none>   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
 ```
@@ -17,7 +20,10 @@ worker0   NotReady   <none>   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64
 Controller worker nodes are assigned `node.k0sproject.io/role=control-plane` and `node-role.kubernetes.io/control-plane=true` labels:
 
 ```shell
-$ kubectl get node --show-labels
+kubectl get node --show-labels
+```
+
+```shell
 NAME          STATUS     ROLES           AGE   VERSION        LABELS
 controller0   NotReady   control-plane   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
 ```
@@ -31,7 +37,10 @@ The `k0s worker` command accepts the `--taints` flag, with which you can make th
 **Note:** Controller nodes running with `--enable-worker` are assigned `node-role.kubernetes.io/master:NoExecute` taint automatically.
 
 ```shell
-$ kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+```
+
+```shell
 NAME          TAINTS
 controller0   [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
 worker0       <none>

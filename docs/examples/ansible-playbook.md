@@ -34,7 +34,10 @@ You will require the following tools to install k0s on local virtual machines:
     This creates 7 virtual machines:
 
     ```shell
-    $ ./tools/multipass_create_instances.sh 7
+    ./tools/multipass_create_instances.sh 7
+    ```
+
+    ```shell
     Create cloud-init to import ssh key...
     [1/7] Creating instance k0s-1 with multipass...
     Launched: k0s-1
@@ -81,7 +84,10 @@ You will require the following tools to install k0s on local virtual machines:
     3. Fill in `inventory/multipass/inventory.yml`. This can be done by direct entry using the metadata provided by `multipass list,`, or you can use the following Python script `multipass_generate_inventory.py`:
 
         ```shell
-        $ ./tools/multipass_generate_inventory.py
+        ./tools/multipass_generate_inventory.py
+        ```
+
+        ```shell
         Designate first three instances as control plane
         Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
         $ cp tools/inventory.yml inventory/multipass/inventory.yml
@@ -130,7 +136,10 @@ You will require the following tools to install k0s on local virtual machines:
     Run the following command to test the connection to your hosts:
 
     ```shell
-    $ ansible -i inventory/multipass/inventory.yml -m ping
+    ansible -i inventory/multipass/inventory.yml -m ping
+    ```
+
+    ```shell
     k0s-4 | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
@@ -148,7 +157,10 @@ You will require the following tools to install k0s on local virtual machines:
     Applying the playbook, k0s download and be set up on all nodes, tokens will be exchanged, and a kubeconfig will be dumped to your local deployment environment.
 
     ```shell
-    $ ansible-playbook site.yml -i inventory/multipass/inventory.yml
+    ansible-playbook site.yml -i inventory/multipass/inventory.yml
+    ```
+
+    ```shell
     TASK [k0s/initial_controller : print kubeconfig command] *******************************************************
     Tuesday 22 December 2020  17:43:20 +0100 (0:00:00.257)       0:00:41.287 ******
     ok: [k0s-1] => {
@@ -193,8 +205,11 @@ You will require the following tools to install k0s on local virtual machines:
 A kubeconfig was copied to your local machine while the playbook was running which you can use to gain access to your new Kubernetes cluster:
 
 ```shell
-$ export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
-$ kubectl cluster-info
+export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
+kubectl cluster-info
+```
+
+```shell
 Kubernetes control plane is running at https://192.168.64.32:6443
 CoreDNS is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 Metrics-server is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
@@ -210,7 +225,10 @@ k0s-7   NotReady   <none>   21s   v1.20.1-k0s1   192.168.64.61   <none>        U
 **Note**: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command:
 
 ```shell
-$ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
+ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/multipass/inventory.yml | tail -1 | jq
+```
+
+```json
 {
   "level": "info",
   "members": {
@@ -226,13 +244,26 @@ $ ansible k0s-1 -a "k0s etcd member-list -c /etc/k0s/k0s.yaml" -i inventory/mult
 Once all worker nodes are at `Ready` state you can use the cluster. You can test the cluster state by creating a simple nginx deployment.
 
 ```shell
-$ kubectl create deployment nginx --image=gcr.io/google-containers/nginx --replicas=5
+kubectl create deployment nginx --image=gcr.io/google-containers/nginx --replicas=5
+```
+
+```shell
 deployment.apps/nginx created
+```
 
-$ kubectl expose deployment nginx --target-port=80 --port=8100
+```shell
+kubectl expose deployment nginx --target-port=80 --port=8100
+```
+
+```shell
 service/nginx exposed
+```
 
-$ kubectl run hello-k0s --image=quay.io/prometheus/busybox --rm -it --restart=Never --command -- wget -qO- nginx:8100
+```shell
+kubectl run hello-k0s --image=quay.io/prometheus/busybox --rm -it --restart=Never --command -- wget -qO- nginx:8100
+```
+
+```shell
 <!DOCTYPE html>
 <html>
 <head>

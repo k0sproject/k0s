@@ -10,7 +10,7 @@ This guide assumes you have already cloned the upstream repo to your system via 
 ## Adding the Forked Remote
 
 ```shell
-export GITHUB_USER={ your github's username }
+export GITHUB_USER={ your github username }
 ```
 
 ```shell
@@ -27,7 +27,10 @@ git push --set-upstream $GITHUB_USER main
 Your remotes should look something like this:
 
 ```shell
-$ git remote -v
+git remote -v
+```
+
+```shell
 origin  https://github.com/k0sproject/k0s (fetch)
 origin  no_push (push)
 my_fork git@github.com:{ github_username }/k0s.git (fetch)
@@ -45,8 +48,11 @@ git checkout -b my_feature_branch
 Rebase your branch:
 
 ```shell
-$ git fetch origin
-$ git rebase origin/main
+git fetch origin && \
+  git rebase origin/main
+```
+
+```shell
 Current branch my_feature_branch is up to date.
 ```
 
