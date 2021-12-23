@@ -104,7 +104,6 @@ func DefaultLogLevels() map[string]string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
@@ -179,6 +178,16 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
+	flagset.AddFlagSet(FileInputFlag())
+	return flagset
+}
+
+// The config flag used to be a persistent, joint flag to all commands
+// now only a few commands use it. This function helps to share the flag with multiple commands without needing to define
+// it in multiple places
+func FileInputFlag() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	flagset.StringVarP(&CfgFile, "config", "c", constant.K0sConfigPathDefault, "config file, use '-' to read the config from stdin")
 
 	return flagset
 }

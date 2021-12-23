@@ -29,6 +29,7 @@ func NewAirgapCmd() *cobra.Command {
 
 	cmd.SilenceUsage = true
 	cmd.AddCommand(NewAirgapListImagesCmd())
+	cmd.PersistentFlags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

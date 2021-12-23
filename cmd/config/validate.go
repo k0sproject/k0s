@@ -36,5 +36,6 @@ func NewValidateCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }

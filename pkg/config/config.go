@@ -17,7 +17,10 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -26,6 +29,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -35,7 +39,12 @@ import (
 var (
 	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
 	getOpts      = v1.GetOptions{TypeMeta: resourceType}
+	errNoConfig  = errors.New("no configuration found")
 )
+
+func IsErrNoConfig(err error) bool {
+	return err == errNoConfig
+}
 
 func getConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
 	timeout := time.After(120 * time.Second)
@@ -117,34 +126,42 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 
 func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	var storage *v1beta1.StorageSpec
+	var cfg *v1beta1.ClusterConfig
+
+	CfgFile = cfgPath
+
 	if k0sVars.DefaultStorageType == "kine" {
 		storage = &v1beta1.StorageSpec{
 			Type: v1beta1.KineStorageType,
 			Kine: v1beta1.DefaultKineConfig(k0sVars.DataDir),
 		}
-
 	}
-	switch cfgPath {
-	case "-":
-		clusterConfig, err = v1beta1.ConfigFromStdin(storage)
-	case "":
-		clusterConfig = v1beta1.DefaultClusterConfig(storage)
-	default:
-		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, storage)
+	if file.Exists(constant.K0sConfigPathDefault) {
+		logrus.Debugf("found config file in %s", constant.K0sConfigPathDefault)
 	}
+	cfgReader, err := getConfigReader()
 	if err != nil {
-		return nil, err
+		if IsErrNoConfig(err) {
+			cfg = v1beta1.DefaultClusterConfig(storage)
+		} else {
+			return nil, err
+		}
+	} else {
+		cfg, err = v1beta1.ConfigFromReader(cfgReader, storage)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
+	if cfg.Spec.Storage.Type == v1beta1.KineStorageType && cfg.Spec.Storage.Kine == nil {
 		logrus.Warn("storage type is kine but no config given, setting up defaults")
-		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
+		cfg.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
 	}
-	if clusterConfig.Spec.Install == nil {
-		clusterConfig.Spec.Install = v1beta1.DefaultInstallSpec()
+	if cfg.Spec.Install == nil {
+		cfg.Spec.Install = v1beta1.DefaultInstallSpec()
 	}
 
-	errors := clusterConfig.Validate()
+	errors := cfg.Validate()
 	if len(errors) > 0 {
 		messages := make([]string, len(errors))
 		for _, e := range errors {
@@ -152,47 +169,7 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 		}
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
 	}
-	return clusterConfig, nil
-}
-
-// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
-// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-// - APISpec
-// - StorageSpec
-// - Network.ServiceCIDR
-// - Install
-func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.ClusterConfig {
-	clusterSpec := &v1beta1.ClusterSpec{
-		ControllerManager: config.Spec.ControllerManager,
-		Scheduler:         config.Spec.Scheduler,
-		Network: &v1beta1.Network{
-			Calico:     config.Spec.Network.Calico,
-			DualStack:  config.Spec.Network.DualStack,
-			KubeProxy:  config.Spec.Network.KubeProxy,
-			KubeRouter: config.Spec.Network.KubeRouter,
-			PodCIDR:    config.Spec.Network.PodCIDR,
-			Provider:   config.Spec.Network.Provider,
-		},
-		PodSecurityPolicy: config.Spec.PodSecurityPolicy,
-		WorkerProfiles:    config.Spec.WorkerProfiles,
-		Telemetry:         config.Spec.Telemetry,
-		Images:            config.Spec.Images,
-		Extensions:        config.Spec.Extensions,
-		Konnectivity:      config.Spec.Konnectivity,
-		API: &v1beta1.APISpec{
-			ExternalAddress: config.Spec.API.ExternalAddress,
-			Address:         config.Spec.API.Address,
-			Port:            config.Spec.API.Port,
-		},
-	}
-
-	return &v1beta1.ClusterConfig{
-		ObjectMeta: config.ObjectMeta,
-		TypeMeta:   config.TypeMeta,
-		Spec:       clusterSpec,
-		Status:     config.Status,
-	}
+	return cfg, nil
 }
 
 // GetNodeConfig takes a config-file parameter and returns a ClusterConfig stripped of Cluster-Wide Settings
@@ -201,31 +178,31 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	if err != nil {
 		return nil, err
 	}
+	nodeConfig := cfg.GetBootstrappingConfig()
 	var etcdConfig *v1beta1.EtcdConfig
 	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		etcdConfig = &v1beta1.EtcdConfig{
 			PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
 		}
-	}
-
-	clusterSpec := &v1beta1.ClusterSpec{
-		API: cfg.Spec.API,
-		Storage: &v1beta1.StorageSpec{
-			Type: cfg.Spec.Storage.Type,
-			Etcd: etcdConfig,
-			Kine: cfg.Spec.Storage.Kine,
-		},
-		Network: &v1beta1.Network{
-			ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
-			DualStack:   cfg.Spec.Network.DualStack,
-		},
-		Install: cfg.Spec.Install,
-	}
-	nodeConfig := &v1beta1.ClusterConfig{
-		ObjectMeta: cfg.ObjectMeta,
-		TypeMeta:   cfg.TypeMeta,
-		Spec:       clusterSpec,
-		Status:     cfg.Status,
+		nodeConfig.Spec.Storage.Etcd = etcdConfig
 	}
 	return nodeConfig, nil
+}
+
+func getConfigReader() (io.Reader, error) {
+	switch CfgFile {
+	case "-":
+		return os.Stdin, nil
+	case "", constant.K0sConfigPathDefault:
+		f, err := os.Open(constant.K0sConfigPathDefault)
+		if err == nil {
+			return f, nil
+		}
+		if os.IsNotExist(err) {
+			return nil, errNoConfig
+		}
+		return nil, err
+	default:
+		return os.Open(CfgFile)
+	}
 }

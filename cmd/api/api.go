@@ -72,6 +72,7 @@ func NewAPICmd() *cobra.Command {
 		},
 	}
 	cmd.SilenceUsage = true
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
