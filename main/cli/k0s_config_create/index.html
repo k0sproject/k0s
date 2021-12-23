@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/k0s-multi-node/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_config_create/">
       
       
         
       
-      <link rel="icon" href="../img/k0s_social.png">
+      <link rel="icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Manual Install (advanced) - Documentation</title>
+        <title>K0s config create - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manual-install-advanced" class="md-skip">
+        <a href="#k0s-config-create" class="md-skip">
           Skip to content
         </a>
       
@@ -103,9 +103,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Manual Install (advanced)
+              K0s config create
             
           </span>
         </div>
@@ -226,9 +226,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -270,14 +270,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
       
       
       
@@ -300,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -314,7 +312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -326,14 +324,12 @@
               
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
       
       
       
@@ -354,120 +350,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Manual Install (advanced)
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-k0s" class="md-nav__link">
-    Install k0s
-  </a>
-  
-    <nav class="md-nav" aria-label="Install k0s">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-download-k0s" class="md-nav__link">
-    1. Download k0s
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-bootstrap-a-controller-node" class="md-nav__link">
-    2. Bootstrap a controller node
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-create-a-join-token" class="md-nav__link">
-    3. Create a join token
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-add-workers-to-the-cluster" class="md-nav__link">
-    4. Add workers to the cluster
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-add-controllers-to-the-cluster" class="md-nav__link">
-    5. Add controllers to the cluster
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-check-k0s-status" class="md-nav__link">
-    6. Check k0s status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-access-your-cluster" class="md-nav__link">
-    7. Access your cluster
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    Next Steps
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -479,7 +366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -493,7 +380,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -507,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -521,7 +408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../../examples/ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -535,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -556,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -570,7 +457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -584,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -598,7 +485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -612,7 +499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../os-deps/" class="md-nav__link">
+      <a href="../../os-deps/" class="md-nav__link">
         OS Dependencies
       </a>
     </li>
@@ -660,7 +547,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -674,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
+      <a href="../../dynamic-configuration/" class="md-nav__link">
         Dynamic Configuration
       </a>
     </li>
@@ -688,7 +575,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
+      <a href="../../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -702,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
+      <a href="../../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -716,7 +603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
+      <a href="../../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -730,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
+      <a href="../../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -744,7 +631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -758,7 +645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../manifests/" class="md-nav__link">
+      <a href="../../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -772,7 +659,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
+      <a href="../../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -786,7 +673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
+      <a href="../../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -800,7 +687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
+      <a href="../../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -814,7 +701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
+      <a href="../../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -828,7 +715,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
+      <a href="../../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -842,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
+      <a href="../../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -856,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
+      <a href="../../environment-variables/" class="md-nav__link">
         Configuration of Environment Variables
       </a>
     </li>
@@ -870,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         OpenID Connect
       </a>
     </li>
@@ -918,7 +805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -932,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../../examples/nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -946,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../../examples/traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -960,7 +847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -974,7 +861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -1022,7 +909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -1036,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -1084,7 +971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -1098,7 +985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         CIS Benchmark
       </a>
     </li>
@@ -1120,7 +1007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1161,7 +1048,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/overview/" class="md-nav__link">
+      <a href="../../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1175,7 +1062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1189,7 +1076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1203,7 +1090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1233,8 +1120,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1243,78 +1128,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites
+  <a href="#k0s-config-create" class="md-nav__link">
+    k0s config create
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-k0s" class="md-nav__link">
-    Install k0s
-  </a>
-  
-    <nav class="md-nav" aria-label="Install k0s">
+    <nav class="md-nav" aria-label="k0s config create">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-download-k0s" class="md-nav__link">
-    1. Download k0s
+  <a href="#options" class="md-nav__link">
+    Options
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-bootstrap-a-controller-node" class="md-nav__link">
-    2. Bootstrap a controller node
+  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
+    Options inherited from parent commands
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-create-a-join-token" class="md-nav__link">
-    3. Create a join token
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-add-workers-to-the-cluster" class="md-nav__link">
-    4. Add workers to the cluster
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-add-controllers-to-the-cluster" class="md-nav__link">
-    5. Add controllers to the cluster
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-check-k0s-status" class="md-nav__link">
-    6. Check k0s status
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-access-your-cluster" class="md-nav__link">
-    7. Access your cluster
+  <a href="#see-also" class="md-nav__link">
+    SEE ALSO
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    Next Steps
-  </a>
   
 </li>
       
@@ -1332,112 +1175,26 @@
                 
                 
                 
-                <h1 id="manual-install-advanced">Manual Install (Advanced)<a class="headerlink" href="#manual-install-advanced" title="Permanent link">#</a></h1>
-<p>You can manually set up k0s nodes by creating a multi-node cluster that is locally managed on each node. This involves several steps, to first install each node separately, and to then connect the node together using access tokens.</p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
-<p><strong>Note</strong>: Before proceeding, make sure to review the <a href="../system-requirements/">System Requirements</a>.</p>
-<p>Though the Manual Install material is written for Debian/Ubuntu, you can use it for any Linux distro that is running either a Systemd or OpenRC init system.</p>
-<p>You can speed up the use of the <code>k0s</code> command by enabling <a href="../shell-completion/">shell completion</a>.</p>
-<h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
-<h3 id="1-download-k0s">1. Download k0s<a class="headerlink" href="#1-download-k0s" title="Permanent link">#</a></h3>
-<p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+                  <h1>K0s config create</h1>
+                
+                <h2 id="k0s-config-create">k0s config create<a class="headerlink" href="#k0s-config-create" title="Permanent link">#</a></h2>
+<p>Output the default or merged k0s configuration yaml to stdout</p>
+<div class="highlight"><pre><span></span><code>k0s config create [flags]
 </code></pre></div>
-<p>The download script accepts the following environment variables:</p>
-<table>
-<thead>
-<tr>
-<th align="left">Variable</th>
-<th align="left">Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left">`K0S_VERSION=v1.23.1+k0s.0</td>
-<td align="left">Select the version of k0s to be installed</td>
-</tr>
-<tr>
-<td align="left"><code>DEBUG=true</code></td>
-<td align="left">Output commands and their arguments at execution.</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Note</strong>: If you require environment variables and use sudo, you can do:</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo <span class="nv">K0S_VERSION</span><span class="o">=</span>v1.23.1+k0s.0 sh
+<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>  -c, --config string          config file, use &#39;-&#39; to read the config from stdin
+      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
+  -h, --help                   help for create
+      --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
 </code></pre></div>
-<h3 id="2-bootstrap-a-controller-node">2. Bootstrap a controller node<a class="headerlink" href="#2-bootstrap-a-controller-node" title="Permanent link">#</a></h3>
-<p>Create a configuration file:</p>
-<div class="highlight"><pre><span></span><code>mkdir -p /etc/k0s
-k0s config create &gt; /etc/k0s/k0s.yaml
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+      --debug                    Debug logging (default: false)
+      --version version[=true]   Print version information and quit
 </code></pre></div>
-<p><strong>Note</strong>: For information on settings modification, refer to the <a href="../configuration/">configuration</a> documentation.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller -c /etc/k0s/k0s.yaml
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>sudo k0s start
-</code></pre></div>
-<p>k0s process acts as a "supervisor" for all of the control plane components. In moments the control plane will be up and running.</p>
-<h3 id="3-create-a-join-token">3. Create a join token<a class="headerlink" href="#3-create-a-join-token" title="Permanent link">#</a></h3>
-<p>You need a token to join workers to the cluster. The token embeds information that enables mutual trust between the worker and controller(s) and which allows the node to join the cluster as worker.</p>
-<p>To get a token, run the following command on one of the existing controller nodes:</p>
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>worker
-</code></pre></div>
-<p>The resulting output is a long <a href="#about-tokens">token</a> string, which you can use to add a worker to the cluster.</p>
-<p>For enhanced security, run the following command to set an expiration time for the token:</p>
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>worker --expiry<span class="o">=</span>100h &gt; token-file
-</code></pre></div>
-<h3 id="4-add-workers-to-the-cluster">4. Add workers to the cluster<a class="headerlink" href="#4-add-workers-to-the-cluster" title="Permanent link">#</a></h3>
-<p>To join the worker, run k0s in the worker mode with the join token you created:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install worker --token-file /path/to/token/file
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>sudo k0s start
-</code></pre></div>
-<h4 id="about-tokens">About tokens<a class="headerlink" href="#about-tokens" title="Permanent link">#</a></h4>
-<p>The join tokens are base64-encoded <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">kubeconfigs</a> for several reasons:</p>
+<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li>Well-defined structure</li>
-<li>Capable of direct use as bootstrap auth configs for kubelet</li>
-<li>Embedding of CA info for mutual trust</li>
-</ul>
-<p>The bearer token embedded in the kubeconfig is a <a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/">bootstrap token</a>. For controller join tokens and worker join tokens k0s uses different usage attributes to ensure that k0s can validate the token role on the controller side.</p>
-<h3 id="5-add-controllers-to-the-cluster">5. Add controllers to the cluster<a class="headerlink" href="#5-add-controllers-to-the-cluster" title="Permanent link">#</a></h3>
-<p><strong>Note</strong>: Either etcd or an external data store (MySQL or Postgres) via kine must be in use to add new controller nodes to the cluster. Pay strict attention to the <a href="../high-availability/">high availability configuration</a> and make sure the configuration is identical for all controller nodes.</p>
-<p>To create a join token for the new controller, run the following command on an existing controller:</p>
-<div class="highlight"><pre><span></span><code>k0s token create --role<span class="o">=</span>controller --expiry<span class="o">=</span>1h &gt; token-file
-</code></pre></div>
-<p>On the new controller, run:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller --token-file /path/to/token/file -c /etc/k0s/k0s.yaml
-</code></pre></div>
-<p>Important notice here is that each controller in the cluster must have k0s.yaml otherwise some cluster nodes will use default config values which will lead to inconsistency behavior.
-If your configuration file includes IP addresses (node address, sans, etcd peerAddress), remember to update them accordingly for this specific controller node.</p>
-<div class="highlight"><pre><span></span><code>k0s start
-</code></pre></div>
-<h3 id="6-check-k0s-status">6. Check k0s status<a class="headerlink" href="#6-check-k0s-status" title="Permanent link">#</a></h3>
-<p>To get general information about your k0s instance's status:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s status
-Version: v1.23.1+k0s.0
-Process ID: <span class="m">2769</span>
-Parent Process ID: <span class="m">1</span>
-Role: controller
-Init System: linux-systemd
-Service file: /etc/systemd/system/k0scontroller.service
-</code></pre></div>
-<h3 id="7-access-your-cluster">7. Access your cluster<a class="headerlink" href="#7-access-your-cluster" title="Permanent link">#</a></h3>
-<p>Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
-NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    &lt;none&gt;   4m6s   v1.23.1-k0s1
-</code></pre></div>
-<p>You can also access your cluster easily with <a href="https://k8slens.dev/">Lens</a>, simply by copying the kubeconfig and pasting it to Lens:</p>
-<div class="highlight"><pre><span></span><code>sudo cat /var/lib/k0s/pki/admin.conf
-</code></pre></div>
-<p><strong>Note</strong>: To access the cluster from an external network you must replace <code>localhost</code> in the kubeconfig with the host ip address for your controller.</p>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">#</a></h2>
-<ul>
-<li><a href="../k0sctl-install/">Install using k0sctl</a>: Deploy multi-node clusters using just one command</li>
-<li><a href="../configuration/">Control plane configuration options</a>: Networking and datastore configuration</li>
-<li><a href="../worker-node-config/">Worker node configuration options</a>: Node labels and kubelet arguments</li>
-<li><a href="../cloud-providers/">Support for cloud providers</a>: Load balancer or storage configuration</li>
-<li><a href="../examples/traefik-ingress/">Installing the Traefik Ingress Controller</a>: Ingress deployment information</li>
+<li><a href="../k0s_config/">k0s config</a>    - Configuration related sub-commands</li>
 </ul>
                 
               
@@ -1455,41 +1212,6 @@ k0s    Ready    &lt;none&gt;   4m6s   v1.23.1-k0s1
       
         
 <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
-      
-        
-        <a href="../k0sctl-install/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Install using k0sctl" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Install using k0sctl
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../k0s-in-docker/" class="md-footer__link md-footer__link--next" aria-label="Next: Docker" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Docker
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1539,10 +1261,10 @@ k0s    Ready    &lt;none&gt;   4m6s   v1.23.1-k0s1
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>

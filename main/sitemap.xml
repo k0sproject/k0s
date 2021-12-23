@@ -216,6 +216,21 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/main/cli/k0s_config/</loc>
+         <lastmod>2021-12-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/main/cli/k0s_config_create/</loc>
+         <lastmod>2021-12-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/main/cli/k0s_config_validate/</loc>
+         <lastmod>2021-12-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/main/cli/k0s_controller/</loc>
          <lastmod>2021-12-23</lastmod>
          <changefreq>daily</changefreq>
@@ -287,11 +302,6 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/main/cli/k0s_stop/</loc>
-         <lastmod>2021-12-23</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://docs.k0sproject.io/main/cli/k0s_token/</loc>
          <lastmod>2021-12-23</lastmod>
          <changefreq>daily</changefreq>
     </url>
