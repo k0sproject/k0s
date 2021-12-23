@@ -220,8 +220,9 @@ data:
       qps: 0
     clusterCIDR: {{ .ClusterCIDR }}
     configSyncPeriod: 0s
-    {{ if .DualStack }}
     featureGates:
+      ServiceInternalTrafficPolicy: true
+    {{ if .DualStack }}
       IPv6DualStack: true
     {{ end }}
     mode: "{{ .Mode }}"

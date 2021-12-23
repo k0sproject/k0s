@@ -166,6 +166,7 @@ jobs:
           - check-upgrade
           - check-psp
           - check-statussocket
+          - check-tunneledkas
           # skipped, originally titled "Smoke-test for network":
           # - check-etcd
 
