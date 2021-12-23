@@ -122,7 +122,10 @@ k0s start
 To get general information about your k0s instance's status:
 
 ```shell
-$ sudo k0s status
+ sudo k0s status
+```
+
+```shell
 Version: v1.23.1+k0s.0
 Process ID: 2769
 Parent Process ID: 1
@@ -136,7 +139,10 @@ Service file: /etc/systemd/system/k0scontroller.service
 Use the Kubernetes 'kubectl' command-line tool that comes with k0s binary to deploy your application or check your node status:
 
 ```shell
-$ sudo k0s kubectl get nodes
+sudo k0s kubectl get nodes
+```
+
+```shell
 NAME   STATUS   ROLES    AGE    VERSION
 k0s    Ready    <none>   4m6s   v1.23.1-k0s1
 ```

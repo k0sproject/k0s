@@ -58,7 +58,10 @@ spec:
 If you do not specify a version, k0sctl checks online for the latest version and defaults to it.
 
 ```shell
-$ k0sctl apply
+k0sctl apply
+```
+
+```shell
 ...
 ...
 INFO[0001] ==> Running phase: Upgrade controllers

@@ -28,7 +28,10 @@ kube-system   metrics-server-7d4bcb75dd-pqkrs            1/1     Running   0    
 When you check the logs, it'll show something like this:
 
 ```shell
-$ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
+kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
+```
+
+```shell
 plugin/loop: Loop (127.0.0.1:55953 -> :1053) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 4547991504243258144.3688648895315093531."
 ```
 

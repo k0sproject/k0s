@@ -53,7 +53,10 @@ spec:
 New pods will appear soon thereafter.
 
 ```shell
-$ sudo k0s kubectl get pods --namespace nginx
+sudo k0s kubectl get pods --namespace nginx
+```
+
+```shell
 NAME                                READY   STATUS    RESTARTS   AGE
 nginx-deployment-66b6c48dd5-8zq7d   1/1     Running   0          10m
 nginx-deployment-66b6c48dd5-br4jv   1/1     Running   0          10m
