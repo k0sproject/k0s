@@ -1464,8 +1464,9 @@ terraform apply
 <p>We will be using raw partititions (AWS EBS volumes), which can be easily attached to the worker node VMs. They are automatically detected by Ceph with its default configuration.</p>
 <p>Deploy AWS EBS volumes, one for each worker node. You can manually create three EBS volumes (for example 10 GB each) using the AWS GUI and attach those to your worker nodes. Formatting shouldn't be done. Instead, Ceph handles that part automatically.</p>
 <p>After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:</p>
-<div class="highlight"><pre><span></span><code>$ lsblk -f
-NAME        FSTYPE   LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINT
+<div class="highlight"><pre><span></span><code>lsblk -f
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAME        FSTYPE   LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINT
 loop0       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/amazon-ssm-agent/3552
 loop1       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/core18/1997
 loop2       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/snapd/11588
@@ -1512,9 +1513,9 @@ sudo k0s kubectl get nodes
 <div class="highlight"><pre><span></span><code>kubectl apply -f cluster.yaml
 </code></pre></div>
 <p>It takes some minutes to prepare the volumes and create the cluster. Once this is completed you should see the following output:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get pods -n rook-ceph
-
-NAME                                                         READY   STATUS      RESTARTS   AGE
+<div class="highlight"><pre><span></span><code>kubectl get pods -n rook-ceph
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAME                                                         READY   STATUS      RESTARTS   AGE
 csi-cephfsplugin-nhxc8                                       <span class="m">3</span>/3     Running     <span class="m">0</span>          2m48s
 csi-cephfsplugin-provisioner-db45f85f5-ldhjp                 <span class="m">6</span>/6     Running     <span class="m">0</span>          2m48s
 csi-cephfsplugin-provisioner-db45f85f5-sxfm8                 <span class="m">6</span>/6     Running     <span class="m">0</span>          2m48s
@@ -1565,9 +1566,9 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   <span class="m">0</
 <div class="highlight"><pre><span></span><code>kubectl get pvc
 </code></pre></div>
 <p>When the PVC gets the requested volume reserved (bound), it should look like this:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get pvc
-
-NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+<div class="highlight"><pre><span></span><code>kubectl get pvc
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO            rook-ceph-block   6s
 </code></pre></div>
 <h3 id="10-deploy-an-example-application">10. Deploy an example application<a class="headerlink" href="#10-deploy-an-example-application" title="Permanent link">#</a></h3>
@@ -1604,11 +1605,12 @@ mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO  
 </code></pre></div>
 <h3 id="11-access-the-application">11. Access the application<a class="headerlink" href="#11-access-the-application" title="Permanent link">#</a></h3>
 <p>Open the MongoDB shell using the mongo pod:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get pods
-NAME                    READY   STATUS    RESTARTS   AGE
+<div class="highlight"><pre><span></span><code>kubectl get pods
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAME                    READY   STATUS    RESTARTS   AGE
 mongo-b87cbd5cc-4wx8t   <span class="m">1</span>/1     Running   <span class="m">0</span>          76s
-
-$ kubectl <span class="nb">exec</span> -it mongo-b87cbd5cc-4wx8t -- mongo
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>kubectl <span class="nb">exec</span> -it mongo-b87cbd5cc-4wx8t -- mongo
 </code></pre></div>
 <p>Create a DB and insert some data:</p>
 <div class="highlight"><pre><span></span><code>&gt; use testDB

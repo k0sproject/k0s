@@ -1269,8 +1269,9 @@ kube-system   kube-proxy-xbw7p                           <span class="m">1</span
 kube-system   metrics-server-7d4bcb75dd-pqkrs            <span class="m">1</span>/1     Running   <span class="m">0</span>          167m
 </code></pre></div>
 <p>When you check the logs, it'll show something like this:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
-plugin/loop: Loop <span class="o">(</span><span class="m">127</span>.0.0.1:55953 -&gt; :1053<span class="o">)</span> detected <span class="k">for</span> zone <span class="s2">&quot;.&quot;</span>, see https://coredns.io/plugins/loop#troubleshooting. Query: <span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
+<div class="highlight"><pre><span></span><code>kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>plugin/loop: Loop <span class="o">(</span><span class="m">127</span>.0.0.1:55953 -&gt; :1053<span class="o">)</span> detected <span class="k">for</span> zone <span class="s2">&quot;.&quot;</span>, see https://coredns.io/plugins/loop#troubleshooting. Query: <span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
 </code></pre></div>
 <p>This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.</p>
 <p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>

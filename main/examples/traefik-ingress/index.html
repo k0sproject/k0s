@@ -1294,8 +1294,9 @@ replicaset.apps/traefik-1607085579-77bbc57699              <span class="m">1</sp
 service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.102   <span class="m">192</span>.168.0.5      <span class="m">80</span>:32153/TCP,443:30791/TCP   84s
 </code></pre></div>
 <p>Receiving a 404 response here is normal, as you've not configured any Ingress resources to respond yet:</p>
-<div class="highlight"><pre><span></span><code>$ curl http://192.168.0.5
-<span class="m">404</span> page not found
+<div class="highlight"><pre><span></span><code>curl http://192.168.0.5
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="m">404</span> page not found
 </code></pre></div>
 <h2 id="3-deploy-and-access-the-traefik-dashboard">3. Deploy and access the Traefik Dashboard<a class="headerlink" href="#3-deploy-and-access-the-traefik-dashboard" title="Permanent link">#</a></h2>
 <p>With an available and addressable load balancer present on your cluster, now you can quickly deploy the Traefik dashboard and access it from anywhere on your LAN (assuming that MetalLB is configured with an addressable range).</p>
@@ -1319,7 +1320,7 @@ service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.10
 </li>
 <li>
 <p>Deploy the resource:</p>
-<div class="highlight"><pre><span></span><code>root@k0s-host ➜ kubectl apply -f traefik-dashboard.yaml
+<div class="highlight"><pre><span></span><code>kubectl apply -f traefik-dashboard.yaml
 </code></pre></div>
 <p><em>Output</em>:</p>
 <div class="highlight"><pre><span></span><code>ingressroute.traefik.containo.us/dashboard created
@@ -1378,7 +1379,7 @@ service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.10
 </li>
 <li>
 <p>Apply the manifests:</p>
-<div class="highlight"><pre><span></span><code>root@k0s-host ➜ kubectl apply -f whoami.yaml
+<div class="highlight"><pre><span></span><code>kubectl apply -f whoami.yaml
 </code></pre></div>
 <p><em>Output</em>:</p>
 <div class="highlight"><pre><span></span><code>deployment.apps/whoami-deployment created

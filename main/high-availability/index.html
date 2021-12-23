@@ -1338,7 +1338,8 @@ listen stats
    stats uri /
 </code></pre></div>
 <p>The last block "listen stats" is optional, but can be helpful. It enables HAProxy statistics with a separate dashboard to monitor for example the health of each backend server. You can access it using a web browser:</p>
-<p><code>http://&lt;ip-addr&gt;:9000</code></p>
+<div class="highlight"><pre><span></span><code>http://&lt;ip-addr&gt;:9000
+</code></pre></div>
 <p>Restart HAProxy to apply the configuration changes.</p>
 <h2 id="k0s-configuration">k0s configuration<a class="headerlink" href="#k0s-configuration" title="Permanent link">#</a></h2>
 <p>The load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>

@@ -1373,8 +1373,9 @@ k0s and make it executable in <code>/usr/bin/k0s</code>.</p>
 <div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
-<div class="highlight"><pre><span></span><code>$ k0s version
-v0.9.1
+<div class="highlight"><pre><span></span><code>k0s version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>v1.22.1+k0s.0
 </code></pre></div>
 <h3 id="deploy-kubernetes">Deploy Kubernetes<a class="headerlink" href="#deploy-kubernetes" title="Permanent link">#</a></h3>
 <p>Each node can now serve as a control plane node or worker node.</p>
@@ -1432,8 +1433,9 @@ v0.9.1
 kubectl create clusterrolebinding k0s-admin-binding --clusterrole<span class="o">=</span>admin --user<span class="o">=</span>k0s
 </code></pre></div>
 <p>You can now access and use the cluster:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get nodes,deployments,pods -A
-NAME         STATUS   ROLES    AGE     VERSION
+<div class="highlight"><pre><span></span><code>kubectl get nodes,deployments,pods -A
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>NAME         STATUS   ROLES    AGE     VERSION
 node/k8s-4   Ready    &lt;none&gt;   5m9s    v1.20.1-k0s1
 node/k8s-5   Ready    &lt;none&gt;   5m      v1.20.1-k0s1
 node/k8s-6   Ready    &lt;none&gt;   4m45s   v1.20.1-k0s1

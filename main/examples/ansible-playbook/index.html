@@ -1263,8 +1263,9 @@
 <p><strong>Note</strong>: Though multipass is the VM manager in use here, there is no interdependence.</p>
 <p>Create a number of virtual machines. For the automation to work, each instance must have passwordless SSH access. To achieve this, provision each instance with a cloud-init manifest that imports your current users' public SSH key and into a user <code>k0s</code> (refer to the bash script below).</p>
 <p>This creates 7 virtual machines:</p>
-<div class="highlight"><pre><span></span><code>$ ./tools/multipass_create_instances.sh <span class="m">7</span>
-Create cloud-init to import ssh key...
+<div class="highlight"><pre><span></span><code>./tools/multipass_create_instances.sh <span class="m">7</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Create cloud-init to import ssh key...
 <span class="o">[</span><span class="m">1</span>/7<span class="o">]</span> Creating instance k0s-1 with multipass...
 Launched: k0s-1
 <span class="o">[</span><span class="m">2</span>/7<span class="o">]</span> Creating instance k0s-2 with multipass...
@@ -1325,8 +1326,9 @@ k0s-7 Running <span class="m">192</span>.168.64.61 Ubuntu <span class="m">20</sp
 </li>
 <li>
 <p>Fill in <code>inventory/multipass/inventory.yml</code>. This can be done by direct entry using the metadata provided by <code>multipass list,</code>, or you can use the following Python script <code>multipass_generate_inventory.py</code>:</p>
-<div class="highlight"><pre><span></span><code>$ ./tools/multipass_generate_inventory.py
-Designate first three instances as control plane
+<div class="highlight"><pre><span></span><code>./tools/multipass_generate_inventory.py
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Designate first three instances as control plane
 Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
 $ cp tools/inventory.yml inventory/multipass/inventory.yml
 </code></pre></div>
@@ -1371,8 +1373,9 @@ $ cp tools/inventory.yml inventory/multipass/inventory.yml
 <li>
 <p>Test the virtual machine connections</p>
 <p>Run the following command to test the connection to your hosts:</p>
-<div class="highlight"><pre><span></span><code>$ ansible -i inventory/multipass/inventory.yml -m ping
-k0s-4 <span class="p">|</span> <span class="nv">SUCCESS</span> <span class="o">=</span>&gt; <span class="o">{</span>
+<div class="highlight"><pre><span></span><code>ansible -i inventory/multipass/inventory.yml -m ping
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>k0s-4 <span class="p">|</span> <span class="nv">SUCCESS</span> <span class="o">=</span>&gt; <span class="o">{</span>
     <span class="s2">&quot;ansible_facts&quot;</span>: <span class="o">{</span>
         <span class="s2">&quot;discovered_interpreter_python&quot;</span>: <span class="s2">&quot;/usr/bin/python3&quot;</span>
     <span class="o">}</span>,
@@ -1386,8 +1389,9 @@ k0s-4 <span class="p">|</span> <span class="nv">SUCCESS</span> <span class="o">=
 <li>
 <p>Provision the cluster with Ansible</p>
 <p>Applying the playbook, k0s download and be set up on all nodes, tokens will be exchanged, and a kubeconfig will be dumped to your local deployment environment.</p>
-<div class="highlight"><pre><span></span><code>$ ansible-playbook site.yml -i inventory/multipass/inventory.yml
-TASK <span class="o">[</span>k0s/initial_controller : print kubeconfig command<span class="o">]</span> *******************************************************
+<div class="highlight"><pre><span></span><code>ansible-playbook site.yml -i inventory/multipass/inventory.yml
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>TASK <span class="o">[</span>k0s/initial_controller : print kubeconfig command<span class="o">]</span> *******************************************************
 Tuesday <span class="m">22</span> December <span class="m">2020</span>  <span class="m">17</span>:43:20 +0100 <span class="o">(</span><span class="m">0</span>:00:00.257<span class="o">)</span>       <span class="m">0</span>:00:41.287 ******
 ok: <span class="o">[</span>k0s-1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
     <span class="s2">&quot;msg&quot;</span>: <span class="s2">&quot;To use Cluster: export KUBECONFIG=/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml&quot;</span>
@@ -1429,9 +1433,10 @@ k0s/initial_controller : Copy k0s service file ---------------------------------
 </ol>
 <h2 id="use-the-cluster-with-kubectl">Use the cluster with kubectl<a class="headerlink" href="#use-the-cluster-with-kubectl" title="Permanent link">#</a></h2>
 <p>A kubeconfig was copied to your local machine while the playbook was running which you can use to gain access to your new Kubernetes cluster:</p>
-<div class="highlight"><pre><span></span><code>$ <span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span>/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
-$ kubectl cluster-info
-Kubernetes control plane is running at https://192.168.64.32:6443
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span>/Users/dev/k0s-ansible/inventory/multipass/artifacts/k0s-kubeconfig.yml
+kubectl cluster-info
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Kubernetes control plane is running at https://192.168.64.32:6443
 CoreDNS is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 Metrics-server is running at https://192.168.64.32:6443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
 
@@ -1443,27 +1448,31 @@ k0s-6   NotReady   &lt;none&gt;   21s   v1.20.1-k0s1   <span class="m">192</span
 k0s-7   NotReady   &lt;none&gt;   21s   v1.20.1-k0s1   <span class="m">192</span>.168.64.61   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.1 LTS   <span class="m">5</span>.4.0-54-generic   containerd://1.4.3
 </code></pre></div>
 <p><strong>Note</strong>: The first three control plane nodes will not display, as the control plane is fully isolated. To check on the distributed etcd cluster, you can use ssh to securely log a controller node, or you can run the following ad-hoc command:</p>
-<div class="highlight"><pre><span></span><code>$ ansible k0s-1 -a <span class="s2">&quot;k0s etcd member-list -c /etc/k0s/k0s.yaml&quot;</span> -i inventory/multipass/inventory.yml <span class="p">|</span> tail -1 <span class="p">|</span> jq
-<span class="o">{</span>
-  <span class="s2">&quot;level&quot;</span>: <span class="s2">&quot;info&quot;</span>,
-  <span class="s2">&quot;members&quot;</span>: <span class="o">{</span>
-    <span class="s2">&quot;k0s-1&quot;</span>: <span class="s2">&quot;https://192.168.64.32:2380&quot;</span>,
-    <span class="s2">&quot;k0s-2&quot;</span>: <span class="s2">&quot;https://192.168.64.33:2380&quot;</span>,
-    <span class="s2">&quot;k0s-3&quot;</span>: <span class="s2">&quot;https://192.168.64.56:2380&quot;</span>
-  <span class="o">}</span>,
-  <span class="s2">&quot;msg&quot;</span>: <span class="s2">&quot;done&quot;</span>,
-  <span class="s2">&quot;time&quot;</span>: <span class="s2">&quot;2020-12-23T00:21:22+01:00&quot;</span>
-<span class="o">}</span>
+<div class="highlight"><pre><span></span><code>ansible k0s-1 -a <span class="s2">&quot;k0s etcd member-list -c /etc/k0s/k0s.yaml&quot;</span> -i inventory/multipass/inventory.yml <span class="p">|</span> tail -1 <span class="p">|</span> jq
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;members&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;k0s-1&quot;</span><span class="p">:</span> <span class="s2">&quot;https://192.168.64.32:2380&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;k0s-2&quot;</span><span class="p">:</span> <span class="s2">&quot;https://192.168.64.33:2380&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;k0s-3&quot;</span><span class="p">:</span> <span class="s2">&quot;https://192.168.64.56:2380&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;done&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;time&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-12-23T00:21:22+01:00&quot;</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>Once all worker nodes are at <code>Ready</code> state you can use the cluster. You can test the cluster state by creating a simple nginx deployment.</p>
-<div class="highlight"><pre><span></span><code>$ kubectl create deployment nginx --image<span class="o">=</span>gcr.io/google-containers/nginx --replicas<span class="o">=</span><span class="m">5</span>
-deployment.apps/nginx created
-
-$ kubectl expose deployment nginx --target-port<span class="o">=</span><span class="m">80</span> --port<span class="o">=</span><span class="m">8100</span>
-service/nginx exposed
-
-$ kubectl run hello-k0s --image<span class="o">=</span>quay.io/prometheus/busybox --rm -it --restart<span class="o">=</span>Never --command -- wget -qO- nginx:8100
-&lt;!DOCTYPE html&gt;
+<div class="highlight"><pre><span></span><code>kubectl create deployment nginx --image<span class="o">=</span>gcr.io/google-containers/nginx --replicas<span class="o">=</span><span class="m">5</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>deployment.apps/nginx created
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>kubectl expose deployment nginx --target-port<span class="o">=</span><span class="m">80</span> --port<span class="o">=</span><span class="m">8100</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>service/nginx exposed
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>kubectl run hello-k0s --image<span class="o">=</span>quay.io/prometheus/busybox --rm -it --restart<span class="o">=</span>Never --command -- wget -qO- nginx:8100
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
 &lt;title&gt;Welcome to nginx on Debian!&lt;/title&gt;

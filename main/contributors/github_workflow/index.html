@@ -1310,7 +1310,7 @@
 <li>On the top, right-hand side, click on "fork" and select your username for the fork destination.</li>
 </ol>
 <h2 id="adding-the-forked-remote">Adding the Forked Remote<a class="headerlink" href="#adding-the-forked-remote" title="Permanent link">#</a></h2>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_USER</span><span class="o">={</span> your github<span class="err">&#39;</span>s username <span class="o">}</span>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_USER</span><span class="o">={</span> your github username <span class="o">}</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span> <span class="nv">$WORKDIR</span>/k0s
 git remote add <span class="nv">$GITHUB_USER</span> git@github.com:<span class="si">${</span><span class="nv">GITHUB_USER</span><span class="si">}</span>/k0s.git
@@ -1322,8 +1322,9 @@ git remote set-url --push origin no_push
 git push --set-upstream <span class="nv">$GITHUB_USER</span> main
 </code></pre></div>
 <p>Your remotes should look something like this:</p>
-<div class="highlight"><pre><span></span><code>$ git remote -v
-origin  https://github.com/k0sproject/k0s <span class="o">(</span>fetch<span class="o">)</span>
+<div class="highlight"><pre><span></span><code>git remote -v
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>origin  https://github.com/k0sproject/k0s <span class="o">(</span>fetch<span class="o">)</span>
 origin  no_push <span class="o">(</span>push<span class="o">)</span>
 my_fork git@github.com:<span class="o">{</span> github_username <span class="o">}</span>/k0s.git <span class="o">(</span>fetch<span class="o">)</span>
 my_fork git@github.com:<span class="o">{</span> github_username <span class="o">}</span>/k0s.git <span class="o">(</span>push<span class="o">)</span>
@@ -1333,9 +1334,10 @@ my_fork git@github.com:<span class="o">{</span> github_username <span class="o">
 <div class="highlight"><pre><span></span><code>git checkout -b my_feature_branch
 </code></pre></div>
 <p>Rebase your branch:</p>
-<div class="highlight"><pre><span></span><code>$ git fetch origin
-$ git rebase origin/main
-Current branch my_feature_branch is up to date.
+<div class="highlight"><pre><span></span><code>git fetch origin <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  git rebase origin/main
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Current branch my_feature_branch is up to date.
 </code></pre></div>
 <p>Please don't use <code>git pull</code> instead of the above <code>fetch / rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
 <h2 id="commit-push">Commit &amp; Push<a class="headerlink" href="#commit-push" title="Permanent link">#</a></h2>
