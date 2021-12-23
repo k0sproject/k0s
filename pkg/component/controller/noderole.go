@@ -100,10 +100,13 @@ func (n *NodeRole) ensureNodeLabel(ctx context.Context, client kubernetes.Interf
 		}
 	}
 
-	_, err := n.addNodeLabel(ctx, client, node.Name, labelToAdd, "true")
-	if err != nil {
-		return fmt.Errorf("failed to set label '%s' to node %s: %w", labelToAdd, node.Name, err)
+	if labelToAdd != "" {
+		_, err := n.addNodeLabel(ctx, client, node.Name, labelToAdd, "true")
+		if err != nil {
+			return fmt.Errorf("failed to set label '%s' to node %s: %w", labelToAdd, node.Name, err)
+		}
 	}
+
 	return nil
 }
 
