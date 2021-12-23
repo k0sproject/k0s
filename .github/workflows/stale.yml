@@ -9,8 +9,8 @@ jobs:
     steps:
       - uses: actions/stale@v3
         with:
-          repo-token: ${{ secrets.GH_TOKEN }}
           stale-issue-message: 'The issue is marked as stale since no activity has been recorded in 30 days'
           stale-pr-message: 'The PR is marked as stale since no activity has been recorded in 30 days'
           days-before-stale: 30
           close-pr-label: "stale"
+
