@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"crypto/md5"
 	"fmt"
 	"os"
 	"path"
@@ -38,8 +39,12 @@ func (f FsManifestsSaver) Save(dst string, content []byte) error {
 	if err := os.WriteFile(target, content, constant.ManifestsDirMode); err != nil {
 		return fmt.Errorf("can't write manifest %s: %v", target, err)
 	}
-	logrus.WithField("component", "manifest-saver").Debugf("succesfully wrote %s", target)
+	logrus.WithField("component", "manifest-saver").Debugf("succesfully wrote %s:%s", target, hash(content))
 	return nil
+}
+
+func hash(data []byte) string {
+	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
 // NewManifestsSaver builds new filesystem manifests saver
