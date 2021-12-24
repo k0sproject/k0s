@@ -97,7 +97,10 @@ func NewControllerCmd() *cobra.Command {
 			}
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cmd.SilenceUsage = true
-			return c.startController(cmd.Context())
+
+			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
+			return c.startController(ctx)
 		},
 	}
 
@@ -267,12 +270,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	perfTimer.Checkpoint("finished-node-component-init")
 
-	// Set up signal handling. Use buffered channel so we dont miss
-	// signals during startup
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-	errCh := make(chan error, 1)
-
 	perfTimer.Checkpoint("starting-node-components")
 
 	// Start components
@@ -375,6 +372,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}()
 
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
+	errCh := make(chan error, 1)
 	go func() {
 		if err := cfgSource.Release(ctx); err != nil {
 			// If the config release does not work, nothing is going to work
