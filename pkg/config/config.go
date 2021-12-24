@@ -178,7 +178,7 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	if err != nil {
 		return nil, err
 	}
-	nodeConfig := cfg.GetBootstrappingConfig()
+	nodeConfig := cfg.GetBootstrappingConfig(cfg.Spec.Storage)
 	var etcdConfig *v1beta1.EtcdConfig
 	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		etcdConfig = &v1beta1.EtcdConfig{
