@@ -223,7 +223,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	var eg errgroup.Group
+	eg, _ := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		// etcd client cert
