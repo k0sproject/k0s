@@ -17,9 +17,7 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -29,7 +27,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -39,12 +36,7 @@ import (
 var (
 	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
 	getOpts      = v1.GetOptions{TypeMeta: resourceType}
-	errNoConfig  = errors.New("no configuration found")
 )
-
-func IsErrNoConfig(err error) bool {
-	return err == errNoConfig
-}
 
 func getConfigFromAPI(kubeConfig string) (*v1beta1.ClusterConfig, error) {
 	timeout := time.After(120 * time.Second)
@@ -74,7 +66,7 @@ func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1b
 		// no config file exists, using defaults
 		logrus.Warn("no config file given, using defaults")
 	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
+	cfg, err := GetConfigFromYAML(cfgPath, k0sVars)
 	if err != nil {
 		return nil, err
 	}
@@ -117,39 +109,65 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 		// no config file exists, using defaults
 		logrus.Warn("no config file given, using defaults")
 	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
+	cfg, err := GetConfigFromYAML(cfgPath, k0sVars)
 	if err != nil {
 		return nil, err
 	}
 	return cfg, nil
 }
 
-func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
+// GetConfigFromYAML will attempt to read a config yaml, validate it and return a clusterConfig object
+func GetConfigFromYAML(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	var storage *v1beta1.StorageSpec
 	var cfg *v1beta1.ClusterConfig
 
 	CfgFile = cfgPath
 
+	// first, let's set the default storage type
 	if k0sVars.DefaultStorageType == "kine" {
 		storage = &v1beta1.StorageSpec{
 			Type: v1beta1.KineStorageType,
 			Kine: v1beta1.DefaultKineConfig(k0sVars.DataDir),
 		}
 	}
-	if file.Exists(constant.K0sConfigPathDefault) {
-		logrus.Debugf("found config file in %s", constant.K0sConfigPathDefault)
-	}
-	cfgReader, err := getConfigReader()
-	if err != nil {
-		if IsErrNoConfig(err) {
-			cfg = v1beta1.DefaultClusterConfig(storage)
-		} else {
-			return nil, err
-		}
-	} else {
-		cfg, err = v1beta1.ConfigFromReader(cfgReader, storage)
+
+	switch CfgFile {
+	// read config file flag
+	default:
+		f, err := os.Open(CfgFile)
 		if err != nil {
 			return nil, err
+		}
+		defer f.Close()
+
+		cfg, err = v1beta1.ConfigFromReader(f, storage)
+		if err != nil {
+			return nil, err
+		}
+
+	// stdin input
+	case "-":
+		cfg, err = v1beta1.ConfigFromReader(os.Stdin, storage)
+
+	// config file not provided: try to read config from default location.
+	// if not exists, generate default config
+	case constant.K0sConfigPathDefault:
+		f, err := os.Open(constant.K0sConfigPathDefault)
+		if err != nil {
+			if os.IsNotExist(err) {
+				logrus.Debugf("could not find config in %s, using defaults", constant.K0sConfigPathDefault)
+				cfg = v1beta1.DefaultClusterConfig(storage)
+			} else {
+				return nil, err
+			}
+		}
+		if err == nil {
+			logrus.Debugf("found config file in %s", constant.K0sConfigPathDefault)
+			cfg, err = v1beta1.ConfigFromReader(f, storage)
+			if err != nil {
+				return nil, err
+			}
+			defer f.Close()
 		}
 	}
 
@@ -187,22 +205,4 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 		nodeConfig.Spec.Storage.Etcd = etcdConfig
 	}
 	return nodeConfig, nil
-}
-
-func getConfigReader() (io.Reader, error) {
-	switch CfgFile {
-	case "-":
-		return os.Stdin, nil
-	case "", constant.K0sConfigPathDefault:
-		f, err := os.Open(constant.K0sConfigPathDefault)
-		if err == nil {
-			return f, nil
-		}
-		if os.IsNotExist(err) {
-			return nil, errNoConfig
-		}
-		return nil, err
-	default:
-		return os.Open(CfgFile)
-	}
 }
