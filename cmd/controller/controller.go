@@ -137,11 +137,11 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		}
 	}
 
-	c.NodeComponents.AddSync(&controller.Certificates{
+	certs := &controller.Certificates{
 		ClusterSpec: c.NodeConfig.Spec,
 		CertManager: certificateManager,
 		K0sVars:     c.K0sVars,
-	})
+	}
 
 	logrus.Infof("using api address: %s", c.NodeConfig.Spec.API.Address)
 	logrus.Infof("using listen port: %d", c.NodeConfig.Spec.API.Port)
@@ -257,6 +257,9 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	})
 
 	perfTimer.Checkpoint("starting-component-init")
+	if err := certs.Init(); err != nil {
+		return err
+	}
 	// init Node components
 	if err := c.NodeComponents.Init(); err != nil {
 		return err
