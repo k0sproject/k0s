@@ -66,8 +66,10 @@ func (d *debouncer) Start() {
 	for {
 		select {
 		case event := <-d.input:
-			item = &event
-			ticker.Reset(d.interval)
+			if event.Op != fsnotify.Chmod {
+				item = &event
+				ticker.Reset(d.interval)
+			}
 		case <-ticker.C:
 			if item != nil {
 				d.callback(*item)

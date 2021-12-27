@@ -61,7 +61,7 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 
 // Start both the initial apply and also the watch for a single stack
 func (s *StackApplier) Start() error {
-	debouncer := debounce.New(5*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
+	debouncer := debounce.New(1*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
 		s.log.Debug("debouncer triggering, applying...")
 		err := retry.OnError(retry.DefaultRetry, func(err error) bool {
 			return true
