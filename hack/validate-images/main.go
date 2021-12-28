@@ -28,7 +28,7 @@ func check(e error) {
 func main() {
 	var architectures []string
 	var architecturesString string
-	flag.StringVar(&architecturesString, "architectures", "amd64,arm64", "which architectures to search for")
+	flag.StringVar(&architecturesString, "architectures", "amd64,arm64,arm", "which architectures to search for")
 	flag.Parse()
 	architectures = strings.Split(architecturesString, ",")
 	if len(architectures) < 1 {
