@@ -46,6 +46,7 @@ func NewEtcdCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

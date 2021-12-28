@@ -18,9 +18,7 @@ package v1beta1
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
-	"os"
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -162,24 +160,6 @@ func (s *SchedulerSpec) IsZero() bool {
 	return len(s.ExtraArgs) == 0
 }
 
-// ConfigFromFile takes a file path as Input, and parses it into a ClusterConfig
-func ConfigFromFile(filename string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	buf, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file at %s: %w", filename, err)
-	}
-	return ConfigFromString(string(buf), defaultStorage...)
-}
-
-// ConfigFromStdin tries to read k0s.yaml config from stdin
-func ConfigFromStdin(defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
-	input, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return nil, fmt.Errorf("can't read configration from stdin: %v", err)
-	}
-	return ConfigFromString(string(input), defaultStorage...)
-}
-
 func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	config := DefaultClusterConfig(defaultStorage...)
 	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval")
@@ -190,6 +170,15 @@ func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfi
 		config.Spec = DefaultClusterSpec(defaultStorage...)
 	}
 	return config, nil
+}
+
+// ConfigFromReader reads the configuration from any reader (can be stdin, file reader, etc)
+func ConfigFromReader(r io.Reader, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
+	input, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return ConfigFromString(string(input), defaultStorage...)
 }
 
 // DefaultClusterConfig sets the default ClusterConfig values, when none are given
@@ -287,6 +276,56 @@ func (c *ClusterConfig) Validate() []error {
 	errors = append(errors, validateSpecs(c.Spec.Konnectivity)...)
 
 	return errors
+}
+
+// GetBootstrappingConfig returns a ClusterConfig object stripped of Cluster-Wide Settings
+func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *ClusterConfig {
+	return &ClusterConfig{
+		ObjectMeta: c.ObjectMeta,
+		TypeMeta:   c.TypeMeta,
+		Spec: &ClusterSpec{
+			API:     c.Spec.API,
+			Storage: storageSpec,
+			Network: &Network{
+				ServiceCIDR: c.Spec.Network.ServiceCIDR,
+				DualStack:   c.Spec.Network.DualStack,
+			},
+			Install: c.Spec.Install,
+		},
+		Status: c.Status,
+	}
+}
+
+// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
+// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
+// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
+// - APISpec
+// - StorageSpec
+// - Network.ServiceCIDR
+// - Install
+func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
+	return &ClusterConfig{
+		ObjectMeta: c.ObjectMeta,
+		TypeMeta:   c.TypeMeta,
+		Spec: &ClusterSpec{
+			ControllerManager: c.Spec.ControllerManager,
+			Scheduler:         c.Spec.Scheduler,
+			Network: &Network{
+				Calico:     c.Spec.Network.Calico,
+				KubeProxy:  c.Spec.Network.KubeProxy,
+				KubeRouter: c.Spec.Network.KubeRouter,
+				PodCIDR:    c.Spec.Network.PodCIDR,
+				Provider:   c.Spec.Network.Provider,
+			},
+			PodSecurityPolicy: c.Spec.PodSecurityPolicy,
+			WorkerProfiles:    c.Spec.WorkerProfiles,
+			Telemetry:         c.Spec.Telemetry,
+			Images:            c.Spec.Images,
+			Extensions:        c.Spec.Extensions,
+			Konnectivity:      c.Spec.Konnectivity,
+		},
+		Status: c.Status,
+	}
 }
 
 // CRValidator is used to make sure a config CR is created with correct values

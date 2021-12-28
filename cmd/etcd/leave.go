@@ -75,5 +75,6 @@ func etcdLeaveCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&etcdPeerAddress, "peer-address", "", "etcd peer address")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }

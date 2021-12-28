@@ -54,6 +54,7 @@ func NewBackupCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets")
 	cmd.SilenceUsage = true
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -89,7 +90,7 @@ func (c *CmdOpts) backup() error {
 
 func preRunValidateConfig(cmd *cobra.Command, args []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err
 	}

@@ -46,6 +46,7 @@ func NewResetCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }
 
@@ -74,7 +75,7 @@ func (c *CmdOpts) reset() error {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err
 	}

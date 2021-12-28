@@ -44,6 +44,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

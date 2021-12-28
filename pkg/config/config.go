@@ -18,6 +18,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -65,7 +66,7 @@ func GetFullConfig(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1b
 		// no config file exists, using defaults
 		logrus.Warn("no config file given, using defaults")
 	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
+	cfg, err := GetConfigFromYAML(cfgPath, k0sVars)
 	if err != nil {
 		return nil, err
 	}
@@ -108,43 +109,77 @@ func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v
 		// no config file exists, using defaults
 		logrus.Warn("no config file given, using defaults")
 	}
-	cfg, err := ValidateYaml(cfgPath, k0sVars)
+	cfg, err := GetConfigFromYAML(cfgPath, k0sVars)
 	if err != nil {
 		return nil, err
 	}
 	return cfg, nil
 }
 
-func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
+// GetConfigFromYAML will attempt to read a config yaml, validate it and return a clusterConfig object
+func GetConfigFromYAML(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
 	var storage *v1beta1.StorageSpec
+	var cfg *v1beta1.ClusterConfig
+
+	CfgFile = cfgPath
+
+	// first, let's set the default storage type
 	if k0sVars.DefaultStorageType == "kine" {
 		storage = &v1beta1.StorageSpec{
 			Type: v1beta1.KineStorageType,
 			Kine: v1beta1.DefaultKineConfig(k0sVars.DataDir),
 		}
-
 	}
-	switch cfgPath {
-	case "-":
-		clusterConfig, err = v1beta1.ConfigFromStdin(storage)
-	case "":
-		clusterConfig = v1beta1.DefaultClusterConfig(storage)
+
+	switch CfgFile {
+	// read config file flag
 	default:
-		clusterConfig, err = v1beta1.ConfigFromFile(cfgPath, storage)
-	}
-	if err != nil {
-		return nil, err
+		f, err := os.Open(CfgFile)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		cfg, err = v1beta1.ConfigFromReader(f, storage)
+		if err != nil {
+			return nil, err
+		}
+
+	// stdin input
+	case "-":
+		cfg, err = v1beta1.ConfigFromReader(os.Stdin, storage)
+
+	// config file not provided: try to read config from default location.
+	// if not exists, generate default config
+	case constant.K0sConfigPathDefault:
+		f, err := os.Open(constant.K0sConfigPathDefault)
+		if err != nil {
+			if os.IsNotExist(err) {
+				logrus.Debugf("could not find config in %s, using defaults", constant.K0sConfigPathDefault)
+				cfg = v1beta1.DefaultClusterConfig(storage)
+			} else {
+				return nil, err
+			}
+		}
+		if err == nil {
+			logrus.Debugf("found config file in %s", constant.K0sConfigPathDefault)
+			cfg, err = v1beta1.ConfigFromReader(f, storage)
+			if err != nil {
+				return nil, err
+			}
+			defer f.Close()
+		}
 	}
 
-	if clusterConfig.Spec.Storage.Type == v1beta1.KineStorageType && clusterConfig.Spec.Storage.Kine == nil {
+	if cfg.Spec.Storage.Type == v1beta1.KineStorageType && cfg.Spec.Storage.Kine == nil {
 		logrus.Warn("storage type is kine but no config given, setting up defaults")
-		clusterConfig.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
+		cfg.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
 	}
-	if clusterConfig.Spec.Install == nil {
-		clusterConfig.Spec.Install = v1beta1.DefaultInstallSpec()
+	if cfg.Spec.Install == nil {
+		cfg.Spec.Install = v1beta1.DefaultInstallSpec()
 	}
 
-	errors := clusterConfig.Validate()
+	errors := cfg.Validate()
 	if len(errors) > 0 {
 		messages := make([]string, len(errors))
 		for _, e := range errors {
@@ -152,47 +187,7 @@ func ValidateYaml(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1be
 		}
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
 	}
-	return clusterConfig, nil
-}
-
-// HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
-// this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
-// This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
-// - APISpec
-// - StorageSpec
-// - Network.ServiceCIDR
-// - Install
-func ClusterConfigMinusNodeConfig(config *v1beta1.ClusterConfig) *v1beta1.ClusterConfig {
-	clusterSpec := &v1beta1.ClusterSpec{
-		ControllerManager: config.Spec.ControllerManager,
-		Scheduler:         config.Spec.Scheduler,
-		Network: &v1beta1.Network{
-			Calico:     config.Spec.Network.Calico,
-			DualStack:  config.Spec.Network.DualStack,
-			KubeProxy:  config.Spec.Network.KubeProxy,
-			KubeRouter: config.Spec.Network.KubeRouter,
-			PodCIDR:    config.Spec.Network.PodCIDR,
-			Provider:   config.Spec.Network.Provider,
-		},
-		PodSecurityPolicy: config.Spec.PodSecurityPolicy,
-		WorkerProfiles:    config.Spec.WorkerProfiles,
-		Telemetry:         config.Spec.Telemetry,
-		Images:            config.Spec.Images,
-		Extensions:        config.Spec.Extensions,
-		Konnectivity:      config.Spec.Konnectivity,
-		API: &v1beta1.APISpec{
-			ExternalAddress: config.Spec.API.ExternalAddress,
-			Address:         config.Spec.API.Address,
-			Port:            config.Spec.API.Port,
-		},
-	}
-
-	return &v1beta1.ClusterConfig{
-		ObjectMeta: config.ObjectMeta,
-		TypeMeta:   config.TypeMeta,
-		Spec:       clusterSpec,
-		Status:     config.Status,
-	}
+	return cfg, nil
 }
 
 // GetNodeConfig takes a config-file parameter and returns a ClusterConfig stripped of Cluster-Wide Settings
@@ -201,31 +196,13 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	if err != nil {
 		return nil, err
 	}
+	nodeConfig := cfg.GetBootstrappingConfig(cfg.Spec.Storage)
 	var etcdConfig *v1beta1.EtcdConfig
 	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		etcdConfig = &v1beta1.EtcdConfig{
 			PeerAddress: cfg.Spec.Storage.Etcd.PeerAddress,
 		}
-	}
-
-	clusterSpec := &v1beta1.ClusterSpec{
-		API: cfg.Spec.API,
-		Storage: &v1beta1.StorageSpec{
-			Type: cfg.Spec.Storage.Type,
-			Etcd: etcdConfig,
-			Kine: cfg.Spec.Storage.Kine,
-		},
-		Network: &v1beta1.Network{
-			ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
-			DualStack:   cfg.Spec.Network.DualStack,
-		},
-		Install: cfg.Spec.Install,
-	}
-	nodeConfig := &v1beta1.ClusterConfig{
-		ObjectMeta: cfg.ObjectMeta,
-		TypeMeta:   cfg.TypeMeta,
-		Spec:       clusterSpec,
-		Status:     cfg.Status,
+		nodeConfig.Spec.Storage.Etcd = etcdConfig
 	}
 	return nodeConfig, nil
 }

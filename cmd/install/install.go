@@ -22,7 +22,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -50,10 +49,6 @@ func (c *CmdOpts) setup(role string, args []string) error {
 		return fmt.Errorf("this command must be run as root")
 	}
 
-	// if cfgFile is not provided k0s will handle this so no need to check if the file exists.
-	if c.CfgFile != "" && !dir.IsDirectory(c.CfgFile) && !file.Exists(c.CfgFile) {
-		return fmt.Errorf("file %s does not exist", c.CfgFile)
-	}
 	if role == "controller" {
 		cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 		if err != nil {
@@ -102,7 +97,7 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err
 	}

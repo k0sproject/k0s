@@ -45,6 +45,7 @@ func etcdListCmd() *cobra.Command {
 			return json.NewEncoder(os.Stdout).Encode(map[string]interface{}{"members": members})
 		},
 	}
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

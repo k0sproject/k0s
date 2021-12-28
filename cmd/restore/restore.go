@@ -56,6 +56,7 @@ func NewRestoreCmd() *cobra.Command {
 
 	cmd.SilenceUsage = true
 	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: ${cwd}/k0s_<archive timestamp>.yaml)")
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -95,7 +96,7 @@ func (c *CmdOpts) restore(path string) error {
 // TODO Need to move to some common place, now it's defined in restore and backup commands
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
+	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return err
 	}

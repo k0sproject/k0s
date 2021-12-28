@@ -130,6 +130,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 		},
 	}
 	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -137,7 +138,6 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 func (c *CmdOpts) getAPIURL() (string, error) {
 	// Disable logrus
 	logrus.SetLevel(logrus.WarnLevel)
-
 	cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 	if err != nil {
 		return "", err
