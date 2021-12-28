@@ -15,3 +15,5 @@ out.json
 static/gen_manifests.go
 .k0sbuild.docker-image.*
 .k0sbuild.docker-vol.*
+docs/cli
+site
