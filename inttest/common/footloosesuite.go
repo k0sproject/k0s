@@ -846,7 +846,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 
 	cfg := config.Config{
 		Cluster: config.Cluster{
-			Name:       s.T().Name() + "DEBUGBRANCH",
+			Name:       s.T().Name(),
 			PrivateKey: path.Join(s.keyDir, "id_rsa"),
 		},
 		Machines: []config.MachineReplicas{
