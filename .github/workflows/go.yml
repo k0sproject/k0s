@@ -80,7 +80,7 @@ jobs:
         run: make check-unit
       
       - name: Validate OCI images manifests
-        run: go run hack/validate-images/main.go -architectures amd64,arm64
+        run: go run hack/validate-images/main.go -architectures amd64,arm64,arm
       
       - name: Cache compiled binary for further testing
         uses: actions/cache@v2
