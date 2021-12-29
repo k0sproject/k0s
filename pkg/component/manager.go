@@ -54,7 +54,7 @@ func (m *Manager) Add(ctx context.Context, component Component) {
 
 // Init initializes all managed components
 func (m *Manager) Init(ctx context.Context) error {
-	var g errgroup.Group
+	g, _ := errgroup.WithContext(ctx)
 
 	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()

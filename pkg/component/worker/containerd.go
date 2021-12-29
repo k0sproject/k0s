@@ -49,8 +49,8 @@ type ContainerD struct {
 }
 
 // Init extracts the needed binaries
-func (c *ContainerD) Init(_ context.Context) error {
-	g := new(errgroup.Group)
+func (c *ContainerD) Init(ctx context.Context) error {
+	g, _ := errgroup.WithContext(ctx)
 	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
 		b := bin
 		g.Go(func() error {
