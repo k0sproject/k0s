@@ -78,7 +78,7 @@ const (
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.27-k0s1"
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
-	MetricsImageVersion                = "v0.5.0"
+	MetricsImageVersion                = "v0.5.2"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
 	KubeProxyImageVersion              = "v1.23.1"
 	CoreDNSImage                       = "k8s.gcr.io/coredns/coredns"
