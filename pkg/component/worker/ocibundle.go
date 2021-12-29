@@ -54,7 +54,7 @@ func (a *OCIBundleReconciler) Run(ctx context.Context) error {
 			return err
 		}
 		return nil
-	}, retry.Delay(time.Second*5))
+	}, retry.Context(ctx), retry.Delay(time.Second*5))
 	if err != nil {
 		return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
 	}

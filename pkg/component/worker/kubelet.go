@@ -225,6 +225,7 @@ func (k *Kubelet) Run(ctx context.Context) error {
 
 		return nil
 	},
+		retry.Context(ctx),
 		retry.Delay(time.Millisecond*500),
 		retry.DelayType(retry.BackOffDelay))
 	if err != nil {

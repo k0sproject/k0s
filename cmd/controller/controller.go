@@ -131,7 +131,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	var joinClient *token.JoinClient
 	if c.TokenArg != "" && c.needToJoin() {
-		joinClient, err = joinController(c.TokenArg, c.K0sVars.CertRootDir)
+		joinClient, err = joinController(ctx, c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
 			return fmt.Errorf("failed to join controller: %v", err)
 		}
@@ -597,7 +597,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 				return fmt.Errorf("file does not exist: %s", c.K0sVars.AdminKubeConfigPath)
 			}
 			return nil
-		})
+		}, retry.Context(ctx))
 		if err != nil {
 			return err
 		}
@@ -613,7 +613,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			}
 			bootstrapConfig = cfg
 			return nil
-		})
+		}, retry.Context(ctx))
 		if err != nil {
 			return err
 		}
@@ -661,7 +661,7 @@ func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
 	return nil
 }
 
-func joinController(tokenArg string, certRootDir string) (*token.JoinClient, error) {
+func joinController(ctx context.Context, tokenArg string, certRootDir string) (*token.JoinClient, error) {
 	joinClient, err := token.JoinClientFromToken(tokenArg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create join client: %w", err)
@@ -674,7 +674,7 @@ func joinController(tokenArg string, certRootDir string) (*token.JoinClient, err
 			return fmt.Errorf("failed to sync CA: %w", err)
 		}
 		return nil
-	})
+	}, retry.Context(ctx))
 	if err != nil {
 		return nil, err
 	}
