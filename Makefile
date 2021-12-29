@@ -115,7 +115,6 @@ endif
 pkg/assets/zz_generated_offsets_darwin.go:
 	$(print_empty_generated_offsets) > $@
 
-
 k0s: TARGET_OS = linux
 k0s: pkg/assets/zz_generated_offsets_linux.go
 k0s: BUILD_GO_CGO_ENABLED = 1
@@ -173,6 +172,8 @@ clean-docker-image:
 .PHONY: clean
 clean: clean-gocache clean-docker-image
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
+	rm -rf site
+	rm -rf docs/cli
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C image-bundle clean
 	-$(MAKE) -C inttest clean
@@ -206,3 +207,25 @@ image-bundle/image.list: k0s
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
 
+ifeq ($(OS),Windows_NT)
+detected_OS := windows
+else
+detected_OS := $(shell uname | tr [:upper:] [:lower:])
+endif
+
+ifeq ($(detected_OS),darwin)
+sedopt := -i "" -e
+else
+sedopt := -i -e
+endif
+
+docs/cli: static/gen_manifests.go pkg/assets/zz_generated_offsets_$(detected_OS).go $(shell find ./cmd/ -type f) mkdocs.yml
+	rm -rf docs/cli
+	mkdir -p docs/cli
+	go run main.go docs markdown
+	rm docs/cli/k0s_kubectl_*
+	sed $(sedopt) '/\[k0s kubectl /d' docs/cli/k0s_kubectl.md
+	ln -s k0s.md docs/cli/README.md
+
+docs: docs/cli
+	mkdocs build --strict
