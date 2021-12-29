@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_kubeconfig/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_reset/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>K0s kubeconfig - Documentation</title>
+        <title>K0s reset - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-kubeconfig" class="md-skip">
+        <a href="#k0s-reset" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s kubeconfig
+              K0s reset
             
           </span>
         </div>
@@ -1128,11 +1128,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-kubeconfig" class="md-nav__link">
-    k0s kubeconfig
+  <a href="#k0s-reset" class="md-nav__link">
+    k0s reset
   </a>
   
-    <nav class="md-nav" aria-label="k0s kubeconfig">
+    <nav class="md-nav" aria-label="k0s reset">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1175,15 +1175,17 @@
                 
                 
                 
-                  <h1>K0s kubeconfig</h1>
+                  <h1>K0s reset</h1>
                 
-                <h2 id="k0s-kubeconfig">k0s kubeconfig<a class="headerlink" href="#k0s-kubeconfig" title="Permanent link">#</a></h2>
-<p>Create a kubeconfig file for a specified user</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig [command] [flags]
+                <h2 id="k0s-reset">k0s reset<a class="headerlink" href="#k0s-reset" title="Permanent link">#</a></h2>
+<p>Uninstall k0s. Must be run as root (or with sudo)</p>
+<div class="highlight"><pre><span></span><code>k0s reset [flags]
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-  -h, --help                   help for kubeconfig
+<div class="highlight"><pre><span></span><code>  -c, --config string          config file, use &#39;-&#39; to read the config from stdin (default &quot;/etc/k0s/k0s.yaml&quot;)
+      --cri-socket string      container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
+  -h, --help                   help for reset
       --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
   -v, --verbose                Verbose logging (default: false)
 </code></pre></div>
@@ -1194,8 +1196,6 @@
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
 <li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
-<li><a href="../k0s_kubeconfig_admin/">k0s kubeconfig admin</a>    - Display Admin's Kubeconfig file</li>
-<li><a href="../k0s_kubeconfig_create/">k0s kubeconfig create</a>  - Create a kubeconfig for a user</li>
 </ul>
                 
               

@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_kubeconfig/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/cli/k0s_kubectl/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>K0s kubeconfig - Documentation</title>
+        <title>K0s kubectl - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-kubeconfig" class="md-skip">
+        <a href="#k0s-kubectl" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s kubeconfig
+              K0s kubectl
             
           </span>
         </div>
@@ -1128,12 +1128,19 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-kubeconfig" class="md-nav__link">
-    k0s kubeconfig
+  <a href="#k0s-kubectl" class="md-nav__link">
+    k0s kubectl
   </a>
   
-    <nav class="md-nav" aria-label="k0s kubeconfig">
+    <nav class="md-nav" aria-label="k0s kubectl">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#options" class="md-nav__link">
@@ -1175,17 +1182,40 @@
                 
                 
                 
-                  <h1>K0s kubeconfig</h1>
+                  <h1>K0s kubectl</h1>
                 
-                <h2 id="k0s-kubeconfig">k0s kubeconfig<a class="headerlink" href="#k0s-kubeconfig" title="Permanent link">#</a></h2>
-<p>Create a kubeconfig file for a specified user</p>
-<div class="highlight"><pre><span></span><code>k0s kubeconfig [command] [flags]
+                <h2 id="k0s-kubectl">k0s kubectl<a class="headerlink" href="#k0s-kubectl" title="Permanent link">#</a></h2>
+<p>kubectl controls the Kubernetes cluster manager</p>
+<h3 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h3>
+<p>kubectl controls the Kubernetes cluster manager.</p>
+<p>Find more information at: https://kubernetes.io/docs/reference/kubectl/overview/</p>
+<div class="highlight"><pre><span></span><code>k0s kubectl [flags]
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-  -h, --help                   help for kubeconfig
-      --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
-  -v, --verbose                Verbose logging (default: false)
+<div class="highlight"><pre><span></span><code>      --as string                      Username to impersonate for the operation. User could be a regular user or a service account in a namespace.
+      --as-group stringArray           Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
+      --as-uid string                  UID to impersonate for the operation.
+      --cache-dir string               Default cache directory (default &quot;/home/runner/.kube/cache&quot;)
+      --certificate-authority string   Path to a cert file for the certificate authority
+      --client-certificate string      Path to a client certificate file for TLS
+      --client-key string              Path to a client key file for TLS
+      --cluster string                 The name of the kubeconfig cluster to use
+      --context string                 The name of the kubeconfig context to use
+  -h, --help                           help for kubectl
+      --insecure-skip-tls-verify       If true, the server&#39;s certificate will not be checked for validity. This will make your HTTPS connections insecure
+      --kubeconfig string              Path to the kubeconfig file to use for CLI requests.
+      --match-server-version           Require server version to match client version
+  -n, --namespace string               If present, the namespace scope for this CLI request
+      --password string                Password for basic authentication to the API server
+      --profile string                 Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex) (default &quot;none&quot;)
+      --profile-output string          Name of the file to write the profile to (default &quot;profile.pprof&quot;)
+      --request-timeout string         The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don&#39;t timeout requests. (default &quot;0&quot;)
+  -s, --server string                  The address and port of the Kubernetes API server
+      --tls-server-name string         Server name to use for server certificate validation. If it is not provided, the hostname used to contact the server is used
+      --token string                   Bearer token for authentication to the API server
+      --user string                    The name of the kubeconfig user to use
+      --username string                Username for basic authentication to the API server
+      --warnings-as-errors             Treat warnings received from the server as errors and exit with a non-zero exit code
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --data-dir string   Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
@@ -1194,8 +1224,6 @@
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
 <li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
-<li><a href="../k0s_kubeconfig_admin/">k0s kubeconfig admin</a>    - Display Admin's Kubeconfig file</li>
-<li><a href="../k0s_kubeconfig_create/">k0s kubeconfig create</a>  - Create a kubeconfig for a user</li>
 </ul>
                 
               
