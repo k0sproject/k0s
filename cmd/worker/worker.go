@@ -83,8 +83,6 @@ func NewWorkerCmd() *cobra.Command {
 
 // StartWorker starts the worker components based on the CmdOpts config
 func (c *CmdOpts) StartWorker(ctx context.Context) error {
-
-	worker.KernelSetup()
 	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
