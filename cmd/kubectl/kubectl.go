@@ -24,6 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 
@@ -69,6 +70,9 @@ func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environme
 }
 
 func NewK0sKubectlCmd() *cobra.Command {
+	_ = pflag.CommandLine.MarkHidden("log-flush-frequency")
+	_ = pflag.CommandLine.MarkHidden("version")
+
 	args := kubectl.KubectlOptions{
 		IOStreams: genericclioptions.IOStreams{
 			In:     os.Stdin,
@@ -79,6 +83,7 @@ func NewK0sKubectlCmd() *cobra.Command {
 		PluginHandler: &kubectlPluginHandler{},
 	}
 	cmd := kubectl.NewKubectlCommand(args)
+
 	cmd.Aliases = []string{"kc"}
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
