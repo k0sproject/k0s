@@ -77,6 +77,8 @@ func TestMultiControllerSuite(t *testing.T) {
 }
 
 const k0sConfigWithMultiController = `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
 spec:
   api:
     externalAddress: %s
