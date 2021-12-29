@@ -73,7 +73,7 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(s.runCtx); err != nil {
 		return err
 	}
-	return nil
+	return os.Remove(s.Socket)
 }
 
 // Reconcile detects changes in configuration and applies them to the component
