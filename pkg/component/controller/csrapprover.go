@@ -87,7 +87,7 @@ func (a *CSRApprover) Reconcile() error {
 }
 
 // Init initializes the component needs
-func (a *CSRApprover) Init() error {
+func (a *CSRApprover) Init(_ context.Context) error {
 	var err error
 	a.clientset, err = a.KubeClientFactory.GetClient()
 	if err != nil {

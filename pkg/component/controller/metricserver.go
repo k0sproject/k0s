@@ -265,7 +265,7 @@ func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientF
 }
 
 // Init does nothing
-func (m *MetricServer) Init() error {
+func (m *MetricServer) Init(_ context.Context) error {
 	return nil
 }
 

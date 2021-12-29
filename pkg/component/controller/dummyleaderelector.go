@@ -22,11 +22,11 @@ type DummyLeaderElector struct {
 	callbacks []func()
 }
 
-func (l *DummyLeaderElector) Init() error      { return nil }
-func (l *DummyLeaderElector) Stop() error      { return nil }
-func (l *DummyLeaderElector) IsLeader() bool   { return l.Leader }
-func (l *DummyLeaderElector) Reconcile() error { return nil }
-func (l *DummyLeaderElector) Healthy() error   { return nil }
+func (l *DummyLeaderElector) Init(_ context.Context) error { return nil }
+func (l *DummyLeaderElector) Stop() error                  { return nil }
+func (l *DummyLeaderElector) IsLeader() bool               { return l.Leader }
+func (l *DummyLeaderElector) Reconcile() error             { return nil }
+func (l *DummyLeaderElector) Healthy() error               { return nil }
 
 func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 	l.callbacks = append(l.callbacks, fn)

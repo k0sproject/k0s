@@ -53,7 +53,7 @@ func (m *Manager) Add(ctx context.Context, component Component) {
 }
 
 // Init initializes all managed components
-func (m *Manager) Init() error {
+func (m *Manager) Init(ctx context.Context) error {
 	var g errgroup.Group
 
 	for _, comp := range m.Components {
@@ -61,7 +61,9 @@ func (m *Manager) Init() error {
 		logrus.Infof("initializing %v\n", compName)
 		c := comp
 		// init this async
-		g.Go(c.Init)
+		g.Go(func() error {
+			return c.Init(ctx)
+		})
 	}
 	err := g.Wait()
 	return err

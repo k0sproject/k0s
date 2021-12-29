@@ -34,7 +34,7 @@ type K0SControlAPI struct {
 }
 
 // Init does currently nothing
-func (m *K0SControlAPI) Init() error {
+func (m *K0SControlAPI) Init(_ context.Context) error {
 	// We need to create a serving cert for the api
 	return nil
 }

@@ -24,7 +24,7 @@ type K0sLease struct {
 }
 
 // Init initializes the component needs
-func (l *K0sLease) Init() error {
+func (l *K0sLease) Init(_ context.Context) error {
 	return nil
 }
 

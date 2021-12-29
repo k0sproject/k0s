@@ -66,7 +66,7 @@ type kubeletConfig struct {
 }
 
 // Init extracts the needed binaries
-func (k *Kubelet) Init() error {
+func (k *Kubelet) Init(_ context.Context) error {
 	cmds := []string{"kubelet", "xtables-legacy-multi"}
 
 	if runtime.GOOS == "windows" {

@@ -43,7 +43,7 @@ type Kine struct {
 }
 
 // Init extracts the needed binaries
-func (k *Kine) Init() error {
+func (k *Kine) Init(_ context.Context) error {
 	logrus.Infof("initializing kine with config: %+v", k.Config)
 	var err error
 	k.uid, err = users.GetUID(constant.KineUser)

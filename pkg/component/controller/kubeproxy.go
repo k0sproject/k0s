@@ -62,7 +62,7 @@ func NewKubeProxy(configFile string, k0sVars constant.CfgVars) (*KubeProxy, erro
 }
 
 // Init does nothing
-func (k *KubeProxy) Init() error {
+func (k *KubeProxy) Init(_ context.Context) error {
 	return nil
 }
 

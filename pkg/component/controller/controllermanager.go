@@ -57,7 +57,7 @@ var _ component.Component = &Manager{}
 var _ component.ReconcilerComponent = &Manager{}
 
 // Init extracts the needed binaries
-func (a *Manager) Init() error {
+func (a *Manager) Init(_ context.Context) error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.GetUID(constant.ApiserverUser)

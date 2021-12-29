@@ -45,7 +45,7 @@ type Manager struct {
 }
 
 // Init initializes the Manager
-func (m *Manager) Init() error {
+func (m *Manager) Init(ctx context.Context) error {
 	err := dir.Init(m.K0sVars.ManifestsDir, constant.ManifestsDirMode)
 	if err != nil {
 		return fmt.Errorf("failed to create manifest bundle dir %s: %w", m.K0sVars.ManifestsDir, err)
@@ -57,10 +57,10 @@ func (m *Manager) Init() error {
 	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
 
 	m.LeaderElector.AddAcquiredLeaseCallback(func() {
-		ctx, cancel := context.WithCancel(context.Background())
+		watcherCtx, cancel := context.WithCancel(ctx)
 		m.cancelWatcher = cancel
 		go func() {
-			_ = m.runWatchers(ctx)
+			_ = m.runWatchers(watcherCtx)
 		}()
 	})
 	m.LeaderElector.AddLostLeaseCallback(func() {

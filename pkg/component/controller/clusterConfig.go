@@ -70,7 +70,7 @@ func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0s
 	}, nil
 }
 
-func (r *ClusterConfigReconciler) Init() error {
+func (r *ClusterConfigReconciler) Init(_ context.Context) error {
 	// If we do not need to store the config in API we do not need the CRDs either
 	if !r.configSource.NeedToStoreInitialConfig() {
 		return nil

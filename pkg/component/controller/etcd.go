@@ -54,7 +54,7 @@ type Etcd struct {
 }
 
 // Init extracts the needed binaries
-func (e *Etcd) Init() error {
+func (e *Etcd) Init(_ context.Context) error {
 	var err error
 
 	if err = detectUnsupportedEtcdArch(); err != nil {

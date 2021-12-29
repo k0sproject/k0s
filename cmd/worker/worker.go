@@ -165,7 +165,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		})
 	}
 	// extract needed components
-	if err := componentManager.Init(); err != nil {
+	if err := componentManager.Init(ctx); err != nil {
 		return err
 	}
 

@@ -262,7 +262,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	perfTimer.Checkpoint("starting-component-init")
 	// init Node components
-	if err := c.NodeComponents.Init(); err != nil {
+	if err := c.NodeComponents.Init(ctx); err != nil {
 		return err
 	}
 	perfTimer.Checkpoint("finished-node-component-init")
@@ -318,7 +318,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
-	if err := c.ClusterComponents.Init(); err != nil {
+	if err := c.ClusterComponents.Init(ctx); err != nil {
 		return err
 	}
 	perfTimer.Checkpoint("finished cluster-component-init")
@@ -444,7 +444,7 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 	// Start all reconcilers
 	for name, reconciler := range reconcilers {
 		logrus.Infof("initing bootstrap reconciler: %s", name)
-		err := reconciler.Init()
+		err := reconciler.Init(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to initialize reconciler: %s", err.Error())
 		}
@@ -541,7 +541,7 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 
 	// Init and add all components to clusterComponents manager
 	for name, comp := range reconcilers {
-		err := comp.Init()
+		err := comp.Init(ctx)
 		if err != nil {
 			logrus.Infof("failed to initialize %s, component may not work properly: %v", name, err)
 		}

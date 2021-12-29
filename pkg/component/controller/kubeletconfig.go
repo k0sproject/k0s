@@ -64,7 +64,7 @@ func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFact
 }
 
 // Init does nothing
-func (k *KubeletConfig) Init() error {
+func (k *KubeletConfig) Init(_ context.Context) error {
 	return nil
 }
 

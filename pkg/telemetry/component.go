@@ -34,7 +34,7 @@ var _ component.ReconcilerComponent = &Component{}
 var interval = time.Minute * 10
 
 // Init set up for external service clients (segment, k8s api)
-func (c *Component) Init() error {
+func (c *Component) Init(_ context.Context) error {
 	c.log = logrus.WithField("component", "telemetry")
 
 	if segmentToken == "" {

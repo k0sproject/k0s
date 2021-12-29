@@ -77,7 +77,7 @@ type egressSelectorConfig struct {
 }
 
 // Init extracts needed binaries
-func (a *APIServer) Init() error {
+func (a *APIServer) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.ApiserverUser)
 	if err != nil {

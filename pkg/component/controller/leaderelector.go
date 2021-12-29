@@ -58,7 +58,7 @@ func NewLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) LeaderE
 	}
 }
 
-func (l *leaderElector) Init() error {
+func (l *leaderElector) Init(_ context.Context) error {
 	return nil
 }
 

@@ -19,7 +19,7 @@ type KubeProxy struct {
 }
 
 // Init
-func (k KubeProxy) Init() error {
+func (k KubeProxy) Init(_ context.Context) error {
 	return assets.Stage(k.K0sVars.BinDir, "kube-proxy.exe", constant.BinDirMode)
 }
 

@@ -28,7 +28,7 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 	}
 }
 
-func (a *OCIBundleReconciler) Init() error {
+func (a *OCIBundleReconciler) Init(_ context.Context) error {
 	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 

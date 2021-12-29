@@ -247,7 +247,7 @@ spec:
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
 // Init
-func (ec *ExtensionsController) Init() error {
+func (ec *ExtensionsController) Init(_ context.Context) error {
 	return nil
 }
 
