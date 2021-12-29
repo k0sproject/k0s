@@ -71,7 +71,12 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = string(bytes)
 			}
 			cmd.SilenceUsage = true
-			return c.StartWorker(cmd.Context())
+
+			// Set up signal handling
+			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
+
+			return c.StartWorker(ctx)
 		},
 	}
 
@@ -165,15 +170,10 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	}
 
 	worker.KernelSetup()
-
-	// Set up signal handling
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
 	err = componentManager.Start(ctx)
 	if err != nil {
 		logrus.WithError(err).Error("failed to start some of the worker components")
-		cancel()
+		return err
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()
