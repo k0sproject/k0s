@@ -123,7 +123,7 @@ func (s *storageSuite) TestValidation() {
 	}{
 		{
 			desc: "default_storage_spec_is_valid",
-			spec: DefaultStorageSpec(constant.DataDirDefault),
+			spec: DefaultStorageSpec(),
 		},
 		{
 			desc: "internal_cluster_spec_is_valid",

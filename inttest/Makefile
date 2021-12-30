@@ -11,7 +11,7 @@ bins = bin/sonobuoy
 include ../embedded-bins/Makefile.variables
 
 .PHONY: all
-all: $(bins) .footloose-alpine.stamp
+all: $(bins) .footloose-alpine.stamp .footloose-etcd.stamp
 
 bin:
 	mkdir -p $@
@@ -21,6 +21,10 @@ bin/sonobuoy: | bin
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
 	docker build -t footloose-alpine -f $< $(dir $<)
+	touch $@
+
+.footloose-etcd.stamp: footloose-etcd/Dockerfile
+	docker build -t footloose-etcd -f $< $(dir $<)
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
@@ -54,7 +58,7 @@ check-noderole: TIMEOUT=6m
 .PHONY: $(smoketests)
 include Makefile.variables
 
-$(smoketests): .footloose-alpine.stamp
+$(smoketests): .footloose-alpine.stamp .footloose-etcd.stamp
 	K0S_IMAGES_BUNDLE="$(realpath ../image-bundle/bundle.tar)" K0S_PATH="$(realpath ../k0s)" go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 
 .PHONY: clean

@@ -66,6 +66,7 @@ type FootlooseSuite struct {
 	KonnectivityAdminPort int
 	KonnectivityAgentPort int
 	KubeAPIExternalPort   int
+	WithExternalEtcd      bool
 	WithLB                bool
 	WorkerCount           int
 	ControllerUmask       int
@@ -190,6 +191,14 @@ func (s *FootlooseSuite) WorkerNode(idx int) string {
 func (s *FootlooseSuite) LBNode(idx int) string {
 	if !s.WithLB {
 		s.T().Log("Can't get Loadbalancer address because LB is not enabled for this suit")
+		s.T().FailNow()
+	}
+	return fmt.Sprintf(s.footlooseConfig.Machines[2].Spec.Name, idx)
+}
+
+func (s *FootlooseSuite) ExternalEtcd(idx int) string {
+	if !s.WithExternalEtcd {
+		s.T().Log("Can't get etcd address because it is not enabled for this suit")
 		s.T().FailNow()
 	}
 	return fmt.Sprintf(s.footlooseConfig.Machines[2].Spec.Name, idx)
@@ -886,6 +895,19 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			Count: 1,
 		})
 	}
+
+	if s.WithExternalEtcd {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec: config.Machine{
+				Name:         "etcd%d",
+				Image:        "footloose-etcd",
+				Privileged:   true,
+				PortMappings: []config.PortMapping{{ContainerPort: 22}},
+			},
+			Count: 1,
+		})
+	}
+
 	return cfg
 }
 
@@ -921,6 +943,20 @@ func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
 
 func (s *FootlooseSuite) GetLBAddress() string {
 	ssh, err := s.SSH(s.LBNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput("hostname -i")
+	s.Require().NoError(err)
+	return ipAddress
+}
+
+func (s *FootlooseSuite) GetExternalEtcdIPAddress() string {
+	return s.getIPAddress(s.ExternalEtcd(0))
+}
+
+func (s *FootlooseSuite) getIPAddress(nodeName string) string {
+	ssh, err := s.SSH(nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

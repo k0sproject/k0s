@@ -149,6 +149,7 @@ jobs:
           - check-ctr
           - check-customports
           - check-dualstack
+          - check-externaletcd
           - check-hacontrolplane
           # exists in inttest/Makefile.variables but there's no matching suite:
           #- check-install

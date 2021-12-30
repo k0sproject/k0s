@@ -201,7 +201,7 @@ func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterCo
 	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
 		etcdConfig = &v1beta1.EtcdConfig{
 			ExternalCluster: cfg.Spec.Storage.Etcd.ExternalCluster,
-			PeerAddress: 	 cfg.Spec.Storage.Etcd.PeerAddress,
+			PeerAddress:     cfg.Spec.Storage.Etcd.PeerAddress,
 		}
 		nodeConfig.Spec.Storage.Etcd = etcdConfig
 	}
