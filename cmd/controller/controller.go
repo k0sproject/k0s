@@ -260,7 +260,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return err
 	}
 
-	perfTimer.Checkpoint("starting-component-init")
+	perfTimer.Checkpoint("starting-node-component-init")
 	// init Node components
 	if err := c.NodeComponents.Init(ctx); err != nil {
 		return err
@@ -281,6 +281,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start controller node components: %w", err)
 	}
+	defer func() {
+		// Stop components
+		if stopErr := c.NodeComponents.Stop(); stopErr != nil {
+			logrus.Errorf("error while stopping node component %s", stopErr)
+		}
+		logrus.Info("all node components stopped")
+	}()
 
 	// in-cluster component reconcilers
 	err = c.createClusterReconcilers(ctx, adminClientFactory)
@@ -359,6 +366,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
 	perfTimer.Checkpoint("finished-starting-cluster-components")
+	defer func() {
+		// Stop Cluster components
+		if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
+			logrus.Errorf("error while stopping node component %s", stopErr)
+		}
+		logrus.Info("all cluster components stopped")
+	}()
 
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
 	go func() {
@@ -390,19 +404,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
-
-	// Stop components
-	if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
-		logrus.Errorf("error while stopping node component %s", stopErr)
-	}
-	logrus.Info("all cluster components stopped")
-
-	// Stop components
-	if stopErr := c.NodeComponents.Stop(); stopErr != nil {
-		logrus.Errorf("error while stopping node component %s", stopErr)
-	}
-	logrus.Info("all node components stopped")
-
 	return err
 }
 
