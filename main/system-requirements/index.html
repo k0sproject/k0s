@@ -520,8 +520,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#hardware" class="md-nav__link">
-    Hardware
+  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
+    Minimum memory and CPU requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controller-node-recommendations-for-large-clusters" class="md-nav__link">
+    Controller node recommendations for large clusters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage" class="md-nav__link">
+    Storage
   </a>
   
 </li>
@@ -550,6 +564,13 @@
         <li class="md-nav__item">
   <a href="#os-dependencies" class="md-nav__link">
     OS dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controller-node-measured-memory-consumption" class="md-nav__link">
+    Controller node measured memory consumption
   </a>
   
 </li>
@@ -1200,8 +1221,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#hardware" class="md-nav__link">
-    Hardware
+  <a href="#minimum-memory-and-cpu-requirements" class="md-nav__link">
+    Minimum memory and CPU requirements
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controller-node-recommendations-for-large-clusters" class="md-nav__link">
+    Controller node recommendations for large clusters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage" class="md-nav__link">
+    Storage
   </a>
   
 </li>
@@ -1234,6 +1269,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#controller-node-measured-memory-consumption" class="md-nav__link">
+    Controller node measured memory consumption
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1249,38 +1291,88 @@
                 
                 
                 <h1 id="system-requirements">System requirements<a class="headerlink" href="#system-requirements" title="Permanent link">#</a></h1>
-<p>Verify that your environment meets the system requirements for k0s.</p>
-<h2 id="hardware">Hardware<a class="headerlink" href="#hardware" title="Permanent link">#</a></h2>
-<p>The minimum hardware requirements for k0s detailed below are approximations and
-thus results may vary.</p>
+<p>This page describes the system requirements for k0s.</p>
+<h2 id="minimum-memory-and-cpu-requirements">Minimum memory and CPU requirements<a class="headerlink" href="#minimum-memory-and-cpu-requirements" title="Permanent link">#</a></h2>
+<p>The minimum requirements for k0s detailed below are approximations, and thus your results may vary.</p>
 <table>
 <thead>
 <tr>
 <th>Role</th>
-<th>Virtual CPU (vCPU)</th>
 <th>Memory (RAM)</th>
+<th>Virtual CPU (vCPU)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Controller node</td>
+<td>1   GB (2 recommended)</td>
 <td>1 vCPU (2 recommended)</td>
-<td>1 GB (2 recommended)</td>
 </tr>
 <tr>
 <td>Worker node</td>
-<td>1 vCPU (2 recommended)</td>
 <td>0.5 GB (1 recommended)</td>
+<td>1 vCPU (2 recommended)</td>
 </tr>
 <tr>
 <td>Controller + worker</td>
+<td>1   GB (2 recommended)</td>
 <td>1 vCPU (2 recommended)</td>
-<td>1 GB (2 recommended)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Note</strong>: Use an SSD for <a href="https://etcd.io/docs/current/op-guide/performance/">optimal storage performance</a> (cluster
-latency and throughput are sensitive to storage).</p>
+<h2 id="controller-node-recommendations-for-large-clusters">Controller node recommendations for large clusters<a class="headerlink" href="#controller-node-recommendations-for-large-clusters" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th># of Worker nodes</th>
+<th># of Pods (besides default)</th>
+<th>Recommended RAM</th>
+<th>Recommended vCPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>up to   10</td>
+<td>up to   1000</td>
+<td>1-2   GB</td>
+<td>1-2   vCPU</td>
+</tr>
+<tr>
+<td>up to   50</td>
+<td>up to   5000</td>
+<td>2-4   GB</td>
+<td>2-4   vCPU</td>
+</tr>
+<tr>
+<td>up to  100</td>
+<td>up to  10000</td>
+<td>4-8   GB</td>
+<td>2-4   vCPU</td>
+</tr>
+<tr>
+<td>up to  500</td>
+<td>up to  50000</td>
+<td>8-16  GB</td>
+<td>4-8   vCPU</td>
+</tr>
+<tr>
+<td>up to 1000</td>
+<td>up to 100000</td>
+<td>16-32 GB</td>
+<td>8-16  vCPU</td>
+</tr>
+<tr>
+<td>up to 5000</td>
+<td>up to 150000</td>
+<td>32-64 GB</td>
+<td>16-32 vCPU</td>
+</tr>
+</tbody>
+</table>
+<p>k0s has the standard Kubernetes limits for the maximum number of nodes, pods, etc. For more details, see <a href="https://kubernetes.io/docs/setup/best-practices/cluster-large/">the Kubernetes considerations for large clusters</a>.</p>
+<p>k0s controller node measured memory consumption can be found below on this page.</p>
+<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h2>
+<p>It's recommended to use an SSD for <a href="https://etcd.io/docs/current/op-guide/performance/">optimal storage performance</a> (cluster latency and throughput are sensitive to storage).</p>
 <p>The specific storage consumption for k0s is as follows:</p>
 <table>
 <thead>
@@ -1304,8 +1396,7 @@ latency and throughput are sensitive to storage).</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Note</strong>: The operating system and application requirements must be considered
-in addition to the k0s part.</p>
+<p><strong>Note</strong>: The operating system and application requirements must be considered in addition to the k0s part.</p>
 <h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
 <ul>
 <li>Linux (kernel v3.10 or later)</li>
@@ -1318,9 +1409,79 @@ in addition to the k0s part.</p>
 <li>ARMv7</li>
 </ul>
 <h2 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h2>
-<p>For information on the ports that k0s needs to function, refer to <a href="../networking/">networking</a>.</p>
+<p>For information on the required ports and protocols, refer to <a href="../networking/">networking</a>.</p>
 <h2 id="os-dependencies">OS dependencies<a class="headerlink" href="#os-dependencies" title="Permanent link">#</a></h2>
-<p>In most cases k0s does NOT have any OS level dependencies. The needed kernel configurations are documented <a href="../os-deps/">here</a>.</p>
+<p>In most cases, k0s does not have any OS level dependencies. The needed kernel configurations are documented <a href="../os-deps/">here</a>.</p>
+<h2 id="controller-node-measured-memory-consumption">Controller node measured memory consumption<a class="headerlink" href="#controller-node-measured-memory-consumption" title="Permanent link">#</a></h2>
+<p>The following table shows the measured memory consumption in the cluster of one controller node.</p>
+<table>
+<thead>
+<tr>
+<th># of Worker nodes</th>
+<th># of Pods (besides default)</th>
+<th>Memory consumption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>510  MB</td>
+</tr>
+<tr>
+<td>1</td>
+<td>100</td>
+<td>600  MB</td>
+</tr>
+<tr>
+<td>20</td>
+<td>0</td>
+<td>660  MB</td>
+</tr>
+<tr>
+<td>20</td>
+<td>2000</td>
+<td>1000 MB</td>
+</tr>
+<tr>
+<td>50</td>
+<td>0</td>
+<td>790  MB</td>
+</tr>
+<tr>
+<td>50</td>
+<td>5000</td>
+<td>1400 MB</td>
+</tr>
+<tr>
+<td>100</td>
+<td>0</td>
+<td>1000 MB</td>
+</tr>
+<tr>
+<td>100</td>
+<td>10000</td>
+<td>2300 MB</td>
+</tr>
+<tr>
+<td>200</td>
+<td>0</td>
+<td>1500 MB</td>
+</tr>
+<tr>
+<td>200</td>
+<td>20000</td>
+<td>3300 MB</td>
+</tr>
+</tbody>
+</table>
+<p>Measurement details:</p>
+<ul>
+<li>k0s v1.22.4+k0s.2 (default configuration with etcd)</li>
+<li>Ubuntu 20.04.3 LTS, OS part of used memory was around 180 MB</li>
+<li>Hardware: AWS t3.xlarge (4 vCPUs, 16 GB RAM)</li>
+<li>Pod image: nginx:1.21.4</li>
+</ul>
                 
               
               
