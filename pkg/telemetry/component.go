@@ -78,7 +78,7 @@ func (c *Component) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (c *Component) Reconcile(_ context.Context, clusterCfg *v1beta1.ClusterConfig) error {
+func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: Telemetry")
 	if !clusterCfg.Spec.Telemetry.Enabled {
 		return c.Stop()
@@ -96,7 +96,7 @@ func (c *Component) Reconcile(_ context.Context, clusterCfg *v1beta1.ClusterConf
 	wait.Until(func() {
 		c.retrieveKubeClient(initedCh)
 	}, time.Second, initedCh)
-	go c.run()
+	go c.run(ctx)
 	return nil
 }
 
@@ -105,14 +105,14 @@ func (c *Component) Healthy() error {
 	return nil
 }
 
-func (c Component) run() {
+func (c Component) run(ctx context.Context) {
 	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			c.sendTelemetry()
+			c.sendTelemetry(ctx)
 		case <-c.stopCh:
 			return
 		}
