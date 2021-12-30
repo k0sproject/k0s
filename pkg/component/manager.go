@@ -16,6 +16,7 @@ limitations under the License.
 package component
 
 import (
+	"container/list"
 	"context"
 	"fmt"
 	"reflect"
@@ -30,15 +31,19 @@ import (
 
 // Manager manages components
 type Manager struct {
-	Components []Component
+	Components     []Component
+	HealthyTimeout time.Duration
 
+	started              *list.List
 	lastReconciledConfig *v1beta1.ClusterConfig
 }
 
 // NewManager creates a manager
 func NewManager() *Manager {
 	return &Manager{
-		Components: []Component{},
+		Components:     []Component{},
+		HealthyTimeout: 2 * time.Minute,
+		started:        list.New(),
 	}
 }
 
@@ -58,7 +63,7 @@ func (m *Manager) Init(ctx context.Context) error {
 
 	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()
-		logrus.Infof("initializing %v\n", compName)
+		logrus.Infof("initializing %v", compName)
 		c := comp
 		// init this async
 		g.Go(func() error {
@@ -77,10 +82,13 @@ func (m *Manager) Start(ctx context.Context) error {
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
 		if err := comp.Run(ctx); err != nil {
+			_ = m.Stop()
 			return err
 		}
+		m.started.PushFront(comp)
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
-		if err := waitForHealthy(ctx, comp, compName); err != nil {
+		if err := waitForHealthy(ctx, comp, compName, m.HealthyTimeout); err != nil {
+			_ = m.Stop()
 			return err
 		}
 	}
@@ -91,16 +99,23 @@ func (m *Manager) Start(ctx context.Context) error {
 // Stop stops all managed components
 func (m *Manager) Stop() error {
 	var ret error
-	for _, component := range m.Components {
-		compName := reflect.TypeOf(component).Elem().Name()
-		logrus.Infof("stopping component %s", compName)
+	var next *list.Element
+
+	for e := m.started.Front(); e != nil; e = next {
+		component := e.Value.(Component)
+		name := reflect.TypeOf(component).Elem().Name()
+
 		if err := component.Stop(); err != nil {
-			logrus.Errorf("failed to stop component: %s", err.Error())
+			logrus.Errorf("failed to stop component %s: %s", name, err.Error())
 			if ret == nil {
 				ret = fmt.Errorf("failed to stop components")
 			}
+		} else {
+			logrus.Infof("stopped component %s", name)
 		}
-		logrus.Infof("stopped component %s", compName)
+
+		next = e.Next()
+		m.started.Remove(e)
 	}
 	return ret
 }
@@ -160,8 +175,8 @@ func isReconcileComponent(component Component) bool {
 }
 
 // waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false
-func waitForHealthy(ctx context.Context, comp Component, name string) error {
-	ctx, cancelFunction := context.WithTimeout(ctx, 2*time.Minute)
+func waitForHealthy(ctx context.Context, comp Component, name string, timeout time.Duration) error {
+	ctx, cancelFunction := context.WithTimeout(ctx, timeout)
 
 	// clear up context after timeout
 	defer cancelFunction()
@@ -169,15 +184,16 @@ func waitForHealthy(ctx context.Context, comp Component, name string) error {
 	// loop forever, until the context is canceled or until etcd is healthy
 	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
+		logrus.Debugf("checking %s for health", name)
+		if err := comp.Healthy(); err != nil {
+			logrus.Debugf("health-check: %s not yet healthy: %v", name, err)
+		} else {
+			return nil
+		}
+
 		select {
 		case <-ticker.C:
-			logrus.Debugf("checking %s for health", name)
-			if err := comp.Healthy(); err != nil {
-				logrus.Errorf("health-check: %s might be down: %v", name, err)
-				continue
-			}
-			logrus.Debugf("%s is healthy. closing check", name)
-			return nil
+			continue
 		case <-ctx.Done():
 			return fmt.Errorf("%s health-check timed out", name)
 		}
