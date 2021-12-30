@@ -33,14 +33,8 @@ func etcdListCmd() *cobra.Command {
 		Short: "Returns etcd cluster members list",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-			c.ClusterConfig = cfg
-
 			ctx := context.Background()
-			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, c.ClusterConfig.Spec.Storage.Etcd)
+			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, c.NodeConfig.Spec.Storage.Etcd)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}
@@ -51,7 +45,6 @@ func etcdListCmd() *cobra.Command {
 			return json.NewEncoder(os.Stdout).Encode(map[string]interface{}{"members": members})
 		},
 	}
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

@@ -75,9 +75,11 @@ func (c *CmdOpts) reset() error {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
+
+	loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
+	_, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get config: %v", err)
 	}
 	return nil
 }

@@ -42,10 +42,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			// Disable logrus for token commands
 			logrus.SetLevel(logrus.WarnLevel)
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
 			expiry, err := time.ParseDuration(tokenExpiry)
 			if err != nil {
 				return err
@@ -61,22 +57,18 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(cmd.Context(), cfg, c.K0sVars, createTokenRole, expiry)
-
+				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(cmd.Context(), c.NodeConfig, c.K0sVars, createTokenRole, expiry)
 				return err
 			})
 			if err != nil {
 				return err
 			}
-
 			fmt.Println(bootstrapConfig)
-
 			return nil
 		},
 	}
 	// append flags
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.Flags().StringVar(&tokenExpiry, "expiry", "0s", "Expiration time of the token. Format 1.5h, 2h45m or 300ms.")
 	cmd.Flags().StringVar(&createTokenRole, "role", "worker", "Either worker or controller")
 	cmd.Flags().BoolVar(&waitCreate, "wait", false, "wait forever (default false)")

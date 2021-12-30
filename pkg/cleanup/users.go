@@ -32,10 +32,10 @@ func (u *users) Name() string {
 
 // Run removes all controller users that are present on the host
 func (u *users) Run() error {
-	cfg, err := config.GetNodeConfig(u.Config.cfgFile, u.Config.k0sVars)
+	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true, K0sVars: u.Config.k0sVars}
+	cfg, err := loadingRules.Load()
 	if err != nil {
 		logrus.Errorf("failed to get cluster setup: %v", err)
-		return nil
 	}
 	if err := install.DeleteControllerUsers(cfg); err != nil {
 		// don't fail, just notify on delete error

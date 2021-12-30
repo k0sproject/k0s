@@ -59,7 +59,7 @@ As an alternative to the previous step, you can use k0sctl to upload the bundle 
 
 ```YAML
 apiVersion: k0sctl.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: k0s-cluster
 spec:
@@ -93,7 +93,7 @@ Use the following `k0s.yaml` to ensure that containerd does not pull images for 
 
 ```yaml
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: k0s
 spec:

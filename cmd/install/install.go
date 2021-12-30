@@ -50,12 +50,7 @@ func (c *CmdOpts) setup(role string, args []string) error {
 	}
 
 	if role == "controller" {
-		cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-		if err != nil {
-			return err
-		}
-		c.ClusterConfig = cfg
-		if err := install.CreateControllerUsers(c.ClusterConfig, c.K0sVars); err != nil {
+		if err := install.CreateControllerUsers(c.NodeConfig, c.K0sVars); err != nil {
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
@@ -97,9 +92,11 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 
 func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
+
+	loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
+	_, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get config: %v", err)
 	}
 	return nil
 }

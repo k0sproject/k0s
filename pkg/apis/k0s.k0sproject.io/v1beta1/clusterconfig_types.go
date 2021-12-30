@@ -279,13 +279,21 @@ func (c *ClusterConfig) Validate() []error {
 }
 
 // GetBootstrappingConfig returns a ClusterConfig object stripped of Cluster-Wide Settings
-func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *ClusterConfig {
+func (c *ClusterConfig) GetBootstrappingConfig() *ClusterConfig {
+	var etcdConfig *EtcdConfig
+	if c.Spec.Storage.Type == EtcdStorageType {
+		etcdConfig = &EtcdConfig{
+			ExternalCluster: c.Spec.Storage.Etcd.ExternalCluster,
+			PeerAddress:     c.Spec.Storage.Etcd.PeerAddress,
+		}
+		c.Spec.Storage.Etcd = etcdConfig
+	}
 	return &ClusterConfig{
 		ObjectMeta: c.ObjectMeta,
 		TypeMeta:   c.TypeMeta,
 		Spec: &ClusterSpec{
 			API:     c.Spec.API,
-			Storage: storageSpec,
+			Storage: c.Spec.Storage,
 			Network: &Network{
 				ServiceCIDR: c.Spec.Network.ServiceCIDR,
 				DualStack:   c.Spec.Network.DualStack,

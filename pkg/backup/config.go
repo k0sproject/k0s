@@ -19,49 +19,39 @@ limitations under the License.
 package backup
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/sirupsen/logrus"
 )
 
 type configurationStep struct {
-	path               string
+	cfgPath            string
 	restoredConfigPath string
 }
 
-func newConfigurationStep(path string, restoredConfigPath string) *configurationStep {
+func newConfigurationStep(cfgPath string, restoredConfigPath string) *configurationStep {
 	return &configurationStep{
-		path:               path,
+		cfgPath:            cfgPath,
 		restoredConfigPath: restoredConfigPath,
 	}
 }
 
 func (c configurationStep) Name() string {
-	return c.path
+	return "k0s-config"
 }
 
 func (c configurationStep) Backup() (StepResult, error) {
-	_, err := os.Stat(c.path)
-	if os.IsNotExist(err) {
-		logrus.Warn("default k0s.yaml is used, do not back it up")
-		return StepResult{}, nil
-	}
-	if err != nil {
-		return StepResult{}, fmt.Errorf("can't backup `%s`: %v", c.path, err)
-	}
-	return StepResult{filesForBackup: []string{c.path}}, nil
+	return StepResult{filesForBackup: []string{c.cfgPath}}, nil
 }
 
 func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 	objectPathInArchive := path.Join(restoreFrom, "k0s.yaml")
 
 	if !file.Exists(objectPathInArchive) {
-		logrus.Debugf("%s does not exist in the backup file", objectPathInArchive)
+		logrus.Infof("%s does not exist in the backup file", objectPathInArchive)
 		return nil
 	}
 

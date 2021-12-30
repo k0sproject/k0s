@@ -16,10 +16,12 @@ limitations under the License.
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
@@ -195,11 +197,26 @@ func FileInputFlag() *pflag.FlagSet {
 func GetCmdOpts() CLIOptions {
 	K0sVars = constant.GetConfig(DataDir)
 
+	if controllerOpts.SingleNode {
+		controllerOpts.EnableWorker = true
+		K0sVars.DefaultStorageType = "kine"
+	}
+
+	// when a custom config file is used, verify that it can be opened
+	if CfgFile != constant.K0sConfigPathDefault {
+		_, err := os.Open(CfgFile)
+		if err != nil {
+			logrus.Fatalf("failed to load config file (%s): %v", CfgFile, err)
+		}
+	}
+
 	opts := CLIOptions{
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
 
 		CfgFile:          CfgFile,
+		ClusterConfig:    getClusterConfig(K0sVars),
+		NodeConfig:       getNodeConfig(K0sVars),
 		Debug:            Debug,
 		Verbose:          Verbose,
 		DefaultLogLevels: DefaultLogLevels(),
@@ -207,4 +224,22 @@ func GetCmdOpts() CLIOptions {
 		DebugListenOn:    DebugListenOn,
 	}
 	return opts
+}
+
+func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
+	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, K0sVars: k0sVars}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return nil
+	}
+	return cfg
+}
+
+func getClusterConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
+	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return nil
+	}
+	return cfg
 }
