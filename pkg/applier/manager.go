@@ -100,7 +100,7 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 	}
 
 	for _, dir := range dirs {
-		if err := m.createStack(path.Join(m.bundlePath, dir)); err != nil {
+		if err := m.createStack(ctx, path.Join(m.bundlePath, dir)); err != nil {
 			log.WithError(err).Error("failed to create stack")
 			return err
 		}
@@ -132,12 +132,12 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 			switch event.Op {
 			case fsnotify.Create:
 				if dir.IsDirectory(event.Name) {
-					if err := m.createStack(event.Name); err != nil {
+					if err := m.createStack(ctx, event.Name); err != nil {
 						return err
 					}
 				}
 			case fsnotify.Remove:
-				_ = m.removeStack(event.Name)
+				_ = m.removeStack(ctx, event.Name)
 			}
 		case <-ctx.Done():
 			log.Info("manifest watcher done")
@@ -146,7 +146,7 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) createStack(name string) error {
+func (m *Manager) createStack(ctx context.Context, name string) error {
 	// safeguard in case the fswatcher would trigger an event for an already existing watcher
 	if _, ok := m.stacks[name]; ok {
 		return nil
@@ -158,14 +158,14 @@ func (m *Manager) createStack(name string) error {
 	}
 
 	go func() {
-		_ = sa.Start()
+		_ = sa.Start(ctx)
 	}()
 
 	m.stacks[name] = sa
 	return nil
 }
 
-func (m *Manager) removeStack(name string) error {
+func (m *Manager) removeStack(ctx context.Context, name string) error {
 	sa, ok := m.stacks[name]
 
 	if !ok {
@@ -179,7 +179,7 @@ func (m *Manager) removeStack(name string) error {
 		m.log.WithField("stack", name).WithError(err).Warn("failed to stop stack applier")
 		return err
 	}
-	err = sa.DeleteStack()
+	err = sa.DeleteStack(ctx)
 	if err != nil {
 		m.log.WithField("stack", name).WithError(err).Warn("failed to stop and delete a stack applier")
 		return err

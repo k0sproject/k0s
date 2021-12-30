@@ -16,6 +16,7 @@ limitations under the License.
 package debounce
 
 import (
+	"context"
 	"fmt"
 	"sync/atomic"
 	"testing"
@@ -32,7 +33,7 @@ func TestDebounce(t *testing.T) {
 
 	var lastEvent atomic.Value
 	lastEvent.Store("")
-	debouncer := New(1*time.Second, eventChan, func(arg fsnotify.Event) {
+	debouncer := New(context.Background(), 1*time.Second, eventChan, func(arg fsnotify.Event) {
 		val := debounceCalled.Load().(int)
 		val++
 		debounceCalled.Store(val)
@@ -56,7 +57,7 @@ func TestDebounceStopWithoutActuallyDebouncing(t *testing.T) {
 
 	var lastEvent atomic.Value
 	lastEvent.Store("")
-	debouncer := New(10*time.Second, eventChan, func(arg fsnotify.Event) {
+	debouncer := New(context.Background(), 10*time.Second, eventChan, func(arg fsnotify.Event) {
 		val := debounceCalled.Load().(int)
 		val++
 		debounceCalled.Store(val)
