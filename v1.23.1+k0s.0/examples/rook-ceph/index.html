@@ -1424,25 +1424,25 @@
 ls -l
 </code></pre></div>
 <p>Open <code>variables.tf</code> and set the number of controller and worker nodes like this:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span> <span class="nv">&quot;cluster_name&quot;</span> <span class="p">{</span>
-  <span class="na">type</span>    <span class="o">=</span> <span class="kt">string</span>
-  <span class="na">default</span> <span class="o">=</span> <span class="s2">&quot;k0sctl&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_name&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;k0sctl&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 
-<span class="kr">variable</span> <span class="nv">&quot;controller_count&quot;</span> <span class="p">{</span>
-  <span class="na">type</span>    <span class="o">=</span> <span class="kt">number</span>
-  <span class="na">default</span> <span class="o">=</span> <span class="m">1</span>
-<span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;controller_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 
-<span class="kr">variable</span> <span class="nv">&quot;worker_count&quot;</span> <span class="p">{</span>
-  <span class="na">type</span>    <span class="o">=</span> <span class="kt">number</span>
-  <span class="na">default</span> <span class="o">=</span> <span class="m">3</span>
-<span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;worker_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 
-<span class="kr">variable</span> <span class="nv">&quot;cluster_flavor&quot;</span> <span class="p">{</span>
-  <span class="na">type</span>    <span class="o">=</span> <span class="kt">string</span>
-  <span class="na">default</span> <span class="o">=</span> <span class="s2">&quot;t3.small&quot;</span>
-<span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_flavor&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;t3.small&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <p>Open <code>main.tf</code> to check or modify k0s version near the end of the file.</p>
 <p>You can also configure a different name to your cluster and change the default VM type. <code>t3.small</code> (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.</p>
@@ -1500,7 +1500,7 @@ sudo k0s kubectl get nodes
 <span class="nb">cd</span> rook/cluster/examples/kubernetes/ceph
 </code></pre></div>
 <p>We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in <code>operator.yaml</code> like this</p>
-<div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span> <span class="s">&quot;/var/lib/k0s/kubelet&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/kubelet&quot;</span><span class="w"></span>
 </code></pre></div>
 <p>To create the resources, which are needed by the Rook’s Ceph operator, run</p>
 <div class="highlight"><pre><span></span><code>kubectl apply -f crds.yaml -f common.yaml -f operator.yaml
@@ -1547,17 +1547,17 @@ rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   <span class="m">0</
 </code></pre></div>
 <h3 id="9-request-storage">9. Request storage<a class="headerlink" href="#9-request-storage" title="Permanent link">#</a></h3>
 <p>Create a new manifest file <code>mongo-pvc.yaml</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">storageClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rook-ceph-block</span>
-  <span class="nt">accessModes</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
-  <span class="nt">resources</span><span class="p">:</span>
-    <span class="nt">requests</span><span class="p">:</span>
-      <span class="nt">storage</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2Gi</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rook-ceph-block</span><span class="w"></span>
+<span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span><span class="w"></span>
+<span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2Gi</span><span class="w"></span>
 </code></pre></div>
 <p>This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.</p>
 <div class="highlight"><pre><span></span><code>kubectl apply -f mongo-pvc.yaml
@@ -1573,32 +1573,32 @@ mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   2Gi        RWO  
 </code></pre></div>
 <h3 id="10-deploy-an-example-application">10. Deploy an example application<a class="headerlink" href="#10-deploy-an-example-application" title="Permanent link">#</a></h3>
 <p>Let's deploy a Mongo database to verify the Ceph storage. Create a new file <code>mongo.yaml</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">selector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo</span>
-  <span class="nt">template</span><span class="p">:</span>
-    <span class="nt">metadata</span><span class="p">:</span>
-      <span class="nt">labels</span><span class="p">:</span>
-        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo</span>
-    <span class="nt">spec</span><span class="p">:</span>
-      <span class="nt">containers</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo:4.0</span>
-        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo</span>
-        <span class="nt">ports</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">containerPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">27017</span>
-          <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo</span>
-        <span class="nt">volumeMounts</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span>
-          <span class="nt">mountPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/data/db</span>
-      <span class="nt">volumes</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span>
-        <span class="nt">persistentVolumeClaim</span><span class="p">:</span>
-          <span class="nt">claimName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo:4.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">27017</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span><span class="w"></span>
+<span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/data/db</span><span class="w"></span>
+<span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span><span class="w"></span>
+<span class="w">        </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span><span class="w"></span>
 </code></pre></div>
 <p>Deploy the database:</p>
 <div class="highlight"><pre><span></span><code>kubectl apply -f mongo.yaml

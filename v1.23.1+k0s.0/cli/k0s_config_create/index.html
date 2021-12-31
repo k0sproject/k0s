@@ -1178,7 +1178,7 @@
                   <h1>K0s config create</h1>
                 
                 <h2 id="k0s-config-create">k0s config create<a class="headerlink" href="#k0s-config-create" title="Permanent link">#</a></h2>
-<p>Output the default or merged k0s configuration yaml to stdout</p>
+<p>Output the default k0s configuration yaml to stdout</p>
 <div class="highlight"><pre><span></span><code>k0s config create [flags]
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
@@ -1186,6 +1186,7 @@
       --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
   -h, --help                   help for create
       --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
+  -v, --verbose                Verbose logging (default: false)
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!

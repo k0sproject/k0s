@@ -1344,43 +1344,43 @@
 </code></pre></div>
 <h2 id="2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl">2b. Sync the bundle file with the airgapped machines (remotely with k0sctl)<a class="headerlink" href="#2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl" title="Permanent link">#</a></h2>
 <p>As an alternative to the previous step, you can use k0sctl to upload the bundle file to the worker nodes. k0sctl can also be used to upload k0s binary file to all nodes. Take a look at this example (k0sctl.yaml) with one controller and one worker node to upload the bundle file and k0s binary:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">hosts</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">ssh</span><span class="p">:</span>
-      <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-controller&gt;</span>
-      <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-      <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span>
-    <span class="nt">role</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">controller</span>
-    <span class="nt">uploadBinary</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-    <span class="nt">k0sBinaryPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/k0s_binary/k0s</span>
-  <span class="p p-Indicator">-</span> <span class="nt">ssh</span><span class="p">:</span>
-      <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-worker&gt;</span>
-      <span class="nt">user</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ubuntu</span>
-      <span class="nt">keyPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span>
-    <span class="nt">role</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">worker</span>
-    <span class="nt">uploadBinary</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-    <span class="nt">k0sBinaryPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/k0s_binary/k0s</span>
-    <span class="nt">files</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bundle-file</span>
-        <span class="nt">src</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/bundle-file/airgap-bundle-amd64.tar</span>
-        <span class="nt">dstDir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/images/</span>
-        <span class="nt">perm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0755</span>
-  <span class="nt">k0s</span><span class="p">:</span>
-    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.21.3+k0s.0</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ssh</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-controller&gt;</span><span class="w"></span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span><span class="w"></span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span><span class="w"></span>
+<span class="w">    </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span><span class="w"></span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/k0s_binary/k0s</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">ssh</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-worker&gt;</span><span class="w"></span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu</span><span class="w"></span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/.ssh/id_rsa</span><span class="w"></span>
+<span class="w">    </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span><span class="w"></span>
+<span class="w">    </span><span class="nt">uploadBinary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">    </span><span class="nt">k0sBinaryPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/k0s_binary/k0s</span><span class="w"></span>
+<span class="w">    </span><span class="nt">files</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bundle-file</span><span class="w"></span>
+<span class="w">        </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/bundle-file/airgap-bundle-amd64.tar</span><span class="w"></span>
+<span class="w">        </span><span class="nt">dstDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/k0s/images/</span><span class="w"></span>
+<span class="w">        </span><span class="nt">perm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0755</span><span class="w"></span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.21.3+k0s.0</span><span class="w"></span>
 </code></pre></div>
 <h2 id="3-ensure-pull-policy-in-the-k0syaml-optional">3. Ensure pull policy in the k0s.yaml (optional)<a class="headerlink" href="#3-ensure-pull-policy-in-the-k0syaml-optional" title="Permanent link">#</a></h2>
 <p>Use the following <code>k0s.yaml</code> to ensure that containerd does not pull images for k0s components from the Internet at any time.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Cluster</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">images</span><span class="p">:</span>
-    <span class="nt">default_pull_policy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Never</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">images</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">default_pull_policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span><span class="w"></span>
 </code></pre></div>
 <h2 id="4-set-up-the-controller-and-worker-nodes">4. Set up the controller and worker nodes<a class="headerlink" href="#4-set-up-the-controller-and-worker-nodes" title="Permanent link">#</a></h2>
 <p>Refer to the <a href="../k0s-multi-node/">Manual Install</a> for information on setting up the controller and worker nodes locally. Alternatively, you can use <a href="../k0sctl-install/">k0sctl</a>.</p>

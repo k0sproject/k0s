@@ -1345,13 +1345,13 @@
 <h3 id="strict-affinity">Strict-affinity<a class="headerlink" href="#strict-affinity" title="Permanent link">#</a></h3>
 <p>You must enable strict affinity to run the windows node.</p>
 <p>If the <code>spec.network.calico.withWindowsNodes</code> field is set to <code>true</code> (it is set to <code>false</code> by default) the additional calico related manifest <code>/var/lib/k0s/manifests/calico/calico-IPAMConfig-ipamconfig.yaml</code> is created with the following values:</p>
-<div class="highlight"><pre><span></span><code><span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">crd.projectcalico.org/v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IPAMConfig</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">strictAffinity</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+<div class="highlight"><pre><span></span><code><span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crd.projectcalico.org/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPAMConfig</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">strictAffinity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 </code></pre></div>
 <p>Alternately, you can manually execute calicoctl:</p>
 <div class="highlight"><pre><span></span><code>calicoctl ipam configure --strictaffinity<span class="o">=</span><span class="nb">true</span>
@@ -1370,15 +1370,15 @@
 <div class="highlight"><pre><span></span><code>kubectl run win --image<span class="o">=</span>hello-world:nanoserver --command<span class="o">=</span><span class="nb">true</span> -i --attach<span class="o">=</span><span class="nb">true</span> -- cmd.exe
 </code></pre></div>
 <h3 id="manifest-for-pod-with-iis-web-server">Manifest for pod with IIS web-server<a class="headerlink" href="#manifest-for-pod-with-iis-web-server" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Pod</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iis</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">containers</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iis</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/windows/servercore/iis</span>
-    <span class="nt">imagePullPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IfNotPresent</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iis</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iis</span><span class="w"></span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/windows/servercore/iis</span><span class="w"></span>
+<span class="w">    </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IfNotPresent</span><span class="w"></span>
 </code></pre></div>
                 
               

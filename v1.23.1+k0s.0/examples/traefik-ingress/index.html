@@ -1240,29 +1240,29 @@
 <p>Configure k0s to install Traefik and MetalLB during cluster bootstrapping by adding their <a href="../../helm-charts/">Helm charts</a> as extensions in the k0s configuration file (<code>k0s.yaml</code>).</p>
 <p><strong>Note:</strong></p>
 <p>A good practice is to have a small range of IP addresses that are addressable on your network, preferably outside the assignment pool your DHCP server allocates (though any valid IP range should work locally on your machine). Providing an addressable range allows you to access your load balancer and Ingress services from anywhere on your local network.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span>
-  <span class="nt">helm</span><span class="p">:</span>
-    <span class="nt">repositories</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik</span>
-      <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://helm.traefik.io/traefik</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bitnami</span>
-      <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://charts.bitnami.com/bitnami</span>
-    <span class="nt">charts</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik</span>
-      <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;10.3.2&quot;</span>
-      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">metallb</span>
-      <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bitnami/metallb</span>
-      <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;2.5.4&quot;</span>
-      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
-      <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|2</span>
-        <span class="no">configInline:</span>
-          <span class="no">address-pools:</span>
-          <span class="no">- name: generic-cluster-pool</span>
-            <span class="no">protocol: layer2</span>
-            <span class="no">addresses:</span>
-            <span class="no">- 192.168.0.5-192.168.0.10</span>
+<div class="highlight"><pre><span></span><code><span class="nt">extensions</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">helm</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">repositories</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span><span class="w"></span>
+<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://helm.traefik.io/traefik</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bitnami</span><span class="w"></span>
+<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.bitnami.com/bitnami</span><span class="w"></span>
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span><span class="w"></span>
+<span class="w">      </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik/traefik</span><span class="w"></span>
+<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.3.2&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb</span><span class="w"></span>
+<span class="w">      </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bitnami/metallb</span><span class="w"></span>
+<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2.5.4&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|2</span><span class="w"></span>
+<span class="w">        </span><span class="no">configInline:</span><span class="w"></span>
+<span class="w">          </span><span class="no">address-pools:</span><span class="w"></span>
+<span class="w">          </span><span class="no">- name: generic-cluster-pool</span><span class="w"></span>
+<span class="w">            </span><span class="no">protocol: layer2</span><span class="w"></span>
+<span class="w">            </span><span class="no">addresses:</span><span class="w"></span>
+<span class="w">            </span><span class="no">- 192.168.0.5-192.168.0.10</span><span class="w"></span>
 </code></pre></div>
 <h2 id="2-retrieve-the-load-balancer-ip">2. Retrieve the Load Balancer IP<a class="headerlink" href="#2-retrieve-the-load-balancer-ip" title="Permanent link">#</a></h2>
 <p>After you start your cluster, run <code>kubectl get all</code> to confirm the deployment of Traefik and MetalLB. The command should return a response with the <code>metallb</code> and <code>traefik</code> resources, along with a service load balancer that has an assigned <code>EXTERNAL-IP</code>.</p>
@@ -1303,19 +1303,19 @@ service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.10
 <ol>
 <li>
 <p>Create the Traefik Dashboard <a href="https://doc.traefik.io/traefik/providers/kubernetes-crd/">IngressRoute</a> in a YAML file:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">traefik.containo.us/v1alpha1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">IngressRoute</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dashboard</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">entryPoints</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
-  <span class="nt">routes</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">match</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">PathPrefix(`/dashboard`) || PathPrefix(`/api`)</span>
-      <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Rule</span>
-      <span class="nt">services</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">api@internal</span>
-          <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">TraefikService</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik.containo.us/v1alpha1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IngressRoute</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dashboard</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">entryPoints</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
+<span class="w">  </span><span class="nt">routes</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">match</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PathPrefix(`/dashboard`) || PathPrefix(`/api`)</span><span class="w"></span>
+<span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Rule</span><span class="w"></span>
+<span class="w">      </span><span class="nt">services</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">api@internal</span><span class="w"></span>
+<span class="w">          </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TraefikService</span><span class="w"></span>
 </code></pre></div>
 </li>
 <li>
@@ -1330,51 +1330,51 @@ service/traefik-1607085579   LoadBalancer   <span class="m">10</span>.105.119.10
 </li>
 <li>
 <p>Create a simple <code>whoami</code> Deployment, Service, and <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a> manifest:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami-deployment</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-  <span class="nt">selector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami</span>
-  <span class="nt">template</span><span class="p">:</span>
-    <span class="nt">metadata</span><span class="p">:</span>
-      <span class="nt">labels</span><span class="p">:</span>
-        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami</span>
-    <span class="nt">spec</span><span class="p">:</span>
-      <span class="nt">containers</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami-container</span>
-        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">containous/whoami</span>
-<span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Service</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami-service</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">ports</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http</span>
-    <span class="nt">targetPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
-    <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
-  <span class="nt">selector</span><span class="p">:</span>
-    <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami</span>
-<span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">networking.k8s.io/v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Ingress</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami-ingress</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">rules</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">http</span><span class="p">:</span>
-      <span class="nt">paths</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/whoami</span>
-        <span class="nt">pathType</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Exact</span>
-        <span class="nt">backend</span><span class="p">:</span>
-          <span class="nt">service</span><span class="p">:</span>
-            <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">whoami-service</span>
-            <span class="nt">port</span><span class="p">:</span>
-              <span class="nt">number</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-deployment</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami</span><span class="w"></span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami</span><span class="w"></span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-container</span><span class="w"></span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">containous/whoami</span><span class="w"></span>
+<span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-service</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span><span class="w"></span>
+<span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami</span><span class="w"></span>
+<span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">networking.k8s.io/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ingress</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-ingress</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">http</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">paths</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/whoami</span><span class="w"></span>
+<span class="w">        </span><span class="nt">pathType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Exact</span><span class="w"></span>
+<span class="w">        </span><span class="nt">backend</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">service</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whoami-service</span><span class="w"></span>
+<span class="w">            </span><span class="nt">port</span><span class="p">:</span><span class="w"></span>
+<span class="w">              </span><span class="nt">number</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
 </code></pre></div>
 </li>
 <li>

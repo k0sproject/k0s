@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/v1.23.1+k0s.0/cli/k0s_validate_config/">
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.23.1+k0s.0/cli/k0s_airgap/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>K0s validate config - Documentation</title>
+        <title>K0s airgap - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-validate-config" class="md-skip">
+        <a href="#k0s-airgap" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s validate config
+              K0s airgap
             
           </span>
         </div>
@@ -1128,19 +1128,12 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-validate-config" class="md-nav__link">
-    k0s validate config
+  <a href="#k0s-airgap" class="md-nav__link">
+    k0s airgap
   </a>
   
-    <nav class="md-nav" aria-label="k0s validate config">
+    <nav class="md-nav" aria-label="k0s airgap">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    Examples
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#options" class="md-nav__link">
@@ -1182,28 +1175,26 @@
                 
                 
                 
-                  <h1>K0s validate config</h1>
+                  <h1>K0s airgap</h1>
                 
-                <h2 id="k0s-validate-config">k0s validate config<a class="headerlink" href="#k0s-validate-config" title="Permanent link">#</a></h2>
-<p>Validate k0s configuration</p>
-<div class="highlight"><pre><span></span><code>k0s validate config <span class="o">[</span>flags<span class="o">]</span>
-</code></pre></div>
-<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code> k0s validate config --config path_to_config.yaml
-</code></pre></div>
+                <h2 id="k0s-airgap">k0s airgap<a class="headerlink" href="#k0s-airgap" title="Permanent link">#</a></h2>
+<p>Manage airgap setup</p>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -h, --help   <span class="nb">help</span> <span class="k">for</span> config
+<div class="highlight"><pre><span></span><code>  -c, --config string          config file, use &#39;-&#39; to read the config from stdin
+      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
+  -h, --help                   help for airgap
+      --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
+  -v, --verbose                Verbose logging (default: false)
 </code></pre></div>
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>  -c, --config string            config file <span class="o">(</span>default: ./k0s.yaml<span class="o">)</span>
-      --data-dir string          Data Directory <span class="k">for</span> k0s <span class="o">(</span>default: /var/lib/k0s<span class="o">)</span>. DO NOT CHANGE <span class="k">for</span> an existing setup, things will break!
-  -d, --debug                    Debug logging <span class="o">(</span>default: <span class="nb">false</span><span class="o">)</span>
-      --debugListenOn string     Http listenOn <span class="k">for</span> debug pprof handler <span class="o">(</span>default <span class="s2">&quot;:6060&quot;</span><span class="o">)</span>
-  -l, --logging stringToString   Logging Levels <span class="k">for</span> the different components <span class="o">(</span>default <span class="o">[</span>konnectivity-server<span class="o">=</span><span class="m">1</span>,kube-apiserver<span class="o">=</span><span class="m">1</span>,kube-controller-manager<span class="o">=</span><span class="m">1</span>,kube-scheduler<span class="o">=</span><span class="m">1</span>,kubelet<span class="o">=</span><span class="m">1</span>,kube-proxy<span class="o">=</span><span class="m">1</span>,etcd<span class="o">=</span>info,containerd<span class="o">=</span>info<span class="o">])</span>
+<div class="highlight"><pre><span></span><code>      --data-dir string          Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+      --debug                    Debug logging (default: false)
+      --version version[=true]   Print version information and quit
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
-<li><a href="../k0s_validate/">k0s validate</a> - Validation related sub-commands</li>
+<li><a href="../k0s/">k0s</a>  - k0s - Zero Friction Kubernetes</li>
+<li><a href="../k0s_airgap_list-images/">k0s airgap list-images</a>    - List image names and version needed for air-gap install</li>
 </ul>
                 
               
