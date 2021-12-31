@@ -34,10 +34,18 @@ jobs:
           ref: '${{ github.event.inputs.version }}'
           fetch-depth: 0
 
-      - name: Check out files from main to ${{ github.event.inputs.version }}
+      - name: Checkout k0s main
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
+          path: 'main'
+          fetch-depth: 0
+
+      - name: Copy files from main to ${{ github.event.inputs.version }}
         run: |
-          git checkout main docs/Makefile
-          git checkout main mkdocs.yml
+          cp -p main/docs/Makefile docs/Makefile
+          cp -p main/mkdocs.yml mkdocs.yml
+          rm -rf main
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
