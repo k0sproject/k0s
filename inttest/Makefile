@@ -13,7 +13,7 @@ include ../embedded-bins/Makefile.variables
 ifeq ($(ARCH),amd64)
 etcd_arch = amd64
 else
-etcd_arch = arch64
+etcd_arch = arm64
 endif
 
 .PHONY: all
