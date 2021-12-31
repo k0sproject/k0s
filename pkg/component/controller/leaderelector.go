@@ -62,12 +62,14 @@ func (l *leaderElector) Init(_ context.Context) error {
 	return nil
 }
 
-func (l *leaderElector) Run(_ context.Context) error {
+func (l *leaderElector) Run(ctx context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(client, "k0s-endpoint-reconciler", leaderelection.WithLogger(l.L))
+	leasePool, err := leaderelection.NewLeasePool(client, "k0s-endpoint-reconciler",
+		leaderelection.WithLogger(l.L),
+		leaderelection.WithContext(ctx))
 	if err != nil {
 		return err
 	}
