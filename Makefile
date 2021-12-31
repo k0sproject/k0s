@@ -207,25 +207,6 @@ image-bundle/image.list: k0s
 image-bundle/bundle.tar: image-bundle/image.list
 	$(MAKE) -C image-bundle bundle.tar
 
-ifeq ($(OS),Windows_NT)
-detected_OS := windows
-else
-detected_OS := $(shell uname | tr [:upper:] [:lower:])
-endif
-
-ifeq ($(detected_OS),darwin)
-sedopt := -i "" -e
-else
-sedopt := -i -e
-endif
-
-docs/cli: static/gen_manifests.go pkg/assets/zz_generated_offsets_$(detected_OS).go $(shell find ./cmd/ -type f) mkdocs.yml
-	rm -rf docs/cli
-	mkdir -p docs/cli
-	go run main.go docs markdown
-	rm docs/cli/k0s_kubectl_*
-	sed $(sedopt) '/\[k0s kubectl /d' docs/cli/k0s_kubectl.md
-	ln -s k0s.md docs/cli/README.md
-
-docs: docs/cli
-	mkdocs build --strict
+.PHONY: docs
+docs:
+	$(MAKE) -C docs
