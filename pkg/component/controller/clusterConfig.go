@@ -112,6 +112,7 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 	}
 
 	go func() {
+		statusCtx := ctx
 		r.log.Debug("start listening changes from config source")
 		for {
 			select {
@@ -128,7 +129,7 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 				} else {
 					err = r.ComponentManager.Reconcile(ctx, cfg)
 				}
-				r.reportStatus(cfg, err)
+				r.reportStatus(statusCtx, cfg, err)
 				if err != nil {
 					r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
 				}
@@ -153,7 +154,7 @@ func (r *ClusterConfigReconciler) Healthy() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, reconcileError error) {
+func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1beta1.ClusterConfig, reconcileError error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		r.log.Error("failed to get hostname:", err)
@@ -192,7 +193,7 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 		e.Message = "Succesfully reconciler cluster config"
 		e.Type = corev1.EventTypeNormal
 	}
-	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(context.TODO(), e, v1.CreateOptions{})
+	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(ctx, e, v1.CreateOptions{})
 	if err != nil {
 		r.log.Error("failed to create event for config reconcile:", err)
 	}
