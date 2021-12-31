@@ -900,7 +900,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         "etcd%d",
-				Image:        "footloose-etcd",
+				Image:        "footloose-alpine",
 				Privileged:   true,
 				PortMappings: []config.PortMapping{{ContainerPort: 22}},
 			},

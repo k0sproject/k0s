@@ -18,6 +18,7 @@ package externaletcd
 import (
 	"context"
 	"fmt"
+	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,15 +42,23 @@ type ExternalEtcdSuite struct {
 
 func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.T().Log("starting etcd")
-	ssh, err := s.SSH(s.ExternalEtcd(0))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
+	err := retry.Do(func() error {
+		ssh, err := s.SSH(s.ExternalEtcd(0))
+		if err != nil {
+			return err
+		}
+		defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("systemctl start etcd")
+		_, err = ssh.ExecWithOutput(
+			"ETCD_ADVERTISE_CLIENT_URLS=\"http://etcd0:2379\" " +
+				"ETCD_LISTEN_CLIENT_URLS=\"http://0.0.0.0:2379\" " +
+				"/opt/etcd > /var/log/etcd.log 2>&1 &")
+		return err
+	})
 	s.Require().NoError(err)
 
 	s.T().Log("configuring k0s controller to resolve etcd0 hostname")
-	ssh, err = s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
@@ -82,7 +91,7 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	defer ssh.Disconnect()
 
 	output, err := ssh.ExecWithOutput(
-		"ETCDCTL_API=3 etcdctl --endpoints=http://127.0.0.1:2379 get /k0s-tenant/services/specs/kube-system/kube-dns --keys-only")
+		"ETCDCTL_API=3 /opt/etcdctl --endpoints=http://127.0.0.1:2379 get /k0s-tenant/services/specs/kube-system/kube-dns --keys-only")
 	s.Require().NoError(err)
 	s.Require().Contains(output, "/k0s-tenant/services/specs/kube-system/kube-dns")
 }
