@@ -1,11 +1,10 @@
-name: Publish docs via GitHub Pages
+name: Manually publish docs via GitHub Pages
 on:
-  push:
-    branches:
-      - main
-  release:
-    types:
-      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g."v1.22.4+k0s.0")'
+        required: true
 
 env:
   GO_VERSION: ^1.17
@@ -29,10 +28,16 @@ jobs:
           pip install git+https://${{ secrets.GH_TOKEN }}@github.com/lensapp/mkdocs-material-insiders.git
           pip install mike
 
-      - name: Checkout k0s release
+      - name: Checkout k0s ${{ github.event.inputs.version }}
         uses: actions/checkout@v2
         with:
+          ref: '${{ github.event.inputs.version }}'
           fetch-depth: 0
+
+      - name: Check out files from main to ${{ github.event.inputs.version }}
+        run: |
+          git checkout main docs/Makefile
+          git checkout main mkdocs.yml
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
@@ -61,19 +66,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: mike deploy main
-        if: contains(github.ref, 'refs/heads/main')
+      - name: mike deploy ${{ github.event.inputs.version }}
         run: |
-          mike deploy --push main
-
-      - name: Get the release version
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-      - name: mike deploy new release
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
-        run: |
-          mike deploy --push --update-aliases ${{ steps.get_version.outputs.VERSION }} latest
-          mike set-default --push ${{ steps.get_version.outputs.VERSION }}
-
+          mike deploy --push --force ${{ github.event.inputs.version }}
