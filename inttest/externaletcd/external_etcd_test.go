@@ -58,11 +58,11 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.Require().NoError(err)
 
 	s.T().Log("configuring k0s controller to resolve etcd0 hostname")
-	ssh, err := s.SSH(s.ControllerNode(0))
+	k0sControllerSSH, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
-	defer ssh.Disconnect()
+	defer k0sControllerSSH.Disconnect()
 
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s etcd0' >> /etc/hosts", s.GetExternalEtcdIPAddress()))
+	_, err = k0sControllerSSH.ExecWithOutput(fmt.Sprintf("echo '%s etcd0' >> /etc/hosts", s.GetExternalEtcdIPAddress()))
 	s.Require().NoError(err)
 
 	s.T().Log("starting k0s controller and worker")
@@ -86,14 +86,26 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("checking if etcd contains keys")
-	ssh, err = s.SSH(s.ExternalEtcd(0))
+	etcdSSH, err := s.SSH(s.ExternalEtcd(0))
 	s.Require().NoError(err)
-	defer ssh.Disconnect()
+	defer etcdSSH.Disconnect()
 
-	output, err := ssh.ExecWithOutput(
+	output, err := etcdSSH.ExecWithOutput(
 		"ETCDCTL_API=3 /opt/etcdctl --endpoints=http://127.0.0.1:2379 get /k0s-tenant/services/specs/kube-system/kube-dns --keys-only")
 	s.Require().NoError(err)
 	s.Require().Contains(output, "/k0s-tenant/services/specs/kube-system/kube-dns")
+
+	etcdLeaveOutput, err := k0sControllerSSH.ExecWithOutput("k0s etcd leave --config=/tmp/k0s.yaml")
+	s.Require().Error(err)
+	s.Require().Contains(etcdLeaveOutput, "command 'k0s etcd' does not support external etcd cluster")
+
+	etcdListOutput, err := k0sControllerSSH.ExecWithOutput("k0s etcd member-list --config=/tmp/k0s.yaml")
+	s.Require().Error(err)
+	s.Require().Contains(etcdListOutput, "command 'k0s etcd' does not support external etcd cluster")
+
+	backupOutput, err := k0sControllerSSH.ExecWithOutput("k0s backup --config=/tmp/k0s.yaml")
+	s.Require().Error(err)
+	s.Require().Contains(backupOutput, "command 'k0s backup' does not support external etcd cluster")
 }
 
 func TestExternalEtcdSuite(t *testing.T) {
