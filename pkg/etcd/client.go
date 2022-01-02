@@ -33,7 +33,7 @@ type Client struct {
 }
 
 // NewClient creates new Client
-func NewClient(certDir string, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
+func NewClient(certDir, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Client, error) {
 	client := &Client{}
 
 	var tlsConfig *tls.Config
