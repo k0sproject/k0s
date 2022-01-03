@@ -207,6 +207,7 @@ func isKubectlSubcommand() bool {
 func Execute() {
 	if isKubectlSubcommand() {
 		os.Args = os.Args[1:]
+		os.Args[0] = "kubectl"
 		os.Exit(cli.Run(kubectl.NewK0sKubectlCmd()))
 		return
 	}
