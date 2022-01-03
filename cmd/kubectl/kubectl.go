@@ -22,13 +22,12 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	kubectl "k8s.io/kubectl/pkg/cmd"
-
-	"github.com/k0sproject/k0s/pkg/config"
 )
 
 type CmdOpts config.CLIOptions

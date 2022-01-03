@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-	"sigs.k8s.io/yaml"
+	"k8s.io/component-base/cli"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -47,7 +47,6 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/config"
 )
@@ -193,14 +192,26 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 	}
 }
 
-func (c *cliOpts) buildConfig() error {
-	conf, _ := yaml.Marshal(v1beta1.DefaultClusterConfig())
-	fmt.Print(string(conf))
-	return nil
+func isKubectlSubcommand() bool {
+	args := os.Args
+	if args[0] == "kubectl" {
+		return true
+	}
+
+	if args[1] == "kc" || args[1] == "kubectl" {
+		return true
+	}
+	return false
 }
 
 func Execute() {
-	if err := NewRootCmd().Execute(); err != nil {
+	if isKubectlSubcommand() {
+		os.Args = os.Args[1:]
+		os.Exit(cli.Run(kubectl.NewK0sKubectlCmd()))
+		return
+	}
+	cmd := NewRootCmd()
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
