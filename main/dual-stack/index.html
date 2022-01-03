@@ -1223,16 +1223,16 @@
                 <h1 id="dual-stack-networking">Dual-stack Networking<a class="headerlink" href="#dual-stack-networking" title="Permanent link">#</a></h1>
 <p><strong>Note:</strong> Dual stack networking setup requires that you configure Calico or a custom CNI as the CNI provider.</p>
 <p>Use the following <code>k0s.yaml</code> as a template to enable dual-stack networking. This configuration will set up bundled calico CNI, enable feature gates for the Kubernetes components, and set up <code>kubernetes-controller-manager</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">network</span><span class="p">:</span>
-    <span class="nt">podCIDR</span><span class="p">:</span> <span class="s">&quot;10.244.0.0/16&quot;</span>
-    <span class="nt">serviceCIDR</span><span class="p">:</span> <span class="s">&quot;10.96.0.0/12&quot;</span>
-    <span class="nt">calico</span><span class="p">:</span>
-      <span class="nt">mode</span><span class="p">:</span> <span class="s">&quot;bird&quot;</span>
-    <span class="nt">dualStack</span><span class="p">:</span>
-      <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-      <span class="nt">IPv6podCIDR</span><span class="p">:</span> <span class="s">&quot;fd00::/108&quot;</span>
-      <span class="nt">IPv6serviceCIDR</span><span class="p">:</span> <span class="s">&quot;fd01::/108&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.244.0.0/16&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.96.0.0/12&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bird&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">      </span><span class="nt">IPv6podCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fd00::/108&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="nt">IPv6serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fd01::/108&quot;</span><span class="w"></span>
 </code></pre></div>
 <h2 id="cni-settings-calico">CNI Settings: Calico<a class="headerlink" href="#cni-settings-calico" title="Permanent link">#</a></h2>
 <p>For cross-pod connectivity, use BIRD for the backend. Calico does not support tunneling for the IPv6, and thus VXLAN and IPIP backends do not work.</p>

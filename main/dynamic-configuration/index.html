@@ -1282,9 +1282,9 @@
 <p>This will open the configuration object for editing in your system's default editor.</p>
 <h2 id="configuration-reconciliation">Configuration reconciliation<a class="headerlink" href="#configuration-reconciliation" title="Permanent link">#</a></h2>
 <p>The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected to how different components are configured. So say you want to change the MTU setting for kube-router CNI networking you'd change the config to contain e.g.:</p>
-<div class="highlight"><pre><span></span><code>    <span class="nt">kuberouter</span><span class="p">:</span>
-      <span class="nt">mtu</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
-      <span class="nt">autoMTU</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span><span class="w"></span>
+<span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
 </code></pre></div>
 <p>This will change the kube-router related configmap and thus make kube-router to use different MTU settings for new pods.</p>
 <h2 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h2>

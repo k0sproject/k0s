@@ -1217,26 +1217,26 @@
 <p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
 <p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">extensions</span><span class="p">:</span>
-    <span class="nt">helm</span><span class="p">:</span>
-      <span class="nt">repositories</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">stable</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://charts.helm.sh/stable</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span>
-      <span class="nt">charts</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span>
-        <span class="nt">chartname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span>
-        <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;14.6.1&quot;</span>
-        <span class="nt">values</span><span class="p">:</span> <span class="p p-Indicator">|</span>
-          <span class="no">alertmanager:</span>
-            <span class="no">persistentVolume:</span>
-              <span class="no">enabled: false</span>
-          <span class="no">server:</span>
-            <span class="no">persistentVolume:</span>
-              <span class="no">enabled: false</span>
-        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">helm</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">repositories</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span><span class="w"></span>
+<span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.helm.sh/stable</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community</span><span class="w"></span>
+<span class="w">        </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://prometheus-community.github.io/helm-charts</span><span class="w"></span>
+<span class="w">      </span><span class="nt">charts</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span><span class="w"></span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span><span class="w"></span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span><span class="w"></span>
+<span class="w">          </span><span class="no">alertmanager:</span><span class="w"></span>
+<span class="w">            </span><span class="no">persistentVolume:</span><span class="w"></span>
+<span class="w">              </span><span class="no">enabled: false</span><span class="w"></span>
+<span class="w">          </span><span class="no">server:</span><span class="w"></span>
+<span class="w">            </span><span class="no">persistentVolume:</span><span class="w"></span>
+<span class="w">              </span><span class="no">enabled: false</span><span class="w"></span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
 </code></pre></div>
 <p>Example extensions that you can use with Helm charts include:</p>
 <ul>

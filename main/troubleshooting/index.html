@@ -1287,17 +1287,17 @@ kube-system   metrics-server-7d4bcb75dd-pqkrs            <span class="m">1</span
 <p>By default k0s does not run on nodes where <code>/usr</code> is read only.</p>
 <p>This can be fixed by changing the default path for <code>volumePluginDir</code> in your k0s config. You will need to change to values, one for the kubelet itself, and one for Calico.</p>
 <p>Here is a snippet of an example config with the default values changed:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">controllerManager</span><span class="p">:</span>
-    <span class="nt">extraArgs</span><span class="p">:</span>
-      <span class="nt">flex-volume-plugin-dir</span><span class="p">:</span> <span class="s">&quot;/etc/kubernetes/kubelet-plugins/volume/exec&quot;</span>
-  <span class="nt">network</span><span class="p">:</span>
-    <span class="nt">calico</span><span class="p">:</span>
-      <span class="nt">flexVolumeDriverPath</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
-  <span class="nt">workerProfiles</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">coreos</span>
-      <span class="nt">values</span><span class="p">:</span>
-        <span class="nt">volumePluginDir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/</span>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">flex-volume-plugin-dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/kubernetes/kubelet-plugins/volume/exec&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">flexVolumeDriverPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span><span class="w"></span>
+<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coreos</span><span class="w"></span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/</span><span class="w"></span>
 </code></pre></div>
 <p>With this config you can start your controller as usual. Any workers will need to be started with</p>
 <div class="highlight"><pre><span></span><code>k0s worker --profile coreos <span class="o">[</span>TOKEN<span class="o">]</span>

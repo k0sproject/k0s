@@ -1381,29 +1381,29 @@
 <p>Alternatively, grab the kubeconfig file with <code>docker exec k0s cat /var/lib/k0s/pki/admin.conf</code> and paste it into <a href="https://github.com/lensapp/lens/">Lens</a>.</p>
 <h2 id="use-docker-compose-alternative">Use Docker Compose (alternative)<a class="headerlink" href="#use-docker-compose-alternative" title="Permanent link">#</a></h2>
 <p>As an alternative you can run k0s using Docker Compose:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span> <span class="s">&quot;3.9&quot;</span>
-<span class="nt">services</span><span class="p">:</span>
-  <span class="nt">k0s</span><span class="p">:</span>
-    <span class="nt">container_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
-    <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:latest</span>
-    <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span>
-    <span class="nt">hostname</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">k0s</span>
-    <span class="nt">privileged</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-    <span class="nt">volumes</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="s">&quot;/var/lib/k0s&quot;</span>
-    <span class="nt">tmpfs</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">/run</span>
-      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">/var/run</span>
-    <span class="nt">ports</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="s">&quot;6443:6443&quot;</span>
-    <span class="nt">network_mode</span><span class="p">:</span> <span class="s">&quot;bridge&quot;</span>
-    <span class="nt">environment</span><span class="p">:</span>
-      <span class="nt">K0S_CONFIG</span><span class="p">:</span> <span class="p p-Indicator">|-</span>
-        <span class="no">apiVersion: k0s.k0sproject.io/v1beta1</span>
-        <span class="no">kind: Cluster</span>
-        <span class="no">metadata:</span>
-          <span class="no">name: k0s</span>
-        <span class="no"># Any additional configuration goes here ...</span>
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.9&quot;</span><span class="w"></span>
+<span class="nt">services</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span><span class="w"></span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/k0sproject/k0s:latest</span><span class="w"></span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s controller --config=/etc/k0s/config.yaml --enable-worker</span><span class="w"></span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span><span class="w"></span>
+<span class="w">    </span><span class="nt">privileged</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">tmpfs</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/run</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run</span><span class="w"></span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;6443:6443&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bridge&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">K0S_CONFIG</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|-</span><span class="w"></span>
+<span class="w">        </span><span class="no">apiVersion: k0s.k0sproject.io/v1beta1</span><span class="w"></span>
+<span class="w">        </span><span class="no">kind: Cluster</span><span class="w"></span>
+<span class="w">        </span><span class="no">metadata:</span><span class="w"></span>
+<span class="w">          </span><span class="no">name: k0s</span><span class="w"></span>
+<span class="w">        </span><span class="no"># Any additional configuration goes here ...</span><span class="w"></span>
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <h3 id="no-custom-docker-networks">No custom Docker networks<a class="headerlink" href="#no-custom-docker-networks" title="Permanent link">#</a></h3>
