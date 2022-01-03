@@ -54,6 +54,16 @@ import (
 
 var defaultK0sBinPath = "/usr/bin/k0s"
 
+const (
+	// DefaultTimeout defines the default timeout for triggering custom teardown functionality
+	DefaultTimeout = 9 * time.Minute // The default golang test timeout is 10mins
+
+	controllerNodeNameFormat = "controller%d"
+	workerNodeNameFormat     = "worker%d"
+	lbNodeNameFormat         = "lb%d"
+	etcdNodeNameFormat       = "etcd%d"
+)
+
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose
 type FootlooseSuite struct {
 	suite.Suite
@@ -66,6 +76,7 @@ type FootlooseSuite struct {
 	KonnectivityAdminPort int
 	KonnectivityAgentPort int
 	KubeAPIExternalPort   int
+	WithExternalEtcd      bool
 	WithLB                bool
 	WorkerCount           int
 	ControllerUmask       int
@@ -178,12 +189,12 @@ func (s *FootlooseSuite) waitForSSH() {
 
 // ControllerNode gets the node name of given controller index
 func (s *FootlooseSuite) ControllerNode(idx int) string {
-	return fmt.Sprintf(s.footlooseConfig.Machines[0].Spec.Name, idx)
+	return fmt.Sprintf(controllerNodeNameFormat, idx)
 }
 
 // WorkerNode gets the node name of given worker index
 func (s *FootlooseSuite) WorkerNode(idx int) string {
-	return fmt.Sprintf(s.footlooseConfig.Machines[1].Spec.Name, idx)
+	return fmt.Sprintf(workerNodeNameFormat, idx)
 }
 
 // LBNode gets the node of given LB index
@@ -192,7 +203,15 @@ func (s *FootlooseSuite) LBNode(idx int) string {
 		s.T().Log("Can't get Loadbalancer address because LB is not enabled for this suit")
 		s.T().FailNow()
 	}
-	return fmt.Sprintf(s.footlooseConfig.Machines[2].Spec.Name, idx)
+	return fmt.Sprintf(lbNodeNameFormat, idx)
+}
+
+func (s *FootlooseSuite) ExternalEtcd(idx int) string {
+	if !s.WithExternalEtcd {
+		s.T().Log("Can't get etcd address because it is not enabled for this suit")
+		s.T().FailNow()
+	}
+	return fmt.Sprintf(etcdNodeNameFormat, idx)
 }
 
 // TearDownSuite does the cleanup work, namely destroy the footloose boxes
@@ -854,7 +873,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 				Count: s.ControllerCount,
 				Spec: config.Machine{
 					Image:        "footloose-alpine",
-					Name:         "controller%d",
+					Name:         controllerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
@@ -864,7 +883,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 				Count: s.WorkerCount,
 				Spec: config.Machine{
 					Image:        "footloose-alpine",
-					Name:         "worker%d",
+					Name:         workerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
@@ -876,7 +895,7 @@ func (s *FootlooseSuite) createConfig() config.Config {
 	if s.WithLB {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
-				Name:         "lb%d",
+				Name:         lbNodeNameFormat,
 				Image:        "footloose-alpine",
 				Privileged:   true,
 				Volumes:      volumes,
@@ -886,11 +905,21 @@ func (s *FootlooseSuite) createConfig() config.Config {
 			Count: 1,
 		})
 	}
+
+	if s.WithExternalEtcd {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec: config.Machine{
+				Name:         etcdNodeNameFormat,
+				Image:        "footloose-alpine",
+				Privileged:   true,
+				PortMappings: []config.PortMapping{{ContainerPort: 22}},
+			},
+			Count: 1,
+		})
+	}
+
 	return cfg
 }
-
-// DefaultTimeout defines the default timeout for triggering custom teardown functionality
-const DefaultTimeout = 9 * time.Minute // The default golang test timeout is 10mins
 
 func getTestTimeout() time.Duration {
 	for _, a := range os.Args {
@@ -908,19 +937,21 @@ func getTestTimeout() time.Duration {
 	return DefaultTimeout
 }
 
-// GetMainIPAddress returns controller ip address
+// GetControllerIPAddress returns controller ip address
 func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
-	ssh, err := s.SSH(s.ControllerNode(idx))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	ipAddress, err := ssh.ExecWithOutput("hostname -i")
-	s.Require().NoError(err)
-	return ipAddress
+	return s.getIPAddress(s.ControllerNode(idx))
 }
 
 func (s *FootlooseSuite) GetLBAddress() string {
-	ssh, err := s.SSH(s.LBNode(0))
+	return s.getIPAddress(s.LBNode(0))
+}
+
+func (s *FootlooseSuite) GetExternalEtcdIPAddress() string {
+	return s.getIPAddress(s.ExternalEtcd(0))
+}
+
+func (s *FootlooseSuite) getIPAddress(nodeName string) string {
+	ssh, err := s.SSH(nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

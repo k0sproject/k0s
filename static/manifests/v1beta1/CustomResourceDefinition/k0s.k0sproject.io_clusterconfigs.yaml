@@ -360,6 +360,33 @@ spec:
                   etcd:
                     description: EtcdConfig defines etcd related config options
                     properties:
+                      externalCluster:
+                        description: ExternalCluster defines external etcd cluster
+                          related config options
+                        properties:
+                          caFile:
+                            description: CaFile is the host path to a file with CA
+                              certificate
+                            type: string
+                          clientCertFile:
+                            description: ClientCertFile is the host path to a file
+                              with TLS certificate for etcd client
+                            type: string
+                          clientKeyFile:
+                            description: ClientKeyFile is the host path to a file
+                              with TLS key for etcd client
+                            type: string
+                          endpoints:
+                            description: Endpoints of external etcd cluster used to
+                              connect by k0s
+                            items:
+                              type: string
+                            type: array
+                          etcdPrefix:
+                            description: EtcdPrefix is a prefix to prepend to all
+                              resource paths in etcd
+                            type: string
+                        type: object
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string

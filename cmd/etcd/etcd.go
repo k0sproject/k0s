@@ -30,7 +30,7 @@ func NewEtcdCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "etcd",
 		Short: "Manage etcd cluster",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
 			if err != nil {
@@ -39,6 +39,9 @@ func NewEtcdCmd() *cobra.Command {
 			c.ClusterConfig = cfg
 			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
 				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
+			}
+			if c.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+				return fmt.Errorf("command 'k0s etcd' does not support external etcd cluster")
 			}
 			return nil
 		},

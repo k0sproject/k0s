@@ -48,6 +48,9 @@ func NewBackupCmd() *cobra.Command {
 				return err
 			}
 			c.ClusterConfig = cfg
+			if c.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+				return fmt.Errorf("command 'k0s backup' does not support external etcd cluster")
+			}
 			return c.backup()
 		},
 		PreRunE: preRunValidateConfig,

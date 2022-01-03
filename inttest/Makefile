@@ -10,6 +10,12 @@ bins = bin/sonobuoy
 
 include ../embedded-bins/Makefile.variables
 
+ifeq ($(ARCH),amd64)
+etcd_arch = amd64
+else
+etcd_arch = arm64
+endif
+
 .PHONY: all
 all: $(bins) .footloose-alpine.stamp
 
@@ -20,7 +26,7 @@ bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
-	docker build -t footloose-alpine -f $< $(dir $<)
+	docker build --build-arg ETCD_ARCH=$(etcd_arch) -t footloose-alpine -f $< $(dir $<)
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
