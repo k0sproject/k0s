@@ -46,13 +46,10 @@ jobs:
         env:
           EMBEDDED_BINS_BUILDMODE: none
 
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.42
           skip-pkg-cache: true
           only-new-issues: true
           skip-build-cache: true
-          config: .golangci.yml
           args: --verbose
