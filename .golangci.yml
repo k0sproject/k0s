@@ -5,6 +5,12 @@ run:
   skip-dirs-use-default: false
   skip-dirs:
     - pkg/helm
+    - static
+    - hack
+    - embedded-bins
+    - pkg/apis/k0s.k0sproject.io/clientset
+  skip-files:
+    - "zz_*"
   tests: false
   modules-download-mode: readonly
   allow-parallel-runners: true
@@ -22,4 +28,11 @@ linters-settings:
   golint:
     min-confidence: 0
   goheader:
-    template-path: hack/client-gen/boilerplate.go.txt
+    template-path: .go-header.txt
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - source: "^//go:build"
+      linters:
+        - goheader
