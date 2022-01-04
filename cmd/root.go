@@ -137,7 +137,7 @@ func newDocsCmd() *cobra.Command {
 func newDefaultConfigCmd() *cobra.Command {
 	cmd := cfg.NewCreateCmd()
 	cmd.Hidden = true
-	cmd.Deprecated = "use 'k0s config generate' instead"
+	cmd.Deprecated = "use 'k0s config create' instead"
 	cmd.Use = "default-config"
 	return cmd
 }
