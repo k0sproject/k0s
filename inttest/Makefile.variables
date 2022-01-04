@@ -24,4 +24,5 @@ smoketests := \
 	check-psp \
 	check-defaultstorage \
 	check-statussocket \
-	check-tunneledkas
+	check-tunneledkas \
+	check-kubectl
