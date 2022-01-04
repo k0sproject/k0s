@@ -42,7 +42,7 @@ var restoredConfigPath string
 
 func NewRestoreCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "restore",
+		Use:   "restore filename",
 		Short: "restore k0s state from given backup archive. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
