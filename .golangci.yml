@@ -1,14 +1,11 @@
 # options for analysis running
 run:
-
   timeout: 8m
 
   skip-dirs-use-default: false
   skip-dirs:
     - pkg/helm
   tests: false
-
-
   modules-download-mode: readonly
   allow-parallel-runners: true
 
@@ -16,6 +13,7 @@ linters:
   enable:
     - revive
     - gofmt
+    - goheader
 
 linters-settings:
   gofmt:
@@ -23,3 +21,5 @@ linters-settings:
     simplify: false
   golint:
     min-confidence: 0
+  goheader:
+    template-path: hack/client-gen/boilerplate.go.txt
