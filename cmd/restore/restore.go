@@ -2,7 +2,7 @@
 // +build !windows
 
 /*
-Copyright 2021 k0s authors
+Copyright 2022 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ var restoredConfigPath string
 
 func NewRestoreCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "restore",
+		Use:   "restore filename",
 		Short: "restore k0s state from given backup archive. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
