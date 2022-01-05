@@ -1344,7 +1344,39 @@ my_fork git@github.com:<span class="o">{</span> github_username <span class="o">
 <p>Commit and sign your changes:</p>
 <div class="highlight"><pre><span></span><code>git commit --signoff
 </code></pre></div>
-<p>The commit message should have a short title as first line, an empty line and then a longer description that explains why the change was made, unless it is obvious.</p>
+<p>The commit message should have a <a href="https://cbea.ms/git-commit/#limit-50">short</a>, <a href="https://cbea.ms/git-commit/#capitalize">capitalized</a> title <a href="https://cbea.ms/git-commit/#end">without trailing period</a> as first line. After the title
+a <a href="https://cbea.ms/git-commit/#separate">blank line</a> and then a longer description that <a href="https://cbea.ms/git-commit/#why-not-how">explains why</a> the change was made, unless it is obvious.</p>
+<p>Use <a href="https://cbea.ms/git-commit/#imperative">imperative mood</a> in the commit message.</p>
+<p>For example:</p>
+<div class="highlight"><pre><span></span><code>Summarize changes in around 50 characters or less
+
+More detailed explanatory text, if necessary. Wrap it to about 72
+characters or so. In some contexts, the first line is treated as the
+subject of the commit and the rest of the text as the body. The
+blank line separating the summary from the body is critical (unless
+you omit the body entirely); various tools like `log`, `shortlog`
+and `rebase` can get confused if you run the two together.
+
+Explain the problem that this commit is solving. Focus on why you
+are making this change as opposed to how (the code explains that).
+Are there side effects or other unintuitive consequences of this
+change? Here&#39;s the place to explain them.
+
+Further paragraphs come after blank lines.
+
+ - Bullet points are okay, too
+
+ - Typically a hyphen or asterisk is used for the bullet, preceded
+   by a single space, with blank lines in between.
+
+If you use an issue tracker, put references to them at the bottom,
+like this:
+
+Fixes: https://github.com/k0sproject/k0s/issues/373
+See also: #456, #789
+
+Signed-off-by: Name Lastname &lt;user@example.com&gt;
+</code></pre></div>
 <p>You can go back and edit/build/test some more, then <code>commit --amend</code> in a few cycles.</p>
 <p>When ready, push your changes to your fork's repository:</p>
 <div class="highlight"><pre><span></span><code>git push --set-upstream my_fork my_feature_branch
