@@ -1,4 +1,4 @@
-go_version = 1.16.12
+go_version = 1.16.13
 
 runc_version = 1.0.3
 runc_buildimage = golang:$(go_version)-alpine
