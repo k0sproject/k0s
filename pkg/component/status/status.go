@@ -26,7 +26,7 @@ type Status struct {
 func (s *Status) Healthy() error { return nil }
 
 // Init initializes component
-func (s *Status) Init() error {
+func (s *Status) Init(_ context.Context) error {
 	s.L = logrus.WithFields(logrus.Fields{"component": "status"})
 
 	var err error
@@ -73,7 +73,7 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(s.runCtx); err != nil {
 		return err
 	}
-	return nil
+	return os.Remove(s.Socket)
 }
 
 // Reconcile detects changes in configuration and applies them to the component

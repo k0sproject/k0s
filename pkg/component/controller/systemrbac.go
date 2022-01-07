@@ -40,7 +40,7 @@ func NewSystemRBAC(manifestDir string) (*SystemRBAC, error) {
 }
 
 // Init does nothing
-func (s *SystemRBAC) Init() error {
+func (s *SystemRBAC) Init(_ context.Context) error {
 	return nil
 }
 

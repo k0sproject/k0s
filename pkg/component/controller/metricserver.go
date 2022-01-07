@@ -239,7 +239,7 @@ spec:
 type MetricServer struct {
 	log               *logrus.Entry
 	clusterConfig     *v1beta1.ClusterConfig
-	tickerDone        chan struct{}
+	tickerDone        context.CancelFunc
 	K0sVars           constant.CfgVars
 	kubeClientFactory k8sutil.ClientFactoryInterface
 }
@@ -265,13 +265,13 @@ func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientF
 }
 
 // Init does nothing
-func (m *MetricServer) Init() error {
+func (m *MetricServer) Init(_ context.Context) error {
 	return nil
 }
 
 // Run runs the metric server reconciler
 func (m *MetricServer) Run(ctx context.Context) error {
-	m.tickerDone = make(chan struct{})
+	ctx, m.tickerDone = context.WithCancel(ctx)
 
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")
 	err := dir.Init(msDir, constant.ManifestsDirMode)
@@ -306,7 +306,7 @@ func (m *MetricServer) Run(ctx context.Context) error {
 					continue
 				}
 				previousConfig = newConfig
-			case <-m.tickerDone:
+			case <-ctx.Done():
 				m.log.Info("metric server reconciler done")
 				return
 			}
@@ -319,7 +319,7 @@ func (m *MetricServer) Run(ctx context.Context) error {
 // Stop stops the reconciler
 func (m *MetricServer) Stop() error {
 	if m.tickerDone != nil {
-		close(m.tickerDone)
+		m.tickerDone()
 	}
 	return nil
 }

@@ -51,7 +51,7 @@ func NewNodeRole(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryIn
 }
 
 // Init no-op
-func (n *NodeRole) Init() error {
+func (n *NodeRole) Init(_ context.Context) error {
 	return nil
 }
 

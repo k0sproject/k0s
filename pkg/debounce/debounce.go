@@ -46,13 +46,13 @@ type debouncer struct {
 }
 
 // New creates new Debouncer with given args
-func New(interval time.Duration, input chan fsnotify.Event, callback Callback) Debouncer {
-	ctx, cancel := context.WithCancel(context.Background())
+func New(ctx context.Context, interval time.Duration, input chan fsnotify.Event, callback Callback) Debouncer {
+	dctx, cancel := context.WithCancel(ctx)
 	db := &debouncer{
 		cancel:   cancel,
 		interval: interval,
 		input:    input,
-		ctx:      ctx,
+		ctx:      dctx,
 		callback: callback,
 	}
 

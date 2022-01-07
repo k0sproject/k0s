@@ -1,5 +1,5 @@
 /*
-Copyright 2020 k0s authors
+COpyright 2020 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ type csrRecognizer struct {
 }
 
 type CSRApprover struct {
-	L      *logrus.Entry
-	stopCh chan struct{}
+	L    *logrus.Entry
+	stop context.CancelFunc
 
 	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
@@ -66,7 +66,6 @@ func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeC
 	return &CSRApprover{
 		ClusterConfig:     c,
 		leaderElector:     leaderElector,
-		stopCh:            make(chan struct{}),
 		KubeClientFactory: kubeClientFactory,
 		L:                 logrus.WithFields(logrus.Fields{"component": "csrapprover"}),
 	}
@@ -76,7 +75,7 @@ func (a *CSRApprover) Healthy() error { return nil }
 
 // Stop stops the CSRApprover
 func (a *CSRApprover) Stop() error {
-	close(a.stopCh)
+	a.stop()
 	return nil
 }
 
@@ -87,7 +86,7 @@ func (a *CSRApprover) Reconcile() error {
 }
 
 // Init initializes the component needs
-func (a *CSRApprover) Init() error {
+func (a *CSRApprover) Init(_ context.Context) error {
 	var err error
 	a.clientset, err = a.KubeClientFactory.GetClient()
 	if err != nil {
@@ -99,7 +98,9 @@ func (a *CSRApprover) Init() error {
 
 // Run every 10 seconds checks for newly issued CSRs and approves them
 func (a *CSRApprover) Run(ctx context.Context) error {
+	ctx, a.stop = context.WithCancel(ctx)
 	go func() {
+		defer a.stop()
 		ticker := time.NewTicker(10 * time.Second) // TODO: sometimes this should be refactored so it watches instead of polls for CSRs
 		defer ticker.Stop()
 		for {
@@ -109,8 +110,8 @@ func (a *CSRApprover) Run(ctx context.Context) error {
 				if err != nil {
 					a.L.Warnf("CSR approval failed: %s", err.Error())
 				}
-			case <-a.stopCh:
-				a.L.Info("CSR Approver done")
+			case <-ctx.Done():
+				a.L.Info("CSR Approver context done")
 				return
 			}
 		}

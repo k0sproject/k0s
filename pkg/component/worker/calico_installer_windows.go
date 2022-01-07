@@ -25,7 +25,7 @@ type CalicoInstaller struct {
 	ClusterDNS string
 }
 
-func (c CalicoInstaller) Init() error {
+func (c CalicoInstaller) Init(_ context.Context) error {
 	path := "C:\\bootstrap.ps1"
 
 	if err := os.Mkdir("C:\\CalicoWindows", 777); err != nil {

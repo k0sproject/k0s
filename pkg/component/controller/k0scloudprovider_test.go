@@ -66,7 +66,7 @@ func (suite *K0sCloudProviderSuite) SetupTest() {
 
 // TestInit covers the `Init()` function.
 func (suite *K0sCloudProviderSuite) TestInit() {
-	assert.Nil(suite.T(), suite.ccp.Init())
+	assert.Nil(suite.T(), suite.ccp.Init(context.TODO()))
 }
 
 // TestRunStop covers the scenario of issuing a `Start()`, and ensuring
@@ -74,8 +74,9 @@ func (suite *K0sCloudProviderSuite) TestInit() {
 // This is effectively testing the close-channel semantics baked into
 // `Stop()`, without worrying about what was actually running.
 func (suite *K0sCloudProviderSuite) TestRunStop() {
-	assert.Nil(suite.T(), suite.ccp.Init())
-	assert.Nil(suite.T(), suite.ccp.Run(context.Background()))
+	ctx := context.TODO()
+	assert.Nil(suite.T(), suite.ccp.Init(ctx))
+	assert.Nil(suite.T(), suite.ccp.Run(ctx))
 
 	// Ensures that the stopping mechanism actually closes the stop channel.
 	assert.Nil(suite.T(), suite.ccp.Stop())
@@ -86,7 +87,7 @@ func (suite *K0sCloudProviderSuite) TestRunStop() {
 
 // TestHealthy covers the `Healthy()` function post-init.
 func (suite *K0sCloudProviderSuite) TestHealthy() {
-	assert.Nil(suite.T(), suite.ccp.Init())
+	assert.Nil(suite.T(), suite.ccp.Init(context.TODO()))
 	assert.Nil(suite.T(), suite.ccp.Healthy())
 }
 

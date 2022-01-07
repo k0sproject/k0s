@@ -58,7 +58,7 @@ func NewEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8suti
 }
 
 // Init initializes the APIEndpointReconciler
-func (a *APIEndpointReconciler) Init() error {
+func (a *APIEndpointReconciler) Init(_ context.Context) error {
 	return nil
 }
 

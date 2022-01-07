@@ -1,28 +1,29 @@
 smoketests := \
 	check-addons \
+	check-airgap \
+	check-backup \
 	check-basic \
 	check-byocri \
 	check-calico \
+	check-cli \
 	check-cnichange \
+	check-configchange \
 	check-ctr \
 	check-customports \
+	check-defaultstorage \
+	check-disabledcomponents \
 	check-dualstack \
 	check-externaletcd \
+	check-extraargs \
 	check-hacontrolplane \
+	check-k0scloudprovider \
 	check-kine \
 	check-metrics \
 	check-multicontroller \
 	check-noderole \
-	check-singlenode \
-	check-backup \
-	check-airgap \
-	check-k0scloudprovider \
-	check-cli \
-	check-disabledcomponents \
-	check-extraargs \
-	check-configchange \
-	check-upgrade \
 	check-psp \
-	check-defaultstorage \
+	check-singlenode \
 	check-statussocket \
-	check-tunneledkas
+	check-tunneledkas \
+	check-upgrade \
+	check-workerrestart

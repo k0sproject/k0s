@@ -62,7 +62,7 @@ func newK0sCloudProvider(config k0scloudprovider.Config, cb CommandBuilder) comp
 }
 
 // Init in the k0s-cloud-provider intentionally does nothing.
-func (c *k0sCloudProvider) Init() error {
+func (c *k0sCloudProvider) Init(_ context.Context) error {
 	return nil
 }
 

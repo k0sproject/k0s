@@ -247,7 +247,7 @@ spec:
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
 // Init
-func (ec *ExtensionsController) Init() error {
+func (ec *ExtensionsController) Init(_ context.Context) error {
 	return nil
 }
 
@@ -276,7 +276,7 @@ func (ec *ExtensionsController) Run(ctx context.Context) error {
 		}
 		ec.L.Info("Extensions CRD is ready, going nuts")
 		return nil
-	}); err != nil {
+	}, retry.Context(ctx)); err != nil {
 		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
 	}
 	// examples say to not use GetScheme in production, but it is unclear at the moment

@@ -64,8 +64,8 @@ type Certificates struct {
 }
 
 // Init initializes the certificate component
-func (c *Certificates) Init() error {
-	eg, _ := errgroup.WithContext(context.Background())
+func (c *Certificates) Init(ctx context.Context) error {
+	eg, _ := errgroup.WithContext(ctx)
 	// Common CA
 	caCertPath := filepath.Join(c.K0sVars.CertRootDir, "ca.crt")
 	caCertKey := filepath.Join(c.K0sVars.CertRootDir, "ca.key")
@@ -236,22 +236,6 @@ func (c *Certificates) Init() error {
 	return eg.Wait()
 }
 
-// Run does nothing, the cert component only needs to be initialized
-func (c *Certificates) Run(_ context.Context) error {
-	return nil
-}
-
-// Stop does nothing, the cert component is not constantly running
-func (c *Certificates) Stop() error {
-	return nil
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (c *Certificates) Reconcile() error {
-	logrus.Debug("reconcile method called for: Certificates")
-	return nil
-}
-
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
 	data := struct {
@@ -278,6 +262,3 @@ func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 
 	return file.Chown(output.Name(), owner, constant.CertSecureMode)
 }
-
-// Health-check interface
-func (c *Certificates) Healthy() error { return nil }

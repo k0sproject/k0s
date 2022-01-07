@@ -97,7 +97,10 @@ func NewControllerCmd() *cobra.Command {
 			}
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cmd.SilenceUsage = true
-			return c.startController(cmd.Context())
+
+			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
+			return c.startController(ctx)
 		},
 	}
 
@@ -131,17 +134,11 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	var joinClient *token.JoinClient
 	if c.TokenArg != "" && c.needToJoin() {
-		joinClient, err = joinController(c.TokenArg, c.K0sVars.CertRootDir)
+		joinClient, err = joinController(ctx, c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
 			return fmt.Errorf("failed to join controller: %v", err)
 		}
 	}
-
-	c.NodeComponents.AddSync(&controller.Certificates{
-		ClusterSpec: c.NodeConfig.Spec,
-		CertManager: certificateManager,
-		K0sVars:     c.K0sVars,
-	})
 
 	logrus.Infof("using api address: %s", c.NodeConfig.Spec.API.Address)
 	logrus.Infof("using listen port: %d", c.NodeConfig.Spec.API.Port)
@@ -256,18 +253,22 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		Socket: config.StatusSocket,
 	})
 
-	perfTimer.Checkpoint("starting-component-init")
+	perfTimer.Checkpoint("starting-certificates-init")
+	certs := &Certificates{
+		ClusterSpec: c.NodeConfig.Spec,
+		CertManager: certificateManager,
+		K0sVars:     c.K0sVars,
+	}
+	if err := certs.Init(ctx); err != nil {
+		return err
+	}
+
+	perfTimer.Checkpoint("starting-node-component-init")
 	// init Node components
-	if err := c.NodeComponents.Init(); err != nil {
+	if err := c.NodeComponents.Init(ctx); err != nil {
 		return err
 	}
 	perfTimer.Checkpoint("finished-node-component-init")
-
-	// Set up signal handling. Use buffered channel so we dont miss
-	// signals during startup
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-	errCh := make(chan error, 1)
 
 	perfTimer.Checkpoint("starting-node-components")
 
@@ -277,6 +278,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start controller node components: %w", err)
 	}
+	defer func() {
+		// Stop components
+		if stopErr := c.NodeComponents.Stop(); stopErr != nil {
+			logrus.Errorf("error while stopping node component %s", stopErr)
+		}
+		logrus.Info("all node components stopped")
+	}()
 
 	// in-cluster component reconcilers
 	err = c.createClusterReconcilers(ctx, adminClientFactory)
@@ -314,7 +322,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
-	if err := c.ClusterComponents.Init(); err != nil {
+	if err := c.ClusterComponents.Init(ctx); err != nil {
 		return err
 	}
 	perfTimer.Checkpoint("finished cluster-component-init")
@@ -355,8 +363,16 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
 	perfTimer.Checkpoint("finished-starting-cluster-components")
+	defer func() {
+		// Stop Cluster components
+		if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
+			logrus.Errorf("error while stopping node component %s", stopErr)
+		}
+		logrus.Info("all cluster components stopped")
+	}()
 
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
+	errCh := make(chan error, 1)
 	go func() {
 		if err := cfgSource.Release(ctx); err != nil {
 			// If the config release does not work, nothing is going to work
@@ -386,19 +402,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
-
-	// Stop components
-	if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
-		logrus.Errorf("error while stopping node component %s", stopErr)
-	}
-	logrus.Info("all cluster components stopped")
-
-	// Stop components
-	if stopErr := c.NodeComponents.Stop(); stopErr != nil {
-		logrus.Errorf("error while stopping node component %s", stopErr)
-	}
-	logrus.Info("all node components stopped")
-
 	return err
 }
 
@@ -440,7 +443,7 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 	// Start all reconcilers
 	for name, reconciler := range reconcilers {
 		logrus.Infof("initing bootstrap reconciler: %s", name)
-		err := reconciler.Init()
+		err := reconciler.Init(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to initialize reconciler: %s", err.Error())
 		}
@@ -537,7 +540,7 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 
 	// Init and add all components to clusterComponents manager
 	for name, comp := range reconcilers {
-		err := comp.Init()
+		err := comp.Init(ctx)
 		if err != nil {
 			logrus.Infof("failed to initialize %s, component may not work properly: %v", name, err)
 		}
@@ -593,7 +596,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 				return fmt.Errorf("file does not exist: %s", c.K0sVars.AdminKubeConfigPath)
 			}
 			return nil
-		})
+		}, retry.Context(ctx))
 		if err != nil {
 			return err
 		}
@@ -609,7 +612,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			}
 			bootstrapConfig = cfg
 			return nil
-		})
+		}, retry.Context(ctx))
 		if err != nil {
 			return err
 		}
@@ -657,7 +660,7 @@ func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
 	return nil
 }
 
-func joinController(tokenArg string, certRootDir string) (*token.JoinClient, error) {
+func joinController(ctx context.Context, tokenArg string, certRootDir string) (*token.JoinClient, error) {
 	joinClient, err := token.JoinClientFromToken(tokenArg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create join client: %w", err)
@@ -670,7 +673,7 @@ func joinController(tokenArg string, certRootDir string) (*token.JoinClient, err
 			return fmt.Errorf("failed to sync CA: %w", err)
 		}
 		return nil
-	})
+	}, retry.Context(ctx))
 	if err != nil {
 		return nil, err
 	}

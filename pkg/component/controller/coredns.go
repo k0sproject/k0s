@@ -283,7 +283,7 @@ func NewCoreDNS(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInt
 }
 
 // Init does nothing
-func (c *CoreDNS) Init() error {
+func (c *CoreDNS) Init(_ context.Context) error {
 	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
 }
 

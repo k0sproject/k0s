@@ -71,7 +71,12 @@ func NewWorkerCmd() *cobra.Command {
 				c.TokenArg = string(bytes)
 			}
 			cmd.SilenceUsage = true
-			return c.StartWorker(cmd.Context())
+
+			// Set up signal handling
+			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+			defer cancel()
+
+			return c.StartWorker(ctx)
 		},
 	}
 
@@ -83,8 +88,6 @@ func NewWorkerCmd() *cobra.Command {
 
 // StartWorker starts the worker components based on the CmdOpts config
 func (c *CmdOpts) StartWorker(ctx context.Context) error {
-
-	worker.KernelSetup()
 	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}
@@ -162,20 +165,15 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		})
 	}
 	// extract needed components
-	if err := componentManager.Init(); err != nil {
+	if err := componentManager.Init(ctx); err != nil {
 		return err
 	}
 
 	worker.KernelSetup()
-
-	// Set up signal handling
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
 	err = componentManager.Start(ctx)
 	if err != nil {
 		logrus.WithError(err).Error("failed to start some of the worker components")
-		cancel()
+		return err
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()

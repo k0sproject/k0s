@@ -16,6 +16,7 @@ limitations under the License.
 package supervisor
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,16 +49,16 @@ type Supervisor struct {
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
 
-	cmd   *exec.Cmd
-	quit  chan bool
-	done  chan bool
-	log   *logrus.Entry
-	mutex sync.Mutex
+	cmd    *exec.Cmd
+	done   chan bool
+	log    *logrus.Entry
+	mutex  sync.Mutex
+	cancel context.CancelFunc
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
-func (s *Supervisor) processWaitQuit() bool {
+func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 	waitresult := make(chan error)
 	go func() {
 		waitresult <- s.cmd.Wait()
@@ -71,7 +72,7 @@ func (s *Supervisor) processWaitQuit() bool {
 	defer os.Remove(s.PidFile)
 
 	select {
-	case <-s.quit:
+	case <-ctx.Done():
 		for {
 			s.log.Infof("Shutting down pid %d", s.cmd.Process.Pid)
 			err := s.cmd.Process.Signal(syscall.SIGTERM)
@@ -111,9 +112,12 @@ func (s *Supervisor) Supervise() error {
 		s.TimeoutRespawn = 5 * time.Second
 	}
 
+	var ctx context.Context
+	ctx, s.cancel = context.WithCancel(context.Background())
 	started := make(chan error)
 	go func() {
 		s.log.Info("Starting to supervise")
+		restarts := 0
 		for {
 			s.mutex.Lock()
 			s.cmd = exec.Command(s.BinPath, s.Args...)
@@ -131,23 +135,23 @@ func (s *Supervisor) Supervise() error {
 			s.mutex.Unlock()
 			if err != nil {
 				s.log.Warnf("Failed to start: %s", err)
-				if s.quit == nil {
+				if restarts == 0 {
 					started <- err
 					return
 				}
 			} else {
-				if s.quit == nil {
+				if restarts == 0 {
 					s.log.Info("Started successfully, go nuts")
-					s.quit = make(chan bool)
 					s.done = make(chan bool)
 					defer func() {
 						s.done <- true
 					}()
 					started <- nil
 				} else {
-					s.log.Info("Restarted")
+					s.log.Infof("Restarted (%d)", restarts)
 				}
-				if s.processWaitQuit() {
+				restarts++
+				if s.processWaitQuit(ctx) {
 					return
 				}
 			}
@@ -156,7 +160,7 @@ func (s *Supervisor) Supervise() error {
 			s.log.Infof("respawning in %s", s.TimeoutRespawn.String())
 
 			select {
-			case <-s.quit:
+			case <-ctx.Done():
 				s.log.Debug("respawn cancelled")
 				return
 			case <-time.After(s.TimeoutRespawn):
@@ -169,14 +173,16 @@ func (s *Supervisor) Supervise() error {
 
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
-	if s.quit != nil {
-		if s.log != nil {
-			s.log.Debug("Sending stop message")
-		}
-		s.quit <- true
-		if s.log != nil {
-			s.log.Debug("Waiting for stopping is done")
-		}
+	if s.log != nil {
+		s.log.Debug("Sending stop message")
+	}
+	if s.cancel != nil {
+		s.cancel()
+	}
+	if s.log != nil {
+		s.log.Debug("Waiting for stopping is done")
+	}
+	if s.done != nil {
 		<-s.done
 	}
 	return nil

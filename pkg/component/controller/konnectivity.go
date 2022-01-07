@@ -64,7 +64,7 @@ var _ component.Component = &Konnectivity{}
 var _ component.ReconcilerComponent = &Konnectivity{}
 
 // Init ...
-func (k *Konnectivity) Init() error {
+func (k *Konnectivity) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
 	if err != nil {

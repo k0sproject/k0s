@@ -1,0 +1,151 @@
+package component
+
+import (
+	"context"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+)
+
+type Fake struct {
+	InitErr      error
+	RunErr       error
+	StopErr      error
+	ReconcileErr error
+	HealthyErr   error
+
+	InitCalled    bool
+	RunCalled     bool
+	StopCalled    bool
+	HealthyCalled bool
+}
+
+func (f *Fake) Init(_ context.Context) error {
+	f.InitCalled = true
+	return f.InitErr
+}
+func (f *Fake) Run(_ context.Context) error {
+	f.RunCalled = true
+	return f.RunErr
+}
+
+func (f *Fake) Stop() error {
+	f.StopCalled = true
+	return f.StopErr
+}
+func (f *Fake) Reconcile() error { return nil }
+func (f *Fake) Healthy() error {
+	f.HealthyCalled = true
+	return f.HealthyErr
+}
+
+func TestManagerSuccess(t *testing.T) {
+	m := NewManager()
+	require.NotNil(t, m)
+
+	ctx := context.Background()
+	f1 := &Fake{}
+	m.Add(ctx, f1)
+
+	f2 := &Fake{}
+	m.Add(ctx, f2)
+
+	require.NoError(t, m.Init(ctx))
+	require.True(t, f1.InitCalled)
+	require.True(t, f2.InitCalled)
+
+	require.NoError(t, m.Start(ctx))
+	require.True(t, f1.RunCalled)
+	require.True(t, f2.RunCalled)
+	require.True(t, f1.HealthyCalled)
+	require.True(t, f2.HealthyCalled)
+
+	require.NoError(t, m.Stop())
+	require.True(t, f1.StopCalled)
+	require.True(t, f2.StopCalled)
+}
+
+func TestManagerInitFail(t *testing.T) {
+	m := NewManager()
+	require.NotNil(t, m)
+
+	ctx := context.Background()
+	f1 := &Fake{
+		InitErr: fmt.Errorf("failed"),
+	}
+	m.Add(ctx, f1)
+
+	f2 := &Fake{}
+	m.Add(ctx, f2)
+
+	require.Error(t, m.Init(ctx))
+
+	// all init should be called even if any fails
+	require.True(t, f1.InitCalled)
+	require.True(t, f2.InitCalled)
+}
+
+func TestManagerRunFail(t *testing.T) {
+	m := NewManager()
+	require.NotNil(t, m)
+
+	ctx := context.Background()
+
+	f1 := &Fake{}
+	m.Add(ctx, f1)
+
+	f2 := &Fake{
+		RunErr: fmt.Errorf("failed"),
+	}
+	m.Add(ctx, f2)
+
+	f3 := &Fake{}
+	m.Add(ctx, f3)
+
+	require.Error(t, m.Start(ctx))
+	require.True(t, f1.RunCalled)
+	require.True(t, f2.RunCalled)
+	require.False(t, f3.RunCalled)
+
+	require.True(t, f1.HealthyCalled)
+	require.False(t, f2.HealthyCalled)
+	require.False(t, f3.HealthyCalled)
+
+	require.True(t, f1.StopCalled)
+	require.False(t, f2.StopCalled)
+	require.False(t, f3.StopCalled)
+}
+
+func TestManagerHealthyFail(t *testing.T) {
+	m := NewManager()
+	require.NotNil(t, m)
+	m.HealthyTimeout = 1 * time.Millisecond
+
+	ctx := context.Background()
+
+	f1 := &Fake{}
+	m.Add(ctx, f1)
+
+	f2 := &Fake{
+		HealthyErr: fmt.Errorf("failed"),
+	}
+	m.Add(ctx, f2)
+
+	f3 := &Fake{}
+	m.Add(ctx, f3)
+
+	require.Error(t, m.Start(ctx))
+	require.True(t, f1.RunCalled)
+	require.True(t, f2.RunCalled)
+	require.False(t, f3.RunCalled)
+
+	require.True(t, f1.HealthyCalled)
+	require.True(t, f2.HealthyCalled)
+	require.False(t, f3.HealthyCalled)
+
+	require.True(t, f1.StopCalled)
+	require.True(t, f2.StopCalled)
+	require.False(t, f3.StopCalled)
+}

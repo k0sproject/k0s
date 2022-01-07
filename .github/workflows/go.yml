@@ -168,6 +168,7 @@ jobs:
           - check-psp
           - check-statussocket
           - check-tunneledkas
+          - check-workerrestart
           # skipped, originally titled "Smoke-test for network":
           # - check-etcd
 
