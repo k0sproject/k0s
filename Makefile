@@ -198,7 +198,7 @@ generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: generate-APIClient
 
-generate-APIClient:
+generate-APIClient: hack/client-gen/boilerplate.go.txt
 	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
 image-bundle/image.list: k0s

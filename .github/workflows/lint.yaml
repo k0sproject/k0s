@@ -50,6 +50,6 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           skip-pkg-cache: true
-          only-new-issues: true
+          only-new-issues: false
           skip-build-cache: true
           args: --verbose
