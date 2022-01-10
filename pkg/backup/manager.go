@@ -21,6 +21,7 @@ package backup
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,6 +58,11 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 		}
 		assets = append(assets, result.filesForBackup...)
 	}
+
+	if savePathDir == "-" {
+		return createArchive(os.Stdout, assets, bm.dataDir)
+	}
+
 	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
 	if err := bm.save(backupFileName, assets); err != nil {
 		return fmt.Errorf("failed to create archive `%s`: %v", backupFileName, err)
@@ -127,7 +133,18 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 
 // RunRestore restores cluster
 func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
-	if err := archive.Extract(archivePath, bm.tmpDir); err != nil {
+	var input io.Reader
+	if archivePath == "-" {
+		input = os.Stdin
+	} else {
+		i, err := os.Open(archivePath)
+		if err != nil {
+			return err
+		}
+		defer i.Close()
+		input = i
+	}
+	if err := archive.Extract(input, bm.tmpDir); err != nil {
 		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)

@@ -43,7 +43,7 @@ var restoredConfigPath string
 func NewRestoreCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore filename",
-		Short: "restore k0s state from given backup archive. Must be run as root (or with sudo)",
+		Short: "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			if len(args) != 1 {
@@ -71,7 +71,7 @@ func (c *CmdOpts) restore(path string) error {
 		logrus.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
-	if !file.Exists(path) {
+	if path != "-" && !file.Exists(path) {
 		return fmt.Errorf("given file %s does not exist", path)
 	}
 
@@ -107,6 +107,9 @@ func preRunValidateConfig(_ *cobra.Command, _ []string) error {
 // the default location for the restore operation is the currently running cwd
 // this can be override, by using the --config-out flag
 func defaultConfigFileOutputPath(archivePath string) string {
+	if archivePath == "-" {
+		return "-"
+	}
 	f := filepath.Base(archivePath)
 	nameWithoutExt := strings.Split(f, ".")[0]
 	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")
