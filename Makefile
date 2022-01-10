@@ -144,7 +144,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
 	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
