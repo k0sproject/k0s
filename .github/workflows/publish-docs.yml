@@ -57,4 +57,4 @@ jobs:
       - name: mkdocs deploy new release
         if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
         run: |
-          mike deploy --push
+          mike deploy --push ${{ steps.get_version.outputs.VERSION }}
