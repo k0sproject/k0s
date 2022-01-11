@@ -122,13 +122,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	// let's make sure run-dir exists
 	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
-		logrus.Fatalf("failed to initialize dir: %v", err)
+		return fmt.Errorf("failed to initialize dir: %v", err)
 	}
 
 	// initialize runtime config
 	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
-	if err := loadingRules.InitRuntimeConfig(); err != nil {
-		logrus.Fatalf("failed to initialize k0s runtime config: %s", err.Error())
+	if err := loadingRules.InitRuntimeConfig(c.K0sVars); err != nil {
+		return fmt.Errorf("failed to initialize k0s runtime config: %s", err.Error())
 	}
 
 	// from now on, we only refer to the runtime config

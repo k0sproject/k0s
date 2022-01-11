@@ -19,6 +19,7 @@ limitations under the License.
 package backup
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -51,7 +52,7 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 	objectPathInArchive := path.Join(restoreFrom, "k0s.yaml")
 
 	if !file.Exists(objectPathInArchive) {
-		logrus.Infof("%s does not exist in the backup file", objectPathInArchive)
+		logrus.Debugf("%s does not exist in the backup file", objectPathInArchive)
 		return nil
 	}
 

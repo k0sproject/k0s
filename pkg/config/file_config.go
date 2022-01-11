@@ -22,6 +22,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
@@ -31,20 +32,18 @@ var (
 )
 
 // InitRuntimeConfig generates the runtime /run/k0s/k0s.yaml
-func (rules *ClientConfigLoadingRules) InitRuntimeConfig() error {
+func (rules *ClientConfigLoadingRules) InitRuntimeConfig(k0sVars constant.CfgVars) error {
+	rules.K0sVars = k0sVars
 	cfg, err := rules.ParseRuntimeConfig()
 	if err != nil {
 		return err
 	}
-	// this is used for Singlenode, where we set
-	// kine as default using k0sVars
-	cfg.Spec.Storage = rules.getStorageSpec()
 
 	yamlData, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
-	return rules.writeConfig(yamlData)
+	return rules.writeConfig(yamlData, cfg.Spec.Storage)
 }
 
 // readRuntimeConfig returns the configuration from the runtime configuration file
@@ -72,26 +71,33 @@ func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterCon
 		CfgFile = rules.RuntimeConfigPath
 	}
 
+	var storage *v1beta1.StorageSpec
+	if rules.K0sVars.DefaultStorageType == "kine" {
+		storage = &v1beta1.StorageSpec{
+			Type: v1beta1.KineStorageType,
+			Kine: v1beta1.DefaultKineConfig(rules.K0sVars.DataDir),
+		}
+	}
+
 	switch CfgFile {
 	// stdin input
 	case "-":
-		return v1beta1.ConfigFromReader(os.Stdin, rules.getStorageSpec())
+		return v1beta1.ConfigFromReader(os.Stdin, storage)
 	default:
 		f, err := os.Open(CfgFile)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return rules.generateDefaults(), nil
+				return rules.generateDefaults(storage), nil
 			}
 			return nil, err
 		}
 		defer f.Close()
 
-		cfg, err = v1beta1.ConfigFromReader(f, rules.getStorageSpec())
+		cfg, err = v1beta1.ConfigFromReader(f, storage)
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	if cfg.Spec.Storage.Type == v1beta1.KineStorageType && cfg.Spec.Storage.Kine == nil {
 		logrus.Warn("storage type is kine but no config given, setting up defaults")
 		cfg.Spec.Storage.Kine = v1beta1.DefaultKineConfig(rules.K0sVars.DataDir)
@@ -110,17 +116,16 @@ func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterCon
 		return nil, fmt.Errorf(strings.Join(messages, "\n"))
 	}
 	return cfg, nil
-
 }
 
 // generate default config and return the config object
-func (rules *ClientConfigLoadingRules) generateDefaults() (config *v1beta1.ClusterConfig) {
+func (rules *ClientConfigLoadingRules) generateDefaults(defaultStorage *v1beta1.StorageSpec) (config *v1beta1.ClusterConfig) {
 	logrus.Debugf("no config file given, using defaults")
-	return v1beta1.DefaultClusterConfig(rules.getStorageSpec())
+	return v1beta1.DefaultClusterConfig(defaultStorage)
 }
 
-func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte) error {
-	mergedConfig, err := v1beta1.ConfigFromString(string(yamlData), rules.getStorageSpec())
+func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte, storageSpec *v1beta1.StorageSpec) error {
+	mergedConfig, err := v1beta1.ConfigFromString(string(yamlData), storageSpec)
 	if err != nil {
 		return fmt.Errorf("unable to parse config: %v", err)
 	}
@@ -134,15 +139,4 @@ func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte) error {
 		return fmt.Errorf("failed to write runtime config to %s (%v): %v", rules.K0sVars.RunDir, rules.RuntimeConfigPath, err)
 	}
 	return nil
-}
-
-func (rules *ClientConfigLoadingRules) getStorageSpec() *v1beta1.StorageSpec {
-	var storage v1beta1.StorageSpec
-	if rules.K0sVars.DefaultStorageType == "kine" {
-		storage = v1beta1.StorageSpec{
-			Type: v1beta1.KineStorageType,
-			Kine: v1beta1.DefaultKineConfig(rules.K0sVars.DataDir),
-		}
-	}
-	return &storage
 }

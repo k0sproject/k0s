@@ -64,7 +64,7 @@ func (rules *ClientConfigLoadingRules) fetchNodeConfig() (*v1beta1.ClusterConfig
 		logrus.Errorf("failed to read config from file: %v", err)
 		return nil, err
 	}
-	return cfg.GetBootstrappingConfig(), nil
+	return cfg.GetBootstrappingConfig(cfg.Spec.Storage), nil
 }
 
 // when API config is enabled, but only node config is needed (for bootstrapping commands)
@@ -77,7 +77,7 @@ func (rules *ClientConfigLoadingRules) mergeNodeAndClusterconfig(nodeConfig *v1b
 		return nil, err
 	}
 
-	err = mergo.Merge(clusterConfig, nodeConfig.GetBootstrappingConfig(), mergo.WithOverride)
+	err = mergo.Merge(clusterConfig, nodeConfig.GetBootstrappingConfig(nodeConfig.Spec.Storage), mergo.WithOverride)
 	if err != nil {
 		return nil, err
 	}

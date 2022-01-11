@@ -107,10 +107,7 @@ func (rules *ClientConfigLoadingRules) IsAPIConfig() bool {
 func (rules *ClientConfigLoadingRules) IsDefaultConfig() bool {
 	// if no custom-value is provided as a config file, and no config-file exists in the default location
 	// we assume we need to generate configuration defaults
-	if CfgFile == constant.K0sConfigPathDefault && !file.Exists(constant.K0sConfigPathDefault) {
-		return true
-	}
-	return false
+	return CfgFile == constant.K0sConfigPathDefault && !file.Exists(constant.K0sConfigPathDefault)
 }
 
 func (rules *ClientConfigLoadingRules) Load() (*v1beta1.ClusterConfig, error) {

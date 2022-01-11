@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -64,7 +65,7 @@ func TestGetConfigFromFile(t *testing.T) {
 	defer os.Remove(configPathRuntimeTest)
 
 	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
-	err := loadingRules.InitRuntimeConfig()
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -84,6 +85,52 @@ func TestGetConfigFromFile(t *testing.T) {
 		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "12.12.12.12/12"},
 		{"Network_KubeProxy_Mode", cfg.Spec.Network.KubeProxy.Mode, "ipvs"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s eq %s", tc.name, tc.expected), func(t *testing.T) {
+			if tc.got != tc.expected {
+				t.Fatalf("expected to read '%s' for the %s test value. Got: %s", tc.expected, tc.name, tc.got)
+			}
+		})
+	}
+}
+
+func TestExternalEtcdConfig(t *testing.T) {
+	yamlData := `
+spec:
+  storage:
+    type: etcd
+    etcd:
+      externalCluster:
+        endpoints:
+        - http://etcd0:2379
+        etcdPrefix: k0s-tenant`
+	cfgFilePath := writeConfigFile(yamlData)
+	CfgFile = cfgFilePath
+	defer os.Remove(configPathRuntimeTest)
+
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	if err != nil {
+		t.Fatalf("failed to initialize k0s config: %s", err.Error())
+	}
+
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		t.Fatalf("failed to load config: %s", err.Error())
+	}
+	if cfg == nil {
+		t.Fatal("received an empty config! failing")
+	}
+	testCases := []struct {
+		name     string
+		got      string
+		expected string
+	}{
+		{"Storage_Type", cfg.Spec.Storage.Type, "etcd"},
+		{"External_Cluster_Endpoint", cfg.Spec.Storage.Etcd.ExternalCluster.Endpoints[0], "http://etcd0:2379"},
+		{"External_Cluster_Prefix", cfg.Spec.Storage.Etcd.ExternalCluster.EtcdPrefix, "k0s-tenant"},
 	}
 
 	for _, tc := range testCases {
@@ -138,7 +185,7 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 
 	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, RuntimeConfigPath: configPathRuntimeTest}
 
-	err := loadingRules.InitRuntimeConfig()
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -167,6 +214,85 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 	}
 }
 
+func TestSingleNodeConfig(t *testing.T) {
+	CfgFile = constant.K0sConfigPathDefault // this path doesn't exist, so default values should be generated
+	defer os.Remove(configPathRuntimeTest)
+
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
+	k0sVars := constant.GetConfig("")
+	k0sVars.DefaultStorageType = "kine"
+
+	err := loadingRules.InitRuntimeConfig(k0sVars)
+	if err != nil {
+		t.Fatalf("failed to initialize k0s config: %s", err.Error())
+	}
+
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		t.Fatalf("failed to load config: %s", err.Error())
+	}
+	if cfg == nil {
+		t.Fatal("received an empty config! failing")
+	}
+	testCases := []struct {
+		name     string
+		got      string
+		expected string
+	}{
+		{"Storage_Type", cfg.Spec.Storage.Type, "kine"},
+		{"Kine_DataSource", cfg.Spec.Storage.Kine.DataSource, "sqlite:///var/lib/k0s/db/state.db"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s eq %s", tc.name, tc.expected), func(t *testing.T) {
+			if !strings.Contains(tc.got, tc.expected) {
+				t.Fatalf("expected to read '%s' for the %s test value. Got: %s", tc.expected, tc.name, tc.got)
+			}
+		})
+	}
+}
+
+func TestSingleNodeConfigWithEtcd(t *testing.T) {
+	yamlData := `
+spec:
+  storage:
+    type: etcd`
+
+	cfgFilePath := writeConfigFile(yamlData)
+	CfgFile = cfgFilePath
+	defer os.Remove(configPathRuntimeTest)
+
+	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
+	k0sVars := constant.GetConfig("")
+	k0sVars.DefaultStorageType = "kine"
+
+	err := loadingRules.InitRuntimeConfig(k0sVars)
+	if err != nil {
+		t.Fatalf("failed to initialize k0s config: %s", err.Error())
+	}
+
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		t.Fatalf("failed to load config: %s", err.Error())
+	}
+	if cfg == nil {
+		t.Fatal("received an empty config! failing")
+	}
+	testCases := []struct {
+		name     string
+		got      string
+		expected string
+	}{{"Storage_Type", cfg.Spec.Storage.Type, "etcd"}} // config file storage type trumps k0sVars.DefaultStorageType
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s eq %s", tc.name, tc.expected), func(t *testing.T) {
+			if tc.got != tc.expected {
+				t.Fatalf("expected to read '%s' for the %s test value. Got: %s", tc.expected, tc.name, tc.got)
+			}
+		})
+	}
+}
+
 // when a component requests an API config,
 // the merged node and cluster config should be returned
 func TestAPIConfig(t *testing.T) {
@@ -183,7 +309,7 @@ func TestAPIConfig(t *testing.T) {
 	defer os.Remove(configPathRuntimeTest)
 
 	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, APIClient: client.K0sV1beta1()}
-	err = loadingRules.InitRuntimeConfig()
+	err = loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}

@@ -52,12 +52,17 @@ func NewRestoreCmd() *cobra.Command {
 			}
 			return c.restore(args[0])
 		},
-		PreRunE: preRunValidateConfig,
 	}
 
 	cmd.SilenceUsage = true
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: ${cwd}/k0s_<archive timestamp>.yaml)")
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil
+	}
+
+	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)
+	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", restoredConfigPathDescription)
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -86,24 +91,10 @@ func (c *CmdOpts) restore(path string) error {
 	if err != nil {
 		return err
 	}
-	// c.CfgFile, c.ClusterConfig.Spec, c.K0sVars
-
 	if restoredConfigPath == "" {
 		restoredConfigPath = defaultConfigFileOutputPath(path)
 	}
 	return mgr.RunRestore(path, c.K0sVars, restoredConfigPath)
-}
-
-// TODO Need to move to some common place, now it's defined in restore and backup commands
-func preRunValidateConfig(_ *cobra.Command, _ []string) error {
-	c := CmdOpts(config.GetCmdOpts())
-
-	loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
-	_, err := loadingRules.ParseRuntimeConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get config: %v", err)
-	}
-	return nil
 }
 
 // set output config file name and path according to input archive Timestamps

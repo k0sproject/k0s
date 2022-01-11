@@ -564,6 +564,7 @@ func (s *FootlooseSuite) GetKubeClientConfig(node string, k0sKubeconfigArgs ...s
 	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s 2>/dev/null", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
 	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
 	if err != nil {
+		fmt.Println(string(kubeConf))
 		return nil, err
 	}
 	cfg, err := clientcmd.Load([]byte(kubeConf))
