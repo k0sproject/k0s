@@ -131,7 +131,7 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 		"--v":                       k.LogLevel,
 		"--enable-profiling":        "false",
 		"--server-id":               serverID,
-		"--proxy-strategies":        "destHost",
+		"--proxy-strategies":        "destHost,default",
 	}
 }
 
