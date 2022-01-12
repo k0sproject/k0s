@@ -42,6 +42,8 @@ spec:
 
 type BackupSuite struct {
 	common.FootlooseSuite
+	backupFunc  func() error
+	restoreFunc func() error
 }
 
 func (s *BackupSuite) getControllerConfig(ipAddress string) string {
@@ -92,7 +94,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see kube-router pods ready")
 	s.Require().NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
 
-	s.Require().NoError(s.takeBackup())
+	s.Require().NoError(s.backupFunc())
 
 	snapshot := s.makeSnapshot(kc)
 
@@ -104,7 +106,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.Reset(s.ControllerNode(0)))
 	s.Require().NoError(s.Reset(s.ControllerNode(1)))
 
-	s.Require().NoError(s.restoreBackup())
+	s.Require().NoError(s.restoreFunc())
 	s.Require().NoError(s.InitController(0))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
@@ -177,6 +179,29 @@ func (s *BackupSuite) takeBackup() error {
 	return nil
 }
 
+func (s *BackupSuite) takeBackupStdout() error {
+	ssh, err := s.SSH(s.ControllerNode(0))
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	out, err := ssh.ExecWithOutput("k0s backup --save-path - > backup.tar.gz")
+	if err != nil {
+		s.T().Errorf("backup failed with output:\n%s", out)
+		return err
+	}
+
+	out, err = ssh.ExecWithOutput("tar tf backup.tar.gz")
+	if err != nil {
+		s.T().Errorf("backup inspection failed with output:\n%s", out)
+		return err
+	}
+
+	s.T().Logf("backup taken succesfully with output:\n%s", out)
+	return nil
+}
+
 func (s *BackupSuite) restoreBackup() error {
 	ssh, err := s.SSH(s.ControllerNode(0))
 	if err != nil {
@@ -184,9 +209,30 @@ func (s *BackupSuite) restoreBackup() error {
 	}
 	defer ssh.Disconnect()
 
+	s.T().Log("restoring controller from file")
+
 	out, err := ssh.ExecWithOutput("k0s restore $(ls /root/k0s_backup_*.tar.gz)")
 	if err != nil {
-		s.T().Errorf("restored failed with output:\n%s", out)
+		s.T().Errorf("restore failed with output:\n%s", out)
+		return err
+	}
+	s.T().Logf("restored succesfully with output:\n%s", out)
+
+	return nil
+}
+
+func (s *BackupSuite) restoreBackupStdin() error {
+	ssh, err := s.SSH(s.ControllerNode(0))
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	s.T().Log("restoring controller from stdin")
+
+	out, err := ssh.ExecWithOutput("cat backup.tar.gz | k0s restore -")
+	if err != nil {
+		s.T().Errorf("restore failed with output:\n%s", out)
 		return err
 	}
 	s.T().Logf("restored succesfully with output:\n%s", out)
@@ -196,10 +242,24 @@ func (s *BackupSuite) restoreBackup() error {
 
 func TestBackupSuite(t *testing.T) {
 	s := BackupSuite{
-		common.FootlooseSuite{
+		FootlooseSuite: common.FootlooseSuite{
 			ControllerCount: 2,
 			WorkerCount:     2,
 		},
 	}
+	s.backupFunc = s.takeBackup
+	s.restoreFunc = s.restoreBackup
+	suite.Run(t, &s)
+}
+
+func TestBackupSuiteStream(t *testing.T) {
+	s := BackupSuite{
+		FootlooseSuite: common.FootlooseSuite{
+			ControllerCount: 2,
+			WorkerCount:     2,
+		},
+	}
+	s.backupFunc = s.takeBackupStdout
+	s.restoreFunc = s.restoreBackupStdin
 	suite.Run(t, &s)
 }

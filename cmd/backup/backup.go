@@ -55,7 +55,7 @@ func NewBackupCmd() *cobra.Command {
 		},
 		PreRunE: preRunValidateConfig,
 	}
-	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets")
+	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
 	cmd.SilenceUsage = true
 	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
@@ -67,7 +67,7 @@ func (c *CmdOpts) backup() error {
 		logrus.Fatal("this command must be run as root!")
 	}
 
-	if !dir.IsDirectory(savePath) {
+	if savePath != "-" && !dir.IsDirectory(savePath) {
 		return fmt.Errorf("the save-path directory (%v) does not exist", savePath)
 	}
 

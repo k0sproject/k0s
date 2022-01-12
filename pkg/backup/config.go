@@ -20,6 +20,7 @@ package backup
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 
@@ -65,6 +66,15 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 	}
 	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
 
+	if c.restoredConfigPath == "-" {
+		f, err := os.Open(objectPathInArchive)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = io.Copy(f, os.Stdout)
+		return err
+	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, c.restoredConfigPath)
 	return file.Copy(objectPathInArchive, c.restoredConfigPath)
 }
