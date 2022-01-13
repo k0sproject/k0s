@@ -131,6 +131,7 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 		"--v":                       k.LogLevel,
 		"--enable-profiling":        "false",
 		"--server-id":               serverID,
+		"--proxy-strategies":        "destHost,default",
 	}
 }
 
@@ -354,8 +355,10 @@ spec:
                   # this is the IP address of the master machine.
                   "--proxy-server-host={{ .APIAddress }}",
                   "--proxy-server-port={{ .AgentPort }}",
-                  "--service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token"
-                  {{ if .TunneledNetworkingMode }},
+                  "--service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token",
+                  "--agent-identifiers=host=$(NODE_IP)",
+                  "--agent-id=$(NODE_IP)",
+                  {{ if .TunneledNetworkingMode }}
                   # agent need to listen on the node ip to be on pair with the tunneled network reconciler
                   "--bind-address=$(NODE_IP)",
                   "--apiserver-port-mapping=6443:localhost:{{.KASPort}}"
