@@ -513,6 +513,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#encrypting-backups-local" class="md-nav__link">
+    Encrypting backups (local)
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1240,6 +1247,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#encrypting-backups-local" class="md-nav__link">
+    Encrypting backups (local)
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1313,6 +1327,7 @@
 <p>The directory used for the <code>save-path</code> value must exist and be writable. The default value is the current working directory.
 The command provides backup archive using following naming convention: <code>k0s_backup_&lt;ISODatetimeString&gt;.tar.gz</code></p>
 <p>Because of the DateTime usage, it is guaranteed that none of the previously created archives would be overwritten.</p>
+<p>To output the backup archive to stdout, use <code>-</code> as the save path.</p>
 <h3 id="restore-local">Restore (local)<a class="headerlink" href="#restore-local" title="Permanent link">#</a></h3>
 <p>To restore cluster state from the archive use the following command on the controller node:</p>
 <div class="highlight"><pre><span></span><code>k0s restore /tmp/k0s_backup_2021-04-26T19_51_57_000Z.tar.gz
@@ -1326,6 +1341,39 @@ E.g. steps for N nodes cluster would be:</p>
 <li>Run controller there</li>
 <li>Join N-1 new machines to the cluster the same way as for the first setup.</li>
 </ul>
+<p>To read the backup archive from stdin, use <code>-</code> as the file path.</p>
+<h3 id="encrypting-backups-local">Encrypting backups (local)<a class="headerlink" href="#encrypting-backups-local" title="Permanent link">#</a></h3>
+<p>By using <code>-</code> as the save or restore path, it is possible to pipe the backup archive through an encryption utility such as <a href="https://gnupg.org/">GnuPG</a> or <a href="https://www.openssl.org/">OpenSSL</a>.</p>
+<p>Note that unencrypted data will still briefly exist as temporary files on the local file system during the backup archvive generation.</p>
+<h4 id="encrypting-backups-using-gnupg">Encrypting backups using GnuPG<a class="headerlink" href="#encrypting-backups-using-gnupg" title="Permanent link">#</a></h4>
+<p>Follow the instructions for your operating system to install the <code>gpg</code> command if it is not already installed.</p>
+<p>This tutorial only covers the bare minimum for example purposes. For secure key management practices and advanced usage refer to the GnuPG user manual.</p>
+<p>To generate a new key-pair, use:</p>
+<div class="highlight"><pre><span></span><code>gpg --gen-key
+</code></pre></div>
+<p>The key will be stored in your key ring.</p>
+<div class="highlight"><pre><span></span><code>gpg --list-keys
+</code></pre></div>
+<p>This will output a list of keys:</p>
+<div class="highlight"><pre><span></span><code>/home/user/.gnupg/pubring.gpg
+------------------------------
+pub   4096R/BD33228F <span class="m">2022</span>-01-13
+uid                  Example User &lt;user@example.com&gt;
+sub   4096R/2F78C251 <span class="m">2022</span>-01-13
+</code></pre></div>
+<p>To export the private key for decrypting the backup on another host, note the key ID ("BD33228F" in this example) in the list and use:</p>
+<div class="highlight"><pre><span></span><code>gpg --export-secret-keys --armor BD33228F &gt; k0s.key
+</code></pre></div>
+<p>To create an encrypted k0s backup:</p>
+<div class="highlight"><pre><span></span><code>k0s backup --save-path - <span class="p">|</span> gpg --encrypt --recipient user@example.com &gt; backup.tar.gz.gpg
+</code></pre></div>
+<h4 id="restoring-encrypted-backups-using-gnupg">Restoring encrypted backups using GnuPG<a class="headerlink" href="#restoring-encrypted-backups-using-gnupg" title="Permanent link">#</a></h4>
+<p>You must have the private key in your gpg keychain. To import the key that was exported in the previous example, use:</p>
+<div class="highlight"><pre><span></span><code>gpg --import k0s.key
+</code></pre></div>
+<p>To restore the encrypted backup, use:</p>
+<div class="highlight"><pre><span></span><code>gpg --decrypt backup.tar.gz.gpg <span class="p">|</span> k0s restore -
+</code></pre></div>
 <h2 id="backuprestore-a-k0s-cluster-using-k0sctl">Backup/restore a k0s cluster using k0sctl<a class="headerlink" href="#backuprestore-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
 <p>With k0sctl you can perform cluster level backup and restore remotely with one command.</p>
 <h3 id="backup-remote">Backup (remote)<a class="headerlink" href="#backup-remote" title="Permanent link">#</a></h3>
