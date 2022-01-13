@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,25 +37,25 @@ var (
 
 // run a config-request from the API and wait until the API is up
 func (rules *ClientConfigLoadingRules) getConfigFromAPI(client k0sv1beta1.K0sV1beta1Interface) (*v1beta1.ClusterConfig, error) {
-	timeout := time.After(120 * time.Second)
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-	// Keep trying until we're timed out or got a result or got an error
-	for {
-		select {
-		// Got a timeout! fail with a timeout error
-		case <-timeout:
-			return nil, fmt.Errorf("timed out waiting for API to return cluster-config")
-		// Got a tick, we should check on doSomething()
-		case <-ticker.C:
-			logrus.Debug("fetching cluster-config from API...")
-			cfg, err := rules.configRequest(client)
-			if err != nil {
-				continue
-			}
-			return cfg, nil
+
+	var cfg *v1beta1.ClusterConfig
+	var err error
+	ctx, cancelFunction := context.WithTimeout(context.Background(), 120*time.Second)
+	// clear up context after timeout
+	defer cancelFunction()
+
+	err = retry.Do(func() error {
+		logrus.Debug("fetching cluster-config from API...")
+		cfg, err = rules.configRequest(client)
+		if err != nil {
+			return err
 		}
+		return nil
+	}, retry.Context(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("timed out waiting for API to return cluster-config")
 	}
+	return cfg, nil
 }
 
 // when API config is enabled, but only node config is needed (for bootstrapping commands)
