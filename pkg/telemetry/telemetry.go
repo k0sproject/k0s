@@ -115,10 +115,11 @@ func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums,
 	var cpuTotal int64
 	for idx, n := range nodes.Items {
 		wd := workerData{
-			"os":   n.Status.NodeInfo.OSImage,
-			"arch": n.Status.NodeInfo.Architecture,
-			"cpus": n.Status.Capacity.Cpu().Value(),
-			"mem":  n.Status.Capacity.Memory().ScaledValue(resource.Mega),
+			"os":      n.Status.NodeInfo.OSImage,
+			"arch":    n.Status.NodeInfo.Architecture,
+			"cpus":    n.Status.Capacity.Cpu().Value(),
+			"mem":     n.Status.Capacity.Memory().ScaledValue(resource.Mega),
+			"runtime": n.Status.NodeInfo.ContainerRuntimeVersion,
 		}
 		wds[idx] = wd
 		memTotal += n.Status.Capacity.Memory().ScaledValue(resource.Mega)
