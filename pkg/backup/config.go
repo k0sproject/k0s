@@ -64,6 +64,7 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		logrus.Debugf("%s does not exist in the backup file", objectPathInArchive)
 		return nil
 	}
+
 	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
 
 	if c.restoredConfigPath == "-" {
@@ -71,10 +72,14 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		if err != nil {
 			return err
 		}
+		if f == nil {
+			return fmt.Errorf("couldn't get a file handle for %s", c.restoredConfigPath)
+		}
 		defer f.Close()
-		_, err = io.Copy(f, os.Stdout)
+		_, err = io.Copy(os.Stdout, f)
 		return err
 	}
+
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, c.restoredConfigPath)
 	return file.Copy(objectPathInArchive, c.restoredConfigPath)
 }
