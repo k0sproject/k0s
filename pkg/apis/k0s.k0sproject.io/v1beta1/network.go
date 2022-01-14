@@ -180,7 +180,7 @@ func (n *Network) BuildServiceCIDR(addr string) string {
 // BuildPodCIDR returns actual argument value for pod cidr
 func (n *Network) BuildPodCIDR() string {
 	if n.DualStack.Enabled {
-		return n.DualStack.IPv6PodCIDR + "," + n.PodCIDR
+		return n.PodCIDR + "," + n.DualStack.IPv6PodCIDR
 	}
 	return n.PodCIDR
 }
