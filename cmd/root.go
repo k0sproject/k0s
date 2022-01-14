@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -194,11 +195,14 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 
 func isKubectlSubcommand() bool {
 	args := os.Args
+	spew.Dump("IS KUBECTL", args)
 	if args[0] == "kubectl" {
+		spew.Dump("kubectl 0")
 		return true
 	}
 
 	if args[1] == "kc" || args[1] == "kubectl" {
+		spew.Dump("KC 1")
 		return true
 	}
 	return false
@@ -208,6 +212,7 @@ func Execute() {
 	if isKubectlSubcommand() {
 		os.Args = os.Args[1:]
 		os.Args[0] = "kubectl"
+		spew.Dump("ARGS BEFORE EXECUTE", os.Args)
 		os.Exit(cli.Run(kubectl.NewK0sKubectlCmd()))
 		return
 	}

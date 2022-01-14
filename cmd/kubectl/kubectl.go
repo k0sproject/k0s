@@ -18,6 +18,7 @@ package kubectl
 import (
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -37,19 +38,20 @@ func NewK0sKubectlCmd() *cobra.Command {
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		spew.Dump("PRE-RUN ARGS", args)
 		// Call parents pre-run if exists, cobra does not do this automatically
 		// See: https://github.com/spf13/cobra/issues/216
-		if parent := cmd.Parent(); parent != nil {
-			if parent.PersistentPreRun != nil {
-				parent.PersistentPreRun(parent, args)
-			}
-			if parent.PersistentPreRunE != nil {
-				err := parent.PersistentPreRunE(parent, args)
-				if err != nil {
-					return err
-				}
-			}
-		}
+		// if parent := cmd.Parent(); parent != nil {
+		// 	if parent.PersistentPreRun != nil {
+		// 		parent.PersistentPreRun(parent, args)
+		// 	}
+		// 	if parent.PersistentPreRunE != nil {
+		// 		err := parent.PersistentPreRunE(parent, args)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 	}
+		// }
 		c := CmdOpts(config.GetCmdOpts())
 		if os.Getenv("KUBECONFIG") == "" {
 			// Verify we can read the config before pushing it to env
