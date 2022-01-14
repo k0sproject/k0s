@@ -18,7 +18,7 @@ echo "foo-plugin"
 `
 
 func (s *KubectlSuite) TestEmbeddedKubectl() {
-	s.Require().NoError(s.InitController(0, "--enable-k0s-cloud-provider", "--k0s-cloud-provider-update-frequency=5s"))
+	s.Require().NoError(s.InitController(0))
 	s.PutFile(s.ControllerNode(0), "/bin/kubectl-foo", pluginContent)
 
 	ssh, err := s.SSH(s.ControllerNode(0))
