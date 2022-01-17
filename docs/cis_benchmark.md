@@ -1,17 +1,12 @@
-# CIS Benchmark
+# Kube-bench Security Benchmark
 
-The [Center for Internet Security](https://www.cisecurity.org/) provides set of benchmarks that help us harden our clusters.
-k0s clusters by default will pass CIS benchmarks with couple of [exceptions](#summary-of-disabled-checks).
-
-For CIS compliance verification we are using `kube-bench`.
+[Kube-bench](https://github.com/aquasecurity/kube-bench) is an open source tool which can be used to verify security best practices as defined in CIS Kubernetes Benchmark. It provides a number of tests to help harden your k0s clusters. By default, k0s will pass Kube-bench benchmarks with some exceptions, which are shown below.
 
 ## Run
 
-`kube-bench` is CIS compliance verification tool.
+Follow the Kube-bench [quick start instructions](https://github.com/aquasecurity/kube-bench/#quick-start).
 
-Follow install [instructions](https://github.com/aquasecurity/kube-bench/#installation).
-
-After installing the kube-bench on the host that is running `k0s` cluster run follwing command:
+After installing the Kube-bench on the host that is running `k0s` cluster run the following command:
 
 ```shell
 kube-bench run --config-dir docs/kube-bench/cfg/ --benchmark k0s-1.0
@@ -21,7 +16,7 @@ kube-bench run --config-dir docs/kube-bench/cfg/ --benchmark k0s-1.0
 
 ### Master Node Security Configuration
 
-Current configuration has in total of 8 master checks disabled:
+The current configuration has in total 8 master checks disabled:
 
 1. **id: 1.2.10** - EventRateLimit requires external yaml config. It is left for the users to configure it
 
@@ -37,7 +32,7 @@ Current configuration has in total of 8 master checks disabled:
     text: "Ensure that the admission control plugin AlwaysPullImages is set (Manual)"
     ```
 
-3. **id: 1.2.22** - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it
+3. **id: 1.2.22** - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it
 
     ```yaml
     type: skip
@@ -51,14 +46,14 @@ Current configuration has in total of 8 master checks disabled:
     text: "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate (Automated)"
     ```
 
-5. **id: 1.2.24** - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it
+5. **id: 1.2.24** - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it
 
     ```yaml
     type: skip
     text: "Ensure that the --audit-log-maxbackup argument is set to 10 or as appropriate (Automated)"
     ```
 
-6. **id: 1.2.25** - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it
+6. **id: 1.2.25** - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it
 
     ```yaml
     type: skip
@@ -104,7 +99,7 @@ and 4 node checks disabled:
     text: "Ensure that the --protect-kernel-defaults argument is set to true (Automated)"
     ```
 
-4. **id: 4.2.10** - k0s doesn't set this because certs get auto rotated
+4. **id: 4.2.10** - k0s doesn't set this up because certs get auto rotated
 
     ```yaml
     type: skip
@@ -113,7 +108,7 @@ and 4 node checks disabled:
 
 ### Control Plane Configuration
 
-3 checks for control plane:
+3 checks for the control plane:
 
 1. **id: 3.1.1** - For purpose of being fully automated k0s is skipping this check
 
@@ -138,4 +133,4 @@ and 4 node checks disabled:
 
 ### Kubernetes Policies
 
-Entire policies checks are disabled too. The checks are manual and are up to the end user to decide on them.
+Policy checks are also disabled. The checks are manual and are up to the end user to decide on them.
