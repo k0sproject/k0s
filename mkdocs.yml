@@ -53,7 +53,7 @@ nav:
       - Common Pitfalls:                  troubleshooting.md
   - Reference:
       - Architecture:                     architecture.md
-      - CIS Benchmark:                    cis_benchmark.md
+      - Kube-bench Security Benchmark:    cis_benchmark.md
   - Releases:                             releases.md
   - Contributing:
       - Overview:                         contributors/overview.md
