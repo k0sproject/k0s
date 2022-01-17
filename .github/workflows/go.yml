@@ -151,8 +151,6 @@ jobs:
           - check-dualstack
           - check-externaletcd
           - check-hacontrolplane
-          # exists in inttest/Makefile.variables but there's no matching suite:
-          #- check-install
           - check-kine
           - check-metrics
           - check-multicontroller
@@ -169,8 +167,7 @@ jobs:
           - check-statussocket
           - check-tunneledkas
           - check-workerrestart
-          # skipped, originally titled "Smoke-test for network":
-          # - check-etcd
+          - check-kubectl
 
     steps:
       - name: Get PR Reference and Set Cache Name
