@@ -23,7 +23,7 @@
     
     
       
-        <title>CIS Benchmark - Documentation</title>
+        <title>Kube-bench Security Benchmark - Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cis-benchmark" class="md-skip">
+        <a href="#kube-bench-security-benchmark" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CIS Benchmark
+              Kube-bench Security Benchmark
             
           </span>
         </div>
@@ -997,12 +997,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          CIS Benchmark
+          Kube-bench Security Benchmark
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        CIS Benchmark
+        Kube-bench Security Benchmark
       </a>
       
         
@@ -1274,19 +1274,16 @@
                 
                 
                 
-                <h1 id="cis-benchmark">CIS Benchmark<a class="headerlink" href="#cis-benchmark" title="Permanent link">#</a></h1>
-<p>The <a href="https://www.cisecurity.org/">Center for Internet Security</a> provides set of benchmarks that help us harden our clusters.
-k0s clusters by default will pass CIS benchmarks with couple of <a href="#summary-of-disabled-checks">exceptions</a>.</p>
-<p>For CIS compliance verification we are using <code>kube-bench</code>.</p>
+                <h1 id="kube-bench-security-benchmark">Kube-bench Security Benchmark<a class="headerlink" href="#kube-bench-security-benchmark" title="Permanent link">#</a></h1>
+<p><a href="https://github.com/aquasecurity/kube-bench">Kube-bench</a> is an open source tool which can be used to verify security best practices as defined in CIS Kubernetes Benchmark. It provides a number of tests to help harden your k0s clusters. By default, k0s will pass Kube-bench benchmarks with some exceptions, which are shown below.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">#</a></h2>
-<p><code>kube-bench</code> is CIS compliance verification tool.</p>
-<p>Follow install <a href="https://github.com/aquasecurity/kube-bench/#installation">instructions</a>.</p>
-<p>After installing the kube-bench on the host that is running <code>k0s</code> cluster run follwing command:</p>
+<p>Follow the Kube-bench <a href="https://github.com/aquasecurity/kube-bench/#quick-start">quick start instructions</a>.</p>
+<p>After installing the Kube-bench on the host that is running <code>k0s</code> cluster run the following command:</p>
 <div class="highlight"><pre><span></span><code>kube-bench run --config-dir docs/kube-bench/cfg/ --benchmark k0s-1.0
 </code></pre></div>
 <h2 id="summary-of-disabled-checks">Summary of disabled checks<a class="headerlink" href="#summary-of-disabled-checks" title="Permanent link">#</a></h2>
 <h3 id="master-node-security-configuration">Master Node Security Configuration<a class="headerlink" href="#master-node-security-configuration" title="Permanent link">#</a></h3>
-<p>Current configuration has in total of 8 master checks disabled:</p>
+<p>The current configuration has in total 8 master checks disabled:</p>
 <ol>
 <li>
 <p><strong>id: 1.2.10</strong> - EventRateLimit requires external yaml config. It is left for the users to configure it</p>
@@ -1301,7 +1298,7 @@ k0s clusters by default will pass CIS benchmarks with couple of <a href="#summar
 </code></pre></div>
 </li>
 <li>
-<p><strong>id: 1.2.22</strong> - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it</p>
+<p><strong>id: 1.2.22</strong> - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it</p>
 <div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w"></span>
 <span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ensure</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">--audit-log-path</span><span class="nv"> </span><span class="s">argument</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">set</span><span class="nv"> </span><span class="s">(Automated)&quot;</span><span class="w"></span>
 </code></pre></div>
@@ -1313,13 +1310,13 @@ k0s clusters by default will pass CIS benchmarks with couple of <a href="#summar
 </code></pre></div>
 </li>
 <li>
-<p><strong>id: 1.2.24</strong> - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it</p>
+<p><strong>id: 1.2.24</strong> - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it</p>
 <div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w"></span>
 <span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ensure</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">--audit-log-maxbackup</span><span class="nv"> </span><span class="s">argument</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">set</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">10</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">appropriate</span><span class="nv"> </span><span class="s">(Automated)&quot;</span><span class="w"></span>
 </code></pre></div>
 </li>
 <li>
-<p><strong>id: 1.2.25</strong> - For sake of simplicity of k0s all audit configuration are skipped. It is left for the users to configure it</p>
+<p><strong>id: 1.2.25</strong> - For sake of simplicity of k0s all audit configurations are skipped. It is left for the users to configure it</p>
 <div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w"></span>
 <span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ensure</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">--audit-log-maxsize</span><span class="nv"> </span><span class="s">argument</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">set</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">appropriate</span><span class="nv"> </span><span class="s">(Automated)&quot;</span><span class="w"></span>
 </code></pre></div>
@@ -1359,14 +1356,14 @@ k0s clusters by default will pass CIS benchmarks with couple of <a href="#summar
 </code></pre></div>
 </li>
 <li>
-<p><strong>id: 4.2.10</strong> - k0s doesn't set this because certs get auto rotated</p>
+<p><strong>id: 4.2.10</strong> - k0s doesn't set this up because certs get auto rotated</p>
 <div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w"></span>
 <span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Ensure</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">--tls-cert-file</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">--tls-private-key-file</span><span class="nv"> </span><span class="s">arguments</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">set</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">appropriate</span><span class="nv"> </span><span class="s">(Manual)&quot;</span><span class="w"></span>
 </code></pre></div>
 </li>
 </ol>
 <h3 id="control-plane-configuration">Control Plane Configuration<a class="headerlink" href="#control-plane-configuration" title="Permanent link">#</a></h3>
-<p>3 checks for control plane:</p>
+<p>3 checks for the control plane:</p>
 <ol>
 <li>
 <p><strong>id: 3.1.1</strong> - For purpose of being fully automated k0s is skipping this check</p>
@@ -1388,7 +1385,7 @@ k0s clusters by default will pass CIS benchmarks with couple of <a href="#summar
 </li>
 </ol>
 <h3 id="kubernetes-policies">Kubernetes Policies<a class="headerlink" href="#kubernetes-policies" title="Permanent link">#</a></h3>
-<p>Entire policies checks are disabled too. The checks are manual and are up to the end user to decide on them.</p>
+<p>Policy checks are also disabled. The checks are manual and are up to the end user to decide on them.</p>
                 
               
               
