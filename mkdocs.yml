@@ -42,6 +42,7 @@ nav:
       - User Management:                  user-management.md
       - Configuration of Environment Variables: environment-variables.md
       - OpenID Connect: ./examples/oidc/oidc-cluster-configuration.md
+      - SELinux:                          selinux.md
   - Extensions:
       - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
       - NGINX Ingress Controller:         examples/nginx-ingress.md
