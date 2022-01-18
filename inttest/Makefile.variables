@@ -26,5 +26,6 @@ smoketests := \
 	check-statussocket \
 	check-tunneledkas \
 	check-upgrade \
-	check-workerrestart	\
-	check-kubectl
+	check-workerrestart \
+	check-kubectl \
+	check-k0sctl
