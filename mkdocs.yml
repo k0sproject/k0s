@@ -1,4 +1,4 @@
-site_name: K0s Documentation
+site_name: k0s // The Kubernetes Distribution
 site_description: Documentation for k0s, the Zero friction Kubernetes distribution.
 site_author: Mirantis, Inc.
 site_url: https://docs.k0sproject.io
@@ -9,59 +9,62 @@ copyright: Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</
     - All rights reserved.
 edit_uri: ""
 nav:
-  - Home:                                 index.md
-  - Getting Started:                      getting-started.md
-  - Install:
-      - Quick Start Guide:                install.md
-      - Install using k0sctl:             k0sctl-install.md
-      - Alternative Install Methods:
-          - Manual Install (advanced):    k0s-multi-node.md
-          - Docker:                       k0s-in-docker.md
-          - Windows (experimental):       experimental-windows.md
-          - Raspberry Pi 4:               raspberry-pi4.md
-          - Ansible Playbook:             examples/ansible-playbook.md
-          - Airgap Install:               airgap-install.md
-      - Upgrade:                          upgrade.md
-      - Backup/Restore:                   backup.md
-      - Uninstall/Reset:                  reset.md
-      - System Requirements:              system-requirements.md
-      - OS Dependencies:                  os-deps.md
-  - Usage:
-      - Configuration Options:            configuration.md
-      - Dynamic Configuration:            dynamic-configuration.md
-      - Configuration Validation:         configuration-validation.md
-      - Worker Node Configuration:        worker-node-config.md
-      - Networking (CNI):                 networking.md
-      - Runtime (CRI):                    runtime.md
-      - Storage (CSI):                    storage.md
-      - Manifest Deployer:                manifests.md
-      - Helm Charts:                      helm-charts.md
-      - Cloud Providers:                  cloud-providers.md
-      - IPv4/IPv6 Dual-Stack:             dual-stack.md
-      - Control Plane High Availability:  high-availability.md
-      - Shell Completion:                 shell-completion.md
-      - User Management:                  user-management.md
-      - Configuration of Environment Variables: environment-variables.md
-      - OpenID Connect: ./examples/oidc/oidc-cluster-configuration.md
-      - SELinux:                          selinux.md
-  - Extensions:
-      - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
-      - NGINX Ingress Controller:         examples/nginx-ingress.md
-      - Traefik Ingress Controller:       examples/traefik-ingress.md
-      - Ambassador API Gateway:           examples/ambassador-ingress.md
-      - Ceph Storage with Rook:           examples/rook-ceph.md
-  - Troubleshooting:
-      - FAQ:                              FAQ.md
-      - Common Pitfalls:                  troubleshooting.md
-  - Reference:
-      - Architecture:                     architecture.md
-      - Kube-bench Security Benchmark:    cis_benchmark.md
-  - Releases:                             releases.md
-  - Contributing:
-      - Overview:                         contributors/overview.md
-      - GitHub Workflow:                  contributors/github_workflow.md
-      - Testing:                          contributors/testing.md
-      - Documentation:                    internal/publishing_docs_using_mkdocs.md
+  - Home:                                   index.md
+  - Documentation:
+    - Getting Started:                      getting-started.md
+    - Install:
+        - Quick Start Guide:                install.md
+        - Install using k0sctl:             k0sctl-install.md
+        - Alternative Install Methods:
+            - Manual Install (advanced):    k0s-multi-node.md
+            - Docker:                       k0s-in-docker.md
+            - Windows (experimental):       experimental-windows.md
+            - Raspberry Pi 4:               raspberry-pi4.md
+            - Ansible Playbook:             examples/ansible-playbook.md
+            - Airgap Install:               airgap-install.md
+        - Upgrade:                          upgrade.md
+        - Backup/Restore:                   backup.md
+        - Uninstall/Reset:                  reset.md
+        - System Requirements:              system-requirements.md
+        - OS Dependencies:                  os-deps.md
+    - Usage:
+        - Configuration Options:            configuration.md
+        - Dynamic Configuration:            dynamic-configuration.md
+        - Configuration Validation:         configuration-validation.md
+        - Worker Node Configuration:        worker-node-config.md
+        - Networking (CNI):                 networking.md
+        - Runtime (CRI):                    runtime.md
+        - Storage (CSI):                    storage.md
+        - Manifest Deployer:                manifests.md
+        - Helm Charts:                      helm-charts.md
+        - Cloud Providers:                  cloud-providers.md
+        - IPv4/IPv6 Dual-Stack:             dual-stack.md
+        - Control Plane High Availability:  high-availability.md
+        - Shell Completion:                 shell-completion.md
+        - User Management:                  user-management.md
+        - Configuration of Environment Variables: environment-variables.md
+        - OpenID Connect:                   ./examples/oidc/oidc-cluster-configuration.md
+        - SELinux:                          selinux.md
+    - Extensions:
+        - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
+        - NGINX Ingress Controller:         examples/nginx-ingress.md
+        - Traefik Ingress Controller:       examples/traefik-ingress.md
+        - Ambassador API Gateway:           examples/ambassador-ingress.md
+        - Ceph Storage with Rook:           examples/rook-ceph.md
+    - Troubleshooting:
+        - FAQ:                              FAQ.md
+        - Common Pitfalls:                  troubleshooting.md
+    - Reference:
+        - Architecture:                     architecture.md
+        - Kube-bench Security Benchmark:    cis_benchmark.md
+    - Releases:                             releases.md
+    - Contributing:
+        - Overview:                         contributors/overview.md
+        - GitHub Workflow:                  contributors/github_workflow.md
+        - Testing:                          contributors/testing.md
+        - Documentation:                    internal/publishing_docs_using_mkdocs.md
+  - Slack:                                  slack.md
+  - Blog:                                   blog/index.md
 
 theme:
     name: 'material'
@@ -101,7 +104,10 @@ markdown_extensions:
   - toc:
         permalink: "#"
         toc_depth: 3
-  - md_in_html
+  - md_in_html # Adds Markdown in HTML - https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/?h=md_in_html#markdown-in-html
+  - pymdownx.emoji: # adds Icons and Emojis - https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/#search
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
 extra:
     generator: false

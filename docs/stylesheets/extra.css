@@ -12,6 +12,10 @@
   overflow: auto;
 }
 
+.md-banner {
+  background-color: #ffffff;
+}
+
 ul.video-list {
   counter-reset: section;
   list-style: none;
