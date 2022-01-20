@@ -89,14 +89,3 @@ func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
 	}
 	return nil
 }
-
-func preRunValidateConfig(_ *cobra.Command, _ []string) error {
-	c := CmdOpts(config.GetCmdOpts())
-
-	loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
-	_, err := loadingRules.ParseRuntimeConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get config: %v", err)
-	}
-	return nil
-}

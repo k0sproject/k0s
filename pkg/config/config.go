@@ -71,9 +71,6 @@ type ClientConfigLoadingRules struct {
 	// this parameter is mainly used for testing purposes, to override the default location on local dev system
 	RuntimeConfigPath string
 
-	// CfgFileOverride is an optional field for overriding the CfgFile parameter from cobra. Used mainly for testing purposes.
-	CfgFileOverride string
-
 	// K0sVars is needed for fetching the right config from the API
 	K0sVars constant.CfgVars
 }
@@ -111,10 +108,6 @@ func (rules *ClientConfigLoadingRules) IsDefaultConfig() bool {
 }
 
 func (rules *ClientConfigLoadingRules) Load() (*v1beta1.ClusterConfig, error) {
-	if rules.CfgFileOverride != "" {
-		CfgFile = rules.CfgFileOverride
-	}
-
 	if rules.Nodeconfig {
 		return rules.fetchNodeConfig()
 	}

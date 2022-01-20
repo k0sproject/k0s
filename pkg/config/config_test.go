@@ -144,10 +144,15 @@ spec:
 
 // Test using config from a yaml file
 func TestConfigFromDefaults(t *testing.T) {
-	CfgFile = constant.K0sConfigPathDefault // this path doesn't exist, so default values should be generated
 	defer os.Remove(configPathRuntimeTest)
 
+	CfgFile = ""
 	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	if err != nil {
+		t.Fatalf("failed to initialize k0s config: %s", err.Error())
+	}
+
 	cfg, err := loadingRules.Load()
 	if err != nil {
 		t.Fatalf("failed to load config: %s", err.Error())
@@ -215,12 +220,12 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 }
 
 func TestSingleNodeConfig(t *testing.T) {
-	CfgFile = constant.K0sConfigPathDefault // this path doesn't exist, so default values should be generated
 	defer os.Remove(configPathRuntimeTest)
 
 	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
 	k0sVars := constant.GetConfig("")
 	k0sVars.DefaultStorageType = "kine"
+	CfgFile = ""
 
 	err := loadingRules.InitRuntimeConfig(k0sVars)
 	if err != nil {
@@ -231,9 +236,11 @@ func TestSingleNodeConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to load config: %s", err.Error())
 	}
+
 	if cfg == nil {
 		t.Fatal("received an empty config! failing")
 	}
+
 	testCases := []struct {
 		name     string
 		got      string

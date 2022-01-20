@@ -58,7 +58,7 @@ func NewRestoreCmd() *cobra.Command {
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return nil
+		logrus.Fatal("failed to get local path")
 	}
 
 	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)

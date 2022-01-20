@@ -64,7 +64,6 @@ func (c *ConfigGetter) FakeConfigFromFile() (*v1beta1.ClusterConfig, error) {
 	loadingRules := config.ClientConfigLoadingRules{
 		RuntimeConfigPath: RuntimeFakePath,
 		Nodeconfig:        c.NodeConfig,
-		CfgFileOverride:   c.cfgFilePath,
 		K0sVars:           c.k0sVars,
 	}
 	return loadingRules.Load()
@@ -87,7 +86,6 @@ func (c *ConfigGetter) FakeAPIConfig() (*v1beta1.ClusterConfig, error) {
 	loadingRules := config.ClientConfigLoadingRules{
 		RuntimeConfigPath: RuntimeFakePath,
 		Nodeconfig:        c.NodeConfig,
-		CfgFileOverride:   c.cfgFilePath,
 		APIClient:         client.K0sV1beta1(),
 		K0sVars:           c.k0sVars,
 	}

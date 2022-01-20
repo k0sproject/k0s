@@ -16,6 +16,7 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -189,7 +190,8 @@ func GetControllerFlags() *pflag.FlagSet {
 // it in multiple places
 func FileInputFlag() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", constant.K0sConfigPathDefault, "config file, use '-' to read the config from stdin")
+	descString := fmt.Sprintf("config file, use '-' to read the config from stdin (default \"%s\")", constant.K0sConfigPathDefault)
+	flagset.StringVarP(&CfgFile, "config", "c", "", descString)
 
 	return flagset
 }
@@ -202,8 +204,8 @@ func GetCmdOpts() CLIOptions {
 		K0sVars.DefaultStorageType = "kine"
 	}
 
-	// when a custom config file is used, verify that it can be opened
-	if CfgFile != constant.K0sConfigPathDefault {
+	// When CfgFile is set, verify the file can be opened
+	if CfgFile != "" {
 		_, err := os.Open(CfgFile)
 		if err != nil {
 			logrus.Fatalf("failed to load config file (%s): %v", CfgFile, err)
@@ -226,6 +228,14 @@ func GetCmdOpts() CLIOptions {
 	return opts
 }
 
+func PreRunValidateConfig(k0sVars constant.CfgVars) error {
+	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
+	_, err := loadingRules.ParseRuntimeConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %v", err)
+	}
+	return nil
+}
 func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
 	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, K0sVars: k0sVars}
 	cfg, err := loadingRules.Load()

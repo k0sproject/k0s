@@ -61,16 +61,6 @@ func (rules *ClientConfigLoadingRules) readRuntimeConfig() (clusterConfig *v1bet
 func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterConfig, error) {
 	var cfg *v1beta1.ClusterConfig
 
-	if rules.RuntimeConfigPath == "" {
-		rules.RuntimeConfigPath = runtimeConfigPathDefault
-	}
-
-	// don't create the runtime config file, if it already exists
-	if file.Exists(rules.RuntimeConfigPath) {
-		logrus.Debugf("runtime config found: using %s", rules.RuntimeConfigPath)
-		CfgFile = rules.RuntimeConfigPath
-	}
-
 	var storage *v1beta1.StorageSpec
 	if rules.K0sVars.DefaultStorageType == "kine" {
 		storage = &v1beta1.StorageSpec{
@@ -78,17 +68,50 @@ func (rules *ClientConfigLoadingRules) ParseRuntimeConfig() (*v1beta1.ClusterCon
 			Kine: v1beta1.DefaultKineConfig(rules.K0sVars.DataDir),
 		}
 	}
+	if rules.RuntimeConfigPath == "" {
+		rules.RuntimeConfigPath = runtimeConfigPathDefault
+	}
+
+	// If runtime config already exists, use it as the source of truth
+	if file.Exists(rules.RuntimeConfigPath) {
+		logrus.Debugf("runtime config found: using %s", rules.RuntimeConfigPath)
+
+		// read config from runtime config
+		f, err := os.Open(rules.RuntimeConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		cfg, err = v1beta1.ConfigFromReader(f, storage)
+		if err != nil {
+			return nil, err
+		}
+		return cfg, nil
+	}
 
 	switch CfgFile {
 	// stdin input
 	case "-":
 		return v1beta1.ConfigFromReader(os.Stdin, storage)
-	default:
-		f, err := os.Open(CfgFile)
+	case "":
+		// if no config is set, look for config in the default location
+		// if it does not exist there either, generate default config
+		f, err := os.Open(constant.K0sConfigPathDefault)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return rules.generateDefaults(storage), nil
 			}
+		}
+		defer f.Close()
+
+		cfg, err = v1beta1.ConfigFromReader(f, storage)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		f, err := os.Open(CfgFile)
+		if err != nil {
 			return nil, err
 		}
 		defer f.Close()
