@@ -16,21 +16,28 @@ limitations under the License.
 package config
 
 import (
+	"os"
+
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
+var outputFormat string
 
-func NewConfigCmd() *cobra.Command {
+func NewStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Configuration related sub-commands",
+		Use:   "status",
+		Short: "Display dynamic configuration reconciliation status",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c := CmdOpts(config.GetCmdOpts())
+			os.Args = []string{os.Args[0], "kubectl", "--data-dir", c.K0sVars.DataDir, "-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
+			if outputFormat != "" {
+				os.Args = append(os.Args, "-o", outputFormat)
+			}
+			return cmd.Execute()
+		},
 	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewEditCmd())
-	cmd.AddCommand(NewStatusCmd())
-	cmd.AddCommand(NewValidateCmd())
-	cmd.SilenceUsage = true
+	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
+	cmd.Flags().StringVarP(&outputFormat, "output", "o", "", "Output format. Must be one of yaml|json")
 	return cmd
 }
