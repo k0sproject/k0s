@@ -75,8 +75,8 @@ const (
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
-	KonnectivityImage                  = "k8s.gcr.io/kas-network-proxy/proxy-agent"
-	KonnectivityImageVersion           = "v0.0.25"
+	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
+	KonnectivityImageVersion           = "0.0.27-k0s2"
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.5.0"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
