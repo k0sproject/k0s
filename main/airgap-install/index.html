@@ -1359,7 +1359,7 @@
 <h2 id="2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl">2b. Sync the bundle file with the airgapped machines (remotely with k0sctl)<a class="headerlink" href="#2b-sync-the-bundle-file-with-the-airgapped-machines-remotely-with-k0sctl" title="Permanent link">#</a></h2>
 <p>As an alternative to the previous step, you can use k0sctl to upload the bundle file to the worker nodes. k0sctl can also be used to upload k0s binary file to all nodes. Take a look at this example (k0sctl.yaml) with one controller and one worker node to upload the bundle file and k0s binary:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span><span class="w"></span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span><span class="w"></span>
 <span class="nt">spec</span><span class="p">:</span><span class="w"></span>
@@ -1389,7 +1389,7 @@
 <h2 id="3-ensure-pull-policy-in-the-k0syaml-optional">3. Ensure pull policy in the k0s.yaml (optional)<a class="headerlink" href="#3-ensure-pull-policy-in-the-k0syaml-optional" title="Permanent link">#</a></h2>
 <p>Use the following <code>k0s.yaml</code> to ensure that containerd does not pull images for k0s components from the Internet at any time.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span><span class="w"></span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span><span class="w"></span>
 <span class="nt">spec</span><span class="p">:</span><span class="w"></span>
