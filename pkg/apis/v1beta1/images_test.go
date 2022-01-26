@@ -39,7 +39,7 @@ func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 			cfg.Spec.Images.Repository = "my.repo"
 			var testingConfig *ClusterConfig
 			require.NoError(t, yaml.Unmarshal(getConfigYAML(t, cfg), &testingConfig))
-			require.Equal(t, fmt.Sprintf("my.repo/k8s-artifacts-prod/kas-network-proxy/proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
+			require.Equal(t, fmt.Sprintf("my.repo/k0sproject/apiserver-network-proxy-agent:%s", constant.KonnectivityImageVersion), testingConfig.Spec.Images.Konnectivity.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/k8s-staging-metrics-server/metrics-server:%s", constant.MetricsImageVersion), testingConfig.Spec.Images.MetricsServer.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/kube-proxy:%s", constant.KubeProxyImageVersion), testingConfig.Spec.Images.KubeProxy.URI())
 			require.Equal(t, fmt.Sprintf("my.repo/coredns/coredns:%s", constant.CoreDNSImageVersion), testingConfig.Spec.Images.CoreDNS.URI())
