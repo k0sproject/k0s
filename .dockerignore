@@ -2,3 +2,7 @@
 *
 !docker-entrypoint.sh
 !k0s
+!k0s-arm
+!k0s-arm64
+!k0s-amd64
+
