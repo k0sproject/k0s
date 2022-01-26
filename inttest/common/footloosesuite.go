@@ -443,7 +443,9 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 		return "", err
 	}
 	defer ssh.Disconnect()
-	token, err := ssh.ExecWithOutput(fmt.Sprintf("%s token create --role=%s %s 2>/dev/null", s.K0sFullPath, role, strings.Join(extraArgs, " ")))
+
+	tokenCmd := fmt.Sprintf("%s token create --role=%s %s 2>/dev/null", s.K0sFullPath, role, strings.Join(extraArgs, " "))
+	token, err := ssh.ExecWithOutput(tokenCmd)
 	if err != nil {
 		return "", fmt.Errorf("can't get join token: %v", err)
 	}

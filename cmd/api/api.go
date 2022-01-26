@@ -63,16 +63,10 @@ func NewAPICmd() *cobra.Command {
 			logrus.SetOutput(os.Stdout)
 
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-			c.NodeConfig = cfg
 			return c.startAPI()
 		},
 	}
 	cmd.SilenceUsage = true
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

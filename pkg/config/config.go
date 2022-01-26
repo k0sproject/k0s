@@ -17,115 +17,114 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-// GetYamlFromFile parses a yaml file into a ClusterConfig object
-func GetYamlFromFile(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	if cfgPath == "" {
-		// no config file exists, using defaults
-		logrus.Warn("no config file given, using defaults")
-	}
-	cfg, err := GetConfigFromYAML(cfgPath, k0sVars)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+// general interface for config related methods
+type Loader interface {
+	BootstrapConfig() (*v1beta1.ClusterConfig, error)
+	ClusterConfig() (*v1beta1.ClusterConfig, error)
+	IsAPIConfig() bool
+	IsDefaultConfig() bool
+	Load() (*v1beta1.ClusterConfig, error)
 }
 
-// GetConfigFromYAML will attempt to read a config yaml, validate it and return a clusterConfig object
-func GetConfigFromYAML(cfgPath string, k0sVars constant.CfgVars) (clusterConfig *v1beta1.ClusterConfig, err error) {
-	var storage *v1beta1.StorageSpec
-	var cfg *v1beta1.ClusterConfig
+type K0sConfigGetter struct {
+	k0sConfigGetter Getter
+}
 
-	CfgFile = cfgPath
+func (g *K0sConfigGetter) IsAPIConfig() bool {
+	return false
+}
 
-	// first, let's set the default storage type
-	if k0sVars.DefaultStorageType == "kine" {
-		storage = &v1beta1.StorageSpec{
-			Type: v1beta1.KineStorageType,
-			Kine: v1beta1.DefaultKineConfig(k0sVars.DataDir),
+func (g *K0sConfigGetter) IsDefaultConfig() bool {
+	return false
+}
+
+func (g *K0sConfigGetter) BootstrapConfig() (*v1beta1.ClusterConfig, error) {
+	return g.k0sConfigGetter()
+}
+
+func (g *K0sConfigGetter) Load() (*v1beta1.ClusterConfig, error) {
+	return g.k0sConfigGetter()
+}
+
+type Getter func() (*v1beta1.ClusterConfig, error)
+
+var _ Loader = &ClientConfigLoadingRules{}
+
+type ClientConfigLoadingRules struct {
+	// APIClient is an optional field for passing a kubernetes API client, to fetch the API config
+	// mostly used by tests, to pass a fake client
+	APIClient k0sv1beta1.K0sV1beta1Interface
+
+	// Nodeconfig is an optional field indicating if provided config-file is a node-config or a standard cluster-config file.
+	Nodeconfig bool
+
+	// RuntimeConfigPath is an optional field indicating the location of the runtime config file (default: /run/k0s/k0s.yaml)
+	// this parameter is mainly used for testing purposes, to override the default location on local dev system
+	RuntimeConfigPath string
+
+	// K0sVars is needed for fetching the right config from the API
+	K0sVars constant.CfgVars
+}
+
+func (rules *ClientConfigLoadingRules) BootstrapConfig() (*v1beta1.ClusterConfig, error) {
+	return rules.fetchNodeConfig()
+}
+
+// ClusterConfig generates a client and queries the API for the cluster config
+func (rules *ClientConfigLoadingRules) ClusterConfig() (*v1beta1.ClusterConfig, error) {
+	if rules.APIClient == nil {
+		// generate a kubernetes client from AdminKubeConfigPath
+		config, err := clientcmd.BuildConfigFromFlags("", K0sVars.AdminKubeConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("can't read kubeconfig: %v", err)
 		}
-	}
+		client, err := cfgClient.NewForConfig(config)
+		if err != nil {
+			return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
+		}
 
-	switch CfgFile {
-	// read config file flag
-	default:
-		f, err := os.Open(CfgFile)
+		rules.APIClient = client.K0sV1beta1()
+	}
+	return rules.getConfigFromAPI(rules.APIClient)
+}
+
+func (rules *ClientConfigLoadingRules) IsAPIConfig() bool {
+	return controllerOpts.EnableDynamicConfig
+}
+
+func (rules *ClientConfigLoadingRules) IsDefaultConfig() bool {
+	// if no custom-value is provided as a config file, and no config-file exists in the default location
+	// we assume we need to generate configuration defaults
+	return CfgFile == constant.K0sConfigPathDefault && !file.Exists(constant.K0sConfigPathDefault)
+}
+
+func (rules *ClientConfigLoadingRules) Load() (*v1beta1.ClusterConfig, error) {
+	if rules.Nodeconfig {
+		return rules.fetchNodeConfig()
+	}
+	if !rules.IsAPIConfig() {
+		return rules.readRuntimeConfig()
+	}
+	if rules.IsAPIConfig() {
+		nodeConfig, err := rules.BootstrapConfig()
 		if err != nil {
 			return nil, err
 		}
-		defer f.Close()
-
-		cfg, err = v1beta1.ConfigFromReader(f, storage)
+		apiConfig, err := rules.ClusterConfig()
 		if err != nil {
 			return nil, err
 		}
-
-	// stdin input
-	case "-":
-		cfg, err = v1beta1.ConfigFromReader(os.Stdin, storage)
-
-	// config file not provided: try to read config from default location.
-	// if not exists, generate default config
-	case constant.K0sConfigPathDefault:
-		f, err := os.Open(constant.K0sConfigPathDefault)
-		if err != nil {
-			if os.IsNotExist(err) {
-				logrus.Debugf("could not find config in %s, using defaults", constant.K0sConfigPathDefault)
-				cfg = v1beta1.DefaultClusterConfig(storage)
-			} else {
-				return nil, err
-			}
-		}
-		if err == nil {
-			logrus.Debugf("found config file in %s", constant.K0sConfigPathDefault)
-			cfg, err = v1beta1.ConfigFromReader(f, storage)
-			if err != nil {
-				return nil, err
-			}
-			defer f.Close()
-		}
+		// get node config from the config-file and cluster-wide settings from the API and return a combined result
+		return rules.mergeNodeAndClusterconfig(nodeConfig, apiConfig)
 	}
-
-	if cfg.Spec.Storage.Type == v1beta1.KineStorageType && cfg.Spec.Storage.Kine == nil {
-		logrus.Warn("storage type is kine but no config given, setting up defaults")
-		cfg.Spec.Storage.Kine = v1beta1.DefaultKineConfig(k0sVars.DataDir)
-	}
-	if cfg.Spec.Install == nil {
-		cfg.Spec.Install = v1beta1.DefaultInstallSpec()
-	}
-
-	errors := cfg.Validate()
-	if len(errors) > 0 {
-		messages := make([]string, len(errors))
-		for _, e := range errors {
-			messages = append(messages, e.Error())
-		}
-		return nil, fmt.Errorf(strings.Join(messages, "\n"))
-	}
-	return cfg, nil
-}
-
-// GetNodeConfig takes a config-file parameter and returns a ClusterConfig stripped of Cluster-Wide Settings
-func GetNodeConfig(cfgPath string, k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
-	cfg, err := GetYamlFromFile(cfgPath, k0sVars)
-	if err != nil {
-		return nil, err
-	}
-	nodeConfig := cfg.GetBootstrappingConfig(cfg.Spec.Storage)
-	var etcdConfig *v1beta1.EtcdConfig
-	if cfg.Spec.Storage.Type == v1beta1.EtcdStorageType {
-		etcdConfig = &v1beta1.EtcdConfig{
-			ExternalCluster: cfg.Spec.Storage.Etcd.ExternalCluster,
-			PeerAddress:     cfg.Spec.Storage.Etcd.PeerAddress,
-		}
-		nodeConfig.Spec.Storage.Etcd = etcdConfig
-	}
-	return nodeConfig, nil
+	return nil, nil
 }

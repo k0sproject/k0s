@@ -44,7 +44,7 @@ func createArchive(archive io.Writer, files []string, baseDir string) error {
 	for _, file := range files {
 		err := addToArchive(tw, file, baseDir)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to add file to backup archive: %v", err)
 		}
 	}
 	return nil

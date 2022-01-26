@@ -43,21 +43,18 @@ func NewBackupCmd() *cobra.Command {
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-			c.ClusterConfig = cfg
-			if c.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+			if c.NodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return fmt.Errorf("command 'k0s backup' does not support external etcd cluster")
 			}
 			return c.backup()
 		},
-		PreRunE: preRunValidateConfig,
+		PreRunE: func(c *cobra.Command, args []string) error {
+			cmdOpts := CmdOpts(config.GetCmdOpts())
+			return config.PreRunValidateConfig(cmdOpts.K0sVars)
+		},
 	}
 	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
 	cmd.SilenceUsage = true
-	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -86,16 +83,7 @@ func (c *CmdOpts) backup() error {
 		if err != nil {
 			return err
 		}
-		return mgr.RunBackup(c.CfgFile, c.ClusterConfig.Spec, c.K0sVars, savePath)
+		return mgr.RunBackup(c.NodeConfig.Spec, c.K0sVars, savePath)
 	}
 	return fmt.Errorf("backup command must be run on the controller node, have `%s`", status.Role)
-}
-
-func preRunValidateConfig(cmd *cobra.Command, args []string) error {
-	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.GetConfigFromYAML(c.CfgFile, c.K0sVars)
-	if err != nil {
-		return err
-	}
-	return nil
 }

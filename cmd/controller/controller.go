@@ -91,10 +91,6 @@ func NewControllerCmd() *cobra.Command {
 				}
 				c.TokenArg = string(bytes)
 			}
-			if c.SingleNode {
-				c.EnableWorker = true
-				c.K0sVars.DefaultStorageType = "kine"
-			}
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cmd.SilenceUsage = true
 
@@ -124,15 +120,25 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	if err := dir.Init(c.K0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 		return err
 	}
-
-	nodeConfig, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-	if err != nil {
-		return err
+	// let's make sure run-dir exists
+	if err := dir.Init(c.K0sVars.RunDir, constant.RunDirMode); err != nil {
+		return fmt.Errorf("failed to initialize dir: %v", err)
 	}
-	c.NodeConfig = nodeConfig
+
+	// initialize runtime config
+	loadingRules := config.ClientConfigLoadingRules{Nodeconfig: true}
+	if err := loadingRules.InitRuntimeConfig(c.K0sVars); err != nil {
+		return fmt.Errorf("failed to initialize k0s runtime config: %s", err.Error())
+	}
+
+	// from now on, we only refer to the runtime config
+	c.CfgFile = loadingRules.RuntimeConfigPath
+
 	certificateManager := certificate.Manager{K0sVars: c.K0sVars}
 
 	var joinClient *token.JoinClient
+	var err error
+
 	if c.TokenArg != "" && c.needToJoin() {
 		joinClient, err = joinController(ctx, c.TokenArg, c.K0sVars.CertRootDir)
 		if err != nil {
@@ -282,8 +288,9 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		// Stop components
 		if stopErr := c.NodeComponents.Stop(); stopErr != nil {
 			logrus.Errorf("error while stopping node component %s", stopErr)
+		} else {
+			logrus.Info("all node components stopped")
 		}
-		logrus.Info("all node components stopped")
 	}()
 
 	// in-cluster component reconcilers
@@ -335,11 +342,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			return err
 		}
 	} else {
-		fullCfg, err := config.GetYamlFromFile(c.CfgFile, c.K0sVars)
-		if err != nil {
-			return err
-		}
-		cfgSource, err = clusterconfig.NewStaticSource(fullCfg)
+		cfgSource, err = clusterconfig.NewStaticSource(c.ClusterConfig)
 		if err != nil {
 			return err
 		}
@@ -402,7 +405,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
-	return err
+	return os.Remove(c.CfgFile)
 }
 
 func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
@@ -420,7 +423,7 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 			return err
 		}
 
-		cfgReconciler, err := controller.NewClusterConfigReconciler(c.CfgFile, leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf, configSource)
+		cfgReconciler, err := controller.NewClusterConfigReconciler(leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf, configSource)
 		if err != nil {
 			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
 			return err
@@ -472,7 +475,7 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
-		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars)
+		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars, c.NodeConfig)
 		if err != nil {
 			return fmt.Errorf("failed to initialize kube-proxy reconciler: %s", err.Error())
 
