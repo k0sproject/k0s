@@ -10,7 +10,7 @@ ARG BUILD_GO_LDFLAGS_EXTRA
 
 RUN apk add build-base git make
 
-RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
+RUN git clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 RUN go version
 RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 && \
