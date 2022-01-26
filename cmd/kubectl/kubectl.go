@@ -26,7 +26,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -129,6 +128,6 @@ func NewK0sKubectlCmd() *cobra.Command {
 
 		originalRun(cmd, args)
 	}
-	logs.AddFlags(cmd.PersistentFlags())
+	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
