@@ -23,7 +23,7 @@ k0s is distributed as a single binary with zero host OS dependencies besides the
 - Scalable from a single node to large, [high-available](high-availability.md) clusters
 - Supports custom [Container Network Interface (CNI)](networking.md) plugins (Kube-Router is the default, Calico is offered as a preconfigured alternative)
 - Supports custom [Container Runtime Interface (CRI)](runtime.md) plugins (containerd is the default)
-- Supports all Kubernetes storage options with [Container Storage Interface (CSI)](storage.md)
+- Supports all Kubernetes storage options with [Container Storage Interface (CSI)](storage.md), includes [OpenEBS host-local storage provider](storage.md#bundled-openebs-storage)
 - Supports a variety of [datastore backends](configuration.md#specstorage): etcd (default for multi-node clusters), SQLite (default for single node clusters), MySQL, and PostgreSQL
 - Supports x86-64, ARM64 and ARMv7
 - Includes [Konnectivity service](networking.md#controller-worker-communication), CoreDNS and Metrics Server

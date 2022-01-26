@@ -279,9 +279,17 @@ In the runtime the image names are calculated as `my.own.repo/calico/kube-contro
 
 ### `spec.extensions.storage`
 
-`spec.extensions.storage` controls bundled storage.
+`spec.extensions.storage` controls bundled storage provider.
 The default value `external` makes no storage deployed.
-Value `openebs_local_storage` deploys OpenEBS with the local path set up.
+
+To enable [embedded host-local storage provider](storage.md#bundled-openebs-storage) use the following configuration:
+
+```yaml
+spec:
+  extensions:
+    storage:
+      type: openebs_local_storage
+```
 
 ### `spec.konnectivity`
 
@@ -298,8 +306,8 @@ The telemetry interval is ten minutes.
 
 ```yaml
 spec:
-    telemetry:
-      enabled: true
+  telemetry:
+    enabled: true
 ```
 
 ## Disabling controller components
