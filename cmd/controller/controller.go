@@ -179,6 +179,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		LogLevel:           c.Logging["kube-apiserver"],
 		Storage:            storageBackend,
 		EnableKonnectivity: enableKonnectivity,
+		EnablePSP:          !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName),
 	})
 
 	if c.NodeConfig.Spec.API.ExternalAddress != "" {
@@ -469,6 +470,13 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 			return fmt.Errorf("failed to initialize default PSP reconciler: %s", err.Error())
 		}
 		reconcilers["default-psp"] = defaultPSP
+	} else if !stringslice.Contains(c.DisableComponents, constant.PodSecurityComponentName) {
+		// enable PodSecurity Standard component only if default PodSecurtyPolicy is disabled
+		podSecurity, err := controller.NewPodSecurity(c.K0sVars, cf)
+		if err != nil {
+			return fmt.Errorf("failed to initialize pod security reconciler: %s", err.Error())
+		}
+		reconcilers["pod-security"] = podSecurity
 	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {

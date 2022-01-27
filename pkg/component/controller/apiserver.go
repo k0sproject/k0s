@@ -45,6 +45,7 @@ type APIServer struct {
 	LogLevel           string
 	Storage            component.Component
 	EnableKonnectivity bool
+	EnablePSP          bool
 	gid                int
 	supervisor         supervisor.Supervisor
 	uid                int
@@ -113,7 +114,7 @@ func (a *APIServer) Run(_ context.Context) error {
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"enable-admission-plugins":         "NodeRestriction,PodSecurityPolicy",
+		"enable-admission-plugins":         "NodeRestriction",
 	}
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
@@ -129,13 +130,19 @@ func (a *APIServer) Run(_ context.Context) error {
 
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
+	if a.EnablePSP {
+		args["enable-admission-plugins"] = args["enable-admission-plugins"] + ",PodSecurityPolicy"
+	} else if a.ClusterConfig.Spec.PodSecurity.Enabled() {
+		args["enable-admission-plugins"] = args["enable-admission-plugins"] + ",PodSecurity"
+		args = v1beta1.EnableFeatureGate(args, v1beta1.PodSecurityFeatureGate)
+	}
+
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
 		if args[name] != "" {
 			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
 		}
 		args[name] = value
 	}
-
 	if a.ClusterConfig.Spec.Network.DualStack.Enabled {
 		args = v1beta1.EnableFeatureGate(args, v1beta1.DualStackFeatureGate)
 	}

@@ -42,6 +42,7 @@ type ClusterSpec struct {
 	Storage           *StorageSpec           `json:"storage"`
 	Network           *Network               `json:"network"`
 	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy"`
+	PodSecurity       *PodSecurity           `json:"podSecurity"`
 	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
 	Telemetry         *ClusterTelemetry      `json:"telemetry"`
 	Install           *InstallSpec           `json:"installConfig,omitempty"`
@@ -229,6 +230,7 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 		ControllerManager: DefaultControllerManagerSpec(),
 		Scheduler:         DefaultSchedulerSpec(),
 		PodSecurityPolicy: DefaultPodSecurityPolicy(),
+		PodSecurity:       DefaultPodSecurity(),
 		Install:           DefaultInstallSpec(),
 		Images:            DefaultClusterImages(),
 		Telemetry:         DefaultClusterTelemetry(),

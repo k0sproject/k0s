@@ -74,6 +74,13 @@ const (
 	KubernetesMajorMinorVersion = "1.23"
 	// DefaultPSP defines the system level default PSP to apply
 	DefaultPSP = "00-k0s-privileged"
+	// Pod Security Standards
+	PodSecurityStandardPrivileged     = "privileged"
+	PodSecurityStandardBaseline       = "baseline"
+	PodSecurityStandardRestricted     = "restricted"
+	PodSecurityStandardNSLabelEnforce = "pod-security.kubernetes.io/enforce"
+	PodSecurityStandardNSLabelAudit   = "pod-security.kubernetes.io/audit"
+	PodSecurityStandardNSLabelWarn    = "pod-security.kubernetes.io/warn"
 	// Image Constants
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.27-k0s2"
@@ -110,6 +117,7 @@ const (
 	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
 	NodeRoleComponentName              = "node-role"
+	PodSecurityComponentName           = "pod-security"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
 	ClusterConfigNamespace  = "kube-system"
