@@ -58,16 +58,16 @@ users:
 
 func kubeconfigCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [username]",
+		Use:   "create username",
 		Short: "Create a kubeconfig for a user",
 		Long: `Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
 Note: A certificate once signed cannot be revoked for a particular user`,
 		Example: `	Command to create a kubeconfig for a user:
 	CLI argument:
-	$ k0s kubeconfig create [username]
+	$ k0s kubeconfig create username
 
 	optionally add groups:
-	$ k0s kubeconfig create [username] --groups [groups]`,
+	$ k0s kubeconfig create username --groups [groups]`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// disable cfssl log
 			log.Level = log.LevelFatal
