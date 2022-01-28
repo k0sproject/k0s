@@ -138,7 +138,7 @@ func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
 	}
 
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		serverDeployment := fmt.Sprintf("%s-server", releaseName)
+		serverDeployment := fmt.Sprintf("%s-prometheus-server", releaseName)
 		d, err := kc.AppsV1().Deployments("default").Get(context.TODO(), serverDeployment, v1.GetOptions{})
 		if err != nil {
 			return false, nil
@@ -226,6 +226,7 @@ metadata:
     - helm.k0sproject.io/uninstall-helm-release 
 spec:
   chartName: {{ .ChartName }}
+  releaseName: {{ .Name }}
   values: |
 {{ .Values | nindent 4 }}
   version: {{ .Version }}

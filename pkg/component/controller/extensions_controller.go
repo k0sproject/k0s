@@ -207,6 +207,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 		// new chartRelease
 		chartRelease, err = cr.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
+			chart.Spec.ReleaseName,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues())
 		if err != nil {
@@ -253,6 +254,7 @@ metadata:
     - {{ .Finalizer }}
 spec:
   chartName: {{ .ChartName }}
+  releaseName: {{ .Name }}
   values: |
 {{ .Values | nindent 4 }}
   version: {{ .Version }}

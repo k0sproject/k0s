@@ -23,10 +23,11 @@ import (
 
 // ChartSpec defines the desired state of Chart
 type ChartSpec struct {
-	ChartName string `json:"chartName,omitempty"`
-	Values    string `json:"values,omitempty"`
-	Version   string `json:"version,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
+	ChartName   string `json:"chartName,omitempty"`
+	ReleaseName string `json:"releaseName,omitempty"`
+	Values      string `json:"values,omitempty"`
+	Version     string `json:"version,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
 }
 
 // YamlValues returns values as map
