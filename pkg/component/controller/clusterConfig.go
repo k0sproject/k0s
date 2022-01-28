@@ -206,7 +206,7 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 		e.Type = corev1.EventTypeWarning
 	} else {
 		e.Reason = "SuccessfulReconcile"
-		e.Message = "Succesfully reconciler cluster config"
+		e.Message = "Succesfully reconciled cluster config"
 		e.Type = corev1.EventTypeNormal
 	}
 	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(ctx, e, v1.CreateOptions{})
