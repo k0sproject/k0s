@@ -34,7 +34,7 @@ controller0   NotReady   control-plane   10s   v1.20.2-k0s1   beta.kubernetes.io
 
 The `k0s worker` command accepts the `--taints` flag, with which you can make the newly joined worker node the register itself with the given set of taints.
 
-**Note:** Controller nodes running with `--enable-worker` are assigned `node-role.kubernetes.io/master:NoExecute` taint automatically.
+**Note:** Controller nodes running with `--enable-worker` are assigned `node-role.kubernetes.io/master:NoExecute` taint automatically. You can disable default taints using `--no-taints`  parameter.
 
 ```shell
 kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
