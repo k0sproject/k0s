@@ -1253,7 +1253,7 @@ controller0   NotReady   control-plane   10s   v1.20.2-k0s1   beta.kubernetes.io
 <p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.</p>
 <h2 id="taints">Taints<a class="headerlink" href="#taints" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--taints</code> flag, with which you can make the newly joined worker node the register itself with the given set of taints.</p>
-<p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/master:NoExecute</code> taint automatically.</p>
+<p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/master:NoExecute</code> taint automatically. You can disable default taints using <code>--no-taints</code>  parameter.</p>
 <div class="highlight"><pre><span></span><code>kubectl get nodes -o custom-columns<span class="o">=</span>NAME:.metadata.name,TAINTS:.spec.taints
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME          TAINTS
