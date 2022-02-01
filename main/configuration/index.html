@@ -1817,9 +1817,14 @@ sudo k0s start
 <h3 id="specextensionshelm"><code>spec.extensions.helm</code><a class="headerlink" href="#specextensionshelm" title="Permanent link">#</a></h3>
 <p><code>spec.extensions.helm</code> is the config file key in which you configure the list of <a href="https://helm.sh">Helm</a> repositories and charts to deploy during cluster bootstrap (for more information, refer to <a href="../helm-charts/">Helm Charts</a>).</p>
 <h3 id="specextensionsstorage"><code>spec.extensions.storage</code><a class="headerlink" href="#specextensionsstorage" title="Permanent link">#</a></h3>
-<p><code>spec.extensions.storage</code> controls bundled storage.
-The default value <code>external</code> makes no storage deployed.
-Value <code>openebs_local_storage</code> deploys OpenEBS with the local path set up.</p>
+<p><code>spec.extensions.storage</code> controls bundled storage provider.
+The default value <code>external</code> makes no storage deployed.</p>
+<p>To enable <a href="../storage/#bundled-openebs-storage">embedded host-local storage provider</a> use the following configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">storage</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openebs_local_storage</span><span class="w"></span>
+</code></pre></div>
 <h3 id="speckonnectivity"><code>spec.konnectivity</code><a class="headerlink" href="#speckonnectivity" title="Permanent link">#</a></h3>
 <p>The <code>spec.konnectivity</code> key is the config file key in which you configure Konnectivity-related settings.</p>
 <ul>
@@ -1830,8 +1835,8 @@ Value <code>openebs_local_storage</code> deploys OpenEBS with the local path set
 <p>To improve the end-user experience k0s is configured by defaul to collect telemetry data from clusters and send it to the k0s development team. To disable the telemetry function, change the <code>enabled</code> setting to <code>false</code>.</p>
 <p>The telemetry interval is ten minutes.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">telemetry</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 </code></pre></div>
 <h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
 <p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
