@@ -65,11 +65,15 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
+	ssh, err := as.SSH(as.ControllerNode(0))
+	as.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	_, err = ssh.ExecWithOutput("rm /var/lib/k0s/manifests/helm/addon_crd_manifest_test-addon.yaml")
+	as.Require().NoError(err)
+
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	client, err := client.New(cfg, client.Options{})
-	as.Require().NoError(err)
-	as.Require().NoError(client.Delete(context.Background(), chart))
 	k8sclient, err := k8s.NewForConfig(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
