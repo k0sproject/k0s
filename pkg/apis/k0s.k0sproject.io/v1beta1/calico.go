@@ -48,6 +48,9 @@ type Calico struct {
 
 	// Windows Nodes (default: false)
 	WithWindowsNodes bool `json:"withWindowsNodes"`
+
+	// PrometheusMetricsEnabled enables the Prometheus metrics server in Felix if set to true
+	PrometheusMetricsEnabled bool `json:"prometheusMetricsEnabled"`
 }
 
 // DefaultCalico returns sane defaults for calico

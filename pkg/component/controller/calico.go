@@ -55,16 +55,17 @@ type manifestsSaver interface {
 }
 
 type calicoConfig struct {
-	MTU                  int
-	Mode                 string
-	VxlanPort            int
-	VxlanVNI             int
-	ClusterCIDRIPv4      string
-	ClusterCIDRIPv6      string
-	EnableWireguard      bool
-	WithWindowsNodes     bool
-	FlexVolumeDriverPath string
-	DualStack            bool
+	MTU                      int
+	Mode                     string
+	VxlanPort                int
+	VxlanVNI                 int
+	ClusterCIDRIPv4          string
+	ClusterCIDRIPv6          string
+	EnableWireguard          bool
+	WithWindowsNodes         bool
+	FlexVolumeDriverPath     string
+	DualStack                bool
+	PrometheusMetricsEnabled bool
 
 	CalicoCNIImage             string
 	CalicoNodeImage            string
@@ -199,6 +200,7 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
 		IPV6AutodetectionMethod:    ipv6AutoDetectionMethod,
 		PullPolicy:                 clusterConfig.Spec.Images.DefaultPullPolicy,
+		PrometheusMetricsEnabled:   clusterConfig.Spec.Network.Calico.PrometheusMetricsEnabled,
 	}
 
 	return config, nil

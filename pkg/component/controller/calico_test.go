@@ -102,6 +102,41 @@ func TestCalicoManifests(t *testing.T) {
 		spec.RequireContainerHasNoEnvVariable(t, "calico-node", "FELIX_WIREGUARDENABLED")
 	})
 
+	t.Run("must_not_have_prometheus_metrics_enabled_if_config_has_no", func(t *testing.T) {
+		saver := inMemorySaver{}
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(k0sVars, crdSaver, saver)
+		require.NoError(t, err)
+
+		cfg, err := calico.getConfig(clusterConfig)
+		require.NoError(t, err)
+		_ = calico.processConfigChanges(cfg)
+
+		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
+		require.True(t, foundRaw, "must have daemon set for calico")
+		spec := daemonSetContainersEnv{}
+		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+		spec.RequireContainerHasNoEnvVariable(t, "calico-node", "FELIX_PROMETHEUSMETRICSENABLED")
+	})
+
+	t.Run("must_have_prometheus_metrics_enabled_if_config_has", func(t *testing.T) {
+		clusterConfig.Spec.Network.Calico.PrometheusMetricsEnabled = true
+		saver := inMemorySaver{}
+		crdSaver := inMemorySaver{}
+		calico, err := NewCalico(k0sVars, crdSaver, saver)
+		require.NoError(t, err)
+
+		cfg, err := calico.getConfig(clusterConfig)
+		require.NoError(t, err)
+		_ = calico.processConfigChanges(cfg)
+
+		daemonSetManifestRaw, foundRaw := saver["calico-DaemonSet-calico-node.yaml"]
+		require.True(t, foundRaw, "must have daemon set for calico")
+		spec := daemonSetContainersEnv{}
+		require.NoError(t, yaml.Unmarshal(daemonSetManifestRaw, &spec))
+		spec.RequireContainerHasEnvVariable(t, "calico-node", "FELIX_PROMETHEUSMETRICSENABLED", "true")
+	})
+
 	t.Run("ip_autodetection", func(t *testing.T) {
 		t.Run("use_IPAutodetectionMethod_for_both_families_by_default", func(t *testing.T) {
 			clusterConfig.Spec.Network.Calico.IPAutodetectionMethod = "somemethod"
