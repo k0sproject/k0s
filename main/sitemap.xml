@@ -246,6 +246,16 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/main/cli/k0s_config_edit/</loc>
+         <lastmod>2022-02-02</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/main/cli/k0s_config_status/</loc>
+         <lastmod>2022-02-02</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/main/cli/k0s_config_validate/</loc>
          <lastmod>2022-02-02</lastmod>
          <changefreq>daily</changefreq>
