@@ -16,21 +16,22 @@ limitations under the License.
 package config
 
 import (
+	"os"
+
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
-
-func NewConfigCmd() *cobra.Command {
+func NewEditCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Configuration related sub-commands",
+		Use:   "edit",
+		Short: "Launch the editor configured in your shell to edit k0s configuration",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c := CmdOpts(config.GetCmdOpts())
+			os.Args = []string{os.Args[0], "kubectl", "--data-dir", c.K0sVars.DataDir, "-n", "kube-system", "edit", "clusterconfig", "k0s"}
+			return cmd.Execute()
+		},
 	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewEditCmd())
-	cmd.AddCommand(NewStatusCmd())
-	cmd.AddCommand(NewValidateCmd())
-	cmd.SilenceUsage = true
+	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
 	return cmd
 }
