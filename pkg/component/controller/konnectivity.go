@@ -317,6 +317,9 @@ spec:
     metadata:
       labels:
         k8s-app: konnectivity-agent
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8093'
     spec:
       nodeSelector:
         kubernetes.io/os: linux

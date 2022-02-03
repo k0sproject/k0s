@@ -273,6 +273,9 @@ spec:
     metadata:
       labels:
         k8s-app: kube-proxy
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '10249'
     spec:
       priorityClassName: system-node-critical
       containers:

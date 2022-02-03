@@ -129,6 +129,9 @@ spec:
     metadata:
       labels:
         k8s-app: kube-dns
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9153'
     spec:
       serviceAccountName: coredns
       tolerations:
