@@ -125,12 +125,6 @@ func (s *FootlooseSuite) SetupSuite() {
 		s.FailNow("failed to initialize footloose cluster", err)
 	}
 
-	// we first try to delete instances from previous runs, if they happen to exist
-	_ = s.cluster.Delete()
-	if err := s.cluster.Create(); err != nil {
-		s.FailNow("failed to create footloose cluster", err)
-	}
-
 	// perform a cleanup whenever the suite's context is canceled
 	s.cleanupTasks.Add(1)
 	go func() {
@@ -946,6 +940,12 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 	cluster, err := cluster.New(cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to setup a new footloose cluster")
+	}
+
+	// we first try to delete instances from previous runs, if they happen to exist
+	_ = cluster.Delete()
+	if err := cluster.Create(); err != nil {
+		return errors.Wrap(err, "failed to create footloose cluster")
 	}
 
 	s.clusterDir = dir
