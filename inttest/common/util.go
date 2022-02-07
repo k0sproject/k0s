@@ -27,14 +27,36 @@ import (
 	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
+// Poll tries a condition func until it returns true, an error or the specified
+// context is canceled or expired.
+func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
+	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, condition)
+}
+
+func fallbackPoll(condition wait.ConditionWithContextFunc) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	return Poll(ctx, condition)
+}
+
 // WaitForCalicoReady waits to see all calico pods healthy
 func WaitForCalicoReady(kc *kubernetes.Clientset) error {
 	return WaitForDaemonSet(kc, "calico-node")
 }
 
-// WaitForKubeRouterReady waits to see all kube-router pods healthy
+// WaitForKubeRouterReady waits to see all kube-router pods healthy.
 func WaitForKubeRouterReady(kc *kubernetes.Clientset) error {
-	return WaitForDaemonSet(kc, "kube-router")
+	return fallbackPoll(waitForKubeRouterReady(kc))
+}
+
+// WaitForKubeRouterReady waits to see all kube-router pods healthy as long as
+// the context isn't canceled.
+func WaitForKubeRouterReadyWithContext(ctx context.Context, kc *kubernetes.Clientset) error {
+	return Poll(ctx, waitForKubeRouterReady(kc))
+}
+
+func waitForKubeRouterReady(kc *kubernetes.Clientset) wait.ConditionWithContextFunc {
+	return waitForDaemonSet(kc, "kube-router")
 }
 
 func WaitForMetricsReady(c *rest.Config) error {
@@ -43,8 +65,8 @@ func WaitForMetricsReady(c *rest.Config) error {
 		return err
 	}
 
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		apiService, err := apiServiceClientset.ApiregistrationV1().APIServices().Get(context.TODO(), "v1beta1.metrics.k8s.io", v1.GetOptions{})
+	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+		apiService, err := apiServiceClientset.ApiregistrationV1().APIServices().Get(ctx, "v1beta1.metrics.k8s.io", v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -59,22 +81,32 @@ func WaitForMetricsReady(c *rest.Config) error {
 	})
 }
 
-// WaitForDaemonSet waits for daemon set be ready
+// WaitForDaemonSet waits for daemon set be ready.
 func WaitForDaemonSet(kc *kubernetes.Clientset, name string) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		ds, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+	return fallbackPoll(waitForDaemonSet(kc, name))
+}
+
+// WaitForDaemonSetWithContext waits for daemon set be ready as long as the
+// given context isn't canceled.
+func WaitForDaemonSetWithContext(ctx context.Context, kc *kubernetes.Clientset, name string) error {
+	return Poll(ctx, waitForDaemonSet(kc, name))
+}
+
+func waitForDaemonSet(kc *kubernetes.Clientset, name string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (done bool, err error) {
+		ds, err := kc.AppsV1().DaemonSets("kube-system").Get(ctx, name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 
 		return ds.Status.NumberAvailable == ds.Status.DesiredNumberScheduled, nil
-	})
+	}
 }
 
 // WaitForDaemonSet waits for daemon set be ready
 func WaitForDeployment(kc *kubernetes.Clientset, name string) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		dep, err := kc.AppsV1().Deployments("kube-system").Get(context.TODO(), name, v1.GetOptions{})
+	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+		dep, err := kc.AppsV1().Deployments("kube-system").Get(ctx, name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -85,8 +117,8 @@ func WaitForDeployment(kc *kubernetes.Clientset, name string) error {
 
 // WaitForPod waits for pod be running
 func WaitForPod(kc *kubernetes.Clientset, name, namespace string) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		ds, err := kc.CoreV1().Pods(namespace).Get(context.TODO(), name, v1.GetOptions{})
+	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+		ds, err := kc.CoreV1().Pods(namespace).Get(ctx, name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -97,8 +129,8 @@ func WaitForPod(kc *kubernetes.Clientset, name, namespace string) error {
 
 // WaitForPodLogs picks the first Ready pod from the list of pods in given namespace and gets the logs of it
 func WaitForPodLogs(kc *kubernetes.Clientset, namespace string) error {
-	return wait.PollImmediate(100*time.Millisecond, 5*time.Minute, func() (done bool, err error) {
-		pods, err := kc.CoreV1().Pods(namespace).List(context.TODO(), v1.ListOptions{
+	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+		pods, err := kc.CoreV1().Pods(namespace).List(ctx, v1.ListOptions{
 			Limit: 100,
 		})
 		if err != nil {
