@@ -6,22 +6,22 @@ This page describes the system requirements for k0s.
 
 The minimum requirements for k0s detailed below are approximations, and thus your results may vary.
 
-| Role                | Memory (RAM)           | Virtual CPU (vCPU)     |
-|---------------------|------------------------|------------------------|
-| Controller node     | 1   GB (2 recommended) | 1 vCPU (2 recommended) |
-| Worker node         | 0.5 GB (1 recommended) | 1 vCPU (2 recommended) |
-| Controller + worker | 1   GB (2 recommended) | 1 vCPU (2 recommended) |
+| Role                | Memory (RAM) | Virtual CPU (vCPU) |
+|---------------------|--------------|--------------------|
+| Controller node     | 1   GB       | 1 vCPU             |
+| Worker node         | 0.5 GB       | 1 vCPU             |
+| Controller + worker | 1   GB       | 1 vCPU             |
 
-## Controller node recommendations for large clusters
+## Controller node recommendations
 
-| # of Worker nodes | # of Pods (besides default) | Recommended RAM | Recommended vCPU |
-|-------------------|-----------------------------|-----------------|------------------|
-| up to   10        | up to   1000                | 1-2   GB        | 1-2   vCPU       |
-| up to   50        | up to   5000                | 2-4   GB        | 2-4   vCPU       |
-| up to  100        | up to  10000                | 4-8   GB        | 2-4   vCPU       |
-| up to  500        | up to  50000                | 8-16  GB        | 4-8   vCPU       |
-| up to 1000        | up to 100000                | 16-32 GB        | 8-16  vCPU       |
-| up to 5000        | up to 150000                | 32-64 GB        | 16-32 vCPU       |
+| # of Worker nodes | # of Pods    | Recommended RAM | Recommended vCPU |
+|-------------------|--------------|-----------------|------------------|
+| up to   10        | up to   1000 | 1-2   GB        | 1-2   vCPU       |
+| up to   50        | up to   5000 | 2-4   GB        | 2-4   vCPU       |
+| up to  100        | up to  10000 | 4-8   GB        | 2-4   vCPU       |
+| up to  500        | up to  50000 | 8-16  GB        | 4-8   vCPU       |
+| up to 1000        | up to 100000 | 16-32 GB        | 8-16  vCPU       |
+| up to 5000        | up to 150000 | 32-64 GB        | 16-32 vCPU       |
 
 k0s has the standard Kubernetes limits for the maximum number of nodes, pods, etc. For more details, see [the Kubernetes considerations for large clusters](https://kubernetes.io/docs/setup/best-practices/cluster-large/).
 
@@ -80,6 +80,6 @@ The following table shows the measured memory consumption in the cluster of one 
 Measurement details:
 
 - k0s v1.22.4+k0s.2 (default configuration with etcd)
-- Ubuntu 20.04.3 LTS, OS part of used memory was around 180 MB
+- Ubuntu Server 20.04.3 LTS, OS part of the used memory was around 180 MB
 - Hardware: AWS t3.xlarge (4 vCPUs, 16 GB RAM)
 - Pod image: nginx:1.21.4
