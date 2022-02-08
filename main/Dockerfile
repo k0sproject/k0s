@@ -15,6 +15,8 @@ RUN \
   apk add --no-cache \
     git \
     git-fast-import \
+    curl \
+    jq \
   && apk add --no-cache --virtual .build gcc musl-dev \
   && python -m pip install --upgrade pip \
   && pip install -r requirements.txt \
