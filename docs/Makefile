@@ -35,7 +35,7 @@ cli: k0s_release_binary
 	rm -rf cli
 	mkdir cli
 	cd .. && ./docs/k0s docs markdown
-	rm ./docs/k0s
+	rm ./k0s
 	rm cli/k0s_kubectl_*
 	sed $(sedopt) '/\[k0s kubectl /d' cli/k0s_kubectl.md
 	ln -s k0s.md cli/README.md
