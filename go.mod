@@ -45,7 +45,7 @@ require (
 	github.com/urfave/cli v1.22.2
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	github.com/weaveworks/footloose v0.0.0-20200609124411-8f3df89ea188
+	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	github.com/zcalusic/sysinfo v0.0.0-20210226105846-b810d137e525
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
@@ -93,6 +93,8 @@ replace (
 	github.com/containerd/go-runc => github.com/containerd/go-runc v0.0.0-20180907222934-5a6d9f37cfa3
 	github.com/containerd/ttrpc => github.com/containerd/ttrpc v1.0.2
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
+
+	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
 
 	// make sure we don't have CVE-2020-28852
 	golang.org/x/text => golang.org/x/text v0.3.6
