@@ -58,6 +58,7 @@ const (
 	workerNodeNameFormat     = "worker%d"
 	lbNodeNameFormat         = "lb%d"
 	etcdNodeNameFormat       = "etcd%d"
+	registryNodeNameFormat   = "registry%d"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -76,6 +77,7 @@ type FootlooseSuite struct {
 	KubeAPIExternalPort   int
 	WithExternalEtcd      bool
 	WithLB                bool
+	WithPrivateRegistry   bool
 	WorkerCount           int
 
 	/* context and cancellation */
@@ -214,6 +216,14 @@ func (s *FootlooseSuite) ExternalEtcd(idx int) string {
 		s.FailNow("can't get etcd address because it's not enabled for this suite")
 	}
 	return fmt.Sprintf(etcdNodeNameFormat, idx)
+}
+
+func (s *FootlooseSuite) PrivateRegistry(idx int) string {
+	if !s.WithPrivateRegistry {
+		s.T().Log("Can't get private registry address because it is not enabled for this suit")
+		s.T().FailNow()
+	}
+	return fmt.Sprintf(registryNodeNameFormat, idx)
 }
 
 // TearDownSuite is called by testify at the very end of the suite's run.
@@ -928,6 +938,18 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		})
 	}
 
+	if s.WithPrivateRegistry {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec: config.Machine{
+				Name:         registryNodeNameFormat,
+				Image:        "footloose-alpine",
+				Privileged:   true,
+				PortMappings: []config.PortMapping{{ContainerPort: 22}},
+			},
+			Count: 2,
+		})
+	}
+
 	footlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal footloose configuration")
@@ -986,6 +1008,10 @@ func (s *FootlooseSuite) GetLBAddress() string {
 
 func (s *FootlooseSuite) GetExternalEtcdIPAddress() string {
 	return s.getIPAddress(s.ExternalEtcd(0))
+}
+
+func (s *FootlooseSuite) GetExternalRegistryIPAddress(idx int) string {
+	return s.getIPAddress(s.PrivateRegistry(idx))
 }
 
 func (s *FootlooseSuite) getIPAddress(nodeName string) string {

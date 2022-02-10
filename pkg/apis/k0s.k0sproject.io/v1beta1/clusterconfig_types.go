@@ -41,6 +41,7 @@ type ClusterSpec struct {
 	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty"`
 	Storage           *StorageSpec           `json:"storage"`
 	Network           *Network               `json:"network"`
+	Runtime           *RuntimeSpec           `json:"runtime"`
 	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy"`
 	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
 	Telemetry         *ClusterTelemetry      `json:"telemetry"`

@@ -21,6 +21,7 @@ smoketests := \
 	check-metrics \
 	check-multicontroller \
 	check-noderole \
+	check-privateregistry \
 	check-psp \
 	check-singlenode \
 	check-statussocket \

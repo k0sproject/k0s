@@ -110,8 +110,9 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	}
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, &worker.ContainerD{
-			LogLevel: c.Logging["containerd"],
-			K0sVars:  c.K0sVars,
+			ClusterConfig: c.NodeConfig,
+			LogLevel:      c.Logging["containerd"],
+			K0sVars:       c.K0sVars,
 		})
 	}
 

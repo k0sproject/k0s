@@ -355,6 +355,42 @@ spec:
                     description: default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
                     type: string
                 type: object
+              runtime:
+                description: RuntimeSpec defines the runtime related config options
+                properties:
+                  registries:
+                    description: Registries defines private registry related config
+                      options
+                    items:
+                      description: RegistryConfig defines the Registry related config
+                        options
+                      properties:
+                        ca:
+                          description: CA certificate of registry
+                          type: string
+                        capabilities:
+                          description: Capabilities
+                          items:
+                            type: string
+                          type: array
+                        client:
+                          description: Client certificate of registry
+                          type: string
+                        key:
+                          description: Client key of registry
+                          type: string
+                        name:
+                          description: Name of registry
+                          type: string
+                        server:
+                          description: Server address of registry
+                          type: string
+                        skip_verify:
+                          description: Skip the registry certificate verification
+                          type: boolean
+                      type: object
+                    type: array
+                type: object
               scheduler:
                 description: SchedulerSpec defines the fields for the Scheduler
                 properties:
