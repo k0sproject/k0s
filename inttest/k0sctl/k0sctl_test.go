@@ -129,7 +129,7 @@ func (s *K0sctlSuite) k0sctlInitConfig() (map[string]interface{}, error) {
 		nodes[i+s.ControllerCount] = s.WorkerNode(i)
 	}
 
-	machines, err := s.Cluster.Inspect(nodes)
+	machines, err := s.InspectMachines(nodes)
 	if err != nil {
 		return nil, err
 	}
