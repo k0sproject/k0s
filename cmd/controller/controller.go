@@ -609,7 +609,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			// we use retry.Do with 10 attempts, back-off delay and delay duration 500 ms which gives us
 			// 225 seconds here
 			tokenAge := time.Second * 225
-			cfg, err := token.CreateKubeletBootstrapConfig(ctx, c.NodeConfig, c.K0sVars, "worker", tokenAge)
+			cfg, err := token.CreateKubeletBootstrapConfig(ctx, c.NodeConfig.Spec.API, c.K0sVars, token.RoleWorker, tokenAge)
 			if err != nil {
 				return err
 			}
