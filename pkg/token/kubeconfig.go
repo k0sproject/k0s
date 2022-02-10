@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	controllerRole = "controller"
-	workerRole     = "worker"
+	RoleController = "controller"
+	RoleWorker     = "worker"
 )
 
 var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
@@ -55,45 +55,62 @@ users:
     token: {{.Token}}
 `))
 
-func CreateKubeletBootstrapConfig(ctx context.Context, nodeConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
-	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
-	caCert, err := os.ReadFile(crtFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read cluster ca certificate from %s: %w. check if the control plane is initialized on this node", crtFile, err)
-	}
-	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
-	if err != nil {
-		return "", err
-	}
-	tokenString, err := manager.Create(ctx, expiry, role)
-	if err != nil {
-		return "", err
-	}
+func CreateKubeletBootstrapConfig(ctx context.Context, api *v1beta1.APISpec, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
 	data := struct {
 		CACert  string
 		Token   string
 		User    string
 		JoinURL string
 		APIUrl  string
-	}{
-		CACert: base64.StdEncoding.EncodeToString(caCert),
-		Token:  tokenString,
+	}{}
+
+	var err error
+	data.User, data.JoinURL, err = loadUserAndJoinURL(api, role)
+	if err != nil {
+		return "", err
 	}
-	if role == workerRole {
-		data.User = "kubelet-bootstrap"
-		data.JoinURL = nodeConfig.Spec.API.APIAddressURL()
-	} else if role == controllerRole {
-		data.User = "controller-bootstrap"
-		data.JoinURL = nodeConfig.Spec.API.K0sControlPlaneAPIAddress()
-	} else {
-		return "", fmt.Errorf("unsupported role %s only supported roles are %q and %q", role, controllerRole, workerRole)
+	data.CACert, err = loadCACert(k0sVars)
+	if err != nil {
+		return "", err
+	}
+	data.Token, err = loadToken(ctx, k0sVars, role, expiry)
+	if err != nil {
+		return "", err
 	}
 
 	var buf bytes.Buffer
-
 	err = kubeconfigTemplate.Execute(&buf, &data)
 	if err != nil {
 		return "", err
 	}
 	return JoinEncode(&buf)
+}
+
+func loadUserAndJoinURL(api *v1beta1.APISpec, role string) (string, string, error) {
+	switch role {
+	case RoleController:
+		return "controller-bootstrap", api.K0sControlPlaneAPIAddress(), nil
+	case RoleWorker:
+		return "kubelet-bootstrap", api.APIAddressURL(), nil
+	default:
+		return "", "", fmt.Errorf("unsupported role %q; supported roles are %q and %q", role, RoleController, RoleWorker)
+	}
+}
+
+func loadCACert(k0sVars constant.CfgVars) (string, error) {
+	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
+	caCert, err := os.ReadFile(crtFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read cluster CA from %q: %w; check if the control plane is initialized on this node", crtFile, err)
+	}
+
+	return base64.StdEncoding.EncodeToString(caCert), nil
+}
+
+func loadToken(ctx context.Context, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
+	manager, err := NewManager(filepath.Join(k0sVars.AdminKubeConfigPath))
+	if err != nil {
+		return "", err
+	}
+	return manager.Create(ctx, expiry, role)
 }
