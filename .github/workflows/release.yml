@@ -6,7 +6,7 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   #pull_request:
 env:
-  GO_VERSION: ^1.17
+  GO_VERSION: ~1.17
   GO_VERSION_WIN: ^1.13
 
 jobs:

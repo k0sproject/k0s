@@ -7,7 +7,7 @@ on:
         required: true
 
 env:
-  GO_VERSION: ^1.17
+  GO_VERSION: ~1.17
   NODE_VERSION: 12.x
   PYTHON_VERSION: 3.x
   TARGET_VERSION: ${{ github.event.inputs.version }}
