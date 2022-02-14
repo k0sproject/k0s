@@ -74,8 +74,30 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 			assert.Error(t, err)
 			assert.Equal(t, "Error: refusing to create token: cannot join into a single node cluster", noToken)
 		})
+
+		// test with etcd backend in config
+		t.Run(("killK0s"), func(t *testing.T) {
+			_, err = ssh.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+			assert.NoError(t, err)
+		})
+
+		s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
+		require.NoError(t, err, "failed to upload k0s.yaml")
+
+		s.NoError(s.InitController(0, "--single", "--config=/tmp/k0s.yaml"))
+
+		t.Run(("etcdIsRunning"), func(t *testing.T) {
+			_, err = ssh.ExecWithOutput("test -e /var/lib/k0s/bin/etcd && ps xa | grep etcd")
+			assert.NoError(t, err)
+		})
 	})
 }
+
+const k0sConfig = `
+spec:
+  storage:
+    type: etcd
+`
 
 func TestSingleNodeSuite(t *testing.T) {
 	s := SingleNodeSuite{
