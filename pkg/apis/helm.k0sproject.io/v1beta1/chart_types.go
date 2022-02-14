@@ -28,6 +28,7 @@ type ChartSpec struct {
 	Values      string `json:"values,omitempty"`
 	Version     string `json:"version,omitempty"`
 	Namespace   string `json:"namespace,omitempty"`
+	Timeout     string `json:"timeout,omitempty"`
 }
 
 // YamlValues returns values as map
