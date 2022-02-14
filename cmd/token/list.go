@@ -79,9 +79,9 @@ func tokenListCmd() *cobra.Command {
 }
 
 func checkListTokenRole(cmd *cobra.Command, args []string) error {
-	if listTokenRole != "" && (listTokenRole != controllerRole && listTokenRole != workerRole) {
+	err := checkTokenRole(listTokenRole)
+	if err != nil {
 		cmd.SilenceUsage = true
-		return fmt.Errorf("unsupported role %q, supported roles are %q and %q", listTokenRole, controllerRole, workerRole)
 	}
-	return nil
+	return err
 }

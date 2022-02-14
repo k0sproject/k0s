@@ -207,6 +207,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 		// new chartRelease
 		chartRelease, err = cr.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
+			chart.Spec.ReleaseName,
 			chart.Spec.Namespace,
 			chart.Spec.YamlValues())
 		if err != nil {
@@ -253,6 +254,7 @@ metadata:
     - {{ .Finalizer }}
 spec:
   chartName: {{ .ChartName }}
+  releaseName: {{ .Name }}
   values: |
 {{ .Values | nindent 4 }}
   version: {{ .Version }}
@@ -262,7 +264,7 @@ spec:
 const finalizerName = "helm.k0sproject.io/uninstall-helm-release"
 
 // Init
-func (ec *ExtensionsController) Init() error {
+func (ec *ExtensionsController) Init(_ context.Context) error {
 	return nil
 }
 
@@ -291,7 +293,7 @@ func (ec *ExtensionsController) Run(ctx context.Context) error {
 		}
 		ec.L.Info("Extensions CRD is ready, going nuts")
 		return nil
-	}); err != nil {
+	}, retry.Context(ctx)); err != nil {
 		return fmt.Errorf("can't start ExtensionsReconciler, helm CRD is not registred, check CRD registration reconciler: %w", err)
 	}
 	// examples say to not use GetScheme in production, but it is unclear at the moment

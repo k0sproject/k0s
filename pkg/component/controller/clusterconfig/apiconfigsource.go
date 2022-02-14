@@ -56,7 +56,7 @@ func (a *apiConfigSource) Release(ctx context.Context) error {
 		for {
 			select {
 			case <-ticker.C:
-				err := a.getAndSendConfig()
+				err := a.getAndSendConfig(ctx)
 				if err != nil {
 					logrus.Errorf("failed to source and propagate cluster config: %v", err)
 				}
@@ -83,8 +83,8 @@ func (a *apiConfigSource) NeedToStoreInitialConfig() bool {
 	return true
 }
 
-func (a *apiConfigSource) getAndSendConfig() error {
-	cfg, err := a.configClient.Get(context.Background(), constant.ClusterConfigObjectName, v1.GetOptions{})
+func (a *apiConfigSource) getAndSendConfig(ctx context.Context) error {
+	cfg, err := a.configClient.Get(ctx, constant.ClusterConfigObjectName, v1.GetOptions{})
 	if err != nil {
 		return err
 	}

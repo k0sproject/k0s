@@ -28,7 +28,9 @@ func NewValidateCmd() *cobra.Command {
    k0s config validate --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
-			_, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
+
+			loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
+			_, err := loadingRules.ParseRuntimeConfig()
 			return err
 		},
 		SilenceUsage:  true,
@@ -36,5 +38,6 @@ func NewValidateCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }

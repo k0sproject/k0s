@@ -64,7 +64,7 @@ func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFact
 }
 
 // Init does nothing
-func (k *KubeletConfig) Init() error {
+func (k *KubeletConfig) Init(_ context.Context) error {
 	return nil
 }
 
@@ -80,10 +80,10 @@ func (k *KubeletConfig) Run(_ context.Context) error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (k *KubeletConfig) Reconcile(_ context.Context, clusterSpec *v1beta1.ClusterConfig) error {
+func (k *KubeletConfig) Reconcile(ctx context.Context, clusterSpec *v1beta1.ClusterConfig) error {
 	k.log.Debug("reconcile method called for: KubeletConfig")
 	// Check if we actually need to reconcile anything
-	defaultProfilesExist, err := k.defaultProfilesExist()
+	defaultProfilesExist, err := k.defaultProfilesExist(ctx)
 	if err != nil {
 		return err
 	}
@@ -105,13 +105,13 @@ func (k *KubeletConfig) Reconcile(_ context.Context, clusterSpec *v1beta1.Cluste
 	return nil
 }
 
-func (k *KubeletConfig) defaultProfilesExist() (bool, error) {
+func (k *KubeletConfig) defaultProfilesExist(ctx context.Context) (bool, error) {
 	c, err := k.kubeClientFactory.GetClient()
 	if err != nil {
 		return false, err
 	}
 	defaultProfileName := formatProfileName("default")
-	_, err = c.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), defaultProfileName, v1.GetOptions{})
+	_, err = c.CoreV1().ConfigMaps("kube-system").Get(ctx, defaultProfileName, v1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return false, nil
 	} else if err != nil {

@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2-0.20210715152647-b2ab2ddd5fd5
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: clusterconfigs.k0s.k0sproject.io
 spec:
@@ -25,8 +24,6 @@ spec:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          dataDir:
             type: string
           kind:
             description: 'Kind is a string value representing the REST resource this
@@ -68,6 +65,10 @@ spec:
                     items:
                       type: string
                     type: array
+                  tunneledNetworkingMode:
+                    description: TunneledNetworkingMode indicates if we access to
+                      KAS through konnectivity tunnel
+                    type: boolean
                 type: object
               controllerManager:
                 description: ControllerManagerSpec defines the fields for the ControllerManager
@@ -87,6 +88,7 @@ spec:
                       based extensions
                     properties:
                       charts:
+                        description: ChartsSettings charts settings
                         items:
                           description: Chart single helm addon
                           properties:
@@ -103,6 +105,7 @@ spec:
                           type: object
                         type: array
                       repositories:
+                        description: RepositoriesSettings repository settings
                         items:
                           description: Repository describes single repository entry.
                             Fields map to the CLI flags for the "helm add" command
@@ -125,6 +128,14 @@ spec:
                               type: string
                           type: object
                         type: array
+                    type: object
+                  storage:
+                    description: StorageExtenstion specifies cluster default storage
+                    properties:
+                      create_default_storage_class:
+                        type: boolean
+                      type:
+                        type: string
                     type: object
                 type: object
               images:
@@ -360,6 +371,33 @@ spec:
                   etcd:
                     description: EtcdConfig defines etcd related config options
                     properties:
+                      externalCluster:
+                        description: ExternalCluster defines external etcd cluster
+                          related config options
+                        properties:
+                          caFile:
+                            description: CaFile is the host path to a file with CA
+                              certificate
+                            type: string
+                          clientCertFile:
+                            description: ClientCertFile is the host path to a file
+                              with TLS certificate for etcd client
+                            type: string
+                          clientKeyFile:
+                            description: ClientKeyFile is the host path to a file
+                              with TLS key for etcd client
+                            type: string
+                          endpoints:
+                            description: Endpoints of external etcd cluster used to
+                              connect by k0s
+                            items:
+                              type: string
+                            type: array
+                          etcdPrefix:
+                            description: EtcdPrefix is a prefix to prepend to all
+                              resource paths in etcd
+                            type: string
+                        type: object
                       peerAddress:
                         description: Node address used for etcd cluster peering
                         type: string

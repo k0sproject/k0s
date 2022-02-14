@@ -13,4 +13,7 @@ jobs:
           stale-pr-message: 'The PR is marked as stale since no activity has been recorded in 30 days'
           days-before-stale: 30
           close-pr-label: "stale"
-
+          remove-issue-stale-when-updated: true
+          remove-pr-stale-when-updated: true
+          labels-to-remove-when-unstale: "stale"
+          exempt-issue-labels: "enhancement"

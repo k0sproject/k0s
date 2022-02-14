@@ -15,7 +15,11 @@ limitations under the License.
 */
 package v1beta1
 
-import "errors"
+import (
+	"errors"
+
+	"helm.sh/helm/v3/pkg/chartutil"
+)
 
 var _ Validateable = (*ClusterExtensions)(nil)
 
@@ -93,6 +97,9 @@ type Chart struct {
 func (c Chart) Validate() error {
 	if c.Name == "" {
 		return errors.New("chart must have Name field not empty")
+	}
+	if err := chartutil.ValidateReleaseName(c.Name); err != nil {
+		return err
 	}
 	if c.ChartName == "" {
 		return errors.New("chart must have ChartName field not empty")

@@ -57,7 +57,7 @@ var _ component.Component = &Manager{}
 var _ component.ReconcilerComponent = &Manager{}
 
 // Init extracts the needed binaries
-func (a *Manager) Init() error {
+func (a *Manager) Init(_ context.Context) error {
 	var err error
 	// controller manager running as api-server user as they both need access to same sa.key
 	a.uid, err = users.GetUID(constant.ApiserverUser)
@@ -98,17 +98,17 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"v":                                a.LogLevel,
 	}
 
-	for name, value := range clusterConfig.Spec.ControllerManager.ExtraArgs {
-		if args[name] != "" {
-			logger.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
-		}
-		args[name] = value
-	}
 	if clusterConfig.Spec.Network.DualStack.Enabled {
 		args["node-cidr-mask-size-ipv6"] = "110"
 		args["node-cidr-mask-size-ipv4"] = "24"
 	} else {
 		args["node-cidr-mask-size"] = "24"
+	}
+	for name, value := range clusterConfig.Spec.ControllerManager.ExtraArgs {
+		if args[name] != "" {
+			logger.Warnf("overriding kube-controller-manager flag with user provided value: %s", name)
+		}
+		args[name] = value
 	}
 	if clusterConfig.Spec.Network.DualStack.Enabled {
 		args = v1beta1.EnableFeatureGate(args, v1beta1.DualStackFeatureGate)

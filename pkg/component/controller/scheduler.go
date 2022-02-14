@@ -45,7 +45,7 @@ var _ component.Component = &Scheduler{}
 var _ component.ReconcilerComponent = &Scheduler{}
 
 // Init extracts the needed binaries
-func (a *Scheduler) Init() error {
+func (a *Scheduler) Init(_ context.Context) error {
 	var err error
 	a.uid, err = users.GetUID(constant.SchedulerUser)
 	if err != nil {

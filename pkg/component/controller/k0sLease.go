@@ -39,7 +39,7 @@ type K0sLease struct {
 }
 
 // Init initializes the component needs
-func (l *K0sLease) Init() error {
+func (l *K0sLease) Init(_ context.Context) error {
 	return nil
 }
 
@@ -59,7 +59,9 @@ func (l *K0sLease) Run(ctx context.Context) error {
 	}
 	leaseID := fmt.Sprintf("k0s-ctrl-%s", holderIdentity)
 
-	leasePool, err := leaderelection.NewLeasePool(client, leaseID, leaderelection.WithLogger(log))
+	leasePool, err := leaderelection.NewLeasePool(client, leaseID,
+		leaderelection.WithLogger(log),
+		leaderelection.WithContext(ctx))
 	if err != nil {
 		return err
 	}

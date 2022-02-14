@@ -81,9 +81,6 @@ func (n *Network) Validate() []error {
 		if err != nil {
 			errors = append(errors, fmt.Errorf("invalid service IPv6 CIDR %s", n.DualStack.IPv6ServiceCIDR))
 		}
-		if !n.KubeProxy.Disabled && n.KubeProxy.Mode != ModeIPVS {
-			errors = append(errors, fmt.Errorf("dual-stack requires kube-proxy in ipvs mode"))
-		}
 	}
 	errors = append(errors, n.KubeProxy.Validate()...)
 	return errors

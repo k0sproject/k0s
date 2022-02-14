@@ -36,13 +36,7 @@ func sanitizeExtractPath(dstDir string, filePath string) (string, error) {
 }
 
 // Extract the given tar.gz archive to given dst path
-func Extract(path, dst string) error {
-	input, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer input.Close()
-
+func Extract(input io.Reader, dst string) error {
 	gzr, err := gzip.NewReader(input)
 	if err != nil {
 		return err

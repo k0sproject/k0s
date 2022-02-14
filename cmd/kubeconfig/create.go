@@ -24,7 +24,6 @@ import (
 	"path"
 
 	"github.com/cloudflare/cfssl/log"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/certificate"
@@ -59,16 +58,16 @@ users:
 
 func kubeconfigCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [username]",
+		Use:   "create username",
 		Short: "Create a kubeconfig for a user",
 		Long: `Create a kubeconfig with a signed certificate and public key for a given user (and optionally user groups)
 Note: A certificate once signed cannot be revoked for a particular user`,
 		Example: `	Command to create a kubeconfig for a user:
 	CLI argument:
-	$ k0s kubeconfig create [username]
+	$ k0s kubeconfig create username
 
 	optionally add groups:
-	$ k0s kubeconfig create [username] --groups [groups]`,
+	$ k0s kubeconfig create username --groups [groups]`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// disable cfssl log
 			log.Level = log.LevelFatal
@@ -78,10 +77,8 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			}
 			username := args[0]
 			c := CmdOpts(config.GetCmdOpts())
-			clusterAPIURL, err := c.getAPIURL()
-			if err != nil {
-				return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
-			}
+			clusterAPIURL := c.NodeConfig.Spec.API.APIAddressURL()
+
 			caCert, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
 				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
@@ -132,15 +129,4 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	cmd.Flags().StringVar(&groups, "groups", "", "Specify groups")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
-}
-
-func (c *CmdOpts) getAPIURL() (string, error) {
-	// Disable logrus
-	logrus.SetLevel(logrus.WarnLevel)
-
-	cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-	if err != nil {
-		return "", err
-	}
-	return cfg.Spec.API.APIAddressURL(), nil
 }

@@ -43,7 +43,7 @@ func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 	}
 }
 
-func (a *OCIBundleReconciler) Init() error {
+func (a *OCIBundleReconciler) Init(_ context.Context) error {
 	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
@@ -69,7 +69,7 @@ func (a *OCIBundleReconciler) Run(ctx context.Context) error {
 			return err
 		}
 		return nil
-	}, retry.Delay(time.Second*5))
+	}, retry.Context(ctx), retry.Delay(time.Second*5))
 	if err != nil {
 		return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
 	}

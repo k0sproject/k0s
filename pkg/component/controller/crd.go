@@ -42,8 +42,8 @@ var bundles = []string{
 	"helm",
 }
 
-// Init  (c CRD) Init() error {
-func (c CRD) Init() error {
+// Init  (c CRD) Init(_ context.Context) error {
+func (c CRD) Init(_ context.Context) error {
 	return nil
 }
 

@@ -24,7 +24,7 @@ In case of HA control plane, all the controllers will need this part of the conf
 The cluster wide configuration is stored in the Kubernetes API as a custom resource called `clusterconfig`. There's currently only one instance named `k0s`. You can edit the configuration with what ever means possible, for example with:
 
 ```shell
-kubectl -n kube-system edit clusterconfig k0s
+k0s config edit
 ```
 
 This will open the configuration object for editing in your system's default editor.
@@ -53,10 +53,13 @@ As with any Kubernetes cluster there are certain things that just cannot be chan
 
 ## Configuration status
 
-The dynamic configuration reconciler operator will write status events for all the changes it detects. To see all related events you can query the events where the source object is this k0s config object:
+The dynamic configuration reconciler operator will write status events for all the changes it detects. To see all dynamic config related events, use:
 
 ```shell
-bash-5.1# k0s kc -n kube-system get event --field-selector involvedObject.name=k0s
+k0s config status
+```
+
+```shell
 LAST SEEN   TYPE      REASON                OBJECT              MESSAGE
 64s         Warning   FailedReconciling     clusterconfig/k0s   failed to validate config: [invalid pod CIDR invalid ip address]
 59s         Normal    SuccessfulReconcile   clusterconfig/k0s   Succesfully reconciler cluster config

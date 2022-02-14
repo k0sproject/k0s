@@ -38,7 +38,7 @@ type TunneledEndpointReconciler struct {
 	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
-func (ter TunneledEndpointReconciler) Init() error {
+func (ter TunneledEndpointReconciler) Init(_ context.Context) error {
 	return nil
 }
 

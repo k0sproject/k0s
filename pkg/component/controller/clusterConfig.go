@@ -61,10 +61,11 @@ type ClusterConfigReconciler struct {
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
-	cfg, err := config.GetYamlFromFile(cfgFile, k0sVars)
+func NewClusterConfigReconciler(leaderElector LeaderElector, k0sVars constant.CfgVars, mgr *component.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
+	loadingRules := config.ClientConfigLoadingRules{K0sVars: k0sVars}
+	cfg, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get config: %v", err)
 	}
 
 	configClient, err := kubeClientFactory.GetConfigClient()
@@ -85,7 +86,7 @@ func NewClusterConfigReconciler(cfgFile string, leaderElector LeaderElector, k0s
 	}, nil
 }
 
-func (r *ClusterConfigReconciler) Init() error {
+func (r *ClusterConfigReconciler) Init(_ context.Context) error {
 	// If we do not need to store the config in API we do not need the CRDs either
 	if !r.configSource.NeedToStoreInitialConfig() {
 		return nil
@@ -127,6 +128,7 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 	}
 
 	go func() {
+		statusCtx := ctx
 		r.log.Debug("start listening changes from config source")
 		for {
 			select {
@@ -143,7 +145,7 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 				} else {
 					err = r.ComponentManager.Reconcile(ctx, cfg)
 				}
-				r.reportStatus(cfg, err)
+				r.reportStatus(statusCtx, cfg, err)
 				if err != nil {
 					r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
 				}
@@ -168,7 +170,7 @@ func (r *ClusterConfigReconciler) Healthy() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, reconcileError error) {
+func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1beta1.ClusterConfig, reconcileError error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		r.log.Error("failed to get hostname:", err)
@@ -204,10 +206,10 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 		e.Type = corev1.EventTypeWarning
 	} else {
 		e.Reason = "SuccessfulReconcile"
-		e.Message = "Succesfully reconciler cluster config"
+		e.Message = "Succesfully reconciled cluster config"
 		e.Type = corev1.EventTypeNormal
 	}
-	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(context.TODO(), e, v1.CreateOptions{})
+	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(ctx, e, v1.CreateOptions{})
 	if err != nil {
 		r.log.Error("failed to create event for config reconcile:", err)
 	}
@@ -216,7 +218,7 @@ func (r *ClusterConfigReconciler) reportStatus(config *v1beta1.ClusterConfig, re
 func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context) (*v1beta1.ClusterConfig, error) {
 	ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
 	defer cancel()
-	clusterWideConfig := config.ClusterConfigMinusNodeConfig(r.YamlConfig).StripDefaults().CRValidator()
+	clusterWideConfig := r.YamlConfig.GetClusterWideConfig().StripDefaults().CRValidator()
 	clusterConfig, err := r.configClient.Create(ctx, clusterWideConfig, cOpts)
 	if err != nil {
 		return nil, err

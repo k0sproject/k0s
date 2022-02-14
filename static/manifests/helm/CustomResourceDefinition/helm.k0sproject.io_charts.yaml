@@ -38,6 +38,8 @@ spec:
             properties:
               chartName:
                 type: string
+              releaseName:
+                type: string
               namespace:
                 type: string
               values:

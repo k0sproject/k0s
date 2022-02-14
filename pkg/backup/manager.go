@@ -21,6 +21,7 @@ package backup
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -43,8 +44,14 @@ type Manager struct {
 }
 
 // RunBackup backups cluster
-func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
-	bm.discoverSteps(cfgPath, clusterSpec, vars, "backup", "")
+func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
+	configLoader := config.ClientConfigLoadingRules{}
+	_, err := configLoader.Load()
+	if err != nil {
+		return err
+	}
+
+	bm.discoverSteps(configLoader.RuntimeConfigPath, nodeSpec, vars, "backup", "")
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -57,6 +64,11 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 		}
 		assets = append(assets, result.filesForBackup...)
 	}
+
+	if savePathDir == "-" {
+		return createArchive(os.Stdout, assets, bm.dataDir)
+	}
+
 	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
 	if err := bm.save(backupFileName, assets); err != nil {
 		return fmt.Errorf("failed to create archive `%s`: %v", backupFileName, err)
@@ -70,13 +82,13 @@ func (bm *Manager) RunBackup(cfgPath string, clusterSpec *v1beta1.ClusterSpec, v
 	return nil
 }
 
-func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
-	if clusterSpec.Storage.Type == v1beta1.EtcdStorageType {
-		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, clusterSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
-	} else if clusterSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(clusterSpec.Storage.Kine.DataSource, "sqlite://") {
-		bm.Add(newSqliteStep(bm.tmpDir, clusterSpec.Storage.Kine.DataSource, vars.DataDir))
+func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
+	if nodeSpec.Storage.Type == v1beta1.EtcdStorageType && !nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
+		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
+	} else if nodeSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(nodeSpec.Storage.Kine.DataSource, "sqlite://") {
+		bm.Add(newSqliteStep(bm.tmpDir, nodeSpec.Storage.Kine.DataSource, vars.DataDir))
 	} else {
-		logrus.Warnf("only etcd and sqlite %s is supported. Other storage backends must be backed-up/restored manually.", action)
+		logrus.Warnf("only internal etcd and sqlite %s are supported. Other storage backends must be backed-up/restored manually.", action)
 	}
 	bm.dataDir = vars.DataDir
 	for _, path := range []string{
@@ -91,7 +103,7 @@ func (bm *Manager) discoverSteps(cfgPath string, clusterSpec *v1beta1.ClusterSpe
 		}
 		bm.Add(NewFilesystemStep(path))
 	}
-	bm.Add(newConfigurationStep(cfgPath, restoredConfigPath))
+	bm.Add(newConfigurationStep(configFilePath, restoredConfigPath))
 }
 
 // Add adds backup step
@@ -126,8 +138,19 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 }
 
 // RunRestore restores cluster
-func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, restoredConfigPath string) error {
-	if err := archive.Extract(archivePath, bm.tmpDir); err != nil {
+func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desiredRestoredConfigPath string) error {
+	var input io.Reader
+	if archivePath == "-" {
+		input = os.Stdin
+	} else {
+		i, err := os.Open(archivePath)
+		if err != nil {
+			return err
+		}
+		defer i.Close()
+		input = i
+	}
+	if err := archive.Extract(input, bm.tmpDir); err != nil {
 		return fmt.Errorf("failed to unpack backup archive `%s`: %v", archivePath, err)
 	}
 	defer os.RemoveAll(bm.tmpDir)
@@ -135,7 +158,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, rest
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %v", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", restoredConfigPath)
+	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {
@@ -149,13 +172,13 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, rest
 
 func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
-	_, err := os.Stat(configFromBackup)
-	if os.IsNotExist(err) {
-		return v1beta1.DefaultClusterConfig(), nil
-	}
-	logrus.Infof("Using k0s.yaml from: %s", configFromBackup)
+	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
-	cfg, err := config.GetNodeConfig(configFromBackup, k0sVars)
+	loadingRules := config.ClientConfigLoadingRules{
+		RuntimeConfigPath: configFromBackup,
+		K0sVars:           k0sVars,
+	}
+	cfg, err := loadingRules.Load()
 	if err != nil {
 		return nil, err
 	}

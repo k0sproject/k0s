@@ -16,6 +16,7 @@ limitations under the License.
 package applier
 
 import (
+	"context"
 	"time"
 
 	"k8s.io/client-go/util/retry"
@@ -60,12 +61,14 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 }
 
 // Start both the initial apply and also the watch for a single stack
-func (s *StackApplier) Start() error {
-	debouncer := debounce.New(1*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
+func (s *StackApplier) Start(ctx context.Context) error {
+	debouncer := debounce.New(ctx, 1*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
 		s.log.Debug("debouncer triggering, applying...")
 		err := retry.OnError(retry.DefaultRetry, func(err error) bool {
 			return true
-		}, s.applier.Apply)
+		}, func() error {
+			return s.applier.Apply(ctx)
+		})
 		if err != nil {
 			s.log.Warnf("failed to apply manifests: %s", err.Error())
 		}
@@ -91,8 +94,8 @@ func (s *StackApplier) Stop() error {
 }
 
 // DeleteStack deletes the associated stack
-func (s *StackApplier) DeleteStack() error {
-	return s.applier.Delete()
+func (s *StackApplier) DeleteStack(ctx context.Context) error {
+	return s.applier.Delete(ctx)
 }
 
 // Health-check interface

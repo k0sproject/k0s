@@ -20,40 +20,32 @@ package backup
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/sirupsen/logrus"
 )
 
 type configurationStep struct {
-	path               string
+	cfgPath            string
 	restoredConfigPath string
 }
 
-func newConfigurationStep(path string, restoredConfigPath string) *configurationStep {
+func newConfigurationStep(cfgPath string, restoredConfigPath string) *configurationStep {
 	return &configurationStep{
-		path:               path,
+		cfgPath:            cfgPath,
 		restoredConfigPath: restoredConfigPath,
 	}
 }
 
 func (c configurationStep) Name() string {
-	return c.path
+	return "k0s-config"
 }
 
 func (c configurationStep) Backup() (StepResult, error) {
-	_, err := os.Stat(c.path)
-	if os.IsNotExist(err) {
-		logrus.Warn("default k0s.yaml is used, do not back it up")
-		return StepResult{}, nil
-	}
-	if err != nil {
-		return StepResult{}, fmt.Errorf("can't backup `%s`: %v", c.path, err)
-	}
-	return StepResult{filesForBackup: []string{c.path}}, nil
+	return StepResult{filesForBackup: []string{c.cfgPath}}, nil
 }
 
 func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
@@ -63,7 +55,21 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 		logrus.Debugf("%s does not exist in the backup file", objectPathInArchive)
 		return nil
 	}
+
 	logrus.Infof("Previously used k0s.yaml saved under the data directory `%s`", restoreTo)
+
+	if c.restoredConfigPath == "-" {
+		f, err := os.Open(objectPathInArchive)
+		if err != nil {
+			return err
+		}
+		if f == nil {
+			return fmt.Errorf("couldn't get a file handle for %s", c.restoredConfigPath)
+		}
+		defer f.Close()
+		_, err = io.Copy(os.Stdout, f)
+		return err
+	}
 
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, c.restoredConfigPath)
 	return file.Copy(objectPathInArchive, c.restoredConfigPath)

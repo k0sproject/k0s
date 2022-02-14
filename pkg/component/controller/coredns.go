@@ -129,6 +129,9 @@ spec:
     metadata:
       labels:
         k8s-app: kube-dns
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9153'
     spec:
       serviceAccountName: coredns
       tolerations:
@@ -283,7 +286,7 @@ func NewCoreDNS(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInt
 }
 
 // Init does nothing
-func (c *CoreDNS) Init() error {
+func (c *CoreDNS) Init(_ context.Context) error {
 	return dir.Init(c.manifestDir, constant.ManifestsDirMode)
 }
 

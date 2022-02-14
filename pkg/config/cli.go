@@ -16,10 +16,13 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
@@ -104,7 +107,6 @@ func DefaultLogLevels() map[string]string {
 
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
-	flagset.StringVarP(&CfgFile, "config", "c", "", "config file, use '-' to read the config from stdin")
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
@@ -179,6 +181,17 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.IntVar(&controllerOpts.K0sCloudProviderPort, "k0s-cloud-provider-port", cloudprovider.CloudControllerManagerPort, "the port that k0s-cloud-provider binds on")
 	flagset.AddFlagSet(GetCriSocketFlag())
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
+	flagset.AddFlagSet(FileInputFlag())
+	return flagset
+}
+
+// The config flag used to be a persistent, joint flag to all commands
+// now only a few commands use it. This function helps to share the flag with multiple commands without needing to define
+// it in multiple places
+func FileInputFlag() *pflag.FlagSet {
+	flagset := &pflag.FlagSet{}
+	descString := fmt.Sprintf("config file, use '-' to read the config from stdin (default \"%s\")", constant.K0sConfigPathDefault)
+	flagset.StringVarP(&CfgFile, "config", "c", "", descString)
 
 	return flagset
 }
@@ -186,11 +199,26 @@ func GetControllerFlags() *pflag.FlagSet {
 func GetCmdOpts() CLIOptions {
 	K0sVars = constant.GetConfig(DataDir)
 
+	if controllerOpts.SingleNode {
+		controllerOpts.EnableWorker = true
+		K0sVars.DefaultStorageType = "kine"
+	}
+
+	// When CfgFile is set, verify the file can be opened
+	if CfgFile != "" {
+		_, err := os.Open(CfgFile)
+		if err != nil {
+			logrus.Fatalf("failed to load config file (%s): %v", CfgFile, err)
+		}
+	}
+
 	opts := CLIOptions{
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
 
 		CfgFile:          CfgFile,
+		ClusterConfig:    getClusterConfig(K0sVars),
+		NodeConfig:       getNodeConfig(K0sVars),
 		Debug:            Debug,
 		Verbose:          Verbose,
 		DefaultLogLevels: DefaultLogLevels(),
@@ -198,4 +226,30 @@ func GetCmdOpts() CLIOptions {
 		DebugListenOn:    DebugListenOn,
 	}
 	return opts
+}
+
+func PreRunValidateConfig(k0sVars constant.CfgVars) error {
+	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
+	_, err := loadingRules.ParseRuntimeConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %v", err)
+	}
+	return nil
+}
+func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
+	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, K0sVars: k0sVars}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return nil
+	}
+	return cfg
+}
+
+func getClusterConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
+	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
+	cfg, err := loadingRules.Load()
+	if err != nil {
+		return nil
+	}
+	return cfg
 }

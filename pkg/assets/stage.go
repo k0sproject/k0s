@@ -27,21 +27,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ExecutableIsOlder return true if currently running executable is older than given filepath
-func ExecutableIsOlder(filepath string) bool {
-	ex, err := os.Executable()
-	if err != nil {
-		return false
+// EmbeddedBinaryNeedsUpdate returns true if the provided embedded binary file should
+// be updated. This determination is based on the modification times of both the provided
+// executable, and embedded binary executable. It is expected that the embedded binary
+// modification times should match the main `k0s` executable.
+func EmbeddedBinaryNeedsUpdate(exinfo os.FileInfo, embeddedBinaryPath string) bool {
+	if pathinfo, err := os.Stat(embeddedBinaryPath); err == nil {
+		return !exinfo.ModTime().Equal(pathinfo.ModTime())
 	}
-	exinfo, err := os.Stat(ex)
-	if err != nil {
-		return false
-	}
-	pathinfo, err := os.Stat(filepath)
-	if err != nil {
-		return false
-	}
-	return exinfo.ModTime().Unix() < pathinfo.ModTime().Unix()
+
+	// If the stat fails, the file is either missing or permissions are missing
+	// to read this -- let above know that an update should be attempted.
+
+	return true
 }
 
 // BinPath searches for a binary on disk:
@@ -66,14 +64,24 @@ func BinPath(name string, binDir string) string {
 // Stage ...
 func Stage(dataDir string, name string, filemode os.FileMode) error {
 	p := filepath.Join(dataDir, name)
-	logrus.Infof("Staging %s", p)
+	logrus.Infof("Staging '%s'", p)
 
 	err := dir.Init(filepath.Dir(p), filemode)
 	if err != nil {
-		return fmt.Errorf("failed to create dir %s: %w", filepath.Dir(p), err)
+		return fmt.Errorf("failed to create dir '%s': %w", filepath.Dir(p), err)
 	}
 
-	if ExecutableIsOlder(p) {
+	selfexe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("unable to determine current executable: %w", err)
+	}
+
+	exinfo, err := os.Stat(selfexe)
+	if err != nil {
+		return fmt.Errorf("unable to stat '%s': %w", selfexe, err)
+	}
+
+	if !EmbeddedBinaryNeedsUpdate(exinfo, p) {
 		logrus.Debug("Re-use existing file:", p)
 		return nil
 	}
@@ -86,34 +94,35 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 	}
 	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
 
-	selfexe, err := os.Executable()
-	if err != nil {
-		logrus.Warn(err)
-		return err
-	}
 	infile, err := os.Open(selfexe)
 	if err != nil {
-		logrus.Warn("Failed to open ", os.Args[0])
-		return err
+		return fmt.Errorf("unable to open executable '%s': %w", selfexe, err)
 	}
 	defer infile.Close()
 
 	// find location at EOF - BinDataSize + offs
 	if _, err := infile.Seek(-BinDataSize+bin.offset, 2); err != nil {
-		return fmt.Errorf("failed to find embedded file position for %s: %w", name, err)
+		return fmt.Errorf("failed to find embedded file position for '%s': %w", p, err)
 	}
 	gz, err := gzip.NewReader(io.LimitReader(infile, bin.size))
 	if err != nil {
-		return fmt.Errorf("failed to create gzip reader for %s: %w", name, err)
+		return fmt.Errorf("failed to create gzip reader for '%s': %w", p, err)
 	}
 
-	logrus.Debug("Writing static file: ", p)
+	logrus.Debugf("Writing static file: '%s'", p)
 
 	if err := copyTo(p, gz); err != nil {
-		return err
+		return fmt.Errorf("unable to copy to '%s': %w", p, err)
 	}
 	if err := os.Chmod(p, 0550); err != nil {
-		return fmt.Errorf("failed to chmod %s: %w", name, err)
+		return fmt.Errorf("failed to chmod '%s': %w", p, err)
+	}
+
+	// In order to properly determine if an update of an embedded binary file is needed,
+	// the staged embedded binary needs to have the same modification time as the `k0s`
+	// executable.
+	if err := os.Chtimes(p, exinfo.ModTime(), exinfo.ModTime()); err != nil {
+		return fmt.Errorf("failed to set file modification times of '%s': %w", p, err)
 	}
 	return nil
 }
