@@ -169,6 +169,7 @@ jobs:
           - check-workerrestart
           - check-kubectl
           - check-k0sctl
+          - check-metricscraper
 
     steps:
       - name: Get PR Reference and Set Cache Name

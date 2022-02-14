@@ -511,6 +511,20 @@ func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.Cl
 		reconcilers["metricServer"] = metricServer
 	}
 
+	if c.EnableMetricsScraper {
+		metricsSaver, err := controller.NewManifestsSaver("metrics", c.K0sVars.DataDir)
+		if err != nil {
+			logrus.Warnf("failed to initialize metrics manifests saver: %s", err.Error())
+			return err
+		}
+		metricServer, err := controller.NewMetrics(c.K0sVars, metricsSaver, cf)
+		if err != nil {
+			logrus.Warnf("failed to initialize metrics reconciler: %s", err.Error())
+			return err
+		}
+		reconcilers["metrics"] = metricServer
+	}
+
 	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
 
 		kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars, cf)
