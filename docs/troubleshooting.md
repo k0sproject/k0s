@@ -54,27 +54,33 @@ As Etcd is not fully supported on ARM architecture it also means that k0s contro
 On ZFS-based systems k0s will fail to start because containerd runs by default in overlayfs mode to manage image layers. This is not compatible with ZFS and requires a custom config of containerd. The following steps should get k0s working on ZFS-based systems:
 
 - check with `$ ctr -a /run/k0s/containerd.sock plugins ls` that the containerd ZFS snapshotter plugin is in `ok` state (should be the case if ZFS kernel modules and ZFS userspace utils are correctly configured):
-```
+
+```console
 TYPE                            ID                       PLATFORMS      STATUS    
 ...
 io.containerd.snapshotter.v1    zfs                      linux/amd64    ok
 ...
 ```
+
 - create a containerd config according to the [documentation](/runtime): `$ containerd config default > /etc/k0s/containerd.toml`
 - modify the line in `/etc/k0s/containerd.toml`:
-```
+
+```toml
 ...
     [plugins."io.containerd.grpc.v1.cri".containerd]
       snapshotter = "overlayfs"
 ...
 ```
+
 to
-```
+
+```toml
 ...
     [plugins."io.containerd.grpc.v1.cri".containerd]
       snapshotter = "zfs"
 ...
 ```
+
 - create a ZFS dataset to be used as snapshot storage at your desired location, e.g. `$ zfs create -o mountpoint=/var/lib/k0s/containerd/io.containerd.snapshotter.v1.zfs rpool/containerd`
 - install k0s as usual, e.g `$ k0s install controller --single -c /etc/k0s/k0s.yaml`
 - containerd should be launched with ZFS support and k0s should initialize the cluster correctly
