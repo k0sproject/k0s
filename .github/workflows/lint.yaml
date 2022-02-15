@@ -58,4 +58,5 @@ jobs:
           skip-pkg-cache: true
           only-new-issues: false
           skip-build-cache: true
+          skip-go-installation: true
           args: --verbose
