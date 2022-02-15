@@ -44,7 +44,7 @@ var restoredConfigPath string
 func NewRestoreCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore filename",
-		Short: "restore k0s state from given backup archive. Must be run as root (or with sudo)",
+		Short: "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := CmdOpts(config.GetCmdOpts())
 			if len(args) != 1 {
@@ -52,11 +52,17 @@ func NewRestoreCmd() *cobra.Command {
 			}
 			return c.restore(args[0])
 		},
-		PreRunE: preRunValidateConfig,
 	}
 
 	cmd.SilenceUsage = true
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", "Specify desired name and full path for the restored k0s.yaml file (default: ${cwd}/k0s_<archive timestamp>.yaml)")
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		logrus.Fatal("failed to get local path")
+	}
+
+	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)
+	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", restoredConfigPathDescription)
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -71,7 +77,7 @@ func (c *CmdOpts) restore(path string) error {
 		logrus.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}
 
-	if !file.Exists(path) {
+	if path != "-" && !file.Exists(path) {
 		return fmt.Errorf("given file %s does not exist", path)
 	}
 
@@ -85,28 +91,19 @@ func (c *CmdOpts) restore(path string) error {
 	if err != nil {
 		return err
 	}
-	// c.CfgFile, c.ClusterConfig.Spec, c.K0sVars
-
 	if restoredConfigPath == "" {
 		restoredConfigPath = defaultConfigFileOutputPath(path)
 	}
 	return mgr.RunRestore(path, c.K0sVars, restoredConfigPath)
 }
 
-// TODO Need to move to some common place, now it's defined in restore and backup commands
-func preRunValidateConfig(_ *cobra.Command, _ []string) error {
-	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // set output config file name and path according to input archive Timestamps
 // the default location for the restore operation is the currently running cwd
 // this can be override, by using the --config-out flag
 func defaultConfigFileOutputPath(archivePath string) string {
+	if archivePath == "-" {
+		return "-"
+	}
 	f := filepath.Base(archivePath)
 	nameWithoutExt := strings.Split(f, ".")[0]
 	fName := strings.TrimPrefix(nameWithoutExt, "k0s_backup_")

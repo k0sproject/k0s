@@ -88,7 +88,7 @@ func NewCalico(k0sVars constant.CfgVars, crdSaver manifestsSaver, manifestsSaver
 }
 
 // Init does nothing
-func (c *Calico) Init() error {
+func (c *Calico) Init(_ context.Context) error {
 	return nil
 }
 

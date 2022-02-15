@@ -31,7 +31,7 @@ type CalicoInstaller struct {
 	ClusterDNS string
 }
 
-func (c CalicoInstaller) Init() error {
+func (c CalicoInstaller) Init(_ context.Context) error {
 	panic("stub component is used: CalicoInstaller")
 }
 
@@ -57,7 +57,7 @@ type KubeProxy struct {
 	LogLevel  string
 }
 
-func (k KubeProxy) Init() error {
+func (k KubeProxy) Init(_ context.Context) error {
 	panic("stub component is used: KubeProxy")
 }
 

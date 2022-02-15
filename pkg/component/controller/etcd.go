@@ -54,7 +54,7 @@ type Etcd struct {
 }
 
 // Init extracts the needed binaries
-func (e *Etcd) Init() error {
+func (e *Etcd) Init(_ context.Context) error {
 	var err error
 
 	if err = detectUnsupportedEtcdArch(); err != nil {
@@ -124,8 +124,12 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 	return etcdResponse.InitialCluster, nil
 }
 
-// Run runs etcd
+// Run runs etcd if external cluster is not configured
 func (e *Etcd) Run(ctx context.Context) error {
+	if e.Config.IsExternalClusterUsed() {
+		return nil
+	}
+
 	etcdCaCert := filepath.Join(e.K0sVars.EtcdCertDir, "ca.crt")
 	etcdCaCertKey := filepath.Join(e.K0sVars.EtcdCertDir, "ca.key")
 	etcdServerCert := filepath.Join(e.K0sVars.EtcdCertDir, "server.crt")
@@ -219,7 +223,7 @@ func (e *Etcd) setupCerts(ctx context.Context) error {
 		return fmt.Errorf("failed to create etcd ca: %w", err)
 	}
 
-	var eg errgroup.Group
+	eg, _ := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		// etcd client cert
@@ -282,7 +286,7 @@ func (e *Etcd) Healthy() error {
 	logrus.WithField("component", "etcd").Debug("checking etcd endpoint for health")
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir)
+	err := etcd.CheckEtcdReady(ctx, e.K0sVars.CertRootDir, e.K0sVars.EtcdCertDir, e.Config)
 	return err
 }
 

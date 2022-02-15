@@ -10,6 +10,12 @@ bins = bin/sonobuoy
 
 include ../embedded-bins/Makefile.variables
 
+ifeq ($(ARCH),amd64)
+etcd_arch = amd64
+else
+etcd_arch = arm64
+endif
+
 .PHONY: all
 all: $(bins) .footloose-alpine.stamp
 
@@ -20,7 +26,7 @@ bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
-	docker build -t footloose-alpine -f $< $(dir $<)
+	docker build --build-arg ETCD_ARCH=$(etcd_arch) -t footloose-alpine -f $< $(dir $<)
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
@@ -40,6 +46,7 @@ check-ctr: TIMEOUT=10m
 check-byocri: TIMEOUT=5m
 # readiness check for metric tests takes between around 5 and 6 minutes.
 check-metrics: TIMEOUT=6m
+check-calico: TIMEOUT=6m
 
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke
 check-customports: TIMEOUT=6m
@@ -49,6 +56,9 @@ check-configchange: TIMEOUT=8m
 
 # Node role check runs several cases
 check-noderole: TIMEOUT=6m
+
+# Backup check runs two scenarios
+check-backup: TIMEOUT=6m
 
 .PHONY: $(smoketests)
 include Makefile.variables

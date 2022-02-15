@@ -16,7 +16,6 @@ limitations under the License.
 package basic
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -42,7 +41,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args=" --address=0.0.0.0  --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
-	s.NoError(err)
+	if err != nil {
+		s.FailNow("failed to obtain Kubernetes client", err)
+	}
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
@@ -54,7 +55,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
+	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
 		Limit: 100,
 	})
 	s.NoError(err)
@@ -65,7 +66,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
 
 	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
 	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))
@@ -117,7 +118,7 @@ func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
 	opts := v1.ListOptions{
 		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
 	}
-	csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(context.TODO(), opts)
+	csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(s.Context(), opts)
 	if err != nil {
 		return err
 	}

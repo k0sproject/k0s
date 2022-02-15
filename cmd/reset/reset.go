@@ -41,11 +41,15 @@ func NewResetCmd() *cobra.Command {
 			c := CmdOpts(config.GetCmdOpts())
 			return c.reset()
 		},
-		PreRunE: preRunValidateConfig,
+		PreRunE: func(c *cobra.Command, args []string) error {
+			cmdOpts := CmdOpts(config.GetCmdOpts())
+			return config.PreRunValidateConfig(cmdOpts.K0sVars)
+		},
 	}
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
+	cmd.Flags().AddFlagSet(config.FileInputFlag())
 	return cmd
 }
 
@@ -70,13 +74,4 @@ func (c *CmdOpts) reset() error {
 	logrus.Warn("To ensure a full reset, a node reboot is recommended.")
 
 	return err
-}
-
-func preRunValidateConfig(_ *cobra.Command, _ []string) error {
-	c := CmdOpts(config.GetCmdOpts())
-	_, err := config.ValidateYaml(c.CfgFile, c.K0sVars)
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -17,7 +17,9 @@ package applier
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -103,7 +105,7 @@ func (a *Applier) lazyInit() error {
 }
 
 // Apply resources
-func (a *Applier) Apply() error {
+func (a *Applier) Apply(ctx context.Context) error {
 	err := a.lazyInit()
 	if err != nil {
 		return err
@@ -123,7 +125,7 @@ func (a *Applier) Apply() error {
 		Discovery: a.discoveryClient,
 	}
 	a.log.Debug("applying stack")
-	err = stack.Apply(context.Background(), true)
+	err = stack.Apply(ctx, true)
 	if err != nil {
 		a.log.WithError(err).Warn("stack apply failed")
 		a.discoveryClient.Invalidate()
@@ -135,7 +137,7 @@ func (a *Applier) Apply() error {
 }
 
 // Delete deletes the entire stack by applying it with empty set of resources
-func (a *Applier) Delete() error {
+func (a *Applier) Delete(ctx context.Context) error {
 	err := a.lazyInit()
 	if err != nil {
 		return err
@@ -147,7 +149,7 @@ func (a *Applier) Delete() error {
 		Discovery: a.discoveryClient,
 	}
 	logrus.Debugf("about to delete a stack %s with empty apply", a.Name)
-	err = stack.Apply(context.Background(), true)
+	err = stack.Apply(ctx, true)
 	return err
 }
 
@@ -163,7 +165,11 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 
 	objects, err := r.Infos()
 	if err != nil {
-		return nil, fmt.Errorf("enable to get object infos: %w", err)
+		// don't return an error on file removal
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("enable to get object infos: %w", err)
+		}
+
 	}
 	for _, o := range objects {
 		item := o.Object.(*unstructured.Unstructured)

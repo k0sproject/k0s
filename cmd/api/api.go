@@ -63,11 +63,6 @@ func NewAPICmd() *cobra.Command {
 			logrus.SetOutput(os.Stdout)
 
 			c := CmdOpts(config.GetCmdOpts())
-			cfg, err := config.GetNodeConfig(c.CfgFile, c.K0sVars)
-			if err != nil {
-				return err
-			}
-			c.NodeConfig = cfg
 			return c.startAPI()
 		},
 	}
@@ -85,16 +80,17 @@ func (c *CmdOpts) startAPI() error {
 	c.KubeClient = kc
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
+	storage := c.NodeConfig.Spec.Storage
 
-	if c.NodeConfig.Spec.Storage.Type == v1beta1.EtcdStorageType {
-		// Only mount the etcd handler if we're running on etcd storage
+	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
+		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
 		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
 			c.controllerHandler(c.etcdHandler()),
 		)
 	}
 
-	if c.NodeConfig.Spec.Storage.IsJoinable() {
+	if storage.IsJoinable() {
 		router.Path(prefix + "/ca").Methods("GET").Handler(
 			c.controllerHandler(c.caHandler()),
 		)
@@ -134,7 +130,7 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 			return
 		}
 
-		etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir)
+		etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, nil)
 		if err != nil {
 			sendError(err, resp)
 			return

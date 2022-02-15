@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/component"
-	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
 
@@ -45,16 +44,12 @@ var _ component.Component = &KubeProxy{}
 var _ component.ReconcilerComponent = &KubeProxy{}
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(configFile string, k0sVars constant.CfgVars) (*KubeProxy, error) {
+func NewKubeProxy(configFile string, k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) (*KubeProxy, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
-	cfg, err := config.GetNodeConfig(configFile, k0sVars)
-	if err != nil {
-		return nil, err
-	}
 	proxyDir := path.Join(k0sVars.ManifestsDir, "kubeproxy")
 	return &KubeProxy{
 		log:            log,
-		nodeConf:       cfg,
+		nodeConf:       nodeConfig,
 		K0sVars:        k0sVars,
 		previousConfig: proxyConfig{},
 		manifestDir:    proxyDir,
@@ -62,7 +57,7 @@ func NewKubeProxy(configFile string, k0sVars constant.CfgVars) (*KubeProxy, erro
 }
 
 // Init does nothing
-func (k *KubeProxy) Init() error {
+func (k *KubeProxy) Init(_ context.Context) error {
 	return nil
 }
 
@@ -278,6 +273,9 @@ spec:
     metadata:
       labels:
         k8s-app: kube-proxy
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '10249'
     spec:
       priorityClassName: system-node-critical
       containers:

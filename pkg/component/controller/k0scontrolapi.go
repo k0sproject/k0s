@@ -34,7 +34,7 @@ type K0SControlAPI struct {
 }
 
 // Init does currently nothing
-func (m *K0SControlAPI) Init() error {
+func (m *K0SControlAPI) Init(_ context.Context) error {
 	// We need to create a serving cert for the api
 	return nil
 }
@@ -54,7 +54,6 @@ func (m *K0SControlAPI) Run(_ context.Context) error {
 		DataDir: m.K0sVars.DataDir,
 		Args: []string{
 			"api",
-			fmt.Sprintf("--config=%s", m.ConfigPath),
 			fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
 		},
 	}

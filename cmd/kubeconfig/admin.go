@@ -42,10 +42,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 					log.Fatal(err)
 				}
 
-				clusterAPIURL, err := c.getAPIURL()
-				if err != nil {
-					return fmt.Errorf("failed to fetch cluster's API Address: %w", err)
-				}
+				clusterAPIURL := c.NodeConfig.Spec.API.APIAddressURL()
 				newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
 				os.Stdout.Write([]byte(newContent))
 			} else {

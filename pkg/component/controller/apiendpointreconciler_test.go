@@ -50,12 +50,13 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: false}, fakeFactory)
 	r.clusterConfig = config
 
-	assert.NoError(t, r.Init())
+	ctx := context.TODO()
+	assert.NoError(t, r.Init(ctx))
 
-	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	assert.NoError(t, r.reconcileEndpoints(ctx))
 	client, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
-	_, err = client.CoreV1().Endpoints("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+	_, err = client.CoreV1().Endpoints("default").Get(ctx, "kubernetes", v1.GetOptions{})
 	// The reconciler should not make any modification as we're not the leader so the endpoint should not get created
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
@@ -76,9 +77,10 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
-	assert.NoError(t, r.Init())
+	ctx := context.TODO()
+	assert.NoError(t, r.Init(ctx))
 
-	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	assert.NoError(t, r.reconcileEndpoints(ctx))
 	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
@@ -97,7 +99,8 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	}
 	fakeClient, err := fakeFactory.GetClient()
 	assert.NoError(t, err)
-	_, err = fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
+	ctx := context.TODO()
+	_, err = fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 	config := &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
@@ -111,9 +114,9 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
-	assert.NoError(t, r.Init())
+	assert.NoError(t, r.Init(ctx))
 
-	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	assert.NoError(t, r.reconcileEndpoints(ctx))
 	verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 }
 
@@ -139,7 +142,8 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 
 	fakeClient, _ := fakeFactory.GetClient()
 
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
+	ctx := context.TODO()
+	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := &v1beta1.ClusterConfig{
@@ -153,9 +157,9 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
-	assert.NoError(t, r.Init())
+	assert.NoError(t, r.Init(ctx))
 
-	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	assert.NoError(t, r.reconcileEndpoints(ctx))
 	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }
@@ -182,7 +186,8 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 
 	fakeClient, _ := fakeFactory.GetClient()
 
-	_, err := fakeClient.CoreV1().Endpoints("default").Create(context.TODO(), &existingEp, v1.CreateOptions{})
+	ctx := context.TODO()
+	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
 	config := &v1beta1.ClusterConfig{
@@ -196,9 +201,9 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
-	assert.NoError(t, r.Init())
+	assert.NoError(t, r.Init(ctx))
 
-	assert.NoError(t, r.reconcileEndpoints(context.Background()))
+	assert.NoError(t, r.reconcileEndpoints(ctx))
 	e := verifyEndpointAddresses(t, expectedAddresses, fakeFactory)
 	assert.Equal(t, "bar", e.ObjectMeta.Annotations["foo"])
 }

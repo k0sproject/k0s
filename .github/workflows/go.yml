@@ -28,7 +28,7 @@ on:
       - '.github/workflows/mkdocs-set-default-version.yml'
       - 'mkdocs.yml'
 env:
-  GO_VERSION: ^1.17
+  GO_VERSION: ~1.17
   GO_VERSION_WIN: ^1.13
 
 jobs:
@@ -78,10 +78,10 @@ jobs:
 
       - name: Run unit tests
         run: make check-unit
-      
+
       - name: Validate OCI images manifests
         run: go run hack/validate-images/main.go -architectures amd64,arm64,arm
-      
+
       - name: Cache compiled binary for further testing
         uses: actions/cache@v2
         id: cache-compiled-binary
@@ -149,9 +149,8 @@ jobs:
           - check-ctr
           - check-customports
           - check-dualstack
+          - check-externaletcd
           - check-hacontrolplane
-          # exists in inttest/Makefile.variables but there's no matching suite:
-          #- check-install
           - check-kine
           - check-metrics
           - check-multicontroller
@@ -167,8 +166,9 @@ jobs:
           - check-psp
           - check-statussocket
           - check-tunneledkas
-          # skipped, originally titled "Smoke-test for network":
-          # - check-etcd
+          - check-workerrestart
+          - check-kubectl
+          - check-k0sctl
 
     steps:
       - name: Get PR Reference and Set Cache Name
@@ -331,13 +331,13 @@ jobs:
       #   with:
       #     go-version: ${{ env.GO_VERSION }}
       #   id: go
-      - name: Install GoLang for ARMHF
-        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
-      - name: Go Version
-        run: go version
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+
+      - name: Install GoLang for ARMHF
+        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/go$(make -s -f go_version.mk).linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
+      - name: Go Version
+        run: go version
 
       - name: Bindata cache
         uses: actions/cache@v2

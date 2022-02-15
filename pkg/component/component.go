@@ -23,7 +23,7 @@ import (
 
 // Component defines the interface each managed component implements
 type Component interface {
-	Init() error
+	Init(context.Context) error
 	Run(context.Context) error
 	Stop() error
 	Healthy() error

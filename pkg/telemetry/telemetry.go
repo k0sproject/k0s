@@ -59,17 +59,17 @@ func (td telemetryData) asProperties() analytics.Properties {
 	}
 }
 
-func (c Component) collectTelemetry() (telemetryData, error) {
+func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) {
 	var err error
 	data := telemetryData{}
 
 	data.StorageType = c.getStorageType()
-	data.ClusterID, err = c.getClusterID()
+	data.ClusterID, err = c.getClusterID(ctx)
 
 	if err != nil {
 		return data, fmt.Errorf("can't collect cluster ID: %v", err)
 	}
-	wds, sums, err := c.getWorkerData()
+	wds, sums, err := c.getWorkerData(ctx)
 	if err != nil {
 		return data, fmt.Errorf("can't collect workers count: %v", err)
 	}
@@ -78,7 +78,7 @@ func (c Component) collectTelemetry() (telemetryData, error) {
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
-	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(context.Background(), c.kubernetesClient)
+	data.ControlPlaneNodesCount, err = kubeutil.GetControlPlaneNodeCount(ctx, c.kubernetesClient)
 	if err != nil {
 		return data, fmt.Errorf("can't collect control plane nodes count: %v", err)
 	}
@@ -93,8 +93,8 @@ func (c Component) getStorageType() string {
 	return "unknown"
 }
 
-func (c Component) getClusterID() (string, error) {
-	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(context.Background(),
+func (c Component) getClusterID(ctx context.Context) (string, error) {
+	ns, err := c.kubernetesClient.CoreV1().Namespaces().Get(ctx,
 		"kube-system",
 		metav1.GetOptions{})
 	if err != nil {
@@ -104,8 +104,8 @@ func (c Component) getClusterID() (string, error) {
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
-func (c Component) getWorkerData() ([]workerData, workerSums, error) {
-	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums, error) {
+	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, workerSums{}, err
 	}
@@ -115,10 +115,11 @@ func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 	var cpuTotal int64
 	for idx, n := range nodes.Items {
 		wd := workerData{
-			"os":   n.Status.NodeInfo.OSImage,
-			"arch": n.Status.NodeInfo.Architecture,
-			"cpus": n.Status.Capacity.Cpu().Value(),
-			"mem":  n.Status.Capacity.Memory().ScaledValue(resource.Mega),
+			"os":      n.Status.NodeInfo.OSImage,
+			"arch":    n.Status.NodeInfo.Architecture,
+			"cpus":    n.Status.Capacity.Cpu().Value(),
+			"mem":     n.Status.Capacity.Memory().ScaledValue(resource.Mega),
+			"runtime": n.Status.NodeInfo.ContainerRuntimeVersion,
 		}
 		wds[idx] = wd
 		memTotal += n.Status.Capacity.Memory().ScaledValue(resource.Mega)
@@ -128,8 +129,8 @@ func (c Component) getWorkerData() ([]workerData, workerSums, error) {
 	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
 }
 
-func (c Component) sendTelemetry() {
-	data, err := c.collectTelemetry()
+func (c Component) sendTelemetry(ctx context.Context) {
+	data, err := c.collectTelemetry(ctx)
 	if err != nil {
 		c.log.WithError(err).Warning("can't prepare telemetry data")
 		return

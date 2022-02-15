@@ -22,6 +22,9 @@ spec:
     metadata:
       labels:
         k8s-app: calico-node
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9091'
     spec:
       nodeSelector:
         kubernetes.io/os: linux
@@ -199,6 +202,8 @@ spec:
             - name: FELIX_LOGSEVERITYSCREEN
               value: "info"
             - name: FELIX_HEALTHENABLED
+              value: "true"
+            - name: FELIX_PROMETHEUSMETRICSENABLED
               value: "true"
           securityContext:
             privileged: true

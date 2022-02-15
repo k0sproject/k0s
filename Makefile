@@ -56,7 +56,12 @@ endif
 
 go_clientgen := $(shell which client-gen)
 ifeq ($(go_clientgen),)
-go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && test -x "${GOPATH}/bin/client-gen"
+go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && "${GOPATH}/bin/client-gen"
+endif
+
+go_controllergen := $(shell which controller-gen)
+ifeq ($(go_controllergen),)
+go_controllergen := cd hack/ci-deps && go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0 && cd ../.. && "${GOPATH}/bin/controller-gen"
 endif
 
 GOLANG_IMAGE = golang:$(go_version)-alpine
@@ -144,7 +149,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
 	$(golint) run --verbose ./...
 
 .PHONY: $(smoketests)
@@ -185,10 +190,10 @@ ROOT_DIR := $(shell pwd)
 manifests: .helmCRD .cfgCRD
 
 .helmCRD:
-	cd $(ROOT_DIR)/pkg/apis/helm.k0sproject.io/ && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)static/manifests/helm/CustomResourceDefinition object
+	$(go_controllergen) crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)static/manifests/helm/CustomResourceDefinition object
 
 .cfgCRD:
-	cd $(ROOT_DIR)/pkg/apis/k0s.k0sproject.io/v1beta1 && controller-gen crd paths="./..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
+	$(go_controllergen) crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
 	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...

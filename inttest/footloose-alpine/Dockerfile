@@ -1,5 +1,6 @@
 FROM alpine:3.13
 
+ARG ETCD_ARCH
 ENV KUBE_VERSION=1.21.3
 
 RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils curl haproxy
@@ -21,5 +22,10 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v$KUBE_VE
        && chmod +x ./kubectl \
        && mv ./kubectl /usr/local/bin/kubectl
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
+
+# Install etcd for smoke tests with external etcd
+RUN wget https://github.com/etcd-io/etcd/releases/download/v3.5.1/etcd-v3.5.1-linux-$ETCD_ARCH.tar.gz
+RUN tar -xvf etcd-v3.5.1-linux-$ETCD_ARCH.tar.gz -C /opt --strip-components=1
+
 # This lets etcd start when running on arm in smokes
 ENV ETCD_UNSUPPORTED_ARCH=arm64

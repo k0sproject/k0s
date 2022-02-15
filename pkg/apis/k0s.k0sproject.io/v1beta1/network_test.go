@@ -93,7 +93,7 @@ func (s *NetworkSuite) TestNetworkDefaults() {
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
 	yamlData := `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: foobar
 spec:
@@ -251,22 +251,6 @@ func (s *NetworkSuite) TestValidation() {
 		s.NotNil(errors)
 		s.Len(errors, 1)
 		s.Contains(errors[0].Error(), "unsupported mode")
-	})
-
-	s.T().Run("invalid_proxy_mode_for_dualstack", func(t *testing.T) {
-		n := DefaultNetwork()
-		n.Calico = DefaultCalico()
-		n.Calico.Mode = "bird"
-		n.DualStack = DefaultDualStack()
-		n.DualStack.Enabled = true
-		n.KubeProxy.Mode = "iptables"
-		n.DualStack.IPv6PodCIDR = "fd00::/108"
-		n.DualStack.IPv6ServiceCIDR = "fd01::/108"
-
-		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "dual-stack requires kube-proxy in ipvs mode")
 	})
 
 	s.T().Run("valid_proxy_disabled_for_dualstack", func(t *testing.T) {

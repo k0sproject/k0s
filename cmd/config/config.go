@@ -28,6 +28,8 @@ func NewConfigCmd() *cobra.Command {
 		Short: "Configuration related sub-commands",
 	}
 	cmd.AddCommand(NewCreateCmd())
+	cmd.AddCommand(NewEditCmd())
+	cmd.AddCommand(NewStatusCmd())
 	cmd.AddCommand(NewValidateCmd())
 	cmd.SilenceUsage = true
 	return cmd

@@ -16,9 +16,12 @@ limitations under the License.
 package token
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
 type CmdOpts config.CLIOptions
@@ -26,11 +29,6 @@ type CmdOpts config.CLIOptions
 var (
 	tokenExpiry string
 	waitCreate  bool
-)
-
-const (
-	controllerRole = "controller"
-	workerRole     = "worker"
 )
 
 func NewTokenCmd() *cobra.Command {
@@ -43,6 +41,12 @@ func NewTokenCmd() *cobra.Command {
 	cmd.AddCommand(tokenCreateCmd())
 	cmd.AddCommand(tokenListCmd())
 	cmd.AddCommand(tokenInvalidateCmd())
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+func checkTokenRole(tokenRole string) error {
+	if tokenRole != token.RoleController && tokenRole != token.RoleWorker {
+		return fmt.Errorf("unsupported role %q; supported roles are %q and %q", tokenRole, token.RoleController, token.RoleWorker)
+	}
+	return nil
 }

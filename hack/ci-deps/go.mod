@@ -15,4 +15,5 @@ require (
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada // indirect
 	github.com/tommy-muehle/go-mnd v1.3.1-0.20200224220436-e6f9a994e8fa // indirect
 	github.com/ugorji/go v1.1.4 // indirect
+	sigs.k8s.io/controller-tools v0.8.0 // indirect
 )

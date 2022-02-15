@@ -55,7 +55,7 @@ func NewDefaultPSP(k0sVars constant.CfgVars) (*DefaultPSP, error) {
 }
 
 // Init does currently nothing
-func (d *DefaultPSP) Init() error {
+func (d *DefaultPSP) Init(_ context.Context) error {
 	err := dir.Init(d.manifestDir, constant.ManifestsDirMode)
 	if err != nil {
 		return err

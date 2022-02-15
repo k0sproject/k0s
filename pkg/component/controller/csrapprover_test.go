@@ -71,7 +71,7 @@ func TestBasicCRSApprover(t *testing.T) {
 	}
 	c := NewCSRApprover(config, &DummyLeaderElector{Leader: true}, fakeFactory)
 
-	assert.NoError(t, c.Init())
+	assert.NoError(t, c.Init(ctx))
 	assert.NoError(t, c.approveCSR(ctx))
 
 	csr, err := client.CertificatesV1().CertificateSigningRequests().Get(ctx, newCsr.Name, metav1.GetOptions{})

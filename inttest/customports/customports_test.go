@@ -19,6 +19,7 @@ package customports
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"html/template"
 	"testing"
 
@@ -36,7 +37,7 @@ type Suite struct {
 
 const configWithExternaladdress = `
 apiVersion: k0s.k0sproject.io/v1beta1
-kind: Cluster
+kind: ClusterConfig
 metadata:
   name: k0s
 spec:
@@ -102,9 +103,9 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 
 	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
 
-	workerToken, err := ds.GetJoinToken("worker", "", "--config=/tmp/k0s.yaml")
+	workerToken, err := ds.GetJoinToken("worker", "")
 	ds.Require().NoError(err)
-	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", workerToken, `--config="/tmp/k0s.yaml"`))
+	ds.Require().NoError(ds.RunWorkersWithToken("/var/lib/k0s", workerToken))
 
 	kc, err := ds.KubeClient("controller0", "")
 	ds.Require().NoError(err)
@@ -112,7 +113,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	err = ds.WaitForNodeReady("worker0", kc)
 	ds.Require().NoError(err)
 
-	controllerToken, err := ds.GetJoinToken("controller", "", "--config=/tmp/k0s.yaml")
+	controllerToken, err := ds.GetJoinToken("controller", "")
 	ds.Require().NoError(err)
 	ds.Require().NoError(ds.InitController(1, controllerToken, "", "--config=/tmp/k0s.yaml"))
 	ds.Require().NoError(ds.InitController(2, controllerToken, "", "--config=/tmp/k0s.yaml"))
@@ -135,4 +136,15 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 
 	ds.T().Log("waiting to get logs from pods")
 	ds.Require().NoError(common.WaitForPodLogs(kc, "kube-system"))
+
+	// https://github.com/k0sproject/k0s/issues/1202
+	ds.T().Run("kubeconfigIncludesExternalAddress", func(t *testing.T) {
+		ssh, err := ds.SSH(ds.ControllerNode(0))
+		ds.Require().NoError(err)
+		defer ssh.Disconnect()
+
+		out, err := ssh.ExecWithOutput("k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
+		ds.Require().NoError(err)
+		ds.Require().Equal(fmt.Sprintf("https://%s:%d", ipAddress, kubeAPIPort), out)
+	})
 }
