@@ -31,7 +31,7 @@ on:
 
 env:
   GO_VERSION: ~1.17
-  GO_VERSION_WIN: ^1.13
+  GO_VERSION_WIN: ~1.17
 
 jobs:
   lint:
