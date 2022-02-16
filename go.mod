@@ -74,8 +74,9 @@ replace (
 	github.com/containerd/continuity => github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc
 	github.com/containerd/ttrpc => github.com/containerd/ttrpc v1.0.2
 	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
-	github.com/docker/distribution => github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution => github.com/docker/distribution v2.8.0+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.2+incompatible
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
 
 	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
 
