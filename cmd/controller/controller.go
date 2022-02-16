@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/sysinfo"
 
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -53,6 +54,8 @@ import (
 )
 
 type CmdOpts config.CLIOptions
+
+var ignorePreFlightChecks bool
 
 func NewControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -94,6 +97,16 @@ func NewControllerCmd() *cobra.Command {
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cmd.SilenceUsage = true
 
+			if c.preFlightChecksRequired() {
+				if err := sysinfo.RunPreFlightChecks(); err != nil {
+					if ignorePreFlightChecks {
+						logrus.Warn(err)
+					} else {
+						return err
+					}
+				}
+			}
+
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 			return c.startController(ctx)
@@ -101,10 +114,15 @@ func NewControllerCmd() *cobra.Command {
 	}
 
 	// append flags
+	cmd.Flags().BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
 	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
 	return cmd
+}
+
+func (c *CmdOpts) preFlightChecksRequired() bool {
+	return c.SingleNode || c.EnableWorker
 }
 
 func (c *CmdOpts) startController(ctx context.Context) error {

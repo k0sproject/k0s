@@ -60,18 +60,33 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	defer ssh.Disconnect()
 
 	s.T().Run("preflightChecks", func(t *testing.T) {
-		out, err := ssh.ExecWithOutput(fmt.Sprintf(`
-			set -eu
-			fakeDir="$(mktemp -d)"
-			trap "rm -rf -- '$fakeDir'" INT EXIT
-			printf '#!/bin/sh\necho spoof' >"$fakeDir/uname"
-			chmod +x -- "$fakeDir/uname"
-			PATH="$fakeDir:$PATH" '%s' worker
-		`, s.K0sFullPath))
-		assert.Error(t, err, "k0s should have exited with status code 1")
-		// Depending on the host OS executing the inttest, there might be more errors than the one's that were unscrupulously injected
-		// (e.g. because the kernel config is stored in a path that's dependent of the kernel version, which has been spoofed)
-		assert.Regexp(t, "^Error: pre-flight checks failed: unsupported operating system: spoof; unsupported kernel release: spoof(; |$)", out)
+		for _, test := range []struct {
+			name string
+			args string
+		}{
+			{name: "worker", args: "worker"},
+			{name: "singleNodeController", args: "controller --single"},
+			{name: "workerEnabledController", args: "controller --enable-worker"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				out, err := ssh.ExecWithOutput(fmt.Sprintf(`
+					set -eu
+					fakeDir="$(mktemp -d)"
+					trap "rm -rf -- '$fakeDir'" INT EXIT
+					printf '#!/bin/sh\necho spoof' >"$fakeDir/uname"
+					chmod +x -- "$fakeDir/uname"
+					PATH="$fakeDir:$PATH" '%s' %s
+				`, s.K0sFullPath, test.args))
+				assert.Error(t, err, "k0s should have exited with status code 1")
+				// Depending on the host OS executing the inttest, there might be more errors than
+				// the one's that were unscrupulously injected (e.g. because the kernel config is
+				// stored in a path that's dependent of the kernel version, which has been spoofed)
+				assert.Regexp(t, "^Error: pre-flight checks failed: "+
+					"unsupported operating system: spoof; "+
+					"unsupported kernel release: spoof(; |$)",
+					out)
+			})
+		}
 	})
 
 	s.T().Run("k0sInstall", func(t *testing.T) {
