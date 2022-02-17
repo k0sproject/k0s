@@ -45,6 +45,8 @@ spec:
     externalAddress: my-lb-address.example.com
     sans:
       - 192.168.68.104
+    tunneledNetworkingMode: false
+    extraArgs: []
   storage:
     type: etcd
     etcd:
@@ -54,15 +56,23 @@ spec:
     serviceCIDR: 10.96.0.0/12
     provider: kuberouter
     calico: null
+    dualStack: {}
     kuberouter:
       mtu: 0
       peerRouterIPs: ""
       peerRouterASNs: ""
       autoMTU: true
+    kubeProxy:
+      disabled: false
+      mode: iptables
   podSecurityPolicy:
     defaultPolicy: 00-k0s-privileged
   telemetry:
     enabled: true
+  controllerManager:
+    extraArgs: []
+  scheduler:
+    extraArgs: []
   installConfig:
     users:
       etcdUser: etcd
@@ -118,6 +128,7 @@ spec:
 | `extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
 | `port`¹           | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
 | `k0sApiPort`¹     | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                 |
+| `tunneledNetworkingMode`     | Whether to tunnel Kubernetes access from worker nodes via local port forwarding. (default: `false`)                                                                                                                                                                 |
 
 ¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the loadbalancer serving at `externalAddress` must listen on the same ports.
 
@@ -160,6 +171,13 @@ spec:
 | `peerRouterASNs` | Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).      |
 
 **Note**: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the [Kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)).
+
+#### `spec.network.kubeProxy`
+
+| Element          | Description                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`       | Disable kube-proxy altogether (default: `false`).                                                                                                       |
+| `mode`           | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
 
 ### `spec.podSecurityPolicy`
 
