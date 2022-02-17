@@ -38,7 +38,7 @@ func getCgroupVersion() (cgroupVersion, error) {
 	switch st.Type {
 	case unix.CGROUP2_SUPER_MAGIC:
 		return cgroupV2, nil
-	case unix.TMPFS_MAGIC:
+	case unix.CGROUP_SUPER_MAGIC, unix.TMPFS_MAGIC:
 		return cgroupV1, nil
 	default:
 		return cgroupVersionUnknown, fmt.Errorf("unexpected file system type of %q: 0x%x", cgroupMountpoint, st.Type)
