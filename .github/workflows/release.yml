@@ -43,7 +43,8 @@ jobs:
           echo ::set-output name=IMAGE_TAGS::${TAGS}
   x64:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: ubuntu-latest
+#    runs-on: [self-hosted,linux,x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -107,179 +108,180 @@ jobs:
           asset_content_type: application/octet-stream
 
 
-  windows:
-    needs: release
-    runs-on: [self-hosted,linux,x64]
-    env:
-      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-      TARGET_OS: windows
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+#  windows:
+#    needs: release
+#    runs-on: [self-hosted,linux,x64]
+#    env:
+#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+#      TARGET_OS: windows
+#    steps:
+#      - name: Check out code into the Go module directory
+#        uses: actions/checkout@v2
+#
+#      - name: Set up Go 1.x
+#        uses: actions/setup-go@v2
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#        id: go
+#
+#      - name: Build
+#        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
+#        env:
+#          VERSION: ${{ needs.release.outputs.tag_name }}
+#
+#      - name: Clean Docker
+#        run: |
+#          docker system prune --all --volumes --force
+#
+#      - name: Upload Release Assets
+#        id: upload-release-asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+#        with:
+#          upload_url: ${{ needs.release.outputs.upload_url }}
+#          asset_path: ./k0s.exe
+#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
+#          asset_content_type: application/octet-stream
 
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
-      - name: Build
-        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
-        env:
-          VERSION: ${{ needs.release.outputs.tag_name }}
-
-      - name: Clean Docker
-        run: |
-          docker system prune --all --volumes --force
-
-      - name: Upload Release Assets
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./k0s.exe
-          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
-          asset_content_type: application/octet-stream
-
-  arm64:
-    needs: release
-    runs-on: [self-hosted,linux,arm64]
-    env:
-      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
-      - name: Build
-        run: make EMBEDDED_BINS_BUILDMODE=docker
-        env:
-          VERSION: ${{ needs.release.outputs.tag_name }}
-      - name: Clean Docker
-        run: |
-          docker system prune --all --volumes --force
-
-      - name: Run basic smoke test
-        run: make check-basic
-
-
-      - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
-
-      - name: Collect smoke test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: logs
-          path: tests/*.log
-
-      - name: Upload Release Assets - Binary
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./k0s
-          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
-          asset_content_type: application/octet-stream
-
-      - name: Upload Artifact for use in other Jobs
-        uses: actions/upload-artifact@v2
-        with:
-          name: k0s-arm64
-          path: ./k0s
-
-      - name: Upload Release Assets - Bundle
-        id: upload-release-asset-images
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./image-bundle/bundle.tar
-          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
-          asset_content_type: application/octet-stream
+#  arm64:
+#    needs: release
+#    runs-on: [self-hosted,linux,arm64]
+#    env:
+#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+#    steps:
+#      - name: Check out code into the Go module directory
+#        uses: actions/checkout@v2
+#
+#      - name: Set up Go 1.x
+#        uses: actions/setup-go@v2
+#        with:
+#          go-version: ${{ env.GO_VERSION }}
+#        id: go
+#
+#      - name: Build
+#        run: make EMBEDDED_BINS_BUILDMODE=docker
+#        env:
+#          VERSION: ${{ needs.release.outputs.tag_name }}
+#      - name: Clean Docker
+#        run: |
+#          docker system prune --all --volumes --force
+#
+#      - name: Run basic smoke test
+#        run: make check-basic
+#
+#
+#      - name: Build bundle for air gap installation
+#        run: make image-bundle/bundle.tar
+#
+#      - name: Collect smoke test logs
+#        if: failure()
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: logs
+#          path: tests/*.log
+#
+#      - name: Upload Release Assets - Binary
+#        id: upload-release-asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+#        with:
+#          upload_url: ${{ needs.release.outputs.upload_url }}
+#          asset_path: ./k0s
+#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
+#          asset_content_type: application/octet-stream
+#
+#      - name: Upload Artifact for use in other Jobs
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: k0s-arm64
+#          path: ./k0s
+#
+#      - name: Upload Release Assets - Bundle
+#        id: upload-release-asset-images
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+#        with:
+#          upload_url: ${{ needs.release.outputs.upload_url }}
+#          asset_path: ./image-bundle/bundle.tar
+#          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
+#          asset_content_type: application/octet-stream
 
 
-  armv7:
-    needs: release
-    runs-on: [self-hosted,linux,arm]
-    env:
-      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-    steps:
-      - name: Install GoLang for ARMHF
-        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
-      - name: Go Version
-        run: go version
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Build
-        run: make EMBEDDED_BINS_BUILDMODE=docker
-        env:
-          VERSION: ${{ needs.release.outputs.tag_name }}
-
-      - name: Run basic smoke test
-        run: make check-basic
-
-      - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
-
-      - name: Collect smoke test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: logs
-          path: tests/*.log
-
-      - name: Upload Release Assets - Binary
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./k0s
-          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
-          asset_content_type: application/octet-stream
-
-      - name: Upload Artifact for use in other Jobs
-        uses: actions/upload-artifact@v2
-        with:
-          name: k0s-arm
-          path: ./k0s
-
-      - name: Upload Release Assets - Bundle
-        id: upload-release-asset-images
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./image-bundle/bundle.tar
-          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
-          asset_content_type: application/octet-stream
+#  armv7:
+#    needs: release
+#    runs-on: [self-hosted,linux,arm]
+#    env:
+#      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
+#      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
+#    steps:
+#      - name: Install GoLang for ARMHF
+#        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
+#      - name: Go Version
+#        run: go version
+#
+#      - name: Check out code into the Go module directory
+#        uses: actions/checkout@v2
+#
+#      - name: Build
+#        run: make EMBEDDED_BINS_BUILDMODE=docker
+#        env:
+#          VERSION: ${{ needs.release.outputs.tag_name }}
+#
+#      - name: Run basic smoke test
+#        run: make check-basic
+#
+#      - name: Build bundle for air gap installation
+#        run: make image-bundle/bundle.tar
+#
+#      - name: Collect smoke test logs
+#        if: failure()
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: logs
+#          path: tests/*.log
+#
+#      - name: Upload Release Assets - Binary
+#        id: upload-release-asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+#        with:
+#          upload_url: ${{ needs.release.outputs.upload_url }}
+#          asset_path: ./k0s
+#          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
+#          asset_content_type: application/octet-stream
+#
+#      - name: Upload Artifact for use in other Jobs
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: k0s-arm
+#          path: ./k0s
+#
+#      - name: Upload Release Assets - Bundle
+#        id: upload-release-asset-images
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+#        with:
+#          upload_url: ${{ needs.release.outputs.upload_url }}
+#          asset_path: ./image-bundle/bundle.tar
+#          asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
+#          asset_content_type: application/octet-stream
 
 
   build-image:
     needs:
       - release
       - x64
-      - arm64
-      - armv7
-    runs-on: [self-hosted,linux,x64]
+#      - arm64
+#      - armv7
+#    runs-on: [self-hosted,linux,x64]
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -305,12 +307,12 @@ jobs:
       - name: Fetch k0s arm64
         uses: actions/download-artifact@v2
         with:
-          name: k0s-arm64
+          name: k0s-amd64
           path: ./k0s-arm64
       - name: Fetch k0s arm
         uses: actions/download-artifact@v2
         with:
-          name: k0s-arm
+          name: k0s-amd64
           path: ./k0s-arm
 
       - name: Build image and push to Docker Hub and GitHub image registry
