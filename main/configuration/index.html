@@ -1468,6 +1468,8 @@ sudo k0s start
 <span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-lb-address.example.com</span><span class="w"></span>
 <span class="w">    </span><span class="nt">sans</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span><span class="w"></span>
+<span class="w">    </span><span class="nt">tunneledNetworkingMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
 <span class="w">  </span><span class="nt">storage</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span><span class="w"></span>
 <span class="w">    </span><span class="nt">etcd</span><span class="p">:</span><span class="w"></span>
@@ -1477,15 +1479,23 @@ sudo k0s start
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span><span class="w"></span>
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kuberouter</span><span class="w"></span>
 <span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
 <span class="w">      </span><span class="nt">peerRouterIPs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
 <span class="w">      </span><span class="nt">peerRouterASNs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
 <span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iptables</span><span class="w"></span>
 <span class="w">  </span><span class="nt">podSecurityPolicy</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">defaultPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span><span class="w"></span>
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
 <span class="w">  </span><span class="nt">installConfig</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">users</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">etcdUser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span><span class="w"></span>
@@ -1561,6 +1571,10 @@ sudo k0s start
 <tr>
 <td><code>k0sApiPort</code>¹</td>
 <td>Custom port for k0s-api server to listen on (default: 9443)</td>
+</tr>
+<tr>
+<td><code>tunneledNetworkingMode</code></td>
+<td>Whether to tunnel Kubernetes access from worker nodes via local port forwarding. (default: <code>false</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1682,6 +1696,25 @@ sudo k0s start
 </tbody>
 </table>
 <p><strong>Note</strong>: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md">Kube-router user guide</a>).</p>
+<h4 id="specnetworkkubeproxy"><code>spec.network.kubeProxy</code><a class="headerlink" href="#specnetworkkubeproxy" title="Permanent link">#</a></h4>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>disabled</code></td>
+<td>Disable kube-proxy altogether (default: <code>false</code>).</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td>Kube proxy operating mode, supported modes <code>iptables</code>, <code>ipvs</code>, <code>userspace</code> (default: <code>iptables</code>)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="specpodsecuritypolicy"><code>spec.podSecurityPolicy</code><a class="headerlink" href="#specpodsecuritypolicy" title="Permanent link">#</a></h3>
 <p>Use the <code>spec.podSecurityPolicy</code> key to configure the default <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">PSP</a>.</p>
 <p>k0s creates two PSPs out-of-the-box:</p>
