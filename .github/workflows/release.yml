@@ -304,14 +304,17 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: k0s-amd64
+          path: ./k0s-amd64
       - name: Fetch k0s arm64
         uses: actions/download-artifact@v2
         with:
-          name: k0s-arm64
+          name: k0s-amd64
+          path: ./k0s-arm64
       - name: Fetch k0s arm
         uses: actions/download-artifact@v2
         with:
-          name: k0s-arm
+          name: k0s-amd64
+          path: ./k0s-arm
 
       - name: Build image and push to Docker Hub and GitHub image registry
         uses: docker/build-push-action@v2
