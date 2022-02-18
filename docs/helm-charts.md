@@ -11,6 +11,27 @@ k0s supports two methods for deploying applications using Helm charts:
 
 Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.
 
+### Wait for install
+
+Each chart is proccesed the same way CLI tool does with following options:
+
+- --wait
+- --wait-for-jobs
+- --timeout 10m
+
+It is possible to customize timeout by using `.Timeout` field.
+
+### Chart configuration
+
+| Field | Default value | Description |
+
+| name | - | Release name |
+| chartname | - | chartname in form "repository/chartname"|
+| version | - | version to install |
+| timeout | 10m | timeout to wait for release install |
+| values | - | yaml as a string, custom chart values |
+| namespace | - | namespace to install chart into |
+
 ## Example
 
 In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to `k0s.yaml` and restart k0s, after which Prometheus should start automatically with k0s.
@@ -28,6 +49,7 @@ spec:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus
         version: "14.6.1"
+        timeout: 20m
         values: |
           alertmanager:
             persistentVolume:

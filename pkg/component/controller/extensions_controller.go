@@ -207,8 +207,12 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 	var err error
 	var chartRelease *release.Release
 	timeout, err := time.ParseDuration(chart.Spec.Timeout)
-	if err != nil || timeout == 0 {
-		cr.L.Tracef("Can't parse `%s` as time.Duration or got 0 value, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
+	if err != nil {
+		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
+		timeout = defaultTimeout
+	}
+	if timeout == 0 {
+		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
 		timeout = defaultTimeout
 	}
 	defer func() {
