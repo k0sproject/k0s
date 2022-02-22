@@ -1,3 +1,4 @@
+/build/cache/*
 pkg/assets/zz_generated_offsets*.go
 k0s
 k0s.code
@@ -14,6 +15,5 @@ out.json
 .vscode
 static/gen_manifests.go
 .k0sbuild.docker-image.*
-.k0sbuild.docker-vol.*
 docs/cli
 site
