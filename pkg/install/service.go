@@ -65,7 +65,7 @@ func InstalledService() (service.Service, error) {
 }
 
 // EnsureService installs the k0s service, per the given arguments, and the detected platform
-func EnsureService(args []string) error {
+func EnsureService(args []string, force bool) error {
 	var deps []string
 	var svcConfig *service.Config
 
@@ -98,7 +98,13 @@ func EnsureService(args []string) error {
 
 	svcConfig.Dependencies = deps
 	svcConfig.Arguments = args
-
+	if force {
+		logrus.Infof("Uninstalling %s service", svcConfig.Name)
+		err = s.Uninstall()
+		if err != nil && err != service.ErrNotInstalled {
+			logrus.Warnf("failed to uninstall service: %v", err)
+		}
+	}
 	logrus.Infof("Installing %s service", svcConfig.Name)
 	err = s.Install()
 	if err != nil {

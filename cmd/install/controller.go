@@ -40,7 +40,7 @@ With the controller subcommand you can setup a single node cluster by running:
 			}
 			flagsAndVals := []string{"controller"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
-			if err := c.setup("controller", flagsAndVals); err != nil {
+			if err := c.setup("controller", flagsAndVals, force); err != nil {
 				cmd.SilenceUsage = true
 				return err
 			}
