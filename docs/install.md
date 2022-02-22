@@ -30,6 +30,12 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
 
+    Is's possible to set environment variables with the install command:
+
+    ```shell
+    sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm64
+    ```
+
     The system service can be reinstalled with the `--force` flag:
 
     ```shell

@@ -65,7 +65,7 @@ func InstalledService() (service.Service, error) {
 }
 
 // EnsureService installs the k0s service, per the given arguments, and the detected platform
-func EnsureService(args []string, force bool) error {
+func EnsureService(args []string, envVars []string, force bool) error {
 	var deps []string
 	var svcConfig *service.Config
 
@@ -94,6 +94,10 @@ func EnsureService(args []string, force bool) error {
 			"LimitNOFILE":   999999,
 		}
 	default:
+	}
+
+	if len(envVars) > 0 {
+		svcConfig.Option["Environment"] = envVars
 	}
 
 	svcConfig.Dependencies = deps
@@ -187,6 +191,8 @@ ConditionFileIsExecutable={{.Path|cmdEscape}}
 StartLimitInterval=5
 StartLimitBurst=10
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
+{{- if .Option.Environment}}{{range .Option.Environment}}
+Environment="{{.}}"{{end}}{{- end}}
 
 RestartSec=120
 Delegate=yes
