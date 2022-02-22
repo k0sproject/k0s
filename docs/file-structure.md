@@ -1,0 +1,76 @@
+# File Structure
+
+- /etc/k0s/k0s.yaml - default k0s.yaml
+- /etc/k0s/containerd.toml - bundled containerd config
+  - generate default by `/var/lib/k0s/bin/containerd config default > containerd.toml` 
+  - [containerd-config.toml.5](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)
+- /var/log/pods/ - logs of pod
+- /var/lib/cni/ - cni working directory
+- /var/openebs/ - OpenEBS default local pv path
+- /etc/machine-id - identity of the node, content is random 32 char - **REQUIRED**
+  - you can generate by `uuidgen | tr -d - > /etc/machine-id`
+- /var/log/k0s.log
+- /var/log/k0s.err - error log
+
+## Data directory
+
+- /var/lib/k0s/ - data directory - defined by `--data-dir`
+  - kubelet.conf
+  - kubelet-config.yaml
+  - kubelet-bootstrap.conf
+    - kubelet bootstrap config
+    - include worker token
+  - konnectivity.conf
+    - EgressSelectorConfiguration
+    - reference /run/k0s/konnectivity-server/konnectivity-server.sock
+- /var/lib/k0s/bin/ - extracted when starting k0s
+  - xtables-legacy-multi - bundled iptable
+    - target of symbol links: ip6tables, ip6tables-restore, ip6tables-save, iptables-restore, iptables-save
+  - containerd, containerd-shim, containerd-shim-runc-v1, containerd-shim-runc-v2
+  - runc
+  - etcd
+  - kine
+  - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
+- /var/lib/k0s/db/ - kine SQLite
+- /var/lib/k0s/etcd/ - etcd data directory
+- /var/lib/k0s/images/bundle_file - airgap bundle file, tar format
+- /var/lib/k0s/pki/ - certs of server, client, etcd
+  - admin.conf - kubeconfig
+- /var/lib/k0s/containerd/ - containerd data dir
+  - io.containerd.snapshotter.v1.zfs main/containerd
+    - ZFS snapshotter mount directory
+  - io.containerd.snapshotter.v1.overlayfs/
+    - default overlayfs snapshotter mount directory
+- /var/lib/k0s/helmhome/ - HELM data dir
+  - the helm config will use repo defined here
+  - repositories.yaml
+    - local helm repo index
+    - defined `openebs-internal` -> https://openebs.github.io/charts
+- /var/lib/k0s/manifests/ - manifest deployment - must under a directory
+  - api-config
+  - calico
+  - coredns
+  - helm
+    - helm-crd-helm.k0sproject.io_charts.yaml
+      - CRD: helm.k0sproject.io/v1beta1/Chart
+      - k0s helm controller watch the CRD to deploy helm chart
+    - addon_crd_manifest_openebs.yaml
+      - deploy openebs by helm
+  - kubeproxy
+    - kube-proxy.yaml
+      - KubeProxyConfiguration
+      - use /run/xtables.lock
+  - metricserver
+    - metric_server.yaml
+  - bootstraprbac
+    - ClusterRoleBinding: kubelet-bootstrap, node-autoapprove-bootstrap, node-autoapprove-certificate-rotation
+  - calico_init
+  - defaultpsp
+    - default-psp.yaml
+      - 00-k0s-privileged
+      - 99-k0s-restricted
+  - kubelet
+    - kubelet-config.yaml
+  - kuberouter
+    - kube-router.yaml
+    - generate /etc/cni/net.d/10-kuberouter.conflist

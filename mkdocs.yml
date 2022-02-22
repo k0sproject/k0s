@@ -55,6 +55,7 @@ nav:
   - Reference:
       - Architecture:                     architecture.md
       - Kube-bench Security Benchmark:    cis_benchmark.md
+      - File Structure:                   file-structure.md
   - Releases:                             releases.md
   - Contributing:
       - Overview:                         contributors/overview.md
