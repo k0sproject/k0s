@@ -37,6 +37,7 @@ func (is ImageSpec) URI() string {
 // ClusterImages sets docker images for addon components
 type ClusterImages struct {
 	Konnectivity  ImageSpec `json:"konnectivity"`
+	PushGateway   ImageSpec `json:"pushgateway"`
 	MetricsServer ImageSpec `json:"metricsserver"`
 	KubeProxy     ImageSpec `json:"kubeproxy"`
 	CoreDNS       ImageSpec `json:"coredns"`
@@ -97,6 +98,10 @@ func DefaultClusterImages() *ClusterImages {
 		Konnectivity: ImageSpec{
 			Image:   constant.KonnectivityImage,
 			Version: constant.KonnectivityImageVersion,
+		},
+		PushGateway: ImageSpec{
+			Image:   constant.PushGatewayImage,
+			Version: constant.PushGatewayImageVersion,
 		},
 		MetricsServer: ImageSpec{
 			Image:   constant.MetricsImage,

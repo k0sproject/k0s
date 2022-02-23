@@ -78,26 +78,8 @@ func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kuberne
 
 // Init does nothing
 func (m *Metrics) Init(_ context.Context) error {
-	tw := templatewriter.TemplateWriter{
-		Name:     "pushgateway-with-ttl",
-		Template: pushGatewayTemplate,
-		Data: map[string]string{
-			"Namespace": namespace,
-			"Name":      pushGatewayName,
-		},
-	}
-	output := bytes.NewBuffer([]byte{})
-	err := tw.WriteToBuffer(output)
-	if err != nil {
-		return err
-	}
-	err = m.saver.Save("pushgateway.yaml", output.Bytes())
-	if err != nil {
-		return err
-	}
-
 	var j *job
-	j, err = m.newJob("kube-scheduler", "https://localhost:10259/metrics")
+	j, err := m.newJob("kube-scheduler", "https://localhost:10259/metrics")
 	if err != nil {
 		return err
 	}
@@ -134,6 +116,27 @@ func (m *Metrics) Stop() error {
 // Reconcile detects changes in configuration and applies them to the component
 func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	m.log.Debug("reconcile method called for: Metrics")
+
+	if m.clusterConfig == nil || clusterConfig.Spec.Images.PushGateway.URI() != m.clusterConfig.Spec.Images.PushGateway.URI() {
+		tw := templatewriter.TemplateWriter{
+			Name:     "pushgateway-with-ttl",
+			Template: pushGatewayTemplate,
+			Data: map[string]string{
+				"Namespace": namespace,
+				"Name":      pushGatewayName,
+				"Image":     clusterConfig.Spec.Images.PushGateway.URI(),
+			},
+		}
+		output := bytes.NewBuffer([]byte{})
+		err := tw.WriteToBuffer(output)
+		if err != nil {
+			return err
+		}
+		err = m.saver.Save("pushgateway.yaml", output.Bytes())
+		if err != nil {
+			return err
+		}
+	}
 
 	// We just store the last known config
 	for _, j := range m.jobs {
@@ -247,47 +250,11 @@ metadata:
   name: {{ .Namespace }}
 ---
 apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    component: "pushgateway"
-    app: k0s-observability
-  name: k0s-pushgateway
-  namespace: {{ .Namespace }}
-  annotations:
-    {}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    component: "pushgateway"
-    app: k0s-observability
-  name: {{ .Name }}
-rules:
-  []
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    component: "pushgateway"
-    app: k0s-observability
-  name: {{ .Name }}
-subjects:
-  - kind: ServiceAccount
-    name: {{ .Name }}
-    namespace: {{ .Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ .Name }}
----
-apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    prometheus.io/probe: pushgateway
+    prometheus.io/port: "9091"
+    prometheus.io/scrape: "true"
   labels:
     component: "pushgateway"
     app: k0s-observability
@@ -324,7 +291,6 @@ spec:
         component: "pushgateway"
         app: k0s-observability
     spec:
-      serviceAccountName: {{ .Name }}
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"
@@ -333,7 +299,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: prometheus-pushgateway
-          image: "dmathai/prom-pushgateway-ttl:1.4.0-ttl"
+          image: {{ .Image }}
           imagePullPolicy: "IfNotPresent"
           args: 
           - --metric.timetolive=120s
