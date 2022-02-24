@@ -34,6 +34,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     sudo k0s install controller --single --force
+    sudo systemctl daemon-reload
     ```
 
 3. Start k0s as a service
