@@ -13,6 +13,8 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
+BUILD_UID ?= $(shell id -u)
+BUILD_GID ?= $(shell id -g)
 BUILD_GO_FLAGS := -tags osusergo
 BUILD_GO_CGO_ENABLED ?= 0
 BUILD_GO_LDFLAGS_EXTRA :=
@@ -44,37 +46,36 @@ LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
-golint := $(shell which golangci-lint)
+golint := $(shell which golangci-lint 2>/dev/null)
 ifeq ($(golint),)
 golint := cd hack/ci-deps && go install github.com/golangci/golangci-lint/cmd/golangci-lint && cd ../.. && "${GOPATH}/bin/golangci-lint"
 endif
 
-go_bindata := $(shell which go-bindata)
+go_bindata := $(shell which go-bindata 2>/dev/null)
 ifeq ($(go_bindata),)
 go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
 endif
 
-go_clientgen := $(shell which client-gen)
+go_clientgen := $(shell which client-gen 2>/dev/null)
 ifeq ($(go_clientgen),)
 go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && "${GOPATH}/bin/client-gen"
 endif
 
-go_controllergen := $(shell which controller-gen)
+go_controllergen := $(shell which controller-gen 2>/dev/null)
 ifeq ($(go_controllergen),)
 go_controllergen := cd hack/ci-deps && go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0 && cd ../.. && "${GOPATH}/bin/controller-gen"
 endif
 
 GOLANG_IMAGE = golang:$(go_version)-alpine
-GO ?= GOCACHE=/gocache/build GOMODCACHE=/gocache/mod docker run --rm \
+GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
-	-v k0sbuild.gocache:/gocache \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
 	-e CGO_ENABLED \
 	-e GOARCH \
 	-e GOCACHE \
 	-e GOMODCACHE \
-	--user $$(id -u) \
+	--user $(BUILD_UID):$(BUILD_GID) \
 	$(GOLANG_IMAGE) go
 
 .PHONY: build
@@ -87,12 +88,7 @@ endif
 .k0sbuild.docker-image.k0s: build/Dockerfile
 	docker build --rm \
 		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
-		-t k0sbuild.docker-image.k0s -f build/Dockerfile .
-	touch $@
-
-.k0sbuild.docker-vol.gocache:
-	docker volume create k0sbuild.gocache
-	docker run --rm -v k0sbuild.gocache:/gocache alpine:latest install -d -o $$(id -u) -g $$(id -g) /gocache/mod /gocache/build
+		-t k0sbuild.docker-image.k0s build/
 	touch $@
 
 .PHONY: all
@@ -110,7 +106,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s .k0sbuild.docker-vol.gocache
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s
 	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
@@ -126,13 +122,11 @@ k0s: BUILD_GO_CGO_ENABLED = 1
 k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
 k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
 k0s: .k0sbuild.docker-image.k0s
-k0s: .k0sbuild.docker-vol.gocache
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 k0s.exe: GOLANG_IMAGE = golang:1.17-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
-k0s.exe: .k0sbuild.docker-vol.gocache
 
 k0s.exe k0s: static/gen_manifests.go
 
@@ -160,15 +154,24 @@ $(smoketests): k0s
 .PHONY: smoketests
 smoketests:  $(smoketests)
 
-
 .PHONY: check-unit
 check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go
-	go test -race `go list ./... | egrep -v "inttest|pkg/assets|static"`
+	$(GO) test -race `$(GO) list -f '{{if eq .Module.Path "github.com/k0sproject/k0s"}}{{.ImportPath}}{{end}}' ./... | egrep -v "/(inttest|pkg/assets|static)(/|$$)"`
+
+.PHONY: check-image-validity
+check-image-validity:
+	$(GO) run hack/validate-images/main.go -architectures amd64,arm64,arm
+
+check-unit \
+check-image-validity \
+clean-gocache: GO = \
+  GOCACHE='$(CURDIR)/build/cache/go/build' \
+  GOMODCACHE='$(CURDIR)/build/cache/go/mod' \
+  go
 
 .PHONY: clean-gocache
 clean-gocache:
-	-docker volume rm k0sbuild.gocache
-	-rm .k0sbuild.docker-vol.gocache
+	$(GO) clean -cache -modcache
 
 clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f

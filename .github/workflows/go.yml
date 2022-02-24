@@ -27,112 +27,110 @@ on:
       - '.github/workflows/docs.yml'
       - '.github/workflows/mkdocs-set-default-version.yml'
       - 'mkdocs.yml'
-env:
-  GO_VERSION: ~1.17
-  GO_VERSION_WIN: ~1.17
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
+    strategy:
+      matrix:
+        target: [linux, windows]
+        include:
+          - target: linux
+            build-docker-image: k0sbuild
+          - target: windows
+            binary-suffix: .exe
 
+    steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-        id: go
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Bindata cache
+      - name: Cache embedded binaries
         uses: actions/cache@v2
-        id: generated-bindata
         with:
+          key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ hashFiles('embedded-bins/**/*') }}
           path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
+            .bins.${{ matrix.target }}.stamp
+            bindata_${{ matrix.target }}
+            embedded-bins/staging/${{ matrix.target }}/bin/
             embedded-bins/Makefile.variables
+            pkg/assets/zz_generated_offsets_${{ matrix.target }}.go
 
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+      - name: Cache GOCACHE
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-build-gocache-${{ matrix.target }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+            ${{ runner.os }}-build-gocache-${{ matrix.target }}-${{ github.ref_name }}-
+          path: |
+            build/cache/go/build
+
+      - name: Cache GOMODCACHE
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-build-gomodcache-${{ matrix.target }}-${{ hashFiles('go.sum') }}
+          path: |
+            build/cache/go/mod
 
       - name: Build
-        run: make build
+        run: make build TARGET_OS='${{ matrix.target }}'
 
-      - name: Run unit tests
-        run: make check-unit
-
-      - name: Validate OCI images manifests
-        run: go run hack/validate-images/main.go -architectures amd64,arm64,arm
-
-      - name: Cache compiled binary for further testing
-        uses: actions/cache@v2
-        id: cache-compiled-binary
+      - name: Upload compiled binary
+        uses: actions/upload-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s${{ matrix.binary-suffix }}
+          path: k0s${{ matrix.binary-suffix }}
 
-  build_windows:
-    name: Build windows
+  unittest:
+    name: Unit test
+    needs: build
     runs-on: ubuntu-latest
-    steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-win-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
 
+    steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ env.GO_VERSION_WIN }}
-        id: go
+          go-version: ${{ env.GO_VERSION }}
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-win-
-
-      - name: Bindata cache
+      - name: Cache GOCACHE
         uses: actions/cache@v2
-        id: generated-bindata
         with:
-          path: |
-            .bins.windows.stamp
-            embedded-bins/staging/windows/bin/
-            bindata_windows
-            pkg/assets/zz_generated_offsets_windows.go
-            embedded-bins/Makefile.variables
-
-          key: ${{ runner.os }}-embedded-bins-win-${{ hashFiles('**/embedded-bins/**/*') }}
+          key: ${{ runner.os }}-unittest-gocache-linux-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-win-${{ hashFiles('**/embedded-bins/**/*') }}
+            ${{ runner.os }}-unittest-gocache-linux-${{ github.ref_name }}-
+            ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-
+          path: |
+            build/cache/go/build
 
-      - name: Build
-        run: make k0s.exe
+      - name: Cache GOMODCACHE
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-unittest-gomodcache-linux-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-build-gomodcache-linux-${{ hashFiles('go.sum') }}
+          path: |
+            build/cache/go/mod
+
+      - name: Run unit tests
+        run: |
+          make EMBEDDED_BINS_BUILDMODE=none check-unit
+
+      - name: Validate OCI images manifests
+        run: make check-image-validity
 
   smoketest:
     name: Smoke test
@@ -171,37 +169,31 @@ jobs:
           - check-k0sctl
 
     steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-        id: go
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
+      - name: Download compiled binary
+        uses: actions/download-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s
 
-      - name: Run test .
-        run: make -C inttest ${{ matrix.smoke-suite }}
+      - name: Run inttest
+        run: chmod +x k0s && make -C inttest ${{ matrix.smoke-suite }}
 
       - name: Collect test logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.cachePrefix }}-logs-${{ matrix.smoke-suite }}-${{ github.run_number }}
-          path: |
-            /tmp/*.log
+          name: smoketest-${{ matrix.smoke-suite }}-logs
+          path: /tmp/*.log
 
   smoketest-airgap:
     name: Smoke test for airgap install
@@ -209,159 +201,149 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get PR Reference and Set Cache Name
-        run: |
-          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
-          echo "cachePrefix=k0s-${PR_NUMBER}-${{ github.sha }}" >> $GITHUB_ENV
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-        id: go
 
-      - name: Cache compiled binary for smoke testing
-        uses: actions/cache@v2
-        id: restore-compiled-binary
+      - name: Download compiled binary
+        uses: actions/download-artifact@v2
         with:
-          path: |
-            k0s
-          key: build-${{env.cachePrefix}}
+          name: k0s
 
-          # We need the bindata cache too so the makefile targets and deps work properly
-      - name: Bindata cache
+      - name: Create airgap image list
+        run: |
+          # Pretend that k0s has been built by make
+          chmod +x k0s
+          make -C embedded-bins staging/linux/bin
+          make -t k0s
+
+          # actually create the image list
+          make image-bundle/image.list
+
+      - name: Cache airgap image bundle
+        id: cache-bundle
         uses: actions/cache@v2
-        id: generated-bindata
         with:
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
-            embedded-bins/Makefile.variables
+          key: ${{ runner.os }}-airgap-image-bundle-${{ hashFiles('image-bundle/image.list') }}
+          path: image-bundle/bundle.tar
 
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-          restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
-
-      - name: Cache images bundle
-        uses: actions/cache@v2
-        id: restore-bundle
-        with:
-          path: |
-            image-bundle/bundle.tar
-          key: build-image-bundle-${{env.cachePrefix}}
+      - name: Create airgap image bundle
+        if: steps.cache-bundle.outputs.cache-hit != 'true'
+        run: make image-bundle/bundle.tar
 
       - name: Run test
-        run: make check-airgap
-
-      - name: Cache images bundle
-        uses: actions/cache@v2
-        id: save-bundle
-        with:
-          path: |
-            image-bundle/bundle.tar
-          key: build-image-bundle-${{env.cachePrefix}}
+        run: make -C inttest check-airgap
 
       - name: Collect test logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.cachePrefix }}-logs-check-airgap-${{ github.run_number }}
-          path: |
-            /tmp/*.log
+          name: smoketest-airgap-check-airgap-logs
+          path: /tmp/*.log
 
   smoketest-arm:
-    name: Smoke test on arm64
-    runs-on: [self-hosted,linux,arm64]
+    name: Smoke test on armv7/arm64
+    strategy:
+      matrix:
+        arch:
+          - arm # this is armv7
+          - arm64
+    runs-on:
+      - self-hosted
+      - linux
+      - ${{ matrix.arch }}
 
     steps:
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
+      - name: "Pre: Fixup directories"
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      # We cannot rely on this for arm: https://github.com/actions/setup-go/issues/106
+      - name: Set up Go
+        if: matrix.arch != 'arm'
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-        id: go
 
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Bindata cache
+      # Install Go manually for arm. See above.
+      - name: Set up Go for armv6l
+        if: matrix.arch == 'arm'
+        run: |
+          echo "Setup go stable version $GO_VERSION"
+          rm -rf -- "$HOME/.local/go"
+          mkdir -p -- "$HOME/.local/go"
+          curl --silent -L "https://golang.org/dl/go${GO_VERSION}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
+
+          echo "$HOME/.local/go/bin" >>"$GITHUB_PATH"
+          export PATH="$PATH:$HOME/.local/go/bin"
+          echo Added go to the path
+
+          echo "Successfully setup go version $GO_VERSION"
+          go version
+          echo ::group::go env
+          go env
+          echo ::endgroup::
+
+      - name: Cache embedded binaries
         uses: actions/cache@v2
-        id: generated-bindata
         with:
+          key: ${{ runner.os }}-embedded-bins-${{ matrix.arch }}-${{ hashFiles('**/embedded-bins/**/*') }}
           path: |
             .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
             bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
+            embedded-bins/staging/linux/bin/
             embedded-bins/Makefile.variables
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
+            pkg/assets/zz_generated_offsets_linux.go
+
+      - name: Cache GOCACHE
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-arm64
+            ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-
+          path: |
+            build/cache/go/build
+
+      - name: Cache GOMODCACHE
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-smoketest-arm-gomodcache-${{ matrix.arch }}-${{ hashFiles('go.sum') }}
+          path: |
+            build/cache/go/mod
+
       - name: Build
         run: make build
 
-      - name: Run test .
+      - name: Run smoketest
         run: make -C inttest check-basic
 
       - name: Collect test logs
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.cachePrefix }}-logs-check-basic-arm-${{ github.run_number }}
-          path: |
-            /tmp/*.log
-  smoketest-armv7:
-    name: Smoke test on armv7
-    runs-on: [self-hosted,linux,arm]
-    steps:
-      # We cannot rely on this as it's not working on arm, see https://github.com/actions/setup-go/issues/106
-      # Instead we must have proper golang version setup at system level.
-      # - name: Set up Go 1.x
-      #   uses: actions/setup-go@v2
-      #   with:
-      #     go-version: ${{ env.GO_VERSION }}
-      #   id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+          name: smoketest-${{ matrix.arch }}-check-basic-logs
+          path: /tmp/*.log
 
-      - name: Install GoLang for ARMHF
-        run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/go$(make -s -f go_version.mk).linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
-      - name: Go Version
-        run: go version
-
-      - name: Bindata cache
-        uses: actions/cache@v2
-        id: generated-bindata
-        with:
-          path: |
-            .bins.linux.stamp
-            embedded-bins/staging/linux/bin/
-            bindata_linux
-            pkg/assets/zz_generated_offsets_linux.go
-            embedded-bins/Makefile.variables
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
-          restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}-armv7
-      - name: Build
-        run: make build
-
-      - name: Run test .
-        run: TIMEOUT=15m make -C inttest check-basic
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ env.cachePrefix }}-logs-check-basic-armv7-${{ github.run_number }}
-          path: |
-            /tmp/*.log
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752
+      # Golang mod cache tends to set directories to read-only, which breaks any
+      # attempts to simply remove those directories. The `make clean-gocache`
+      # target takes care of this, but the mod cache can't be deleted here,
+      # since it shall be cached across builds, and caching takes place as a
+      # post build action. So, as a workaround, ensure that all subdirectories
+      # are writable.
+      - name: "Post: Fixup directories"
+        if: always()
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
