@@ -55,3 +55,12 @@ In order for a PR to be merged, the following conditions should exist:
 2. PR commits have been signed with the `--signoff` option.
 3. PR was reviewed and approved by a code owner.
 4. PR is rebased against upstream's main branch.
+
+### Cleanup the local workspace
+
+In order to clean up the local workspace, run `make clean`. It will clean up all
+of the intermediate files and directories created during the k0s build. Note
+that you can't just use `git clean -X` or even `rm -rf`, since the Go modules
+cache sets all of its subdirectories to read-only. If you get in trouble while
+trying to delete your local workspace, try `chmod -R u+w /path/to/workspace &&
+rm -rf /path/to/workspace`.
