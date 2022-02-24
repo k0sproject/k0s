@@ -26,7 +26,11 @@ bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile
-	docker build --build-arg ETCD_ARCH=$(etcd_arch) -t footloose-alpine -f $< $(dir $<)
+	docker build \
+	  --build-arg ETCD_ARCH=$(etcd_arch) \
+	  --build-arg ETCD_VERSION=$(etcd_version) \
+	  --build-arg KUBE_VERSION=$(kubernetes_version) \
+	  -t footloose-alpine - <'$<'
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
