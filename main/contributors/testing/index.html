@@ -1142,6 +1142,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cleanup-the-local-workspace" class="md-nav__link">
+    Cleanup the local workspace
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1221,6 +1228,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cleanup-the-local-workspace" class="md-nav__link">
+    Cleanup the local workspace
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1288,6 +1302,13 @@ Once a PR is ready for review, transition it from Draft mode, and code owners wi
 <li>PR was reviewed and approved by a code owner.</li>
 <li>PR is rebased against upstream's main branch.</li>
 </ol>
+<h3 id="cleanup-the-local-workspace">Cleanup the local workspace<a class="headerlink" href="#cleanup-the-local-workspace" title="Permanent link">#</a></h3>
+<p>In order to clean up the local workspace, run <code>make clean</code>. It will clean up all
+of the intermediate files and directories created during the k0s build. Note
+that you can't just use <code>git clean -X</code> or even <code>rm -rf</code>, since the Go modules
+cache sets all of its subdirectories to read-only. If you get in trouble while
+trying to delete your local workspace, try <code>chmod -R u+w /path/to/workspace &amp;&amp;
+rm -rf /path/to/workspace</code>.</p>
                 
               
               
