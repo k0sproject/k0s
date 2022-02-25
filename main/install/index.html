@@ -1268,6 +1268,10 @@
 <div class="highlight"><pre><span></span><code>sudo k0s install controller --single
 </code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. Refer to <a href="../k0s-multi-node/#installation-steps">manual install</a> for a custom config file example.</p>
+<p>The system service can be reinstalled with the <code>--force</code> flag:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s install controller --single --force
+sudo systemctl daemon-reload
+</code></pre></div>
 </li>
 <li>
 <p>Start k0s as a service</p>
