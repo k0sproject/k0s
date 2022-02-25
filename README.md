@@ -27,7 +27,7 @@ k0s fits well in any cloud environment, but can also be used in IoT gateways, Ed
 - Automatic lifecycle management with k0sctl: [upgrade](docs/upgrade.md), [backup and restore](docs/backup.md)
 - Modest [system requirements](docs/system-requirements.md) (1 vCPU, 1 GB RAM)
 - Vanilla upstream Kubernetes (with no changes)
-- Available as a single binary with no [OS dependencies](docs/os-deps.md) besides the kernel
+- Available as a single binary with no [external runtime dependencies](docs/external-runtime-deps.md) besides the kernel
 - Flexible deployment options with [control plane isolation](docs/networking.md#controller-worker-communication) as default
 - Scalable from a single node to large, [high-available](docs/high-availability.md) clusters
 - Supports custom [Container Network Interface (CNI)](docs/networking.md) plugins (Kube-Router is the default, Calico is offered as preconfigured alternative)
