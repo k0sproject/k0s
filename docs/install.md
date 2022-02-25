@@ -30,6 +30,13 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
 
+    The system service can be reinstalled with the `--force` flag:
+
+    ```shell
+    sudo k0s install controller --single --force
+    sudo systemctl daemon-reload
+    ```
+
 3. Start k0s as a service
 
     To start the k0s service, run:

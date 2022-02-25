@@ -17,15 +17,17 @@ package install
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
-
-	"github.com/spf13/cobra"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 )
+
+var force bool
 
 type CmdOpts config.CLIOptions
 
@@ -37,14 +39,23 @@ func NewInstallCmd() *cobra.Command {
 
 	cmd.AddCommand(installControllerCmd())
 	cmd.AddCommand(installWorkerCmd())
+	cmd.PersistentFlags().AddFlagSet(getInstallFlags())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
+}
+
+func getInstallFlags() *pflag.FlagSet {
+	flagSet := &pflag.FlagSet{}
+
+	flagSet.BoolVar(&force, "force", false, "force init script creation")
+
+	return flagSet
 }
 
 // the setup functions:
 // * Ensures that the proper users are created
 // * sets up startup and logging for k0s
-func (c *CmdOpts) setup(role string, args []string) error {
+func (c *CmdOpts) setup(role string, args []string, force bool) error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -54,7 +65,7 @@ func (c *CmdOpts) setup(role string, args []string) error {
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
-	err := install.EnsureService(args)
+	err := install.EnsureService(args, force)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %v", err)
 	}
