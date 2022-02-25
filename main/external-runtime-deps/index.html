@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/main/internal/host-dependencies/">
+        <link rel="canonical" href="https://docs.k0sproject.io/main/external-runtime-deps/">
       
       
         
       
-      <link rel="icon" href="../../img/k0s_social.png">
+      <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Host Dependencies - Documentation</title>
+        <title>External runtime dependencies - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#host-dependencies" class="md-skip">
+        <a href="#external-runtime-dependencies" class="md-skip">
           Skip to content
         </a>
       
@@ -103,9 +103,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Host Dependencies
+              External runtime dependencies
             
           </span>
         </div>
@@ -226,9 +226,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -257,7 +257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -270,12 +270,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
       
       
@@ -298,7 +300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -312,7 +314,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0sctl-install/" class="md-nav__link">
+      <a href="../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -352,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-multi-node/" class="md-nav__link">
+      <a href="../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -366,7 +368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-in-docker/" class="md-nav__link">
+      <a href="../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -380,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../experimental-windows/" class="md-nav__link">
+      <a href="../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -394,7 +396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi4/" class="md-nav__link">
+      <a href="../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -408,7 +410,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -422,7 +424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../airgap-install/" class="md-nav__link">
+      <a href="../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -443,7 +445,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../upgrade/" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -457,7 +459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -471,7 +473,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reset/" class="md-nav__link">
+      <a href="../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -485,7 +487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-requirements/" class="md-nav__link">
+      <a href="../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -497,11 +499,99 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../os-deps/" class="md-nav__link">
-        OS Dependencies
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          External runtime dependencies
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        External runtime dependencies
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-unique-machine-id-for-multi-node-setups" class="md-nav__link">
+    A unique machine ID for multi-node setups
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linux-specific" class="md-nav__link">
+    Linux specific
+  </a>
+  
+    <nav class="md-nav" aria-label="Linux specific">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linux-kernel-configuration" class="md-nav__link">
+    Linux kernel configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cgroups" class="md-nav__link">
+    cgroups
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
+    containerd needs apparmor_parser
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
+    Other dependencies in previous versions of k0s
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-specific" class="md-nav__link">
+    Windows specific
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -547,7 +637,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -561,7 +651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dynamic-configuration/" class="md-nav__link">
+      <a href="../dynamic-configuration/" class="md-nav__link">
         Dynamic Configuration
       </a>
     </li>
@@ -575,7 +665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration-validation/" class="md-nav__link">
+      <a href="../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -589,7 +679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../worker-node-config/" class="md-nav__link">
+      <a href="../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -603,7 +693,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../networking/" class="md-nav__link">
+      <a href="../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -617,7 +707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../runtime/" class="md-nav__link">
+      <a href="../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -631,7 +721,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage/" class="md-nav__link">
+      <a href="../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -645,7 +735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manifests/" class="md-nav__link">
+      <a href="../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -659,7 +749,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../helm-charts/" class="md-nav__link">
+      <a href="../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -673,7 +763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cloud-providers/" class="md-nav__link">
+      <a href="../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -687,7 +777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dual-stack/" class="md-nav__link">
+      <a href="../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -701,7 +791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../high-availability/" class="md-nav__link">
+      <a href="../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -715,7 +805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../shell-completion/" class="md-nav__link">
+      <a href="../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -729,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-management/" class="md-nav__link">
+      <a href="../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -743,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../environment-variables/" class="md-nav__link">
+      <a href="../environment-variables/" class="md-nav__link">
         Configuration of Environment Variables
       </a>
     </li>
@@ -757,7 +847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         OpenID Connect
       </a>
     </li>
@@ -771,7 +861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../selinux/" class="md-nav__link">
+      <a href="../selinux/" class="md-nav__link">
         SELinux
       </a>
     </li>
@@ -819,7 +909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -833,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -847,7 +937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -861,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../examples/ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -875,7 +965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -923,7 +1013,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../FAQ/" class="md-nav__link">
+      <a href="../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -937,7 +1027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -985,7 +1075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -999,7 +1089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cis_benchmark/" class="md-nav__link">
+      <a href="../cis_benchmark/" class="md-nav__link">
         Kube-bench Security Benchmark
       </a>
     </li>
@@ -1021,7 +1111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../releases/" class="md-nav__link">
+      <a href="../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1062,7 +1152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/overview/" class="md-nav__link">
+      <a href="../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1076,7 +1166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/github_workflow/" class="md-nav__link">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1090,7 +1180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/testing/" class="md-nav__link">
+      <a href="../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1104,7 +1194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1144,8 +1234,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#list-of-hard-dependencies" class="md-nav__link">
-    List of hard dependencies
+  <a href="#a-unique-machine-id-for-multi-node-setups" class="md-nav__link">
+    A unique machine ID for multi-node setups
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linux-specific" class="md-nav__link">
+    Linux specific
+  </a>
+  
+    <nav class="md-nav" aria-label="Linux specific">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linux-kernel-configuration" class="md-nav__link">
+    Linux kernel configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cgroups" class="md-nav__link">
+    cgroups
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
+    containerd needs apparmor_parser
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
+    Other dependencies in previous versions of k0s
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-specific" class="md-nav__link">
+    Windows specific
   </a>
   
 </li>
@@ -1164,21 +1302,117 @@
                 
                 
                 
-                <h1 id="host-dependencies">Host Dependencies<a class="headerlink" href="#host-dependencies" title="Permanent link">#</a></h1>
-<p>The goal of k0s is to only depend on kernel functionality. However, the kubelet
-currently has several host dependencies. Some of these may need to be bundled,
-but we should prefer upstream contributions to remove these dependencies.</p>
-<h2 id="list-of-hard-dependencies">List of hard dependencies<a class="headerlink" href="#list-of-hard-dependencies" title="Permanent link">#</a></h2>
+                <h1 id="external-runtime-dependencies">External runtime dependencies<a class="headerlink" href="#external-runtime-dependencies" title="Permanent link">#</a></h1>
+<p>k0s is packaged as a single binary, which includes all the needed components.
+All the binaries are statically linked which means that in typical use cases
+there's an absolute minimum of external runtime dependencies.</p>
+<p>However, depending on the node role and cluster configuration, some of the
+underlying components <em>may</em> have specific dependencies, like OS level tools,
+packages and libraries. This page aims to provide a comprehensive overview.</p>
+<p>The following command checks for known requirements on a host (currently only
+available on Linux):</p>
+<div class="highlight"><pre><span></span><code>k0s sysinfo
+</code></pre></div>
+<h2 id="a-unique-machine-id-for-multi-node-setups">A unique machine ID for multi-node setups<a class="headerlink" href="#a-unique-machine-id-for-multi-node-setups" title="Permanent link">#</a></h2>
+<p>Whenever k0s is run in a multi-node setup (i.e. the <code>--single</code> command line flag
+isn't used), k0s requires a <a href="https://github.com/denisbrodbeck/machineid/blob/v1.0.1/README.md#what-you-get">machine ID</a>: a unique host identifier that is
+somewhat stable across reboots. For Linux, this ID is read from the files
+<code>/var/lib/dbus/machine-id</code> or <code>/etc/machine-id</code>. For Windows, it's taken from
+the registry key <code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\MachineGuid</code>.
+If neither of the OS specific sources yield a result, k0s will fallback to use a
+machine ID based on the hostname.</p>
+<p>When running k0s on top of virtualized or containerized environments, you need
+to <a href="https://github.com/denisbrodbeck/machineid/blob/v1.0.1/README.md#unique-key-reliability">ensure</a> that hosts get their own unique IDs, even if they
+have been created from the same image.</p>
+<h2 id="linux-specific">Linux specific<a class="headerlink" href="#linux-specific" title="Permanent link">#</a></h2>
+<!--
+This piece of documentation is best-effort and considered to be augmented and
+extended in the future. The kernel and cgroups requirements are basically taken
+from kubernetes/system-validators. Often there's no real hint as to why they are
+required (although most requirements seem pretty obvious). Also need to check
+for requirements of kube-router and calico.
+-->
+
+<h3 id="linux-kernel-configuration">Linux kernel configuration<a class="headerlink" href="#linux-kernel-configuration" title="Permanent link">#</a></h3>
+<p>Needless to say, as k0s operates Kubernetes worker nodes, there's a certain
+number of needed Linux kernel modules and configurations that we need in the
+system. This basically stems from the need to run both containers and also be
+able to set up networking for the containers.</p>
+<p>The needed kernel configuration items are listed below. All of them are
+available in Kernel versions 4.3 and above. The list covers ONLY the
+k0s/kubernetes components’ needs on worker nodes. Your own workloads may require
+more.</p>
 <ul>
-<li><code>find</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95189</li>
-<li><code>du</code>
--- PR by @ncopa to resolve this: https://github.com/kubernetes/kubernetes/pull/95178
--- note that <code>du</code> dependency remains, but using POSIX-compliant argument</li>
-<li><code>nice</code></li>
-<li><code>iptables</code>
--- as documented in https://github.com/k0sproject/k0s/issues/176 it is unclear whether <code>iptables</code> is needed. It appears to come from the <code>portmap</code> plugin, but the most robust solution may be to simply bundle <code>iptables</code> with k0s.</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5">CONFIG_INET</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L853">CONFIG_NETFILTER_XT_TARGET_REDIRECT</a></li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002">CONFIG_NETFILTER_XT_MATCH_COMMENT</a>
+    (this used to be IP_NF_TARGET_REDIRECT before kernel version 3.7)</p>
+</li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168">CONFIG_NAMESPACES</a></p>
+</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1180">CONFIG_UTS_NS</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1187">CONFIG_IPC_NS</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1210">CONFIG_PID_NS</a></li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218">CONFIG_NET_NS</a></p>
+</li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927">CONFIG_CGROUPS</a></p>
+</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953">CONFIG_CGROUP_FREEZER</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959">CONFIG_CGROUP_PIDS</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975">CONFIG_CGROUP_DEVICE</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981">CONFIG_CPUSETS</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996">CONFIG_CGROUP_CPUACCT</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005">CONFIG_MEMCG</a></li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081">CONFIG_CGROUP_SCHED</a></p>
+<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090">CONFIG_FAIR_GROUP_SCHED</a></li>
 </ul>
+</li>
+<li>
+<p><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33">CONFIG_EXT4_FS</a></p>
+</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/proc/Kconfig#L1">CONFIG_PROC_FS</a></li>
+</ul>
+<h3 id="cgroups">cgroups<a class="headerlink" href="#cgroups" title="Permanent link">#</a></h3>
+<p>Required <a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">cgroups</a> controllers:</p>
+<ul>
+<li>cpu</li>
+<li>cpuacct</li>
+<li>cpuset</li>
+<li>memory</li>
+<li>devices</li>
+<li>freezer</li>
+<li>pids</li>
+</ul>
+<h3 id="containerd-needs-apparmor_parser">containerd needs <code>apparmor_parser</code><a class="headerlink" href="#containerd-needs-apparmor_parser" title="Permanent link">#</a></h3>
+<p>If containerd <a href="https://github.com/containerd/containerd/blob/v1.5.9/pkg/apparmor/apparmor_linux.go#L37-L48">detects</a> that the system is configured to use <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>
+it will require a tool called <code>apparmor_parser</code> to be installed on the system.</p>
+<h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
+<ul>
+<li>
+<p>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
+  Required for worker nodes. Resolved by @ncopa in <a href="https://github.com/k0sproject/k0s/pull/1046">#1046</a> by adding <code>iptables</code>
+  and friends to k0s's embedded binaries.</p>
+</li>
+<li>
+<p>up until k0s v1.21.7+k0s.0: <code>find</code>, <code>du</code> and <code>nice</code><br />
+  Required for worker nodes. Resolved upstream by @ncopa in
+  <a href="https://github.com/kubernetes/kubernetes/pull/96115">kubernetes/kubernetes#96115</a>, contained in Kubernetes 1.21.8 (<a href="https://github.com/kubernetes/kubernetes/commit/5b13c8f68d48740261fa4c96ecb0a504982088a8">5b13c8f68d4</a>)
+  and 1.22.0 (<a href="https://github.com/kubernetes/kubernetes/commit/d45ba645a8f7b288284890a051c73bbae717da4b">d45ba645a8f</a>).</p>
+</li>
+</ul>
+<h2 id="windows-specific">Windows specific<a class="headerlink" href="#windows-specific" title="Permanent link">#</a></h2>
+<!--
+The kubernetes/system-validators require certain Windows versions starting with
+Windows Server 2016. k0s states that it requires Windows Server 2019, though.
+-->
+
+<p>TBD.</p>
                 
               
               
@@ -1195,6 +1429,41 @@ but we should prefer upstream contributions to remove these dependencies.</p>
       
         
 <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../system-requirements/" class="md-footer__link md-footer__link--prev" aria-label="Previous: System Requirements" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              System Requirements
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../configuration/" class="md-footer__link md-footer__link--next" aria-label="Next: Configuration Options" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Configuration Options
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -1244,10 +1513,10 @@ but we should prefer upstream contributions to remove these dependencies.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"method": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>
