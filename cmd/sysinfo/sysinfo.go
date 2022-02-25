@@ -49,26 +49,27 @@ func runSysinfo() error {
 
 	spec := system.DefaultSysSpec
 	spec.KernelSpec.Required =
+		// this is documented in docs/external-runtime-deps.md
 		[]system.KernelConfig{
-			{Name: "NAMESPACES"},
-			{Name: "NET_NS"},
-			{Name: "PID_NS"},
-			{Name: "IPC_NS"},
-			{Name: "UTS_NS"},
-			{Name: "CGROUPS"},
-			{Name: "CGROUP_CPUACCT"},
-			{Name: "CGROUP_DEVICE"},
-			{Name: "CGROUP_FREEZER"},
-			{Name: "CGROUP_PIDS"},
-			{Name: "CGROUP_SCHED"},
-			{Name: "CPUSETS"},
-			{Name: "MEMCG"},
 			{Name: "INET"},
-			{Name: "EXT4_FS"},
-			{Name: "PROC_FS"},
 			{Name: "NETFILTER_XT_TARGET_REDIRECT", Aliases: []string{"IP_NF_TARGET_REDIRECT"}},
 			{Name: "NETFILTER_XT_MATCH_COMMENT"},
+			{Name: "NAMESPACES"},
+			{Name: "UTS_NS"},
+			{Name: "IPC_NS"},
+			{Name: "PID_NS"},
+			{Name: "NET_NS"},
+			{Name: "CGROUPS"},
+			{Name: "CGROUP_FREEZER"},
+			{Name: "CGROUP_PIDS"},
+			{Name: "CGROUP_DEVICE"},
+			{Name: "CPUSETS"},
+			{Name: "CGROUP_CPUACCT"},
+			{Name: "MEMCG"},
+			{Name: "CGROUP_SCHED"},
 			{Name: "FAIR_GROUP_SCHED"},
+			{Name: "EXT4_FS"},
+			{Name: "PROC_FS"},
 		}
 
 	spec.KernelSpec.Optional =
