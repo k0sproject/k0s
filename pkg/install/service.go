@@ -85,8 +85,23 @@ func EnsureService(args []string) error {
 	// fetch service type
 	svcType := s.Platform()
 	switch svcType {
+	case "darwin-launchd":
+		svcConfig.Option = map[string]interface{}{
+			"LaunchdConfig": launchdConfig,
+		}
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
+		svcConfig.Option = map[string]interface{}{
+			"OpenRCScript": openRCScript,
+		}
+	case "linux-upstart":
+		svcConfig.Option = map[string]interface{}{
+			"UpstartScript": upstartScript,
+		}
+	case "unix-systemv":
+		svcConfig.Option = map[string]interface{}{
+			"SystemdScript": sysvScript,
+		}
 	case "linux-systemd":
 		deps = []string{"After=network-online.target", "Wants=network-online.target"}
 		svcConfig.Option = map[string]interface{}{
