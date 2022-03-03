@@ -1265,7 +1265,7 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <li>
 <p>Linting</p>
 <p>We use <a href="https://golangci-lint.run/usage/install/#local-installation">golangci-lint</a> for style verification.
-In the repository's root directory, simply run:</p>
+  In the repository's root directory, simply run:</p>
 <div class="highlight"><pre><span></span><code>make lint
 </code></pre></div>
 </li>
@@ -1277,12 +1277,10 @@ In the repository's root directory, simply run:</p>
 <li>
 <p>Pre-submit Flight Checks</p>
 <p>In the repository root directory, make sure that:</p>
-<ul>
-<li><code>make build</code> runs successfully.</li>
-<li><code>make check-basic</code> runs successfully.</li>
-<li><code>make check-unit</code> has no errors.</li>
-<li><code>make check-hacontrolplane</code> runs successfully.</li>
-</ul>
+<p>* <code>make build</code> runs successfully.
+  * <code>make check-basic</code> runs successfully.
+  * <code>make check-unit</code> has no errors.
+  * <code>make check-hacontrolplane</code> runs successfully.</p>
 <p>Please note that this last test is prone to "flakiness", so it might fail on occasion. If it fails constantly, take a deeper look at your code to find the source of the problem.</p>
 <p>If you find that all tests passed, you may open a pull request upstream.</p>
 </li>

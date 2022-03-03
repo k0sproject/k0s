@@ -1343,39 +1343,39 @@ available in Kernel versions 4.3 and above. The list covers ONLY the
 k0s/kubernetes components’ needs on worker nodes. Your own workloads may require
 more.</p>
 <ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5">CONFIG_INET</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5">CONFIG_INET</a><ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L853">CONFIG_NETFILTER_XT_TARGET_REDIRECT</a></li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002">CONFIG_NETFILTER_XT_MATCH_COMMENT</a>
-    (this used to be IP_NF_TARGET_REDIRECT before kernel version 3.7)</p>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002">CONFIG_NETFILTER_XT_MATCH_COMMENT</a>
+  (this used to be IP_NF_TARGET_REDIRECT before kernel version 3.7)</li>
+</ul>
 </li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168">CONFIG_NAMESPACES</a></p>
-</li>
+</ul>
+<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168">CONFIG_NAMESPACES</a><ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1180">CONFIG_UTS_NS</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1187">CONFIG_IPC_NS</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1210">CONFIG_PID_NS</a></li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218">CONFIG_NET_NS</a></p>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218">CONFIG_NET_NS</a></li>
+</ul>
 </li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927">CONFIG_CGROUPS</a></p>
-</li>
+</ul>
+<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927">CONFIG_CGROUPS</a><ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953">CONFIG_CGROUP_FREEZER</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959">CONFIG_CGROUP_PIDS</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975">CONFIG_CGROUP_DEVICE</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981">CONFIG_CPUSETS</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996">CONFIG_CGROUP_CPUACCT</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005">CONFIG_MEMCG</a></li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081">CONFIG_CGROUP_SCHED</a></p>
-<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081">CONFIG_CGROUP_SCHED</a><ul>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090">CONFIG_FAIR_GROUP_SCHED</a></li>
 </ul>
 </li>
-<li>
-<p><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33">CONFIG_EXT4_FS</a></p>
+</ul>
 </li>
+</ul>
+<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33">CONFIG_EXT4_FS</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/proc/Kconfig#L1">CONFIG_PROC_FS</a></li>
 </ul>
 <h3 id="cgroups">cgroups<a class="headerlink" href="#cgroups" title="Permanent link">#</a></h3>
@@ -1394,17 +1394,15 @@ more.</p>
 it will require a tool called <code>apparmor_parser</code> to be installed on the system.</p>
 <h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
 <ul>
-<li>
-<p>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
+<li>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
   Required for worker nodes. Resolved by @ncopa in <a href="https://github.com/k0sproject/k0s/pull/1046">#1046</a> by adding <code>iptables</code>
-  and friends to k0s's embedded binaries.</p>
-</li>
-<li>
-<p>up until k0s v1.21.7+k0s.0: <code>find</code>, <code>du</code> and <code>nice</code><br />
+  and friends to k0s's embedded binaries.</li>
+</ul>
+<ul>
+<li>up until k0s v1.21.7+k0s.0: <code>find</code>, <code>du</code> and <code>nice</code><br />
   Required for worker nodes. Resolved upstream by @ncopa in
   <a href="https://github.com/kubernetes/kubernetes/pull/96115">kubernetes/kubernetes#96115</a>, contained in Kubernetes 1.21.8 (<a href="https://github.com/kubernetes/kubernetes/commit/5b13c8f68d48740261fa4c96ecb0a504982088a8">5b13c8f68d4</a>)
-  and 1.22.0 (<a href="https://github.com/kubernetes/kubernetes/commit/d45ba645a8f7b288284890a051c73bbae717da4b">d45ba645a8f</a>).</p>
-</li>
+  and 1.22.0 (<a href="https://github.com/kubernetes/kubernetes/commit/d45ba645a8f7b288284890a051c73bbae717da4b">d45ba645a8f</a>).</li>
 </ul>
 <h2 id="windows-specific">Windows specific<a class="headerlink" href="#windows-specific" title="Permanent link">#</a></h2>
 <!--

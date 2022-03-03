@@ -1306,83 +1306,69 @@ k0s-7 Running <span class="m">192</span>.168.64.61 Ubuntu <span class="m">20</sp
 </li>
 <li>
 <p>Create Ansible inventory</p>
-<ol>
-<li>
-<p>Copy the sample to create the inventory directory:</p>
-<div class="highlight"><pre><span></span><code>cp -rfp inventory/sample inventory/multipass
+<p>1. Copy the sample to create the inventory directory:</p>
+<div class="highlight"><pre><span></span><code>  ```shell
+  cp -rfp inventory/sample inventory/multipass
+  ```
 </code></pre></div>
-</li>
-<li>
-<p>Create the inventory.</p>
-<p>Assign the virtual machines to the different host groups, as required by the playbook logic.</p>
-<table>
-<thead>
-<tr>
-<th align="left">Host group</th>
-<th align="left">Detail</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left"><code>initial_controller</code></td>
-<td align="left">Must contain a single node that creates the worker and controller tokens needed by the other nodes</td>
-</tr>
-<tr>
-<td align="left"><code>controller</code></td>
-<td align="left">Can contain nodes that, together with the host from <code>initial_controller</code>, form a highly available isolated control plane</td>
-</tr>
-<tr>
-<td align="left"><code>worker</code></td>
-<td align="left">Must contain at least one node, to allow for the deployment of Kubernetes objects</td>
-</tr>
-</tbody>
-</table>
-</li>
-<li>
-<p>Fill in <code>inventory/multipass/inventory.yml</code>. This can be done by direct entry using the metadata provided by <code>multipass list,</code>, or you can use the following Python script <code>multipass_generate_inventory.py</code>:</p>
-<div class="highlight"><pre><span></span><code>./tools/multipass_generate_inventory.py
+<p>2. Create the inventory.</p>
+<div class="highlight"><pre><span></span><code>  Assign the virtual machines to the different host groups, as required by the playbook logic.
+
+  | Host group            | Detail                                    |
+  |:----------------------|:------------------------------------------|
+  | `initial_controller`  | Must contain a single node that creates the worker and controller tokens needed by the other nodes|
+  | `controller`          | Can contain nodes that, together with the host from `initial_controller`, form a highly available isolated control plane |
+  | `worker`              | Must contain at least one node, to allow for the deployment of Kubernetes objects |
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>Designate first three instances as control plane
-Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
-$ cp tools/inventory.yml inventory/multipass/inventory.yml
+<p>3. Fill in <code>inventory/multipass/inventory.yml</code>. This can be done by direct entry using the metadata provided by <code>multipass list,</code>, or you can use the following Python script <code>multipass_generate_inventory.py</code>:</p>
+<div class="highlight"><pre><span></span><code>  ```shell
+  ./tools/multipass_generate_inventory.py
+  ```
+
+  ```shell
+  Designate first three instances as control plane
+  Created Ansible Inventory at: /Users/dev/k0s-ansible/tools/inventory.yml
+  $ cp tools/inventory.yml inventory/multipass/inventory.yml
+  ```
+
+  Your `inventory/multipass/inventory.yml` should resemble the example below:
+
+  ```yaml
+  ---
+  all:
+    children:
+      initial_controller:
+        hosts:
+          k0s-1:
+      controller:
+        hosts:
+          k0s-2:
+          k0s-3:
+      worker:
+        hosts:
+          k0s-4:
+          k0s-5:
+          k0s-6:
+          k0s-7:
+    hosts:
+      k0s-1:
+        ansible_host: 192.168.64.32
+      k0s-2:
+        ansible_host: 192.168.64.33
+      k0s-3:
+        ansible_host: 192.168.64.56
+      k0s-4:
+        ansible_host: 192.168.64.57
+      k0s-5:
+        ansible_host: 192.168.64.58
+      k0s-6:
+        ansible_host: 192.168.64.60
+      k0s-7:
+        ansible_host: 192.168.64.61
+    vars:
+      ansible_user: k0s
+  ```
 </code></pre></div>
-<p>Your <code>inventory/multipass/inventory.yml</code> should resemble the example below:</p>
-<div class="highlight"><pre><span></span><code><span class="nn">---</span><span class="w"></span>
-<span class="nt">all</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">children</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">initial_controller</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-1</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">controller</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-2</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-3</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">worker</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-4</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-5</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-6</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">k0s-7</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-1</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.32</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-2</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.33</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-3</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.56</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-4</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.57</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-5</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.58</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-6</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.60</span><span class="w"></span>
-<span class="w">    </span><span class="nt">k0s-7</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">ansible_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.64.61</span><span class="w"></span>
-<span class="w">  </span><span class="nt">vars</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">ansible_user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span><span class="w"></span>
-</code></pre></div>
-</li>
-</ol>
 </li>
 <li>
 <p>Test the virtual machine connections</p>
