@@ -18,6 +18,7 @@ package install
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -87,7 +88,8 @@ func EnsureService(args []string, envVars []string, force bool) error {
 	switch svcType {
 	case "darwin-launchd":
 		svcConfig.Option = map[string]interface{}{
-			"LaunchdConfig": launchdConfig,
+			"EnvironmentMap": prepareEnvVars(envVars),
+			"LaunchdConfig":  launchdConfig,
 		}
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
@@ -191,6 +193,19 @@ func GetServiceConfig(role string) *service.Config {
 		DisplayName: k0sDisplayName,
 		Description: k0sDescription,
 	}
+}
+
+func prepareEnvVars(envVars []string) map[string]string {
+	result := make(map[string]string)
+	for _, envVar := range envVars {
+		parts := strings.SplitN(envVar, "=", 1)
+		if len(parts) != 2 {
+			continue
+		}
+
+		result[parts[0]] = parts[1]
+	}
+	return result
 }
 
 // Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template

@@ -8,7 +8,7 @@ const launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 	{{- if .Option.Environment}}
     <key>EnvironmentVariables</key>
 	<dict>
-	{{range $k, $v := .Option.Environment -}}
+	{{range $k, $v := .Option.EnvironmentMap -}}
 	<key>{{html $k}}</key>
 	<string>{{html $v}}</string>
 	{{end -}}
