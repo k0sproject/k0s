@@ -50,6 +50,8 @@ check-ctr: TIMEOUT=10m
 check-byocri: TIMEOUT=5m
 # readiness check for metric tests takes between around 5 and 6 minutes.
 check-metrics: TIMEOUT=6m
+check-metricscraper: TIMEOUT=6m
+
 check-calico: TIMEOUT=6m
 
 # Establishing konnectivity tunnels with the LB in place takes a while, thus a bit longer timeout for the smoke

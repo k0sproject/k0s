@@ -28,4 +28,5 @@ smoketests := \
 	check-upgrade \
 	check-workerrestart \
 	check-kubectl \
-	check-k0sctl
+	check-k0sctl \
+	check-metricscraper

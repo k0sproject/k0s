@@ -167,6 +167,7 @@ jobs:
           - check-workerrestart
           - check-kubectl
           - check-k0sctl
+          - check-metricscraper
 
     steps:
       - name: Check out code into the Go module directory
