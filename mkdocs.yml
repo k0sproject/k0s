@@ -33,7 +33,7 @@ nav:
       - Networking (CNI):                 networking.md
       - Runtime (CRI):                    runtime.md
       - Storage (CSI):                    storage.md
-      - System monitoring:                system-monitoring.md
+      - System Components Monitoring:     system-monitoring.md
       - Manifest Deployer:                manifests.md
       - Helm Charts:                      helm-charts.md
       - Cloud Providers:                  cloud-providers.md
