@@ -27,7 +27,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/install"
 )
 
-var force bool
+var (
+	force   bool
+	envVars []string
+)
 
 type CmdOpts config.CLIOptions
 
@@ -48,6 +51,7 @@ func getInstallFlags() *pflag.FlagSet {
 	flagSet := &pflag.FlagSet{}
 
 	flagSet.BoolVar(&force, "force", false, "force init script creation")
+	flagSet.StringArrayVarP(&envVars, "env", "e", nil, "set environment variable")
 
 	return flagSet
 }
@@ -55,7 +59,7 @@ func getInstallFlags() *pflag.FlagSet {
 // the setup functions:
 // * Ensures that the proper users are created
 // * sets up startup and logging for k0s
-func (c *CmdOpts) setup(role string, args []string, force bool) error {
+func (c *CmdOpts) setup(role string, args []string, envVars []string, force bool) error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -65,7 +69,7 @@ func (c *CmdOpts) setup(role string, args []string, force bool) error {
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
-	err := install.EnsureService(args, force)
+	err := install.EnsureService(args, envVars, force)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %v", err)
 	}

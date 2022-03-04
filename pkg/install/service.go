@@ -18,6 +18,7 @@ package install
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
@@ -65,7 +66,7 @@ func InstalledService() (service.Service, error) {
 }
 
 // EnsureService installs the k0s service, per the given arguments, and the detected platform
-func EnsureService(args []string, force bool) error {
+func EnsureService(args []string, envVars []string, force bool) error {
 	var deps []string
 	var svcConfig *service.Config
 
@@ -85,8 +86,24 @@ func EnsureService(args []string, force bool) error {
 	// fetch service type
 	svcType := s.Platform()
 	switch svcType {
+	case "darwin-launchd":
+		svcConfig.Option = map[string]interface{}{
+			"EnvironmentMap": prepareEnvVars(envVars),
+			"LaunchdConfig":  launchdConfig,
+		}
 	case "linux-openrc":
 		deps = []string{"need net", "use dns", "after firewall"}
+		svcConfig.Option = map[string]interface{}{
+			"OpenRCScript": openRCScript,
+		}
+	case "linux-upstart":
+		svcConfig.Option = map[string]interface{}{
+			"UpstartScript": upstartScript,
+		}
+	case "unix-systemv":
+		svcConfig.Option = map[string]interface{}{
+			"SystemdScript": sysvScript,
+		}
 	case "linux-systemd":
 		deps = []string{"After=network-online.target", "Wants=network-online.target"}
 		svcConfig.Option = map[string]interface{}{
@@ -94,6 +111,10 @@ func EnsureService(args []string, force bool) error {
 			"LimitNOFILE":   999999,
 		}
 	default:
+	}
+
+	if len(envVars) > 0 {
+		svcConfig.Option["Environment"] = envVars
 	}
 
 	svcConfig.Dependencies = deps
@@ -174,6 +195,19 @@ func GetServiceConfig(role string) *service.Config {
 	}
 }
 
+func prepareEnvVars(envVars []string) map[string]string {
+	result := make(map[string]string)
+	for _, envVar := range envVars {
+		parts := strings.SplitN(envVar, "=", 1)
+		if len(parts) != 2 {
+			continue
+		}
+
+		result[parts[0]] = parts[1]
+	}
+	return result
+}
+
 // Upstream kardianos/service does not support all the options we want to set to the systemd unit, hence we override the template
 // Currently mostly for KillMode=process so we get systemd to only send the sigterm to the main process
 const systemdScript = `[Unit]
@@ -187,6 +221,8 @@ ConditionFileIsExecutable={{.Path|cmdEscape}}
 StartLimitInterval=5
 StartLimitBurst=10
 ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmdEscape}}{{end}}
+{{- if .Option.Environment}}{{range .Option.Environment}}
+Environment="{{.}}"{{end}}{{- end}}
 
 RestartSec=120
 Delegate=yes
