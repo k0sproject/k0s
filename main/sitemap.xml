@@ -176,6 +176,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/main/system-monitoring/</loc>
+         <lastmod>2022-03-04</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/main/system-requirements/</loc>
          <lastmod>2022-03-04</lastmod>
          <changefreq>daily</changefreq>
