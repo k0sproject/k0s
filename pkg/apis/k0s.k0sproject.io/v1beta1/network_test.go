@@ -211,6 +211,16 @@ func (s *NetworkSuite) TestValidation() {
 		s.Contains(errors[0].Error(), "invalid service CIDR")
 	})
 
+	s.T().Run("invalid_cluster_domain", func(t *testing.T) {
+		n := DefaultNetwork()
+		n.ClusterDomain = ".invalid-cluster-domain"
+
+		errors := n.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "invalid clusterDomain .invalid-cluster-domain")
+	})
+
 	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
 		n := DefaultNetwork()
 		n.Calico = DefaultCalico()
