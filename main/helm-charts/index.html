@@ -712,6 +712,26 @@
     Helm charts in k0s configuration
   </a>
   
+    <nav class="md-nav" aria-label="Helm charts in k0s configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wait-for-install" class="md-nav__link">
+    Wait for install
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chart-configuration" class="md-nav__link">
+    Chart configuration
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1211,6 +1231,26 @@
     Helm charts in k0s configuration
   </a>
   
+    <nav class="md-nav" aria-label="Helm charts in k0s configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wait-for-install" class="md-nav__link">
+    Wait for install
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chart-configuration" class="md-nav__link">
+    Chart configuration
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1243,6 +1283,22 @@
 </ul>
 <h2 id="helm-charts-in-k0s-configuration">Helm charts in k0s configuration<a class="headerlink" href="#helm-charts-in-k0s-configuration" title="Permanent link">#</a></h2>
 <p>Adding Helm charts into the k0s configuration file gives you a declarative way in which to configure the cluster. k0s controller manages the setup of Helm charts that are defined as extensions in the k0s configuration file.</p>
+<h3 id="wait-for-install">Wait for install<a class="headerlink" href="#wait-for-install" title="Permanent link">#</a></h3>
+<p>Each chart is proccesed the same way CLI tool does with following options:</p>
+<ul>
+<li>--wait</li>
+<li>--wait-for-jobs</li>
+<li>--timeout 10m</li>
+</ul>
+<p>It is possible to customize timeout by using <code>.Timeout</code> field.</p>
+<h3 id="chart-configuration">Chart configuration<a class="headerlink" href="#chart-configuration" title="Permanent link">#</a></h3>
+<p>| Field | Default value | Description |</p>
+<p>| name | - | Release name |
+| chartname | - | chartname in form "repository/chartname"|
+| version | - | version to install |
+| timeout | 10m | timeout to wait for release install |
+| values | - | yaml as a string, custom chart values |
+| namespace | - | namespace to install chart into |</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
 <p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
@@ -1257,6 +1313,7 @@
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-stack</span><span class="w"></span>
 <span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus-community/prometheus</span><span class="w"></span>
 <span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.6.1&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20m</span><span class="w"></span>
 <span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span><span class="w"></span>
 <span class="w">          </span><span class="no">alertmanager:</span><span class="w"></span>
 <span class="w">            </span><span class="no">persistentVolume:</span><span class="w"></span>
