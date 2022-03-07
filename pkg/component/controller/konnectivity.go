@@ -325,14 +325,7 @@ spec:
         kubernetes.io/os: linux
       priorityClassName: system-cluster-critical
       tolerations:
-        - key: "CriticalAddonsOnly"
-          operator: "Exists"
-        - key: "node-role.kubernetes.io/master"
-          operator: "Exists"
-          effect: "NoSchedule"
-        {{ if .TunneledNetworkingMode }}
         - operator: Exists
-        {{ end }}
       {{ if .TunneledNetworkingMode }}
       hostNetwork: true
       {{ end }}
