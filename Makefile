@@ -193,7 +193,7 @@ ROOT_DIR := $(shell pwd)
 manifests: .helmCRD .cfgCRD
 
 .helmCRD:
-	$(go_controllergen) crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)static/manifests/helm/CustomResourceDefinition object
+	$(go_controllergen) crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/helm/CustomResourceDefinition object
 
 .cfgCRD:
 	$(go_controllergen) crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object

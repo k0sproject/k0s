@@ -45,21 +45,22 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
-	as.waitForPrometheusRelease(addonName, 1)
+	as.NoError(as.RunWorkers())
+	kc, err := as.KubeClient(as.ControllerNode(0))
+	as.NoError(err)
+	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
+	as.NoError(err)
+	as.waitForTestRelease(addonName, 1)
 
 	values := map[string]interface{}{
-		"server": map[string]interface{}{
-			"env": []interface{}{
-				map[string]interface{}{
-					"name":  "FOO",
-					"value": "foobar",
-				},
-			},
+		"replicaCount": 2,
+		"image": map[string]interface{}{
+			"pullPolicy": "Always",
 		},
 	}
-	as.doPrometheusUpdate(addonName, values)
-	chart := as.waitForPrometheusRelease(addonName, 2)
-	as.Require().NoError(as.waitForPrometheusServerEnvs(chart.Status.ReleaseName))
+	as.doTestAddonUpdate(addonName, values)
+	chart := as.waitForTestRelease(addonName, 2)
+	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.doPrometheusDelete(chart)
 }
 
@@ -91,8 +92,8 @@ func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	}))
 }
 
-func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1beta1.Chart {
-	as.T().Logf("waiting to see prometheus release ready in kube API, generation %d", rev)
+func (as *AddonsSuite) waitForTestRelease(addonName string, rev int64) *v1beta1.Chart {
+	as.T().Logf("waiting to see test-addon release ready in kube API, generation %d", rev)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
@@ -122,7 +123,7 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1
 		}
 
 		as.Require().Equal("default", chart.Status.Namespace)
-		as.Require().Equal("2.26.0", chart.Status.AppVersion)
+		as.Require().Equal("0.4.0", chart.Status.AppVersion)
 		as.Require().Equal("default", chart.Status.Namespace)
 		as.Require().NotEmpty(chart.Status.ReleaseName)
 		as.Require().Empty(chart.Status.Error)
@@ -134,35 +135,25 @@ func (as *AddonsSuite) waitForPrometheusRelease(addonName string, rev int64) *v1
 	return &chart
 }
 
-func (as *AddonsSuite) waitForPrometheusServerEnvs(releaseName string) error {
-	as.T().Logf("waiting to see prometheus release to have envs set from values yaml")
+func (as *AddonsSuite) checkCustomValues(releaseName string) error {
+	as.T().Logf("waiting to see release to have values set from CRD yaml")
 	kc, err := as.KubeClient(as.ControllerNode(0))
 	if err != nil {
 		return err
 	}
-
 	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		serverDeployment := fmt.Sprintf("%s-prometheus-server", releaseName)
+		serverDeployment := fmt.Sprintf("%s-echo-server", releaseName)
 		d, err := kc.AppsV1().Deployments("default").Get(context.TODO(), serverDeployment, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
-		for _, c := range d.Spec.Template.Spec.Containers {
-			if c.Name == "prometheus-server" {
-				for _, e := range c.Env {
-					if e.Name == "FOO" && e.Value == "foobar" {
-						return true, nil
-					}
-				}
-			} else {
-				continue
-			}
-		}
-		return false, nil
+		as.Require().Equal(int32(2), *d.Spec.Replicas, "Must have replicas value set from passed values")
+		as.Require().Equal("Always", string(d.Spec.Template.Spec.Containers[0].ImagePullPolicy))
+		return true, nil
 	})
 }
 
-func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]interface{}) {
+func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]interface{}) {
 	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/addon_crd_manifest_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)
@@ -177,9 +168,9 @@ func (as *AddonsSuite) doPrometheusUpdate(addonName string, values map[string]in
 			TargetNS  string
 		}{
 			Name:      "test-addon",
-			ChartName: "prometheus-community/prometheus",
+			ChartName: "ealenn/echo-server",
 			Values:    string(valuesBytes),
-			Version:   "14.6.0",
+			Version:   "0.4.0",
 			TargetNS:  "default",
 		},
 	}
@@ -194,6 +185,7 @@ func TestAddonsSuite(t *testing.T) {
 	s := AddonsSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
+			WorkerCount:     1,
 		},
 	}
 
@@ -206,14 +198,12 @@ spec:
     extensions:
         helm:
           repositories:
-          - name: stable
-            url: https://charts.helm.sh/stable
-          - name: prometheus-community
-            url: https://prometheus-community.github.io/helm-charts
+          - name: ealenn
+            url: https://ealenn.github.io/charts
           charts:
           - name: %s
-            chartname: prometheus-community/prometheus
-            version: "14.6.0"
+            chartname: ealenn/echo-server
+            version: "0.3.1"
             values: ""
             namespace: default
 `

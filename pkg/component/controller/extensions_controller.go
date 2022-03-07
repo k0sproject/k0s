@@ -105,6 +105,7 @@ func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions) *k0sAPI.HelmExtens
 		ChartName: "openebs-internal/openebs",
 		TargetNS:  "openebs",
 		Version:   constant.OpenEBSVersion,
+		Timeout:   time.Duration(time.Minute * 30), // it takes a while to install openebs
 	})
 	return helmSpec
 }
@@ -200,16 +201,33 @@ func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) e
 	return nil
 }
 
+const defaultTimeout = time.Duration(10 * time.Minute)
+
 func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1beta1.Chart) error {
 	var err error
 	var chartRelease *release.Release
+	timeout, err := time.ParseDuration(chart.Spec.Timeout)
+	if err != nil {
+		cr.L.Tracef("Can't parse `%s` as time.Duration, using default timeout `%s`", chart.Spec.Timeout, defaultTimeout)
+		timeout = defaultTimeout
+	}
+	if timeout == 0 {
+		cr.L.Tracef("Using default timeout `%s`, failed to parse `%s`", defaultTimeout, chart.Spec.Timeout)
+		timeout = defaultTimeout
+	}
+	defer func() {
+		cr.updateStatus(ctx, chart, chartRelease, err)
+	}()
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
+		cr.L.Tracef("Start update or install %s", chart.Spec.ChartName)
 		chartRelease, err = cr.helm.InstallChart(chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.ReleaseName,
 			chart.Spec.Namespace,
-			chart.Spec.YamlValues())
+			chart.Spec.YamlValues(),
+			timeout,
+		)
 		if err != nil {
 			return fmt.Errorf("can't reconcile installation for `%s`: %v", chart.GetName(), err)
 		}
@@ -220,24 +238,32 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 			chart.Status.ReleaseName,
 			chart.Status.Namespace,
 			chart.Spec.YamlValues(),
+			timeout,
 		)
 		if err != nil {
 			return fmt.Errorf("can't reconcile upgrade for `%s`: %v", chart.GetName(), err)
 		}
 	}
-
-	chart.Status.ReleaseName = chartRelease.Name
-	chart.Status.Version = chartRelease.Chart.Metadata.Version
-	chart.Status.AppVersion = chartRelease.Chart.AppVersion()
-	chart.Status.Updated = time.Now().String()
-	chart.Status.Revision = int64(chartRelease.Version)
-	chart.Status.Namespace = chartRelease.Namespace
-	chart.Status.Error = ""
-	err = cr.Client.Status().Update(ctx, &chart)
-	if err != nil {
-		return fmt.Errorf("can't update status for `%s`: %v", chart.GetName(), err)
-	}
+	cr.updateStatus(ctx, chart, chartRelease, nil)
 	return nil
+}
+
+func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) {
+
+	if chartRelease != nil {
+		chart.Status.ReleaseName = chartRelease.Name
+		chart.Status.Version = chartRelease.Chart.Metadata.Version
+		chart.Status.AppVersion = chartRelease.Chart.AppVersion()
+		chart.Status.Revision = int64(chartRelease.Version)
+		chart.Status.Namespace = chartRelease.Namespace
+	}
+	chart.Status.Updated = time.Now().String()
+	if err != nil {
+		chart.Status.Error = err.Error()
+	}
+	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
+		cr.L.Errorf("Failed to update status for chart release %s: %s", chart.Name, updErr)
+	}
 }
 
 func (ec *ExtensionsController) addRepo(repo k0sAPI.Repository) error {
@@ -255,6 +281,7 @@ metadata:
 spec:
   chartName: {{ .ChartName }}
   releaseName: {{ .Name }}
+  timeout: {{ .Timeout }}
   values: |
 {{ .Values | nindent 4 }}
   version: {{ .Version }}

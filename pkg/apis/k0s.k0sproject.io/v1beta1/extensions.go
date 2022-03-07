@@ -17,6 +17,7 @@ package v1beta1
 
 import (
 	"errors"
+	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 )
@@ -86,11 +87,12 @@ func (he HelmExtensions) Validate() []error {
 
 // Chart single helm addon
 type Chart struct {
-	Name      string `json:"name"`
-	ChartName string `json:"chartname"`
-	Version   string `json:"version"`
-	Values    string `json:"values"`
-	TargetNS  string `json:"namespace"`
+	Name      string        `json:"name"`
+	ChartName string        `json:"chartname"`
+	Version   string        `json:"version"`
+	Values    string        `json:"values"`
+	TargetNS  string        `json:"namespace"`
+	Timeout   time.Duration `json:"timeout"`
 }
 
 // Validate performs validation
