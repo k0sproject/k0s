@@ -18,6 +18,7 @@ package supervisor
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 	"syscall"
@@ -123,14 +124,19 @@ func TestGetEnv(t *testing.T) {
 }
 
 func TestRespawn(t *testing.T) {
+	truePath, err := exec.LookPath("true")
+	if err != nil {
+		t.Errorf("could not find a path for 'true' executable: %s", err)
+	}
+
 	s := Supervisor{
 		Name:           "supervisor-test-respawn",
-		BinPath:        "/bin/true",
+		BinPath:        truePath,
 		RunDir:         ".",
 		Args:           []string{},
 		TimeoutRespawn: 10 * time.Millisecond,
 	}
-	err := s.Supervise()
+	err = s.Supervise()
 	if err != nil {
 		t.Errorf("Failed to start %s: %v", s.Name, err)
 	}
@@ -156,14 +162,19 @@ func TestRespawn(t *testing.T) {
 }
 
 func TestStopWhileRespawn(t *testing.T) {
+	falsePath, err := exec.LookPath("false")
+	if err != nil {
+		t.Errorf("could not find a path for 'false' executable: %s", err)
+	}
+
 	s := Supervisor{
 		Name:           "supervisor-test-stop-while-respawn",
-		BinPath:        "/bin/false",
+		BinPath:        falsePath,
 		RunDir:         ".",
 		Args:           []string{},
 		TimeoutRespawn: 1 * time.Second,
 	}
-	err := s.Supervise()
+	err = s.Supervise()
 	if err != nil {
 		t.Errorf("Failed to start %s: %v", s.Name, err)
 	}
