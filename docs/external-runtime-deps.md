@@ -96,7 +96,7 @@ Required [cgroups] controllers:
 If containerd [detects][cd-aa] that the system is configured to use [AppArmor]
 it will require a tool called `apparmor_parser` to be installed on the system.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v1.5.9/pkg/apparmor/apparmor_linux.go#L37-L48
+[cd-aa]: https://github.com/containerd/containerd/blob/v1.5.10/pkg/apparmor/apparmor_linux.go#L37-L48
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 ### Other dependencies in previous versions of k0s
