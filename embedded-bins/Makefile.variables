@@ -1,4 +1,4 @@
-go_version = 1.16.13
+go_version = 1.16.15
 
 runc_version = 1.0.3
 runc_buildimage = golang:$(go_version)-alpine
@@ -8,7 +8,7 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_ldflags =
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-containerd_version = 1.5.9
+containerd_version = 1.5.10
 containerd_buildimage = golang:$(go_version)-alpine
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
@@ -17,7 +17,7 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_ldflags =
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kubernetes_version = 1.22.6
+kubernetes_version = 1.22.7
 kubernetes_buildimage = golang:$(go_version)-alpine
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
