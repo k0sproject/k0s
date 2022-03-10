@@ -9,7 +9,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/containerd/containerd v1.5.9
+	github.com/containerd/containerd v1.5.10
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
