@@ -101,20 +101,20 @@ markdown_extensions:
         toc_depth: 3
 
 extra:
-    generator: false
-    social:
-      - icon: fontawesome/brands/github
-        link: https://github.com/k0sproject/k0s
-        name: k0s on GitHub
-      - icon: fontawesome/brands/twitter
-        link: https://twitter.com/k0sproject
-        name: k0s on Twitter
-      - icon: fontawesome/brands/slack
-        link: http://k8slens.slack.com/
-        name: k0s on Slack
-      - icon: fontawesome/solid/link
-        link: https://k0sproject.io/
-        name: k0s Website
-    version:
-      method: mike
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/k0sproject/k0s
+      name: k0s on GitHub
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/k0sproject
+      name: k0s on Twitter
+    - icon: fontawesome/brands/slack
+      link: http://k8slens.slack.com/
+      name: k0s on Slack
+    - icon: fontawesome/solid/link
+      link: https://k0sproject.io/
+      name: k0s Website
+  version:
+    provider: mike
 
