@@ -187,7 +187,10 @@ jobs:
           name: k0s
 
       - name: Run inttest
-        run: chmod +x k0s && make -C inttest ${{ matrix.smoke-suite }}
+        run: |
+          chmod +x k0s
+          ./k0s sysinfo
+          make -C inttest ${{ matrix.smoke-suite }}
 
       - name: Collect test logs
         if: failure()

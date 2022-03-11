@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/machineid"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -160,5 +160,5 @@ func (c Component) sendTelemetry(ctx context.Context) {
 
 func machineID() string {
 	id, _ := machineid.Generate()
-	return id
+	return id.ID()
 }

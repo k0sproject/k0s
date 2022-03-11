@@ -27,8 +27,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/machineid"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -110,9 +110,9 @@ func (k *Konnectivity) Reconcile(ctx context.Context, clusterCfg *v1beta1.Cluste
 }
 
 func (k *Konnectivity) defaultArgs() stringmap.StringMap {
-	serverID, err := machineid.Generate()
+	machineID, err := machineid.Generate()
 	if err != nil {
-		logrus.Errorf("failed to fetch server ID for konnectivity-server")
+		logrus.Errorf("failed to fetch machine ID for konnectivity-server")
 	}
 	return stringmap.StringMap{
 		"--uds-name":                filepath.Join(k.K0sVars.KonnectivitySocketDir, "konnectivity-server.sock"),
@@ -130,7 +130,7 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 		"--stderrthreshold":         "1",
 		"--v":                       k.LogLevel,
 		"--enable-profiling":        "false",
-		"--server-id":               serverID,
+		"--server-id":               machineID.ID(),
 		"--proxy-strategies":        "destHost,default",
 	}
 }

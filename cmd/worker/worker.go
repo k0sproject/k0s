@@ -28,6 +28,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -37,6 +38,8 @@ import (
 )
 
 type CmdOpts config.CLIOptions
+
+var ignorePreFlightChecks bool
 
 func NewWorkerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -72,6 +75,14 @@ func NewWorkerCmd() *cobra.Command {
 			}
 			cmd.SilenceUsage = true
 
+			if err := (&sysinfo.K0sSysinfoSpec{
+				ControllerRoleEnabled: false,
+				WorkerRoleEnabled:     true,
+				DataDir:               c.K0sVars.DataDir,
+			}).RunPreFlightChecks(ignorePreFlightChecks); err != nil {
+				return err
+			}
+
 			// Set up signal handling
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
@@ -81,6 +92,7 @@ func NewWorkerCmd() *cobra.Command {
 	}
 
 	// append flags
+	cmd.Flags().BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())
 	return cmd

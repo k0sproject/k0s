@@ -24,6 +24,7 @@ require (
 	github.com/k0sproject/dig v0.2.0
 	github.com/k0sproject/k0sctl v0.12.3
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
+	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/image-spec v1.0.2
@@ -63,7 +64,6 @@ require (
 	k8s.io/kube-aggregator v0.23.0
 	k8s.io/kubectl v0.23.0
 	k8s.io/mount-utils v0.23.0
-	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/yaml v1.3.0

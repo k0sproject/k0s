@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/cloudflare/cfssl/log"
-	"github.com/k0sproject/k0s/internal/pkg/machineid"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -133,7 +133,7 @@ func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*
 			return nil, err
 		}
 
-		leaseConfig.identity = machineID
+		leaseConfig.identity = machineID.ID()
 	}
 
 	for _, opt := range opts {

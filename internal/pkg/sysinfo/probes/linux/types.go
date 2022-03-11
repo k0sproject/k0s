@@ -1,3 +1,6 @@
+//go:build linux && !arm
+// +build linux,!arm
+
 /*
 Copyright 2022 k0s authors
 
@@ -13,23 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package machineid
 
-import "testing"
+package linux
 
-func TestMachineIDFromHostname(t *testing.T) {
-	id, err := fromHostname()
-	if err != nil {
-		t.Errorf("fromHostname() unexpctedly returned error")
-	} else if len(id) != 32 {
-		t.Errorf("len(fromHostname()) = %d, want %d", len(id), 32)
-	}
-
-	// test that id does not change
-	id2, err := fromHostname()
-	if err != nil {
-		t.Errorf("fromHostname() unexpectedly returned error")
-	} else if id != id2 {
-		t.Errorf("fromHostname() = %s, want %s", id2, id)
-	}
-}
+type utsFieldType *[65]int8

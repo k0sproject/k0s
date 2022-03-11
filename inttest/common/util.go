@@ -103,16 +103,26 @@ func waitForDaemonSet(kc *kubernetes.Clientset, name string) wait.ConditionWithC
 	}
 }
 
-// WaitForDaemonSet waits for daemon set be ready
+// WaitForDeployment waits for a deployment to become ready.
 func WaitForDeployment(kc *kubernetes.Clientset, name string) error {
-	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+	return fallbackPoll(waitForDeployment(kc, name))
+}
+
+// WaitForDeploymentWithContext waits for a deployment to become ready as long
+// as the given context isn't canceled.
+func WaitForDeploymentWithContext(ctx context.Context, kc *kubernetes.Clientset, name string) error {
+	return Poll(ctx, waitForDeployment(kc, name))
+}
+
+func waitForDeployment(kc *kubernetes.Clientset, name string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (done bool, err error) {
 		dep, err := kc.AppsV1().Deployments("kube-system").Get(ctx, name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 
 		return *dep.Spec.Replicas == dep.Status.ReadyReplicas, nil
-	})
+	}
 }
 
 // WaitForPod waits for pod be running
