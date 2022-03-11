@@ -1,7 +1,8 @@
 include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -name 'zz_generated*')
+GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
@@ -28,7 +29,16 @@ endif
 KUBECTL_VERSION = $(shell go mod graph |  grep "github.com/k0sproject/k0s" |  grep kubectl  | cut -d "@" -f 2 | sed "s/v0\./1./")
 KUBECTL_MAJOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 1)
 KUBECTL_MINOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 2)
-BUILD_DATE = $(shell date ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH:-}"} -u +'%Y-%m-%dT%H:%M:%SZ')
+
+# https://reproducible-builds.org/docs/source-date-epoch/#makefile
+# https://reproducible-builds.org/docs/source-date-epoch/#git
+# https://stackoverflow.com/a/15103333
+BUILD_DATE_FMT = %Y-%m-%dT%H:%M:%SZ
+ifdef SOURCE_DATE_EPOCH
+	BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u "+$(BUILD_DATE_FMT)")
+else
+	BUILD_DATE ?= $(shell TZ=UTC git log -1 --pretty=%cd --date='format-local:$(BUILD_DATE_FMT)' || date -u +$(BUILD_DATE_FMT))
+endif
 
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
@@ -94,6 +104,9 @@ endif
 .PHONY: all
 all: k0s k0s.exe
 
+go.sum: go.mod
+	$(GO) mod tidy
+
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
 print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
 			"package assets" \
@@ -106,7 +119,7 @@ pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s
+pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s go.sum
 	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
@@ -130,7 +143,7 @@ k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
 k0s.exe k0s: static/gen_manifests.go
 
-k0s.exe k0s: $(GO_SRCS)
+k0s.exe k0s: $(GO_SRCS) go.sum
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
@@ -144,7 +157,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 .PHONY: lint
 lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
-	$(golint) run --verbose ./...
+	$(golint) run --verbose $(GO_DIRS)
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
@@ -155,11 +168,11 @@ $(smoketests): k0s
 smoketests:  $(smoketests)
 
 .PHONY: check-unit
-check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go
-	$(GO) test -race `$(GO) list -f '{{if eq .Module.Path "github.com/k0sproject/k0s"}}{{.ImportPath}}{{end}}' ./... | egrep -v "/(inttest|pkg/assets|static)(/|$$)"`
+check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go go.sum
+	$(GO) test -race `$(GO) list $(GO_DIRS)`
 
 .PHONY: check-image-validity
-check-image-validity:
+check-image-validity: go.sum
 	$(GO) run hack/validate-images/main.go -architectures amd64,arm64,arm
 
 check-unit \
