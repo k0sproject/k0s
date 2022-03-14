@@ -13,9 +13,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
-	github.com/estesp/manifest-tool/v2 v2.0.0-beta.1
+	github.com/estesp/manifest-tool/v2 v2.0.1-0.20220217152536-f3906340b65e
 	github.com/evanphx/json-patch v4.12.0+incompatible
-	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gorilla/mux v1.8.0
