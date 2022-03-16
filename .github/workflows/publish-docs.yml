@@ -69,7 +69,7 @@ jobs:
         if: contains(github.ref, 'refs/heads/main')
         run: |
           mike delete main || true
-          mike deploy --push head
+          mike deploy --push head main
 
       # If this is a tag build, deploy as a new version
       - name: mike deploy new version
