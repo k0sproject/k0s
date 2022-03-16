@@ -68,7 +68,6 @@ jobs:
       - name: mike deploy head
         if: contains(github.ref, 'refs/heads/main')
         run: |
-          mike delete main || true
           mike deploy --push head
 
       # If this is a tag build, deploy as a new version
@@ -86,6 +85,7 @@ jobs:
           TAGS=$(gh release list -L 1000 -R k0sproject/k0s | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
           LATEST=$(echo "${TAGS}" | tail -1)
           STABLE=$(echo "${TAGS}" | grep -v -- "-" | tail -1)
+          mike alias -u head main
           mike alias -u "${LATEST}" latest
           mike alias -u "${STABLE}" stable
           mike set-default --push stable
