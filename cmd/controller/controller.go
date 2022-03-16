@@ -182,7 +182,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	})
 
 	if c.NodeConfig.Spec.API.ExternalAddress != "" {
-		c.NodeComponents.Add(ctx, &controller.K0sLease{
+		c.NodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
 			ClusterConfig:     c.NodeConfig,
 			KubeClientFactory: adminClientFactory,
 		})
@@ -191,7 +191,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	var leaderElector controller.LeaderElector
 
 	// One leader elector per controller
-	if c.NodeConfig.Spec.API.ExternalAddress != "" {
+	if !c.SingleNode {
 		leaderElector = controller.NewLeaderElector(adminClientFactory)
 	} else {
 		leaderElector = &controller.DummyLeaderElector{Leader: true}
@@ -291,14 +291,16 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Scheduler{
-			LogLevel: c.Logging[constant.KubeSchedulerComponentName],
-			K0sVars:  c.K0sVars,
+			LogLevel:   c.Logging[constant.KubeSchedulerComponentName],
+			K0sVars:    c.K0sVars,
+			SingleNode: c.SingleNode,
 		})
 	}
 	if !stringslice.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Manager{
-			LogLevel: c.Logging[constant.KubeControllerManagerComponentName],
-			K0sVars:  c.K0sVars,
+			LogLevel:   c.Logging[constant.KubeControllerManagerComponentName],
+			K0sVars:    c.K0sVars,
+			SingleNode: c.SingleNode,
 		})
 
 	}
