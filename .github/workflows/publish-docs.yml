@@ -22,18 +22,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs
-          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/lensapp/mkdocs-material-insiders.git
-          pip install mike
-
-      - name: Checkout k0s release
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:
@@ -48,6 +36,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs
+          pip install git+https://${{ secrets.GH_TOKEN }}@github.com/lensapp/mkdocs-material-insiders.git
+          pip install mdx-truly-sane-lists
+          pip install mike
+          go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
+
+      - name: checkout k0s release
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - name: Generate docs
         run: make -C docs
 
@@ -61,19 +63,48 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: mike deploy main
+      # This deploys the current docs into gh-pages/head on merges to main
+      # The old "main" gets deleted if it exists, head is more descriptive
+      - name: mike deploy head
         if: contains(github.ref, 'refs/heads/main')
         run: |
-          mike deploy --push main
+          mike delete main || true
+          mike deploy --push head
 
-      - name: Get the release version
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
-      - name: mike deploy new release
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease # (don't generate for pre-releases)
+      # If this is a tag build, deploy as a new version
+      - name: mike deploy new version
+        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
         run: |
-          mike deploy --push --update-aliases ${{ steps.get_version.outputs.VERSION }} latest
-          mike set-default --push ${{ steps.get_version.outputs.VERSION }}
+          VERSION=${GITHUB_REF/refs\/tags\//}
+          mike deploy --push "${VERSION}"
 
+      - name: Update mike version aliases
+        id: set_versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAGS=$(gh release list -L 1000 -R k0sproject/k0s | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
+          LATEST=$(echo "${TAGS}" | tail -1)
+          STABLE=$(echo "${TAGS}" | grep -v -- "-" | tail -1)
+          mike alias -u "${LATEST}" latest
+          mike alias -u "${STABLE}" stable
+          mike set-default --push stable
+          echo ::set-output name=LATEST::${LATEST}
+          echo ::set-output name=STABLE::${STABLE}
+
+      # Ensures the current branch is gh-pages,
+      # Creates / updates the "stable" and "latest" plain text files with the corresponding versions
+      # Commits if the files were changed
+      # Finally pushes if there are unpushed commits
+      - name: Create version files
+        run: |
+          LATEST=${{ steps.set_versions.outputs.LATEST }}
+          STABLE=${{ steps.set_versions.outputs.STABLE }}
+          git checkout gh-pages
+          echo "${STABLE}" > stable.txt
+          git add stable.txt && git update-index --refresh
+          git diff-index --quiet HEAD -- || git commit -m "Set stable to ${STABLE}"
+          echo "${LATEST}" > latest.txt
+          git add latest.txt && git update-index --refresh
+          git diff-index --quiet HEAD -- || git commit -m "Set latest to ${LATEST}"
+          git push origin gh-pages
