@@ -18,6 +18,8 @@ package sysinfo
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 
@@ -37,13 +39,13 @@ type K0sSysinfoSpec struct {
 }
 
 func (s *K0sSysinfoSpec) RunPreFlightChecks(lenient bool) error {
-	reporter := &preFlightReporter{lenient: lenient}
+	reporter := &preFlightReporter{log: logrus.NewEntry(logrus.StandardLogger()), lenient: lenient}
 	if err := s.NewSysinfoProbes().Probe(reporter); err != nil {
-		return err
+		return fmt.Errorf("pre-flight checks failed, check out `k0s sysinfo`: %w", err)
 	}
 
 	if reporter.failed {
-		return errors.New("pre-flight checks failed")
+		return errors.New("pre-flight checks failed, check out `k0s sysinfo`")
 	}
 
 	return nil
@@ -78,31 +80,55 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 }
 
 type preFlightReporter struct {
+	log             *logrus.Entry
 	lenient, failed bool
 }
 
-func (*preFlightReporter) Pass(d probes.ProbeDesc, prop probes.ProbedProp) error {
-	logrus.Debug(d.DisplayName(), prop)
+func (p *preFlightReporter) Pass(d probes.ProbeDesc, prop probes.ProbedProp) error {
+	if p.log.Logger.IsLevelEnabled(logrus.DebugLevel) {
+		p.logger(d, prop).Debug("")
+	}
 	return nil
 }
 
-func (*preFlightReporter) Warn(d probes.ProbeDesc, prop probes.ProbedProp, msg string) error {
-	logrus.Warn(d.DisplayName(), prop, msg)
+func (p *preFlightReporter) Warn(d probes.ProbeDesc, prop probes.ProbedProp, msg string) error {
+	p.logger(d, prop).Warn(msg)
 	return nil
 }
 
 func (p *preFlightReporter) Reject(d probes.ProbeDesc, prop probes.ProbedProp, msg string) error {
+	p.failed = true
+
+	level := logrus.ErrorLevel
 	if p.lenient {
-		logrus.Warn(d.DisplayName(), prop, msg)
-	} else {
-		p.failed = true
-		logrus.Error(d.DisplayName(), prop, msg)
+		level = logrus.WarnLevel
 	}
+
+	if msg == "" {
+		msg = "Rejected"
+	} else {
+		msg = "Rejected: " + msg
+	}
+
+	p.logger(d, prop).Log(level, msg)
 
 	return nil
 }
 
 func (p *preFlightReporter) Error(d probes.ProbeDesc, err error) error {
 	p.failed = true
+	if p.lenient {
+		p.logger(d, nil).Error(err)
+		return nil
+	}
+
 	return err
+}
+
+func (p *preFlightReporter) logger(desc probes.ProbeDesc, prop probes.ProbedProp) *logrus.Entry {
+	log := p.log.WithField("pre-flight-check", strings.Join(desc.Path(), "/"))
+	if prop != nil {
+		log = log.WithField("property", prop.String())
+	}
+	return log
 }

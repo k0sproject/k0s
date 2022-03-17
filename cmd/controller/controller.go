@@ -101,7 +101,7 @@ func NewControllerCmd() *cobra.Command {
 				ControllerRoleEnabled: true,
 				WorkerRoleEnabled:     c.SingleNode || c.EnableWorker,
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); err != nil {
+			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
 				return err
 			}
 

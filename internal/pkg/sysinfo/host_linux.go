@@ -172,7 +172,7 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	ip6NFIPTables.AssertKernelConfig("IP6_NF_NAT", "ip6tables NAT support")
 	netfilter.AssertKernelConfig("NF_DEFRAG_IPV6", "")
 
-	bridge := linux.AssertKernelConfig("BRIDGE", "802.1d Ethernet Bridging")
+	bridge := net.AssertKernelConfig("BRIDGE", "802.1d Ethernet Bridging")
 	bridge.AssertKernelConfig("LLC", "")
 	bridge.AssertKernelConfig("STP", "")
 }

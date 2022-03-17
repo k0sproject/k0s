@@ -94,7 +94,18 @@ func TestRequireKernelConfig(t *testing.T) {
 
 			reporter.AssertExpectations(t)
 			assert.Same(t, expectedErr, err)
+		})
 
+		t.Run("warnsIfNotFound", func(t *testing.T) {
+			var expectedErr noKConfigsFound
+			c["IKCONFIG"] = configResult{kConfigUnknown, &expectedErr}
+			reporter := new(test_sysinfo.MockReporter)
+			reporter.On("Warn", mock.Anything, &expectedErr, "").Return(nil)
+
+			err := linux.probes.Probe(reporter)
+
+			reporter.AssertExpectations(t)
+			assert.NoError(t, err)
 		})
 	})
 }

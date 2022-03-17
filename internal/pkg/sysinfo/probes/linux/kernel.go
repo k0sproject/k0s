@@ -233,19 +233,22 @@ func (k *kConfigProbe) DisplayName() string {
 }
 
 func (k *kConfigProbe) Probe(reporter probes.Reporter) error {
-	if err := k.probe(reporter); err != nil {
+	option, err := k.probeConfig(k.kConfig)
+	if err != nil {
+		if err, notFound := err.(*noKConfigsFound); notFound {
+			return reporter.Warn(k, err, "")
+		}
+		return reporter.Error(k, err)
+	}
+
+	if err := k.probe(reporter, option); err != nil {
 		return err
 	}
 
 	return k.probes.Probe(reporter)
 }
 
-func (k *kConfigProbe) probe(reporter probes.Reporter) error {
-	option, err := k.probeConfig(k.kConfig)
-	if err != nil {
-		return reporter.Error(k, err)
-	}
-
+func (k *kConfigProbe) probe(reporter probes.Reporter, option kConfigOption) error {
 	switch option {
 	case kConfigBuiltIn, kConfigAsModule:
 		return reporter.Pass(k, option)
@@ -284,6 +287,22 @@ type altKConfigOption struct {
 
 func (a *altKConfigOption) String() string {
 	return fmt.Sprintf("%s (via %s)", a.kConfigOption, &a.kConfig)
+}
+
+type noKConfigsFound struct {
+	kernelRelease string
+	checkedPaths  []string
+}
+
+func (n *noKConfigsFound) String() string {
+	return "no kernel config found"
+}
+
+func (n *noKConfigsFound) Error() string {
+	return fmt.Sprintf(
+		"%s for kernel release %s in %s",
+		n.String(), n.kernelRelease, strings.Join(n.checkedPaths, ", "),
+	)
 }
 
 // loadKConfigs checks a list of well-known file system paths for kernel
@@ -329,7 +348,8 @@ func loadKConfigs(kernelRelease string) (kConfigs, error) {
 
 		return parseKConfigs(r)
 	}
-	return nil, fmt.Errorf("no kernel config found in %v", strings.Join(possiblePaths, ", "))
+
+	return nil, &noKConfigsFound{kernelRelease, possiblePaths}
 }
 
 // parseKConfigs parses `r` line by line, extracting all kernel config options.

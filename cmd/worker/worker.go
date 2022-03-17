@@ -79,7 +79,7 @@ func NewWorkerCmd() *cobra.Command {
 				ControllerRoleEnabled: false,
 				WorkerRoleEnabled:     true,
 				DataDir:               c.K0sVars.DataDir,
-			}).RunPreFlightChecks(ignorePreFlightChecks); err != nil {
+			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
 				return err
 			}
 
