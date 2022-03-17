@@ -49,7 +49,7 @@ Installing NGINX using NodePort is the most simple example for Ingress Controlle
     NAME    CONTROLLER             PARAMETERS   AGE
     nginx   k8s.io/ingress-nginx   <none>       162m
     ```
-  
+
     If this is only instance of the Ingresss-NGINX controller, you should [add the annotation](https://kubernetes.github.io/ingress-nginx/#i-have-only-one-instance-of-the-ingresss-nginx-controller-in-my-cluster-what-should-i-do) `ingressclass.kubernetes.io/is-default-class` in your ingress class:
 
     ```shell
@@ -239,4 +239,4 @@ For more information about NGINX Ingress Controller installation, take a look at
 
 ## Alternative examples for Ingress Controllers on k0s
 
-[Traefik Ingress](https://docs.k0sproject.io/main/examples/traefik-ingress/)
+[Traefik Ingress](../traefik-ingress)
