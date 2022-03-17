@@ -18,7 +18,7 @@ k0s is distributed as a single binary with zero host OS dependencies besides the
 - Multiple installation methods: [single-node](install.md), [multi-node](k0sctl-install.md), [airgap](airgap-install.md) and [Docker](k0s-in-docker.md)
 - Automatic lifecycle management with k0sctl: [upgrade](upgrade.md), [backup and restore](backup.md)
 - Modest [system requirements](system-requirements.md) (1 vCPU, 1 GB RAM)
-- Available as a single binary with no [external runtime dependencies](external-runtime--deps.md) besides the kernel
+- Available as a single binary with no [external runtime dependencies](external-runtime-deps.md) besides the kernel
 - Flexible deployment options with [control plane isolation](networking.md#controller-worker-communication) as default
 - Scalable from a single node to large, [high-available](high-availability.md) clusters
 - Supports custom [Container Network Interface (CNI)](networking.md) plugins (Kube-Router is the default, Calico is offered as a preconfigured alternative)
