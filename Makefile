@@ -193,8 +193,7 @@ clean-docker-image:
 .PHONY: clean
 clean: clean-gocache clean-docker-image
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
-	rm -rf site
-	rm -rf docs/cli
+	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C image-bundle clean
 	-$(MAKE) -C inttest clean
@@ -231,3 +230,14 @@ image-bundle/bundle.tar: image-bundle/image.list
 .PHONY: docs
 docs:
 	$(MAKE) -C docs
+
+DOCS_DEV_PORT = 8000
+
+.PHONY: docs-serve-dev
+docs-serve-dev:
+	$(MAKE) -C docs .docker-image.serve-dev.stamp
+	docker run --rm \
+	  -v "$(CURDIR):/docs:ro" \
+	  -w /docs \
+	  -p '$(DOCS_DEV_PORT):8000' \
+	  k0sdocs.docker-image.serve-dev

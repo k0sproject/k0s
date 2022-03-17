@@ -7,8 +7,6 @@ on:
         required: true
 
 env:
-  GO_VERSION: ~1.17
-  NODE_VERSION: 12.x
   PYTHON_VERSION: 3.x
   TARGET_VERSION: ${{ github.event.inputs.version }}
   
@@ -50,17 +48,13 @@ jobs:
           rm -rf main
 
       - name: Generate docs
-        run: make -C docs
+        run: make -C docs docs clean-k0s
 
       - name: git config
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ env.NODE_VERSION }}
 
       - name: mike deploy ${{ github.event.inputs.version }}
         run: |

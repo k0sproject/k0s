@@ -8,8 +8,6 @@ on:
       - published
 
 env:
-  GO_VERSION: ~1.17
-  NODE_VERSION: 12.x
   PYTHON_VERSION: 3.x
 
 jobs:
@@ -17,6 +15,14 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
+      - name: checkout k0s release
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v2
         with:
@@ -26,15 +32,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-        id: go
-
-      - uses: actions/cache@v2
-        name: Go modules cache
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Install dependencies
         run: |
@@ -45,23 +42,13 @@ jobs:
           pip install mike
           go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
 
-      - name: checkout k0s release
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
       - name: Generate docs
-        run: make -C docs
+        run: make -C docs docs clean-k0s
 
       - name: git config
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ env.NODE_VERSION }}
 
       # This deploys the current docs into gh-pages/head on merges to main
       # The old "main" gets deleted if it exists, head is more descriptive
