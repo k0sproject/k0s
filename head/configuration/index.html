@@ -1493,6 +1493,7 @@ sudo k0s start
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span><span class="w"></span>
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kuberouter</span><span class="w"></span>
 <span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"></span>
+<span class="w">    </span><span class="nt">clusterDomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cluster.local</span><span class="w"></span>
 <span class="w">    </span><span class="nt">dualStack</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
@@ -1636,6 +1637,10 @@ sudo k0s start
 <tr>
 <td><code>serviceCIDR</code></td>
 <td>Network CIDR to use for cluster VIP services.</td>
+</tr>
+<tr>
+<td><code>clusterDomain</code></td>
+<td>Cluster Domain to be passed to the <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration">kubelet</a> and the coredns configuration.</td>
 </tr>
 </tbody>
 </table>
