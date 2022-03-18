@@ -556,8 +556,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cgroups" class="md-nav__link">
-    cgroups
+  <a href="#control-groups-cgroups" class="md-nav__link">
+    Control Groups (cgroups)
   </a>
   
 </li>
@@ -1270,8 +1270,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cgroups" class="md-nav__link">
-    cgroups
+  <a href="#control-groups-cgroups" class="md-nav__link">
+    Control Groups (cgroups)
   </a>
   
 </li>
@@ -1341,7 +1341,7 @@ have been created from the same image.</p>
 <h2 id="linux-specific">Linux specific<a class="headerlink" href="#linux-specific" title="Permanent link">#</a></h2>
 <!--
 This piece of documentation is best-effort and considered to be augmented and
-extended in the future. The kernel and cgroups requirements are basically taken
+extended in the future. The kernel and cgroup requirements are basically taken
 from kubernetes/system-validators. Often there's no real hint as to why they are
 required (although most requirements seem pretty obvious). Also need to check
 for requirements of kube-router and calico.
@@ -1353,47 +1353,97 @@ number of needed Linux kernel modules and configurations that we need in the
 system. This basically stems from the need to run both containers and also be
 able to set up networking for the containers.</p>
 <p>The needed kernel configuration items are listed below. All of them are
-available in Kernel versions 4.3 and above. The list covers ONLY the
-k0s/kubernetes components’ needs on worker nodes. Your own workloads may require
-more.</p>
+available in Kernel versions 4.3 and above. If running on older kernels, check
+if the distro in use has backported some features; nevertheless, it might meet
+the requirements. k0s will check the Linux kernel release as part of its
+pre-flight checks and issue a warning if it's below 3.10.</p>
+<p>The list covers ONLY the k0s/kubernetes components’ needs on worker nodes. Your
+own workloads may require more.</p>
+<!-- Kernel config nesting is taken from the v4.3 kernel's menuconfig structure. -->
+
 <ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5">CONFIG_INET</a><ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L853">CONFIG_NETFILTER_XT_TARGET_REDIRECT</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002">CONFIG_NETFILTER_XT_MATCH_COMMENT</a>
-  (this used to be IP_NF_TARGET_REDIRECT before kernel version 3.7)</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927"><code>CONFIG_CGROUPS</code></a>:
+  Control Group support<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953"><code>CONFIG_CGROUP_FREEZER</code></a>:
+  Freezer cgroup subsystem</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959"><code>CONFIG_CGROUP_PIDS</code></a>:
+  PIDs cgroup subsystem<br />
+<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975"><code>CONFIG_CGROUP_DEVICE</code></a>:
+  Device controller for cgroups</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981"><code>CONFIG_CPUSETS</code></a>:
+  Cpuset support</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996"><code>CONFIG_CGROUP_CPUACCT</code></a>:
+  Simple CPU accounting cgroup subsystem</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005"><code>CONFIG_MEMCG</code></a>:
+  Memory Resource Controller for Control Groups</li>
+<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1055"><code>CONFIG_CGROUP_HUGETLB</code></a>:
+  HugeTLB Resource Controller for Control Groups<br />
+<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081"><code>CONFIG_CGROUP_SCHED</code></a>:
+  Group CPU scheduler<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090"><code>CONFIG_FAIR_GROUP_SCHED</code></a>:
+  Group scheduling for SCHED_OTHER<br />
+<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-717996215">kubernetes/kubeadm#2335 (comment)</a><ul>
+<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1095"><code>CONFIG_CFS_BANDWIDTH</code></a>:
+  CPU bandwidth provisioning for FAIR_GROUP_SCHED<br />
+  Required if CPU CFS quota enforcement is enabled for containers that
+  specify CPU limits (<code>--cpu-cfs-quota</code>).</li>
 </ul>
 </li>
 </ul>
-<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168">CONFIG_NAMESPACES</a><ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1180">CONFIG_UTS_NS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1187">CONFIG_IPC_NS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1210">CONFIG_PID_NS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218">CONFIG_NET_NS</a></li>
+</li>
+<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1119"><code>CONFIG_BLK_CGROUP</code></a>:
+  Block IO controller<br />
+<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a></li>
+</ul>
+</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1168"><code>CONFIG_NAMESPACES</code></a>:
+  Namespaces support<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1180"><code>CONFIG_UTS_NS</code></a>:
+  UTS namespace</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1187"><code>CONFIG_IPC_NS</code></a>:
+  IPC namespace</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1210"><code>CONFIG_PID_NS</code></a>:
+  PID namespace</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1218"><code>CONFIG_NET_NS</code></a>:
+  Network namespace</li>
+</ul>
+</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L5"><code>CONFIG_NET</code></a>:
+  Networking support<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L58"><code>CONFIG_INET</code></a>:
+  TCP/IP networking</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L109"><code>CONFIG_NETFILTER</code></a>:
+  Network packet filtering framework (Netfilter)<ul>
+<li><em>(optional)</em> <a href="https://github.com/torvalds/linux/blob/v4.3/net/Kconfig#L171"><code>CONFIG_NETFILTER_ADVANCED</code></a>:
+  Advanced netfilter configuration</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L567"><code>CONFIG_NETFILTER_XTABLES</code></a>:
+  Netfilter Xtables support<ul>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L853"><code>CONFIG_NETFILTER_XT_TARGET_REDIRECT</code></a>:
+  REDIRECT target support</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/net/netfilter/Kconfig#L1002"><code>CONFIG_NETFILTER_XT_MATCH_COMMENT</code></a>:
+  "comment" match support</li>
 </ul>
 </li>
 </ul>
-<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L927">CONFIG_CGROUPS</a><ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L953">CONFIG_CGROUP_FREEZER</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L959">CONFIG_CGROUP_PIDS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L975">CONFIG_CGROUP_DEVICE</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L981">CONFIG_CPUSETS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L996">CONFIG_CGROUP_CPUACCT</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1005">CONFIG_MEMCG</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1081">CONFIG_CGROUP_SCHED</a><ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L1090">CONFIG_FAIR_GROUP_SCHED</a></li>
-</ul>
 </li>
 </ul>
 </li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33"><code>CONFIG_EXT4_FS</code></a>:
+  The Extended 4 (ext4) filesystem</li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/proc/Kconfig#L1"><code>CONFIG_PROC_FS</code></a>:
+  /proc file system support</li>
 </ul>
-<ul>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/ext4/Kconfig#L33">CONFIG_EXT4_FS</a></li>
-<li><a href="https://github.com/torvalds/linux/blob/v4.3/fs/proc/Kconfig#L1">CONFIG_PROC_FS</a></li>
-</ul>
-<h3 id="cgroups">cgroups<a class="headerlink" href="#cgroups" title="Permanent link">#</a></h3>
-<p>Required <a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">cgroups</a> controllers:</p>
+<p><strong>Note:</strong> As part of its pre-flight checks, k0s will try to inspect and validate
+the kernel configuration. In order for that to succeed, the configuration needs
+to be accessible at runtime. There are some typical places that k0s will check.
+A bullet-proof way to ensure the accessibility is to enable
+<a href="https://github.com/torvalds/linux/blob/v4.3/init/Kconfig#L807"><code>CONFIG_IKCONFIG_PROC</code></a>,
+and, if enabled as a module, to load the <code>configs</code> module: <code>modprobe configs</code>.</p>
+<h3 id="control-groups-cgroups">Control Groups (cgroups)<a class="headerlink" href="#control-groups-cgroups" title="Permanent link">#</a></h3>
+<p>Both <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/">cgroup v1</a> and <a href="https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html">cgroup v2</a> are supported.</p>
+<p>Required <a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">cgroup</a> controllers:</p>
 <ul>
 <li>cpu</li>
 <li>cpuacct</li>
@@ -1402,6 +1452,13 @@ more.</p>
 <li>devices</li>
 <li>freezer</li>
 <li>pids</li>
+</ul>
+<p>Optional cgroup controllers:</p>
+<ul>
+<li>hugetlb (<a href="https://github.com/kubernetes/kubeadm/issues/2335#issuecomment-722405527">kubernetes/kubeadm#2335 (comment)</a>)</li>
+<li>blkio (<a href="https://github.com/kubernetes/kubernetes/issues/92287#issuecomment-1010723587">kubernetes/kubernetes#92287 (comment)</a>)<br />
+   containerd and cri-o will use blkio to track disk I/O and throttling in both
+   cgroup v1 and v2.</li>
 </ul>
 <h3 id="containerd-needs-apparmor_parser">containerd needs <code>apparmor_parser</code><a class="headerlink" href="#containerd-needs-apparmor_parser" title="Permanent link">#</a></h3>
 <p>If containerd <a href="https://github.com/containerd/containerd/blob/v1.5.10/pkg/apparmor/apparmor_linux.go#L37-L48">detects</a> that the system is configured to use <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>

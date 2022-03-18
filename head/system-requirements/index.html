@@ -1427,7 +1427,7 @@
 <p><strong>Note</strong>: The operating system and application requirements must be considered in addition to the k0s part.</p>
 <h2 id="host-operating-system">Host operating system<a class="headerlink" href="#host-operating-system" title="Permanent link">#</a></h2>
 <ul>
-<li>Linux (kernel v4.3 or later)</li>
+<li>Linux (see <a href="../external-runtime-deps/#linux-specific">Linux specific requirements</a> for details)</li>
 <li>Windows Server 2019</li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">#</a></h2>
@@ -1441,6 +1441,8 @@
 <h2 id="external-runtime-dependencies">External runtime dependencies<a class="headerlink" href="#external-runtime-dependencies" title="Permanent link">#</a></h2>
 <p>k0s strives to be as independent from the OS as possible. The current and past
 external runtime dependencies are documented <a href="../external-runtime-deps/">here</a>.</p>
+<p>To run some automated compatiblility checks on your system, use
+<a href="../cli/k0s_sysinfo/"><code>k0s sysinfo</code></a>.</p>
 <h2 id="controller-node-measured-memory-consumption">Controller node measured memory consumption<a class="headerlink" href="#controller-node-measured-memory-consumption" title="Permanent link">#</a></h2>
 <p>The following table shows the measured memory consumption in the cluster of one controller node.</p>
 <table>
