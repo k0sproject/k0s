@@ -82,12 +82,29 @@ func (s *NetworkSuite) TestAddresses() {
 	})
 }
 
+func (s *NetworkSuite) TestDomainMarshaling() {
+	yamlData := `
+spec:
+  storage:
+    type: kine
+  network:
+    clusterDomain: something.local
+`
+	c, err := ConfigFromString(yamlData)
+	s.NoError(err)
+	n := c.Spec.Network
+	s.Equal("kuberouter", n.Provider)
+	s.NotNil(n.KubeRouter)
+	s.Equal("something.local", n.ClusterDomain)
+}
+
 func (s *NetworkSuite) TestNetworkDefaults() {
 	n := DefaultNetwork()
 
 	s.Equal("kuberouter", n.Provider)
 	s.NotNil(n.KubeRouter)
 	s.Equal(ModeIptables, n.KubeProxy.Mode)
+	s.Equal("cluster.local", n.ClusterDomain)
 }
 
 func (s *NetworkSuite) TestCalicoDefaultsAfterMashaling() {
