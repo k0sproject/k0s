@@ -334,7 +334,7 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 
 	config := coreDNSConfig{
 		Replicas:      replicas,
-		ClusterDomain: "cluster.local",
+		ClusterDomain: clusterConfig.Spec.Network.ClusterDomain,
 		ClusterDNSIP:  dns,
 		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
 		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/asaskevich/govalidator"
 	utilnet "k8s.io/utils/net"
 )
 
@@ -38,17 +39,20 @@ type Network struct {
 	Provider string `json:"provider"`
 	// Network CIDR to use for cluster VIP services
 	ServiceCIDR string `json:"serviceCIDR,omitempty"`
+	// Cluster Domain
+	ClusterDomain string `json:"clusterDomain,omitempty"`
 }
 
 // DefaultNetwork creates the Network config struct with sane default values
 func DefaultNetwork() *Network {
 	return &Network{
-		PodCIDR:     "10.244.0.0/16",
-		ServiceCIDR: "10.96.0.0/12",
-		Provider:    "kuberouter",
-		KubeRouter:  DefaultKubeRouter(),
-		DualStack:   DefaultDualStack(),
-		KubeProxy:   DefaultKubeProxy(),
+		PodCIDR:       "10.244.0.0/16",
+		ServiceCIDR:   "10.96.0.0/12",
+		Provider:      "kuberouter",
+		KubeRouter:    DefaultKubeRouter(),
+		DualStack:     DefaultDualStack(),
+		KubeProxy:     DefaultKubeProxy(),
+		ClusterDomain: "cluster.local",
 	}
 }
 
@@ -67,6 +71,10 @@ func (n *Network) Validate() []error {
 	_, _, err = net.ParseCIDR(n.ServiceCIDR)
 	if err != nil {
 		errors = append(errors, fmt.Errorf("invalid service CIDR %s", n.ServiceCIDR))
+	}
+
+	if !govalidator.IsDNSName(n.ClusterDomain) {
+		errors = append(errors, fmt.Errorf("invalid clusterDomain %s", n.ClusterDomain))
 	}
 
 	if n.DualStack.Enabled {

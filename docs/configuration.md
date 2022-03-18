@@ -56,6 +56,7 @@ spec:
     serviceCIDR: 10.96.0.0/12
     provider: kuberouter
     calico: null
+    clusterDomain: cluster.local
     dualStack: {}
     kuberouter:
       mtu: 0
@@ -147,6 +148,7 @@ spec:
 | `provider`    | Network provider (valid values: `calico`, `kuberouter`, or `custom`). For `custom`, you can push any network provider (default: `kuberouter`). Be aware that it is your responsibility to configure all of the CNI-related setups, including the CNI provider itself and all necessary host levels setups (for example, CNI binaries). **Note:** Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment. |
 | `podCIDR`     | Pod network CIDR to use in the cluster.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `serviceCIDR` | Network CIDR to use for cluster VIP services.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `clusterDomain` | Cluster Domain to be passed to the [kubelet](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration) and the coredns configuration.                                                                                                                                                                                                                                                                        |
 
 #### `spec.network.calico`
 

@@ -154,7 +154,6 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		args["--cni-bin-dir"] = "C:\\k\\cni"
 		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
 		args["--hostname-override"] = node
-		args["--cluster-domain"] = "cluster.local"
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
 	} else {
