@@ -18,26 +18,51 @@ package machineid
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"os"
 
 	"github.com/denisbrodbeck/machineid"
 )
 
+type MachineID struct {
+	id, source string
+}
+
+func (id *MachineID) ID() string {
+	if id == nil {
+		return ""
+	}
+
+	return id.id
+}
+
+func (id *MachineID) Source() string {
+	if id == nil {
+		return ""
+	}
+
+	return id.source
+}
+
+func (id *MachineID) String() string {
+	return fmt.Sprintf("%q (from %s)", id.id, id.source)
+}
+
 // Generate returns protected id for the current machine
-func Generate() (string, error) {
+func Generate() (*MachineID, error) {
 	id, err := machineid.ProtectedID("k0sproject-k0s")
 	if err != nil {
 		return fromHostname()
 	}
-	return id, err
+	return &MachineID{id, "machine"}, err
 }
 
 // fromHostname generates a machine id hash from hostname
-func fromHostname() (string, error) {
+func fromHostname() (*MachineID, error) {
 	name, err := os.Hostname()
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("failed to get hostname: %w", err)
 	}
 	sum := md5.Sum([]byte(name))
-	return hex.EncodeToString(sum[:]), nil
+	return &MachineID{hex.EncodeToString(sum[:]), "hostname"}, nil
 }

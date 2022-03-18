@@ -44,7 +44,7 @@ Where `${HOST}` is any node and the login can succeed with no further prompts.
 
 Every node (whether control plane or not) requires additional configuration in preparation for k0s deployment.
 
-#### CGroup Configuration
+#### cgroup Configuration
 
 1. Ensure that the following packages are installed on each node:
 

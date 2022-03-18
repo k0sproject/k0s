@@ -43,8 +43,10 @@ The specific storage consumption for k0s is as follows:
 
 ## Host operating system
 
-- Linux (kernel v4.3 or later)
+- Linux (see [Linux specific requirements] for details)
 - Windows Server 2019
+
+[Linux specific requirements]: external-runtime-deps.md#linux-specific
 
 ## Architecture
 
@@ -60,6 +62,9 @@ For information on the required ports and protocols, refer to [networking](netwo
 
 k0s strives to be as independent from the OS as possible. The current and past
 external runtime dependencies are documented [here](external-runtime-deps.md).
+
+To run some automated compatiblility checks on your system, use
+[`k0s sysinfo`](cli/k0s_sysinfo.md).
 
 ## Controller node measured memory consumption
 

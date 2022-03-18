@@ -16,12 +16,14 @@ limitations under the License.
 package cli
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -54,70 +56,93 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 
 func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	ssh, err := s.SSH(s.ControllerNode(0))
-	s.Require().NoError(err)
+	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
 
-	s.T().Log("running k0s install command")
-	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server")
-	s.Require().NoError(err)
-
-	_, err = ssh.ExecWithOutput("k0s start")
-	s.Require().NoError(err)
-
-	err = s.WaitForKubeAPI(s.ControllerNode(0))
-	s.Require().NoError(err)
-
-	output, err := ssh.ExecWithOutput("k0s kubectl get namespaces -o json 2>/dev/null")
-	s.Require().NoError(err)
-
-	namespaces := &K8sNamespaces{}
-
-	err = json.Unmarshal([]byte(output), namespaces)
-	s.NoError(err)
-
-	s.Len(namespaces.Items, 4)
-	s.Equal("default", namespaces.Items[0].Metadata.Name)
-	s.Equal("kube-node-lease", namespaces.Items[1].Metadata.Name)
-	s.Equal("kube-public", namespaces.Items[2].Metadata.Name)
-	s.Equal("kube-system", namespaces.Items[3].Metadata.Name)
-
-	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
-
-	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
-	s.NoError(err)
-
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
-		Limit: 100,
+	s.T().Run("sysinfoSmoketest", func(t *testing.T) {
+		out, err := ssh.ExecWithOutput(fmt.Sprintf("%s sysinfo", s.K0sFullPath))
+		assert.NoError(t, err, "k0s sysinfo has non-zero exit code")
+		t.Logf(out)
+		assert.Regexp(t, "^Machine ID: ", out)
+		assert.Regexp(t, "\nOperating system: Linux \\(pass\\)\n", out)
+		assert.Regexp(t, "\n  Linux kernel release: ", out)
+		assert.Regexp(t, "\n  CONFIG_CGROUPS: ", out)
+		assert.Regexp(t, "\n  Control Groups: ", out)
+		assert.Regexp(t, "\n    cgroup controller \"[a-z]+\": ", out)
 	})
+
+	s.T().Run("k0sInstall", func(t *testing.T) {
+		out, err := ssh.ExecWithOutput("k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server")
+		assert.NoError(t, err)
+		assert.Equal(t, "", out)
+	})
+
+	s.T().Run("k0sStart", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+
+		_, err = ssh.ExecWithOutput("k0s start")
+		require.NoError(err)
+
+		require.NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
+
+		output, err := ssh.ExecWithOutput("k0s kubectl get namespaces -o json 2>/dev/null")
+		require.NoError(err)
+
+		namespaces := &K8sNamespaces{}
+		assert.NoError(json.Unmarshal([]byte(output), namespaces))
+
+		assert.Len(namespaces.Items, 4)
+		assert.Equal("default", namespaces.Items[0].Metadata.Name)
+		assert.Equal("kube-node-lease", namespaces.Items[1].Metadata.Name)
+		assert.Equal("kube-public", namespaces.Items[2].Metadata.Name)
+		assert.Equal("kube-system", namespaces.Items[3].Metadata.Name)
+
+		kc, err := s.KubeClient(s.ControllerNode(0))
+		require.NoError(err)
+
+		err = s.WaitForNodeReady(s.ControllerNode(0), kc)
+		assert.NoError(err)
+
+		pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
+			Limit: 100,
+		})
+		assert.NoError(err)
+
+		podCount := len(pods.Items)
+
+		s.T().Logf("found %d pods in kube-system", podCount)
+		s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+
+		// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
+		require.NoError(common.WaitForDaemonSetWithContext(s.Context(), kc, "kube-proxy"))
+		require.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc))
+		require.NoError(common.WaitForDeploymentWithContext(s.Context(), kc, "coredns"))
+	})
+
+	s.T().Log("waiting for k0s to terminate")
+	_, err = ssh.ExecWithOutput("k0s stop")
 	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
-
-	// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
-	s.Require().NoError(common.WaitForDaemonSet(kc, "kube-proxy"))
-	s.Require().NoError(common.WaitForKubeRouterReady(kc))
-	s.Require().NoError(common.WaitForDeployment(kc, "coredns"))
-
-	// Stop and actually wait till k0s dies
-	_, err = ssh.ExecWithOutput("k0s stop && while pidof k0s containerd kubelet; do sleep 0.1s; done")
+	_, err = ssh.ExecWithOutput("while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
-	s.T().Log("running k0s reset command")
-	// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
-	// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
-	resetOutput, _ := ssh.ExecWithOutput("k0s reset --debug")
+	s.T().Run("k0sReset", func(t *testing.T) {
+		assert := assert.New(t)
+		resetOutput, err := ssh.ExecWithOutput("k0s reset --debug")
+		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
-	s.T().Logf("Reset executed with output:\n%s", resetOutput)
+		// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
+		// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
+		assert.Error(err)
 
-	fileCount, _ := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
-	s.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
+		fileCount, err := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
+		assert.NoError(err)
+		assert.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
 
-	newPodCount, _ := ssh.ExecWithOutput("ps aux | grep '[c]ontainerd-shim-runc-v2' | wc -l")
-	s.Equal("0", newPodCount, "expected to see 0 pods after reset command")
+		newPodCount, err := ssh.ExecWithOutput("ps aux | grep '[c]ontainerd-shim-runc-v2' | wc -l")
+		assert.NoError(err)
+		assert.Equal("0", newPodCount, "expected to see 0 pods after reset command")
+	})
 }
 
 func TestCliCommandSuite(t *testing.T) {

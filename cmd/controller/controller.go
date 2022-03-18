@@ -37,6 +37,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -53,6 +54,8 @@ import (
 )
 
 type CmdOpts config.CLIOptions
+
+var ignorePreFlightChecks bool
 
 func NewControllerCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -94,6 +97,14 @@ func NewControllerCmd() *cobra.Command {
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
 			cmd.SilenceUsage = true
 
+			if err := (&sysinfo.K0sSysinfoSpec{
+				ControllerRoleEnabled: true,
+				WorkerRoleEnabled:     c.SingleNode || c.EnableWorker,
+				DataDir:               c.K0sVars.DataDir,
+			}).RunPreFlightChecks(ignorePreFlightChecks); !ignorePreFlightChecks && err != nil {
+				return err
+			}
+
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 			return c.startController(ctx)
@@ -101,6 +112,7 @@ func NewControllerCmd() *cobra.Command {
 	}
 
 	// append flags
+	cmd.Flags().BoolVar(&ignorePreFlightChecks, "ignore-pre-flight-checks", false, "continue even if pre-flight checks fail")
 	cmd.Flags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.PersistentFlags().AddFlagSet(config.GetControllerFlags())
 	cmd.PersistentFlags().AddFlagSet(config.GetWorkerFlags())

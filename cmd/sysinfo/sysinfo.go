@@ -16,108 +16,110 @@ limitations under the License.
 package sysinfo
 
 import (
-	"runtime"
+	"errors"
+	"io"
+	"os"
+	"strings"
 
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
-	system "k8s.io/system-validators/validators"
+	"k8s.io/kubectl/pkg/util/term"
 )
 
 func NewSysinfoCmd() *cobra.Command {
-	return &cobra.Command{
+
+	var sysinfoSpec sysinfo.K0sSysinfoSpec
+
+	cmd := &cobra.Command{
 		Use:   "sysinfo",
 		Short: "Display system information",
+		Long:  `Runs k0s's pre-flight checks and issues the results to stdout.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSysinfo()
+			cmd.SilenceUsage = true
+
+			sysinfoSpec.AddDebugProbes = true
+			probes := sysinfoSpec.NewSysinfoProbes()
+			cli := &cliReporter{
+				w:      os.Stdout,
+				colors: aurora.NewAurora(term.IsTerminal(os.Stdout)),
+			}
+
+			if err := probes.Probe(cli); err != nil {
+				return err
+			}
+
+			if cli.failed {
+				return errors.New("sysinfo failed")
+			}
+
+			return nil
 		},
 	}
 
+	// append flags
+	flags := cmd.Flags()
+	flags.BoolVar(&sysinfoSpec.ControllerRoleEnabled, "controller", true, "Include controller-specific sysinfo")
+	flags.BoolVar(&sysinfoSpec.WorkerRoleEnabled, "worker", true, "Include worker-specific sysinfo")
+	flags.StringVar(&sysinfoSpec.DataDir, "data-dir", constant.DataDirDefault, "Data Directory for k0s")
+
+	return cmd
 }
 
-func runSysinfo() error {
-	reporter := system.DefaultReporter
+type cliReporter struct {
+	w      io.Writer
+	colors aurora.Aurora
+	failed bool
+}
 
-	var validators = []system.Validator{
-		&system.KernelValidator{Reporter: reporter},
+func (r *cliReporter) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
+	return r.printf("%s%s%s (pass)\n",
+		strings.Repeat("  ", len(p.Path())-1),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Green(v.String()))
+}
+
+func (r *cliReporter) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	if msg == "" {
+		msg = " (warning)"
+	} else {
+		msg = " (warning: " + msg + ")"
 	}
 
-	if runtime.GOOS == "linux" {
-		validators = append(validators,
-			&system.OSValidator{Reporter: reporter},
-			&system.CgroupsValidator{Reporter: reporter},
-		)
+	return r.printf("%s%s%s%s\n",
+		strings.Repeat("  ", len(p.Path())-1),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Yellow(v.String()),
+		msg)
+}
+
+func (r *cliReporter) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
+	r.failed = true
+	if msg == "" {
+		msg = " (rejected)"
+	} else {
+		msg = " (rejected: " + msg + ")"
 	}
 
-	spec := system.DefaultSysSpec
-	spec.KernelSpec.Required =
-		// this is documented in docs/external-runtime-deps.md
-		[]system.KernelConfig{
-			{Name: "INET"},
-			{Name: "NETFILTER_XT_TARGET_REDIRECT", Aliases: []string{"IP_NF_TARGET_REDIRECT"}},
-			{Name: "NETFILTER_XT_MATCH_COMMENT"},
-			{Name: "NAMESPACES"},
-			{Name: "UTS_NS"},
-			{Name: "IPC_NS"},
-			{Name: "PID_NS"},
-			{Name: "NET_NS"},
-			{Name: "CGROUPS"},
-			{Name: "CGROUP_FREEZER"},
-			{Name: "CGROUP_PIDS"},
-			{Name: "CGROUP_DEVICE"},
-			{Name: "CPUSETS"},
-			{Name: "CGROUP_CPUACCT"},
-			{Name: "MEMCG"},
-			{Name: "CGROUP_SCHED"},
-			{Name: "FAIR_GROUP_SCHED"},
-			{Name: "EXT4_FS"},
-			{Name: "PROC_FS"},
-		}
+	return r.printf("%s%s%s%s\n",
+		strings.Repeat("  ", len(p.Path())-1),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Bold(r.colors.Red(v.String())),
+		msg)
+}
 
-	spec.KernelSpec.Optional =
-		[]system.KernelConfig{
-			{Name: "OVERLAY_FS", Aliases: []string{"OVERLAYFS_FS"}, Description: "Required for overlayfs."},
-			{Name: "BLK_DEV_DM", Description: "Required for devicemapper."},
-			{Name: "CFS_BANDWIDTH", Description: "Required for CPU quota."},
-			{Name: "CGROUP_HUGETLB", Description: "Required for hugetlb cgroup."},
-			{Name: "SECCOMP", Description: "Required for seccomp."},
-			{Name: "SECCOMP_FILTER", Description: "Required for seccomp mode 2."},
+func (r *cliReporter) Error(p probes.ProbeDesc, err error) error {
+	r.failed = true
+	return r.printf("%s%s%s\n",
+		strings.Repeat("  ", len(p.Path())-1),
+		r.colors.BrightWhite(p.DisplayName()+": "),
+		r.colors.Bold(r.colors.Red("error: "+err.Error())))
+}
 
-			{Name: "BRIDGE"},
-			{Name: "IP6_NF_FILTER"},
-			{Name: "IP6_NF_IPTABLES"},
-			{Name: "IP6_NF_MANGLE"},
-			{Name: "IP6_NF_NAT"},
-			{Name: "IP_NF_FILTER"},
-			{Name: "IP_NF_IPTABLES"},
-			{Name: "IP_NF_MANGLE"},
-			{Name: "IP_NF_NAT"},
-			{Name: "IP_NF_TARGET_REJECT"},
-			{Name: "IP_SET"},
-			{Name: "IP_SET_HASH_IP"},
-			{Name: "IP_SET_HASH_NET"},
-			{Name: "IP_VS_NFCT"},
-			{Name: "LLC"},
-			{Name: "NETFILTER_NETLINK"},
-			{Name: "NETFILTER_XTABLES"},
-			{Name: "NETFILTER_XT_MARK"},
-			{Name: "NETFILTER_XT_MATCH_ADDRTYPE"},
-			{Name: "NETFILTER_XT_MATCH_CONNTRACK"},
-			{Name: "NETFILTER_XT_MATCH_MULTIPORT"},
-			{Name: "NETFILTER_XT_MATCH_RECENT"},
-			{Name: "NETFILTER_XT_MATCH_STATISTIC"},
-			{Name: "NETFILTER_XT_NAT"},
-			{Name: "NETFILTER_XT_SET"},
-			{Name: "NETFILTER_XT_TARGET_MASQUERADE"},
-			{Name: "NF_CONNTRACK"},
-			{Name: "NF_DEFRAG_IPV4"},
-			{Name: "NF_DEFRAG_IPV6"},
-			{Name: "NF_NAT"},
-			{Name: "NF_REJECT_IPV4"},
-			{Name: "STP"},
-		}
-
-	for _, v := range validators {
-		_, _ = v.Validate(spec)
-	}
-
-	return nil
+func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
+	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
+	return err
 }

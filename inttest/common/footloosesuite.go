@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
@@ -839,13 +840,9 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 	volumes := []config.Volume{
 		{
 			Type:        "bind",
-			Source:      "/lib/modules",
-			Destination: "/lib/modules",
-		},
-		{
-			Type:        "bind",
 			Source:      binPath,
 			Destination: s.K0sFullPath,
+			ReadOnly:    true,
 		},
 		{
 			Type:        "volume",
@@ -853,7 +850,43 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		},
 	}
 
+	// Ensure that kernel config is available in the footloose boxes.
+	// See https://github.com/kubernetes/system-validators/blob/v1.6.0/validators/kernel_validator.go#L180-L190
+
+	bindPaths := []string{
+		"/usr/src/linux/.config",
+		"/usr/lib/modules",
+		"/lib/modules",
+	}
+
+	if kernelVersion, err := exec.Command("uname", "-r").Output(); err == nil {
+		kernelVersion := strings.TrimSpace(string(kernelVersion))
+		bindPaths = append(bindPaths, []string{
+			"/boot/config-" + kernelVersion,
+			"/usr/src/linux-" + kernelVersion,
+			"/usr/lib/ostree-boot/config-" + kernelVersion,
+			"/usr/lib/kernel/config-" + kernelVersion,
+			"/usr/src/linux-headers-" + kernelVersion,
+		}...)
+	} else {
+		s.T().Logf("not mounting any kernel-specific paths: %v", err)
+	}
+
+	for _, path := range bindPaths {
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      path,
+			Destination: path,
+			ReadOnly:    true,
+		})
+	}
+
 	volumes = append(volumes, s.ExtraVolumes...)
+
+	s.T().Logf("mounting volumes: %v", volumes)
 
 	portMaps := []config.PortMapping{
 		{
