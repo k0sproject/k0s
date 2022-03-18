@@ -187,7 +187,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		EnableKonnectivity: enableKonnectivity,
 	})
 
-	if c.NodeConfig.Spec.API.ExternalAddress != "" {
+	if !c.SingleNode {
 		c.NodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
 			ClusterConfig:     c.NodeConfig,
 			KubeClientFactory: adminClientFactory,
@@ -301,6 +301,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	if enableKonnectivity {
 		c.ClusterComponents.Add(ctx, &controller.Konnectivity{
+			SingleNode:        c.SingleNode,
 			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
