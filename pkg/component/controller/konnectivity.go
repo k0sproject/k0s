@@ -42,8 +42,9 @@ import (
 
 // Konnectivity implements the component interface of konnectivity server
 type Konnectivity struct {
-	K0sVars  constant.CfgVars
-	LogLevel string
+	K0sVars    constant.CfgVars
+	LogLevel   string
+	SingleNode bool
 	// used for lease lock
 	KubeClientFactory k8sutil.ClientFactoryInterface
 	NodeConfig        *v1beta1.ClusterConfig
@@ -100,7 +101,7 @@ func (k *Konnectivity) Run(ctx context.Context) error {
 // Reconcile detects changes in configuration and applies them to the component
 func (k *Konnectivity) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterConfig) error {
 	k.clusterConfig = clusterCfg
-	if k.NodeConfig.Spec.API.ExternalAddress != "" {
+	if !k.SingleNode {
 		go k.runLeaseCounter(ctx)
 	} else {
 		// It's a buffered channel so once we start the runServer routine it'll pick this up and just sees it never changing
