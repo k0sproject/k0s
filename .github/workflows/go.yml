@@ -168,6 +168,7 @@ jobs:
           - check-kubectl
           - check-k0sctl
           - check-metricscraper
+          - check-customdomain
 
     steps:
       - name: Check out code into the Go module directory
