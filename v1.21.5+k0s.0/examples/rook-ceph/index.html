@@ -1,0 +1,1657 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
+      
+      
+        <meta name="author" content="Mirantis, Inc.">
+      
+      
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.21.5+k0s.0/examples/rook-ceph/">
+      
+      <link rel="icon" href="../../img/k0s_social.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.5">
+    
+    
+      
+        <title>Ceph Storage with Rook - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2d9f7617.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JMV1409T2T');
+  </script>
+
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#installing-ceph-storage-with-rook" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-component="outdated" hidden>
+        <aside class="md-banner md-banner--warning">
+          
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+  <a href="../../..">
+    <strong>Click here to go to latest.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          
+        </aside>
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../img/k0s_social.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Ceph Storage with Rook
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../../img/k0s_social.png" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Install
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Install" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Install
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        Quick Start Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../k0sctl-install/" class="md-nav__link">
+        Install using k0sctl
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3">
+          Alternative Install Methods
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          Alternative Install Methods
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
+        Manual Install (advanced)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
+        Docker
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../experimental-windows/" class="md-nav__link">
+        Windows (experimental)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
+        Raspberry Pi 4
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ansible-playbook/" class="md-nav__link">
+        Ansible Playbook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airgap-install/" class="md-nav__link">
+        Airgap Install
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrade/" class="md-nav__link">
+        Upgrade
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backup/" class="md-nav__link">
+        Backup/Restore
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reset/" class="md-nav__link">
+        Uninstall/Reset
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system-requirements/" class="md-nav__link">
+        System Requirements
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        Configuration Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration-validation/" class="md-nav__link">
+        Configuration Validation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worker-node-config/" class="md-nav__link">
+        Worker Node Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../networking/" class="md-nav__link">
+        Networking (CNI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runtime/" class="md-nav__link">
+        Runtime (CRI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../storage/" class="md-nav__link">
+        Storage (CSI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud-providers/" class="md-nav__link">
+        Cloud Providers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dual-stack/" class="md-nav__link">
+        IPv4/IPv6 Dual-Stack
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../high-availability/" class="md-nav__link">
+        Control Plane High Availability
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../shell-completion/" class="md-nav__link">
+        Shell Completion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-management/" class="md-nav__link">
+        User Management
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Extensions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Extensions" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Extensions
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manifests/" class="md-nav__link">
+        Manifest Deployer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../helm-charts/" class="md-nav__link">
+        Helm Charts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3">
+          Examples
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Examples" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          Examples
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../traefik-ingress/" class="md-nav__link">
+        Traefik Ingress Controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ambassador-ingress/" class="md-nav__link">
+        Ambassador Gateway
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Ceph Storage with Rook
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Ceph Storage with Rook
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-steps" class="md-nav__link">
+    Deployment steps
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-preparations" class="md-nav__link">
+    1. Preparations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-the-vms" class="md-nav__link">
+    2. Create the VMs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-create-and-attach-the-volumes" class="md-nav__link">
+    3. Create and attach the volumes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-install-k0s-using-k0sctl" class="md-nav__link">
+    4. Install k0s using k0sctl
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-access-k0s-cluster" class="md-nav__link">
+    5. Access k0s cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deploy-rook" class="md-nav__link">
+    6. Deploy Rook
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-deploy-ceph-cluster" class="md-nav__link">
+    7. Deploy Ceph Cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-configure-ceph-block-storage" class="md-nav__link">
+    8. Configure Ceph block storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-request-storage" class="md-nav__link">
+    9. Request storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-deploy-an-example-application" class="md-nav__link">
+    10. Deploy an example application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-access-the-application" class="md-nav__link">
+    11. Access the application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-clean-up" class="md-nav__link">
+    12. Clean-up
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conclusions" class="md-nav__link">
+    Conclusions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Troubleshooting
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Troubleshooting" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Troubleshooting
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FAQ/" class="md-nav__link">
+        FAQ
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        Common Pitfalls
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cis_benchmark/" class="md-nav__link">
+        CIS Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributors/overview/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
+        GitHub Workflow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributors/testing/" class="md-nav__link">
+        Testing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+        Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-steps" class="md-nav__link">
+    Deployment steps
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-preparations" class="md-nav__link">
+    1. Preparations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-create-the-vms" class="md-nav__link">
+    2. Create the VMs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-create-and-attach-the-volumes" class="md-nav__link">
+    3. Create and attach the volumes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-install-k0s-using-k0sctl" class="md-nav__link">
+    4. Install k0s using k0sctl
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-access-k0s-cluster" class="md-nav__link">
+    5. Access k0s cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deploy-rook" class="md-nav__link">
+    6. Deploy Rook
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-deploy-ceph-cluster" class="md-nav__link">
+    7. Deploy Ceph Cluster
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-configure-ceph-block-storage" class="md-nav__link">
+    8. Configure Ceph block storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-request-storage" class="md-nav__link">
+    9. Request storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-deploy-an-example-application" class="md-nav__link">
+    10. Deploy an example application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-access-the-application" class="md-nav__link">
+    11. Access the application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-clean-up" class="md-nav__link">
+    12. Clean-up
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conclusions" class="md-nav__link">
+    Conclusions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+
+<h1 id="installing-ceph-storage-with-rook">Installing Ceph Storage with Rook<a class="headerlink" href="#installing-ceph-storage-with-rook" title="Permanent link">#</a></h1>
+<p>In this tutorial you'll create a Ceph storage for k0s. Ceph is a highly scalable, distributed storage solution. It offers object, block, and file storage, and it's designed to run on any common hardware. Ceph implements data replication into multiple volumes that makes it fault-tolerant. Another clear advantage of Ceph in Kubernetes is the dynamic provisioning. This means that applications just need to request the storage (persistent volume claim) and Ceph will automatically provision the requested storage without a manual creation of the persistent volume each time.</p>
+<p>Unfortunately, the Ceph deployment as such can be considered a bit complex. To make the deployment easier, we'll use Rook operator. Rook is a CNCF project and it's dedicated to storage orchestration. Rook supports several storage solutions, but in this tutorial we will use it to manage Ceph.</p>
+<p>This tutorial uses three worker nodes and one controller. It's possible to use less nodes, but using three worker nodes makes it a good example for deploying a high-available storage cluster. We use external storage partitions, which are assigned to the worker nodes to be used by Ceph.</p>
+<p>After the Ceph deployment we'll deploy a sample application (MongoDB) to use the storage in practice.</p>
+<p><img alt="k0s_rook_ceph_cluster.png" src="../../img/k0s_rook_ceph_cluster.png" /></p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">#</a></h2>
+<ul>
+<li>Linux OS</li>
+<li>GitHub access</li>
+<li>AWS account</li>
+<li>Terraform</li>
+</ul>
+<h2 id="deployment-steps">Deployment steps<a class="headerlink" href="#deployment-steps" title="Permanent link">#</a></h2>
+<h3 id="1-preparations">1. Preparations<a class="headerlink" href="#1-preparations" title="Permanent link">#</a></h3>
+<p>In this example we'll use Terraform to create four Ubuntu VMs on AWS. Using Terraform makes the VM deployment fast and repeatable. You can avoid manually setting up everything in the AWS GUI. Moreover, when you have finished with the tutorial, it's very easy to tear down the VMs with Terraform (with one command). However, you can set up the nodes in many different ways and it doesn't make a difference in the following steps.</p>
+<p>We will use k0sctl to create the k0s cluster. k0sctl repo also includes a ready-made Terraform configuration to create the VMs on AWS. We'll use that. Let's start be cloning the k0sctl repo.</p>
+<div class="highlight"><pre><span></span><code>git clone git@github.com:k0sproject/k0sctl.git
+</code></pre></div>
+<p>Take a look at the Terraform files</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span> k0sctl/examples/aws-tf
+ls -l
+</code></pre></div>
+<p>Open <code>variables.tf</code> and set the number of controller and worker nodes like this:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_name&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;k0sctl&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;controller_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;worker_count&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;cluster_flavor&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
+<span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;t3.small&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+<p>You can also configure a different name to your cluster and change the default VM type. <code>t3.small</code> (2 vCPUs, 2 GB RAM) runs just fine for this tutorial.</p>
+<h3 id="2-create-the-vms">2. Create the VMs<a class="headerlink" href="#2-create-the-vms" title="Permanent link">#</a></h3>
+<p>For AWS, you need an account. Terraform will use the following environment variable: <code>AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN</code>. You can easily copy-paste them from the AWS portal. For more information, see <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html">the AWS documentation</a>.</p>
+<p><img alt="k0s_rook_ceph_aws_credentials.png" src="../../img/k0s_rook_ceph_aws_credentials.png" /></p>
+<p>When the environment variables are set, you can proceed with Terraform and deploy the VMs.</p>
+<div class="highlight"><pre><span></span><code>terraform init
+terraform apply
+</code></pre></div>
+<p>If you decide to create the VMs manually using AWS GUI, you need to disable source / destination checking. This needs to be disbled always for multi-node Kubernetes clusters in order to get the node-to-node communication working due to Network Address Translation. For Terraform this is already taken care of in the default configuration.</p>
+<h3 id="3-create-and-attach-the-volumes">3. Create and attach the volumes<a class="headerlink" href="#3-create-and-attach-the-volumes" title="Permanent link">#</a></h3>
+<p>Ceph requires one of the following storage options for storing the data:</p>
+<ul>
+<li>Raw devices (no partitions or formatted filesystems)</li>
+<li>Raw partitions (no formatted filesystem)</li>
+<li>PVs available from a storage class in block mode</li>
+</ul>
+<p>We will be using raw partititions (AWS EBS volumes), which can be easily attached to the worker node VMs. They are automatically detected by Ceph with its default configuration.</p>
+<p>Deploy AWS EBS volumes, one for each worker node. You can manually create three EBS volumes (for example 10 GB each) using the AWS GUI and attach those to your worker nodes. Formatting shouldn't be done. Instead, Ceph handles that part automatically.</p>
+<p>After you have attached the EBS volumes to the worker nodes, log in to one of the workers and check the available block devices:</p>
+<div class="highlight"><pre><span></span><code>$ lsblk -f
+NAME        FSTYPE   LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINT
+loop0       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/amazon-ssm-agent/3552
+loop1       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/core18/1997
+loop2       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/snapd/11588
+loop3       squashfs                                                            <span class="m">0</span>   <span class="m">100</span>% /snap/lxd/19647
+nvme0n1
+└─nvme0n1p1 ext4     cloudimg-rootfs e8070c31-bfee-4314-a151-d1332dc23486    <span class="m">5</span>.1G    <span class="m">33</span>% /
+nvme1n1
+</code></pre></div>
+<p>The last line (nvme1n1) in this example printout corresponds to the attached EBS volume. Note that it doesn't have any filesystem (FSTYPE is empty). This meets the Ceph storage requirements and you are good to proceed.</p>
+<h3 id="4-install-k0s-using-k0sctl">4. Install k0s using k0sctl<a class="headerlink" href="#4-install-k0s-using-k0sctl" title="Permanent link">#</a></h3>
+<p>You can use terraform to automatically output a config file for k0sctl with the ip addresses and access details.</p>
+<div class="highlight"><pre><span></span><code>terraform output -raw k0s_cluster &gt; k0sctl.yaml
+</code></pre></div>
+<p>After that deploying k0s becomes very easy with the ready-made configuration.</p>
+<div class="highlight"><pre><span></span><code>k0sctl apply --config k0sctl.yaml
+</code></pre></div>
+<p>It might take around 2-3 minutes for k0sctl to connect each node, install k0s and connect the nodes together to form a cluster.</p>
+<h3 id="5-access-k0s-cluster">5. Access k0s cluster<a class="headerlink" href="#5-access-k0s-cluster" title="Permanent link">#</a></h3>
+<p>To access your new cluster remotely, you can use k0sctl to fetch kubeconfig and use that with kubectl or Lens.</p>
+<div class="highlight"><pre><span></span><code>k0sctl kubeconfig --config k0sctl.yaml &gt; kubeconfig
+<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$PWD</span>/kubeconfig
+kubectl get nodes
+</code></pre></div>
+<p>The other option is to login to your controller node and use the k0s in-built kubectl to access the cluster. Then you don't need to worry about kubeconfig (k0s takes care of that automatically).</p>
+<div class="highlight"><pre><span></span><code>ssh -i aws.pem &lt;username&gt;@&lt;ip-address&gt;
+sudo k0s kubectl get nodes
+</code></pre></div>
+<h3 id="6-deploy-rook">6. Deploy Rook<a class="headerlink" href="#6-deploy-rook" title="Permanent link">#</a></h3>
+<p>To get started with Rook, let's first clone the Rook GitHub repo:</p>
+<div class="highlight"><pre><span></span><code>git clone --single-branch --branch v1.6.0 https://github.com/rook/rook.git
+<span class="nb">cd</span> rook/cluster/examples/kubernetes/ceph
+</code></pre></div>
+<p>We will use mostly the default Rook configuration. However, k0s kubelet drectory must be configured in <code>operator.yaml</code> like this</p>
+<div class="highlight"><pre><span></span><code><span class="nt">ROOK_CSI_KUBELET_DIR_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/kubelet&quot;</span><span class="w"></span>
+</code></pre></div>
+<p>To create the resources, which are needed by the Rook’s Ceph operator, run</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f crds.yaml -f common.yaml -f operator.yaml
+</code></pre></div>
+<p>Now you should see the operator running. Check them with</p>
+<div class="highlight"><pre><span></span><code>kubectl get pods -n rook-ceph
+</code></pre></div>
+<h3 id="7-deploy-ceph-cluster">7. Deploy Ceph Cluster<a class="headerlink" href="#7-deploy-ceph-cluster" title="Permanent link">#</a></h3>
+<p>Then you can proceed to create a Ceph cluster. Ceph will use the three EBS volumes attached to the worker nodes:</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f cluster.yaml
+</code></pre></div>
+<p>It takes some minutes to prepare the volumes and create the cluster. Once this is completed you should see the following output:</p>
+<div class="highlight"><pre><span></span><code>$ kubectl get pods -n rook-ceph
+
+NAME                                                         READY   STATUS      RESTARTS   AGE
+csi-cephfsplugin-nhxc8                                       <span class="m">3</span>/3     Running     <span class="m">0</span>          2m48s
+csi-cephfsplugin-provisioner-db45f85f5-ldhjp                 <span class="m">6</span>/6     Running     <span class="m">0</span>          2m48s
+csi-cephfsplugin-provisioner-db45f85f5-sxfm8                 <span class="m">6</span>/6     Running     <span class="m">0</span>          2m48s
+csi-cephfsplugin-tj2bh                                       <span class="m">3</span>/3     Running     <span class="m">0</span>          2m48s
+csi-cephfsplugin-z2rrl                                       <span class="m">3</span>/3     Running     <span class="m">0</span>          2m48s
+csi-rbdplugin-5q7gq                                          <span class="m">3</span>/3     Running     <span class="m">0</span>          2m49s
+csi-rbdplugin-8sfpd                                          <span class="m">3</span>/3     Running     <span class="m">0</span>          2m49s
+csi-rbdplugin-f2xdz                                          <span class="m">3</span>/3     Running     <span class="m">0</span>          2m49s
+csi-rbdplugin-provisioner-d85cbdb48-g6vck                    <span class="m">6</span>/6     Running     <span class="m">0</span>          2m49s
+csi-rbdplugin-provisioner-d85cbdb48-zpmvr                    <span class="m">6</span>/6     Running     <span class="m">0</span>          2m49s
+rook-ceph-crashcollector-ip-172-31-0-76-64cb4c7775-m55x2     <span class="m">1</span>/1     Running     <span class="m">0</span>          45s
+rook-ceph-crashcollector-ip-172-31-13-183-654b46588d-djqsd   <span class="m">1</span>/1     Running     <span class="m">0</span>          2m57s
+rook-ceph-crashcollector-ip-172-31-15-5-67b68698f-gcjb7      <span class="m">1</span>/1     Running     <span class="m">0</span>          2m46s
+rook-ceph-mgr-a-5ffc65c874-8pxgv                             <span class="m">1</span>/1     Running     <span class="m">0</span>          58s
+rook-ceph-mon-a-ffcd85c5f-z89tb                              <span class="m">1</span>/1     Running     <span class="m">0</span>          2m59s
+rook-ceph-mon-b-fc8f59464-lgczk                              <span class="m">1</span>/1     Running     <span class="m">0</span>          2m46s
+rook-ceph-mon-c-69bd87b558-kl4nl                             <span class="m">1</span>/1     Running     <span class="m">0</span>          91s
+rook-ceph-operator-54cf7487d4-pl66p                          <span class="m">1</span>/1     Running     <span class="m">0</span>          4m57s
+rook-ceph-osd-0-dd4fd8f6-g6s9m                               <span class="m">1</span>/1     Running     <span class="m">0</span>          48s
+rook-ceph-osd-1-7c478c49c4-gkqml                             <span class="m">1</span>/1     Running     <span class="m">0</span>          47s
+rook-ceph-osd-2-5b887995fd-26492                             <span class="m">1</span>/1     Running     <span class="m">0</span>          46s
+rook-ceph-osd-prepare-ip-172-31-0-76-6b5fw                   <span class="m">0</span>/1     Completed   <span class="m">0</span>          28s
+rook-ceph-osd-prepare-ip-172-31-13-183-cnkf9                 <span class="m">0</span>/1     Completed   <span class="m">0</span>          25s
+rook-ceph-osd-prepare-ip-172-31-15-5-qc6pt                   <span class="m">0</span>/1     Completed   <span class="m">0</span>          23s
+</code></pre></div>
+<h3 id="8-configure-ceph-block-storage">8. Configure Ceph block storage<a class="headerlink" href="#8-configure-ceph-block-storage" title="Permanent link">#</a></h3>
+<p>Before Ceph can provide storage to your cluster, you need to create a ReplicaPool and a StorageClass. In this example, we use the default configuration to create the block storage.</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f ./csi/rbd/storageclass.yaml
+</code></pre></div>
+<h3 id="9-request-storage">9. Request storage<a class="headerlink" href="#9-request-storage" title="Permanent link">#</a></h3>
+<p>Create a new manifest file <code>mongo-pvc.yaml</code> with the following content:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rook-ceph-block</span><span class="w"></span>
+<span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span><span class="w"></span>
+<span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2Gi</span><span class="w"></span>
+</code></pre></div>
+<p>This will create Persistent Volume Claim (PVC) to request a 2 GB block storage from Ceph. Provioning will be done dynamically. You can define the block size freely as long as it fits to the available storage size.</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f mongo-pvc.yaml
+</code></pre></div>
+<p>You can now check the status of your PVC:</p>
+<div class="highlight"><pre><span></span><code>kubectl get pvc
+</code></pre></div>
+<p>When the PVC gets the requested volume reserved (bound), it should look like this:</p>
+<div class="highlight"><pre><span></span><code>$ kubectl get pvc
+
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+mongo-pvc   Bound    pvc-08337736-65dd-49d2-938c-8197a8871739   3Gi        RWO            rook-ceph-block   6s
+</code></pre></div>
+<h3 id="10-deploy-an-example-application">10. Deploy an example application<a class="headerlink" href="#10-deploy-an-example-application" title="Permanent link">#</a></h3>
+<p>Let's deploy a Mongo database to verify the Ceph storage. Create a new file <code>mongo.yaml</code> with the following content:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo:4.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">27017</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo</span><span class="w"></span>
+<span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span><span class="w"></span>
+<span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/data/db</span><span class="w"></span>
+<span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-persistent-storage</span><span class="w"></span>
+<span class="w">        </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">claimName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mongo-pvc</span><span class="w"></span>
+</code></pre></div>
+<p>Deploy the database:</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f mongo.yaml
+</code></pre></div>
+<h3 id="11-access-the-application">11. Access the application<a class="headerlink" href="#11-access-the-application" title="Permanent link">#</a></h3>
+<p>Open the MongoDB shell using the mongo pod:</p>
+<div class="highlight"><pre><span></span><code>$ kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+mongo-b87cbd5cc-4wx8t   <span class="m">1</span>/1     Running   <span class="m">0</span>          76s
+
+$ kubectl <span class="nb">exec</span> -it mongo-b87cbd5cc-4wx8t -- mongo
+</code></pre></div>
+<p>Create a DB and insert some data:</p>
+<div class="highlight"><pre><span></span><code>&gt; use testDB
+switched to db testDB
+&gt; db.testDB.insertOne( {name: &quot;abc&quot;, number: 123  })
+{
+  &quot;acknowledged&quot; : true,
+  &quot;insertedId&quot; : ObjectId(&quot;60815690a709d344f83b651d&quot;)
+}
+&gt; db.testDB.insertOne( {name: &quot;bcd&quot;, number: 234  })
+{
+  &quot;acknowledged&quot; : true,
+  &quot;insertedId&quot; : ObjectId(&quot;6081569da709d344f83b651e&quot;)
+}
+</code></pre></div>
+<p>Read the data:</p>
+<div class="highlight"><pre><span></span><code>&gt; db.getCollection(&quot;testDB&quot;).find()
+{ &quot;_id&quot; : ObjectId(&quot;60815690a709d344f83b651d&quot;), &quot;name&quot; : &quot;abc&quot;, &quot;number&quot; : 123 }
+{ &quot;_id&quot; : ObjectId(&quot;6081569da709d344f83b651e&quot;), &quot;name&quot; : &quot;bcd&quot;, &quot;number&quot; : 234 }
+&gt;
+</code></pre></div>
+<p>You can also try to restart the mongo pod or restart the worker nodes to verity that the storage is persistent.</p>
+<h3 id="12-clean-up">12. Clean-up<a class="headerlink" href="#12-clean-up" title="Permanent link">#</a></h3>
+<p>You can use Terraform to take down the VMs:</p>
+<div class="highlight"><pre><span></span><code>terraform destroy
+</code></pre></div>
+<p>Remember to delete the EBS volumes separately.</p>
+<h3 id="conclusions">Conclusions<a class="headerlink" href="#conclusions" title="Permanent link">#</a></h3>
+<p>You have now created a replicated Ceph storage for k0s. All you data is stored to multiple disks at the same time so you have a fault-tolerant solution. You also have enabled dynamic provisioning. Your applications can request the available storage without a manual creation of the persistent volumes each time.</p>
+<p>This was just one example to deploy distributed storage to k0s cluster using an operator. You can easily use different Kubernetes storage solutions with k0s.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../ambassador-ingress/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Ambassador Gateway" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Ambassador Gateway
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../FAQ/" class="md-footer__link md-footer__link--next" aria-label="Next: FAQ" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              FAQ
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</a> - All rights reserved.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.bd0b6b67.min.js", "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.467223ff.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -2,11 +2,19 @@
 
 {% block analytics %}
   <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-90E1JB4HW4"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-90E1JB4HW4');
+
+    gtag('config', 'G-JMV1409T2T');
   </script>
+{% endblock %}
+
+{% block outdated %}
+  You're not viewing the latest version.
+  <a href="{{ '../' ~ base_url }}">
+    <strong>Click here to go to latest.</strong>
+  </a>
 {% endblock %}
