@@ -1,6 +1,6 @@
 FROM alpine:3.13
 
-ENV KUBE_VERSION=1.21.10
+ENV KUBE_VERSION=1.21.11
 
 RUN apk add openrc openssh-server bash busybox-initscripts coreutils findutils iptables curl haproxy
 # enable syslog and sshd
