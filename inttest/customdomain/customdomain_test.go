@@ -31,7 +31,8 @@ type CustomDomainSuite struct {
 
 func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
-	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	// Metrics disabled as it's super slow to get up properly and interferes with API discovery etc. while it's getting up
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components metrics-server"))
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -55,6 +56,19 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 
 	s.T().Log("waiting to see CNI pods ready")
 	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "CNI did not start")
+
+	s.T().Run("check custom domain existence in pod", func(t *testing.T) {
+		// All done via SSH as it's much simpler :)
+		// e.g. execing via client-go is super complex and would require too much wiring
+		ssh, err := s.SSH(s.ControllerNode(0))
+		s.NoError(err)
+		_, err = ssh.ExecWithOutput("k0s kc run nginx --image docker.io/nginx:1-alpine")
+		s.NoError(err)
+		s.NoError(common.WaitForPod(kc, "nginx", "default"))
+		output, err := ssh.ExecWithOutput("k0s kc exec nginx -- cat /etc/resolv.conf")
+		s.NoError(err)
+		s.Contains(output, "search default.svc.something.local svc.something.local something.local")
+	})
 }
 
 func TestCustomDomainSuite(t *testing.T) {
