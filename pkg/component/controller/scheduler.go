@@ -36,6 +36,7 @@ type Scheduler struct {
 	gid            int
 	K0sVars        constant.CfgVars
 	LogLevel       string
+	SingleNode     bool
 	supervisor     *supervisor.Supervisor
 	uid            int
 	previousConfig stringmap.StringMap
@@ -88,8 +89,7 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		}
 		args[name] = value
 	}
-
-	if clusterConfig.Spec.API.ExternalAddress == "" {
+	if a.SingleNode {
 		args["leader-elect"] = "false"
 	}
 

@@ -17,7 +17,10 @@ package singlenode
 
 import (
 	"fmt"
+
 	"testing"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,6 +76,18 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 			noToken, err := ssh.ExecWithOutput(fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
 			assert.Error(t, err)
 			assert.Equal(t, "Error: refusing to create token: cannot join into a single node cluster", noToken)
+		})
+
+		t.Run("leader election disabled for scheduler", func(t *testing.T) {
+			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-scheduler", v1.GetOptions{})
+			assert.Error(t, err)
+			assert.True(t, apierrors.IsNotFound(err))
+		})
+
+		t.Run("leader election disabled for controller manager", func(t *testing.T) {
+			_, err := kc.CoordinationV1().Leases("kube-system").Get(s.Context(), "kube-controller-manager", v1.GetOptions{})
+			assert.Error(t, err)
+			assert.True(t, apierrors.IsNotFound(err))
 		})
 
 		// test with etcd backend in config

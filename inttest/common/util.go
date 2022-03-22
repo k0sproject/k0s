@@ -20,6 +20,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -161,5 +162,20 @@ func WaitForPodLogs(kc *kubernetes.Clientset, namespace string) error {
 		}
 
 		return true, nil
+	})
+}
+
+func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) error {
+
+	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
+		lease, err := kc.CoordinationV1().Leases(namespace).Get(ctx, name, v1.GetOptions{})
+		if err != nil && apierrors.IsNotFound(err) {
+			return false, nil // Not found, keep polling
+		} else if err != nil {
+			return false, err
+		}
+
+		// Verify that there's a valid holder on the lease
+		return *lease.Spec.HolderIdentity != "", nil
 	})
 }
