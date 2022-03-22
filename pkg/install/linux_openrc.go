@@ -28,6 +28,8 @@ command_args="{{range .Arguments}}{{.}} {{end}}"
 name=$(basename $(readlink -f $command))
 supervise_daemon_args="--stdout /var/log/${name}.log --stderr /var/log/${name}.err"
 
+: "${rc_ulimit=-n 1048576 -u unlimited}"
+
 {{- if .Dependencies }}
 depend() {
 {{- range $i, $dep := .Dependencies}} 
