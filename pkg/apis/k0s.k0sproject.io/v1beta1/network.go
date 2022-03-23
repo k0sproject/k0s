@@ -146,7 +146,7 @@ func (n *Network) InternalAPIAddresses() ([]string, error) {
 
 // UnmarshalJSON sets in some sane defaults when unmarshaling the data from json
 func (n *Network) UnmarshalJSON(data []byte) error {
-	n.Provider = "calico"
+	n.Provider = "kuberouter"
 
 	type network Network
 	jc := (*network)(n)

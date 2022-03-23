@@ -29,4 +29,5 @@ smoketests := \
 	check-workerrestart \
 	check-kubectl \
 	check-k0sctl \
-	check-metricscraper
+	check-metricscraper \
+	check-customdomain \
