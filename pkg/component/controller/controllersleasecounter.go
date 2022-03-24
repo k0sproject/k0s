@@ -28,9 +28,9 @@ import (
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 )
 
-// ControllerLease implements a component that manages a lease per controller.
+// K0sControllersLeaseCounter implements a component that manages a lease per controller.
 // The per-controller leases are used to determine the amount of currently running controllers
-type K0sLease struct {
+type K0sControllersLeaseCounter struct {
 	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
@@ -39,12 +39,12 @@ type K0sLease struct {
 }
 
 // Init initializes the component needs
-func (l *K0sLease) Init(_ context.Context) error {
+func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
 	return nil
 }
 
 // Run runs the leader elector to keep the lease object up-to-date.
-func (l *K0sLease) Run(ctx context.Context) error {
+func (l *K0sControllersLeaseCounter) Run(ctx context.Context) error {
 	ctx, l.cancelFunc = context.WithCancel(ctx)
 	log := logrus.WithFields(logrus.Fields{"component": "controllerlease"})
 	client, err := l.KubeClientFactory.GetClient()
@@ -88,7 +88,7 @@ func (l *K0sLease) Run(ctx context.Context) error {
 }
 
 // Stop stops the component
-func (l *K0sLease) Stop() error {
+func (l *K0sControllersLeaseCounter) Stop() error {
 	if l.leaseCancel != nil {
 		l.leaseCancel()
 	}
@@ -100,10 +100,10 @@ func (l *K0sLease) Stop() error {
 }
 
 // Reconcile detects changes in configuration and applies them to the component
-func (l *K0sLease) Reconcile() error {
+func (l *K0sControllersLeaseCounter) Reconcile() error {
 	logrus.Debug("reconcile method called for: K0sLease")
 	return nil
 }
 
 // Healthy is a no-op healchcheck
-func (l *K0sLease) Healthy() error { return nil }
+func (l *K0sControllersLeaseCounter) Healthy() error { return nil }
