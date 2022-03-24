@@ -42,7 +42,7 @@ etcd_build_go_ldflags = "-w -s"
 #etcd_build_go_ldflags_extra =
 
 konnectivity_buildimage = golang:$(go_version)-alpine
-konnectivity_version = 0.0.27-k0s2
+konnectivity_version = 0.0.30-k0s
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0
 konnectivity_build_go_flags = "-a"
