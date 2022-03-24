@@ -41,6 +41,7 @@ type Manager struct {
 	supervisor     *supervisor.Supervisor
 	uid            int
 	previousConfig stringmap.StringMap
+	SingleNode     bool
 }
 
 var cmDefaultArgs = stringmap.StringMap{
@@ -116,8 +117,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 			args[name] = value
 		}
 	}
-
-	if clusterConfig.Spec.API.ExternalAddress == "" {
+	if a.SingleNode {
 		args["leader-elect"] = "false"
 	}
 
