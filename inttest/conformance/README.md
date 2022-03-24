@@ -35,15 +35,15 @@ In order to run the conformance test, you will need to set the tested k0s versio
 In the same directory as your `main.tf` file, create an additional file `terraform.tfvars` with the following input:
 
 ```terraform
-k0s_version=v1.23.4+k0s.0
-k8s_version=v1.23.4
+k0s_version=v1.23.5+k0s.0
+k8s_version=v1.23.5
 sonobuoy_version=0.53.2
 ```
 
 ### 2. Environment variables
 
 ```shell
-TF_VAR_k0s_version=v1.23.4+k0s.0 TF_VAR_sonobuoy_version=0.20.0 TF_VAR_k8s_version=v1.23.3 terraform apply
+TF_VAR_k0s_version=v1.23.5+k0s.0 TF_VAR_sonobuoy_version=0.20.0 TF_VAR_k8s_version=v1.23.5 terraform apply
 ```
 
 **NOTE:** By default, terraform will fetch sonobuoy version **0.53.2**. If you want to use a different version you can override this with one of the above methods.
