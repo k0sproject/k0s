@@ -78,10 +78,10 @@ spec:
       #    directly to the target host.
       uploadBinary: true
 
-      #   k0sBinaryPath: <local filepath>
-      #     Like uploadBinary, use to upload a custom or manually
-      #     downloaded k0s binary from the k0sctl machine to the
-      #     target host.
+      #  k0sBinaryPath: <local filepath>
+      #    Upload a custom or manually downloaded k0s binary
+      #    from a local path on the host running k0sctl to the
+      #    target host.
       # k0sBinaryPath: path/to/k0s_binary/k0s
 
     - role: worker
