@@ -13,6 +13,8 @@ The k0s containers are published both on Docker Hub and GitHub. For reasons of s
 - docker.io/k0sproject/k0s:latest
 - docker.pkg.github.com/k0sproject/k0s/k0s:"version"
 
+**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v1.23.5+k0s.0` is tagged as `docker.io/k0sproject/k0s:v1.23.5-k0s.0`.
+
 ## Start k0s
 
 ### 1. Initiate k0s
@@ -21,6 +23,12 @@ You can run your own k0s in Docker:
 
 ```sh
 docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:latest
+```
+
+**Note:** If you are using Docker Desktop as the runtime, starting from 4.3.0 version it's using cgroups v2 in the VM that runs the engine. This means you have to add some extra flags to the above command to get kubelet and containerd to properly work with cgroups v2:
+
+```sh
+--cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw
 ```
 
 ### 2. (Optional) Create additional workers
