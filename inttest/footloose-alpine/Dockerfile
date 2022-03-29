@@ -26,6 +26,3 @@ ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 # Install etcd for smoke tests with external etcd
 RUN curl -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$ETCD_ARCH.tar.gz \
   | tar xz -C /opt --strip-components=1
-
-# This lets etcd start when running on arm in smokes
-ENV ETCD_UNSUPPORTED_ARCH=arm64
