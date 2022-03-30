@@ -208,7 +208,11 @@ k0s creates two PSPs out-of-the-box:
 
 ### `spec.workerProfiles`
 
-Array of `spec.workerProfiles.workerProfile`. Each element has following properties:
+Worker profiles are used to set kubelet parameters can for a worker. Each worker profile is then used to generate a config map containing a custom `kubelet.config.k8s.io` object.
+
+For a list of possible kubelet configuration keys: [go here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
+
+The worker profiles are defined as an array of `spec.workerProfiles.workerProfile`. Each element has following properties:
 
 | Property | Description                                                    |
 | -------- | -------------------------------------------------------------- |
@@ -266,6 +270,17 @@ spec:
           memory.available: "0Mi"
           nodefs.available: "500Mi"
           imagefs.available: "2Gi"
+```
+
+##### Unsafe Sysctls
+
+```yaml
+spec:
+  workerProfiles:
+    - name: custom-eviction
+      values:
+        allowedUnsafeSysctls:
+          - fs.inotify.max_user_instances
 ```
 
 ### `spec.images`
