@@ -644,6 +644,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#worker-profiles" class="md-nav__link">
+    Worker Profiles
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1234,6 +1241,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#worker-profiles" class="md-nav__link">
+    Worker Profiles
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1277,6 +1291,10 @@ worker0       &lt;none&gt;
 <h2 id="kubelet-args">Kubelet args<a class="headerlink" href="#kubelet-args" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts a generic flag to pass in any set of arguments for kubelet process.</p>
 <p>For example, running <code>k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"</code> passes in the given flags to kubelet as-is. As such, you must confirm that any flags you are passing in are properly formatted and valued as k0s will not validate those flags.</p>
+<h2 id="worker-profiles">Worker Profiles<a class="headerlink" href="#worker-profiles" title="Permanent link">#</a></h2>
+<p>kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom <code>kubelet.config.k8s.io</code> object.
+To see examples of k0s.yaml containing worker profiles: <a href="../configuration/#specworkerprofiles">go here</a>.
+For a list of possible kubelet configuration keys: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go here</a>.</p>
                 
               
               

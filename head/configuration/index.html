@@ -1787,7 +1787,9 @@ sudo k0s start
 </tbody>
 </table>
 <h3 id="specworkerprofiles"><code>spec.workerProfiles</code><a class="headerlink" href="#specworkerprofiles" title="Permanent link">#</a></h3>
-<p>Array of <code>spec.workerProfiles.workerProfile</code>. Each element has following properties:</p>
+<p>Worker profiles are used to set kubelet parameters can for a worker. Each worker profile is then used to generate a config map containing a custom <code>kubelet.config.k8s.io</code> object.</p>
+<p>For a list of possible kubelet configuration keys: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go here</a>.</p>
+<p>The worker profiles are defined as an array of <code>spec.workerProfiles.workerProfile</code>. Each element has following properties:</p>
 <table>
 <thead>
 <tr>
@@ -1815,21 +1817,45 @@ sudo k0s start
 <li><code>kind</code></li>
 </ul>
 <h4 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h4>
-<p>mapping:</p>
+<h5 id="feature-gates">Feature Gates<a class="headerlink" href="#feature-gates" title="Permanent link">#</a></h5>
+<p>The below is an example of a worker profile with feature gates enabled:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-role</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-feature-gate</span><span class="w">      </span><span class="c1"># name of the worker profile</span><span class="w"></span>
 <span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
-<span class="w">         </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span><span class="w"></span>
-<span class="w">         </span><span class="nt">mapping</span><span class="p">:</span><span class="w"></span>
-<span class="w">             </span><span class="nt">innerKey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">innerValue</span><span class="w"></span>
+<span class="w">         </span><span class="nt">featureGates</span><span class="p">:</span><span class="w">        </span><span class="c1"># feature gates mapping</span><span class="w"></span>
+<span class="w">            </span><span class="nt">DevicePlugins</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="nt">Accelerators</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="nt">AllowExtTrafficLocalEndpoints</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;false&quot;</span><span class="w"></span>
 </code></pre></div>
-<p>Custom volumePluginDir:</p>
+<h5 id="custom-volumeplugindir">Custom volumePluginDir<a class="headerlink" href="#custom-volumeplugindir" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-role</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-pluginDir</span><span class="w"></span>
 <span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
 <span class="w">         </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/libexec/k0s/kubelet-plugins/volume/exec</span><span class="w"></span>
+</code></pre></div>
+<h5 id="eviction-policy">Eviction Policy<a class="headerlink" href="#eviction-policy" title="Permanent link">#</a></h5>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-eviction</span><span class="w"></span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">evictionHard</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;500Mi&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1Gi&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100Gi&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">evictionMinimumReclaim</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">memory.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0Mi&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">nodefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;500Mi&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">imagefs.available</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2Gi&quot;</span><span class="w"></span>
+</code></pre></div>
+<h5 id="unsafe-sysctls">Unsafe Sysctls<a class="headerlink" href="#unsafe-sysctls" title="Permanent link">#</a></h5>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-eviction</span><span class="w"></span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">allowedUnsafeSysctls</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fs.inotify.max_user_instances</span><span class="w"></span>
 </code></pre></div>
 <h3 id="specimages"><code>spec.images</code><a class="headerlink" href="#specimages" title="Permanent link">#</a></h3>
 <p>Nodes under the <code>images</code> key all have the same basic structure:</p>
