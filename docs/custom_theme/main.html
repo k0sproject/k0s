@@ -11,3 +11,10 @@
     gtag('config', 'G-JMV1409T2T');
   </script>
 {% endblock %}
+
+{% block outdated %}
+  You are not currently viewing the documentation for the current stable release of k0s.
+  <a href="{{ '../' ~ base_url }}">
+    <strong>Click here to go to the documentation of the current stable release.</strong>
+  </a>
+{% endblock %}

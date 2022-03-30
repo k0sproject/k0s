@@ -117,4 +117,5 @@ extra:
       name: k0s Website
   version:
     provider: mike
+    default: stable
 
