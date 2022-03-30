@@ -51,3 +51,9 @@ worker0       <none>
 The `k0s worker` command accepts a generic flag to pass in any set of arguments for kubelet process.
 
 For example, running `k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"` passes in the given flags to kubelet as-is. As such, you must confirm that any flags you are passing in are properly formatted and valued as k0s will not validate those flags.
+
+## Worker Profiles
+
+kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom `kubelet.config.k8s.io` object.
+To see examples of k0s.yaml containing worker profiles: [go here](./configuration.md#specworkerprofiles).
+For a list of possible kubelet configuration keys: [go here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
