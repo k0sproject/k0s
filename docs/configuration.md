@@ -90,7 +90,7 @@ spec:
       version: v0.5.0
     kubeproxy:
       image: k8s.gcr.io/kube-proxy
-      version: v1.23.5
+      version: v1.24.0-beta.0
     coredns:
       image: k8s.gcr.io/coredns/coredns
       version: v1.7.0
