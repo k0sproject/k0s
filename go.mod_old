@@ -41,10 +41,10 @@ require (
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
-	go.etcd.io/etcd/api/v3 v3.5.4
-	go.etcd.io/etcd/client/pkg/v3 v3.5.4
-	go.etcd.io/etcd/client/v3 v3.5.4
-	go.etcd.io/etcd/etcdutl/v3 v3.5.4
+	go.etcd.io/etcd/api/v3 v3.5.2
+	go.etcd.io/etcd/client/pkg/v3 v3.5.2
+	go.etcd.io/etcd/client/v3 v3.5.2
+	go.etcd.io/etcd/etcdutl/v3 v3.5.2
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -53,18 +53,13 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.8.1
-
-)
-
-// Kubernetes deps, split into own section for easier maintenance
-require (
 	k8s.io/api v0.24.0-beta.0
 	k8s.io/apimachinery v0.24.0-beta.0
 	k8s.io/cli-runtime v0.24.0-beta.0
 	k8s.io/client-go v0.24.0-beta.0
 	k8s.io/cloud-provider v0.24.0-beta.0
 	k8s.io/component-base v0.24.0-beta.0
-	k8s.io/cri-api v0.23.0
+	k8s.io/cri-api v0.24.0-beta.0
 	k8s.io/kube-aggregator v0.24.0-beta.0
 	k8s.io/kubectl v0.24.0-beta.0
 	k8s.io/mount-utils v0.24.0-beta.0
@@ -72,9 +67,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/yaml v1.3.0
 )
-
-// Try to make helm use older version, DOES NOT SEEM TO WORK though :(
-replace k8s.io/kubectl/pkg/cmd/util => k8s.io/kubectl v0.23.0
 
 // backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
 replace (
@@ -90,3 +82,8 @@ replace (
 	// make sure we don't have CVE-2020-28852
 	golang.org/x/text => golang.org/x/text v0.3.6
 )
+
+// To fix Helm to use older kubectl packages
+replace k8s.io/kubectl/pkg/cmd/util => k8s.io/kubectl v0.23.5
+
+replace github.com/containerd/cgroups/v2 => github.com/containerd/cgroups v1.0.1
