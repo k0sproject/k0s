@@ -76,50 +76,88 @@ type cliReporter struct {
 }
 
 func (r *cliReporter) Pass(p probes.ProbeDesc, v probes.ProbedProp) error {
-	return r.printf("%s%s%s (pass)\n",
-		strings.Repeat("  ", len(p.Path())-1),
+	prop := propString(v)
+	return r.printf("%s%s%s%s\n",
+		indent(p),
 		r.colors.BrightWhite(p.DisplayName()+": "),
-		r.colors.Green(v.String()))
+		r.colors.Green(prop),
+		buildMsg(prop, "pass", ""),
+	)
 }
 
 func (r *cliReporter) Warn(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
-	if msg == "" {
-		msg = " (warning)"
-	} else {
-		msg = " (warning: " + msg + ")"
-	}
-
+	prop := propString(v)
 	return r.printf("%s%s%s%s\n",
-		strings.Repeat("  ", len(p.Path())-1),
+		indent(p),
 		r.colors.BrightWhite(p.DisplayName()+": "),
-		r.colors.Yellow(v.String()),
-		msg)
+		r.colors.Yellow(prop),
+		buildMsg(prop, "warning", msg))
 }
 
 func (r *cliReporter) Reject(p probes.ProbeDesc, v probes.ProbedProp, msg string) error {
 	r.failed = true
-	if msg == "" {
-		msg = " (rejected)"
-	} else {
-		msg = " (rejected: " + msg + ")"
-	}
-
+	prop := propString(v)
 	return r.printf("%s%s%s%s\n",
-		strings.Repeat("  ", len(p.Path())-1),
+		indent(p),
 		r.colors.BrightWhite(p.DisplayName()+": "),
-		r.colors.Bold(r.colors.Red(v.String())),
-		msg)
+		r.colors.Bold(r.colors.Red(prop)),
+		buildMsg(prop, "rejected", msg))
 }
 
 func (r *cliReporter) Error(p probes.ProbeDesc, err error) error {
 	r.failed = true
+
+	errStr := "error"
+	if err != nil {
+		e := err.Error()
+		if e != "" {
+			errStr = errStr + ": " + e
+		}
+	}
+
 	return r.printf("%s%s%s\n",
-		strings.Repeat("  ", len(p.Path())-1),
+		indent(p),
 		r.colors.BrightWhite(p.DisplayName()+": "),
-		r.colors.Bold(r.colors.Red("error: "+err.Error())))
+		r.colors.Bold(errStr).Red(),
+	)
 }
 
 func (r *cliReporter) printf(format interface{}, args ...interface{}) error {
 	_, err := io.WriteString(r.w, aurora.Sprintf(format, args...))
 	return err
+}
+
+func propString(p probes.ProbedProp) string {
+	if p == nil {
+		return ""
+	}
+
+	return p.String()
+}
+
+func indent(p probes.ProbeDesc) string {
+	count := 0
+	if p != nil {
+		count = len(p.Path()) - 1
+		if count < 1 {
+			return ""
+		}
+	}
+
+	return strings.Repeat("  ", count)
+}
+
+func buildMsg(propString, category, msg string) string {
+	var buf strings.Builder
+	if propString != "" {
+		buf.WriteRune(' ')
+	}
+	buf.WriteRune('(')
+	buf.WriteString(category)
+	if msg != "" {
+		buf.WriteString(": ")
+		buf.WriteString(msg)
+	}
+	buf.WriteRune(')')
+	return buf.String()
 }
