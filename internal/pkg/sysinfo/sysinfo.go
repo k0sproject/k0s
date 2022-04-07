@@ -52,7 +52,7 @@ func (s *K0sSysinfoSpec) RunPreFlightChecks(lenient bool) error {
 }
 
 func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
-	p := probes.NewProbes()
+	p := probes.NewProbes(nil)
 
 	// https://docs.k0sproject.io/main/external-runtime-deps/#a-unique-machine-id-for-multi-node-setups
 	probes.RequireMachineID(p)

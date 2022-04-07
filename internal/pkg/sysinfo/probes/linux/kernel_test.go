@@ -63,21 +63,21 @@ func TestRequireKernelConfig(t *testing.T) {
 		t.Run("calledWhenNoError", func(t *testing.T) {
 			reporter := new(test_sysinfo.MockReporter)
 			reporter.On("Pass", mock.MatchedBy(func(desc probes.ProbeDesc) bool {
-				if (probes.ProbePath{"kernelConfig", "IKCONFIG"}).Equal(desc.Path()) {
+				if (probes.ProbePath{"IKCONFIG"}).Equal(desc.Path()) {
 					assert.Equal(t, "CONFIG_IKCONFIG: ikconfig", desc.DisplayName())
 					return true
 				}
 				return false
 			}), kConfigBuiltIn).Return(nil)
 			reporter.On("Pass", mock.MatchedBy(func(desc probes.ProbeDesc) bool {
-				if (probes.ProbePath{"kernelConfig", "IKCONFIG", "IKCONFIG_PROC"}).Equal(desc.Path()) {
+				if (probes.ProbePath{"IKCONFIG", "IKCONFIG_PROC"}).Equal(desc.Path()) {
 					assert.Equal(t, "CONFIG_IKCONFIG_PROC: ikconfig_proc", desc.DisplayName())
 					return true
 				}
 				return false
 			}), kConfigAsModule).Return(nil)
 
-			err := linux.probes.Probe(reporter)
+			err := linux.Probes.Probe(reporter)
 
 			reporter.AssertExpectations(t)
 			assert.NoError(t, err)
@@ -87,10 +87,10 @@ func TestRequireKernelConfig(t *testing.T) {
 			expectedErr := errors.New("dummy")
 			reporter := new(test_sysinfo.MockReporter)
 			reporter.On("Pass", mock.MatchedBy(func(desc probes.ProbeDesc) bool {
-				return probes.ProbePath{"kernelConfig", "IKCONFIG"}.Equal(desc.Path())
+				return probes.ProbePath{"IKCONFIG"}.Equal(desc.Path())
 			}), kConfigBuiltIn).Return(expectedErr)
 
-			err := linux.probes.Probe(reporter)
+			err := linux.Probes.Probe(reporter)
 
 			reporter.AssertExpectations(t)
 			assert.Same(t, expectedErr, err)
@@ -102,7 +102,7 @@ func TestRequireKernelConfig(t *testing.T) {
 			reporter := new(test_sysinfo.MockReporter)
 			reporter.On("Warn", mock.Anything, &expectedErr, "").Return(nil)
 
-			err := linux.probes.Probe(reporter)
+			err := linux.Probes.Probe(reporter)
 
 			reporter.AssertExpectations(t)
 			assert.NoError(t, err)

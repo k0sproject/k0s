@@ -58,6 +58,11 @@ type ProbeDesc interface {
 	DisplayName() string
 }
 
+// NewProbeDesc returns a new ProbeDesc with the given display name and path.
+func NewProbeDesc(name string, path ProbePath) ProbeDesc {
+	return &probeDesc{path, name}
+}
+
 type ParentProbe interface {
 	Get(id string) Probe
 	Set(id string, setter func(path ProbePath, current Probe) Probe)
@@ -92,10 +97,18 @@ type Probes interface {
 	Probe
 }
 
-// NewProbes returns a new, empty composite probe.
-func NewProbes() Probes {
-	return &probes{}
+// NewProbes returns a new, empty composite probe at the given path.
+func NewProbes(path ProbePath) Probes {
+	return &probes{path, nil}
 }
+
+type probeDesc struct {
+	path ProbePath
+	name string
+}
+
+func (d *probeDesc) Path() ProbePath     { return d.path }
+func (d *probeDesc) DisplayName() string { return d.name }
 
 type probes struct {
 	path   ProbePath

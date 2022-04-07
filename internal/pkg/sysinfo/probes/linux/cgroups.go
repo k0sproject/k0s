@@ -31,21 +31,22 @@ import (
 )
 
 type CgroupsProbes struct {
+	probes.Probes
+
 	path              probes.ProbePath
 	probeUname        unameProber
 	probeCgroupSystem cgroupSystemProber
-	probes            probes.Probes
 }
 
 func (p *LinuxProbes) RequireCgroups() *CgroupsProbes {
 	var c *CgroupsProbes
-	p.probes.Set("cgroups", func(path probes.ProbePath, current probes.Probe) probes.Probe {
+	p.Set("cgroups", func(path probes.ProbePath, current probes.Probe) probes.Probe {
 		if probe, ok := current.(*CgroupsProbes); ok {
 			c = probe
 			return c
 		}
 
-		c = newCgroupsProbes(append(p.path, path...), p.probeUname, "/sys/fs/cgroup")
+		c = newCgroupsProbes(path, p.probeUname, "/sys/fs/cgroup")
 		return c
 	})
 
@@ -54,35 +55,29 @@ func (p *LinuxProbes) RequireCgroups() *CgroupsProbes {
 
 func newCgroupsProbes(path probes.ProbePath, unameProber unameProber, mountPoint string) *CgroupsProbes {
 	return &CgroupsProbes{
+		probes.NewProbes(path),
+
 		path,
 		unameProber,
 		newCgroupSystemProber(unameProber, mountPoint),
-		probes.NewProbes(),
 	}
-}
-
-func (c *CgroupsProbes) Path() probes.ProbePath {
-	return c.path
-}
-
-func (c *CgroupsProbes) DisplayName() string {
-	return "Control Groups"
 }
 
 func (c *CgroupsProbes) Probe(reporter probes.Reporter) error {
-	if err := c.probeSystem(reporter); err != nil {
+	if err := c.probe(reporter); err != nil {
 		return err
 	}
 
-	return c.probes.Probe(reporter)
+	return c.Probes.Probe(reporter)
 }
 
-func (c *CgroupsProbes) probeSystem(reporter probes.Reporter) error {
+func (c *CgroupsProbes) probe(reporter probes.Reporter) error {
+	desc := probes.NewProbeDesc("Control Groups", c.path)
 	sys, err := c.probeCgroupSystem()
 	if err != nil {
-		return reportCgroupSystemErr(reporter, c, err)
+		return reportCgroupSystemErr(reporter, desc, err)
 	}
-	return reporter.Pass(c, sys)
+	return reporter.Pass(desc, sys)
 }
 
 func reportCgroupSystemErr(reporter probes.Reporter, d probes.ProbeDesc, err error) error {

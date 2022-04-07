@@ -20,5 +20,5 @@ limitations under the License.
 package probes
 
 func (a *assertDiskSpace) Probe(reporter Reporter) error {
-	return reporter.Warn(a, probeUnsupported("Disk space detection unsupported on this platform"), "")
+	return reporter.Warn(a.desc(), probeUnsupported("Disk space detection unsupported on this platform"), "")
 }
