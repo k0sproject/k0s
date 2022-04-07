@@ -72,6 +72,10 @@ func KernelSetup() {
 	if !file.Exists("/proc/sys/net/bridge/bridge-nf-call-iptables") {
 		modprobe("br_netfilter")
 	}
+	// https://github.com/kubernetes/kubernetes/issues/108877
+	if !file.Exists("/proc/net/ip_tables_targets") {
+		modprobe("ip_tables")
+	}
 	enableSysCtl("net/ipv4/conf/all/forwarding")
 	enableSysCtl("net/ipv4/conf/default/forwarding")
 	enableSysCtl("net/ipv6/conf/all/forwarding")
