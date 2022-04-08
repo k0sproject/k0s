@@ -1329,9 +1329,12 @@ kube-system   metrics-server-7d4bcb75dd-pqkrs            <span class="m">1</span
 <p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>
 <p>Read more at CoreDNS <a href="https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters">troubleshooting docs</a>.</p>
 <h2 id="k0s-controller-fails-on-arm-boxes"><code>k0s controller</code> fails on ARM boxes<a class="headerlink" href="#k0s-controller-fails-on-arm-boxes" title="Permanent link">#</a></h2>
-<p>In the logs you probably see ETCD not starting up properly.</p>
-<p>Etcd is <a href="https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support">not fully supported</a> on ARM architecture, thus you need to run <code>k0s controller</code> and thus also etcd process with env <code>ETCD_UNSUPPORTED_ARCH=arm64</code>.</p>
-<p>As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.</p>
+<p>In the logs you probably see etcd not starting up properly.</p>
+<p>Etcd is <a href="https://etcd.io/docs/v3.5/op-guide/supported-platform/#current-support">not fully supported</a> on ARM architecture, thus you need
+to run <code>k0s controller</code> and thus also etcd process with env
+<code>ETCD_UNSUPPORTED_ARCH=arm</code>.</p>
+<p>As etcd is not fully supported on ARM, it also means that the k0s control plane
+with etcd itself is not fully supported on ARM either.</p>
 <h2 id="k0s-will-not-start-on-zfs-based-systems"><code>k0s</code> will not start on ZFS-based systems<a class="headerlink" href="#k0s-will-not-start-on-zfs-based-systems" title="Permanent link">#</a></h2>
 <p>On ZFS-based systems k0s will fail to start because containerd runs by default in overlayfs mode to manage image layers. This is not compatible with ZFS and requires a custom config of containerd. The following steps should get k0s working on ZFS-based systems:</p>
 <ul>
