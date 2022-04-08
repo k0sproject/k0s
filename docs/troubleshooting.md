@@ -43,11 +43,16 @@ Read more at CoreDNS [troubleshooting docs](https://coredns.io/plugins/loop/#tro
 
 ## `k0s controller` fails on ARM boxes
 
-In the logs you probably see ETCD not starting up properly.
+In the logs you probably see etcd not starting up properly.
 
-Etcd is [not fully supported](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/supported-platform.md#current-support) on ARM architecture, thus you need to run `k0s controller` and thus also etcd process with env `ETCD_UNSUPPORTED_ARCH=arm64`.
+Etcd is [not fully supported][etcd-platforms] on ARM architecture, thus you need
+to run `k0s controller` and thus also etcd process with env
+`ETCD_UNSUPPORTED_ARCH=arm`.
 
-As Etcd is not fully supported on ARM architecture it also means that k0s controlplane with etcd itself is not fully supported on ARM either.
+As etcd is not fully supported on ARM, it also means that the k0s control plane
+with etcd itself is not fully supported on ARM either.
+
+[etcd-platforms]: https://etcd.io/docs/v3.5/op-guide/supported-platform/#current-support
 
 ## `k0s` will not start on ZFS-based systems
 

@@ -291,7 +291,8 @@ func (e *Etcd) Healthy() error {
 }
 
 func detectUnsupportedEtcdArch() error {
-	if strings.Contains(runtime.GOARCH, "arm") {
+	// https://github.com/etcd-io/etcd/blob/v3.5.2/server/etcdmain/etcd.go#L467-L472
+	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		if os.Getenv("ETCD_UNSUPPORTED_ARCH") != runtime.GOARCH {
 			return fmt.Errorf("running ETCD on %s requires ETCD_UNSUPPORTED_ARCH=%s ", runtime.GOARCH, runtime.GOARCH)
 		}

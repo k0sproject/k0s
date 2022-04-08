@@ -33,7 +33,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     Is's possible to set environment variables with the install command:
 
     ```shell
-    sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm64
+    sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm
     ```
 
     The system service can be reinstalled with the `--force` flag:
