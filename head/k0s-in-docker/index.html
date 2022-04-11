@@ -1392,10 +1392,14 @@
 <li>docker.io/k0sproject/k0s:latest</li>
 <li>docker.pkg.github.com/k0sproject/k0s/k0s:"version"</li>
 </ul>
+<p><strong>Note:</strong> Due to Docker Hub tag validation scheme, we have to use <code>-</code> as the k0s version separator instead of the usual <code>+</code>. So for example k0s version <code>v1.23.5+k0s.0</code> is tagged as <code>docker.io/k0sproject/k0s:v1.23.5-k0s.0</code>.</p>
 <h2 id="start-k0s">Start k0s<a class="headerlink" href="#start-k0s" title="Permanent link">#</a></h2>
 <h3 id="1-initiate-k0s">1. Initiate k0s<a class="headerlink" href="#1-initiate-k0s" title="Permanent link">#</a></h3>
 <p>You can run your own k0s in Docker:</p>
 <div class="highlight"><pre><span></span><code>docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p <span class="m">6443</span>:6443 docker.io/k0sproject/k0s:latest
+</code></pre></div>
+<p><strong>Note:</strong> If you are using Docker Desktop as the runtime, starting from 4.3.0 version it's using cgroups v2 in the VM that runs the engine. This means you have to add some extra flags to the above command to get kubelet and containerd to properly work with cgroups v2:</p>
+<div class="highlight"><pre><span></span><code>--cgroupns<span class="o">=</span>host -v /sys/fs/cgroup:/sys/fs/cgroup:rw
 </code></pre></div>
 <h3 id="2-optional-create-additional-workers">2. (Optional) Create additional workers<a class="headerlink" href="#2-optional-create-additional-workers" title="Permanent link">#</a></h3>
 <p>You can attach multiple workers nodes into the cluster to then distribute your application containers to separate workers.</p>
