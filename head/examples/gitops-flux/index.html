@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/manifests/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/examples/gitops-flux/">
       
       
         
       
-      <link rel="icon" href="../img/k0s_social.png">
+      <link rel="icon" href="../../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>Manifest Deployer - Documentation</title>
+        <title>GitOps with Flux - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#manifest-deployer" class="md-skip">
+        <a href="#using-gitops-with-flux" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../..">
+  <a href="../../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
@@ -113,9 +113,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -131,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Manifest Deployer
+              GitOps with Flux
             
           </span>
         </div>
@@ -236,9 +236,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../img/k0s_social.png" alt="logo">
+  <img src="../../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -267,7 +267,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -308,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -322,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0sctl-install/" class="md-nav__link">
+      <a href="../../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -362,7 +362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-multi-node/" class="md-nav__link">
+      <a href="../../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -376,7 +376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../k0s-in-docker/" class="md-nav__link">
+      <a href="../../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -390,7 +390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../experimental-windows/" class="md-nav__link">
+      <a href="../../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -404,7 +404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../raspberry-pi4/" class="md-nav__link">
+      <a href="../../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -418,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -432,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../airgap-install/" class="md-nav__link">
+      <a href="../../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -453,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+      <a href="../../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -467,7 +467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup/" class="md-nav__link">
+      <a href="../../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -481,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reset/" class="md-nav__link">
+      <a href="../../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -495,7 +495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-requirements/" class="md-nav__link">
+      <a href="../../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -509,8 +509,294 @@
   
   
     <li class="md-nav__item">
-      <a href="../external-runtime-deps/" class="md-nav__link">
+      <a href="../../external-runtime-deps/" class="md-nav__link">
         External runtime dependencies
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        Configuration Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dynamic-configuration/" class="md-nav__link">
+        Dynamic Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration-validation/" class="md-nav__link">
+        Configuration Validation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worker-node-config/" class="md-nav__link">
+        Worker Node Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../networking/" class="md-nav__link">
+        Networking (CNI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runtime/" class="md-nav__link">
+        Runtime (CRI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../storage/" class="md-nav__link">
+        Storage (CSI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system-monitoring/" class="md-nav__link">
+        System Components Monitoring
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manifests/" class="md-nav__link">
+        Manifest Deployer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../helm-charts/" class="md-nav__link">
+        Helm Charts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud-providers/" class="md-nav__link">
+        Cloud Providers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dual-stack/" class="md-nav__link">
+        IPv4/IPv6 Dual-Stack
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../high-availability/" class="md-nav__link">
+        Control Plane High Availability
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../shell-completion/" class="md-nav__link">
+        Shell Completion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-management/" class="md-nav__link">
+        User Management
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment-variables/" class="md-nav__link">
+        Configuration of Environment Variables
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../oidc/oidc-cluster-configuration/" class="md-nav__link">
+        OpenID Connect
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../selinux/" class="md-nav__link">
+        SELinux
       </a>
     </li>
   
@@ -536,353 +822,7 @@
     <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
-      
-      
-      
-      
-        <label class="md-nav__link" for="__nav_3">
-          Usage
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" aria-label="Usage" data-md-level="1">
-        <label class="md-nav__title" for="__nav_3">
-          <span class="md-nav__icon md-icon"></span>
-          Usage
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
-        Configuration Options
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dynamic-configuration/" class="md-nav__link">
-        Dynamic Configuration
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration-validation/" class="md-nav__link">
-        Configuration Validation
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../worker-node-config/" class="md-nav__link">
-        Worker Node Configuration
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../networking/" class="md-nav__link">
-        Networking (CNI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../runtime/" class="md-nav__link">
-        Runtime (CRI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
-        Storage (CSI)
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../system-monitoring/" class="md-nav__link">
-        System Components Monitoring
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Manifest Deployer
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Manifest Deployer
-      </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
-  </a>
-  
-    <nav class="md-nav" aria-label="Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    Note
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../helm-charts/" class="md-nav__link">
-        Helm Charts
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cloud-providers/" class="md-nav__link">
-        Cloud Providers
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dual-stack/" class="md-nav__link">
-        IPv4/IPv6 Dual-Stack
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../high-availability/" class="md-nav__link">
-        Control Plane High Availability
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../shell-completion/" class="md-nav__link">
-        Shell Completion
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../user-management/" class="md-nav__link">
-        User Management
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../environment-variables/" class="md-nav__link">
-        Configuration of Environment Variables
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
-        OpenID Connect
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../selinux/" class="md-nav__link">
-        SELinux
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
       
       
       
@@ -905,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -919,7 +859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -933,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -947,7 +887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -961,7 +901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/rook-ceph/" class="md-nav__link">
+      <a href="../rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -973,11 +913,93 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../examples/gitops-flux/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          GitOps with Flux
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         GitOps with Flux
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-gitops-with-k0s" class="md-nav__link">
+    Why GitOps with k0s
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-kubeconfig" class="md-nav__link">
+    Set kubeconfig
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-flux" class="md-nav__link">
+    Install Flux
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-flux-for-a-github-repository" class="md-nav__link">
+    Configure Flux for a GitHub repository
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-example-application" class="md-nav__link">
+    Deploy example application
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-flux" class="md-nav__link">
+    Uninstall Flux
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1023,7 +1045,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -1037,7 +1059,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+      <a href="../../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -1085,7 +1107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -1099,7 +1121,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cis_benchmark/" class="md-nav__link">
+      <a href="../../cis_benchmark/" class="md-nav__link">
         Kube-bench Security Benchmark
       </a>
     </li>
@@ -1121,7 +1143,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../releases/" class="md-nav__link">
+      <a href="../../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1162,7 +1184,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/overview/" class="md-nav__link">
+      <a href="../../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1176,7 +1198,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/github_workflow/" class="md-nav__link">
+      <a href="../../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1190,7 +1212,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributors/testing/" class="md-nav__link">
+      <a href="../../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1204,7 +1226,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1244,28 +1266,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+  <a href="#why-gitops-with-k0s" class="md-nav__link">
+    Why GitOps with k0s
   </a>
-  
-    <nav class="md-nav" aria-label="Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#note" class="md-nav__link">
-    Note
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    Example
+  <a href="#install-k0s" class="md-nav__link">
+    Install k0s
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-kubeconfig" class="md-nav__link">
+    Set kubeconfig
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-flux" class="md-nav__link">
+    Install Flux
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-flux-for-a-github-repository" class="md-nav__link">
+    Configure Flux for a GitHub repository
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-example-application" class="md-nav__link">
+    Deploy example application
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstall-flux" class="md-nav__link">
+    Uninstall Flux
   </a>
   
 </li>
@@ -1284,58 +1328,115 @@
                 
                 
                 
-                <h1 id="manifest-deployer">Manifest Deployer<a class="headerlink" href="#manifest-deployer" title="Permanent link">#</a></h1>
-<p>Included with k0s, Manifest Deployer is one of two methods you can use to run k0s with your preferred extensions (the other being by defining your extensions as <a href="../helm-charts/">Helm charts</a>).</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
-<p>Manifest Deployer runs on the controller nodes and provides an easy way to automatically deploy manifests at runtime.</p>
-<p>By default, k0s reads all manifests under <code>/var/lib/k0s/manifests</code> and ensures that their state matches the cluster state. Moreover, on removal of a manifest file, k0s will automatically prune all of it associated resources.</p>
-<p>The use of Manifest Deployer is quite similar to the use the <code>kubectl apply</code> command. The main difference between the two is that Manifest Deployer constantly monitors the directory for changes, and thus you do not need to manually apply changes that are made to the manifest files.</p>
-<h3 id="note">Note<a class="headerlink" href="#note" title="Permanent link">#</a></h3>
-<ul>
-<li>Each directory that is a direct descendant of <code>/var/lib/k0s/manifests</code> is considered to be its own "stack". Nested directories (further subfolders), however, are excluded from the stack mechanism and thus are not automatically deployed by the Manifest Deployer.</li>
-</ul>
-<ul>
-<li>k0s uses the indepenent stack mechanism for some of its internal in-cluster components, as well as for other resources. Be sure to only touch the manifests that are not managed by k0s.</li>
-</ul>
-<ul>
-<li>Explicitly define the namespace in the manifests (Manifest Deployer does not have a default namespace).</li>
-</ul>
-<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
-<p>To try Manifest Deployer, create a new folder under <code>/var/lib/k0s/manifests</code> and then create a manifest file (such as <code>nginx.yaml</code>) with the following content:</p>
+                <h1 id="using-gitops-with-flux">Using GitOps with Flux<a class="headerlink" href="#using-gitops-with-flux" title="Permanent link">#</a></h1>
+<p>This tutorial describes the benefits of using GitOps with k0s and provides an example of deploying an application with Flux v2.</p>
+<p>GitOps is a practice where you leverage Git as the single source of truth. It offers a declarative way to do Kubernetes cluster management and application delivery. The desired states, using Kubernetes manifests and helm packages, are pulled from a git repository and automatically deployed to the cluster. This also makes it quick to re-deploy and recover applications whenever needed.</p>
+<p><img alt="k0s_flux" src="../../img/k0s_flux.png" /></p>
+<h2 id="why-gitops-with-k0s">Why GitOps with k0s<a class="headerlink" href="#why-gitops-with-k0s" title="Permanent link">#</a></h2>
+<p>k0s doesn't come with a lot of different extensions and add-ons that some users might find useful (and some not). Instead, k0s comes with 100% upstream Kubernetes and is compatible with all Kubernetes extensions. This makes it easy for k0s users to freely select the needed extensions that their applications and infrastructure need, without conflicting to any predefined options. Now, GitOps is a perfect practice to deploy these extensions automatically with applications by defining and configuring them directly in Git. This will also help with cluster security as the cluster doesn't need to be accessed directly when application changes are needed. However, this puts more stress on the Git access control, because changes in Git are propagated automatically to the cluster.</p>
+<h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
+<p>Let's start by installing k0s. Any k0s deployment option will do, but to keep things simple, this <a href="../../install/">Quick Start Guide</a> gets you started with a single node k0s cluster.</p>
+<p>Run these three commands to download k0s, install and start it:</p>
+<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+sudo k0s install controller --single
+sudo k0s start
+</code></pre></div>
+<h2 id="set-kubeconfig">Set kubeconfig<a class="headerlink" href="#set-kubeconfig" title="Permanent link">#</a></h2>
+<p>Next, you need to set the KUBECONFIG variable, which is needed by Flux CLI later on.</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubeconfig admin &gt; kubeconfig
+<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$PWD</span>/kubeconfig
+</code></pre></div>
+<h2 id="install-flux">Install Flux<a class="headerlink" href="#install-flux" title="Permanent link">#</a></h2>
+<p>To proceed with Flux, install the Flux CLI, which is used for configuring Flux to your Kubernetes cluster. For macOS and Linux, this can be done either with brew or bash script. Use one of them:</p>
+<div class="highlight"><pre><span></span><code>brew install fluxcd/tap/flux
+</code></pre></div>
+<p>or</p>
+<div class="highlight"><pre><span></span><code>curl -s https://fluxcd.io/install.sh <span class="p">|</span> sudo bash
+</code></pre></div>
+<p>For more details of the Flux installation, check the <a href="https://fluxcd.io/docs/get-started/">Flux documentation</a>.</p>
+<h2 id="configure-flux-for-a-github-repository">Configure Flux for a GitHub repository<a class="headerlink" href="#configure-flux-for-a-github-repository" title="Permanent link">#</a></h2>
+<p>Export your GitHub personal access token (<a href="https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token">instructions how to get it</a>) and username:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_TOKEN</span><span class="o">=</span>&lt;your-token&gt;
+<span class="nb">export</span> <span class="nv">GITHUB_USER</span><span class="o">=</span>&lt;your-username&gt;
+</code></pre></div>
+<p>Come up with a GitHub repo name (e.g. flux-demo), which will be used by Flux to store (and sync) the config files.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_REPO_NAME</span><span class="o">=</span>&lt;<span class="k">select</span>-repo-name-to-be-created&gt;
+</code></pre></div>
+<p>Bootstrap flux to your cluster. The GitHub repo will be created automatically by Flux:</p>
+<div class="highlight"><pre><span></span><code>flux bootstrap github <span class="se">\</span>
+--owner<span class="o">=</span><span class="nv">$GITHUB_USER</span> <span class="se">\</span>
+--repository<span class="o">=</span><span class="nv">$GITHUB_REPO_NAME</span> <span class="se">\</span>
+--branch<span class="o">=</span>main <span class="se">\</span>
+--path<span class="o">=</span>./clusters/my-cluster <span class="se">\</span>
+--personal
+</code></pre></div>
+<p>Now you are all set with Flux and can proceed to deploy your first application.</p>
+<h2 id="deploy-example-application">Deploy example application<a class="headerlink" href="#deploy-example-application" title="Permanent link">#</a></h2>
+<p>Next, we'll deploy a simple web application and expose it using a NodePort service. In the previous step, we configured Flux to track the path /clusters/my-cluster/ in your repository. Now clone the repo to your local machine:</p>
+<div class="highlight"><pre><span></span><code>git clone git@github.com:<span class="nv">$GITHUB_USER</span>/<span class="nv">$GITHUB_REPO_NAME</span>.git
+<span class="nb">cd</span> <span class="nv">$GITHUB_REPO_NAME</span>/clusters/my-cluster/
+</code></pre></div>
+<p>Create the following YAML file (simple-web-server-with-nodeport.yaml) into the same directory:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span><span class="w"></span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
 <span class="nn">---</span><span class="w"></span>
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-deployment</span><span class="w"></span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
 <span class="nt">spec</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
-<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"></span>
-<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
-<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
+<span class="w">    </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd</span><span class="w"></span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd:2.4.53-alpine3.15</span><span class="w"></span>
+<span class="w">          </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server-service</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NodePort</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
+<span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">      </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30003</span><span class="w"></span>
 </code></pre></div>
-<p>New pods will appear soon thereafter.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s kubectl get pods --namespace nginx
+<p>Then push the new file to the repository:</p>
+<div class="highlight"><pre><span></span><code>git add .
+git commit -m <span class="s2">&quot;Add web server manifest&quot;</span>
+git push
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-66b6c48dd5-8zq7d   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
-nginx-deployment-66b6c48dd5-br4jv   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
-nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <span class="m">0</span>          10m
+<p>Check that Flux detects your changes and the web server gets applied (by default this should happen within 1 min):</p>
+<div class="highlight"><pre><span></span><code>flux get kustomizations
 </code></pre></div>
+<p>If the deployment went successfully, you should see the newly added objects:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl get all -n web
+</code></pre></div>
+<p>You can try to access the web application using</p>
+<div class="highlight"><pre><span></span><code>curl localhost:30003
+</code></pre></div>
+<p>or by using a web browser <a href="http://localhost:30003">http://localhost:30003</a>.</p>
+<p><strong>Voilà!</strong> You have now installed the example application using the GitOps method with Flux. As a next step you can try to modify the web app YAML file or add another application directly in to the Git repo and see how Flux will automatically pick up the changes without accessing the cluster with kubectl.</p>
+<h2 id="uninstall-flux">Uninstall Flux<a class="headerlink" href="#uninstall-flux" title="Permanent link">#</a></h2>
+<p>If you want to uninstall Flux from the cluster, run:</p>
+<div class="highlight"><pre><span></span><code>flux uninstall --namespace<span class="o">=</span>flux-system
+</code></pre></div>
+<p>Your applications, which were installed by Flux, will remain in the cluster, but you don't have the Flux processes anymore to sync up the desired state from Git.</p>
                 
               
               
@@ -1356,7 +1457,7 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../system-monitoring/" class="md-footer__link md-footer__link--prev" aria-label="Previous: System Components Monitoring" rel="prev">
+        <a href="../rook-ceph/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Ceph Storage with Rook" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1365,20 +1466,20 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
               <span class="md-footer__direction">
                 Previous
               </span>
-              System Components Monitoring
+              Ceph Storage with Rook
             </div>
           </div>
         </a>
       
       
         
-        <a href="../helm-charts/" class="md-footer__link md-footer__link--next" aria-label="Next: Helm Charts" rel="next">
+        <a href="../../FAQ/" class="md-footer__link md-footer__link--next" aria-label="Next: FAQ" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Helm Charts
+              FAQ
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1436,10 +1537,10 @@ nginx-deployment-66b6c48dd5-sqvhb   <span class="m">1</span>/1     Running   <sp
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>

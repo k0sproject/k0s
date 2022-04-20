@@ -421,6 +421,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/head/examples/gitops-flux/</loc>
+         <lastmod>2022-04-20</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/head/examples/metallb-loadbalancer/</loc>
          <lastmod>2022-04-20</lastmod>
          <changefreq>daily</changefreq>
