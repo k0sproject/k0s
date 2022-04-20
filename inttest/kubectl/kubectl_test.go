@@ -42,7 +42,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kubectl version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
+				s.Require().Contains(output, "Client Version: version.Info")
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kc version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
+				s.Require().Contains(output, "Client Version: version.Info")
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "kubectl version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
+				s.Require().Contains(output, "Client Version: version.Info")
 			},
 		},
 		{
