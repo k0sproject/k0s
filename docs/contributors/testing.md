@@ -22,7 +22,12 @@ Please run the following style and formatting commands and fix/check-in any chan
     go fmt ./...
     ```
 
-3. Pre-submit Flight Checks
+3. Checking the documentation
+
+   Verify any changes to the documentation by following the instructions
+   [here](../internal/publishing_docs_using_mkdocs.md#testing-docs-locally).
+
+4. Pre-submit Flight Checks
 
     In the repository root directory, make sure that:
 

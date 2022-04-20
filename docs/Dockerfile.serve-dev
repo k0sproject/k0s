@@ -1,6 +1,6 @@
-ARG PYTHON_VERSION=3.8.1-alpine3.11
+ARG PYTHON_IMAGE_VERSION
 
-FROM python:${PYTHON_VERSION} as builder
+FROM python:${PYTHON_IMAGE_VERSION} as builder
 
 ENV PYTHONUNBUFFERED 1
 
@@ -23,8 +23,6 @@ RUN \
   && apk del .build gcc musl-dev \
   && rm -rf /usr/local/lib/python3.8/site-packages/mkdocs/themes/*/* \
   && rm -rf /tmp/*
-
-
 
 # Set final MkDocs working directory
 WORKDIR /docs

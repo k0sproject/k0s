@@ -41,6 +41,9 @@ nav:
 
 ## Testing docs locally
 
-We've got a dockerized setup for easily testing docs in local environment. Simply run `docker-compose up` in the docs root folder. The docs will be available on `localhost:80`.
+We've got a dockerized setup for easily testing docs locally. Simply run
+`make docs-serve-dev`. The docs will be available on http://localhost:8000.
 
-**Note** If you have something already running locally on port `80` you need to change the mapped port on the `docker-compose.yml` file.
+**Note** If you have something already running locally on port `8000` you can
+choose another port like so: `make docs-serve-dev DOCS_DEV_PORT=9999`. The docs
+will then be available on http://localhost:9999.
