@@ -50,6 +50,7 @@ nav:
       - Traefik Ingress Controller:       examples/traefik-ingress.md
       - Ambassador API Gateway:           examples/ambassador-ingress.md
       - Ceph Storage with Rook:           examples/rook-ceph.md
+      - GitOps with Flux:                 examples/gitops-flux.md
   - Troubleshooting:
       - FAQ:                              FAQ.md
       - Common Pitfalls:                  troubleshooting.md
