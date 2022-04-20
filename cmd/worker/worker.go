@@ -184,8 +184,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	worker.KernelSetup()
 	err = componentManager.Start(ctx)
 	if err != nil {
-		logrus.WithError(err).Error("failed to start some of the worker components")
-		return err
+		return fmt.Errorf("failed to start worker components: %w", err)
 	}
 	// Wait for k0s process termination
 	<-ctx.Done()
