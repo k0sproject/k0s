@@ -42,7 +42,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kubectl version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"))
+				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kc version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"))
+				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				// Check for debug log messages
-				s.Require().True(strings.Contains(output, "round_trippers.go"))
+				s.Require().True(strings.Contains(output, "round_trippers.go"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				// Check for debug log messages
-				s.Require().True(strings.Contains(output, "round_trippers.go"))
+				s.Require().True(strings.Contains(output, "round_trippers.go"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kubectl foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().Equal(output, "foo-plugin")
+				s.Require().Equal(output, "foo-plugin", "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kc foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().Equal(output, "foo-plugin")
+				s.Require().Equal(output, "foo-plugin", "Unexpected output: %v", output)
 			},
 		},
 
@@ -93,7 +93,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "kubectl version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"))
+				s.Require().True(strings.HasPrefix(output, "Client Version: version.Info"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				// Check for debug log messages
-				s.Require().True(strings.Contains(output, "round_trippers.go"))
+				s.Require().True(strings.Contains(output, "round_trippers.go"), "Unexpected output: %v", output)
 			},
 		},
 		{
@@ -110,7 +110,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			Command: "k0s kubectl foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
-				s.Require().Equal(output, "foo-plugin")
+				s.Require().Equal(output, "foo-plugin", "Unexpected output: %v", output)
 			},
 		},
 	}
