@@ -97,8 +97,13 @@ type Probes interface {
 	Probe
 }
 
-// NewProbes returns a new, empty composite probe at the given path.
-func NewProbes(path ProbePath) Probes {
+// NewRootProbes returns a new, empty composite probe without a path.
+func NewRootProbes() Probes {
+	return &probes{nil, nil}
+}
+
+// NewProbesAtPath returns a new, empty composite probe at the given path.
+func NewProbesAtPath(path ProbePath) Probes {
 	return &probes{path, nil}
 }
 

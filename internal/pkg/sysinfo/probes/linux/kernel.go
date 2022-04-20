@@ -98,7 +98,7 @@ func probeKConfig(
 			kp = probe
 			kp.kConfigSpec = spec
 		} else {
-			kp = &kConfigProbe{&KernelConfigProbes{probes.NewProbes(path), path, probeConfig}, spec}
+			kp = &kConfigProbe{&KernelConfigProbes{probes.NewProbesAtPath(path), path, probeConfig}, spec}
 		}
 		return kp
 	})

@@ -53,7 +53,7 @@ func RequireLinux(parent probes.ParentProbe) (l *LinuxProbes) {
 func newLinuxProbes(path probes.ProbePath) *LinuxProbes {
 	unameProber := newUnameProber()
 	return &LinuxProbes{
-		probes.NewProbes(path),
+		probes.NewProbesAtPath(path),
 
 		path,
 		unameProber,

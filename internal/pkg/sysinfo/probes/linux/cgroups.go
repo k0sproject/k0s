@@ -55,7 +55,7 @@ func (p *LinuxProbes) RequireCgroups() *CgroupsProbes {
 
 func newCgroupsProbes(path probes.ProbePath, unameProber unameProber, mountPoint string) *CgroupsProbes {
 	return &CgroupsProbes{
-		probes.NewProbes(path),
+		probes.NewProbesAtPath(path),
 
 		path,
 		unameProber,
