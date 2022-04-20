@@ -920,6 +920,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#install-nginx-using-host-network" class="md-nav__link">
+    Install NGINX using host network
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1279,6 +1286,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#install-nginx-using-host-network" class="md-nav__link">
+    Install NGINX using host network
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1318,16 +1332,16 @@
 <p>Kubernetes offers multiple options for exposing services to external networks. The main options are NodePort, LoadBalancer and Ingress controller.</p>
 <p><strong>NodePort</strong>, as the name says, means that a port on a node is configured to route incoming requests to a certain service. The port range is limited to 30000-32767, so you cannot expose commonly used ports like 80 or 443 with NodePort.</p>
 <p><strong>LoadBalancer</strong> is a service, which is typically implemented by the cloud provider as an external service (with additional cost). Load balancers can also be installed internally in the Kubernetes cluster with MetalLB, which is typically used for bare-metal deployments. Load balancer provides a single IP address to access your services, which can run on multiple nodes.</p>
-<p><strong>Ingress controller</strong> helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort or LoadBalancer. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.</p>
+<p><strong>Ingress controller</strong> helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort, LoadBalancer or host network. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.</p>
 <h2 id="nginx-ingress-controller">NGINX Ingress Controller<a class="headerlink" href="#nginx-ingress-controller" title="Permanent link">#</a></h2>
-<p>NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. Both of these alternatives are described in more detail on below, with separate examples.</p>
+<p>NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. The third option is to use host network. All of these alternatives are described in more detail on below, with separate examples.</p>
 <p><img alt="k0s_ingress_controller" src="../../img/k0s_ingress_controller.png" /></p>
 <h3 id="install-nginx-using-nodeport">Install NGINX using NodePort<a class="headerlink" href="#install-nginx-using-nodeport" title="Permanent link">#</a></h3>
 <p>Installing NGINX using NodePort is the most simple example for Ingress Controller as we can avoid the load balancer dependency. NodePort is used for exposing the NGINX Ingress to the external network.</p>
 <ol>
 <li>
-<p>Install NGINX Ingress Controller (using the official manifests of version <code>v1.0.0</code> by the ingress-nginx project, supports Kubernetes versions &gt;= <code>v1.19</code>)</p>
-<div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
+<p>Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
 </code></pre></div>
 </li>
 <li>
@@ -1498,8 +1512,34 @@ nginx   k8s.io/ingress-nginx   &lt;none&gt;       162m
 <p>If you are successful, you should see <code>&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</code>.</p>
 </li>
 </ol>
+<h3 id="install-nginx-using-host-network">Install NGINX using host network<a class="headerlink" href="#install-nginx-using-host-network" title="Permanent link">#</a></h3>
+<p>The host network option exposes Ingress directly using the worker nodes' IP addresses. It also allows you to use ports 80 and 443. This option doesn't use any Service objects (ClusterIP, NodePort, LoadBalancer) and it has the limitation that only one Ingress controller Pod may be scheduled on each cluster node.</p>
+<ol>
+<li>
+<p>Download the official NGINX Ingress Controller manifests:</p>
+<div class="highlight"><pre><span></span><code>wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Edit deploy.yaml. Find the Deployment ingress-nginx-controller and enable the host network option by adding the hostNetwork line:</p>
+<div class="highlight"><pre><span></span><code>spec:
+  template:
+    spec:
+      hostNetwork: <span class="nb">true</span>
+</code></pre></div>
+<p>You can also remove the Service ingress-nginx-controller completely, because it won't be needed.</p>
+</li>
+<li>
+<p>Install Ingress</p>
+<div class="highlight"><pre><span></span><code>kubectl apply -f deploy.yaml
+</code></pre></div>
+</li>
+<li>
+<p>Try to connect to the Ingress controller, deploy a test application and verify the access. These steps are similar to the previous install methods.</p>
+</li>
+</ol>
 <h2 id="additional-information">Additional information<a class="headerlink" href="#additional-information" title="Permanent link">#</a></h2>
-<p>For more information about NGINX Ingress Controller installation, take a look at the <a href="https://kubernetes.github.io/ingress-nginx/deploy/">official ingress-nginx documentation</a>.</p>
+<p>For more information about NGINX Ingress Controller installation, take a look at the official ingress-nginx <a href="https://kubernetes.github.io/ingress-nginx/deploy/">installation guide</a> and <a href="https://kubernetes.github.io/ingress-nginx/deploy/baremetal/">bare-metal considerations</a>.</p>
 <h2 id="alternative-examples-for-ingress-controllers-on-k0s">Alternative examples for Ingress Controllers on k0s<a class="headerlink" href="#alternative-examples-for-ingress-controllers-on-k0s" title="Permanent link">#</a></h2>
 <p><a href="../traefik-ingress">Traefik Ingress</a></p>
                 
