@@ -21,6 +21,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -103,7 +104,7 @@ func getRuntimeClient(addr string) (pb.RuntimeServiceClient, *grpc.ClientConn, e
 }
 
 func getRuntimeClientConnection(addr string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		errMsg := fmt.Errorf("connect endpoint %s, make sure you are running as root and the endpoint has been started: %w", addr, err)
 		logrus.Error(errMsg)
