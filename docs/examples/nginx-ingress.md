@@ -10,11 +10,11 @@ Kubernetes offers multiple options for exposing services to external networks. T
 
 **LoadBalancer** is a service, which is typically implemented by the cloud provider as an external service (with additional cost). Load balancers can also be installed internally in the Kubernetes cluster with MetalLB, which is typically used for bare-metal deployments. Load balancer provides a single IP address to access your services, which can run on multiple nodes.
 
-**Ingress controller** helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort or LoadBalancer. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.
+**Ingress controller** helps to consolidate routing rules of multiple applications into one entity. Ingress controller is exposed to an external network with the help of NodePort, LoadBalancer or host network. You can also use Ingress controller to terminate TLS for your domain in one place, instead of terminating TLS for each application separately.
 
 ## NGINX Ingress Controller
 
-NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. Both of these alternatives are described in more detail on below, with separate examples.
+NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud environments, it can be exposed to an external network by using the load balancer offered by the cloud provider. However, cloud load balancers are not necessary. Load balancer can also be implemented with MetalLB, which can be deployed in the same Kubernetes cluster. Another option to expose the Ingress controller to an external network is to use NodePort. The third option is to use host network. All of these alternatives are described in more detail on below, with separate examples.
 
 ![k0s_ingress_controller](../img/k0s_ingress_controller.png)
 
@@ -22,10 +22,10 @@ NGINX Ingress Controller is a very popular Ingress for Kubernetes. In many cloud
 
 Installing NGINX using NodePort is the most simple example for Ingress Controller as we can avoid the load balancer dependency. NodePort is used for exposing the NGINX Ingress to the external network.
 
-1. Install NGINX Ingress Controller (using the official manifests of version `v1.0.0` by the ingress-nginx project, supports Kubernetes versions >= `v1.19`)
+1. Install NGINX Ingress Controller (using the official manifests by the ingress-nginx project)
 
     ```shell
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
     ```
 
 2. Check that the Ingress controller pods have started
@@ -233,9 +233,38 @@ In this example you'll install NGINX Ingress controller using LoadBalancer on k0
 
     If you are successful, you should see ```<html><body><h1>It works!</h1></body></html>```.
 
+### Install NGINX using host network
+
+The host network option exposes Ingress directly using the worker nodes' IP addresses. It also allows you to use ports 80 and 443. This option doesn't use any Service objects (ClusterIP, NodePort, LoadBalancer) and it has the limitation that only one Ingress controller Pod may be scheduled on each cluster node.
+
+1. Download the official NGINX Ingress Controller manifests:
+
+    ```shell
+    wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.3/deploy/static/provider/baremetal/deploy.yaml
+    ```
+
+2. Edit deploy.yaml. Find the Deployment ingress-nginx-controller and enable the host network option by adding the hostNetwork line:
+
+    ```shell
+    spec:
+      template:
+        spec:
+          hostNetwork: true
+    ```
+
+    You can also remove the Service ingress-nginx-controller completely, because it won't be needed.
+
+3. Install Ingress
+
+    ```shell
+    kubectl apply -f deploy.yaml
+    ```
+
+4. Try to connect to the Ingress controller, deploy a test application and verify the access. These steps are similar to the previous install methods.
+
 ## Additional information
 
-For more information about NGINX Ingress Controller installation, take a look at the [official ingress-nginx documentation](https://kubernetes.github.io/ingress-nginx/deploy/).
+For more information about NGINX Ingress Controller installation, take a look at the official ingress-nginx [installation guide](https://kubernetes.github.io/ingress-nginx/deploy/) and [bare-metal considerations](https://kubernetes.github.io/ingress-nginx/deploy/baremetal/).
 
 ## Alternative examples for Ingress Controllers on k0s
 
