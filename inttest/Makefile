@@ -30,7 +30,9 @@ bin/sonobuoy: | bin
 	  --build-arg ETCD_ARCH=$(etcd_arch) \
 	  --build-arg ETCD_VERSION=$(etcd_version) \
 	  --build-arg KUBE_VERSION=$(kubernetes_version) \
-	  -t footloose-alpine - <'$<'
+	  -t footloose-alpine \
+	  -f footloose-alpine/Dockerfile \
+	  footloose-alpine
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
