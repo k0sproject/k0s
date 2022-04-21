@@ -403,7 +403,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 		err = c.startControllerWorker(ctx, c.WorkerProfile)
 		if err != nil {
-			errCh <- fmt.Errorf("failed to start worker components: %w", err)
+			errCh <- fmt.Errorf("failed to start controller worker: %w", err)
 		}
 	}
 	perfTimer.Checkpoint("started-worker")
@@ -413,7 +413,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// Wait for k0s process termination
 	select {
 	case err = <-errCh:
-		logrus.Error(err)
+		logrus.WithError(err).Error("Failed to start controller")
 	case <-ctx.Done():
 		logrus.Debug("Context done in main")
 	}
