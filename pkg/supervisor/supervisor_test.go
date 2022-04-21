@@ -32,8 +32,8 @@ type SupervisorTest struct {
 }
 
 func TestSupervisorStart(t *testing.T) {
-	var testSupervisors = []SupervisorTest{
-		SupervisorTest{
+	var testSupervisors = []*SupervisorTest{
+		{
 			shouldFail: false,
 			proc: Supervisor{
 				Name:    "supervisor-test-sleep",
@@ -42,7 +42,7 @@ func TestSupervisorStart(t *testing.T) {
 				Args:    []string{"-c", "sleep 1s"},
 			},
 		},
-		SupervisorTest{
+		{
 			shouldFail: false,
 			proc: Supervisor{
 				Name:    "supervisor-test-fail",
@@ -51,7 +51,7 @@ func TestSupervisorStart(t *testing.T) {
 				Args:    []string{"-c", "false"},
 			},
 		},
-		SupervisorTest{
+		{
 			shouldFail: true,
 			proc: Supervisor{
 				Name:    "supervisor-test-non-executable",
@@ -59,7 +59,7 @@ func TestSupervisorStart(t *testing.T) {
 				RunDir:  ".",
 			},
 		},
-		SupervisorTest{
+		{
 			shouldFail: true,
 			proc: Supervisor{
 				Name:    "supervisor-test-rundir-fail",
