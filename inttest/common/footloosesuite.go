@@ -134,12 +134,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		s.cleanupSuite()
 	}()
 
-	if s.WithLB {
-		go s.startHAProxy()
-	}
-
 	// set up signal handler so we teardown on SIGINT or SIGTERM
-
 	c := make(chan os.Signal, 3)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
@@ -149,6 +144,11 @@ func (s *FootlooseSuite) SetupSuite() {
 	}()
 
 	s.waitForSSH()
+
+	if s.WithLB {
+		go s.startHAProxy()
+	}
+
 }
 
 // waitForSSH waits to get a SSH connection to all footloose machines defined as part of the test suite.
@@ -160,6 +160,10 @@ func (s *FootlooseSuite) waitForSSH() {
 	}
 	for i := 0; i < s.WorkerCount; i++ {
 		nodes = append(nodes, s.WorkerNode(i))
+	}
+
+	if s.WithLB {
+		nodes = append(nodes, s.LBNode(0))
 	}
 
 	s.T().Logf("total of %d nodes: %v", len(nodes), nodes)
