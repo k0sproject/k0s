@@ -41,30 +41,30 @@ require (
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
-	go.etcd.io/etcd/api/v3 v3.5.1
-	go.etcd.io/etcd/client/pkg/v3 v3.5.1
-	go.etcd.io/etcd/client/v3 v3.5.1
-	go.etcd.io/etcd/etcdutl/v3 v3.5.1
+	go.etcd.io/etcd/api/v3 v3.5.4
+	go.etcd.io/etcd/client/pkg/v3 v3.5.4
+	go.etcd.io/etcd/client/v3 v3.5.4
+	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/zap v1.19.1
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211029165221-6e7872819dc8
 	google.golang.org/grpc v1.40.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.0
-	k8s.io/api v0.23.0
-	k8s.io/apimachinery v0.23.0
-	k8s.io/cli-runtime v0.23.0
-	k8s.io/client-go v0.23.0
-	k8s.io/cloud-provider v0.23.0
-	k8s.io/component-base v0.23.0
-	k8s.io/cri-api v0.23.0
-	k8s.io/kube-aggregator v0.23.0
-	k8s.io/kubectl v0.23.0
-	k8s.io/mount-utils v0.23.0
+	k8s.io/api v0.23.6
+	k8s.io/apimachinery v0.23.6
+	k8s.io/cli-runtime v0.23.6
+	k8s.io/client-go v0.23.6
+	k8s.io/cloud-provider v0.23.6
+	k8s.io/component-base v0.23.6
+	k8s.io/cri-api v0.23.6
+	k8s.io/kube-aggregator v0.23.6
+	k8s.io/kubectl v0.23.6
+	k8s.io/mount-utils v0.23.6
 	k8s.io/system-validators v1.4.0
-	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/yaml v1.3.0
 )
