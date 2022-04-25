@@ -90,18 +90,8 @@ func NewK0sKubectlCmd() *cobra.Command {
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Call parents pre-run if exists, cobra does not do this automatically
-		// See: https://github.com/spf13/cobra/issues/216
-		if parent := cmd.Parent(); parent != nil {
-			if parent.PersistentPreRun != nil {
-				parent.PersistentPreRun(parent, args)
-			}
-			if parent.PersistentPreRunE != nil {
-				err := parent.PersistentPreRunE(parent, args)
-				if err != nil {
-					return err
-				}
-			}
+		if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
+			return err
 		}
 
 		if err := fallbackToK0sKubeconfig(args); err != nil {

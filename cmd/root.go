@@ -17,14 +17,12 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"github.com/spf13/viper"
 
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
@@ -65,12 +63,16 @@ func NewRootCmd() *cobra.Command {
 				logrus.SetLevel(logrus.InfoLevel)
 			}
 
-			// set DEBUG from env, or from command flag
-			if viper.GetString("debug") != "" || c.Debug {
+			if c.Debug {
 				logrus.SetLevel(logrus.DebugLevel)
 				go func() {
-					log.Println("starting debug server under", c.DebugListenOn)
-					log.Println(http.ListenAndServe(c.DebugListenOn, nil))
+					log := logrus.WithField("debug_server", c.DebugListenOn)
+					log.Debug("Starting debug server")
+					if err := http.ListenAndServe(c.DebugListenOn, nil); err != http.ErrServerClosed {
+						log.WithError(err).Debug("Failed to start debug server")
+					} else {
+						log.Debug("Debug server closed")
+					}
 				}()
 			}
 		},
