@@ -31,6 +31,10 @@ func NewEtcdCmd() *cobra.Command {
 		Use:   "etcd",
 		Short: "Manage etcd cluster",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
+				return err
+			}
+
 			c := CmdOpts(config.GetCmdOpts())
 			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
 				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
