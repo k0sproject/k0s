@@ -107,10 +107,6 @@ func NewRootCmd() *cobra.Command {
 		longDesc = longDesc + "\n" + build.EulaNotice
 	}
 	cmd.Long = longDesc
-
-	// workaround for the data-dir location input for the kubectl command
-	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
-
 	return cmd
 }
 
