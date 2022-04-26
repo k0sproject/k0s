@@ -84,7 +84,7 @@ spec:
         dstDir: /var/lib/k0s/images/
         perm: 0755
   k0s:
-    version: 1.21.11+k0s.0
+    version: 1.21.12+k0s.0
 ```
 
 ## 3. Ensure pull policy in the k0s.yaml (optional)
