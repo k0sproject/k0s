@@ -74,7 +74,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	if err != nil {
 		return err
 	}
-	// We need to also start the cri-dockerd
+	// We need to also start the cri-dockerd as the shim is no longer bundled with kubelet codebase
 	_, err = sshWorker.ExecWithOutput("rc-service cri-dockerd start")
 	if err != nil {
 		return err
