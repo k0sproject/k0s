@@ -27,9 +27,6 @@ ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 RUN curl -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$ETCD_ARCH.tar.gz \
   | tar xz -C /opt --strip-components=1
 
-# This lets etcd start when running on arm in smokes
-ENV ETCD_UNSUPPORTED_ARCH=arm64
-
 # Install cri-dockerd shim for custom CRI testing
 RUN curl -sSfL https://github.com/Mirantis/cri-dockerd/releases/download/v0.2.0/cri-dockerd-v0.2.0-linux-amd64.tar.gz | tar -zxvf - cri-dockerd -C /usr/local/bin/
 ADD cri-dockerd.sh /etc/init.d/cri-dockerd
