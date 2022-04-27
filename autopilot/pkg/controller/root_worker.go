@@ -53,8 +53,9 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	logger := w.log
 
 	managerOpts := crman.Options{
-		Port:               w.cfg.ManagerPort,
-		MetricsBindAddress: w.cfg.MetricsBindAddr,
+		Port:                   w.cfg.ManagerPort,
+		MetricsBindAddress:     w.cfg.MetricsBindAddr,
+		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
 	mgr, err := cr.NewManager(w.clientFactory.RESTConfig(), managerOpts)
