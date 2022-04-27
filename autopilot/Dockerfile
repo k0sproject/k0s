@@ -29,6 +29,6 @@ RUN CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
         ./cmd/autopilot
 
 
-FROM scratch
+FROM gcr.io/distroless/static
 COPY --from=build /go/src/github.com/k0sproject/autopilot/autopilot /autopilot/bin/autopilot
 ENTRYPOINT ["/autopilot/bin/autopilot"]
