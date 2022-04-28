@@ -47,12 +47,11 @@ func TestExtractSignalData(t *testing.T) {
 						"planId":"abc123",
 						"created":"now",
 						"command": {
-							"update": {
-								"k0s": {
-									"version": "v1.2.3",
-									"url": "https://www.google.com/download.tar.gz",
-									"sha256": "thisisthesha"
-								}
+							"id": 123,
+							"k0supdate": {
+								"version": "v1.2.3",
+								"url": "https://www.google.com/download.tar.gz",
+								"sha256": "thisisthesha"
 							}
 						}
 					}
@@ -72,12 +71,11 @@ func TestExtractSignalData(t *testing.T) {
 						"planId":"abc123",
 						"created":"now",
 						"command": {
-							"update": {
-								"k0s": {
-									"version": "v1.2.3",
-									"url": "https://www.google.com/download.tar.gz",
-									"sha256": "thisisthesha"
-								}
+							"id": 123,
+							"k0supdate": {
+								"version": "v1.2.3",
+								"url": "https://www.google.com/download.tar.gz",
+								"sha256": "thisisthesha"
 							}
 						},
 						"status": {

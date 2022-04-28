@@ -59,8 +59,8 @@ func registerDownloadController(logger *logrus.Entry, mgr crman.Manager, eventFi
 func (b downloadManfiestBuilderAirgap) Build(signalNode crcli.Object, signalData apsigv2.SignalData) (apsigcomm.DownloadManifest, error) {
 	m := apsigcomm.DownloadManifest{
 		Config: apdl.Config{
-			URL:          signalData.Command.Update.Airgap.URL,
-			ExpectedHash: signalData.Command.Update.Airgap.Sha256,
+			URL:          signalData.Command.AirgapUpdate.URL,
+			ExpectedHash: signalData.Command.AirgapUpdate.Sha256,
 			Hasher:       sha256.New(),
 			DownloadDir:  path.Join(b.k0sDataDir, apconst.K0sManifestSubDir),
 		},

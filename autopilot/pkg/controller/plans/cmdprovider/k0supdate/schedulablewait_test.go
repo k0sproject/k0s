@@ -279,11 +279,10 @@ func TestSchedulableWait(t *testing.T) {
 							apsigv2.SignalData{
 								Created: "now",
 								Command: apsigv2.Command{
-									Update: &apsigv2.CommandUpdateItem{
-										K0s: &apsigv2.CommandUpdateItemK0s{
-											URL:     "https://foo.bar.baz/download.tar.gz",
-											Version: "v1.2.3",
-										},
+									ID: new(int),
+									K0sUpdate: &apsigv2.CommandK0sUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
 									},
 								},
 								Status: &apsigv2.Status{
@@ -460,9 +459,8 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 			},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{},
-					},
+					ID:        new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{},
 				},
 			},
 			true,
@@ -482,9 +480,8 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 			apv1beta2.PlanCommand{},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{},
-					},
+					ID:        new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{},
 				},
 			},
 			false,
@@ -496,9 +493,8 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 			},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						Airgap: &apsigv2.CommandUpdateItemAirgap{},
-					},
+					ID:           new(int),
+					AirgapUpdate: &apsigv2.CommandAirgapUpdate{},
 				},
 			},
 			false,

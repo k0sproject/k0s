@@ -81,8 +81,8 @@ func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter cr
 func (b downloadManifestBuilderK0s) Build(signalNode crcli.Object, signalData apsigv2.SignalData) (apsigcomm.DownloadManifest, error) {
 	m := apsigcomm.DownloadManifest{
 		Config: apdl.Config{
-			URL:          signalData.Command.Update.K0s.URL,
-			ExpectedHash: signalData.Command.Update.K0s.Sha256,
+			URL:          signalData.Command.K0sUpdate.URL,
+			ExpectedHash: signalData.Command.K0sUpdate.Sha256,
 			Hasher:       sha256.New(),
 			DownloadDir:  apconst.K0sBinaryDir,
 		},

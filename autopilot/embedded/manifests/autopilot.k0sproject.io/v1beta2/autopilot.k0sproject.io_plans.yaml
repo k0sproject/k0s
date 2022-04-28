@@ -55,21 +55,21 @@ spec:
                       properties:
                         platforms:
                           additionalProperties:
-                            description: PlanResourceUrl is a remote Url resource.
+                            description: PlanResourceURL is a remote URL resource.
                             properties:
                               sha256:
                                 description: Sha256 provides an optional SHA256 hash
-                                  of the Url's content for verification.
+                                  of the URL's content for verification.
                                 type: string
                               url:
-                                description: Url is the Url of a downloadable resource.
+                                description: URL is the URL of a downloadable resource.
                                 type: string
                             required:
                             - url
                             type: object
                           description: Platforms is a map of PlanResourceUrls to platform
                             identifiers, allowing a single k0s version to have multiple
-                            Url resources based on platform.
+                            URL resources based on platform.
                           type: object
                         targets:
                           description: Targets defines how the controllers/workers
@@ -209,6 +209,10 @@ spec:
                 items:
                   description: PlanCommandStatus is the status of a known command.
                   properties:
+                    id:
+                      description: Id is a unique identifier for this command in a
+                        Plan
+                      type: integer
                     k0supdate:
                       description: K0sUpdate is the status of the `K0sUpdate` command.
                       properties:
@@ -267,6 +271,7 @@ spec:
                       description: State is the current state of the plan command.
                       type: string
                   required:
+                  - id
                   - state
                   type: object
                 type: array

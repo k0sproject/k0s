@@ -110,13 +110,13 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 		return cr.Result{}, fmt.Errorf("unable to determine k0s version: %w", err)
 	}
 
-	sctx.Log.Infof("Current version of k0s = '%s', requested version = '%s'", k0sVersion, sctx.SignalData.Command.Update.K0s.Version)
+	sctx.Log.Infof("Current version of k0s = '%s', requested version = '%s'", k0sVersion, sctx.SignalData.Command.K0sUpdate.Version)
 
 	// Only move to 'Downloading' if the requested version doesn't match the current
 	// installed version. Move to 'Completed' otherwise as there is nothing to do.
 	var status string
 	switch k0sVersion {
-	case sctx.SignalData.Command.Update.K0s.Version:
+	case sctx.SignalData.Command.K0sUpdate.Version:
 		status = apsigcomm.Completed
 	default:
 		status = Downloading

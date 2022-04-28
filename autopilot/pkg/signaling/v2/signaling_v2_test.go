@@ -43,11 +43,10 @@ func TestSignalValid(t *testing.T) {
 // TestSignalDataValid tests the validation of the direct fields in `SignalData`.
 func TestSignalDataValid(t *testing.T) {
 	commandK0s := Command{
-		Update: &CommandUpdateItem{
-			K0s: &CommandUpdateItemK0s{
-				URL:     "https://foo.bar.baz",
-				Version: "v1.2.3",
-			},
+		ID: new(int),
+		K0sUpdate: &CommandK0sUpdate{
+			URL:     "https://foo.bar.baz",
+			Version: "v1.2.3",
 		},
 	}
 
@@ -80,12 +79,11 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 		return SignalData{
 			Created: "now",
 			Command: Command{
-				Update: &CommandUpdateItem{
-					K0s: &CommandUpdateItemK0s{
-						URL:     url,
-						Version: version,
-						Sha256:  sha256,
-					},
+				ID: new(int),
+				K0sUpdate: &CommandK0sUpdate{
+					URL:     url,
+					Version: version,
+					Sha256:  sha256,
 				},
 			},
 			Status: &Status{
@@ -125,7 +123,8 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 			SignalData{
 				Created: "now",
 				Command: Command{
-					Update: &CommandUpdateItem{},
+					ID:        new(int),
+					K0sUpdate: &CommandK0sUpdate{},
 				},
 			},
 			false,
@@ -144,12 +143,11 @@ func TestMarshaling(t *testing.T) {
 	signalData1 := SignalData{
 		Created: "now",
 		Command: Command{
-			Update: &CommandUpdateItem{
-				K0s: &CommandUpdateItemK0s{
-					URL:     "https://foo.bar.baz",
-					Version: "v1.2.3",
-					Sha256:  "deadbeef",
-				},
+			ID: new(int),
+			K0sUpdate: &CommandK0sUpdate{
+				URL:     "https://foo.bar.baz",
+				Version: "v1.2.3",
+				Sha256:  "deadbeef",
 			},
 		},
 		Status: &Status{

@@ -68,7 +68,6 @@ var _ signaling.Validator = (*SignalData)(nil)
 func (s SignalData) Validate() error {
 	validate := validator.New()
 	validate.RegisterStructValidation(validateCommand, Command{})
-	validate.RegisterStructValidation(validateCommandUpdateItem, CommandUpdateItem{})
 
 	return validate.Struct(s)
 }
@@ -135,48 +134,33 @@ func IsSignalingPresent(m map[string]string) bool {
 // Command contains all of the at-most-one commands that can be used to control
 // an `autopilot` operation. Currently only `update` is supported.
 type Command struct {
-	Update *CommandUpdateItem `json:"update" validate:"required"`
+	ID           *int                 `json:"id" validate:"required"`
+	K0sUpdate    *CommandK0sUpdate    `json:"k0supdate,omitempty"`
+	AirgapUpdate *CommandAirgapUpdate `json:"airgapupdate,omitempty"`
 }
 
-// CommandUpdateItem contains all of the at-most-one update items that can be used
-// as part of an `autopilot` update.
-type CommandUpdateItem struct {
-	K0s    *CommandUpdateItemK0s    `json:"k0s,omitempty"`
-	Airgap *CommandUpdateItemAirgap `json:"airgap,omitempty"`
-}
-
-// CommandUpdateItemK0s describes what an update to `k0s` is.
-type CommandUpdateItemK0s struct {
+// CommandK0sUpdate describes what an update to `k0s` is.
+type CommandK0sUpdate struct {
 	URL     string `json:"url" validate:"required,url"`
 	Version string `json:"version" validate:"required"`
 	Sha256  string `json:"sha256,omitempty"`
 }
 
-// CommandUpdateItemAirgap describes what an update to `airgap` is.
-type CommandUpdateItemAirgap struct {
+// CommandAirgapUpdate describes what an update to `airgap` is.
+type CommandAirgapUpdate struct {
 	URL     string `json:"url" validate:"required,url"`
 	Version string `json:"version" validate:"required"`
 	Sha256  string `json:"sha256,omitempty"`
 }
 
-// validateCommand ensures that a `Command` contains at-most-one of the following fields: `Update`
+// validateCommand ensures that a `Command` contains at-most-one of
+// the following fields: `K0sUpdate`, `AirgapUpdate`.
 func validateCommand(sl validator.StructLevel) {
-	command := sl.Current().Interface().(Command)
+	cui := sl.Current().Interface().(Command)
 
 	// Provide at-most-one semantics, ensuring that only one field is defined.
-	if command.Update == nil {
-		sl.ReportError(reflect.ValueOf(command.Update), "Update", "update", "atmostone", "")
-	}
-}
-
-// validateCommandUpdateItem ensures that a `CommandUpdateItem` contains at-most-one of
-// the following fields: `K0s`.
-func validateCommandUpdateItem(sl validator.StructLevel) {
-	cui := sl.Current().Interface().(CommandUpdateItem)
-
-	// Provide at-most-one semantics, ensuring that only one field is defined.
-	if (cui.K0s == nil && cui.Airgap == nil) || (cui.K0s != nil && cui.Airgap != nil) {
-		sl.ReportError(reflect.ValueOf(cui.K0s), "K0s", "k0s", "atmostone", "")
-		sl.ReportError(reflect.ValueOf(cui.Airgap), "Airgap", "airgap", "atmostone", "")
+	if (cui.K0sUpdate == nil && cui.AirgapUpdate == nil) || (cui.K0sUpdate != nil && cui.AirgapUpdate != nil) {
+		sl.ReportError(reflect.ValueOf(cui.K0sUpdate), "K0sUpdate", "k0supdate", "atmostone", "")
+		sl.ReportError(reflect.ValueOf(cui.AirgapUpdate), "AirgapUpdate", "airgapupdate", "atmostone", "")
 	}
 }

@@ -100,7 +100,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	// Get the filename fragment from the URL
-	updateURL, err := url.Parse(signalData.Command.Update.K0s.URL)
+	updateURL, err := url.Parse(signalData.Command.K0sUpdate.URL)
 	if err != nil {
 		return cr.Result{}, fmt.Errorf("unable to get update request URL: %w", err)
 	}

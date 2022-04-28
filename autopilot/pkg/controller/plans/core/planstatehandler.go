@@ -127,7 +127,7 @@ func findPlanCommandStatus(status *apv1beta2.PlanStatus, idx int) *apv1beta2.Pla
 	}
 
 	// .. otherwise, add a new one and return it
-	status.Commands = append(status.Commands, apv1beta2.PlanCommandStatus{})
+	status.Commands = append(status.Commands, apv1beta2.PlanCommandStatus{Id: idx})
 
 	return &status.Commands[len(status.Commands)-1]
 }
@@ -142,7 +142,9 @@ func (h *planStateHandler) planCommandProviderLookup(cmd apv1beta2.PlanCommand) 
 	rpcmd := reflect.Indirect(reflect.ValueOf(cmd))
 
 	for i := 0; i < rpcmd.NumField(); i++ {
-		if v := rpcmd.Field(i); !v.IsNil() {
+		v := rpcmd.Field(i)
+
+		if v.Kind() == reflect.Pointer && !v.IsNil() {
 			fieldName := rpcmd.Type().Field(i).Name
 			if handler, found := h.commandProviderMap[fieldName]; found {
 				return fieldName, handler, true

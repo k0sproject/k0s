@@ -89,7 +89,7 @@ func (kp *k0supdate) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand,
 	// This has the possibility of ending reconciliation early if the node and plan platforms
 	// disagree. This target state will move to `IncompleteTargets` in this case.
 
-	nodeCopy, err := signalNodeUpdate(signalNodeDelegate.DeepCopy(signalNode), cmd.K0sUpdate, status.K0sUpdate)
+	nodeCopy, err := signalNodeUpdate(signalNodeDelegate.DeepCopy(signalNode), cmd, status)
 	if err != nil {
 		logger.Warnf("Unable to update signal node: %v", err)
 		return appc.PlanIncompleteTargets, false, nil
@@ -170,30 +170,33 @@ func findNextPendingRandom(nodes []apv1beta2.PlanCommandTargetStatus) (*apv1beta
 }
 
 // signalNodeUpdate builds a signalling update request, and adds it to the provided node
-func signalNodeUpdate(node crcli.Object, cmd *apv1beta2.PlanCommandK0sUpdate, cmdStatus *apv1beta2.PlanCommandK0sUpdateStatus) (crcli.Object, error) {
+func signalNodeUpdate(node crcli.Object, cmd apv1beta2.PlanCommand, cmdStatus *apv1beta2.PlanCommandStatus) (crcli.Object, error) {
+	if cmdStatus == nil || cmd.K0sUpdate == nil || cmdStatus.K0sUpdate == nil {
+		return nil, fmt.Errorf("invalid plan command arguments for k0supdate")
+	}
+
 	// Determine the platform identifier of the target signal node
 	nodePlatformID, err := signalNodePlatformIdentifier(node)
 	if err != nil {
-		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus)
+		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.K0sUpdate)
 		return nil, err
 	}
 
 	// Find the appropriate update content for this signal node
-	updateContent, updateContentOk := cmd.Platforms[nodePlatformID]
+	updateContent, updateContentOk := cmd.K0sUpdate.Platforms[nodePlatformID]
 	if !updateContentOk {
-		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus)
+		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.K0sUpdate)
 		return nil, err
 	}
 
 	signalData := apsigv2.SignalData{
 		Created: time.Now().Format(time.RFC3339),
 		Command: apsigv2.Command{
-			Update: &apsigv2.CommandUpdateItem{
-				K0s: &apsigv2.CommandUpdateItemK0s{
-					URL:     updateContent.URL,
-					Version: cmd.Version,
-					Sha256:  updateContent.Sha256,
-				},
+			ID: &cmdStatus.Id,
+			K0sUpdate: &apsigv2.CommandK0sUpdate{
+				URL:     updateContent.URL,
+				Version: cmd.K0sUpdate.Version,
+				Sha256:  updateContent.Sha256,
 			},
 		},
 	}

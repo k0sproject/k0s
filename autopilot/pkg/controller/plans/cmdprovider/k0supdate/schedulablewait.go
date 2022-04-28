@@ -130,16 +130,10 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmd ap
 // isSignalDataSameCommand determines if the `PlanCommand` and the command specified in the signal data represent
 // the same command.
 func isSignalDataSameCommand(cmd apv1beta2.PlanCommand, signalData apsigv2.SignalData) bool {
-	update := signalData.Command.Update
-	if update == nil {
-		return false
-	}
-
 	// As additional commands are implemented, they will need to be reflected here.
-
 	switch {
 	case cmd.K0sUpdate != nil:
-		return update.K0s != nil
+		return signalData.Command.K0sUpdate != nil
 	}
 
 	return false

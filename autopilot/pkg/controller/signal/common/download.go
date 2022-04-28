@@ -83,13 +83,13 @@ func (r *downloadController) Reconcile(ctx context.Context, req cr.Request) (cr.
 
 	httpdl := apdl.NewDownloader(manifest.Config, logger)
 	if err := httpdl.Download(ctx); err != nil {
-		logger.Errorf("Unable to download '%s': %v", signalData.Command.Update.K0s.URL, err)
+		logger.Errorf("Unable to download '%s': %v", manifest.URL, err)
 
 		// When the download is complete move the status to `FailedDownload`
 		signalData.Status = apsigv2.NewStatus(FailedDownload)
 
 	} else {
-		logger.Infof("Download of '%s' successful", signalData.Command.Update.K0s.URL)
+		logger.Infof("Download of '%s' successful", manifest.URL)
 
 		// When the download is complete move the status to the success state
 		signalData.Status = apsigv2.NewStatus(manifest.SuccessState)

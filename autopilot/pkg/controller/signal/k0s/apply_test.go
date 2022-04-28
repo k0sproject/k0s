@@ -55,13 +55,12 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.23.3+k0s.0",
-												"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.23.3+k0s.0",
+											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
 										}
 									},
 									"status": {
@@ -98,13 +97,12 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.23.3+k0s.0",
-												"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.23.3+k0s.0",
+											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
 										}
 									},
 									"status": {
@@ -125,18 +123,24 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 				ObjectOld: &apv1beta2.ControlNode{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"k0sproject.io/autopilot-version":                "v1beta2",
-							"k0sproject.io/autopilot-command":                "update",
-							"k0sproject.io/autopilot-command-id":             "0396fbc9fe1b",
-							"k0sproject.io/autopilot-command-timestamp":      "2021-10-20T19:06:56Z",
-							"k0sproject.io/autopilot-command-update-sha256":  "thisisthesha",
-							"k0sproject.io/autopilot-command-update-url":     "https://www.google.com/download.tar.gz",
-							"k0sproject.io/autopilot-command-update-version": "v1.2.3",
-							"k0sproject.io/autopilot-plan-id":                "id123",
-							"k0sproject.io/autopilot-response":               "Completed",
-							"k0sproject.io/autopilot-response-id":            "0396fbc9fe1b",
-							"k0sproject.io/autopilot-response-timestamp":     "2021-10-20T19:09:11Z",
-						}},
+							"k0sproject.io/autopilot-signal-version": "v2",
+							"k0sproject.io/autopilot-signal-data": `
+								{
+									"planId":"abc123",
+									"created":"now",
+									"command": {
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
+										}
+									}
+								}
+							`,
+						},
+					},
 				},
 				ObjectNew: &apv1beta2.ControlNode{
 					TypeMeta: metav1.TypeMeta{
@@ -146,17 +150,26 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "node0",
 						Annotations: map[string]string{
-							"k0sproject.io/autopilot-version":                "v1beta2",
-							"k0sproject.io/autopilot-command":                "update",
-							"k0sproject.io/autopilot-command-id":             "0396fbc9fe1b",
-							"k0sproject.io/autopilot-command-timestamp":      "2021-10-20T19:06:56Z",
-							"k0sproject.io/autopilot-command-update-sha256":  "thisisthesha",
-							"k0sproject.io/autopilot-command-update-url":     "https://www.google.com/download.tar.gz",
-							"k0sproject.io/autopilot-command-update-version": "v1.2.3",
-							"k0sproject.io/autopilot-plan-id":                "id123",
-							"k0sproject.io/autopilot-response":               "Completed",
-							"k0sproject.io/autopilot-response-id":            "0396fbc9fe1b",
-							"k0sproject.io/autopilot-response-timestamp":     "2021-10-20T19:09:11Z",
+							"k0sproject.io/autopilot-signal-version": "v2",
+							"k0sproject.io/autopilot-signal-data": `
+								{
+									"planId":"abc123",
+									"created":"now",
+									"command": {
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
+										}
+									}
+									"status": {
+										"status": "Completed",
+										"timestamp": "2021-10-20T19:09:11Z"
+									}
+								}
+							`,
 						},
 					},
 				},
@@ -179,17 +192,26 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "nodeDIFFERENT",
 						Annotations: map[string]string{
-							"k0sproject.io/autopilot-version":                "v1beta2",
-							"k0sproject.io/autopilot-command":                "update",
-							"k0sproject.io/autopilot-command-id":             "0396fbc9fe1b",
-							"k0sproject.io/autopilot-command-timestamp":      "2021-10-20T19:06:56Z",
-							"k0sproject.io/autopilot-command-update-sha256":  "thisisthesha",
-							"k0sproject.io/autopilot-command-update-url":     "https://www.google.com/download.tar.gz",
-							"k0sproject.io/autopilot-command-update-version": "v1.2.3",
-							"k0sproject.io/autopilot-plan-id":                "id123",
-							"k0sproject.io/autopilot-response":               "Completed",
-							"k0sproject.io/autopilot-response-id":            "0396fbc9fe1b",
-							"k0sproject.io/autopilot-response-timestamp":     "2021-10-20T19:09:11Z",
+							"k0sproject.io/autopilot-signal-version": "v2",
+							"k0sproject.io/autopilot-signal-data": `
+								{
+									"planId":"abc123",
+									"created":"now",
+									"command": {
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
+										}
+									}
+									"status": {
+										"status": "Completed",
+										"timestamp": "2021-10-20T19:09:11Z"
+									}
+								}
+							`,
 						},
 					},
 				},

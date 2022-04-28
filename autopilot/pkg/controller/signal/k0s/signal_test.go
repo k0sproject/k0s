@@ -68,13 +68,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -85,6 +84,7 @@ func TestSignalControllerEventFilter(t *testing.T) {
 			},
 			true,
 		},
+
 		{
 			"Unexpected response",
 			crev.UpdateEvent{
@@ -107,13 +107,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									},
 									"status": {
@@ -128,6 +127,7 @@ func TestSignalControllerEventFilter(t *testing.T) {
 			},
 			false,
 		},
+
 		{
 			"No change in annotations",
 			crev.UpdateEvent{
@@ -140,13 +140,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -168,13 +167,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -185,6 +183,7 @@ func TestSignalControllerEventFilter(t *testing.T) {
 			},
 			false,
 		},
+
 		{
 			"Different hostname",
 			crev.UpdateEvent{
@@ -207,13 +206,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -251,13 +249,12 @@ func TestSignalControllerSameVersion(t *testing.T) {
 					"planId":"abc123",
 					"created":"now",
 					"command": {
-						"update": {
-							"k0s": {
-								"version": "v1.23.3+k0s.0",
-								"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-								"timestamp": "2021-10-20T19:06:56Z",
-								"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-							}
+						"id": 123,
+						"k0supdate": {
+							"version": "v1.23.3+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
+							"timestamp": "2021-10-20T19:06:56Z",
+							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
 						}
 					}
 				}
@@ -356,13 +353,12 @@ func TestSignalControllerNewVersion(t *testing.T) {
 					"planId":"abc123",
 					"created":"now",
 					"command": {
-						"update": {
-							"k0s": {
-								"version": "v1.23.3+k0s.0",
-								"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-								"timestamp": "2021-10-20T19:06:56Z",
-								"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-							}
+						"id": 123,
+						"k0supdate": {
+							"version": "v1.23.3+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
+							"timestamp": "2021-10-20T19:06:56Z",
+							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
 						}
 					}
 				}
@@ -463,12 +459,11 @@ func TestCheckExpiredInvalid(t *testing.T) {
 			&apsigv2.SignalData{
 				Created: "now",
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{
-							Version: "v1.2.3",
-							URL:     "https://www.google.com/download.tar.gz",
-							Sha256:  "thisisthesha",
-						},
+					ID: new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{
+						Version: "v1.2.3",
+						URL:     "https://www.google.com/download.tar.gz",
+						Sha256:  "thisisthesha",
 					},
 				},
 				Status: &apsigv2.Status{
@@ -487,12 +482,11 @@ func TestCheckExpiredInvalid(t *testing.T) {
 			&apsigv2.SignalData{
 				Created: "now",
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{
-							Version: "v1.2.3",
-							URL:     "https://www.google.com/download.tar.gz",
-							Sha256:  "thisisthesha",
-						},
+					ID: new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{
+						Version: "v1.2.3",
+						URL:     "https://www.google.com/download.tar.gz",
+						Sha256:  "thisisthesha",
 					},
 				},
 				Status: &apsigv2.Status{
@@ -511,12 +505,11 @@ func TestCheckExpiredInvalid(t *testing.T) {
 			&apsigv2.SignalData{
 				Created: "now",
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{
-							Version: "v1.2.3",
-							URL:     "https://www.google.com/download.tar.gz",
-							Sha256:  "thisisthesha",
-						},
+					ID: new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{
+						Version: "v1.2.3",
+						URL:     "https://www.google.com/download.tar.gz",
+						Sha256:  "thisisthesha",
 					},
 				},
 				Status: &apsigv2.Status{

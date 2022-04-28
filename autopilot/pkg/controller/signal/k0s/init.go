@@ -102,6 +102,6 @@ func getK0sPid(statusSocketPath string) (int, error) {
 // provided SignalData is an 'k0s' update.
 func signalDataUpdateCommandK0sPredicate() apsigpred.SignalDataPredicate {
 	return func(signalData apsigv2.SignalData) bool {
-		return signalData.Command.Update != nil && signalData.Command.Update.K0s != nil
+		return signalData.Command.K0sUpdate != nil
 	}
 }

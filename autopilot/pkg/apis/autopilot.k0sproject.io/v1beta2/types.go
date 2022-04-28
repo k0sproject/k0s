@@ -212,6 +212,9 @@ type PlanStatus struct {
 
 // PlanCommandStatus is the status of a known command.
 type PlanCommandStatus struct {
+	// Id is a unique identifier for this command in a Plan
+	Id int `json:"id"`
+
 	// State is the current state of the plan command.
 	State PlanStateType `json:"state"`
 

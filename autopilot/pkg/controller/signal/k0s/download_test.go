@@ -55,13 +55,12 @@ func TestDownloadingEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									},
 									"status": {
@@ -88,13 +87,12 @@ func TestDownloadingEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									},
 									"status": {
@@ -120,13 +118,12 @@ func TestDownloadingEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									},
 									"status": {

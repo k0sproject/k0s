@@ -34,9 +34,8 @@ func TestSignalDataUpdateCommandAirgapPredicate(t *testing.T) {
 			"Found",
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						Airgap: &apsigv2.CommandUpdateItemAirgap{},
-					},
+					ID:           new(int),
+					AirgapUpdate: &apsigv2.CommandAirgapUpdate{},
 				},
 			},
 			true,
@@ -45,9 +44,8 @@ func TestSignalDataUpdateCommandAirgapPredicate(t *testing.T) {
 			"NotFoundK0s",
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
-					Update: &apsigv2.CommandUpdateItem{
-						K0s: &apsigv2.CommandUpdateItemK0s{},
-					},
+					ID:        new(int),
+					K0sUpdate: &apsigv2.CommandK0sUpdate{},
 				},
 			},
 			false,

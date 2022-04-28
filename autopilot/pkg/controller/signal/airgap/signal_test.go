@@ -67,13 +67,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"airgap": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"airgapupdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -106,13 +105,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									},
 									"status": {
@@ -139,13 +137,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -167,13 +164,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -206,13 +202,12 @@ func TestSignalControllerEventFilter(t *testing.T) {
 									"planId":"abc123",
 									"created":"now",
 									"command": {
-										"update": {
-											"k0s": {
-												"version": "v1.2.3",
-												"url": "https://www.google.com/download.tar.gz",
-												"timestamp": "2021-10-20T19:06:56Z",
-												"sha256": "thisisthesha"
-											}
+										"id": 123,
+										"k0supdate": {
+											"version": "v1.2.3",
+											"url": "https://www.google.com/download.tar.gz",
+											"timestamp": "2021-10-20T19:06:56Z",
+											"sha256": "thisisthesha"
 										}
 									}
 								}
@@ -249,12 +244,11 @@ func TestHandle(t *testing.T) {
 					"planId":"abc123",
 					"created":"now",
 					"command": {
-						"update": {
-							"airgap": {
-								"version": "v1.23.3+k0s.1",
-								"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
-								"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
-							}
+						"id": 123,
+						"airgapupdate": {
+							"version": "v1.23.3+k0s.1",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
+							"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
 						}
 					}
 				}

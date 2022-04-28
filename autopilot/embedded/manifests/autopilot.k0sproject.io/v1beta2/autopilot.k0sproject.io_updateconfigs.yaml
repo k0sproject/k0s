@@ -52,14 +52,14 @@ spec:
                           properties:
                             platforms:
                               additionalProperties:
-                                description: PlanResourceUrl is a remote Url resource.
+                                description: PlanResourceURL is a remote URL resource.
                                 properties:
                                   sha256:
                                     description: Sha256 provides an optional SHA256
-                                      hash of the Url's content for verification.
+                                      hash of the URL's content for verification.
                                     type: string
                                   url:
-                                    description: Url is the Url of a downloadable
+                                    description: URL is the URL of a downloadable
                                       resource.
                                     type: string
                                 required:
@@ -67,7 +67,7 @@ spec:
                                 type: object
                               description: Platforms is a map of PlanResourceUrls
                                 to platform identifiers, allowing a single k0s version
-                                to have multiple Url resources based on platform.
+                                to have multiple URL resources based on platform.
                               type: object
                             targets:
                               description: Targets defines how the controllers/workers

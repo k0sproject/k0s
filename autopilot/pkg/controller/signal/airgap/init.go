@@ -56,6 +56,6 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 // provided SignalData is an 'airgap' update.
 func signalDataUpdateCommandAirgapPredicate() apsigpred.SignalDataPredicate {
 	return func(signalData apsigv2.SignalData) bool {
-		return signalData.Command.Update != nil && signalData.Command.Update.Airgap != nil
+		return signalData.Command.AirgapUpdate != nil
 	}
 }
