@@ -67,6 +67,12 @@ func (s *cgroupV2) loadControllers(seen func(string, string)) error {
 
 	for _, controllerName := range strings.Fields(string(controllerData)) {
 		seen(controllerName, "")
+		switch controllerName {
+		case "cpu": // This is the successor to the version 1 cpu and cpuacct controllers.
+			seen("cpuacct", "via cpu in "+s.String())
+		case "io": // This is the successor of the version 1 blkio controller.
+			seen("blkio", "via io in "+s.String())
+		}
 	}
 
 	return nil
@@ -79,7 +85,7 @@ func parseKernelRelease(probeUname unameProber) (int64, int64, error) {
 	}
 
 	var major, minor int64
-	r := regexp.MustCompile(`^(\d+)\.(\d)(\.|$)`)
+	r := regexp.MustCompile(`^(\d+)\.(\d+)(\.|$)`)
 	if matches := r.FindStringSubmatch(uname.osRelease.value); matches == nil {
 		err = errors.New("unsupported format")
 	} else {
