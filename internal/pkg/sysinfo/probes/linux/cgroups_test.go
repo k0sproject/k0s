@@ -115,3 +115,7 @@ func (m *mockCgroupSystem) probeController(name string) (cgroupControllerAvailab
 	args := m.Called(name)
 	return args.Get(0).(cgroupControllerAvailable), args.Error(1)
 }
+
+func (m mockCgroupSystem) String() string {
+	return "mockCgroupSystem"
+}

@@ -199,9 +199,6 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Kind == "" {
 		c.Kind = "ClusterConfig"
 	}
-	if c.ClusterName == "" {
-		c.ClusterName = "k0s"
-	}
 	c.Spec = DefaultClusterSpec()
 
 	type config ClusterConfig
@@ -340,7 +337,6 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 // CRValidator is used to make sure a config CR is created with correct values
 func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy := c.DeepCopy()
-	copy.ClusterName = "k0s"
 	copy.ObjectMeta.Name = "k0s"
 	copy.ObjectMeta.Namespace = "kube-system"
 

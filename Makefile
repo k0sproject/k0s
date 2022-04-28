@@ -98,6 +98,7 @@ endif
 .k0sbuild.docker-image.k0s: build/Dockerfile
 	docker build --rm \
 		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
 	touch $@
 

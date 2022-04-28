@@ -109,7 +109,6 @@ func (a *APIServer) Run(_ context.Context) error {
 		"service-account-signing-key-file": path.Join(a.K0sVars.CertRootDir, "sa.key"),
 		"service-account-issuer":           "https://kubernetes.default.svc",
 		"service-account-jwks-uri":         "https://kubernetes.default.svc/openid/v1/jwks",
-		"insecure-port":                    "0",
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),

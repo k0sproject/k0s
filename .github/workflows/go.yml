@@ -131,12 +131,13 @@ jobs:
 
       - name: Validate OCI images manifests
         run: make check-image-validity
-
+  
   smoketest:
     name: Smoke test
     needs: build
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         smoke-suite:
           - check-basic

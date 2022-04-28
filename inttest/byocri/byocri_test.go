@@ -74,8 +74,13 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	if err != nil {
 		return err
 	}
+	// We need to also start the cri-dockerd as the shim is no longer bundled with kubelet codebase
+	_, err = sshWorker.ExecWithOutput("rc-service cri-dockerd start")
+	if err != nil {
+		return err
+	}
 
-	workerCommand := fmt.Sprintf(`nohup k0s --debug worker --cri-socket docker:unix:///var/run/docker.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`nohup k0s --debug worker --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	_, err = sshWorker.ExecWithOutput(workerCommand)
 	if err != nil {
 		return err
