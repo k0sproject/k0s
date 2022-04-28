@@ -32,7 +32,7 @@ func cmdFlagsToArgs(cmd *cobra.Command) []string {
 		val := f.Value.String()
 		switch f.Value.Type() {
 		case "stringSlice", "stringToString":
-			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s="%s"`, f.Name, strings.Trim(val, "[]")))
+			flagsAndVals = append(flagsAndVals, fmt.Sprintf(`--%s=%s`, f.Name, strings.Trim(val, "[]")))
 		default:
 			if f.Name == "env" || f.Name == "force" {
 				return
