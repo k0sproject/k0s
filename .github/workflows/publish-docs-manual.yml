@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -29,13 +29,13 @@ jobs:
           pip install mike
 
       - name: Checkout k0s ${{ github.event.inputs.version }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: '${{ github.event.inputs.version }}'
           fetch-depth: 0
 
       - name: Checkout k0s main
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: 'main'
           path: 'main'
