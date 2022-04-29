@@ -823,6 +823,22 @@ func (s *FootlooseSuite) initializeFootlooseCluster() error {
 	return err
 }
 
+// Verifies that kubelet process has the address flag set
+func (s *FootlooseSuite) GetKubeletCMDLine(node string) (string, error) {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return "", err
+	}
+	defer ssh.Disconnect()
+
+	output, err := ssh.ExecWithOutput(`cat /proc/$(pidof kubelet)/cmdline`)
+	if err != nil {
+		return "", err
+	}
+
+	return output, nil
+}
+
 func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 	binPath := os.Getenv("K0S_PATH")
 	if binPath == "" {
