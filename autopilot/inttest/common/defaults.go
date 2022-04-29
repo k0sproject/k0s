@@ -20,6 +20,27 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	TargetK0sVersion = "v1.23.3+k0s.1"
+)
+
+var Versions = map[string]map[string]map[string]string{
+	TargetK0sVersion: {
+		"linux-amd64": {
+			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64",
+			"sha256": "0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e",
+		},
+		"linux-arm64": {
+			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-arm64",
+			"sha256": "350adde6c452abd56a3c8113bf5af254fc17bcc41946e32ae47b580626a9293c",
+		},
+		"windows-amd64": {
+			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64.exe",
+			"sha256": "f9e064f70c997e55dacbd3b36ca04029bb7995e84be8084d8bbd2cd75601fe30",
+		},
+	},
+}
+
 // DefaultNodeLabels creates a default map of labels expected to be seen
 // on every signal node.
 func DefaultNodeLabels() map[string]string {

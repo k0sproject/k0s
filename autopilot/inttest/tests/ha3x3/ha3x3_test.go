@@ -129,11 +129,11 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: v1.23.3+k0s.1
+        version: ` + apitcomm.TargetK0sVersion + `
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64
-            sha256: 0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e
+            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["url"] + `
+            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["sha256"] + `
         targets:
           controllers:
             discovery:
