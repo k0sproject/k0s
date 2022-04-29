@@ -117,11 +117,11 @@ func loadCgroupSystem(probeUname unameProber, mountPoint string) (cgroupSystem, 
 	switch st.Type {
 	case unix.CGROUP2_SUPER_MAGIC:
 		// https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html#mounting
-		return &cgroupV2{probeUname: probeUname}, nil
+		return &cgroupV2{mountPoint, cgroupControllerProber{}, probeUname}, nil
 	case unix.CGROUP_SUPER_MAGIC, unix.TMPFS_MAGIC:
 		// https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man7/cgroups.7?h=man-pages-5.13#n159
 		// https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/cgroups.html#how-do-i-use-cgroups
-		return &cgroupV1{}, nil
+		return &cgroupV1{cgroupControllerProber{}}, nil
 	default:
 		msg := fmt.Sprintf("unexpected file system type of %q: 0x%x", mountPoint, st.Type)
 		return nil, cgroupFsDetectionFailed(msg)

@@ -40,20 +40,9 @@ func (s *K0sSysinfoSpec) addHostSpecificProbes(p probes.Probes) {
 
 	s.addKernelConfigs(linux)
 
-	cgroups := linux.RequireCgroups()
-	cgroups.RequireControllers(
-		"cpu",
-		"cpuacct",
-		"cpuset",
-		"memory",
-		"devices",
-		"freezer",
-		"pids",
-	)
-	cgroups.AssertControllers(
-		"hugetlb",
-		"blkio",
-	)
+	if s.WorkerRoleEnabled {
+		addCgroups(linux)
+	}
 }
 
 func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
@@ -175,4 +164,21 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	bridge := net.AssertKernelConfig("BRIDGE", "802.1d Ethernet Bridging")
 	bridge.AssertKernelConfig("LLC", "")
 	bridge.AssertKernelConfig("STP", "")
+}
+
+func addCgroups(linux *linux.LinuxProbes) {
+	cgroups := linux.RequireCgroups()
+	cgroups.RequireControllers(
+		"cpu",
+		"cpuacct",
+		"cpuset",
+		"memory",
+		"devices",
+		"freezer",
+		"pids",
+	)
+	cgroups.AssertControllers(
+		"hugetlb",
+		"blkio",
+	)
 }
