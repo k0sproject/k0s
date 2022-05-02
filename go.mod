@@ -19,7 +19,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.12
 	github.com/k0sproject/dig v0.2.0
-	github.com/k0sproject/k0sctl v0.12.3
+	github.com/k0sproject/k0sctl v0.12.6
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/go-homedir v1.1.0
