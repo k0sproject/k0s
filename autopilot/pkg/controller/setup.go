@@ -33,6 +33,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	k0sinstall "github.com/k0sproject/k0s/pkg/install"
 )
 
 const (
@@ -88,7 +90,7 @@ func (sc *setupController) Run(ctx context.Context) error {
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
 	logger.Infof("Creating controlnode '%s'", hostname)
-	if err := createControlNode(ctx, sc.clientFactory, hostname); err != nil {
+	if err := sc.createControlNode(ctx, sc.clientFactory, hostname); err != nil {
 		return fmt.Errorf("unable to create controlnode '%s': %w", hostname, err)
 	}
 
@@ -113,32 +115,86 @@ func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string
 
 // createControlNode creates a new control node, ignoring errors if one already exists
 // for this physical host.
-func createControlNode(ctx context.Context, cf apcli.FactoryInterface, name string) error {
-	client, err := cf.GetAutopilotClient()
+func (sc *setupController) createControlNode(ctx context.Context, cf apcli.FactoryInterface, name string) error {
+	logger := sc.log.WithField("component", "setup")
+	client, err := sc.clientFactory.GetAutopilotClient()
 	if err != nil {
 		return err
 	}
 
-	node := apv1beta2.ControlNode{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-			// Create the usual os and arch labels as this describes a controller node
-			Labels: map[string]string{
-				v1.LabelHostname:   name,
-				v1.LabelOSStable:   runtime.GOOS,
-				v1.LabelArchStable: runtime.GOARCH,
+	// Create the ControlNode object if needed
+	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		logger.Infof("ControlNode '%s' not found, creating", name)
+		node = &apv1beta2.ControlNode{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+				// Create the usual os and arch labels as this describes a controller node
+				Labels: map[string]string{
+					v1.LabelHostname:   name,
+					v1.LabelOSStable:   runtime.GOOS,
+					v1.LabelArchStable: runtime.GOARCH,
+				},
 			},
-		},
-	}
+		}
 
-	// Attempt to create the `controlnode`, ignoring if it already exists
-	if _, err := client.AutopilotV1beta2().ControlNodes().Create(ctx, &node, metav1.CreateOptions{}); err != nil {
-		if !errors.IsAlreadyExists(err) {
+		// Attempt to create the `controlnode`
+		if node, err = client.AutopilotV1beta2().ControlNodes().Create(ctx, node, metav1.CreateOptions{}); err != nil {
 			return err
 		}
+	} else if err != nil {
+		logger.Errorf("unable to get controlnode '%s': %v", name, err)
+		return err
 	}
 
+	addresses, err := getControlNodeAddresses(name)
+	if err != nil {
+		return err
+	}
+
+	node.Status = apv1beta2.ControlNodeStatus{
+		Addresses: addresses,
+	}
+
+	logger.Infof("Updating controlnode status '%s'", name)
+	if node, err = client.AutopilotV1beta2().ControlNodes().UpdateStatus(ctx, node, metav1.UpdateOptions{}); err != nil {
+		logger.Errorf("unable to update controlnode '%s': %v", name, err)
+		return err
+	}
+	logger.Infof("Updated controlnode '%s', status: %v", name, node.Status)
+
 	return nil
+}
+
+// TODO re-use from somewhere else
+const DefaultK0sStatusSocketPath = "/run/k0s/status.sock"
+
+func getControlNodeAddresses(hostname string) ([]v1.NodeAddress, error) {
+	addresses := []v1.NodeAddress{}
+	apiAddress, err := getControllerAPIAddress()
+	if err != nil {
+		return addresses, err
+	}
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    v1.NodeInternalIP,
+		Address: apiAddress,
+	})
+
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    v1.NodeHostName,
+		Address: hostname,
+	})
+
+	return addresses, nil
+}
+
+func getControllerAPIAddress() (string, error) {
+	status, err := k0sinstall.GetStatusInfo(DefaultK0sStatusSocketPath)
+	if err != nil {
+		return "", err
+	}
+
+	return status.ClusterConfig.Spec.API.Address, nil
 }
 
 // applyManifestCRDsWithWait iterates over all of the embedded CRDs, applies them to the k0s

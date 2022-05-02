@@ -15,13 +15,17 @@
 package controller
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
-	"net"
 	"net/url"
 	"time"
 
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apcli "github.com/k0sproject/autopilot/pkg/client"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -38,24 +42,26 @@ type ReadyProber interface {
 }
 
 type readyProber struct {
-	log       *logrus.Entry
-	tlsConfig *tls.Config
-	timeout   time.Duration
-	targets   []apv1beta2.PlanCommandTargetStatus
+	log           *logrus.Entry
+	tlsConfig     *tls.Config
+	timeout       time.Duration
+	targets       []apv1beta2.PlanCommandTargetStatus
+	clientFactory apcli.FactoryInterface
 }
 
 // NewReadyProber creates a new ReadyProber based on a REST configuration, and is
 // populated with PlanCommandTargetStatus targets assigned via AddTargets.
-func NewReadyProber(logger *logrus.Entry, restConfig *rest.Config, timeout time.Duration) (ReadyProber, error) {
+func NewReadyProber(logger *logrus.Entry, cf apcli.FactoryInterface, restConfig *rest.Config, timeout time.Duration) (ReadyProber, error) {
 	tlscfg, err := rest.TLSConfigFor(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &readyProber{
-		log:       logger,
-		tlsConfig: tlscfg,
-		timeout:   timeout,
+		log:           logger,
+		clientFactory: cf,
+		tlsConfig:     tlscfg,
+		timeout:       timeout,
 	}, nil
 }
 
@@ -92,19 +98,31 @@ func (p readyProber) Probe() error {
 func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	p.log.Infof("Probing %v", target.Name)
 
-	ips, err := net.LookupIP(target.Name)
+	client, err := p.clientFactory.GetAutopilotClient()
 	if err != nil {
-		return fmt.Errorf("unable to resolve IP from '%s': %w", target.Name, err)
+		return err
 	}
 
-	if len(ips) == 0 {
-		return fmt.Errorf("unable to find IP for '%s': %w", target.Name, err)
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
+	defer cancel()
+	controlnode, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, target.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
 	}
 
-	ip := ips[0].String()
-	url, err := url.Parse(fmt.Sprintf(readyzURLFormat, ip))
+	address := ""
+	for _, a := range controlnode.Status.Addresses {
+		if a.Type == corev1.NodeInternalIP {
+			address = a.Address
+		}
+	}
+	if address == "" {
+		return fmt.Errorf("no internal IP address found for %v", target.Name)
+	}
+
+	url, err := url.Parse(fmt.Sprintf(readyzURLFormat, address))
 	if err != nil {
-		return fmt.Errorf("unable to parse URL for '%s': %w", ips[0].String(), err)
+		return fmt.Errorf("unable to parse URL for '%s': %w", address, err)
 	}
 
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
@@ -112,11 +130,11 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 	// The body content is not interesting at the moment.
 	res, _, err := probe.Probe(url, nil, p.timeout)
 	if err != nil {
-		return fmt.Errorf("failed to HTTP probe '%v/%v': %w", target.Name, ip, err)
+		return fmt.Errorf("failed to HTTP probe '%v/%v': %w", target.Name, address, err)
 	}
 
 	if res != k8sprobe.Success {
-		return fmt.Errorf("failed to probe '%v/%v': result=%v", target.Name, ip, res)
+		return fmt.Errorf("failed to probe '%v/%v': result=%v", target.Name, address, res)
 	}
 
 	p.log.Infof("Probing %v done: %v", target.Name, res)

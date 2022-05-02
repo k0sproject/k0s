@@ -162,7 +162,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 
 	leaderMode := event == LeaseAcquired
 
-	prober, err := NewReadyProber(logger, mgr.GetConfig(), 1*time.Minute)
+	prober, err := NewReadyProber(logger, c.clientFactory, mgr.GetConfig(), 1*time.Minute)
 	if err != nil {
 		logger.WithError(err).Error("unable to create controller prober: %w")
 		return err

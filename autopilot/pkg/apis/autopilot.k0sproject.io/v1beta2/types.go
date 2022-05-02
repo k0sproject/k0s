@@ -16,6 +16,7 @@
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,13 +34,20 @@ func init() {
 //
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Cluster
+//+kubebuilder:subresource:status
 //+genclient
-//+genclient:onlyVerbs=create,delete,list,get,watch,update
+//+genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus
 //+genclient:nonNamespaced
 // +groupName=autopilot.k0sproject.io
 type ControlNode struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`
+	Status            ControlNodeStatus `json:"status,omitempty"`
+}
+
+// ControlNodeStatus has the runtime status info of the controller such as address etc.
+type ControlNodeStatus struct {
+	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 }
 
 // ControlNodeList is a list of ControlNode instances.

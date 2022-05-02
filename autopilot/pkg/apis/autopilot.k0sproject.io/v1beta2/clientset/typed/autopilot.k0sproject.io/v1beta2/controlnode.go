@@ -26,6 +26,7 @@ type ControlNodesGetter interface {
 type ControlNodeInterface interface {
 	Create(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.CreateOptions) (*v1beta2.ControlNode, error)
 	Update(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error)
+	UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta2.ControlNode, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1beta2.ControlNodeList, error)
@@ -105,6 +106,21 @@ func (c *controlNodes) Update(ctx context.Context, controlNode *v1beta2.ControlN
 	err = c.client.Put().
 		Resource("controlnodes").
 		Name(controlNode.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(controlNode).
+		Do(ctx).
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *controlNodes) UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (result *v1beta2.ControlNode, err error) {
+	result = &v1beta2.ControlNode{}
+	err = c.client.Put().
+		Resource("controlnodes").
+		Name(controlNode.Name).
+		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(controlNode).
 		Do(ctx).

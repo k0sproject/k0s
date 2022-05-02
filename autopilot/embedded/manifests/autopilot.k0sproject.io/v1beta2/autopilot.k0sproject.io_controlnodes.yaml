@@ -33,9 +33,32 @@ spec:
             type: string
           metadata:
             type: object
+          status:
+            description: ControlNodeStatus has the runtime status info of the controller
+              such as address etc.
+            properties:
+              addresses:
+                items:
+                  description: NodeAddress contains information for the node's address.
+                  properties:
+                    address:
+                      description: The node address.
+                      type: string
+                    type:
+                      description: Node address type, one of Hostname, ExternalIP
+                        or InternalIP.
+                      type: string
+                  required:
+                  - address
+                  - type
+                  type: object
+                type: array
+            type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

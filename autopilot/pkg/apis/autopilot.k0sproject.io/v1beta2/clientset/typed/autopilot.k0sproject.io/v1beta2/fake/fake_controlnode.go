@@ -82,6 +82,17 @@ func (c *FakeControlNodes) Update(ctx context.Context, controlNode *v1beta2.Cont
 	return obj.(*v1beta2.ControlNode), err
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeControlNodes) UpdateStatus(ctx context.Context, controlNode *v1beta2.ControlNode, opts v1.UpdateOptions) (*v1beta2.ControlNode, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewRootUpdateSubresourceAction(controlnodesResource, "status", controlNode), &v1beta2.ControlNode{})
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*v1beta2.ControlNode), err
+}
+
 // Delete takes name of the controlNode and deletes it. Returns an error if one occurs.
 func (c *FakeControlNodes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
