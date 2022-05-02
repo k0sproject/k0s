@@ -34,6 +34,13 @@ test: build
 inttest: build
 	$(MAKE) -C inttest
 
+.PHONY: lint
+lint:
+	docker run \
+	    --rm -v `pwd`:/go/src -w /go/src golangci/golangci-lint:v1.45.2 \
+	    golangci-lint run \
+	        --verbose ./cmd/... ./pkg/... ./internal/... ./hack/...
+
 .PHONY: clean
 clean:
 	-rm -f autopilot .autopilot.*

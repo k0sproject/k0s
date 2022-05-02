@@ -22,10 +22,6 @@ on:
       - '.github/workflows/image.yml'
       - '*.md'
 
-env:
-  GO_VERSION: ~1.18
-  GO_VERSION_WIN: ~1.18
-
 jobs:
   lint:
     name: Lint
@@ -34,17 +30,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          skip-pkg-cache: true
-          only-new-issues: false
-          skip-build-cache: true
-          skip-go-installation: true
-          args: --verbose
+        run: make lint
