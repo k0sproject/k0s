@@ -17,7 +17,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
 
@@ -53,7 +52,7 @@ func (h *planStateHandler) Handle(ctx context.Context, plan *apv1beta2.Plan) (Pr
 	logger := h.logger.WithField("component", "planstatehandler")
 
 	for cmdIdx, cmd := range plan.Spec.Commands {
-		cmdName, cmdHandler, found := h.planCommandProviderLookup(cmd)
+		cmdName, cmdHandler, found := planCommandProviderLookup(h.commandProviderMap, cmd)
 		if !found {
 			// Nothing we can do if we receive a command that we know nothing about.
 			return ProviderResultFailure, fmt.Errorf("unknown command state handler '%s'", cmdName)
@@ -75,6 +74,7 @@ func (h *planStateHandler) Handle(ctx context.Context, plan *apv1beta2.Plan) (Pr
 		// It is the adapters implementation who is responsible for providing the proper status
 		// for executing the command.
 
+		originalPlanCommandState := cmdStatus.State
 		nextState, retry, err := h.adapter(ctx, cmdHandler, cmd, cmdStatus)
 
 		// If we're asked to retry, we can ignore any errors and state transition as this is an effective
@@ -90,11 +90,16 @@ func (h *planStateHandler) Handle(ctx context.Context, plan *apv1beta2.Plan) (Pr
 			return ProviderResultFailure, fmt.Errorf("error in plan state adapter: %w", err)
 		}
 
-		originalPlanStatus := plan.Status
-		plan.Status.State = nextState
+		// If the command has indicated that it is 'Completed', don't use this state for the plan, as its
+		// the completion of this loop which determines 'Completed'. This requires another iteration.
 
-		if originalPlanStatus.State != plan.Status.State {
-			logger.Infof("Requesting plan transition from '%s' --> '%s'", originalPlanStatus.State, plan.Status.State)
+		cmdStatus.State = nextState
+		if cmdStatus.State != PlanCompleted {
+			plan.Status.State = nextState
+		}
+
+		if originalPlanCommandState != nextState {
+			logger.Infof("Requesting plan command transition from '%s' --> '%s'", originalPlanCommandState, nextState)
 		}
 
 		return ProviderResultSuccess, nil
@@ -130,27 +135,4 @@ func findPlanCommandStatus(status *apv1beta2.PlanStatus, idx int) *apv1beta2.Pla
 	status.Commands = append(status.Commands, apv1beta2.PlanCommandStatus{Id: idx})
 
 	return &status.Commands[len(status.Commands)-1]
-}
-
-// planCommandProviderLookup will iterate through all of the fields in a `PlanCommand`, looking
-// for the first field that has a non-nil value. Once found, an internal map will be consulted
-// to find a handler for this field value.
-//
-// This is effectively a reflective short-cut to avoid long if/else-if blocks searching for
-// non-nil field values. (ie. `if cmd.K0sUpdate != nil { processK0sUpdate() } ...`)
-func (h *planStateHandler) planCommandProviderLookup(cmd apv1beta2.PlanCommand) (string, PlanCommandProvider, bool) {
-	rpcmd := reflect.Indirect(reflect.ValueOf(cmd))
-
-	for i := 0; i < rpcmd.NumField(); i++ {
-		v := rpcmd.Field(i)
-
-		if v.Kind() == reflect.Pointer && !v.IsNil() {
-			fieldName := rpcmd.Type().Field(i).Name
-			if handler, found := h.commandProviderMap[fieldName]; found {
-				return fieldName, handler, true
-			}
-		}
-	}
-
-	return "", nil, false
 }

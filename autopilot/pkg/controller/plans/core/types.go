@@ -61,6 +61,9 @@ type PlanStateHandler interface {
 // specific function to call in the resolved `PlanCommandProvider`.
 type PlanStateHandlerAdapter func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 
+// PlanCommandProviderMap is a mapping of command names to `PlanCommandProvider` instances.
+type PlanCommandProviderMap map[string]PlanCommandProvider
+
 // PlanCommandProvider defines what a specific `PlanCommand` can do at specific states.
 //
 // The methods provided represent the various states that a `Plan` can transition to, and their

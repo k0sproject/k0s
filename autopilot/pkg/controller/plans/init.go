@@ -61,11 +61,12 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 // registerNewPlanStateController registers the 'newplan' plan state controller to
 // controller-runtime.
 func registerNewPlanStateController(logger *logrus.Entry, mgr crman.Manager, providers []appc.PlanCommandProvider) error {
-	handler := appc.NewPlanStateHandler(
+	handler := appc.NewInitProvidersHandler(
 		logger,
 		func(ctx context.Context, provider appc.PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 			return provider.NewPlan(ctx, cmd, status)
 		},
+		appc.PlanSchedulableWait,
 		providers...,
 	)
 

@@ -448,14 +448,14 @@ func TestSchedulableWait(t *testing.T) {
 func TestIsSignalDataSameCommand(t *testing.T) {
 	var tests = []struct {
 		name       string
-		command    apv1beta2.PlanCommand
+		command    apv1beta2.PlanCommandStatus
 		signalData apsigv2.SignalData
 		same       bool
 	}{
 		{
 			"Same",
-			apv1beta2.PlanCommand{
-				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			apv1beta2.PlanCommandStatus{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 			},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
@@ -467,8 +467,8 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 		},
 		{
 			"NotSameSignalDataNil",
-			apv1beta2.PlanCommand{
-				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			apv1beta2.PlanCommandStatus{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 			},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{},
@@ -477,7 +477,7 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 		},
 		{
 			"NotSameCommandNil",
-			apv1beta2.PlanCommand{},
+			apv1beta2.PlanCommandStatus{},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{
 					ID:        new(int),
@@ -488,8 +488,9 @@ func TestIsSignalDataSameCommand(t *testing.T) {
 		},
 		{
 			"NotSameSignalData",
-			apv1beta2.PlanCommand{
-				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			apv1beta2.PlanCommandStatus{
+				Id:        123,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 			},
 			apsigv2.SignalData{
 				Command: apsigv2.Command{

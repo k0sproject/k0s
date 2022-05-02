@@ -34,7 +34,7 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanComm
 	// of their respective signal node objects.
 
 	logger.Info("Reconciling controller/worker signal node statuses")
-	if err := kp.reconcileSignalNodeStatus(ctx, cmd, status.K0sUpdate); err != nil {
+	if err := kp.reconcileSignalNodeStatus(ctx, status); err != nil {
 		return status.State, false, fmt.Errorf("failed to reconcile signal node status: %w", err)
 	}
 
@@ -72,13 +72,13 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanComm
 
 // reconcileSignalNodeStatus performs a reconciliation of the status of every signal node (controller/worker)
 // defined in the update status, ensuring that signal nodes marked as 'Completed' are updated in the plan status.
-func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandK0sUpdateStatus) error {
+func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmdStatus *apv1beta2.PlanCommandStatus) error {
 	var targets = []struct {
 		nodes []apv1beta2.PlanCommandTargetStatus
 		label string
 	}{
-		{status.Controllers, "controller"},
-		{status.Workers, "worker"},
+		{cmdStatus.K0sUpdate.Controllers, "controller"},
+		{cmdStatus.K0sUpdate.Workers, "worker"},
 	}
 
 	for _, target := range targets {
@@ -87,7 +87,7 @@ func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmd apv1beta
 			return fmt.Errorf("unable to find controller delegate '%s'", target.label)
 		}
 
-		kp.reconcileSignalNodeStatusTarget(ctx, cmd, delegate, target.nodes)
+		kp.reconcileSignalNodeStatusTarget(ctx, *cmdStatus, delegate, target.nodes)
 	}
 
 	return nil
@@ -96,7 +96,7 @@ func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmd apv1beta
 // reconcileSignalNodeStatusTarget performs a reconciliation of the status of every signal node provided
 // against the current state maintained in the plan status. This ensures that any signal nodes that
 // have been transitioned to 'Completed' will also appear in the plan status as 'Completed'.
-func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmd apv1beta2.PlanCommand, delegate apdel.ControllerDelegate, signalNodes []apv1beta2.PlanCommandTargetStatus) {
+func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmdStatus apv1beta2.PlanCommandStatus, delegate apdel.ControllerDelegate, signalNodes []apv1beta2.PlanCommandTargetStatus) {
 	for i := 0; i < len(signalNodes); i++ {
 		if signalNodes[i].State == appc.SignalCompleted {
 			continue
@@ -114,7 +114,7 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmd ap
 			var signalData apsigv2.SignalData
 			if err := signalData.Unmarshal(signalNode.GetAnnotations()); err == nil {
 				// Ensure that the commands are the same, but their status's are different before we check completed.
-				if isSignalDataSameCommand(cmd, signalData) && isSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
+				if isSignalDataSameCommand(cmdStatus, signalData) && isSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
 					if signalData.Status.Status == apsigcomm.Completed {
 						kp.logger.Infof("Signal node '%s' status changed from '%s' to '%s'", signalNodes[i].Name, signalNodes[i].State, signalData.Status.Status)
 						signalNodes[i].State = appc.SignalCompleted
@@ -129,11 +129,11 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmd ap
 
 // isSignalDataSameCommand determines if the `PlanCommand` and the command specified in the signal data represent
 // the same command.
-func isSignalDataSameCommand(cmd apv1beta2.PlanCommand, signalData apsigv2.SignalData) bool {
+func isSignalDataSameCommand(cmdStatus apv1beta2.PlanCommandStatus, signalData apsigv2.SignalData) bool {
 	// As additional commands are implemented, they will need to be reflected here.
 	switch {
-	case cmd.K0sUpdate != nil:
-		return signalData.Command.K0sUpdate != nil
+	case cmdStatus.K0sUpdate != nil:
+		return signalData.Command.ID != nil && (cmdStatus.Id == *signalData.Command.ID)
 	}
 
 	return false

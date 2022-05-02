@@ -29,32 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type fakePlanCommandProvider struct {
-	commandID              string
-	handlerCanContinue     func(context.Context, string) bool
-	handlerNewPlan         func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
-	handlerSchedulable     func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
-	handlerSchedulableWait func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
-}
-
-var _ PlanCommandProvider = (*fakePlanCommandProvider)(nil)
-
-func (f fakePlanCommandProvider) CommandID() string {
-	return f.commandID
-}
-
-func (f fakePlanCommandProvider) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-	return f.handlerNewPlan(ctx, cmd, status)
-}
-
-func (f fakePlanCommandProvider) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-	return f.handlerSchedulable(ctx, cmd, status)
-}
-
-func (f fakePlanCommandProvider) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-	return f.handlerSchedulableWait(ctx, cmd, status)
-}
-
 // TestHandle runs through a table of scenarios focusing on the edge cases of the `Handle()` function
 // in `PlanStateHandler`
 func TestHandle(t *testing.T) {
@@ -112,9 +86,10 @@ func TestHandle(t *testing.T) {
 			ProviderResultSuccess,
 			false,
 			&apv1beta2.PlanStatus{
-				State: PlanCompleted,
+				State: PlanSchedulable,
 				Commands: []apv1beta2.PlanCommandStatus{
 					{
+						State:     PlanCompleted,
 						K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 					},
 				},
@@ -302,17 +277,14 @@ func TestHandle(t *testing.T) {
 			ProviderResultSuccess,
 			false,
 			&apv1beta2.PlanStatus{
-				State: PlanCompleted,
+				// Note: the plan state is unchanged as that needs another iteration.
 				Commands: []apv1beta2.PlanCommandStatus{
 					{
 						State:     PlanCompleted,
 						K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 					},
-
-					// Tricky: even though the plan will complete, it won't magically flip to 'Completed'
-					// as that is an action of the controller.
 					{
-						State:     PlanSchedulable,
+						State:     PlanCompleted,
 						K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 					},
 				},
