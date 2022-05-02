@@ -17,8 +17,8 @@ package v1beta1
 
 import (
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // ChartSpec defines the desired state of Chart

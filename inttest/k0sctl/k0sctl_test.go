@@ -28,7 +28,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0sctl/integration/github"
@@ -149,9 +149,8 @@ func (s *K0sctlSuite) k0sctlInitConfig() (map[string]interface{}, error) {
 	out, err := exec.Command("./k0sctl", args...).Output()
 	s.NoError(err)
 
-	cfg := make(map[string]interface{})
-	err = yaml.Unmarshal(out, cfg)
-
+	cfg := map[string]interface{}{}
+	err = yaml.Unmarshal(out, &cfg)
 	return cfg, err
 }
 
@@ -178,7 +177,7 @@ func (s *K0sctlSuite) TestK0sGetsUp() {
 	s.NoError(s.DownloadK0sctl())
 	cfg, err := s.k0sctlInitConfig()
 
-	spec, ok := cfg["spec"].(map[interface{}]interface{})
+	spec, ok := cfg["spec"].(map[string]interface{})
 	if !ok {
 		s.FailNow("could not find spec in generated k0sctl.yaml")
 	}
@@ -188,7 +187,7 @@ func (s *K0sctlSuite) TestK0sGetsUp() {
 	}
 
 	for _, host := range hosts {
-		h, ok := host.(map[interface{}]interface{})
+		h, ok := host.(map[string]interface{})
 		if !ok {
 			s.FailNow("host not what was expectd")
 		}

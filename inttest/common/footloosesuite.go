@@ -39,15 +39,14 @@ import (
 	"github.com/go-openapi/jsonpointer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
+	"github.com/weaveworks/footloose/pkg/cluster"
+	"github.com/weaveworks/footloose/pkg/config"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/weaveworks/footloose/pkg/cluster"
-	"github.com/weaveworks/footloose/pkg/config"
+	"sigs.k8s.io/yaml"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
