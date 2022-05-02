@@ -13,7 +13,7 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/k0s-single-node/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/podsecurity/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>K0s single node - Documentation</title>
+        <title>Pod Security Standards - Documentation</title>
       
     
     
@@ -82,6 +82,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#pod-security-standards" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -126,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s single node
+              Pod Security Standards
             
           </span>
         </div>
@@ -524,12 +529,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
@@ -802,11 +809,21 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../podsecurity/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Pod Security Standards
       </a>
+      
     </li>
   
 
@@ -1172,6 +1189,23 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
@@ -1179,9 +1213,46 @@
                 
                 
                 
-                  <h1>K0s single node</h1>
-                
-                <p>See the <a href="../install/">Quick Start Guide</a>.</p>
+                <h1 id="pod-security-standards">Pod Security Standards<a class="headerlink" href="#pod-security-standards" title="Permanent link">#</a></h1>
+<p>Since Pod Security Policies are deprecated as of Kubernetes v1.21, and will be removed in v1.25, Kubernetes offers <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">Pod Security Standards</a> – a new way to enhance cluster security.</p>
+<p>To enable PSS in k0s you need to create an admission controller config file:</p>
+<div class="highlight"><pre><span></span><code>```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: PodSecurity
+  configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1beta1
+    kind: PodSecurityConfiguration
+    # Defaults applied when a mode label is not set.
+    defaults:
+      enforce: &quot;privileged&quot;
+      enforce-version: &quot;latest&quot;
+    exemptions:
+      # Don&#39;t forget to exempt namespaces or users that are responsible for deploying
+      # cluster components, because they need to run privileged containers
+      usernames: [&quot;admin&quot;] 
+      namespaces: [&quot;kube-system&quot;]
+```
+</code></pre></div>
+<p>Add these extra arguments to the k0s configuration:</p>
+<div class="highlight"><pre><span></span><code>```yaml
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+spec:
+  api:
+    extraArgs:
+      disable-admission-plugins: PodSecurityPolicy # if you want to disable PodSecurityPolicy admission controller, not required
+      enable-admission-plugins: PodSecurity        # only for Kubernetes 1.22, since 1.23 it&#39;s enabled by default
+      feature-gates: &quot;PodSecurity=true&quot;            # only for Kubernetes 1.22, since 1.23 it&#39;s enabled by default
+      admission-control-config-file: /path/to/admission/control/config.yaml
+```
+</code></pre></div>
+<p>And finally, install k0s with the PodSecurityPolicy component disabled.</p>
+<div class="highlight"><pre><span></span><code>```shell
+$ k0s install controller --disable-components=default-psp
+```
+</code></pre></div>
                 
               
               
@@ -1198,6 +1269,41 @@
       
         
 <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../selinux/" class="md-footer__link md-footer__link--prev" aria-label="Previous: SELinux" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              SELinux
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../examples/metallb-loadbalancer/" class="md-footer__link md-footer__link--next" aria-label="Next: MetalLB Load Balancer" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              MetalLB Load Balancer
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
