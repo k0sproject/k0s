@@ -796,8 +796,8 @@ github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7V
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/k0sproject/dig v0.2.0 h1:cNxEIl96g9kqSMfPSZLhpnZ0P8bWXKv08nxvsMHop5w=
 github.com/k0sproject/dig v0.2.0/go.mod h1:rBcqaQlJpcKdt2x/OE/lPvhGU50u/e95CSm5g/r4s78=
-github.com/k0sproject/k0sctl v0.12.3 h1:VOGKx5Ueql3aBheEHzy/5p6byW9Gu713MYs6nuM9Nl4=
-github.com/k0sproject/k0sctl v0.12.3/go.mod h1:59PeIvPDC3BHRSYIRNYCo0npFgnFhW88l4VWo2izZTw=
+github.com/k0sproject/k0sctl v0.12.6 h1:VN2QzguRMdDpm/G/4y3UI2Af+NxzqS/QQTImt/YXU90=
+github.com/k0sproject/k0sctl v0.12.6/go.mod h1:59PeIvPDC3BHRSYIRNYCo0npFgnFhW88l4VWo2izZTw=
 github.com/k0sproject/rig v0.4.7/go.mod h1:4FKfoqz5HOE8v8pJ0K8BCvWw3ypB2vJINkAY4P+yTpo=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 h1:iQTw/8FWTuc7uiaSepXwyf3o52HaUYcV+Tu66S3F5GA=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
