@@ -50,6 +50,16 @@ type ControlNodeStatus struct {
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 }
 
+// GetInternalIP returns the internal IP address for the object. Returns empty string if the object does not have InternalIP set.
+func (c *ControlNodeStatus) GetInternalIP() string {
+	for _, addr := range c.Addresses {
+		if addr.Type == corev1.NodeInternalIP {
+			return addr.Address
+		}
+	}
+	return ""
+}
+
 // ControlNodeList is a list of ControlNode instances.
 //
 //+kubebuilder:object:root=true

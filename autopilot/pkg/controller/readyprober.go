@@ -24,7 +24,6 @@ import (
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/autopilot/pkg/client"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/sirupsen/logrus"
@@ -110,12 +109,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 		return err
 	}
 
-	address := ""
-	for _, a := range controlnode.Status.Addresses {
-		if a.Type == corev1.NodeInternalIP {
-			address = a.Address
-		}
-	}
+	address := controlnode.Status.GetInternalIP()
 	if address == "" {
 		return fmt.Errorf("no internal IP address found for %v", target.Name)
 	}
