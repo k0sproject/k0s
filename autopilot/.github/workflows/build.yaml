@@ -30,6 +30,7 @@ jobs:
     strategy:
       matrix:
         test:
+          - check-airgap
           - check-ha3x3
           - check-platformselect
           - check-nocontrollers

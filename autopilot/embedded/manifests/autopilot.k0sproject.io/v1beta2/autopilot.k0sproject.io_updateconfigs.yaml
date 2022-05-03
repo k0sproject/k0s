@@ -46,6 +46,89 @@ spec:
                       description: PlanCommand is a command that can be run within
                         a `Plan`
                       properties:
+                        airgapupdate:
+                          description: AirgapUpdate is the `AirgapUpdate` command
+                            which is responsible for updating a k0s airgap bundle.
+                          properties:
+                            platforms:
+                              additionalProperties:
+                                description: PlanResourceURL is a remote URL resource.
+                                properties:
+                                  sha256:
+                                    description: Sha256 provides an optional SHA256
+                                      hash of the URL's content for verification.
+                                    type: string
+                                  url:
+                                    description: URL is the URL of a downloadable
+                                      resource.
+                                    type: string
+                                required:
+                                - url
+                                type: object
+                              description: Platforms is a map of PlanResourceUrls
+                                to platform identifiers, allowing a single k0s airgap
+                                version to have multiple Url resources based on platform.
+                              type: object
+                            version:
+                              description: Version is the version that `AirgapUpdate`
+                                will be upgrading to.
+                              type: string
+                            workers:
+                              description: Workers defines how the k0s workers will
+                                be discovered and airgap updated.
+                              properties:
+                                discovery:
+                                  description: Discovery details how nodes for this
+                                    target should be discovered.
+                                  properties:
+                                    selector:
+                                      description: Selector provides a kubernetes
+                                        'selector' means of identifying target signal
+                                        nodes.
+                                      properties:
+                                        fields:
+                                          description: Fields is a standard kubernetes
+                                            field selector (key=value,key=value,...)
+                                          type: string
+                                        labels:
+                                          description: Labels is a standard kubernetes
+                                            label selector (key=value,key=value,...)
+                                          type: string
+                                      type: object
+                                    static:
+                                      description: Static provides a static means
+                                        of identifying target signal nodes.
+                                      properties:
+                                        nodes:
+                                          description: Nodes provides a static set
+                                            of target signal nodes.
+                                          items:
+                                            type: string
+                                          type: array
+                                      type: object
+                                  type: object
+                                limits:
+                                  default:
+                                    concurrent: 1
+                                  description: Limits impose various limits and restrictions
+                                    on how discovery and execution should behave.
+                                  properties:
+                                    concurrent:
+                                      default: 1
+                                      description: Concurrent specifies the number
+                                        of concurrent target executions that can be
+                                        performed within this target. (ie. '2' ==
+                                        at most have 2 execute at the same time)
+                                      type: integer
+                                  type: object
+                              required:
+                              - discovery
+                              type: object
+                          required:
+                          - platforms
+                          - version
+                          - workers
+                          type: object
                         k0supdate:
                           description: K0sUpdate is the `K0sUpdate` command which
                             is responsible for updating a k0s node (controller/worker)

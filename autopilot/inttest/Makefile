@@ -2,6 +2,7 @@ AUTOPILOT_PATH = $(realpath ../autopilot)
 LOGS_BASE ?= $(realpath logs)
 
 integrationtests := \
+	check-airgap \
 	check-ha3x3 \
 	check-platformselect \
 	check-nocontrollers \

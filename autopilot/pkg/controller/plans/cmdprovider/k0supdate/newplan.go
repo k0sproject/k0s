@@ -16,15 +16,14 @@ package k0supdate
 
 import (
 	"context"
-	"fmt"
 
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apcomm "github.com/k0sproject/autopilot/pkg/common"
 	apdel "github.com/k0sproject/autopilot/pkg/controller/delegate"
+	appkd "github.com/k0sproject/autopilot/pkg/controller/plans/cmdprovider/k0supdate/discovery"
+	appku "github.com/k0sproject/autopilot/pkg/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/autopilot/pkg/controller/plans/core"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -65,53 +64,16 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 // populateControllerStatus is a specialization of `DiscoverNodes` for working
 // with `apv1beta2.ControlNode` signal node objects.
 func populateControllerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	return DiscoverNodes(ctx, client, &update.Targets.Controllers, dm["controller"],
+	return appkd.DiscoverNodes(ctx, client, &update.Targets.Controllers, dm["controller"],
 		func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-			return objectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms)
+			return appku.ObjectExistsWithPlatform(ctx, client, name, &apv1beta2.ControlNode{}, update.Platforms)
 		})
 }
 
 // populateWorkerStatus is a specialization of `DiscoverNodes` for working
 // with `v1.Node` signal node objects.
 func populateWorkerStatus(ctx context.Context, client crcli.Client, update apv1beta2.PlanCommandK0sUpdate, dm apdel.ControllerDelegateMap) ([]apv1beta2.PlanCommandTargetStatus, bool) {
-	return DiscoverNodes(ctx, client, &update.Targets.Workers, dm["worker"], func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
-		return objectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
+	return appkd.DiscoverNodes(ctx, client, &update.Targets.Workers, dm["worker"], func(name string) (bool, *apv1beta2.PlanCommandTargetStateType) {
+		return appku.ObjectExistsWithPlatform(ctx, client, name, &v1.Node{}, update.Platforms)
 	})
-}
-
-// objectExistsWithPlatform looks up an object for a given name and type, and determines
-// if there is a platform available for it in the provided plan.
-func objectExistsWithPlatform(ctx context.Context, client crcli.Client, name string, obj crcli.Object, platformMap apv1beta2.PlanPlatformResourceURLMap) (bool, *apv1beta2.PlanCommandTargetStateType) {
-	key := types.NamespacedName{Name: name}
-	if err := client.Get(ctx, key, obj); err != nil {
-		return false, &appc.SignalMissingNode
-	}
-
-	// Determine what platform this signal node is
-	platformID, err := signalNodePlatformIdentifier(obj)
-	if err != nil {
-		return false, &appc.SignalMissingPlatform
-	}
-
-	// Ensure that the plan has a platform matching this signal node
-	if _, found := platformMap[platformID]; !found {
-		return false, &appc.SignalMissingPlatform
-	}
-
-	return true, nil
-}
-
-// signalNodePlatformIdentifier inspects the signal nodes labels and returns a
-// platform identifier.
-func signalNodePlatformIdentifier(obj crcli.Object) (string, error) {
-	if labels := obj.GetLabels(); labels != nil {
-		arch, archOk := labels[v1.LabelArchStable]
-		os, osOk := labels[v1.LabelOSStable]
-
-		if archOk && osOk {
-			return apcomm.PlatformIdentifier(os, arch), nil
-		}
-	}
-
-	return "", fmt.Errorf("unable to determine platform identifier for '%s'", obj.GetName())
 }

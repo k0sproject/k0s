@@ -21,4 +21,5 @@ const (
 	K0sBinaryDir        = "/usr/local/bin"
 	K0sDefaultDataDir   = "/var/lib/k0s"
 	K0sManifestSubDir   = "manifests"
+	K0sImagesDir        = "images"
 )

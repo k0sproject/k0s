@@ -19,7 +19,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,26 +31,24 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-openapi/jsonpointer"
-	"github.com/stretchr/testify/suite"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/weaveworks/footloose/pkg/cluster"
-	"github.com/weaveworks/footloose/pkg/config"
-
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-
-	"k8s.io/apimachinery/pkg/util/wait"
+	apclient "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	"github.com/k0sproject/autopilot/internal/pkg/random"
 	k0sinttestcommon "github.com/k0sproject/k0s/inttest/common"
 
-	apclient "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	"github.com/go-openapi/jsonpointer"
+	"github.com/stretchr/testify/suite"
+	"github.com/weaveworks/footloose/pkg/cluster"
+	"github.com/weaveworks/footloose/pkg/config"
+	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -1002,6 +999,15 @@ func (s *FootlooseSuite) GetMembers(idx int) map[string]string {
 // RunCommandController runs a command via SSH on a specified controller node
 func (s *FootlooseSuite) RunCommandController(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	return ssh.ExecWithOutput(command)
+}
+
+// RunCommandWorker runs a command via SSH on a specified controller node
+func (s *FootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
+	ssh, err := s.SSH(s.WorkerNode(idx))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

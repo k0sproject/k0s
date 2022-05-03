@@ -16,18 +16,15 @@ package k0supdate
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
-	"time"
 
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apdel "github.com/k0sproject/autopilot/pkg/controller/delegate"
+	appku "github.com/k0sproject/autopilot/pkg/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/autopilot/pkg/controller/plans/core"
 	apsigv2 "github.com/k0sproject/autopilot/pkg/signaling/v2"
 
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -89,15 +86,21 @@ func (kp *k0supdate) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand,
 	// This has the possibility of ending reconciliation early if the node and plan platforms
 	// disagree. This target state will move to `IncompleteTargets` in this case.
 
-	nodeCopy, err := signalNodeUpdate(signalNodeDelegate.DeepCopy(signalNode), cmd, status)
+	signalNodeCopy := signalNodeDelegate.DeepCopy(signalNode)
+	signalNodeCommandBuilder, err := signalNodeK0sUpdateCommandBuilder(signalNodeCopy, cmd, status)
 	if err != nil {
+		logger.Warnf("Unable to build signal node content: %v", err)
+		return appc.PlanIncompleteTargets, false, nil
+	}
+
+	if err := appku.UpdateSignalNode(signalNodeCopy, signalNodeCommandBuilder); err != nil {
 		logger.Warnf("Unable to update signal node: %v", err)
 		return appc.PlanIncompleteTargets, false, nil
 	}
 
 	// .. and update the node
 
-	if err := kp.client.Update(ctx, nodeCopy, &crcli.UpdateOptions{}); err != nil {
+	if err := kp.client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
 		logger.Warnf("Unable to update signalnode with signaling: %v", err)
 		return status.State, false, fmt.Errorf("unable to update signalnode with signaling: %w", err)
 	}
@@ -122,11 +125,11 @@ func findNextSchedulableTarget(logger *logrus.Entry, cmd *apv1beta2.PlanCommandK
 	}
 
 	for _, target := range targets {
-		pendingNodes := findPending(target.nodes)
+		pendingNodes := appku.FindPending(target.nodes)
 		pendingNodeCount := len(pendingNodes)
 
 		if pendingNodeCount > 0 {
-			nextNode, err := findNextPendingRandom(pendingNodes)
+			nextNode, err := appku.FindNextPendingRandom(pendingNodes)
 			if err != nil {
 				logger.Errorf("Unable to determine next random node: %v", err)
 			}
@@ -140,80 +143,30 @@ func findNextSchedulableTarget(logger *logrus.Entry, cmd *apv1beta2.PlanCommandK
 	return nil, "", 0
 }
 
-func findPending(nodes []apv1beta2.PlanCommandTargetStatus) []apv1beta2.PlanCommandTargetStatus {
-	var pendingNodes []apv1beta2.PlanCommandTargetStatus
-
-	for _, node := range nodes {
-		if node.State == appc.SignalPending {
-			pendingNodes = append(pendingNodes, node)
-		}
-	}
-
-	return pendingNodes
-}
-
-// findNextPendingRandom finds a random `PlanCommandTargetStatus` in the provided slice that
-// has the status of `PendingSignal`
-func findNextPendingRandom(nodes []apv1beta2.PlanCommandTargetStatus) (*apv1beta2.PlanCommandTargetStatus, error) {
-	count := int64(len(nodes))
-	if count > 0 {
-		idx, err := rand.Int(rand.Reader, big.NewInt(count))
-		if err != nil {
-			return nil, err
-		}
-
-		node := nodes[idx.Int64()]
-		return &node, nil
-	}
-
-	return nil, nil
-}
-
-// signalNodeUpdate builds a signalling update request, and adds it to the provided node
-func signalNodeUpdate(node crcli.Object, cmd apv1beta2.PlanCommand, cmdStatus *apv1beta2.PlanCommandStatus) (crcli.Object, error) {
-	if cmdStatus == nil || cmd.K0sUpdate == nil || cmdStatus.K0sUpdate == nil {
-		return nil, fmt.Errorf("invalid plan command arguments for k0supdate")
-	}
-
+func signalNodeK0sUpdateCommandBuilder(node crcli.Object, cmd apv1beta2.PlanCommand, cmdStatus *apv1beta2.PlanCommandStatus) (appku.SignalNodeCommandBuilder, error) {
 	// Determine the platform identifier of the target signal node
-	nodePlatformID, err := signalNodePlatformIdentifier(node)
+	nodePlatformID, err := appku.SignalNodePlatformIdentifier(node)
 	if err != nil {
 		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.K0sUpdate)
 		return nil, err
 	}
 
-	// Find the appropriate update content for this signal node
 	updateContent, updateContentOk := cmd.K0sUpdate.Platforms[nodePlatformID]
 	if !updateContentOk {
 		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.K0sUpdate)
 		return nil, err
 	}
 
-	signalData := apsigv2.SignalData{
-		Created: time.Now().Format(time.RFC3339),
-		Command: apsigv2.Command{
+	return func() apsigv2.Command {
+		return apsigv2.Command{
 			ID: &cmdStatus.Id,
 			K0sUpdate: &apsigv2.CommandK0sUpdate{
 				URL:     updateContent.URL,
 				Version: cmd.K0sUpdate.Version,
 				Sha256:  updateContent.Sha256,
 			},
-		},
-	}
-
-	if err := signalData.Validate(); err != nil {
-		return nil, fmt.Errorf("unable to validate signaling data: %w", err)
-	}
-
-	if node.GetAnnotations() == nil {
-		node.SetAnnotations(make(map[string]string))
-	}
-
-	if err := signalData.Marshal(node.GetAnnotations()); err != nil {
-		return nil, fmt.Errorf("unable to marshal signaling data: %w", err)
-	}
-
-	return node, nil
+		}
+	}, nil
 }
 
 // UpdatePlanCommandTargetStatusByName searches through nodes in the plan status, updating the
@@ -225,12 +178,8 @@ func updatePlanCommandTargetStatusByName(name string, status apv1beta2.PlanComma
 	}
 
 	for _, group := range groups {
-		for idx, node := range group {
-			if node.Name == name {
-				group[idx].State = status
-				group[idx].LastUpdatedTimestamp = metav1.Now()
-				return
-			}
+		if appku.UpdatePlanCommandTargetStatusByName(name, status, group) {
+			return
 		}
 	}
 }

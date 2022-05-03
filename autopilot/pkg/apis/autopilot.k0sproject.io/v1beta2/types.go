@@ -128,6 +128,9 @@ type PlanSpec struct {
 type PlanCommand struct {
 	// K0sUpdate is the `K0sUpdate` command which is responsible for updating a k0s node (controller/worker)
 	K0sUpdate *PlanCommandK0sUpdate `json:"k0supdate,omitempty"`
+
+	// AirgapUpdate is the `AirgapUpdate` command which is responsible for updating a k0s airgap bundle.
+	AirgapUpdate *PlanCommandAirgapUpdate `json:"airgapupdate,omitempty"`
 }
 
 // PlanPlatformResourceURLMap is a mapping of `PlanResourceURL` instances mapped to platform identifiers.
@@ -145,6 +148,20 @@ type PlanCommandK0sUpdate struct {
 
 	// Targets defines how the controllers/workers should be discovered and upgraded.
 	Targets PlanCommandTargets `json:"targets"`
+}
+
+// PlanCommandAirgapUpdate provides all of the information to for a `AirgapUpdate` command to
+// update a set of target signal nodes
+type PlanCommandAirgapUpdate struct {
+	// Version is the version that `AirgapUpdate` will be upgrading to.
+	Version string `json:"version"`
+
+	// Platforms is a map of PlanResourceUrls to platform identifiers, allowing a single k0s airgap
+	// version to have multiple Url resources based on platform.
+	Platforms PlanPlatformResourceURLMap `json:"platforms"`
+
+	// Workers defines how the k0s workers will be discovered and airgap updated.
+	Workers PlanCommandTarget `json:"workers"`
 }
 
 // PlanResourceURL is a remote URL resource.
@@ -238,6 +255,9 @@ type PlanCommandStatus struct {
 
 	// K0sUpdate is the status of the `K0sUpdate` command.
 	K0sUpdate *PlanCommandK0sUpdateStatus `json:"k0supdate,omitempty"`
+
+	// AirgapUpdate is the status of the `AirgapUpdate` command.
+	AirgapUpdate *PlanCommandAirgapUpdateStatus `json:"airgapupdate,omitempty"`
 }
 
 // PlanCommandK0sUpdateStatus is the status of a `K0sUpdate` command for a collection
@@ -246,6 +266,13 @@ type PlanCommandK0sUpdateStatus struct {
 	// Controllers are a collection of status for resolved k0s controller targets.
 	Controllers []PlanCommandTargetStatus `json:"controllers,omitempty"`
 
+	// Workers are a collection of status for resolved k0s worker targets.
+	Workers []PlanCommandTargetStatus `json:"workers,omitempty"`
+}
+
+// PlanCommandAirgapUpdateStatus is the status of a `AirgapUpdate` command for
+// k0s worker nodes.
+type PlanCommandAirgapUpdateStatus struct {
 	// Workers are a collection of status for resolved k0s worker targets.
 	Workers []PlanCommandTargetStatus `json:"workers,omitempty"`
 }

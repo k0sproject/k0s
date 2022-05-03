@@ -62,7 +62,7 @@ func (b downloadManfiestBuilderAirgap) Build(signalNode crcli.Object, signalData
 			URL:          signalData.Command.AirgapUpdate.URL,
 			ExpectedHash: signalData.Command.AirgapUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  path.Join(b.k0sDataDir, apconst.K0sManifestSubDir),
+			DownloadDir:  path.Join(b.k0sDataDir, apconst.K0sImagesDir),
 		},
 		SuccessState: apsigcomm.Completed,
 	}

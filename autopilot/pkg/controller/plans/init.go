@@ -22,6 +22,7 @@ import (
 	apcomm "github.com/k0sproject/autopilot/pkg/common"
 	apconst "github.com/k0sproject/autopilot/pkg/constant"
 	apdel "github.com/k0sproject/autopilot/pkg/controller/delegate"
+	appagupdate "github.com/k0sproject/autopilot/pkg/controller/plans/cmdprovider/airgapupdate"
 	appk0supdate "github.com/k0sproject/autopilot/pkg/controller/plans/cmdprovider/k0supdate"
 	appc "github.com/k0sproject/autopilot/pkg/controller/plans/core"
 
@@ -39,6 +40,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	cmdProviders := []appc.PlanCommandProvider{
 		appk0supdate.NewK0sUpdatePlanCommandProvider(logger, mgr.GetClient(), controllerDelegateMap, excludeFromPlans),
+		appagupdate.NewAirgapUpdatePlanCommandProvider(logger, mgr.GetClient(), controllerDelegateMap, excludeFromPlans),
 	}
 
 	if leaderMode {
