@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"hash"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/cavaliergopher/grab/v3"
 	"github.com/sirupsen/logrus"
 )
 
