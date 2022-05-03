@@ -32,9 +32,10 @@ import (
 
 // JoinClient is the client we can use to call k0s join APIs
 type JoinClient struct {
-	joinAddress string
-	httpClient  http.Client
-	bearerToken string
+	joinAddress   string
+	httpClient    http.Client
+	bearerToken   string
+	joinTokenType string
 }
 
 // JoinClientFromToken creates a new join api client from a token
@@ -53,6 +54,11 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 		return nil, err
 	}
 
+	raw, err := clientConfig.RawConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	ca := x509.NewCertPool()
 	ca.AppendCertsFromPEM(config.CAData)
 	tlsConfig := &tls.Config{
@@ -65,6 +71,8 @@ func JoinClientFromToken(encodedToken string) (*JoinClient, error) {
 		bearerToken: config.BearerToken,
 	}
 	c.joinAddress = config.Host
+	c.joinTokenType = GetTokenType(&raw)
+
 	logrus.Info("initialized join client successfully")
 	return c, nil
 }
@@ -143,4 +151,8 @@ func (j *JoinClient) JoinEtcd(peerAddress string) (v1beta1.EtcdResponse, error) 
 	}
 
 	return etcdResponse, nil
+}
+
+func (j *JoinClient) JoinTokenType() string {
+	return j.joinTokenType
 }

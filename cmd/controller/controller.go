@@ -698,6 +698,10 @@ func joinController(ctx context.Context, tokenArg string, certRootDir string) (*
 		return nil, fmt.Errorf("failed to create join client: %w", err)
 	}
 
+	if joinClient.JoinTokenType() != "controller-bootstrap" {
+		return nil, fmt.Errorf("wrong token type %s, expected type: controller-bootstrap", joinClient.JoinTokenType())
+	}
+
 	var caData v1beta1.CaResponse
 	err = retry.Do(func() error {
 		caData, err = joinClient.GetCA()
