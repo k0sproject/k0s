@@ -20,6 +20,8 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"io"
+
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // DecodeJoinToken decodes an token string that is encoded with JoinEncode
@@ -45,4 +47,12 @@ func DecodeJoinToken(token string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func GetTokenType(clientCfg *clientcmdapi.Config) string {
+	for _, kubeContext := range clientCfg.Contexts {
+		return kubeContext.AuthInfo
+	}
+
+	return ""
 }

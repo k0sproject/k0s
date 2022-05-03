@@ -39,6 +39,11 @@ func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) 
 	if err != nil {
 		return fmt.Errorf("failed to parse kubelet bootstrap auth from token: %w", err)
 	}
+
+	if tokenType := token.GetTokenType(clientCfg); tokenType != "kubelet-bootstrap" {
+		return fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
+	}
+
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
 	if !file.Exists(kubeletCAPath) {
 		if err := dir.Init(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
