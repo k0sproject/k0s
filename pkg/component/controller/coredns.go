@@ -246,8 +246,8 @@ spec:
 
 const HostsPerExtraReplica = 10.0
 
-var _ component.Component = &CoreDNS{}
-var _ component.ReconcilerComponent = &CoreDNS{}
+var _ component.Component = (*CoreDNS)(nil)
+var _ component.ReconcilerComponent = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {

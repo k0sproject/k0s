@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ ContainerRuntime = &DockerRuntime{}
+var _ ContainerRuntime = (*DockerRuntime)(nil)
 
 type DockerRuntime struct {
 	criSocketPath string

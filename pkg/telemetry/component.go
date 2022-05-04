@@ -43,8 +43,8 @@ type Component struct {
 	stopCh chan struct{}
 }
 
-var _ component.Component = &Component{}
-var _ component.ReconcilerComponent = &Component{}
+var _ component.Component = (*Component)(nil)
+var _ component.ReconcilerComponent = (*Component)(nil)
 
 var interval = time.Minute * 10
 

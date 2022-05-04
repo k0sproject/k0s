@@ -42,8 +42,8 @@ type DefaultPSP struct {
 	previousPolicy string
 }
 
-var _ component.Component = &DefaultPSP{}
-var _ component.ReconcilerComponent = &DefaultPSP{}
+var _ component.Component = (*DefaultPSP)(nil)
+var _ component.ReconcilerComponent = (*DefaultPSP)(nil)
 
 // NewDefaultPSP creates new system level RBAC reconciler
 func NewDefaultPSP(k0sVars constant.CfgVars) (*DefaultPSP, error) {

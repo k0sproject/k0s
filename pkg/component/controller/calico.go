@@ -35,8 +35,8 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.Component = &Calico{}
-var _ component.ReconcilerComponent = &Calico{}
+var _ component.Component = (*Calico)(nil)
+var _ component.ReconcilerComponent = (*Calico)(nil)
 
 var calicoCRDOnce sync.Once
 

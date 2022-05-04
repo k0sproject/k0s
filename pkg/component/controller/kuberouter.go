@@ -37,8 +37,8 @@ type KubeRouter struct {
 	k0sVars        constant.CfgVars
 }
 
-var _ component.Component = &KubeRouter{}
-var _ component.ReconcilerComponent = &KubeRouter{}
+var _ component.Component = (*KubeRouter)(nil)
+var _ component.ReconcilerComponent = (*KubeRouter)(nil)
 
 type kubeRouterConfig struct {
 	MTU               int

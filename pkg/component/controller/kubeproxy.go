@@ -40,8 +40,8 @@ type KubeProxy struct {
 	manifestDir    string
 }
 
-var _ component.Component = &KubeProxy{}
-var _ component.ReconcilerComponent = &KubeProxy{}
+var _ component.Component = (*KubeProxy)(nil)
+var _ component.ReconcilerComponent = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
 func NewKubeProxy(configFile string, k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) (*KubeProxy, error) {

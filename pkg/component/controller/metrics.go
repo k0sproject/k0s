@@ -20,11 +20,12 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"path"
 	"time"
+
+	"k8s.io/client-go/rest"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -51,8 +52,8 @@ type Metrics struct {
 	restClient    rest.Interface
 }
 
-var _ component.Component = &Metrics{}
-var _ component.ReconcilerComponent = &Metrics{}
+var _ component.Component = (*Metrics)(nil)
+var _ component.ReconcilerComponent = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
 func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface) (*Metrics, error) {
