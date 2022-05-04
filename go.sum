@@ -2399,8 +2399,8 @@ k8s.io/kubectl v0.24.0-beta.0/go.mod h1:PYylwYjci95A9BA6AJ9vHBH6KIVxmTm6q0khy2KQ
 k8s.io/kubernetes v1.13.0/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/metrics v0.24.0-beta.0 h1:qMTkmvutRFAmhVE9UX/M2LkYpgvNAV3v4dAcBdS7CwA=
 k8s.io/metrics v0.24.0-beta.0/go.mod h1:GHGniJ7wpgbOV8qNOo70NRqNa5LzBl4paA9TAhwVTWM=
-k8s.io/mount-utils v0.24.0-beta.0 h1:nZlBHKq8V5oPa8/zZWJ/cKXCMS7qqNx47GZhGeR4q0M=
-k8s.io/mount-utils v0.24.0-beta.0/go.mod h1:XrSqB3a2e8sq+aU+rlbcBtQ3EgcuDk5RP9ZsGxjoDrI=
+k8s.io/mount-utils v0.25.0-alpha.0 h1:UH1LIJ6I6NBq8l0COyKaTEfppFUzFnAkPN3zMO5xEHY=
+k8s.io/mount-utils v0.25.0-alpha.0/go.mod h1:XrSqB3a2e8sq+aU+rlbcBtQ3EgcuDk5RP9ZsGxjoDrI=
 k8s.io/utils v0.0.0-20201110183641-67b214c5f920/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 k8s.io/utils v0.0.0-20210802155522-efc7438f0176/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
