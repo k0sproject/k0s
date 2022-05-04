@@ -193,11 +193,11 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"localhost",
 	}
 
-	localIPs, err := detectLocalIPs()
+	localIP, err := detectLocalIP()
 	if err != nil {
-		return fmt.Errorf("error detecting local IPs: %w", err)
+		return fmt.Errorf("error detecting local IP: %w", err)
 	}
-	hostnames = append(hostnames, localIPs...)
+	hostnames = append(hostnames, localIP)
 	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
 	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
@@ -237,34 +237,18 @@ func (c *Certificates) Init(ctx context.Context) error {
 	return eg.Wait()
 }
 
-func detectLocalIPs() ([]string, error) {
-	var localIPs []string
-	ifaces, err := net.Interfaces()
+func detectLocalIP() (string, error) {
+	addrs, err := net.LookupIP("localhost")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			return nil, err
-		}
 
-		for _, addr := range addrs {
-			switch v := addr.(type) {
-			case *net.IPNet:
-				if v.IP.To4() == nil {
-					continue
-				}
-				localIPs = append(localIPs, v.IP.To4().String())
-			case *net.IPAddr:
-				if v.IP.To4() == nil {
-					continue
-				}
-				localIPs = append(localIPs, v.IP.To4().String())
-			}
+	for _, addr := range addrs {
+		if addr.To4() != nil {
+			return addr.String(), nil
 		}
 	}
-	return localIPs, nil
+	return "", fmt.Errorf("could not detect ipv4 IP")
 }
 
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
