@@ -43,18 +43,18 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache embedded binaries
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ hashFiles('embedded-bins/**/*') }}
           path: |
@@ -65,7 +65,7 @@ jobs:
             pkg/assets/zz_generated_offsets_${{ matrix.target }}.go
 
       - name: Cache GOCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-build-gocache-${{ matrix.target }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
@@ -74,7 +74,7 @@ jobs:
             build/cache/go/build
 
       - name: Cache GOMODCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-build-gomodcache-${{ matrix.target }}-${{ hashFiles('go.sum') }}
           path: |
@@ -84,7 +84,7 @@ jobs:
         run: make build TARGET_OS='${{ matrix.target }}'
 
       - name: Upload compiled binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: k0s${{ matrix.binary-suffix }}
           path: k0s${{ matrix.binary-suffix }}
@@ -96,18 +96,18 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache GOCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-unittest-gocache-linux-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
@@ -117,7 +117,7 @@ jobs:
             build/cache/go/build
 
       - name: Cache GOMODCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-unittest-gomodcache-linux-${{ hashFiles('go.sum') }}
           restore-keys: |
@@ -173,18 +173,18 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Download compiled binary
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: k0s
 
@@ -198,7 +198,7 @@ jobs:
 
       - name: Collect test logs
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: smoketest-${{ matrix.smoke-suite }}-logs
           path: /tmp/*.log
@@ -210,18 +210,18 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Download compiled binary
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: k0s
 
@@ -237,7 +237,7 @@ jobs:
 
       - name: Cache airgap image bundle
         id: cache-bundle
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-airgap-image-bundle-${{ hashFiles('image-bundle/image.list') }}
           path: image-bundle/bundle.tar
@@ -251,7 +251,7 @@ jobs:
 
       - name: Collect test logs
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: smoketest-airgap-check-airgap-logs
           path: /tmp/*.log
@@ -274,7 +274,7 @@ jobs:
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
@@ -282,7 +282,7 @@ jobs:
       # We cannot rely on this for arm: https://github.com/actions/setup-go/issues/106
       - name: Set up Go
         if: matrix.arch != 'arm'
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -306,7 +306,7 @@ jobs:
           echo ::endgroup::
 
       - name: Cache embedded binaries
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-embedded-bins-${{ matrix.arch }}-${{ hashFiles('**/embedded-bins/**/*') }}
           path: |
@@ -317,7 +317,7 @@ jobs:
             pkg/assets/zz_generated_offsets_linux.go
 
       - name: Cache GOCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-smoketest-arm-gocache-${{ matrix.arch }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
@@ -326,7 +326,7 @@ jobs:
             build/cache/go/build
 
       - name: Cache GOMODCACHE
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           key: ${{ runner.os }}-smoketest-arm-gomodcache-${{ matrix.arch }}-${{ hashFiles('go.sum') }}
           path: |
@@ -343,7 +343,7 @@ jobs:
 
       - name: Collect test logs
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: smoketest-${{ matrix.arch }}-check-basic-logs
           path: /tmp/*.log
