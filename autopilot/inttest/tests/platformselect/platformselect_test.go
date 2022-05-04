@@ -69,14 +69,14 @@ spec:
         version: ` + apitcomm.TargetK0sVersion + `
         platforms:
           windows-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["windows-amd64"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["windows-amd64"]["sha256"] + `
+            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["windows-amd64"]["k0s"]["url"] + `
+            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["windows-amd64"]["k0s"]["sha256"] + `
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["sha256"] + `
+            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
+            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
           linux-arm64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-arm64"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-arm64"]["sha256"] + `
+            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-arm64"]["k0s"]["url"] + `
+            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-arm64"]["k0s"]["sha256"] + `
         targets:
           controllers:
             discovery:

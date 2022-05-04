@@ -24,19 +24,40 @@ const (
 	TargetK0sVersion = "v1.23.3+k0s.1"
 )
 
-var Versions = map[string]map[string]map[string]string{
-	TargetK0sVersion: {
+type K0sVersion string
+type K0sVersionedPlatformResourceMap map[K0sVersion]PlatformedResourceMap
+type PlatformedResourceMap map[string]ResourceMap
+type ResourceMap map[string]AttributeMap
+type AttributeMap map[string]string
+
+var Versions = K0sVersionedPlatformResourceMap{
+	"v1.23.3+k0s.1": {
 		"linux-amd64": {
-			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64",
-			"sha256": "0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e",
+			"k0s": {
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64",
+				"sha256": "0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e",
+			},
+			"airgap": {
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
+				"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2",
+			},
 		},
 		"linux-arm64": {
-			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-arm64",
-			"sha256": "350adde6c452abd56a3c8113bf5af254fc17bcc41946e32ae47b580626a9293c",
+			"k0s": {
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-arm64",
+				"sha256": "350adde6c452abd56a3c8113bf5af254fc17bcc41946e32ae47b580626a9293c",
+			},
+			"airgap": {
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-arm64",
+				"sha256": "2fe4976a90193e2ec89d3cff4ebf6bd063b38cf23116071689415fd19f251f29",
+			},
 		},
 		"windows-amd64": {
-			"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64.exe",
-			"sha256": "f9e064f70c997e55dacbd3b36ca04029bb7995e84be8084d8bbd2cd75601fe30",
+			"k0s": {
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64.exe",
+				"sha256": "f9e064f70c997e55dacbd3b36ca04029bb7995e84be8084d8bbd2cd75601fe30",
+			},
+			// no airgap bundles published for windows
 		},
 	},
 }
