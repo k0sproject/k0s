@@ -53,7 +53,7 @@ jobs:
         id: go
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           skip-pkg-cache: true
           only-new-issues: false
