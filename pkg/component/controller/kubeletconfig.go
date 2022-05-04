@@ -41,8 +41,8 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.ReconcilerComponent = &KubeletConfig{}
-var _ component.Component = &KubeletConfig{}
+var _ component.ReconcilerComponent = (*KubeletConfig)(nil)
+var _ component.Component = (*KubeletConfig)(nil)
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {

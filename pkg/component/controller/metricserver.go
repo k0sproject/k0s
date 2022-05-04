@@ -251,8 +251,8 @@ type metricsConfig struct {
 	MEMRequest string
 }
 
-var _ component.Component = &MetricServer{}
-var _ component.ReconcilerComponent = &MetricServer{}
+var _ component.Component = (*MetricServer)(nil)
+var _ component.ReconcilerComponent = (*MetricServer)(nil)
 
 // NewMetricServer creates new MetricServer reconciler
 func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {

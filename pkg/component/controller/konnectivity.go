@@ -61,8 +61,8 @@ type Konnectivity struct {
 	agentManifestLock   sync.Mutex
 }
 
-var _ component.Component = &Konnectivity{}
-var _ component.ReconcilerComponent = &Konnectivity{}
+var _ component.Component = (*Konnectivity)(nil)
+var _ component.ReconcilerComponent = (*Konnectivity)(nil)
 
 // Init ...
 func (k *Konnectivity) Init(_ context.Context) error {

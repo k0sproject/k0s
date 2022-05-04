@@ -42,8 +42,8 @@ type Scheduler struct {
 	previousConfig stringmap.StringMap
 }
 
-var _ component.Component = &Scheduler{}
-var _ component.ReconcilerComponent = &Scheduler{}
+var _ component.Component = (*Scheduler)(nil)
+var _ component.ReconcilerComponent = (*Scheduler)(nil)
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init(_ context.Context) error {

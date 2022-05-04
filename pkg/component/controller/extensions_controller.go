@@ -52,8 +52,8 @@ type ExtensionsController struct {
 	leaderElector LeaderElector
 }
 
-var _ component.Component = &ExtensionsController{}
-var _ component.ReconcilerComponent = &ExtensionsController{}
+var _ component.Component = (*ExtensionsController)(nil)
+var _ component.ReconcilerComponent = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
 func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *ExtensionsController {

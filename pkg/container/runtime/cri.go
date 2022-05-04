@@ -25,7 +25,7 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
-var _ ContainerRuntime = &CRIRuntime{}
+var _ ContainerRuntime = (*CRIRuntime)(nil)
 
 type CRIRuntime struct {
 	criSocketPath string

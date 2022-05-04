@@ -24,7 +24,7 @@ import (
 	"github.com/k0sproject/k0s/static"
 )
 
-var _ component.Component = &CRD{}
+var _ component.Component = (*CRD)(nil)
 
 // CRD unpacks bundled CRD definitions to the filesystem
 type CRD struct {

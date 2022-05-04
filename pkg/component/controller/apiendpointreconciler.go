@@ -33,8 +33,8 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.Component = &APIEndpointReconciler{}
-var _ component.ReconcilerComponent = &APIEndpointReconciler{}
+var _ component.Component = (*APIEndpointReconciler)(nil)
+var _ component.ReconcilerComponent = (*APIEndpointReconciler)(nil)
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {

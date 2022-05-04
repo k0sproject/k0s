@@ -54,8 +54,8 @@ var cmDefaultArgs = stringmap.StringMap{
 	"use-service-account-credentials": "true",
 }
 
-var _ component.Component = &Manager{}
-var _ component.ReconcilerComponent = &Manager{}
+var _ component.Component = (*Manager)(nil)
+var _ component.ReconcilerComponent = (*Manager)(nil)
 
 // Init extracts the needed binaries
 func (a *Manager) Init(_ context.Context) error {
