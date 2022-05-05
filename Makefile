@@ -108,6 +108,10 @@ all: k0s k0s.exe
 go.sum: go.mod
 	$(GO) mod tidy
 
+codegen_targets = \
+	static/gen_manifests.go \
+	pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
 print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
 			"package assets" \
@@ -131,7 +135,6 @@ pkg/assets/zz_generated_offsets_darwin.go:
 	$(print_empty_generated_offsets) > $@
 
 k0s: TARGET_OS = linux
-k0s: pkg/assets/zz_generated_offsets_linux.go
 k0s: BUILD_GO_CGO_ENABLED = 1
 k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
 k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
@@ -140,9 +143,8 @@ k0s: .k0sbuild.docker-image.k0s
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
 k0s.exe: GOLANG_IMAGE = golang:1.17-alpine
-k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 
-k0s.exe k0s: static/gen_manifests.go
+k0s.exe k0s: $(codegen_targets)
 
 k0s.exe k0s: $(GO_SRCS) go.sum
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
@@ -155,9 +157,11 @@ k0s.exe k0s: $(GO_SRCS) go.sum
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
+.PHONY: codegen
+codegen: $(codegen_targets)
 
 .PHONY: lint
-lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
+lint: go.sum codegen
 	$(golint) run --verbose $(GO_DIRS)
 
 .PHONY: $(smoketests)
@@ -169,7 +173,7 @@ $(smoketests): k0s
 smoketests:  $(smoketests)
 
 .PHONY: check-unit
-check-unit: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go static/gen_manifests.go go.sum
+check-unit: go.sum codegen
 	$(GO) test -race `$(GO) list $(GO_DIRS)`
 
 .PHONY: check-image-validity
