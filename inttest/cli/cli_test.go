@@ -58,7 +58,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	defer ssh.Disconnect()
 
 	s.T().Log("running k0s install command")
-	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server")
+	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--event-qps=7 --enable-load-reader=true'")
 	s.Require().NoError(err)
 
 	_, err = ssh.ExecWithOutput("k0s start")
@@ -101,6 +101,12 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	s.Require().NoError(common.WaitForDaemonSet(kc, "kube-proxy"))
 	s.Require().NoError(common.WaitForKubeRouterReady(kc))
 	s.Require().NoError(common.WaitForDeployment(kc, "coredns"))
+
+	// Check that the kubelet extra flags are properly set
+	kubeletCmdLine, err := s.GetKubeletCMDLine(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.Require().Contains(kubeletCmdLine, "--event-qps=7")
+	s.Require().Contains(kubeletCmdLine, "--enable-load-reader=true")
 
 	// Stop and actually wait till k0s dies
 	_, err = ssh.ExecWithOutput("k0s stop && while pidof k0s containerd kubelet; do sleep 0.1s; done")
