@@ -22,14 +22,14 @@ import (
 
 // PlanStatusType
 var (
-	PlanSchedulable         apv1beta2.PlanStateType = "Schedulable"
-	PlanSchedulableWait     apv1beta2.PlanStateType = "SchedulableWait"
+	PlanSchedulable     apv1beta2.PlanStateType = "Schedulable"
+	PlanSchedulableWait apv1beta2.PlanStateType = "SchedulableWait"
+	PlanCompleted       apv1beta2.PlanStateType = "Completed"
+
 	PlanInconsistentTargets apv1beta2.PlanStateType = "InconsistentTargets"
 	PlanIncompleteTargets   apv1beta2.PlanStateType = "IncompleteTargets"
 	PlanRestricted          apv1beta2.PlanStateType = "Restricted"
-	PlanMissingPlatform     apv1beta2.PlanStateType = "MissingPlatform"
 	PlanMissingSignalNode   apv1beta2.PlanStateType = "MissingSignalNode"
-	PlanCompleted           apv1beta2.PlanStateType = "Completed"
 )
 
 // PlanCommandStatusType

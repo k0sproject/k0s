@@ -116,7 +116,7 @@ does nothing with this information.
 * The `commands` contains all of the commands that should be performed as a part of the plan.
 
 
-### Update Command Fields
+### **`k0supdate`** Command
 #### `spec.commands[].k0supdate.version <string> (required)`
 * The version of the binary being updated. This version is used to compare against the installed
 version before and after update to ensure success.
@@ -144,6 +144,27 @@ where quorom may be disrupted.
 * This object provides the details of how `workers` should be updated.
 
 #### `spec.commands[].k0supdate.targets.workers.limits.concurrent <int> (optional, default = 1)`
+* Specifying a `concurrent` value for worker targets will allow for that number of workers
+to be updated at a time. If no value is provided, `1` is assumed.
+
+### **`airgapupdate`** Command
+#### `spec.commands[].airgapupdate.version <string> (required)`
+* The version of the airgap bundle being updated.
+
+#### `spec.commands[].airgapupdate.platforms.*.url <string> (required)`
+* An URL providing where the updated binary should be downloaded from, for this specific platform.
+  * The naming of platforms is a combination of `$GOOS` and `$GOARCH`, separated by a hyphen (`-`)
+    * eg: `linux-amd64`, `linux-arm64`, `linux-arm`
+  * **Note:** The main supported platform is `linux`. **Autopilot** may work on other platforms, however
+this has not been tested.
+
+#### `spec.commands[].airgapupdate.platforms.*.sha256 <string> (optional)`
+* If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.
+
+#### `spec.commands[].airgapupdate.targets.workers <object> (optional)`
+* This object provides the details of how `workers` should be updated.
+
+#### `spec.commands[].airgapupdate.targets.workers.limits.concurrent <int> (optional, default = 1)`
 * Specifying a `concurrent` value for worker targets will allow for that number of workers
 to be updated at a time. If no value is provided, `1` is assumed.
 
