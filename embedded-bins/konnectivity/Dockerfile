@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -10,10 +10,11 @@ ARG BUILD_GO_LDFLAGS_EXTRA
 
 RUN apk add build-base git make protoc
 
-RUN git clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
+RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 RUN go version
-RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 github.com/golang/protobuf/protoc-gen-go@v1.4.3 && \
+RUN go install github.com/golang/mock/mockgen@v1.4.4 && \
+    go install github.com/golang/protobuf/protoc-gen-go@v1.4.3 && \
     make gen && \
     CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     GOOS=linux \

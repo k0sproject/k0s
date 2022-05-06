@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -11,7 +11,7 @@ ARG BUILD_GO_LDFLAGS_EXTRA
 RUN apk add build-base git
 
 
-RUN cd / && git clone -b v$VERSION --depth=1 https://github.com/rancher/kine.git
+RUN cd / && git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/rancher/kine.git
 WORKDIR /kine
 RUN go version
 RUN CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \

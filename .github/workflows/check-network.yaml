@@ -8,10 +8,6 @@ on:
   schedule:
     - cron: "0 23 * * *"
 
-env:
-  GO_VERSION: ~1.17
-  GO_VERSION_WIN: ~1.17
-
 jobs:
   terraform:
     env:
@@ -46,7 +42,10 @@ jobs:
         with:
           ref: ${{ env.github_ref }}
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}

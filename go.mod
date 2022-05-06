@@ -1,6 +1,6 @@
 module github.com/k0sproject/k0s
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible

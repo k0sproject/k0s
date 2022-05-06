@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -24,7 +24,7 @@ RUN make -j$(nproc) -C /libseccomp-$LIBSECCOMP_VERSION check
 RUN make -C /libseccomp-$LIBSECCOMP_VERSION install
 
 RUN mkdir -p $GOPATH/src/github.com/opencontainers/runc
-RUN git clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
+RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
 WORKDIR /go/src/github.com/opencontainers/runc
 RUN go version
 RUN make \
