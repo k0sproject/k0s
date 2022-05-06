@@ -19,4 +19,6 @@ limitations under the License.
 
 package linux
 
-type utsFieldType *[65]uint8
+func utsChar(ch rune) uint8 { return uint8(ch) } //nolint:deadcode,unused // just for tests 🙄
+
+type utsStringPtr *[65]uint8

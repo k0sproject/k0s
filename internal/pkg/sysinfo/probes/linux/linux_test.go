@@ -139,11 +139,11 @@ func TestUname(t *testing.T) {
 
 	t.Run("parsesFields", func(t *testing.T) {
 		var utsname syscall.Utsname
-		utsname.Sysname[0] = int8('S')
-		utsname.Nodename[0] = int8('N')
-		utsname.Release[0] = int8('R')
-		utsname.Version[0] = int8('V')
-		utsname.Machine[0] = int8('M')
+		utsname.Sysname[0] = utsChar('S')
+		utsname.Nodename[0] = utsChar('N')
+		utsname.Release[0] = utsChar('R')
+		utsname.Version[0] = utsChar('V')
+		utsname.Machine[0] = utsChar('M')
 
 		parsed := parseUname(&utsname)
 		assert.Equal(t, &uname{
@@ -158,7 +158,7 @@ func TestUname(t *testing.T) {
 	t.Run("parseDetectsTruncation", func(t *testing.T) {
 		var utsname syscall.Utsname
 		for i := range utsname.Sysname {
-			utsname.Sysname[i] = int8('x')
+			utsname.Sysname[i] = utsChar('x')
 		}
 
 		parsed := parseUname(&utsname).osName
