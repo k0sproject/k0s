@@ -105,7 +105,7 @@ endif
 .PHONY: all
 all: k0s k0s.exe
 
-go.sum: go.mod
+go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy
 
 codegen_targets = \
@@ -142,7 +142,7 @@ k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:1.17-alpine
+k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine
 
 k0s.exe k0s: $(codegen_targets)
 

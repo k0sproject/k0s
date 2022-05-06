@@ -29,10 +29,6 @@ on:
       - 'mkdocs.yml'
       - '*.md'
 
-env:
-  GO_VERSION: ~1.17
-  GO_VERSION_WIN: ~1.17
-
 jobs:
   lint:
     name: Lint
@@ -41,7 +37,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Go 1.x
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}

@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -13,18 +13,19 @@ ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
 RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
-RUN git clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
+RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
 WORKDIR /go/src/github.com/kubernetes/kubernetes
 
 RUN go version
 RUN \
+	set -e; \
 	# Ensure that all of the binaries are built with CGO \
 	if [ ${BUILD_GO_CGO_ENABLED:-0} -eq 1 ]; then \
 		export KUBE_CGO_OVERRIDES="${COMMANDS}"; \
 	fi; \
 	for cmd in $COMMANDS; do \
 		export KUBE_GIT_VERSION="v$VERSION+k0s"; \
-		make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd || break;\
+		make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \
 	done
 
 FROM scratch

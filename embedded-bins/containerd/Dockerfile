@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -16,7 +16,7 @@ RUN apk upgrade -U -a && apk add \
 	protoc
 
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
-RUN git clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
+RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
 WORKDIR /go/src/github.com/containerd/containerd
 RUN go version
 RUN make \
