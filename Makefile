@@ -173,8 +173,9 @@ $(smoketests): k0s
 smoketests:  $(smoketests)
 
 .PHONY: check-unit
+check-unit: GO_TEST_RACE ?= -race
 check-unit: go.sum codegen
-	$(GO) test -race `$(GO) list $(GO_DIRS)`
+	$(GO) test $(GO_TEST_RACE) `$(GO) list $(GO_DIRS)`
 
 .PHONY: check-image-validity
 check-image-validity: go.sum
