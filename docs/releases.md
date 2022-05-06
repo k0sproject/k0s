@@ -12,6 +12,6 @@ The biggest new k0s features will typically only be delivered on top of the late
 
 The k0s version string consists of the Kubernetes version and the k0s version. For example:
 
-- v1.24.0-beta.0+k0s.0
+- v1.23.6+k0s.1
 
-The Kubernetes version (1.24.0-beta.0) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.
+The Kubernetes version (1.23.6) is the first part, and the last part (k0s.0) reflects the k0s version, which is built on top of the certain Kubernetes version.
