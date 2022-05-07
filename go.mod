@@ -2,6 +2,7 @@ module github.com/k0sproject/k0s
 
 go 1.18
 
+// k0s
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Microsoft/hcsshim v0.9.2
@@ -48,7 +49,23 @@ require (
 	google.golang.org/grpc v1.46.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	helm.sh/helm/v3 v3.8.2
+	sigs.k8s.io/controller-runtime v0.11.2
+	sigs.k8s.io/yaml v1.3.0
+)
 
+// Kubernetes
+require (
+	k8s.io/api v0.24.0
+	k8s.io/apimachinery v0.24.0
+	k8s.io/cli-runtime v0.24.0
+	k8s.io/client-go v0.24.0
+	k8s.io/cloud-provider v0.24.0
+	k8s.io/component-base v0.24.0
+	k8s.io/cri-api v0.24.0
+	k8s.io/kube-aggregator v0.24.0
+	k8s.io/kubectl v0.24.0
+	k8s.io/mount-utils v0.24.0
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
 
 require (
@@ -69,7 +86,6 @@ require (
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
@@ -258,13 +274,13 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/apiextensions-apiserver v0.24.0-beta.0 // indirect
-	k8s.io/apiserver v0.24.0-beta.0 // indirect
-	k8s.io/component-helpers v0.24.0-beta.0 // indirect
-	k8s.io/controller-manager v0.24.0-beta.0 // indirect
+	k8s.io/apiextensions-apiserver v0.24.0 // indirect
+	k8s.io/apiserver v0.24.0 // indirect
+	k8s.io/component-helpers v0.24.0 // indirect
+	k8s.io/controller-manager v0.24.0 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
-	k8s.io/metrics v0.24.0-beta.0 // indirect
+	k8s.io/metrics v0.24.0 // indirect
 	oras.land/oras-go v1.1.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
@@ -274,36 +290,22 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
 
-// Kubernetes deps, split into own section for easier maintenance
-require (
-	k8s.io/api v0.24.0-beta.0
-	k8s.io/apimachinery v0.24.0-beta.0
-	k8s.io/cli-runtime v0.24.0-beta.0
-	k8s.io/client-go v0.24.0-beta.0
-	k8s.io/cloud-provider v0.24.0-beta.0
-	k8s.io/component-base v0.24.0-beta.0
-	k8s.io/cri-api v0.24.0-beta.0
-	k8s.io/kube-aggregator v0.24.0-beta.0
-	k8s.io/kubectl v0.24.0-beta.0
-	k8s.io/mount-utils v0.24.0-beta.0
-	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
-	sigs.k8s.io/controller-runtime v0.11.2
-	sigs.k8s.io/yaml v1.3.0
+// Replacements specific to k0s
+replace (
+	// https://github.com/weaveworks/footloose/pull/272
+	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
+
+	// TODO: replace with a k0s helm fork
+	helm.sh/helm/v3 => github.com/s0j/helm/v3 v3.8.3-beta.0
 )
 
-// backported from k8s upstream, as a project which uses etcd, containerd and grpc at the same time, they have already selected versions which don't provide any interface compile time errors
+// Replacements duplicated from upstream Kubernetes
 replace (
-	github.com/containerd/continuity => github.com/containerd/continuity v0.1.0
-	github.com/containerd/ttrpc => github.com/containerd/ttrpc v1.0.2
-	github.com/containerd/typeurl => github.com/containerd/typeurl v1.0.1
+	// https://github.com/kubernetes/kubernetes/blob/v1.24.0/go.mod#L220-L221
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.12+incompatible
-	github.com/opencontainers/go-digest => github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2-0.20211117181255-693428a734f5
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.1
-	github.com/opencontainers/runtime-spec => github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/opencontainers/selinux => github.com/opencontainers/selinux v1.8.2
-	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
+
+	// https://github.com/kubernetes/kubernetes/blob/v1.24.0/go.mod#L394-L405
 	go.opentelemetry.io/contrib => go.opentelemetry.io/contrib v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0
@@ -316,10 +318,4 @@ replace (
 	go.opentelemetry.io/otel/sdk/metric => go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
-
-	// make sure we don't have CVE-2020-28852
-	golang.org/x/text => golang.org/x/text v0.3.7
-
-	// TODO: replace with a k0s helm fork
-	helm.sh/helm/v3 => github.com/s0j/helm/v3 v3.8.3-beta.0
 )
