@@ -1430,7 +1430,7 @@ modprobe br_netfilter
 <p>In addition, add each of these modules to your <code>/etc/modules-load.d/modules.conf</code> file to ensure they persist following reboot.</p>
 <h4 id="download-k0s">Download k0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h4>
 <p>Download a <a href="https://github.com/k0sproject/k0s/releases/latest">k0s release</a>. For example:</p>
-<div class="highlight"><pre><span></span><code>wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v0.9.1/k0s-v0.9.1-arm64 <span class="c1"># replace version number!</span>
+<div class="highlight"><pre><span></span><code>wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.23.6%2Bk0s.1/k0s-v1.23.6+k0s.1-arm64 <span class="c1"># replace version number!</span>
 sudo install /tmp/k0s /usr/local/bin/k0s
 </code></pre></div>
 <p>-- or --</p>
@@ -1441,7 +1441,7 @@ k0s and make it executable in <code>/usr/bin/k0s</code>.</p>
 <p>At this point you can run <code>k0s</code>:</p>
 <div class="highlight"><pre><span></span><code>k0s version
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>v1.22.1+k0s.0
+<div class="highlight"><pre><span></span><code>v1.23.6+k0s.1
 </code></pre></div>
 <h3 id="deploy-kubernetes">Deploy Kubernetes<a class="headerlink" href="#deploy-kubernetes" title="Permanent link">#</a></h3>
 <p>Each node can now serve as a control plane node or worker node.</p>
@@ -1502,9 +1502,9 @@ kubectl create clusterrolebinding k0s-admin-binding --clusterrole<span class="o"
 <div class="highlight"><pre><span></span><code>kubectl get nodes,deployments,pods -A
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>NAME         STATUS   ROLES    AGE     VERSION
-node/k8s-4   Ready    &lt;none&gt;   5m9s    v1.20.1-k0s1
-node/k8s-5   Ready    &lt;none&gt;   5m      v1.20.1-k0s1
-node/k8s-6   Ready    &lt;none&gt;   4m45s   v1.20.1-k0s1
+node/k8s-4   Ready    &lt;none&gt;   5m9s    v1.23.6+k0s.1
+node/k8s-5   Ready    &lt;none&gt;   5m      v1.23.6+k0s.1
+node/k8s-6   Ready    &lt;none&gt;   4m45s   v1.23.6+k0s.1
 
 NAMESPACE     NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   deployment.apps/calico-kube-controllers   <span class="m">1</span>/1     <span class="m">1</span>            <span class="m">1</span>           12m
