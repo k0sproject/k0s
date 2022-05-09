@@ -34,6 +34,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -115,7 +116,7 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 
 		req.KeyRequest.A = "rsa"
 		req.KeyRequest.S = 2048
-		req.Hosts = certReq.Hostnames
+		req.Hosts = stringslice.Unique(certReq.Hostnames)
 
 		var key, csrBytes []byte
 		g := &csr.Generator{Validator: genkey.Validator}

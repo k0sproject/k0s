@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -189,10 +190,15 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"kubernetes.default.svc",
 		"kubernetes.default.svc.cluster",
 		fmt.Sprintf("kubernetes.svc.%s", c.ClusterSpec.Network.ClusterDomain),
-		"127.0.0.1",
 		"localhost",
+		"127.0.0.1",
 	}
 
+	localIPs, err := detectLocalIPs()
+	if err != nil {
+		return fmt.Errorf("error detecting local IP: %w", err)
+	}
+	hostnames = append(hostnames, localIPs...)
 	hostnames = append(hostnames, c.ClusterSpec.API.Sans()...)
 
 	internalAPIAddress, err := c.ClusterSpec.Network.InternalAPIAddresses()
@@ -230,6 +236,29 @@ func (c *Certificates) Init(ctx context.Context) error {
 	})
 
 	return eg.Wait()
+}
+
+func detectLocalIPs() ([]string, error) {
+	var localIPs []string
+	addrs, err := net.LookupIP("localhost")
+	if err != nil {
+		return nil, err
+	}
+
+	if hostname, err := os.Hostname(); err == nil {
+		hostnameAddrs, err := net.LookupIP(hostname)
+		if err == nil {
+			addrs = append(addrs, hostnameAddrs...)
+		}
+	}
+
+	for _, addr := range addrs {
+		if addr.To4() != nil {
+			localIPs = append(localIPs, addr.String())
+		}
+	}
+
+	return localIPs, nil
 }
 
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
