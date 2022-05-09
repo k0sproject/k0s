@@ -17,11 +17,12 @@ package updates
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/autopilot/pkg/client"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -66,10 +67,18 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 		return cr.Result{}, fmt.Errorf("unable to get plan='%s': %w", req.NamespacedName, err)
 	}
 
+	var token string
+	tokenSecret := &corev1.Secret{}
+	if err := u.client.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: "kube-system"}, tokenSecret); err != nil {
+		u.log.Errorf("unable to get plan='%s': %v", req.NamespacedName, err)
+	} else {
+		token = string(tokenSecret.Data["token"])
+	}
+
 	u.log.Infof("processing updater config '%s'", req.NamespacedName)
 
 	if u.updater == nil {
-		updater, err := newUpdater(ctx, *updaterConfig, u.client, u.clusterID)
+		updater, err := newUpdater(ctx, *updaterConfig, u.client, u.clusterID, token)
 		if err != nil {
 			return cr.Result{}, err
 		}

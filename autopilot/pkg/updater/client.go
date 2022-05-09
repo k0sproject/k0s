@@ -30,9 +30,10 @@ type client struct {
 	httpClient      *http.Client
 	updateServer    string
 	updateServerURL *url.URL
+	authToken       string
 }
 
-func NewClient(updateServer string) (Client, error) {
+func NewClient(updateServer string, authToken string) (Client, error) {
 	url, err := url.Parse(updateServer)
 	if err != nil {
 		return nil, err
@@ -41,6 +42,7 @@ func NewClient(updateServer string) (Client, error) {
 		httpClient:      http.DefaultClient,
 		updateServer:    updateServer,
 		updateServerURL: url,
+		authToken:       authToken,
 	}
 	return c, nil
 }
@@ -53,7 +55,17 @@ func (c *client) GetUpdate(channel, clusterID, lastUpdateStatus, currentVersion 
 	query.Set("lastUpdateStatus", lastUpdateStatus)
 	query.Set("currentVersion", currentVersion)
 	u.RawQuery = query.Encode()
-	resp, err := c.httpClient.Get(u.String())
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.authToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
+	}
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

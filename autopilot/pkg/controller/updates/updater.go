@@ -53,8 +53,8 @@ var patchOpts []client.PatchOption = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string) (*updater, error) {
-	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer)
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateServerToken string) (*updater, error) {
+	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
 	}
