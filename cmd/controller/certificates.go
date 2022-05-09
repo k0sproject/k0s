@@ -191,6 +191,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"kubernetes.default.svc.cluster",
 		fmt.Sprintf("kubernetes.svc.%s", c.ClusterSpec.Network.ClusterDomain),
 		"localhost",
+		"127.0.0.1",
 	}
 
 	localIPs, err := detectLocalIPs()
