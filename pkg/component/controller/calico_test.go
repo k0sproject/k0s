@@ -26,8 +26,6 @@ import (
 
 type inMemorySaver map[string][]byte
 
-var dataDir string
-
 func (i inMemorySaver) Save(dst string, content []byte) error {
 	i[dst] = content
 	return nil

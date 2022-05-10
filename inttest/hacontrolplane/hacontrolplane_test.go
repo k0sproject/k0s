@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -138,12 +137,4 @@ func getHostnameFromURL(s string) string {
 	}
 	hostName, _, _ := net.SplitHostPort(u.Host)
 	return hostName
-}
-
-func lastLine(text string) string {
-	if text == "" {
-		return ""
-	}
-	parts := strings.Split(text, "\n")
-	return parts[len(parts)-1]
 }

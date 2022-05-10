@@ -11,7 +11,7 @@ run:
     - pkg/apis/k0s.k0sproject.io/clientset
   skip-files:
     - "zz_*"
-  tests: false
+  tests: true
   modules-download-mode: readonly
   allow-parallel-runners: true
 

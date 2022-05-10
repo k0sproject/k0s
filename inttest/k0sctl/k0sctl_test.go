@@ -163,7 +163,9 @@ func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) error {
 	cmd.Stdin = bytes.NewReader(plain)
 
 	stdout, _ := cmd.StdoutPipe()
-	cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
 
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {

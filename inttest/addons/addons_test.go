@@ -97,7 +97,8 @@ func (as *AddonsSuite) waitForTestRelease(addonName string, rev int64) *v1beta1.
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	v1beta1.AddToScheme(scheme.Scheme)
+	err = v1beta1.AddToScheme(scheme.Scheme)
+	as.Require().NoError(err)
 	chartClient, err := client.New(cfg, client.Options{
 		Scheme: scheme.Scheme,
 	})
