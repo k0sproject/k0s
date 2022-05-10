@@ -98,8 +98,9 @@ func TestCgroupsProbes_Probe_NonExistent(t *testing.T) {
 	reporter.On("Reject", mock.Anything, mock.Anything, "").Return(nil)
 
 	underTest := newCgroupsProbes(path, nil, nonExistent)
-	underTest.Probe(reporter)
+	err := underTest.Probe(reporter)
 
+	assert.NoError(t, err)
 	reporter.AssertExpectations(t)
 	args := reporter.Calls[0].Arguments
 	assert.Equal(t, path, args[0].(probes.ProbeDesc).Path())
@@ -116,6 +117,6 @@ func (m *mockCgroupSystem) probeController(name string) (cgroupControllerAvailab
 	return args.Get(0).(cgroupControllerAvailable), args.Error(1)
 }
 
-func (m mockCgroupSystem) String() string {
+func (m *mockCgroupSystem) String() string {
 	return "mockCgroupSystem"
 }

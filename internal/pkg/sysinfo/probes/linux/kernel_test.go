@@ -138,6 +138,7 @@ func TestKConfigProber(t *testing.T) {
 }
 
 func TestKernelConfigParser(t *testing.T) {
+	//revive:disable-next-line:var-naming
 	kConfigData := `#
 # Automatically generated file; DO NOT EDIT.
 # Linux/x86_64 5.16.8 Kernel Configuration

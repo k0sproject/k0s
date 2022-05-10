@@ -25,7 +25,7 @@ package dualstack
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/stretchr/testify/suite"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,23 +42,23 @@ type DualstackSuite struct {
 	client *k8s.Clientset
 }
 
-func (ds *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
-	nl, err := ds.client.CoreV1().Nodes().List(context.Background(), v1meta.ListOptions{})
-	ds.Require().NoError(err)
+func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
+	nl, err := s.client.CoreV1().Nodes().List(context.Background(), v1meta.ListOptions{})
+	s.Require().NoError(err)
 	for _, n := range nl.Items {
-		ds.Require().Len(n.Spec.PodCIDRs, 2, "Each node must have ipv4 and ipv6 pod cidr")
+		s.Require().Len(n.Spec.PodCIDRs, 2, "Each node must have ipv4 and ipv6 pod cidr")
 	}
 }
 
-func (ds *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
-	err := ds.verifyKubeApiServiceClusterIPRangeFlag(ds.ControllerNode(0))
-	ds.Require().NoError(err)
-	err = ds.verifyKubeControllerManagerServiceClusterIPRangeFlag(ds.ControllerNode(0))
-	ds.Require().NoError(err)
+func (s *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
+	err := s.verifyKubeAPIServiceClusterIPRangeFlag(s.ControllerNode(0))
+	s.Require().NoError(err)
+	err = s.verifyKubeControllerManagerServiceClusterIPRangeFlag(s.ControllerNode(0))
+	s.Require().NoError(err)
 }
 
 // Verifies that kube-apiserver process has a dual-stack service-cluster-ip-range configured.
-func (s *DualstackSuite) verifyKubeApiServiceClusterIPRangeFlag(node string) error {
+func (s *DualstackSuite) verifyKubeAPIServiceClusterIPRangeFlag(node string) error {
 	ssh, err := s.SSH(node)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (s *DualstackSuite) verifyKubeApiServiceClusterIPRangeFlag(node string) err
 		return err
 	}
 	if output != "--service-cluster-ip-range=10.96.0.0/12,fd01::/108" {
-		return fmt.Errorf("kube-apiserver does not have proper a dual-stack service-cluster-ip-range set.")
+		return errors.New("kube-apiserver does not have proper a dual-stack service-cluster-ip-range set")
 	}
 
 	return nil
@@ -89,26 +89,26 @@ func (s *DualstackSuite) verifyKubeControllerManagerServiceClusterIPRangeFlag(no
 		return err
 	}
 	if output != "--service-cluster-ip-range=10.96.0.0/12,fd01::/108" {
-		return fmt.Errorf("kube-controller-manager does not have proper a dual-stack service-cluster-ip-range set.")
+		return errors.New("kube-controller-manager does not have proper a dual-stack service-cluster-ip-range set")
 	}
 
 	return nil
 }
 
-func (ds *DualstackSuite) SetupSuite() {
-	ds.FootlooseSuite.SetupSuite()
-	ds.PutFile(ds.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
-	ds.Require().NoError(ds.InitController(0, "--config=/tmp/k0s.yaml"))
-	ds.Require().NoError(ds.RunWorkers())
-	client, err := ds.KubeClient(ds.ControllerNode(0))
-	ds.Require().NoError(err)
-	err = ds.WaitForNodeReady(ds.WorkerNode(0), client)
-	ds.Require().NoError(err)
+func (s *DualstackSuite) SetupSuite() {
+	s.FootlooseSuite.SetupSuite()
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.RunWorkers())
+	client, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	err = s.WaitForNodeReady(s.WorkerNode(0), client)
+	s.Require().NoError(err)
 
-	err = ds.WaitForNodeReady(ds.WorkerNode(1), client)
-	ds.Require().NoError(err)
+	err = s.WaitForNodeReady(s.WorkerNode(1), client)
+	s.Require().NoError(err)
 
-	ds.client = client
+	s.client = client
 
 }
 

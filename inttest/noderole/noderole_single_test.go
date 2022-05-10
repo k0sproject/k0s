@@ -31,7 +31,8 @@ type NodeRoleSingleSuite struct {
 }
 
 func (s *NodeRoleSingleSuite) TestK0sSingleNode() {
-	s.InitController(0, "--single")
+	err := s.InitController(0, "--single")
+	s.Require().NoError(err)
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
