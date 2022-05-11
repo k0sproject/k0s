@@ -110,6 +110,12 @@ func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
 				if errors.IsNotFound(e) {
 					// ClusterConfig CR cannot be found, which means we can create it
 					r.log.Debugf("didn't find cluster-config object: %v", err)
+
+					if !r.leaderElector.IsLeader() {
+						r.log.Debug("I am not the leader, not writing cluster configuration")
+						return true, nil
+					}
+
 					_, e = r.copyRunningConfigToCR(ctx)
 					if e != nil {
 						r.log.Errorf("failed to save cluster-config  %v\n", err)
@@ -222,10 +228,6 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context)
 	clusterConfig, err := r.configClient.Create(ctx, clusterWideConfig, cOpts)
 	if err != nil {
 		return nil, err
-	}
-	if !r.leaderElector.IsLeader() {
-		r.log.Debug("I am not the leader, not writing cluster configuration")
-		return clusterConfig, nil
 	}
 
 	r.log.Info("successfully wrote cluster-config to API")
