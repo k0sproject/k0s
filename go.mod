@@ -49,7 +49,7 @@ require (
 	google.golang.org/grpc v1.46.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	helm.sh/helm/v3 v3.8.2
-	sigs.k8s.io/controller-runtime v0.11.2
+	sigs.k8s.io/controller-runtime v0.12.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
