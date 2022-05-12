@@ -353,22 +353,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// For backwards compatibility, use file as config source by default
 	if c.EnableDynamicConfig {
 		cfgSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
-		if err != nil {
-			return err
-		}
 	} else {
 		cfgSource, err = clusterconfig.NewStaticSource(c.ClusterConfig)
-		if err != nil {
-			return err
-		}
 	}
-	defer func() {
-		if cfgSource != nil {
-			if err := cfgSource.Stop(); err != nil {
-				logrus.Warnf("error while stopping ConfigSource: %s", err.Error())
-			}
-		}
-	}()
+	if err != nil {
+		return err
+	}
+	defer cfgSource.Stop()
 
 	// start Bootstrapping Reconcilers
 	err = c.startBootstrapReconcilers(ctx, adminClientFactory, leaderElector, cfgSource)
