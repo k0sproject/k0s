@@ -144,11 +144,11 @@ func TestRespawn(t *testing.T) {
 	// wait til the process exits
 	process := s.GetProcess()
 	for process != nil && process.Signal(syscall.Signal(0)) == nil {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 
 	// wait enought time for new process to be respawned
-	time.Sleep(s.TimeoutRespawn)
+	time.Sleep((18 * s.TimeoutRespawn) / 10)
 
 	// test that a new process got re-spawned
 	if process.Pid == s.GetProcess().Pid {
