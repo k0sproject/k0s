@@ -46,21 +46,21 @@ var _ component.Component = (*KubeletConfig)(nil)
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {
-	kubeClientFactory k8sutil.ClientFactoryInterface
+	log logrus.FieldLogger
 
-	log              *logrus.Entry
-	k0sVars          constant.CfgVars
-	previousProfiles v1beta1.WorkerProfiles
+	kubeClientFactory k8sutil.ClientFactoryInterface
+	k0sVars           constant.CfgVars
+	previousProfiles  v1beta1.WorkerProfiles
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*KubeletConfig, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "kubeletconfig"})
+func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *KubeletConfig {
 	return &KubeletConfig{
+		log: logrus.WithFields(logrus.Fields{"component": "kubeletconfig"}),
+
 		kubeClientFactory: clientFactory,
-		log:               log,
 		k0sVars:           k0sVars,
-	}, nil
+	}
 }
 
 // Init does nothing

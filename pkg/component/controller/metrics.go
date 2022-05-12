@@ -42,14 +42,16 @@ const (
 
 // Metrics is the reconciler implementation for metrics server
 type Metrics struct {
-	hostname      string
-	log           *logrus.Entry
+	log logrus.FieldLogger
+
+	hostname   string
+	K0sVars    constant.CfgVars
+	saver      manifestsSaver
+	restClient rest.Interface
+
 	clusterConfig *v1beta1.ClusterConfig
 	tickerDone    context.CancelFunc
-	K0sVars       constant.CfgVars
 	jobs          []*job
-	saver         manifestsSaver
-	restClient    rest.Interface
 }
 
 var _ component.Component = (*Metrics)(nil)
@@ -61,7 +63,6 @@ func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kuberne
 	if err != nil {
 		return nil, err
 	}
-	log := logrus.WithFields(logrus.Fields{"component": "Metrics"})
 
 	restClient, err := clientCF.GetRESTClient()
 	if err != nil {
@@ -69,8 +70,9 @@ func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kuberne
 	}
 
 	return &Metrics{
+		log: logrus.WithFields(logrus.Fields{"component": "metrics"}),
+
 		hostname:   hostname,
-		log:        log,
 		K0sVars:    k0sVars,
 		saver:      saver,
 		restClient: restClient,
@@ -151,11 +153,12 @@ func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 func (m *Metrics) Healthy() error { return nil }
 
 type job struct {
+	log logrus.FieldLogger
+
 	scrapeURL     string
 	name          string
 	hostname      string
 	clusterConfig *v1beta1.ClusterConfig
-	log           *logrus.Entry
 	scrapeClient  *http.Client
 	restClient    rest.Interface
 }
@@ -170,10 +173,10 @@ func (m *Metrics) newJob(name, scrapeURL string) (*job, error) {
 	}
 
 	return &job{
+		log:          m.log.WithField("metrics_job", name),
 		scrapeURL:    scrapeURL,
 		name:         name,
 		hostname:     m.hostname,
-		log:          m.log,
 		scrapeClient: httpClient,
 		restClient:   m.restClient,
 	}, nil

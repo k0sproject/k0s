@@ -305,10 +305,68 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		}
 	}()
 
-	// in-cluster component reconcilers
-	err = c.createClusterReconcilers(ctx, adminClientFactory)
-	if err != nil {
-		return fmt.Errorf("failed to start reconcilers: %w", err)
+	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewDefaultPSP(c.K0sVars))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, c.NodeConfig))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
+		coreDNS, err := controller.NewCoreDNS(c.K0sVars, adminClientFactory)
+		if err != nil {
+			return fmt.Errorf("failed to create CoreDNS reconciler: %w", err)
+		}
+		c.ClusterComponents.Add(ctx, coreDNS)
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
+		logrus.Infof("Creating network reconcilers")
+
+		calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to create calico manifests saver: %w", err)
+		}
+		calicoInitSaver, err := controller.NewManifestsSaver("calico_init", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to create calico_init manifests saver: %w", err)
+		}
+		c.ClusterComponents.Add(ctx, controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver))
+
+		kubeRouterSaver, err := controller.NewManifestsSaver("kuberouter", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to create kuberouter manifests saver: %w", err)
+		}
+		c.ClusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, kubeRouterSaver))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewMetricServer(c.K0sVars, adminClientFactory))
+	}
+
+	if c.EnableMetricsScraper {
+		metricsSaver, err := controller.NewManifestsSaver("metrics", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to create metrics manifests saver: %w", err)
+		}
+		metrics, err := controller.NewMetrics(c.K0sVars, metricsSaver, adminClientFactory)
+		if err != nil {
+			return fmt.Errorf("failed to create metrics reconciler: %w", err)
+		}
+		c.ClusterComponents.Add(ctx, metrics)
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewSystemRBAC(c.K0sVars.ManifestsDir))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
+		c.ClusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
 	}
 
 	if enableKonnectivity {
@@ -320,6 +378,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			NodeConfig:        c.NodeConfig,
 		})
 	}
+
 	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Scheduler{
 			LogLevel:   c.Logging[constant.KubeSchedulerComponentName],
@@ -327,13 +386,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			SingleNode: c.SingleNode,
 		})
 	}
+
 	if !stringslice.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Manager{
 			LogLevel:   c.Logging[constant.KubeControllerManagerComponentName],
 			K0sVars:    c.K0sVars,
 			SingleNode: c.SingleNode,
 		})
-
 	}
 
 	c.ClusterComponents.Add(ctx, &telemetry.Component{
@@ -465,148 +524,6 @@ func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.C
 			return fmt.Errorf("failed to start reconciler: %s", err.Error())
 		}
 	}
-
-	return nil
-}
-
-func (c *CmdOpts) createClusterReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface) error {
-
-	reconcilers := make(map[string]component.Component)
-
-	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
-		defaultPSP, err := controller.NewDefaultPSP(c.K0sVars)
-		if err != nil {
-			return fmt.Errorf("failed to initialize default PSP reconciler: %s", err.Error())
-		}
-		reconcilers["default-psp"] = defaultPSP
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
-		proxy, err := controller.NewKubeProxy(c.CfgFile, c.K0sVars, c.NodeConfig)
-		if err != nil {
-			return fmt.Errorf("failed to initialize kube-proxy reconciler: %s", err.Error())
-
-		}
-		reconcilers["kube-proxy"] = proxy
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
-		coreDNS, err := controller.NewCoreDNS(c.K0sVars, cf)
-		if err != nil {
-			return fmt.Errorf("failed to initialize CoreDNS reconciler: %s", err.Error())
-		}
-		reconcilers["coredns"] = coreDNS
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
-		logrus.Infof("initializing network reconcilers")
-		if err := c.initCalico(reconcilers); err != nil {
-			logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
-		}
-		if err := c.initKubeRouter(reconcilers); err != nil {
-			logrus.Warnf("failed to initialize network reconciler: %s", err.Error())
-		}
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
-
-		metricServer, err := controller.NewMetricServer(c.K0sVars, cf)
-		if err != nil {
-			logrus.Warnf("failed to initialize metrics-server reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["metricServer"] = metricServer
-	}
-
-	if c.EnableMetricsScraper {
-		metricsSaver, err := controller.NewManifestsSaver("metrics", c.K0sVars.DataDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize metrics manifests saver: %s", err.Error())
-			return err
-		}
-		metricServer, err := controller.NewMetrics(c.K0sVars, metricsSaver, cf)
-		if err != nil {
-			logrus.Warnf("failed to initialize metrics reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["metrics"] = metricServer
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
-
-		kubeletConfig, err := controller.NewKubeletConfig(c.K0sVars, cf)
-		if err != nil {
-			logrus.Warnf("failed to initialize kubelet config reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["kubeletConfig"] = kubeletConfig
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
-
-		systemRBAC, err := controller.NewSystemRBAC(c.K0sVars.ManifestsDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize system RBAC reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["systemRBAC"] = systemRBAC
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
-
-		nodeRole, err := controller.NewNodeRole(c.K0sVars, cf)
-		if err != nil {
-			logrus.Warnf("failed to initialize node label reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["roleLabeler"] = nodeRole
-	}
-
-	// Init and add all components to clusterComponents manager
-	for name, comp := range reconcilers {
-		err := comp.Init(ctx)
-		if err != nil {
-			logrus.Infof("failed to initialize %s, component may not work properly: %v", name, err)
-		}
-		logrus.Infof("adding %s as clusterComponent so it'll be reconciled based on config object changes", name)
-		c.ClusterComponents.Add(ctx, comp)
-	}
-	return nil
-}
-
-func (c *CmdOpts) initCalico(reconcilers map[string]component.Component) error {
-	calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
-	if err != nil {
-		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-		return err
-	}
-	calicoInitSaver, err := controller.NewManifestsSaver("calico_init", c.K0sVars.DataDir)
-	if err != nil {
-		logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-		return err
-	}
-	calico, err := controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver)
-	if err != nil {
-		logrus.Warnf("failed to initialize calico reconciler: %s", err.Error())
-		return err
-	}
-	reconcilers["calico"] = calico
-
-	return nil
-}
-
-func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) error {
-	mfSaver, err := controller.NewManifestsSaver("kuberouter", c.K0sVars.DataDir)
-	if err != nil {
-		logrus.Warnf("failed to initialize kube-router manifests saver: %s", err.Error())
-		return err
-	}
-	kubeRouter, err := controller.NewKubeRouter(c.K0sVars, mfSaver)
-	if err != nil {
-		logrus.Warnf("failed to initialize kube-router reconciler: %s", err.Error())
-		return err
-	}
-	reconcilers["kube-router"] = kubeRouter
 
 	return nil
 }

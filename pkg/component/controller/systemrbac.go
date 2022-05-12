@@ -33,10 +33,8 @@ type SystemRBAC struct {
 }
 
 // NewSystemRBAC creates new system level RBAC reconciler
-func NewSystemRBAC(manifestDir string) (*SystemRBAC, error) {
-	return &SystemRBAC{
-		manifestDir: manifestDir,
-	}, nil
+func NewSystemRBAC(manifestDir string) *SystemRBAC {
+	return &SystemRBAC{manifestDir}
 }
 
 // Init does nothing

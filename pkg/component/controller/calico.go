@@ -42,7 +42,7 @@ var calicoCRDOnce sync.Once
 
 // Calico is the Component interface implementation to manage Calico
 type Calico struct {
-	log *logrus.Entry
+	log logrus.FieldLogger
 
 	crdSaver   manifestsSaver
 	saver      manifestsSaver
@@ -76,15 +76,15 @@ type calicoConfig struct {
 }
 
 // NewCalico creates new Calico reconciler component
-func NewCalico(k0sVars constant.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) (*Calico, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "calico"})
+func NewCalico(k0sVars constant.CfgVars, crdSaver manifestsSaver, manifestsSaver manifestsSaver) *Calico {
 	return &Calico{
-		log:        log,
+		log: logrus.WithFields(logrus.Fields{"component": "calico"}),
+
 		crdSaver:   crdSaver,
 		saver:      manifestsSaver,
 		prevConfig: calicoConfig{},
 		k0sVars:    k0sVars,
-	}, nil
+	}
 }
 
 // Init does nothing
