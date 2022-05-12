@@ -24,7 +24,7 @@ import (
 
 type ConfigSource interface {
 	// Release allows the config source to start sending config updates
-	Release(ctx context.Context) error
+	Release(context.Context)
 	// ResultChan provides the result channel where config updates are pushed by the source on it is released
 	ResultChan() <-chan *v1beta1.ClusterConfig
 	// Stop stops sending config events
