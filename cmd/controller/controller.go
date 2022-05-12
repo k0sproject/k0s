@@ -390,33 +390,25 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}()
 
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
-	errCh := make(chan error, 1)
-	go func() {
-		if err := cfgSource.Release(ctx); err != nil {
-			// If the config release does not work, nothing is going to work
-			errCh <- fmt.Errorf("failed to release configuration for reconcilers: %w", err)
-		}
-	}()
+	go cfgSource.Release(ctx)
 
+	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-
-		err = c.startControllerWorker(ctx, c.WorkerProfile)
-		if err != nil {
-			errCh <- fmt.Errorf("failed to start controller worker: %w", err)
-		}
+		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
 	}
 	perfTimer.Checkpoint("started-worker")
 
 	perfTimer.Output()
 
-	// Wait for k0s process termination
-	select {
-	case err = <-errCh:
-		logrus.WithError(err).Error("Failed to start controller")
-	case <-ctx.Done():
+	if workerErr != nil {
+		logrus.WithError(workerErr).Error("Failed to start controller worker")
+	} else {
+		// Wait for k0s process termination
+		<-ctx.Done()
 		logrus.Debug("Context done in main")
 	}
+
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
