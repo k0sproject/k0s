@@ -1,0 +1,103 @@
+time="2022-04-11 08:44:11" level=info msg="Starting autopilot in controller mode" app=autopilot
+time="2022-04-11 08:44:11" level=info msg="Applying embedded CRDs" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:11" level=info msg="Successfully wrote CRD 'controlnodes.autopilot.k0sproject.io' as '/var/lib/k0s/manifests/autopilot/controlnodes.autopilot.k0sproject.io.yaml'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:11" level=info msg="Waiting for CRD 'controlnodes.autopilot.k0sproject.io' to be realized (timeout = 2m0s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:13" level=info msg="Finished waiting for CRD 'controlnodes.autopilot.k0sproject.io' (actual = 1.578358417s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:13" level=info msg="Successfully wrote CRD 'plans.autopilot.k0sproject.io' as '/var/lib/k0s/manifests/autopilot/plans.autopilot.k0sproject.io.yaml'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:13" level=info msg="Waiting for CRD 'plans.autopilot.k0sproject.io' to be realized (timeout = 2m0s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:27" level=info msg="Finished waiting for CRD 'plans.autopilot.k0sproject.io' (actual = 14.033314132s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:27" level=info msg="Successfully wrote CRD 'updateconfigs.autopilot.k0sproject.io' as '/var/lib/k0s/manifests/autopilot/updateconfigs.autopilot.k0sproject.io.yaml'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:27" level=info msg="Waiting for CRD 'updateconfigs.autopilot.k0sproject.io' to be realized (timeout = 2m0s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:38" level=info msg="Finished waiting for CRD 'updateconfigs.autopilot.k0sproject.io' (actual = 11.031233087s)" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:38" level=info msg="Creating namespace 'k0s-autopilot'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:38" level=info msg="Using effective hostname = 'controller0'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:38" level=info msg="Creating controlnode 'controller0'" app=autopilot component=setup controller=setup
+time="2022-04-11 08:44:38" level=info msg="Got lease event = pending, reconfiguring controllers" app=autopilot
+time="2022-04-11 08:44:38" level=info msg="Stopping subcontrollers" app=autopilot leasemode=pending
+time="2022-04-11 08:44:38" level=info msg="Starting subcontrollers" app=autopilot leadermode=false
+time="2022-04-11 08:44:38" level=info msg="Starting controller-runtime subhandlers" app=autopilot leadermode=false
+I0411 08:44:38.603412     682 leaderelection.go:248] attempting to acquire leader lease k0s-autopilot/k0s-autopilot-controller...
+I0411 08:44:38.647049     682 leaderelection.go:258] successfully acquired lease k0s-autopilot/k0s-autopilot-controller
+2022/04/11 08:44:38 [INFO] acquired leader lease
+time="2022-04-11 08:44:38" level=info msg="Got lease event = acquired, reconfiguring controllers" app=autopilot
+time="2022-04-11 08:44:38" level=info msg="Stopping subcontrollers" app=autopilot leasemode=acquired
+I0411 08:44:39.988056     682 request.go:665] Waited for 1.044030959s due to client-side throttling, not priority and fairness, request: GET:https://localhost:6443/apis/autoscaling/v1?timeout=32s
+time="2022-04-11 08:44:40" level=info msg="Using effective hostname = 'controller0'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'signal' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false updatetype=k0s
+time="2022-04-11 08:44:40" level=info msg="Registering k0s 'downloading' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'cordoning' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'applying-update' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'restart' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'uncordoning' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'complete' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=info msg="Registering 'signal' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false updatetype=airgap
+time="2022-04-11 08:44:40" level=info msg="Registering airgap 'downloading' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=false
+time="2022-04-11 08:44:40" level=error msg="unable to register 'update' controllers" app=autopilot error="context canceled" leadermode=false
+time="2022-04-11 08:44:40" level=error msg="failed to start subhandlers: context canceled" app=autopilot leasemode=acquired
+time="2022-04-11 08:44:40" level=info msg="Starting subcontrollers" app=autopilot leadermode=true
+time="2022-04-11 08:44:40" level=info msg="Starting controller-runtime subhandlers" app=autopilot leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Using effective hostname = 'controller0'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'signal' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true updatetype=k0s
+time="2022-04-11 08:44:42" level=info msg="Registering k0s 'downloading' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'cordoning' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'applying-update' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'restart' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'uncordoning' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'complete' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'signal' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true updatetype=airgap
+time="2022-04-11 08:44:42" level=info msg="Registering airgap 'downloading' reconciler for 'ControlNode'" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'new-plan' reconciler" app=autopilot controller=plans leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'schedulable' reconciler" app=autopilot controller=plans leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'schedulablewait' reconciler" app=autopilot controller=plans leadermode=true
+time="2022-04-11 08:44:42" level=info msg="Registering 'complete' reconciler" app=autopilot controller=plans leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan source="kind source: *v1beta1.Plan"
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s signal' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s complete' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s downloading' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s restart' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s applying-update' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s uncordoning' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11 08:44:42" level=warning msg="Failed 'airgap download' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan source="kind source: *v1beta1.Plan"
+time="2022-04-11 08:44:42" level=warning msg="Failed 'signal' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode source="kind source: *v1beta1.ControlNode"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.updateconfig reconciler group=autopilot.k0sproject.io reconciler kind=UpdateConfig source="kind source: *v1beta1.UpdateConfig"
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan source="kind source: *v1beta1.Plan"
+time="2022-04-11 08:44:42" level=warning msg="Failed 'k0s cordoning' predicate: signaling envelope validation failure: Key: 'Signal.Version' Error:Field validation for 'Version' failed on the 'eq' tag\nKey: 'Signal.Data' Error:Field validation for 'Data' failed on the 'required' tag" app=autopilot controller=ControlNode leadermode=true
+time="2022-04-11T08:44:42Z" level=info msg="Starting EventSource" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan source="kind source: *v1beta1.Plan"
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.updateconfig reconciler group=autopilot.k0sproject.io reconciler kind=UpdateConfig
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting Controller" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.controlnode reconciler group=autopilot.k0sproject.io reconciler kind=ControlNode worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan worker count=1
+time="2022-04-11T08:44:42Z" level=info msg="Starting workers" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan worker count=1
+time="2022-04-11T08:44:43Z" level=info msg="Starting workers" logger=controller.updateconfig reconciler group=autopilot.k0sproject.io reconciler kind=UpdateConfig worker count=1
+time="2022-04-11T08:44:43Z" level=info msg="Starting workers" logger=controller.plan reconciler group=autopilot.k0sproject.io reconciler kind=Plan worker count=1
