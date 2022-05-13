@@ -13,7 +13,6 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 # k0s runs on linux even if its built on mac or windows
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
-GOPATH ?= $(shell go env GOPATH)
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
 BUILD_GO_FLAGS := -tags osusergo
@@ -56,25 +55,17 @@ LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
-golint := $(shell which golangci-lint 2>/dev/null)
-ifeq ($(golint),)
-golint := cd hack/ci-deps && go install github.com/golangci/golangci-lint/cmd/golangci-lint && cd ../.. && "${GOPATH}/bin/golangci-lint"
-endif
+.DEFAULT_GOAL := build
 
-go_bindata := $(shell which go-bindata 2>/dev/null)
-ifeq ($(go_bindata),)
-go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
-endif
-
-go_clientgen := $(shell which client-gen 2>/dev/null)
-ifeq ($(go_clientgen),)
-go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && "${GOPATH}/bin/client-gen"
-endif
-
-go_controllergen := $(shell which controller-gen 2>/dev/null)
-ifeq ($(go_controllergen),)
-go_controllergen := cd hack/ci-deps && go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0 && cd ../.. && "${GOPATH}/bin/controller-gen"
-endif
+# https://stackoverflow.com/q/1950926/create-directories-using-make-file#comment89152187_45048948
+$(info $(shell mkdir -p build/cache))
+define install_go_bin
+	GOBIN='$(abspath $(dir $(1)))' go install -- '$(2)/$(notdir $(1))@v$(3)'
+endef
+build/cache/golangci-lint:;  $(call install_go_bin,$@,github.com/golangci/golangci-lint/cmd,1.46.0)
+build/cache/go-bindata:;     $(call install_go_bin,$@,github.com/kevinburke/go-bindata,3.23.0+incompatible)
+build/cache/client-gen:;     $(call install_go_bin,$@,k8s.io/code-generator/cmd,0.22.2)
+build/cache/controller-gen:; $(call install_go_bin,$@,sigs.k8s.io/controller-tools/cmd,0.8.0)
 
 GOLANG_IMAGE = golang:$(go_version)-alpine
 GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/mod docker run --rm \
@@ -162,7 +153,7 @@ codegen: $(codegen_targets)
 
 .PHONY: lint
 lint: go.sum codegen
-	$(golint) run --verbose $(GO_DIRS)
+	build/cache/golangci-lint run --verbose $(GO_DIRS)
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
@@ -210,22 +201,22 @@ ROOT_DIR := $(shell pwd)
 
 manifests: .helmCRD .cfgCRD
 
-.helmCRD:
-	$(go_controllergen) crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/helm/CustomResourceDefinition object
+.helmCRD: build/cache/controller-gen
+	build/cache/controller-gen crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/helm/CustomResourceDefinition object
 
-.cfgCRD:
-	$(go_controllergen) crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
+.cfgCRD: build/cache/controller-gen
+	build/cache/controller-gen crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
 
-static/gen_manifests.go: $(shell find static/manifests -type f)
-	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
+static/gen_manifests.go: build/cache/go-bindata $(shell find static/manifests -type f)
+	build/cache/go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: generate-APIClient
 
-generate-APIClient: hack/client-gen/boilerplate.go.txt
-	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+generate-APIClient: build/cache/client-gen hack/client-gen/boilerplate.go.txt
+	build/cache/client-gen --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
 image-bundle/image.list: k0s
 	./k0s airgap list-images > image-bundle/image.list
