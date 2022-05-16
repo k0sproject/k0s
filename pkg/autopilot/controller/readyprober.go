@@ -119,7 +119,7 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 		return fmt.Errorf("unable to parse URL for '%s': %w", address, err)
 	}
 
-	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
+	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig)
 
 	// The body content is not interesting at the moment.
 	res, _, err := probe.Probe(url, nil, p.timeout)

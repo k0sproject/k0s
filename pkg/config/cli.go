@@ -28,6 +28,7 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -91,6 +92,7 @@ type WorkerOptions struct {
 	TokenFile        string
 	TokenArg         string
 	WorkerProfile    string
+	AutopilotRoot    aproot.Root
 }
 
 func DefaultLogLevels() map[string]string {

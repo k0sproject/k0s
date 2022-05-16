@@ -29,12 +29,14 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
+	"github.com/k0sproject/k0s/pkg/autopilot"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 type CmdOpts config.CLIOptions
@@ -86,6 +88,12 @@ func NewWorkerCmd() *cobra.Command {
 			// Set up signal handling
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
+
+			autopilotRoot, err := autopilot.New(ctx, c.K0sVars, "worker", kubernetes.NewAdminClientFactory(c.K0sVars))
+			if err != nil {
+				return err
+			}
+			c.AutopilotRoot = autopilotRoot
 
 			return c.StartWorker(ctx)
 		},
@@ -180,6 +188,11 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	if err := componentManager.Init(ctx); err != nil {
 		return err
 	}
+
+	go func() {
+		// TODO: handle error
+		c.AutopilotRoot.Run(ctx)
+	}()
 
 	worker.KernelSetup()
 	err = componentManager.Start(ctx)

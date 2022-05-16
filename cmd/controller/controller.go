@@ -25,8 +25,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/install"
-
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/sirupsen/logrus"
@@ -40,6 +38,8 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	"github.com/k0sproject/k0s/pkg/autopilot"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -48,6 +48,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -392,10 +393,20 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
 	go cfgSource.Release(ctx)
 
+	autopilotRoot, err := autopilot.New(ctx, c.K0sVars, "controller", adminClientFactory)
+	if err != nil {
+		return fmt.Errorf("failed to start autopilot: %w", err)
+	}
+
 	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
 		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
+	} else {
+		go func() {
+			// TODO: handle the error
+			autopilotRoot.Run(ctx)
+		}()
 	}
 	perfTimer.Checkpoint("started-worker")
 
@@ -611,7 +622,7 @@ func (c *CmdOpts) initKubeRouter(reconcilers map[string]component.Component) err
 	return nil
 }
 
-func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
+func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string, autopilotRoot aproot.Root) error {
 	var bootstrapConfig string
 	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
@@ -648,6 +659,7 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 	workerCmdOpts := *(*workercmd.CmdOpts)(c)
 	workerCmdOpts.TokenArg = bootstrapConfig
 	workerCmdOpts.WorkerProfile = profile
+	workerCmdOpts.AutopilotRoot = autopilotRoot
 	workerCmdOpts.Labels = append(workerCmdOpts.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
 	if !c.SingleNode && !c.NoTaints {
 		workerCmdOpts.Taints = append(workerCmdOpts.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
