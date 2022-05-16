@@ -72,6 +72,14 @@ func TestSchedulable(t *testing.T) {
 							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
 							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
 						},
+						"linux-arm64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
+							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+						},
+						"linux-arm": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
+							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+						},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -119,6 +127,14 @@ func TestSchedulable(t *testing.T) {
 					Version: "v1.22.2+k0s.1",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
+							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+						},
+						"linux-arm64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
+							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+						},
+						"linux-arm": {
 							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
 							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
 						},

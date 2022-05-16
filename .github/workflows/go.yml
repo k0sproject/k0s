@@ -34,12 +34,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [linux, windows]
+#        target: [linux, windows]
+        target: [linux]
         include:
           - target: linux
             build-docker-image: k0sbuild
-          - target: windows
-            binary-suffix: .exe
+#          - target: windows
+#            binary-suffix: .exe
 
     steps:
       - name: Check out code into the Go module directory
