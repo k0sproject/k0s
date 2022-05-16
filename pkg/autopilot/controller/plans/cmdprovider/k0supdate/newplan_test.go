@@ -79,6 +79,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -130,6 +132,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -181,6 +185,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -245,6 +251,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -309,6 +317,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -370,6 +380,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -431,6 +443,8 @@ func TestNewPlan(t *testing.T) {
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{

@@ -68,6 +68,8 @@ func TestNewPlan(t *testing.T) {
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -107,6 +109,8 @@ func TestNewPlan(t *testing.T) {
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -159,6 +163,8 @@ func TestNewPlan(t *testing.T) {
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -198,6 +204,8 @@ func TestNewPlan(t *testing.T) {
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {},
+						"linux-arm64": {},
+						"linux-arm":   {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
