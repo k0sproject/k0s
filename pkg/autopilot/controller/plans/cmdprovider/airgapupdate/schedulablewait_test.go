@@ -38,7 +38,7 @@ import (
 
 func signalNodeStatusDataAnnotations(sd apsigv2.SignalData) map[string]string {
 	data := make(map[string]string)
-	sd.Marshal(data)
+	_ = sd.Marshal(data)
 
 	return data
 }

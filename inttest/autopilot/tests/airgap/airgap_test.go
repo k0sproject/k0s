@@ -83,7 +83,7 @@ func (s *airgapSuite) SetupTest() {
 	w_client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	s.WaitForNodeReady(s.WorkerNode(0), w_client)
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), w_client))
 
 	// With k0s running, then start autopilot
 	s.PutFile(s.WorkerNode(0), "/var/lib/k0s/admin.conf", controllerAdminConfg)

@@ -190,8 +190,10 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	}
 
 	go func() {
-		// TODO: handle error
-		c.AutopilotRoot.Run(ctx)
+		err := c.AutopilotRoot.Run(ctx)
+		if err != nil {
+			logrus.WithError(err).Error("error while running autopilot")
+		}
 	}()
 
 	worker.KernelSetup()

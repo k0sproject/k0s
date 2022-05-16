@@ -404,8 +404,10 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		workerErr = c.startControllerWorker(ctx, c.WorkerProfile, autopilotRoot)
 	} else {
 		go func() {
-			// TODO: handle the error
-			autopilotRoot.Run(ctx)
+			err := autopilotRoot.Run(ctx)
+			if err != nil {
+				logrus.WithError(err).Error("error while running autopilot")
+			}
 		}()
 	}
 	perfTimer.Checkpoint("started-worker")
