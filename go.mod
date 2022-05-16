@@ -25,7 +25,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/image-spec v1.0.2
-	github.com/opencontainers/selinux v1.8.4 // indirect
+	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v0.0.0-20210528155034-8dc8788f37db
 	github.com/segmentio/analytics-go v3.1.0+incompatible
