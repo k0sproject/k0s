@@ -401,7 +401,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
+		workerErr = c.startControllerWorker(ctx, c.WorkerProfile, autopilotRoot)
 	} else {
 		go func() {
 			// TODO: handle the error
