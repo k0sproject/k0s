@@ -37,28 +37,22 @@ func checkPermissions(t *testing.T, path string, want os.FileMode) {
 }
 
 func TestInit(t *testing.T) {
-	dir, err := os.MkdirTemp("", "testExist")
-	if err != nil {
-		t.Errorf("failed to create temp dir: %v", err)
-		return
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	foo := filepath.Join(dir, "foo")
-	err = Init(foo, 0700)
+	err := Init(foo, 0700)
 	if err != nil {
 		t.Errorf("failed to create temp dir foo: %v", err)
 	}
 	checkPermissions(t, foo, 0700)
 
 	oldUmask := unix.Umask(0027)
+	t.Cleanup(func() { unix.Umask(oldUmask) })
+
 	bar := filepath.Join(dir, "bar")
 	err = Init(bar, 0755)
 	if err != nil {
 		t.Errorf("failed to create temp dir bar: %v", err)
 	}
 	checkPermissions(t, bar, 0755)
-
-	_ = unix.Umask(oldUmask)
-
 }

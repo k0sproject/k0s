@@ -115,7 +115,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 		CAKey:  caKeyPath,
 	}
 
-	k0sVars := constant.GetConfig(os.TempDir())
+	k0sVars := constant.GetConfig(s.T().TempDir())
 	certManager := certificate.Manager{
 		K0sVars: k0sVars,
 	}
