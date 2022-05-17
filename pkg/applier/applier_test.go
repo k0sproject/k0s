@@ -32,8 +32,7 @@ import (
 )
 
 func TestApplierAppliesAllManifestsInADirectory(t *testing.T) {
-	dir, err := os.MkdirTemp("", "applier-test-*")
-	assert.NoError(t, err)
+	dir := t.TempDir()
 	templateNS := `
 apiVersion: v1
 kind: Namespace
@@ -116,10 +115,9 @@ spec:
 	}
 
 	a := NewApplier(dir, fakes)
-	assert.NoError(t, err)
 
 	ctx := context.Background()
-	err = a.Apply(ctx)
+	err := a.Apply(ctx)
 	assert.NoError(t, err)
 	gv, _ := schema.ParseResourceArg("configmaps.v1.")
 	r, err := a.client.Resource(*gv).Namespace("kube-system").Get(ctx, "applier-test", metav1.GetOptions{})
