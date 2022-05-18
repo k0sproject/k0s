@@ -84,7 +84,7 @@ const (
 	CoreDNSImage                       = "k8s.gcr.io/coredns/coredns"
 	CoreDNSImageVersion                = "v1.7.0"
 	CalicoImage                        = "docker.io/calico/cni"
-	CalicoComponentImagesVersion       = "v3.18.1"
+	CalicoComponentImagesVersion       = "v3.18.6"
 	CalicoNodeImage                    = "docker.io/calico/node"
 	KubeControllerImage                = "docker.io/calico/kube-controllers"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
