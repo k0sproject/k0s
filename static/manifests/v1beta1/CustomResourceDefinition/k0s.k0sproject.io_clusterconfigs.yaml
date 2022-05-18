@@ -232,6 +232,14 @@ spec:
                       version:
                         type: string
                     type: object
+                  pushgateway:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    type: object
                   repository:
                     type: string
                 type: object
@@ -306,6 +314,9 @@ spec:
                         description: 'Windows Nodes (default: false)'
                         type: boolean
                     type: object
+                  clusterDomain:
+                    description: Cluster Domain
+                    type: string
                   dualStack:
                     description: DualStack defines network configuration for ipv4\ipv6
                       mixed cluster setup
