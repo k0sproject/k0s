@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - release-*
+      - autopilot
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
@@ -17,6 +18,7 @@ on:
     branches:
       - main
       - release-*
+      - autopilot
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
