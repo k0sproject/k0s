@@ -96,6 +96,10 @@ codegen_targets += pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp
 pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io/v1beta1 -type f -name \*.go)
 pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp: gen_output_dir = v1beta1
 
+codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp
+pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2 -type f -name \*.go)
+pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
+
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 	CGO_ENABLED=0 $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version)
 	$(GO_ENV) controller-gen \
@@ -105,16 +109,27 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile
 	  object
 	touch -- '$@'
 
+# Note: k0s.k0sproject.io omits the version from the output directory, so this needs
+# special handling until this versioning layout is fixed.
+
 codegen_targets += pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp
-pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io -type f -name \*.go)
+pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: groupver = k0s.k0sproject.io/v1beta1
+pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: gen_output_dir = k0s.k0sproject.io
+
+codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp
+pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io -type f -name \*.go)
+pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: groupver = autopilot.k0sproject.io/v1beta2
+pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: gen_output_dir = $(groupver)
+
+pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	CGO_ENABLED=0 $(GO) install k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version))
 	$(GO_ENV) client-gen \
 	  --go-header-file hack/tools/boilerplate.go.txt \
-	  --input=k0s.k0sproject.io/v1beta1 \
+	  --input=$(groupver) \
 	  --input-base github.com/k0sproject/k0s/pkg/apis \
 	  --clientset-name=clientset \
-	  --output-package=github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+	  --output-package=github.com/k0sproject/k0s/pkg/apis/$(gen_output_dir)/
 	touch -- '$@'
 
 codegen_targets += static/gen_manifests.go
