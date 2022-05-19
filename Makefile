@@ -65,15 +65,15 @@ GO_ENV ?= docker run --rm \
 	k0sbuild.docker-image.k0s
 GO ?= $(GO_ENV) go
 
-.PHONY: all
-all: k0s k0s.exe
-
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
 build: k0s.exe
 else
 build: k0s
 endif
+
+.PHONY: all
+all: k0s k0s.exe
 
 build/cache:
 	mkdir -p -- '$@'
