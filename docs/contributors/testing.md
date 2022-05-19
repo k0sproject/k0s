@@ -31,7 +31,7 @@ Please run the following style and formatting commands and fix/check-in any chan
 
     In the repository root directory, make sure that:
 
-    * `make build` runs successfully.
+    * `make build && git diff --exit-code` runs successfully.
     * `make check-basic` runs successfully.
     * `make check-unit` has no errors.
     * `make check-hacontrolplane` runs successfully.

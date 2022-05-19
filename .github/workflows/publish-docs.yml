@@ -7,9 +7,6 @@ on:
     types:
       - published
 
-env:
-  PYTHON_VERSION: 3.x
-
 jobs:
   build:
     name: Deploy docs
@@ -32,11 +29,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: checkout k0s release
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Install dependencies
         run: |

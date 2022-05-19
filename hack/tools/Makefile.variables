@@ -1,0 +1,3 @@
+controller-gen_version = 0.8.0
+go-bindata_version = 3.23.0+incompatible
+golangci-lint_version = 1.46.2
