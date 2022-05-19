@@ -7,9 +7,6 @@ on:
     types:
       - published
 
-env:
-  PYTHON_VERSION: 3.x
-
 jobs:
   build:
     name: Deploy docs

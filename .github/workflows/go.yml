@@ -48,14 +48,6 @@ jobs:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
 
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Cache embedded binaries
         uses: actions/cache@v3
         with:
@@ -84,7 +76,12 @@ jobs:
             build/cache/go/mod
 
       - name: Build
-        run: make build TARGET_OS='${{ matrix.target }}'
+        env:
+          TARGET_OS: '${{ matrix.target }}'
+        run: |
+          make bindata
+          make --touch codegen
+          make build
 
       - name: Upload compiled binary
         uses: actions/upload-artifact@v3
@@ -100,14 +97,6 @@ jobs:
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
 
       - name: Cache GOCACHE
         uses: actions/cache@v3
@@ -129,8 +118,12 @@ jobs:
             build/cache/go/mod
 
       - name: Run unit tests
+        env:
+          EMBEDDED_BINS_BUILDMODE: none
         run: |
-          make EMBEDDED_BINS_BUILDMODE=none check-unit
+          make bindata
+          make --touch codegen
+          make check-unit
 
       - name: Validate OCI images manifests
         run: make check-image-validity
@@ -350,7 +343,10 @@ jobs:
         run: echo GO_TEST_RACE= >>"$GITHUB_ENV"
 
       - name: Build
-        run: make build
+        run: |
+          make bindata
+          make --touch codegen
+          make build
 
       - name: Upload compiled binary
         uses: actions/upload-artifact@v3

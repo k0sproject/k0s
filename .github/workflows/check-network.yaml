@@ -80,8 +80,9 @@ jobs:
         with:
           path: |
             .bins.linux.stamp
+            bindata_linux
             embedded-bins/staging/linux/bin/
-            bindata
+            embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_linux.go
 
           key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
