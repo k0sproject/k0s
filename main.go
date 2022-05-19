@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:generate make generate-bindata
+//go:generate make codegen
 
 func init() {
 	logrus.SetOutput(os.Stderr)
