@@ -48,7 +48,7 @@ require (
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.46.2
 	gopkg.in/fsnotify.v1 v1.4.7
-	helm.sh/helm/v3 v3.8.2
+	helm.sh/helm/v3 v3.9.0
 	sigs.k8s.io/controller-runtime v0.12.1
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -112,7 +112,7 @@ require (
 	github.com/deislabs/oras v0.9.0 // indirect
 	github.com/docker/cli v20.10.11+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.13+incompatible // indirect
+	github.com/docker/docker v20.10.14+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.1-0.20190612165340-fd1b1942c4d5 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
@@ -291,13 +291,8 @@ require (
 )
 
 // Replacements specific to k0s
-replace (
-	// https://github.com/weaveworks/footloose/pull/272
-	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
-
-	// TODO: replace with a k0s helm fork
-	helm.sh/helm/v3 => github.com/s0j/helm/v3 v3.8.3-beta.0
-)
+// https://github.com/weaveworks/footloose/pull/272
+replace github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
 
 // Replacements duplicated from upstream Kubernetes
 replace (
