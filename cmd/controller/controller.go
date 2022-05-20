@@ -229,17 +229,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		})
 	}
 
-	if c.NodeConfig.Spec.API.TunneledNetworkingMode {
-		c.ClusterComponents.Add(ctx, controller.NewTunneledEndpointReconciler(leaderElector,
-			adminClientFactory))
-	}
-
-	if c.NodeConfig.Spec.API.ExternalAddress != "" && !c.NodeConfig.Spec.API.TunneledNetworkingMode {
-		c.ClusterComponents.Add(ctx, controller.NewEndpointReconciler(
-			leaderElector,
-			adminClientFactory,
-		))
-	}
 	if !stringslice.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
 		c.NodeComponents.Add(ctx, controller.NewCSRApprover(c.NodeConfig,
 			leaderElector,
@@ -298,12 +287,73 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	defer func() {
 		// Stop components
-		if stopErr := c.NodeComponents.Stop(); stopErr != nil {
-			logrus.Errorf("error while stopping node component %s", stopErr)
+		if err := c.NodeComponents.Stop(); err != nil {
+			logrus.WithError(err).Error("Failed to stop node components")
 		} else {
-			logrus.Info("all node components stopped")
+			logrus.Info("All node components stopped")
 		}
 	}()
+
+	var configSource clusterconfig.ConfigSource
+	// For backwards compatibility, use file as config source by default
+	if c.EnableDynamicConfig {
+		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
+	} else {
+		configSource, err = clusterconfig.NewStaticSource(c.ClusterConfig)
+	}
+	if err != nil {
+		return err
+	}
+	defer configSource.Stop()
+
+	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
+		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
+		}
+
+		cfgReconciler, err := controller.NewClusterConfigReconciler(
+			leaderElector,
+			c.K0sVars,
+			c.ClusterComponents,
+			apiConfigSaver,
+			adminClientFactory,
+			configSource,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to initialize cluster-config reconciler: %w", err)
+		}
+		c.ClusterComponents.Add(ctx, cfgReconciler)
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.HelmComponentName) {
+		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
+		if err != nil {
+			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
+		}
+
+		c.ClusterComponents.Add(ctx, controller.NewCRD(helmSaver))
+		c.ClusterComponents.Add(ctx, controller.NewExtensionsController(
+			helmSaver,
+			c.K0sVars,
+			adminClientFactory,
+			leaderElector,
+		))
+	}
+
+	if c.NodeConfig.Spec.API.TunneledNetworkingMode {
+		c.ClusterComponents.Add(ctx, controller.NewTunneledEndpointReconciler(
+			leaderElector,
+			adminClientFactory,
+		))
+	}
+
+	if c.NodeConfig.Spec.API.ExternalAddress != "" && !c.NodeConfig.Spec.API.TunneledNetworkingMode {
+		c.ClusterComponents.Add(ctx, controller.NewEndpointReconciler(
+			leaderElector,
+			adminClientFactory,
+		))
+	}
 
 	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewDefaultPSP(c.K0sVars))
@@ -408,39 +458,22 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	perfTimer.Checkpoint("finished cluster-component-init")
 
-	var cfgSource clusterconfig.ConfigSource
-	// For backwards compatibility, use file as config source by default
-	if c.EnableDynamicConfig {
-		cfgSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
-	} else {
-		cfgSource, err = clusterconfig.NewStaticSource(c.ClusterConfig)
-	}
-	if err != nil {
-		return err
-	}
-	defer cfgSource.Stop()
-
-	// start Bootstrapping Reconcilers
-	err = c.startBootstrapReconcilers(ctx, adminClientFactory, leaderElector, cfgSource)
-	if err != nil {
-		return fmt.Errorf("failed to start bootstrapping reconcilers: %w", err)
-	}
-
-	err = c.startClusterComponents(ctx)
+	err = c.ClusterComponents.Start(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start cluster components: %w", err)
 	}
 	perfTimer.Checkpoint("finished-starting-cluster-components")
 	defer func() {
 		// Stop Cluster components
-		if stopErr := c.ClusterComponents.Stop(); stopErr != nil {
-			logrus.Errorf("error while stopping node component %s", stopErr)
+		if err := c.ClusterComponents.Stop(); err != nil {
+			logrus.WithError(err).Error("Failed to stop cluster components")
+		} else {
+			logrus.Info("All cluster components stopped")
 		}
-		logrus.Info("all cluster components stopped")
 	}()
 
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
-	go cfgSource.Release(ctx)
+	go configSource.Release(ctx)
 
 	var workerErr error
 	if c.EnableWorker {
@@ -463,60 +496,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	perfTimer.Output()
 	return os.Remove(c.CfgFile)
-}
-
-func (c *CmdOpts) startClusterComponents(ctx context.Context) error {
-	return c.ClusterComponents.Start(ctx)
-}
-
-func (c *CmdOpts) startBootstrapReconcilers(ctx context.Context, cf kubernetes.ClientFactoryInterface, leaderElector controller.LeaderElector, configSource clusterconfig.ConfigSource) error {
-	reconcilers := make(map[string]component.Component)
-
-	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
-		logrus.Debug("starting api-config reconciler")
-		manifestSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-			return err
-		}
-
-		cfgReconciler, err := controller.NewClusterConfigReconciler(leaderElector, c.K0sVars, c.ClusterComponents, manifestSaver, cf, configSource)
-		if err != nil {
-			logrus.Warnf("failed to initialize cluster-config reconciler: %s", err.Error())
-			return err
-		}
-		reconcilers["clusterConfig"] = cfgReconciler
-	}
-
-	if !stringslice.Contains(c.DisableComponents, constant.HelmComponentName) {
-		logrus.Debug("starting manifest saver")
-		manifestsSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
-		if err != nil {
-			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
-			return err
-		}
-		reconcilers["helmCrd"] = controller.NewCRD(manifestsSaver)
-		extensionsController := controller.NewExtensionsController(manifestsSaver, c.K0sVars, cf, leaderElector)
-		c.ClusterComponents.Add(ctx, extensionsController)
-	}
-
-	// Start all reconcilers
-	for name, reconciler := range reconcilers {
-		logrus.Infof("initing bootstrap reconciler: %s", name)
-		err := reconciler.Init(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to initialize reconciler: %s", err.Error())
-		}
-	}
-	for name, reconciler := range reconcilers {
-		logrus.Infof("running bootstrap reconciler: %s", name)
-		err := reconciler.Run(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to start reconciler: %s", err.Error())
-		}
-	}
-
-	return nil
 }
 
 func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
