@@ -19,23 +19,24 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/fake"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/sirupsen/logrus"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/require"
 )
 
 var (
-	configPathRuntimeTest = "/tmp/k0s.yaml"
-	cOpts                 = v1.CreateOptions{TypeMeta: resourceType}
-	fileYaml              = `
+	cOpts    = v1.CreateOptions{TypeMeta: resourceType}
+	fileYaml = `
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 spec:
@@ -60,11 +61,11 @@ spec:
 
 // Test using config from a yaml file
 func TestGetConfigFromFile(t *testing.T) {
-	cfgFilePath := writeConfigFile(fileYaml)
-	CfgFile = cfgFilePath
-	defer os.Remove(configPathRuntimeTest)
+	CfgFile = writeConfigFile(t, fileYaml)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+	}
 	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -106,11 +107,12 @@ spec:
         endpoints:
         - http://etcd0:2379
         etcdPrefix: k0s-tenant`
-	cfgFilePath := writeConfigFile(yamlData)
-	CfgFile = cfgFilePath
-	defer os.Remove(configPathRuntimeTest)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
+	CfgFile = writeConfigFile(t, yamlData)
+
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+	}
 	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -142,12 +144,11 @@ spec:
 	}
 }
 
-// Test using config from a yaml file
 func TestConfigFromDefaults(t *testing.T) {
-	defer os.Remove(configPathRuntimeTest)
-
 	CfgFile = ""
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+	}
 	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -181,14 +182,16 @@ func TestConfigFromDefaults(t *testing.T) {
 
 // Test using node-config from a file when API config is enabled
 func TestNodeConfigWithAPIConfig(t *testing.T) {
-	cfgFilePath := writeConfigFile(fileYaml)
+	cfgFilePath := writeConfigFile(t, fileYaml)
 	CfgFile = cfgFilePath
 
 	// if API config is enabled, Nodeconfig will be stripped of any cluster-wide-config settings
 	controllerOpts.EnableDynamicConfig = true
-	defer os.Remove(configPathRuntimeTest)
 
-	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, RuntimeConfigPath: configPathRuntimeTest}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+		Nodeconfig:        true,
+	}
 
 	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
@@ -220,9 +223,10 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 }
 
 func TestSingleNodeConfig(t *testing.T) {
-	defer os.Remove(configPathRuntimeTest)
-
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+		Nodeconfig:        true,
+	}
 	k0sVars := constant.GetConfig("")
 	k0sVars.DefaultStorageType = "kine"
 	CfgFile = ""
@@ -265,11 +269,12 @@ spec:
   storage:
     type: etcd`
 
-	cfgFilePath := writeConfigFile(yamlData)
-	CfgFile = cfgFilePath
-	defer os.Remove(configPathRuntimeTest)
+	CfgFile = writeConfigFile(t, yamlData)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+		Nodeconfig:        true,
+	}
 	k0sVars := constant.GetConfig("")
 	k0sVars.DefaultStorageType = "kine"
 
@@ -303,7 +308,7 @@ spec:
 // when a component requests an API config,
 // the merged node and cluster config should be returned
 func TestAPIConfig(t *testing.T) {
-	CfgFile = writeConfigFile(fileYaml)
+	CfgFile = writeConfigFile(t, fileYaml)
 
 	controllerOpts.EnableDynamicConfig = true
 	// create the API config using a fake client
@@ -313,9 +318,11 @@ func TestAPIConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create API config: %s", err.Error())
 	}
-	defer os.Remove(configPathRuntimeTest)
 
-	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, APIClient: client.K0sV1beta1()}
+	loadingRules := ClientConfigLoadingRules{
+		RuntimeConfigPath: nonExistentPath(t),
+		APIClient:         client.K0sV1beta1(),
+	}
 	err = loadingRules.InitRuntimeConfig(constant.GetConfig(""))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
@@ -346,11 +353,9 @@ func TestAPIConfig(t *testing.T) {
 	}
 }
 
-func writeConfigFile(yamlData string) (filePath string) {
-	cfgFilePath, err := file.WriteTmpFile(yamlData, "k0s-config")
-	if err != nil {
-		logrus.Fatalf("Error creating tempfile: %v", err)
-	}
+func writeConfigFile(t *testing.T, yamlData string) (filePath string) {
+	cfgFilePath := path.Join(t.TempDir(), "k0s-config.yaml")
+	require.NoError(t, os.WriteFile(cfgFilePath, []byte(yamlData), 0644))
 	return cfgFilePath
 }
 
@@ -369,4 +374,8 @@ func createFakeAPIConfig(client k0sv1beta1.K0sV1beta1Interface) error {
 		return fmt.Errorf("failed to create clusterConfig in the API: %s", err.Error())
 	}
 	return nil
+}
+
+func nonExistentPath(t *testing.T) string {
+	return path.Join(t.TempDir(), "non-existent")
 }
