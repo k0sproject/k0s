@@ -17,128 +17,98 @@ package testutil
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"path"
+	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/yaml"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/fake"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 )
 
-const RuntimeFakePath = "/tmp/k0s.yaml"
-
-var resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
+var resourceType = metav1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
 
 type ConfigGetter struct {
 	NodeConfig bool
 	YamlData   string
 
-	k0sVars     constant.CfgVars
-	cfgFilePath string
+	t       *testing.T
+	k0sVars constant.CfgVars
 }
 
 // NewConfigGetter sets the parameters required to fetch a fake config for testing
-func NewConfigGetter(yamlData string, isNodeConfig bool, k0sVars constant.CfgVars) *ConfigGetter {
+func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars constant.CfgVars) *ConfigGetter {
 	return &ConfigGetter{
 		YamlData:   yamlData,
 		NodeConfig: isNodeConfig,
+		t:          t,
 		k0sVars:    k0sVars,
 	}
 }
 
 // FakeRuntimeConfig takes a yaml construct and returns a config object from a fake runtime config path
-func (c *ConfigGetter) FakeConfigFromFile() (*v1beta1.ClusterConfig, error) {
-	err := c.initRuntimeConfig()
-	if err != nil {
-		return nil, err
-	}
+func (c *ConfigGetter) FakeConfigFromFile() *v1beta1.ClusterConfig {
 	loadingRules := config.ClientConfigLoadingRules{
-		RuntimeConfigPath: RuntimeFakePath,
+		RuntimeConfigPath: c.initRuntimeConfig(),
 		Nodeconfig:        c.NodeConfig,
 		K0sVars:           c.k0sVars,
 	}
-	return loadingRules.Load()
+
+	cfg, err := loadingRules.Load()
+	require.NoError(c.t, err, "failed to load fake config from file")
+	return cfg
 }
 
-func (c *ConfigGetter) FakeAPIConfig() (*v1beta1.ClusterConfig, error) {
-	err := c.initRuntimeConfig()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *ConfigGetter) FakeAPIConfig() *v1beta1.ClusterConfig {
 	// create the API config using a fake client
 	client := fake.NewSimpleClientset()
 
-	err = c.createFakeAPIConfig(client.K0sV1beta1())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get fake API client: %v", err)
-	}
+	c.createFakeAPIConfig(client.K0sV1beta1())
 
 	loadingRules := config.ClientConfigLoadingRules{
-		RuntimeConfigPath: RuntimeFakePath,
+		RuntimeConfigPath: path.Join(c.t.TempDir(), "nonexistent-k0s.yaml"),
 		Nodeconfig:        c.NodeConfig,
 		APIClient:         client.K0sV1beta1(),
 		K0sVars:           c.k0sVars,
 	}
 
-	return loadingRules.Load()
+	cfg, err := loadingRules.Load()
+	require.NoError(c.t, err, "failed to load cluster config")
+	return cfg
 }
 
-func (c *ConfigGetter) initRuntimeConfig() error {
-	// write the yaml string into a temporary config file path
-	cfgFilePath, err := file.WriteTmpFile(c.YamlData, "k0s-config")
-	if err != nil {
-		return fmt.Errorf("error creating tempfile: %v", err)
-	}
+func (c *ConfigGetter) initRuntimeConfig() string {
+	cfg, err := v1beta1.ConfigFromString(c.YamlData, c.getStorageSpec())
+	require.NoError(c.t, err, "failed to parse config")
 
-	c.cfgFilePath = cfgFilePath
+	data, err := yaml.Marshal(&cfg)
+	require.NoError(c.t, err, "failed to marshal config")
 
-	logrus.Infof("using config path: %s", cfgFilePath)
-	f, err := os.Open(c.cfgFilePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	fakeConfigPath := path.Join(c.t.TempDir(), "fake-k0s.yaml")
+	err = os.WriteFile(fakeConfigPath, data, 0644)
+	require.NoError(c.t, err, "failed to write runtime config to %q", fakeConfigPath)
 
-	mergedConfig, err := v1beta1.ConfigFromReader(f, c.getStorageSpec())
-	if err != nil {
-		return fmt.Errorf("unable to parse config from %s: %v", cfgFilePath, err)
-	}
-	data, err := yaml.Marshal(&mergedConfig)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %v", err)
-	}
-	err = os.WriteFile(RuntimeFakePath, data, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to write runtime config to %s: %v", RuntimeFakePath, err)
-	}
-	return nil
+	return fakeConfigPath
 }
 
-func (c *ConfigGetter) createFakeAPIConfig(client k0sv1beta1.K0sV1beta1Interface) error {
+func (c *ConfigGetter) createFakeAPIConfig(client k0sv1beta1.K0sV1beta1Interface) {
+	cfg, err := v1beta1.ConfigFromString(c.YamlData, c.getStorageSpec())
+	require.NoError(c.t, err, "failed to parse config")
+
 	clusterConfigs := client.ClusterConfigs(constant.ClusterConfigNamespace)
-	ctxWithTimeout, cancelFunction := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
+	ctxWithTimeout, cancelFunction := context.WithTimeout(context.TODO(), time.Duration(10)*time.Second)
 	defer cancelFunction()
 
-	cfg, err := v1beta1.ConfigFromString(c.YamlData, c.getStorageSpec())
-	if err != nil {
-		return fmt.Errorf("failed to parse config yaml: %s", err.Error())
-	}
-
-	_, err = clusterConfigs.Create(ctxWithTimeout, cfg.GetClusterWideConfig().StripDefaults(), v1.CreateOptions{TypeMeta: resourceType})
-	if err != nil {
-		return fmt.Errorf("failed to create clusterConfig in the API: %s", err.Error())
-	}
-	return nil
+	_, err = clusterConfigs.Create(ctxWithTimeout, cfg.GetClusterWideConfig().StripDefaults(), metav1.CreateOptions{TypeMeta: resourceType})
+	require.NoError(c.t, err, "failed to create clusterConfig in the API")
 }
 
 func (c *ConfigGetter) getStorageSpec() *v1beta1.StorageSpec {

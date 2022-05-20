@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -46,11 +45,9 @@ spec:
   api:
     externalAddress: 10.0.0.86
 `
-	configGetter := testutil.NewConfigGetter(yamlData, false, constant.GetConfig(""))
-	cfg, err := configGetter.FakeConfigFromFile()
-	s.NoError(err)
+	configGetter := testutil.NewConfigGetter(s.T(), yamlData, false, constant.GetConfig(""))
+	cfg := configGetter.FakeConfigFromFile()
 
-	defer os.Remove(testutil.RuntimeFakePath)
 	caCert := `
 -----BEGIN CERTIFICATE-----
 MIIDADCCAeigAwIBAgIUW+2hawM8HgHrfxmDRV51wOq95icwDQYJKoZIhvcNAQEL
@@ -72,8 +69,10 @@ K3icRdyke+TCLl+YqsCKG2n95cK4CMMEm8a1KVWRZKwDqLD7rFdemNdmzCNlpFW/
 nzXu8A==
 -----END CERTIFICATE-----
 `
-	caCertPath, err := file.WriteTmpFile(caCert, "ca-cert")
-	s.NoError(err)
+
+	tmpDir := s.T().TempDir()
+	caCertPath := path.Join(tmpDir, "ca-cert")
+	s.Require().NoError(os.WriteFile(caCertPath, []byte(caCert), 0644))
 
 	caCertKey := `
 -----BEGIN RSA PRIVATE KEY-----
@@ -104,8 +103,8 @@ z+5UodDFCnUsfprMjfTdY2Vk99PT4++SrJ5iTOn7xgKRrd1MPkBv7SXwnPtxCBAK
 yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 -----END RSA PRIVATE KEY-----
 `
-	caKeyPath, err := file.WriteTmpFile(caCertKey, "ca-key")
-	s.NoError(err)
+	caKeyPath := path.Join(tmpDir, "ca-key")
+	s.Require().NoError(os.WriteFile(caKeyPath, []byte(caCertKey), 0644))
 
 	userReq := certificate.Request{
 		Name:   "test-user",
@@ -120,11 +119,8 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 		K0sVars: k0sVars,
 	}
 
-	pkiPath := path.Join(k0sVars.CertRootDir)
-	err = os.Mkdir(pkiPath, 0o755)
-	s.NoError(err)
+	s.Require().NoError(os.MkdirAll(k0sVars.CertRootDir, 0755))
 
-	defer os.RemoveAll(pkiPath)
 	userCert, err := certManager.EnsureCertificate(userReq, "root")
 	s.NoError(err)
 	clusterAPIURL := cfg.Spec.API.APIAddressURL()
@@ -144,13 +140,13 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	}
 
 	var buf bytes.Buffer
+	s.Require().NoError(userKubeconfigTemplate.Execute(&buf, &data))
 
-	err = userKubeconfigTemplate.Execute(&buf, &data)
-	s.NoError(err)
-	kubeconfigPath, err := file.WriteTmpFile(buf.String(), "kubeconfig")
-	s.NoError(err)
+	kubeconfigPath := path.Join(tmpDir, "kubeconfig")
+	s.Require().NoError(os.WriteFile(kubeconfigPath, buf.Bytes(), 0644))
+
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal("https://10.0.0.86:6443", config.Host)
 }
 

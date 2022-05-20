@@ -159,7 +159,10 @@ func GetConfig(dataDir string) CfgVars {
 	}
 
 	// fetch absolute path for dataDir
-	dataDir, _ = filepath.Abs(dataDir)
+	dataDir, err := filepath.Abs(dataDir)
+	if err != nil {
+		panic(err)
+	}
 
 	var runDir string
 	if os.Geteuid() == 0 {
