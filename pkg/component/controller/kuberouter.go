@@ -30,11 +30,12 @@ import (
 
 // KubeRouter implements the kube-router reconciler component
 type KubeRouter struct {
-	log *logrus.Entry
+	log logrus.FieldLogger
 
-	saver          manifestsSaver
+	saver   manifestsSaver
+	k0sVars constant.CfgVars
+
 	previousConfig kubeRouterConfig
-	k0sVars        constant.CfgVars
 }
 
 var _ component.Component = (*KubeRouter)(nil)
@@ -51,13 +52,13 @@ type kubeRouterConfig struct {
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
-func NewKubeRouter(k0sVars constant.CfgVars, manifestsSaver manifestsSaver) (*KubeRouter, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "kube-router"})
+func NewKubeRouter(k0sVars constant.CfgVars, manifestsSaver manifestsSaver) *KubeRouter {
 	return &KubeRouter{
+		log: logrus.WithFields(logrus.Fields{"component": "kube-router"}),
+
 		saver:   manifestsSaver,
-		log:     log,
 		k0sVars: k0sVars,
-	}, nil
+	}
 }
 
 // Init does nothing

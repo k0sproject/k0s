@@ -33,8 +33,7 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 	ctx := context.Background()
 
-	metrics, err := NewMetricServer(k0sVars, fakeFactory)
-	require.NoError(t, err)
+	metrics := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, metrics.Reconcile(ctx, cfg))
 	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
@@ -57,8 +56,7 @@ func TestGetConfigWithSomeNodes(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	metrics, err := NewMetricServer(k0sVars, fakeFactory)
-	require.NoError(t, err)
+	metrics := NewMetricServer(k0sVars, fakeFactory)
 	require.NoError(t, metrics.Reconcile(ctx, cfg))
 	cfg, err := metrics.getConfig(ctx)
 	require.NoError(t, err)
