@@ -51,6 +51,14 @@ require (
 	helm.sh/helm/v3 v3.8.2
 	sigs.k8s.io/controller-runtime v0.12.0
 	sigs.k8s.io/yaml v1.3.0
+	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/cavaliergopher/grab/v3 v3.0.1
+	github.com/go-playground/validator/v10 v10.9.0
+	github.com/google/go-cmp v0.5.7
+	github.com/robfig/cron v1.2.0
+	gopkg.in/yaml.v2 v2.4.0
+	k8s.io/apiextensions-apiserver v0.24.0
+	k8s.io/kubernetes v1.13.0
 )
 
 // Kubernetes
@@ -66,17 +74,6 @@ require (
 	k8s.io/kubectl v0.24.0
 	k8s.io/mount-utils v0.24.0
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
-)
-
-require (
-	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/go-playground/validator/v10 v10.9.0
-	github.com/google/go-cmp v0.5.7
-	github.com/robfig/cron v1.2.0
-	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/apiextensions-apiserver v0.24.0
-	k8s.io/kubernetes v1.13.0
 )
 
 require (
