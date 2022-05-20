@@ -71,11 +71,10 @@ func (a *apiConfigSource) ResultChan() <-chan *v1beta1.ClusterConfig {
 	return a.resultChan
 }
 
-func (a apiConfigSource) Stop() error {
+func (a apiConfigSource) Stop() {
 	if a.resultChan != nil {
 		close(a.resultChan)
 	}
-	return nil
 }
 
 func (a *apiConfigSource) NeedToStoreInitialConfig() bool {
