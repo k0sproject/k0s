@@ -17,18 +17,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"os"
-	"path"
 	"runtime"
 	"time"
 
-	aptw "github.com/k0sproject/k0s/internal/autopilot/pkg/templatewriter"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/autopilot/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
-	apem "github.com/k0sproject/k0s/static"
-
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -69,11 +64,6 @@ func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sData
 // autopilot has access to the k0s file-system, or even if k0s is used at all.
 func (sc *setupController) Run(ctx context.Context) error {
 	logger := sc.log.WithField("component", "setup")
-
-	logger.Infof("Applying embedded CRDs")
-	if err := applyManifestCRDsWithWait(ctx, logger, sc.clientFactory, sc.k0sDataDir); err != nil {
-		return fmt.Errorf("unable to extract embedded CRDs: %w", err)
-	}
 
 	logger.Infof("Creating namespace '%s'", apconst.AutopilotNamespace)
 	if _, err := createNamespace(ctx, sc.clientFactory, apconst.AutopilotNamespace); err != nil {
@@ -195,52 +185,4 @@ func getControllerAPIAddress() (string, error) {
 	}
 
 	return status.ClusterConfig.Spec.API.Address, nil
-}
-
-// applyManifestCRDsWithWait iterates over all of the embedded CRDs, applies them to the k0s
-// manifest directory, and waits for them to be realized. In the event of a failure to realize,
-// or timeout, an error will be returned.
-func applyManifestCRDsWithWait(ctx context.Context, logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir string) error {
-	autopilotManifestDir := path.Join(k0sDataDir, apconst.K0sManifestSubDir, apconst.AutopilotName)
-	if _, err := os.Stat(autopilotManifestDir); os.IsNotExist(err) {
-		if err := os.Mkdir(autopilotManifestDir, 0755); err != nil {
-			return err
-		}
-	}
-
-	crds, err := apem.LoadCustomResourceDefinitions()
-	if err != nil {
-		return err
-	}
-
-	client, err := cf.GetExtensionClient()
-	if err != nil {
-		return err
-	}
-
-	for name, manifest := range crds {
-		manifestFilename := path.Join(autopilotManifestDir, fmt.Sprintf("%s.yaml", name))
-		tw := aptw.TemplateWriter{
-			Name:     name,
-			Template: string(manifest),
-			Data:     nil,
-			Path:     manifestFilename,
-		}
-
-		if err := tw.Write(); err != nil {
-			return fmt.Errorf("unable to write CRD manifest to '%s': %w", manifestFilename, err)
-		}
-
-		logger.Infof("Successfully wrote CRD '%s' as '%s'", name, manifestFilename)
-		logger.Infof("Waiting for CRD '%s' to be realized (timeout = %v)", name, defaultCRDTimeout)
-
-		timestamp := time.Now()
-		if _, err := apcomm.WaitForCRDByName(ctx, client, name, defaultCRDTimeout); err != nil {
-			return fmt.Errorf("unable to wait for CRD '%s': %w", name, err)
-		}
-
-		logger.Infof("Finished waiting for CRD '%s' (actual = %v)", name, time.Since(timestamp))
-	}
-
-	return nil
 }

@@ -1,9 +1,9 @@
 /build/cache/*
-pkg/assets/zz_generated_offsets*.go
-./k0s
-k0s.code
-k0s.exe
-k0s.exe.code
+/k0s
+/k0s.code
+/k0s.exe
+/k0s.exe.code
+/pkg/assets/zz_generated_offsets*.go
 bindata*
 .*.stamp
 .tmp
