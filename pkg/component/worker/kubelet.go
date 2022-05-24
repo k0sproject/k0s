@@ -167,13 +167,12 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		args["--container-runtime"] = rtType
-		shimPath := "unix:///var/run/dockershim.sock"
+
+		shimPath := "unix:///var/run/cri-dockerd.sock"
 		if runtime.GOOS == "windows" {
 			shimPath = "npipe:////./pipe/dockershim"
 		}
 		if rtType == "docker" {
-			args["--docker-endpoint"] = rtSock
 			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
 			args["--container-runtime-endpoint"] = shimPath
 		} else {
