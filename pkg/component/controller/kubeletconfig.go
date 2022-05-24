@@ -27,6 +27,7 @@ import (
 	"reflect"
 
 	"github.com/imdario/mergo"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
@@ -128,7 +128,6 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 	manifest := bytes.NewBuffer([]byte{})
 	defaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled, clusterSpec.Spec.Network.ClusterDomain)
 	defaultProfile["cgroupsPerQOS"] = true
-	defaultProfile["resolvConf"] = "{{.ResolvConf}}"
 
 	winDefaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled, clusterSpec.Spec.Network.ClusterDomain)
 	winDefaultProfile["cgroupsPerQOS"] = false
@@ -229,27 +228,8 @@ func getDefaultProfile(dnsAddress string, dualStack bool, clusterDomain string) 
 
 	// for the authentication.x509.clientCAFile and volumePluginDir we want to use later binding so we put template placeholder instead of actual value there
 	profile := unstructuredYamlObject{
-		"apiVersion": "kubelet.config.k8s.io/v1beta1",
-		"kind":       "KubeletConfiguration",
-		"authentication": map[string]interface{}{
-			"anonymous": map[string]interface{}{
-				"enabled": false,
-			},
-			"webhook": map[string]interface{}{
-				"cacheTTL": "0s",
-				"enabled":  true,
-			},
-			"x509": map[string]interface{}{
-				"clientCAFile": "{{.ClientCAFile}}", // see line 174 explanation
-			},
-		},
-		"authorization": map[string]interface{}{
-			"mode": "Webhook",
-			"webhook": map[string]interface{}{
-				"cacheAuthorizedTTL":   "0s",
-				"cacheUnauthorizedTTL": "0s",
-			},
-		},
+		"apiVersion":    "kubelet.config.k8s.io/v1beta1",
+		"kind":          "KubeletConfiguration",
 		"clusterDNS":    []string{dnsAddress},
 		"clusterDomain": clusterDomain,
 		"tlsCipherSuites": []string{
@@ -262,14 +242,10 @@ func getDefaultProfile(dnsAddress string, dualStack bool, clusterDomain string) 
 			"TLS_RSA_WITH_AES_256_GCM_SHA384",
 			"TLS_RSA_WITH_AES_128_GCM_SHA256",
 		},
-		"volumeStatsAggPeriod": "0s",
-		"volumePluginDir":      "{{.VolumePluginDir}}", // see line 174 explanation
-		"failSwapOn":           false,
-		"rotateCertificates":   true,
-		"serverTLSBootstrap":   true,
-		"eventRecordQPS":       0,
-		"kubeReservedCgroup":   "{{.KubeReservedCgroup}}",
-		"kubeletCgroups":       "{{.KubeletCgroups}}",
+		"failSwapOn":         false,
+		"rotateCertificates": true,
+		"serverTLSBootstrap": true,
+		"eventRecordQPS":     0,
 	}
 	if dualStack {
 		profile["featureGates"] = map[string]bool{
