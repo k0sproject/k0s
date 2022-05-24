@@ -33,10 +33,6 @@ type assertDiskSpace struct {
 	minFree uint64
 }
 
-func (a *assertDiskSpace) Path() ProbePath {
-	return a.path
-}
-
-func (a *assertDiskSpace) DisplayName() string {
-	return fmt.Sprintf("Disk space available for %s", a.fsPath)
+func (a *assertDiskSpace) desc() ProbeDesc {
+	return NewProbeDesc(fmt.Sprintf("Disk space available for %s", a.fsPath), a.path)
 }

@@ -36,24 +36,17 @@ type assertTotalMem struct {
 	minFree          uint64
 }
 
-func (a *assertTotalMem) Path() ProbePath {
-	return a.path
-}
-
-func (*assertTotalMem) DisplayName() string {
-	return "Total memory"
-}
-
 func (a *assertTotalMem) Probe(reporter Reporter) error {
+	desc := NewProbeDesc("Total memory", a.path)
 	if totalMemory, err := a.probeTotalMemory(); err != nil {
 		if unsupportedErr, unsupported := err.(probeUnsupported); unsupported {
-			return reporter.Warn(a, unsupportedErr, "")
+			return reporter.Warn(desc, unsupportedErr, "")
 		}
-		return reporter.Error(a, err)
+		return reporter.Error(desc, err)
 	} else if totalMemory >= a.minFree {
-		return reporter.Pass(a, iecBytes(totalMemory))
+		return reporter.Pass(desc, iecBytes(totalMemory))
 	} else {
-		return reporter.Warn(a, iecBytes(totalMemory), fmt.Sprintf("%s recommended", iecBytes(a.minFree)))
+		return reporter.Warn(desc, iecBytes(totalMemory), fmt.Sprintf("%s recommended", iecBytes(a.minFree)))
 	}
 }
 
