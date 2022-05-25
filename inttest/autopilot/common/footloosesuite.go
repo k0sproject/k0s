@@ -31,7 +31,7 @@ import (
 	"text/template"
 	"time"
 
-	apclient "github.com/k0sproject/k0s/pkg/autopilot/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	"github.com/k0sproject/k0s/internal/autopilot/pkg/random"
