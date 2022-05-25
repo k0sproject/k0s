@@ -1,2 +1,4 @@
 /*.etag
 /.docker-image.*
+/k0s
+/k0s.exe
