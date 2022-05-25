@@ -163,21 +163,14 @@ func (k *Kubelet) Run(ctx context.Context) error {
 	}
 
 	if k.CRISocket != "" {
-		rtType, rtSock, err := SplitRuntimeConfig(k.CRISocket)
+		// Due to the removal of dockershim from kube 1.24, we no longer need to
+		// handle any special docker case
+		_, rtSock, err := SplitRuntimeConfig(k.CRISocket)
 		if err != nil {
 			return err
 		}
+		args["--container-runtime-endpoint"] = rtSock
 
-		shimPath := "unix:///var/run/cri-dockerd.sock"
-		if runtime.GOOS == "windows" {
-			shimPath = "npipe:////./pipe/dockershim"
-		}
-		if rtType == "docker" {
-			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
-			args["--container-runtime-endpoint"] = shimPath
-		} else {
-			args["--container-runtime-endpoint"] = rtSock
-		}
 	} else {
 		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
 		args["--container-runtime"] = "remote"
