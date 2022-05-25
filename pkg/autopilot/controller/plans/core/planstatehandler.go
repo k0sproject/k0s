@@ -132,7 +132,7 @@ func findPlanCommandStatus(status *apv1beta2.PlanStatus, idx int) *apv1beta2.Pla
 	}
 
 	// .. otherwise, add a new one and return it
-	status.Commands = append(status.Commands, apv1beta2.PlanCommandStatus{Id: idx})
+	status.Commands = append(status.Commands, apv1beta2.PlanCommandStatus{ID: idx})
 
 	return &status.Commands[len(status.Commands)-1]
 }

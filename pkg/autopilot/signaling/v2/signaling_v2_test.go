@@ -160,7 +160,7 @@ func TestMarshaling(t *testing.T) {
 	assert.Empty(t, m)
 
 	// Forward ..
-	signalData1.Marshal(m)
+	assert.NoError(t, signalData1.Marshal(m))
 	assert.NotEmpty(t, m)
 	assert.Equal(t, 2, len(m))
 	assert.Contains(t, m, "k0sproject.io/autopilot-signal-version")

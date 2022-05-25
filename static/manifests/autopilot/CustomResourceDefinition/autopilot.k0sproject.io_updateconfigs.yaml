@@ -279,7 +279,7 @@ spec:
                       type: object
                     type: array
                   id:
-                    description: Id is a user-provided identifier for this plan.
+                    description: ID is a user-provided identifier for this plan.
                     type: string
                   timestamp:
                     description: Timestamp is a user-provided time that the plan was

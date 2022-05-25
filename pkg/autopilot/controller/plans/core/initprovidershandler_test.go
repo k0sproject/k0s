@@ -93,11 +93,11 @@ func TestInitProvidersHandle(t *testing.T) {
 				State: PlanSchedulableWait,
 				Commands: []apv1beta2.PlanCommandStatus{
 					{
-						Id:        0,
+						ID:        0,
 						K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 					},
 					{
-						Id:        1,
+						ID:        1,
 						K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{},
 					},
 				},
@@ -191,8 +191,8 @@ func TestInitProvidersHandle(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	apscheme2.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme2.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -176,8 +176,8 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	apscheme.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()

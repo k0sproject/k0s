@@ -446,8 +446,8 @@ func TestHandle(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	apscheme2.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme2.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

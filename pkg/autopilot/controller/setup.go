@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -31,10 +30,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
-)
-
-const (
-	defaultCRDTimeout = 2 * time.Minute
 )
 
 // SetupController defines operations that should be run once to completion,
@@ -65,11 +60,6 @@ func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sData
 // autopilot has access to the k0s file-system, or even if k0s is used at all.
 func (sc *setupController) Run(ctx context.Context) error {
 	logger := sc.log.WithField("component", "setup")
-
-	logger.Infof("Applying embedded CRDs")
-	if err := applyManifestCRDsWithWait(ctx, logger, sc.clientFactory, sc.k0sDataDir); err != nil {
-		return fmt.Errorf("unable to extract embedded CRDs: %w", err)
-	}
 
 	logger.Infof("Creating namespace '%s'", apconst.AutopilotNamespace)
 	if _, err := createNamespace(ctx, sc.clientFactory, apconst.AutopilotNamespace); err != nil {

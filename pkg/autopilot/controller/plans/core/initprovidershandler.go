@@ -65,7 +65,7 @@ func (ah *initProvidersHandler) Handle(ctx context.Context, plan *apv1beta2.Plan
 		// Create an empty status for the command.
 
 		logger.Infof("Adding new status for plan '%s' (index=%d)", cmdName, cmdIdx)
-		plan.Status.Commands = append(plan.Status.Commands, apv1beta2.PlanCommandStatus{Id: cmdIdx})
+		plan.Status.Commands = append(plan.Status.Commands, apv1beta2.PlanCommandStatus{ID: cmdIdx})
 
 		// It is the adapters implementation who is responsible for providing the proper status
 		// for executing the command.

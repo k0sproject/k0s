@@ -138,7 +138,7 @@ func TestSchedulable(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanCommandStatus{
-				Id:    123,
+				ID:    123,
 				State: appc.PlanSchedulable,
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
 					Controllers: []apv1beta2.PlanCommandTargetStatus{
@@ -157,7 +157,7 @@ func TestSchedulable(t *testing.T) {
 	}
 
 	scheme := apimruntime.NewScheme()
-	apscheme.AddToScheme(scheme)
+	assert.NoError(t, apscheme.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
