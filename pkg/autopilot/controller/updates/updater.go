@@ -164,7 +164,7 @@ func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 		}
 	}
 
-	p.Spec.Id = strconv.FormatInt(time.Now().Unix(), 10)
+	p.Spec.ID = strconv.FormatInt(time.Now().Unix(), 10)
 	p.Spec.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
 	p.Spec.Commands = append(p.Spec.Commands, apv1beta2.PlanCommand{
 		K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{

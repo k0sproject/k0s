@@ -39,7 +39,7 @@ func RegisterIndexers(ctx context.Context, mgr crman.Manager, scope string) erro
 			"",
 			func(obj crcli.Object) []string {
 				if plan, ok := obj.(*apv1beta2.Plan); ok {
-					return []string{plan.Spec.Id}
+					return []string{plan.Spec.ID}
 				}
 
 				return nil

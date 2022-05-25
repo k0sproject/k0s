@@ -271,7 +271,7 @@ spec:
                   type: object
                 type: array
               id:
-                description: Id is a user-provided identifier for this plan.
+                description: ID is a user-provided identifier for this plan.
                 type: string
               timestamp:
                 description: Timestamp is a user-provided time that the plan was created.
@@ -321,7 +321,7 @@ spec:
                           type: array
                       type: object
                     id:
-                      description: Id is a unique identifier for this command in a
+                      description: ID is a unique identifier for this command in a
                         Plan
                       type: integer
                     k0supdate:
