@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/autopilot/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 
 	v1 "k8s.io/api/core/v1"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
