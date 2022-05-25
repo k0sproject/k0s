@@ -98,12 +98,20 @@ func Test_KubeletConfig(t *testing.T) {
 
 			// manually apple the same changes to default config and check that there is no diff
 			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, false, "cluster.local")
-			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
+			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
+				"anonymous": map[string]interface{}{
+					"enabled": false,
+				},
+			}
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
 			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, false, "cluster.local")
-			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
+			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
+				"webhook": map[string]interface{}{
+					"cacheTTL": "15s",
+				},
+			}
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 
 			require.NoError(t, err)
