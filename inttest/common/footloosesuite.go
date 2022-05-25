@@ -463,7 +463,7 @@ func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	workerCommand := fmt.Sprintf(`nohup %s --debug worker %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(args, " "), token)
+	workerCommand := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(args, " "), token)
 
 	for i := 0; i < s.WorkerCount; i++ {
 		sshWorker, err := s.SSH(s.WorkerNode(i))

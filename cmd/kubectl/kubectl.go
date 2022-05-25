@@ -116,7 +116,7 @@ func NewK0sKubectlCmd() *cobra.Command {
 
 		return originalPreRunE(cmd, args)
 	}
-
+	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
 	originalRun := cmd.Run
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
