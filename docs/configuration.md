@@ -227,6 +227,7 @@ Note that there are several fields that cannot be overridden:
 - `clusterDomain`
 - `apiVersion`
 - `kind`
+- `staticPodURL`
 
 #### Examples
 

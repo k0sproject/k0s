@@ -49,6 +49,7 @@ var lockedFields = map[string]struct{}{
 	"clusterDomain": {},
 	"apiVersion":    {},
 	"kind":          {},
+	"staticPodURL":  {},
 }
 
 // Validate validates instance
