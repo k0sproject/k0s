@@ -4,7 +4,7 @@ Back in December 2020, Kubernetes have anounced the [deprecation of the docker-s
 
 ## What Is Dockershim, and Why Was It Deprecated?
 
-The dockershim is a transparent library that intercepts API calls to the kubernetes API and handles their operation in the Docker API. Early versions of Kubernetes used this shim in order to allow containers to run over docker. Later versions of Kubernetes started creating containers via the CRI (Container Runtime Interface). Since CRI has become the de-facto default runtime for Kubernetes, maintaining the dockershin turned into a heavy burden for Kubernetes maintainers, and so the decision to deprecate the built-in dockershim support came into being.
+The dockershim is a transparent library that intercepts API calls to the kubernetes API and handles their operation in the Docker API. Early versions of Kubernetes used this shim in order to allow containers to run over docker. Later versions of Kubernetes started creating containers via the CRI (Container Runtime Interface). Since CRI has become the de-facto default runtime for Kubernetes, maintaining the dockershim turned into a heavy burden for Kubernetes maintainers, and so the decision to deprecate the built-in dockershim support came into being.
 
 ### So What's going to happen to Dockershim?
 
@@ -16,18 +16,20 @@ In order to continue to use the Docker engine with Kubernetes v1.24+, you will h
 
 ## Migrating to CRI-Dockerd
 
-The following steps will need to be done on ALL k0s' worker nodes, or single-nodes. Basically any node that runs containers will need to be migrated using the process detailed below.
+*This migration guide assumes that you've been running k0s with docker on version 1.23 and below.*
+
+The following steps will need to be done on ALL k0s' worker nodes, or single-node controllers. Basically any node that runs containers will need to be migrated using the process detailed below.
 
 ### Cordon and drain the node
 
-Get a list of all nodes:
+Get a list of all nodes (k0s is still version 1.23, which already includes the docker-shim):
 
 ```sh
 sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS   ROLES           AGE   VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   3m    v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   containerd://1.6.4
-ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          31s   v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   containerd://1.6.4
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   52m   v1.23.6+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          12s   v1.23.6+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```
 
 cordon and drain the nodes (migrate one by one):
@@ -41,8 +43,8 @@ sudo k0s kubectl drain ip-10-0-62-250.eu-west-1.compute.internal --ignore-daemon
 sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS                     ROLES           AGE     VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   12m     v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   containerd://1.6.4
-ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          9m47s   v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   containerd://1.6.4
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   56m     v1.23.6+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          3m40s   v1.23.6+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```
 
 Stop k0s on the node:
@@ -53,53 +55,62 @@ sudo k0s stop
 
 ### Installing CRI-Dockerd
 
-Download the Latest cri-dockerd version:
+Download the Latest cri-dockerd deb package:
 
 ```sh
 cd /tmp
-VER=$(curl -s https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest|grep tag_name | cut -d '"' -f 4)
 
-wget https://github.com/Mirantis/cri-dockerd/releases/download/${VER}/cri-dockerd-${VER}-linux-amd64.tar.gz
-tar xvf cri-dockerd-${VER}-linux-amd64.tar.gz
+# Get the deb file name for ubuntu-jammy
+OS="ubuntu-jammy"
+PKG=$(curl -s https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest | grep ${OS} | grep http | cut -d '"' -f 4)
 
-sudo mv cri-dockerd /usr/local/bin/
+wget ${PKG} -O cri-dockerd-latest.deb
+
+sudo dpkg -i cri-dockerd-latest.deb
+
+Selecting previously unselected package cri-dockerd.
+(Reading database ... 164618 files and directories currently installed.)
+Preparing to unpack cri-dockerd-latest.deb ...
+Unpacking cri-dockerd (0.2.1~3-0~ubuntu-jammy) ...
+Setting up cri-dockerd (0.2.1~3-0~ubuntu-jammy) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.
 ```
 
 Verify the correct version:
 
 ```sh
+which cri-dockerd
+/usr/bin/cri-dockerd
+
 cri-dockerd --version
-cri-dockerd 0.2.0 (HEAD)
+cri-dockerd 0.2.1 (HEAD)
 ```
 
-Download cri-dockerd packaging files:
+Make sure dockershim is started:
 
 ```sh
-wget https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service
-wget https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket
-sudo mv cri-docker.socket cri-docker.service /etc/systemd/system/
-sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
-```
+sudo systemctl status cri-docker.service
+● cri-docker.service - CRI Interface for Docker Application Container Engine
+     Loaded: loaded (/lib/systemd/system/cri-docker.service; enabled; vendor preset: enabled)
+     Active: active (running) since Wed 2022-05-25 14:27:31 UTC; 1min 23s ago
+TriggeredBy: ● cri-docker.socket
+       Docs: https://docs.mirantis.com
+   Main PID: 1404151 (cri-dockerd)
+      Tasks: 9
+     Memory: 15.3M
+     CGroup: /system.slice/cri-docker.service
+             └─1404151 /usr/bin/cri-dockerd --container-runtime-endpoint fd:// --network-plugin=
 
-Enable dockershim:
-
-```sh
-sudo systemctl daemon-reload
-sudo systemctl enable cri-docker.service
-sudo systemctl enable --now cri-docker.socket
 ```
 
 ### Configure K0s to use dockershim
 
+Replace docker socket in the systemd file for cri-dockerd (the step below should be run AFTER upgrading k0s to version 1.24):
+
 ```sh
-sudo sed -i -e 's_^ExecStart.*_& --cri-socket docker:unix:///var/run/cri-dockerd.sock_' /etc/systemd/system/k0sworker.service
+sudo sed -i -e 's_--cri-socket=docker:unix:///var/run/docker.sock_--cri-socket docker:unix:///var/run/cri-dockerd.sock_' /etc/systemd/system/k0sworker.service
 sudo systemctl daemon-reload
-```
-
-This will add the cri-socket flag to the worker command:
-
-```sh
-ExecStart=/usr/local/bin/k0s worker --token-file=/home/ubuntu/worker_token.pem --cri-socket docker:unix:///var/run/cri-dockerd.sock
 ```
 
 ### Start k0s with cri-dockerd
@@ -125,10 +136,11 @@ fb888cbc5ae0   k8s_POD_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a
 On the controller, you'll be able to see the worker started with the new docker container runtime:
 
 ```sh
-➜ sudo k0s kubectl get nodes -o wide
-NAME                                        STATUS                     ROLES           AGE   VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   16h   v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   containerd://1.6.4
-ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          16h   v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
+sudo k0s kubectl get nodes -o wide
+
+NAME                                        STATUS                     ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          64m    v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```
 
 ### Uncordon the Node
@@ -144,7 +156,7 @@ You should now see the node Ready for scheduling with the docker Runtime:
 ```sh
 sudo k0s kubectl get nodes -o wide
 
-NAME                                        STATUS   ROLES           AGE   VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   16h   v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   containerd://1.6.4
-ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          16h   v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
+NAME                                        STATUS   ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.24.0+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          66m    v1.24.0+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```

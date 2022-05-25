@@ -151,10 +151,7 @@ After editing the configuration, restart `k0s` to get containerd using the newly
 
 Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<socket_path>` (for `type`, use `docker` for a pure Docker setup and `remote` for anything else).
 
-To run k0s with a pre-existing Docker setup, run the worker with `k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock <token>`.
-
-When `docker` is used as a runtime, k0s configures kubelet to create the dockershim socket at `/var/run/cri-dockerd.sock`.
-
 ### Using dockershim
 
-The following is a detailed guide on the changes expected for k0s under kubernetes 1.24: [k0s dockershim guide](./docker-shim.md).
+To run k0s with a pre-existing Dockershim setup, run the worker with `k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock <token>`.
+A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our [k0s dockershim guide](./docker-shim.md).
