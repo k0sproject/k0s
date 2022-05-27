@@ -29,7 +29,7 @@ In addition to Kube-router, k0s also offers [Calico](https://www.projectcalico.o
 
 ### Custom CNI configuration
 
-You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the network provider in the k0s configurtion file (`k0s.yaml`). You can do this, for example, by pushing network provider manifests into `/var/lib/k0s/manifests`, from where k0s controllers will collect them for deployment into the cluster (for more information, refer to [Manifest Deployer](manifests.md).
+You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the network provider in the k0s configurtion file (`k0s.yaml`). You can do this, for example, by pushing network provider manifests into `/var/lib/k0s/manifests`, from where k0s controllers will collect them for deployment into the cluster (for more information, refer to [Manifest Deployer](manifests.md)).
 
 ## Controller-Worker communication
 
