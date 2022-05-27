@@ -17,15 +17,17 @@ package controller
 import (
 	"context"
 	"fmt"
+	"runtime"
+
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
+
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"runtime"
 
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
 )

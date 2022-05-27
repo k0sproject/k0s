@@ -1,4 +1,4 @@
-#!/usr/bin/env -S make --no-print-directory -s -f
+#!/usr/bin/env
 
 .PHONY: help
 help:
