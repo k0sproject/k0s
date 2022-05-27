@@ -60,12 +60,12 @@ func (s *airgapSuite) SetupTest() {
 	// With k0s running, then start autopilot
 	s.Require().NoError(s.InitControllerAutopilot(0, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
-	c_client, err := s.ExtensionsClient(s.ControllerNode(0))
+	cClient, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, perr := apcomm.WaitForCRDByName(context.TODO(), c_client, "plans.autopilot.k0sproject.io", 2*time.Minute)
+	_, perr := apcomm.WaitForCRDByName(context.TODO(), cClient, "plans.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(context.TODO(), c_client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
+	_, cerr := apcomm.WaitForCRDByName(context.TODO(), cClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
 
 	// Collect an `admin.conf` from a controller for use with worker nodes, and add in the
@@ -80,10 +80,10 @@ func (s *airgapSuite) SetupTest() {
 	// Start the workers using the join token
 	s.Require().NoError(s.RunWorkersWithToken(workerJoinToken))
 
-	w_client, err := s.KubeClient(s.ControllerNode(0))
+	wClient, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	s.WaitForNodeReady(s.WorkerNode(0), w_client)
+	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), wClient))
 
 	// With k0s running, then start autopilot
 	s.PutFile(s.WorkerNode(0), "/var/lib/k0s/admin.conf", controllerAdminConfg)
@@ -158,6 +158,7 @@ spec:
 
 	// Does the bundle exist on the worker, in the proper directory?
 	lsout, err := s.RunCommandWorker(0, "ls /var/lib/k0s/images/k0s-airgap-bundle-*")
+	s.NoError(err)
 	s.NotEmpty(lsout)
 }
 

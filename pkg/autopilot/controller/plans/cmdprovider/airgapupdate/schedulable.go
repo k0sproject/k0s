@@ -123,7 +123,7 @@ func signalNodeAirgapUpdateCommandBuilder(node crcli.Object, cmd apv1beta2.PlanC
 
 	return func() apsigv2.Command {
 		return apsigv2.Command{
-			ID: &cmdStatus.Id,
+			ID: &cmdStatus.ID,
 			AirgapUpdate: &apsigv2.CommandAirgapUpdate{
 				URL:     updateContent.URL,
 				Version: cmd.AirgapUpdate.Version,

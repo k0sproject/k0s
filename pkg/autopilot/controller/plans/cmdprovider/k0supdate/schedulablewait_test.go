@@ -38,7 +38,7 @@ import (
 
 func signalNodeStatusDataAnnotations(sd apsigv2.SignalData) map[string]string {
 	data := make(map[string]string)
-	sd.Marshal(data)
+	_ = sd.Marshal(data)
 
 	return data
 }
@@ -414,8 +414,8 @@ func TestSchedulableWait(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	apscheme.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -108,7 +108,7 @@ func (s *nocontrollersSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
-		s.WaitForNodeReady(s.WorkerNode(idx), client)
+		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 
 		// With k0s running, then start autopilot
 		s.PutFile(s.WorkerNode(idx), "/var/lib/k0s/admin.conf", controllerAdminConfg)

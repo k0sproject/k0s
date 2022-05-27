@@ -205,8 +205,8 @@ func TestDiscover(t *testing.T) {
 	}
 
 	scheme := runtime.NewScheme()
-	apscheme.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -150,8 +150,8 @@ func TestSchedulable(t *testing.T) {
 	}
 
 	scheme := apimruntime.NewScheme()
-	apscheme.AddToScheme(scheme)
-	v1.AddToScheme(scheme)
+	assert.NoError(t, apscheme.AddToScheme(scheme))
+	assert.NoError(t, v1.AddToScheme(scheme))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

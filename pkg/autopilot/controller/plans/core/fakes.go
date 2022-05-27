@@ -24,7 +24,6 @@ import (
 // all of the interface methods, allowing for easy testing.
 type fakePlanCommandProvider struct {
 	commandID              string
-	handlerCanContinue     func(context.Context, string) bool
 	handlerNewPlan         func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 	handlerSchedulable     func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 	handlerSchedulableWait func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)

@@ -17,9 +17,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"runtime"
-	"time"
-
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
@@ -28,12 +25,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"runtime"
 
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
-)
-
-const (
-	defaultCRDTimeout = 2 * time.Minute
 )
 
 // SetupController defines operations that should be run once to completion,

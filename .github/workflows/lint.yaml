@@ -57,10 +57,8 @@ jobs:
       - name: Check generated code to be consistent
         run: make codegen EMBEDDED_BINS_BUILDMODE=none && git diff --exit-code
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: 'v${{ env.GOLANGCI_LINT_VERSION }}'
-          skip-cache: true
-          only-new-issues: false
-          args: --verbose
+      - name: Run linter
+        env:
+          EMBEDDED_BINS_BUILDMODE: none
+        run: |
+          make lint

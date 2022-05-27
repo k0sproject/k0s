@@ -146,14 +146,6 @@ func (s *FootlooseSuite) SetupSuite() {
 
 }
 
-func (s *FootlooseSuite) startUpdateServer() {
-	ssh, err := s.SSH("updateserver0")
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput("rc-service nginx start")
-	s.Require().NoError(err, "Can't start update server")
-}
-
 func (s *FootlooseSuite) waitForSSH(name string) {
 	var err error
 	// SSH through cluster should wait until we actually can get it through, but it doesn't
