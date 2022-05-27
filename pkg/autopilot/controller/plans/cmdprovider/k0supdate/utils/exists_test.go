@@ -60,7 +60,11 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
+				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
 			},
 			true,
 			nil,
@@ -81,7 +85,11 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
+				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
 			},
 			false,
 			&appc.SignalMissingPlatform,
@@ -125,7 +133,11 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
+				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
 			},
 			true,
 			nil,
@@ -146,7 +158,11 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
+				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
+				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
+				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
 			},
 			false,
 			&appc.SignalMissingPlatform,

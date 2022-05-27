@@ -78,7 +78,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -129,7 +133,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -180,7 +188,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -244,7 +256,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -308,7 +324,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -369,7 +389,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -430,7 +454,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
