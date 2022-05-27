@@ -18,7 +18,7 @@ require (
 	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/gorilla/mux v1.8.0
-	github.com/imdario/mergo v0.3.12
+	github.com/imdario/mergo v0.3.13
 	github.com/k0sproject/dig v0.2.0
 	github.com/k0sproject/k0sctl v0.12.6
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
@@ -274,7 +274,7 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 	k8s.io/apiextensions-apiserver v0.24.0 // indirect
 	k8s.io/apiserver v0.24.0 // indirect
 	k8s.io/component-helpers v0.24.0 // indirect
