@@ -89,18 +89,20 @@ go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
 
 codegen_targets += pkg/apis/helm.k0sproject.io/v1beta1/.controller-gen.stamp
-pkg/apis/helm.k0sproject.io/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm.k0sproject.io/v1beta1/ -type f -name \*.go)
+pkg/apis/helm.k0sproject.io/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm.k0sproject.io/v1beta1/  -maxdepth 1 -type f -name \*.go)
 pkg/apis/helm.k0sproject.io/v1beta1/.controller-gen.stamp: gen_output_dir = helm
 
 codegen_targets += pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp
-pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io/v1beta1 -type f -name \*.go)
+pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io/v1beta1/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/k0s.k0sproject.io/v1beta1/.controller-gen.stamp: gen_output_dir = v1beta1
 
 codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp
-pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2 -type f -name \*.go)
+pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
+	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
+	rm -f -- '$(dir $@)'zz_*.go
 	CGO_ENABLED=0 $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version)
 	$(GO_ENV) controller-gen \
 	  crd \
@@ -113,16 +115,17 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile
 # special handling until this versioning layout is fixed.
 
 codegen_targets += pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp
-pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io -type f -name \*.go)
+pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io/v1beta1/ -maxdepth 1 -type f -name \*.go -not -name zz_\*.go)
 pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: groupver = k0s.k0sproject.io/v1beta1
 pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: gen_output_dir = k0s.k0sproject.io
 
 codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp
-pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io -type f -name \*.go)
+pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2/ -maxdepth 1 -type f -name \*.go -not -name zz_\*.go)
 pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: groupver = autopilot.k0sproject.io/v1beta2
 pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: gen_output_dir = $(groupver)
 
 pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
+	rm -rf 'pkg/apis/$(gen_output_dir)/clientset/'
 	CGO_ENABLED=0 $(GO) install k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version))
 	$(GO_ENV) client-gen \
 	  --go-header-file hack/tools/boilerplate.go.txt \
