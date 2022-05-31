@@ -17,6 +17,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
+	"time"
 
 	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -67,18 +70,26 @@ func (w *rootWorker) Run(ctx context.Context) error {
 		logger.WithError(err).Fatal("unable to register autopilot scheme")
 	}
 
-	if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
-		logger.WithError(err).Fatal("unable to register indexers")
-	}
+	// In some cases, we need to wait on the worker side until controller deploys all autopilot CRDs
+	return retry.OnError(wait.Backoff{
+		Steps:    120,
+		Duration: 1 * time.Second,
+		Factor:   1.0,
+		Jitter:   0.1,
+	}, func(err error) bool {
+		return true
+	}, func() error {
+		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
+			return fmt.Errorf("unable to register indexers: %w", err)
+		}
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir); err != nil {
-		logger.WithError(err).Fatal("unable to register 'controlnodes' controllers")
-	}
-
-	// The controller-runtime start blocks until the context is cancelled.
-	if err := mgr.Start(ctx); err != nil {
-		return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
-	}
-
-	return nil
+		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir); err != nil {
+			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
+		}
+		// The controller-runtime start blocks until the context is cancelled.
+		if err := mgr.Start(ctx); err != nil {
+			return fmt.Errorf("unable to run controller-runtime manager for workers: %w", err)
+		}
+		return nil
+	})
 }

@@ -28,18 +28,16 @@ var _ component.Component = (*CRD)(nil)
 
 // CRD unpacks bundled CRD definitions to the filesystem
 type CRD struct {
-	saver manifestsSaver
+	saver   manifestsSaver
+	bundles []string
 }
 
 // NewCRD build new CRD
-func NewCRD(s manifestsSaver) *CRD {
+func NewCRD(s manifestsSaver, bundles []string) *CRD {
 	return &CRD{
-		saver: s,
+		saver:   s,
+		bundles: bundles,
 	}
-}
-
-var bundles = []string{
-	"helm",
 }
 
 // Init  (c CRD) Init(_ context.Context) error {
@@ -49,7 +47,7 @@ func (c CRD) Init(_ context.Context) error {
 
 // Run unpacks manifests from bindata
 func (c CRD) Run(_ context.Context) error {
-	for _, bundle := range bundles {
+	for _, bundle := range c.bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
 		if err != nil {
 			return fmt.Errorf("can't unbundle CRD `%s` manifests: %v", bundle, err)
