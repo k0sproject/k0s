@@ -2,9 +2,9 @@
 
 set -eu
 
-goVersion="$(make --no-print-directory -s -f ./vars.mk go_version)"
-golangciLintVersion="$(make --no-print-directory -s -f ./vars.mk FROM=hack/tools golangci-lint_version)"
-pythonVersion="$(make --no-print-directory -s -f ./vars.mk FROM=docs python_version)"
+goVersion="$(./vars.sh go_version)"
+golangciLintVersion="$(./vars.sh FROM=hack/tools golangci-lint_version)"
+pythonVersion="$(./vars.sh FROM=docs python_version)"
 
 cat <<EOF >>"$GITHUB_ENV"
 GO_VERSION=$goVersion
