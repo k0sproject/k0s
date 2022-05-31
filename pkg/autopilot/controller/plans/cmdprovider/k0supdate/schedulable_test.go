@@ -72,6 +72,22 @@ func TestSchedulable(t *testing.T) {
 							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
 							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
 						},
+						"linux-arm64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"linux-arm": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"darwin-amd64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"darwin-arm64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
 					},
 					Targets: apv1beta2.PlanCommandTargets{
 						Controllers: apv1beta2.PlanCommandTarget{
@@ -122,6 +138,22 @@ func TestSchedulable(t *testing.T) {
 					Version: "v1.22.2+k0s.1",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"linux-arm64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"linux-arm": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"darwin-amd64": {
+							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
+							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+						},
+						"darwin-arm64": {
 							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2%2Bk0s.1/k0s-v1.22.2+k0s.1-amd64",
 							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
 						},

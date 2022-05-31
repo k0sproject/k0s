@@ -67,7 +67,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -106,7 +110,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -158,7 +166,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{
@@ -197,7 +209,11 @@ func TestNewPlan(t *testing.T) {
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
-						"linux-amd64": {},
+						"linux-amd64":  {},
+						"linux-arm64":  {},
+						"linux-arm":    {},
+						"darwin-amd64": {},
+						"darwin-arm64": {},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
 						Discovery: apv1beta2.PlanCommandTargetDiscovery{

@@ -80,7 +80,7 @@ build/cache:
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | build/cache
 	docker build --rm \
-		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		--build-arg BUILDIMAGE=golang:$(go_version) \
 		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
 	touch $@
