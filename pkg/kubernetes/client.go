@@ -69,14 +69,14 @@ func (c *ClientFactory) GetClient() (kubernetes.Interface, error) {
 
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		}
 		// We're always running the client on the same host as the API, no need to compress
 		c.restConfig.DisableCompression = true
 		// To mitigate stack applier bursts in startup
 		c.restConfig.QPS = 40.0
 		c.restConfig.Burst = 400.0
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
 	}
 
 	if c.client != nil {
@@ -99,14 +99,14 @@ func (c *ClientFactory) GetDynamicClient() (dynamic.Interface, error) {
 	var err error
 	if c.restConfig == nil {
 		c.restConfig, err = clientcmd.BuildConfigFromFlags("", c.configPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		}
 		// We're always running the client on the same host as the API, no need to compress
 		c.restConfig.DisableCompression = true
 		// To mitigate stack applier bursts in startup
 		c.restConfig.QPS = 40.0
 		c.restConfig.Burst = 400.0
-		if err != nil {
-			return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
-		}
 	}
 
 	if c.dynamicClient != nil {

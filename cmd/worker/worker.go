@@ -18,6 +18,9 @@ package worker
 import (
 	"context"
 	"fmt"
+	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"os"
 	"os/signal"
 	"runtime"
@@ -25,6 +28,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -35,6 +39,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/token"
 )
 
 type CmdOpts config.CLIOptions
@@ -86,6 +91,33 @@ func NewWorkerCmd() *cobra.Command {
 			// Set up signal handling
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
+
+			tokenBytes, err := token.DecodeJoinToken(c.TokenArg)
+			if err != nil {
+				return fmt.Errorf("failed to decode token: %w", err)
+			}
+			clientConfig, err := clientcmd.NewClientConfigFromBytes(tokenBytes)
+			if err != nil {
+				return err
+			}
+			restConfig, err := clientConfig.ClientConfig()
+			if err != nil {
+				return err
+			}
+
+			autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
+			if err != nil {
+				return fmt.Errorf("creating autopilot client factory error: %w", err)
+			}
+			autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
+				KubeConfig: c.K0sVars.AdminKubeConfigPath,
+				K0sDataDir: c.K0sVars.DataDir,
+				Mode:       "worker",
+			}, logrus.NewEntry(logrus.StandardLogger()), autopilotClientFactory)
+			if err != nil {
+				return fmt.Errorf("failed to create autopilot worker: %w", err)
+			}
+			c.AutopilotRoot = autopilotRoot
 
 			return c.StartWorker(ctx)
 		},
@@ -180,6 +212,13 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	if err := componentManager.Init(ctx); err != nil {
 		return err
 	}
+
+	go func() {
+		err := c.AutopilotRoot.Run(ctx)
+		if err != nil {
+			logrus.WithError(err).Error("error while running autopilot")
+		}
+	}()
 
 	worker.KernelSetup()
 	err = componentManager.Start(ctx)
