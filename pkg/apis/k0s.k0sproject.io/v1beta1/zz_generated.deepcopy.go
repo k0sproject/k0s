@@ -246,6 +246,7 @@ func (in *ClusterExtensions) DeepCopy() *ClusterExtensions {
 func (in *ClusterImages) DeepCopyInto(out *ClusterImages) {
 	*out = *in
 	out.Konnectivity = in.Konnectivity
+	out.PushGateway = in.PushGateway
 	out.MetricsServer = in.MetricsServer
 	out.KubeProxy = in.KubeProxy
 	out.CoreDNS = in.CoreDNS

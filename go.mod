@@ -55,17 +55,17 @@ require (
 
 // Kubernetes
 require (
-	k8s.io/api v0.24.0
-	k8s.io/apimachinery v0.24.0
-	k8s.io/cli-runtime v0.24.0
-	k8s.io/client-go v0.24.0
-	k8s.io/cloud-provider v0.24.0
-	k8s.io/component-base v0.24.0
-	k8s.io/cri-api v0.24.0
-	k8s.io/kube-aggregator v0.24.0
-	k8s.io/kubectl v0.24.0
-	k8s.io/kubelet v0.24.0
-	k8s.io/mount-utils v0.24.0
+	k8s.io/api v0.24.1
+	k8s.io/apimachinery v0.24.1
+	k8s.io/cli-runtime v0.24.1
+	k8s.io/client-go v0.24.1
+	k8s.io/cloud-provider v0.24.1
+	k8s.io/component-base v0.24.1
+	k8s.io/cri-api v0.24.1
+	k8s.io/kube-aggregator v0.24.1
+	k8s.io/kubectl v0.24.1
+	k8s.io/kubelet v0.24.1
+	k8s.io/mount-utils v0.24.1
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
 
@@ -275,13 +275,13 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
-	k8s.io/apiextensions-apiserver v0.24.0 // indirect
-	k8s.io/apiserver v0.24.0 // indirect
-	k8s.io/component-helpers v0.24.0 // indirect
-	k8s.io/controller-manager v0.24.0 // indirect
+	k8s.io/apiextensions-apiserver v0.24.1 // indirect
+	k8s.io/apiserver v0.24.1 // indirect
+	k8s.io/component-helpers v0.24.1 // indirect
+	k8s.io/controller-manager v0.24.1 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
-	k8s.io/metrics v0.24.0 // indirect
+	k8s.io/metrics v0.24.1 // indirect
 	oras.land/oras-go v1.1.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
@@ -297,11 +297,11 @@ replace github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-202
 
 // Replacements duplicated from upstream Kubernetes
 replace (
-	// https://github.com/kubernetes/kubernetes/blob/v1.24.0/go.mod#L220-L221
+	// https://github.com/kubernetes/kubernetes/blob/v1.24.1/go.mod#L220-L221
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.12+incompatible
 
-	// https://github.com/kubernetes/kubernetes/blob/v1.24.0/go.mod#L394-L405
+	// https://github.com/kubernetes/kubernetes/blob/v1.24.1/go.mod#L394-L405
 	go.opentelemetry.io/contrib => go.opentelemetry.io/contrib v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0
