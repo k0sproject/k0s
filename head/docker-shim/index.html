@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/cli/k0s_install_worker/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/docker-shim/">
       
       
         
       
-      <link rel="icon" href="../../img/k0s_social.png">
+      <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>K0s install worker - Documentation</title>
+        <title>Dockershim Deprecation - What Does It Mean For K0s? - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-install-worker" class="md-skip">
+        <a href="#dockershim-deprecation-what-does-it-mean-for-k0s" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../../..">
+  <a href="../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
@@ -113,9 +113,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -131,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s install worker
+              Dockershim Deprecation - What Does It Mean For K0s?
             
           </span>
         </div>
@@ -236,9 +236,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -267,7 +267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -308,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -322,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0sctl-install/" class="md-nav__link">
+      <a href="../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -362,7 +362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-multi-node/" class="md-nav__link">
+      <a href="../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -376,7 +376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-in-docker/" class="md-nav__link">
+      <a href="../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -390,7 +390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../experimental-windows/" class="md-nav__link">
+      <a href="../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -404,7 +404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi4/" class="md-nav__link">
+      <a href="../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -418,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -432,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../airgap-install/" class="md-nav__link">
+      <a href="../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -453,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../upgrade/" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -467,7 +467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -481,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reset/" class="md-nav__link">
+      <a href="../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -495,7 +495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-requirements/" class="md-nav__link">
+      <a href="../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -509,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../external-runtime-deps/" class="md-nav__link">
+      <a href="../external-runtime-deps/" class="md-nav__link">
         External runtime dependencies
       </a>
     </li>
@@ -557,7 +557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -571,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dynamic-configuration/" class="md-nav__link">
+      <a href="../dynamic-configuration/" class="md-nav__link">
         Dynamic Configuration
       </a>
     </li>
@@ -585,7 +585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration-validation/" class="md-nav__link">
+      <a href="../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -599,7 +599,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../worker-node-config/" class="md-nav__link">
+      <a href="../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -613,7 +613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../networking/" class="md-nav__link">
+      <a href="../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -627,7 +627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../runtime/" class="md-nav__link">
+      <a href="../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -641,7 +641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage/" class="md-nav__link">
+      <a href="../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -655,7 +655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-monitoring/" class="md-nav__link">
+      <a href="../system-monitoring/" class="md-nav__link">
         System Components Monitoring
       </a>
     </li>
@@ -669,7 +669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manifests/" class="md-nav__link">
+      <a href="../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -683,7 +683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../helm-charts/" class="md-nav__link">
+      <a href="../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cloud-providers/" class="md-nav__link">
+      <a href="../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -711,7 +711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dual-stack/" class="md-nav__link">
+      <a href="../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -725,7 +725,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../high-availability/" class="md-nav__link">
+      <a href="../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -739,7 +739,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../shell-completion/" class="md-nav__link">
+      <a href="../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -753,7 +753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-management/" class="md-nav__link">
+      <a href="../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -767,7 +767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../environment-variables/" class="md-nav__link">
+      <a href="../environment-variables/" class="md-nav__link">
         Configuration of Environment Variables
       </a>
     </li>
@@ -781,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         OpenID Connect
       </a>
     </li>
@@ -795,7 +795,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../selinux/" class="md-nav__link">
+      <a href="../selinux/" class="md-nav__link">
         SELinux
       </a>
     </li>
@@ -809,7 +809,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../podsecurity/" class="md-nav__link">
+      <a href="../podsecurity/" class="md-nav__link">
         Pod Security Standards
       </a>
     </li>
@@ -857,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -871,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -885,7 +885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -899,7 +899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../examples/ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -913,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -927,7 +927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/gitops-flux/" class="md-nav__link">
+      <a href="../examples/gitops-flux/" class="md-nav__link">
         GitOps with Flux
       </a>
     </li>
@@ -975,7 +975,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../FAQ/" class="md-nav__link">
+      <a href="../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -989,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -1037,7 +1037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -1051,7 +1051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cis_benchmark/" class="md-nav__link">
+      <a href="../cis_benchmark/" class="md-nav__link">
         Kube-bench Security Benchmark
       </a>
     </li>
@@ -1073,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../releases/" class="md-nav__link">
+      <a href="../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1114,7 +1114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/overview/" class="md-nav__link">
+      <a href="../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1128,7 +1128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/github_workflow/" class="md-nav__link">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1142,7 +1142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/testing/" class="md-nav__link">
+      <a href="../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1156,7 +1156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1186,6 +1186,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1194,37 +1196,64 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-install-worker" class="md-nav__link">
-    k0s install worker
+  <a href="#what-is-dockershim-and-why-was-it-deprecated" class="md-nav__link">
+    What Is Dockershim, and Why Was It Deprecated?
   </a>
   
-    <nav class="md-nav" aria-label="k0s install worker">
+    <nav class="md-nav" aria-label="What Is Dockershim, and Why Was It Deprecated?">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    Examples
+  <a href="#so-whats-going-to-happen-to-dockershim" class="md-nav__link">
+    So What's going to happen to Dockershim?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migrating-to-cri-dockerd" class="md-nav__link">
+    Migrating to CRI-Dockerd
+  </a>
+  
+    <nav class="md-nav" aria-label="Migrating to CRI-Dockerd">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cordon-and-drain-the-node" class="md-nav__link">
+    Cordon and drain the node
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
+  <a href="#installing-cri-dockerd" class="md-nav__link">
+    Installing CRI-Dockerd
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
+  <a href="#configure-k0s-to-use-dockershim" class="md-nav__link">
+    Configure K0s to use dockershim
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
+  <a href="#start-k0s-with-cri-dockerd" class="md-nav__link">
+    Start k0s with cri-dockerd
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uncordon-the-node" class="md-nav__link">
+    Uncordon the Node
   </a>
   
 </li>
@@ -1248,43 +1277,116 @@
                 
                 
                 
-                  <h1>K0s install worker</h1>
-                
-                <h2 id="k0s-install-worker">k0s install worker<a class="headerlink" href="#k0s-install-worker" title="Permanent link">#</a></h2>
-<p>Install k0s worker on a brand-new system. Must be run as root (or with sudo)</p>
-<div class="highlight"><pre><span></span><code>k0s install worker [flags]
-</code></pre></div>
-<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>Worker subcommand allows you to pass in all available worker parameters.
-All default values of worker command will be passed to the service stub unless overriden.
+                <h1 id="dockershim-deprecation-what-does-it-mean-for-k0s">Dockershim Deprecation - What Does It Mean For K0s?<a class="headerlink" href="#dockershim-deprecation-what-does-it-mean-for-k0s" title="Permanent link">#</a></h1>
+<p>Back in December 2020, Kubernetes have anounced the <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">deprecation of the docker-shim from version 1.24 onwards</a>. Now that kubernetes 1.24 is out, the 1.24 release of k0s will no longer support the docker-shim as well.</p>
+<h2 id="what-is-dockershim-and-why-was-it-deprecated">What Is Dockershim, and Why Was It Deprecated?<a class="headerlink" href="#what-is-dockershim-and-why-was-it-deprecated" title="Permanent link">#</a></h2>
+<p>The dockershim is a transparent library that intercepts API calls to the kubernetes API and handles their operation in the Docker API. Early versions of Kubernetes used this shim in order to allow containers to run over docker. Later versions of Kubernetes started creating containers via the CRI (Container Runtime Interface). Since CRI has become the de-facto default runtime for Kubernetes, maintaining the dockershim turned into a heavy burden for Kubernetes maintainers, and so the decision to deprecate the built-in dockershim support came into being.</p>
+<h3 id="so-whats-going-to-happen-to-dockershim">So What's going to happen to Dockershim?<a class="headerlink" href="#so-whats-going-to-happen-to-dockershim" title="Permanent link">#</a></h3>
+<p>Dockershim is not gone. It's only changed ownership. Mirantis has agreed to maintain dockershim (now called cri-dockerd). See: <a href="https://www.mirantis.com/blog/the-future-of-dockershim-is-cri-dockerd/">The Future of Dockershim is cri-dockerd</a>.</p>
+<p>From Kubernetes version 1.24 you will have the built-in possibility to run containers via CRI, but if you want to continue using docker, you are free to do so, using <a href="https://github.com/Mirantis/cri-dockerd">cri-dockerd</a>.</p>
+<p>In order to continue to use the Docker engine with Kubernetes v1.24+, you will have to migrated all worker nodes to use cri-dockerd.</p>
+<h2 id="migrating-to-cri-dockerd">Migrating to CRI-Dockerd<a class="headerlink" href="#migrating-to-cri-dockerd" title="Permanent link">#</a></h2>
+<p><em>This migration guide assumes that you've been running k0s with docker on version 1.23 and below.</em></p>
+<p>The following steps will need to be done on ALL k0s' worker nodes, or single-node controllers. Basically any node that runs containers will need to be migrated using the process detailed below.</p>
+<h3 id="cordon-and-drain-the-node">Cordon and drain the node<a class="headerlink" href="#cordon-and-drain-the-node" title="Permanent link">#</a></h3>
+<p>Get a list of all nodes (k0s is still version 1.23, which already includes the docker-shim):</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
 
-Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;--cluster-dns&quot; will be ignored since install command doesn&#39;t yet support Windows services
+NAME                                        STATUS   ROLES           AGE   VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   52m   v1.23.6+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          12s   v1.23.6+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --api-server string           HACK: api-server for the windows worker node
-      --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cluster-dns string          HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
-      --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --enable-cloud-provider       Whether or not to enable cloud provider support in kubelet
-  -h, --help                        help for worker
-      --kubelet-extra-args string   extra args for kubelet
-      --labels strings              Node labels, list of key=value pairs
-  -l, --logging stringToString      Logging Levels for the different components (default [kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1])
-      --profile string              worker profile to use on the node (default &quot;default&quot;)
-      --taints strings              Node taints, list of key=value:effect strings
-      --token-file string           Path to the file containing token.
+<p>cordon and drain the nodes (migrate one by one):</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl cordon ip-10-0-62-250.eu-west-1.compute.internal 
+sudo k0s kubectl drain ip-10-0-62-250.eu-west-1.compute.internal --ignore-daemonsets
 </code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --data-dir string        Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                  Debug logging (default: false)
-      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-      --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
-  -v, --verbose                Verbose logging (default: false)
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
+
+NAME                                        STATUS                     ROLES           AGE     VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   56m     v1.23.6+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          3m40s   v1.23.6+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
-<ul>
-<li><a href="../k0s_install/">k0s install</a>  - Install k0s on a brand-new system. Must be run as root (or with sudo)</li>
-</ul>
+<p>Stop k0s on the node:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s stop
+</code></pre></div>
+<h3 id="installing-cri-dockerd">Installing CRI-Dockerd<a class="headerlink" href="#installing-cri-dockerd" title="Permanent link">#</a></h3>
+<p>Download the Latest cri-dockerd deb package:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span> /tmp
+
+<span class="c1"># Get the deb file name for ubuntu-jammy</span>
+<span class="nv">OS</span><span class="o">=</span><span class="s2">&quot;ubuntu-jammy&quot;</span>
+<span class="nv">PKG</span><span class="o">=</span><span class="k">$(</span>curl -s https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest <span class="p">|</span> grep <span class="si">${</span><span class="nv">OS</span><span class="si">}</span> <span class="p">|</span> grep http <span class="p">|</span> cut -d <span class="s1">&#39;&quot;&#39;</span> -f <span class="m">4</span><span class="k">)</span>
+
+wget <span class="si">${</span><span class="nv">PKG</span><span class="si">}</span> -O cri-dockerd-latest.deb
+
+sudo dpkg -i cri-dockerd-latest.deb
+
+Selecting previously unselected package cri-dockerd.
+<span class="o">(</span>Reading database ... <span class="m">164618</span> files and directories currently installed.<span class="o">)</span>
+Preparing to unpack cri-dockerd-latest.deb ...
+Unpacking cri-dockerd <span class="o">(</span><span class="m">0</span>.2.1~3-0~ubuntu-jammy<span class="o">)</span> ...
+Setting up cri-dockerd <span class="o">(</span><span class="m">0</span>.2.1~3-0~ubuntu-jammy<span class="o">)</span> ...
+Created symlink /etc/systemd/system/multi-user.target.wants/cri-docker.service → /lib/systemd/system/cri-docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/cri-docker.socket → /lib/systemd/system/cri-docker.socket.
+</code></pre></div>
+<p>Verify the correct version:</p>
+<div class="highlight"><pre><span></span><code>which cri-dockerd
+/usr/bin/cri-dockerd
+
+cri-dockerd --version
+cri-dockerd <span class="m">0</span>.2.1 <span class="o">(</span>HEAD<span class="o">)</span>
+</code></pre></div>
+<p>Make sure dockershim is started:</p>
+<div class="highlight"><pre><span></span><code>sudo systemctl status cri-docker.service
+● cri-docker.service - CRI Interface <span class="k">for</span> Docker Application Container Engine
+     Loaded: loaded <span class="o">(</span>/lib/systemd/system/cri-docker.service<span class="p">;</span> enabled<span class="p">;</span> vendor preset: enabled<span class="o">)</span>
+     Active: active <span class="o">(</span>running<span class="o">)</span> since Wed <span class="m">2022</span>-05-25 <span class="m">14</span>:27:31 UTC<span class="p">;</span> 1min 23s ago
+TriggeredBy: ● cri-docker.socket
+       Docs: https://docs.mirantis.com
+   Main PID: <span class="m">1404151</span> <span class="o">(</span>cri-dockerd<span class="o">)</span>
+      Tasks: <span class="m">9</span>
+     Memory: <span class="m">15</span>.3M
+     CGroup: /system.slice/cri-docker.service
+             └─1404151 /usr/bin/cri-dockerd --container-runtime-endpoint fd:// --network-plugin<span class="o">=</span>
+</code></pre></div>
+<h3 id="configure-k0s-to-use-dockershim">Configure K0s to use dockershim<a class="headerlink" href="#configure-k0s-to-use-dockershim" title="Permanent link">#</a></h3>
+<p>Replace docker socket in the systemd file for cri-dockerd (the step below should be run AFTER upgrading k0s to version 1.24):</p>
+<div class="highlight"><pre><span></span><code>sudo sed -i -e <span class="s1">&#39;s_--cri-socket=docker:unix:///var/run/docker.sock_--cri-socket docker:unix:///var/run/cri-dockerd.sock_&#39;</span> /etc/systemd/system/k0sworker.service
+sudo systemctl daemon-reload
+</code></pre></div>
+<h3 id="start-k0s-with-cri-dockerd">Start k0s with cri-dockerd<a class="headerlink" href="#start-k0s-with-cri-dockerd" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>sudo k0s start
+</code></pre></div>
+<p>Verify the running pods via <code>docker ps</code>:</p>
+<div class="highlight"><pre><span></span><code>docker ps --format <span class="s2">&quot;table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Image}}&quot;</span>
+
+CONTAINER ID   NAMES                                                                                                STATE     STATUS          IMAGE
+1b9b4624ddfd   k8s_konnectivity-agent_konnectivity-agent-5jpd7_kube-system_1b3101ea-baeb-4a22-99a2-088d7ca5be85_1   running   Up <span class="m">51</span> minutes   quay.io/k0sproject/apiserver-network-proxy-agent
+414758a8a951   k8s_kube-router_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a67f2db730_1                 running   Up <span class="m">51</span> minutes   3a67679337a5
+b81960bb304c   k8s_kube-proxy_kube-proxy-tv95n_kube-system_164dc9f8-f47c-4f6c-acb7-ede5dbcd63cd_1                   running   Up <span class="m">51</span> minutes   k8s.gcr.io/kube-proxy
+fb888cbc5ae0   k8s_POD_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a67f2db730_0                         running   Up <span class="m">51</span> minutes   k8s.gcr.io/pause:3.1
+382d0a938c9d   k8s_POD_konnectivity-agent-5jpd7_kube-system_1b3101ea-baeb-4a22-99a2-088d7ca5be85_0                  running   Up <span class="m">51</span> minutes   k8s.gcr.io/pause:3.1
+72d4a47b5609   k8s_POD_kube-proxy-tv95n_kube-system_164dc9f8-f47c-4f6c-acb7-ede5dbcd63cd_0                          running   Up <span class="m">51</span> minutes   k8s.gcr.io/pause:3.1
+</code></pre></div>
+<p>On the controller, you'll be able to see the worker started with the new docker container runtime:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
+
+NAME                                        STATUS                     ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.24.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          64m    v1.24.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+</code></pre></div>
+<h3 id="uncordon-the-node">Uncordon the Node<a class="headerlink" href="#uncordon-the-node" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl uncordon ip-10-0-62-250.eu-west-1.compute.internal
+
+node/ip-10-0-62-250.eu-west-1.compute.internal uncordoned
+</code></pre></div>
+<p>You should now see the node Ready for scheduling with the docker Runtime:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
+
+NAME                                        STATUS   ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.24.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          66m    v1.24.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+</code></pre></div>
                 
               
               
@@ -1350,10 +1452,10 @@ Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>
