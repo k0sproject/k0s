@@ -1,6 +1,6 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE
-RUN apt-get update && apt-get install -y make gcc musl-dev binutils-gold
+RUN apk add --no-cache make gcc musl-dev binutils-gold
 
 ENV \
   HOME="/run/k0s-build" \
