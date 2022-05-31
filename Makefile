@@ -69,6 +69,7 @@ GO ?= $(GO_ENV) go
 ifeq ($(TARGET_OS),windows)
 build: k0s.exe
 else
+BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
 build: k0s
 endif
 
@@ -166,7 +167,6 @@ pkg/assets/zz_generated_offsets_darwin.go:
 
 k0s: TARGET_OS = linux
 k0s: BUILD_GO_CGO_ENABLED = 1
-k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
 k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
@@ -207,7 +207,7 @@ smoketests: $(smoketests)
 .PHONY: check-unit
 check-unit: GO_TEST_RACE ?= -race
 check-unit: go.sum codegen
-	$(GO) test $(GO_TEST_RACE) `$(GO) list $(GO_DIRS)`
+	$(GO) test $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list $(GO_DIRS)`
 
 .PHONY: check-image-validity
 check-image-validity: go.sum
