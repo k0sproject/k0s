@@ -18,13 +18,14 @@ package worker
 import (
 	"context"
 	"fmt"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
-	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
-	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -109,11 +110,14 @@ func NewWorkerCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("creating autopilot client factory error: %w", err)
 			}
-			autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
-				KubeConfig: c.K0sVars.AdminKubeConfigPath,
-				K0sDataDir: c.K0sVars.DataDir,
-				Mode:       "worker",
-			}, logrus.NewEntry(logrus.StandardLogger()), autopilotClientFactory)
+			autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
+				KubeConfig:          c.K0sVars.AdminKubeConfigPath,
+				K0sDataDir:          c.K0sVars.DataDir,
+				Mode:                "worker",
+				ManagerPort:         8899,
+				MetricsBindAddr:     "0",
+				HealthProbeBindAddr: "0",
+			}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), autopilotClientFactory)
 			if err != nil {
 				return fmt.Errorf("failed to create autopilot worker: %w", err)
 			}

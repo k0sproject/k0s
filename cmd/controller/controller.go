@@ -18,14 +18,15 @@ package controller
 import (
 	"context"
 	"fmt"
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
-	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	"io/fs"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -399,10 +400,13 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		return fmt.Errorf("creating autopilot client factory error: %w", err)
 	}
 	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
-		KubeConfig: c.K0sVars.AdminKubeConfigPath,
-		K0sDataDir: c.K0sVars.DataDir,
-		Mode:       "controller",
-	}, logrus.NewEntry(logrus.StandardLogger()), autopilotClientFactory)
+		KubeConfig:          c.K0sVars.AdminKubeConfigPath,
+		K0sDataDir:          c.K0sVars.DataDir,
+		Mode:                "controller",
+		ManagerPort:         8899,
+		MetricsBindAddr:     "0",
+		HealthProbeBindAddr: "0",
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), autopilotClientFactory)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot controller: %w", err)
 	}
