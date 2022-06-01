@@ -25,28 +25,33 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0sctl/integration/github"
 )
+
+const k0sctlVersion = "v0.13.0-rc.3"
 
 type K0sctlSuite struct {
 	common.FootlooseSuite
+	k0sctlEnv []string
 }
 
-func (s *K0sctlSuite) haveLatest(latest github.Release) bool {
-	out, err := exec.Command("./k0sctl", "version").Output()
+func (s *K0sctlSuite) haveLatest() bool {
+	cmd := exec.Command("./k0sctl", "version")
+	cmd.Env = s.k0sctlEnv
+	out, err := cmd.Output()
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(out), fmt.Sprintf("%s\n", latest.TagName))
+	return strings.Contains(string(out), fmt.Sprintf("%s\n", k0sctlVersion))
 }
 
-func (s *K0sctlSuite) k0sctlFilename() string {
+func k0sctlFilename() string {
 	var ext string
 	os := runtime.GOOS
 	if os == "windows" {
@@ -68,58 +73,31 @@ func (s *K0sctlSuite) k0sctlFilename() string {
 	return fmt.Sprintf("k0sctl-%s-%s%s", os, arch, ext)
 }
 
-func (s *K0sctlSuite) k0sctlDownloadAsset(latest github.Release) (github.Asset, error) {
-	fn := s.k0sctlFilename()
-	for _, a := range latest.Assets {
-		if a.Name == fn {
-			return a, nil
-		}
-	}
-	return github.Asset{}, fmt.Errorf("failed to find a k0sctl release binary asset %s", fn)
-}
-
-func (s *K0sctlSuite) DownloadK0sctl() error {
-	latest, err := github.LatestRelease("k0sproject/k0sctl", false)
-	if err != nil {
-		return fmt.Errorf("failed to get latest k0sctl version from github: %w", err)
+func (s *K0sctlSuite) downloadK0sctl() {
+	if s.haveLatest() {
+		s.T().Logf("Already have k0sctl %s", k0sctlVersion)
+		return
 	}
 
-	if s.haveLatest(latest) {
-		s.T().Logf("Already have k0sctl %s", latest.TagName)
-		return nil
-	}
+	s.T().Logf("Downloading k0sctl %s", k0sctlVersion)
 
-	s.T().Logf("Downloading k0sctl %s", latest.TagName)
-
-	asset, err := s.k0sctlDownloadAsset(latest)
-	if err != nil {
-		return err
-	}
-	s.T().Logf("Found matching asset: %s - Downloading", asset.Name)
-
-	req, err := http.NewRequest("GET", asset.URL, nil)
-	if err != nil {
-		return err
-	}
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://github.com/k0sproject/k0sctl/releases/download/%s/%s", k0sctlVersion, k0sctlFilename()), nil)
+	s.Require().NoError(err)
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
+	s.Require().NoError(err)
 
 	defer resp.Body.Close()
 
 	f, err := os.OpenFile("k0sctl", os.O_CREATE|os.O_WRONLY, 0755)
-	if err != nil {
-		return err
-	}
+	s.Require().NoError(err)
 	defer f.Close()
 
 	_, err = io.Copy(f, resp.Body)
+	s.Require().NoError(err)
 	s.T().Logf("Download of %s complete", f.Name())
-	return err
 }
 
-func (s *K0sctlSuite) k0sctlInitConfig() (map[string]interface{}, error) {
+func (s *K0sctlSuite) k0sctlInitConfig() map[string]interface{} {
 	nodes := make([]string, s.ControllerCount+s.WorkerCount)
 	addresses := make([]string, s.ControllerCount+s.WorkerCount)
 	for i := 0; i < s.ControllerCount; i++ {
@@ -130,9 +108,7 @@ func (s *K0sctlSuite) k0sctlInitConfig() (map[string]interface{}, error) {
 	}
 
 	machines, err := s.InspectMachines(nodes)
-	if err != nil {
-		return nil, err
-	}
+	s.Require().NoError(err)
 
 	for _, m := range machines {
 		port, err := m.HostPort(22)
@@ -146,59 +122,85 @@ func (s *K0sctlSuite) k0sctlInitConfig() (map[string]interface{}, error) {
 	}
 	args := []string{"init", "--controller-count", fmt.Sprintf("%d", s.ControllerCount), "--key-path", ssh.KeyPath, "--user", ssh.User}
 	args = append(args, addresses...)
-	out, err := exec.Command("./k0sctl", args...).Output()
+	cmd := exec.Command("./k0sctl", args...)
+	cmd.Env = s.k0sctlEnv
+	out, err := cmd.Output()
 	s.NoError(err)
 
 	cfg := map[string]interface{}{}
 	err = yaml.Unmarshal(out, &cfg)
-	return cfg, err
+
+	s.Require().NoError(err)
+	return cfg
 }
 
-func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) error {
+func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) {
 	plain, err := yaml.Marshal(cfg)
-	if err != nil {
-		return err
-	}
+	s.Require().NoError(err)
+
+	s.T().Logf("Applying k0sctl config:\n%s", plain)
 	cmd := exec.Command("./k0sctl", "apply", "--config", "-")
+	cmd.Env = s.k0sctlEnv
 	cmd.Stdin = bytes.NewReader(plain)
 
-	stdout, _ := cmd.StdoutPipe()
-	if err := cmd.Start(); err != nil {
-		return err
-	}
+	stdout, err := cmd.StdoutPipe()
+	s.Require().NoError(err)
+	stderr, err := cmd.StderrPipe()
+	s.Require().NoError(err)
 
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		m := scanner.Text()
-		s.T().Log(m)
-	}
-	return cmd.Wait()
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			s.T().Log(scanner.Text())
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			s.T().Log("STDERR", scanner.Text())
+		}
+	}()
+
+	s.Require().NoError(cmd.Start())
+
+	err = cmd.Wait()
+	wg.Wait()
+	s.Require().NoError(err)
 }
 
 func (s *K0sctlSuite) TestK0sGetsUp() {
-	s.NoError(s.DownloadK0sctl())
-	cfg, err := s.k0sctlInitConfig()
+	k0sBinaryPath := os.Getenv("K0S_PATH")
+	k0sVersion, err := exec.Command(k0sBinaryPath, "version").Output()
+	s.Require().NoError(err, "failed to get k0s version")
+
+	s.downloadK0sctl()
+	cfg := s.k0sctlInitConfig()
 
 	spec, ok := cfg["spec"].(map[string]interface{})
-	if !ok {
-		s.FailNow("could not find spec in generated k0sctl.yaml")
-	}
+	s.Require().True(ok, "could not find spec in generated k0sctl.yaml")
 	hosts, ok := spec["hosts"].([]interface{})
-	if !ok {
-		s.FailNow("could not find spec.hosts in generated k0sctl.yaml")
-	}
+	s.Require().True(ok, "could not find spec.hosts in generated k0sctl.yaml")
 
 	for _, host := range hosts {
 		h, ok := host.(map[string]interface{})
-		if !ok {
-			s.FailNow("host not what was expectd")
-		}
+		s.Require().True(ok, "host not what was expected")
 		h["uploadBinary"] = true
-		h["k0sBinaryPath"] = os.Getenv("K0S_PATH")
+		h["k0sBinaryPath"] = k0sBinaryPath
 	}
 
-	s.NoError(err)
-	s.NoError(s.k0sctlApply(cfg))
+	k0s, ok := spec["k0s"].(map[string]interface{})
+	s.Require().True(ok, "could not find spec.k0s in generated k0sctl.yaml")
+
+	k0s["version"] = strings.TrimSpace(string(k0sVersion))
+
+	s.k0sctlApply(cfg)
 }
 
 func TestK0sctlSuite(t *testing.T) {
@@ -206,6 +208,11 @@ func TestK0sctlSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
+		},
+		[]string{
+			fmt.Sprintf("USER=%s", t.Name()),
+			fmt.Sprintf("HOME=%s", t.TempDir()),
+			fmt.Sprintf("TMPDIR=%s", t.TempDir()),
 		},
 	}
 	suite.Run(t, &s)
