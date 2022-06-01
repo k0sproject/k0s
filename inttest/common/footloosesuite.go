@@ -60,6 +60,9 @@ const (
 	workerNodeNameFormat     = "worker%d"
 	lbNodeNameFormat         = "lb%d"
 	etcdNodeNameFormat       = "etcd%d"
+
+	defaultK0sBinaryFullPath = "/usr/bin/k0s"
+	k0sBindMountFullPath     = "/dist/k0s"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -96,7 +99,7 @@ type FootlooseSuite struct {
 // initializeDefaults initializes any unset configuration knobs to their defaults.
 func (s *FootlooseSuite) initializeDefaults() {
 	if s.K0sFullPath == "" {
-		s.K0sFullPath = "/usr/bin/k0s"
+		s.K0sFullPath = defaultK0sBinaryFullPath
 	}
 	if s.K0sAPIExternalPort == 0 {
 		s.K0sAPIExternalPort = 9443
@@ -901,7 +904,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		{
 			Type:        "bind",
 			Source:      binPath,
-			Destination: s.K0sFullPath,
+			Destination: k0sBindMountFullPath,
 			ReadOnly:    true,
 		},
 		{
