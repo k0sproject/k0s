@@ -339,6 +339,12 @@ jobs:
       - name: Build
         run: make build
 
+      - name: Upload compiled binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: k0s-${{ matrix.arch }}
+          path: k0s
+
       - name: Unit tests
         run: make check-unit
 
