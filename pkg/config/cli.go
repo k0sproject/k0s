@@ -237,15 +237,28 @@ func GetCmdOpts() CLIOptions {
 
 // CallParentPersistentPreRun runs the parent command's persistent pre-run.
 // Cobra does not do this automatically.
+//
 // See: https://github.com/spf13/cobra/issues/216
+// See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
 func CallParentPersistentPreRun(c *cobra.Command, args []string) error {
 	for p := c.Parent(); p != nil; p = p.Parent() {
-		if p.PersistentPreRunE != nil {
-			return p.PersistentPreRunE(c, args)
+		preRunE := p.PersistentPreRunE
+		preRun := p.PersistentPreRun
+
+		p.PersistentPreRunE = nil
+		p.PersistentPreRun = nil
+
+		defer func() {
+			p.PersistentPreRunE = preRunE
+			p.PersistentPreRun = preRun
+		}()
+
+		if preRunE != nil {
+			return preRunE(c, args)
 		}
 
-		if p.PersistentPreRun != nil {
-			p.PersistentPreRun(c, args)
+		if preRun != nil {
+			preRun(c, args)
 			return nil
 		}
 	}

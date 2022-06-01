@@ -1,7 +1,7 @@
 include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -a ! -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
