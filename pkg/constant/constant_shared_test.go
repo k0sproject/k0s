@@ -17,7 +17,7 @@ package constant
 
 import (
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -42,8 +42,8 @@ func TestKubernetesMajorMinorVersion(t *testing.T) {
 }
 
 func getVersion(t *testing.T, component string) string {
-	cmd := exec.Command("make", "--no-print-directory", "-s", "-f", "vars.mk", component+"_version")
-	cmd.Dir = path.Join("..", "..")
+	cmd := exec.Command("./vars.sh", component+"_version")
+	cmd.Dir = filepath.Join("..", "..")
 
 	out, err := cmd.Output()
 	require.NoError(t, err)
