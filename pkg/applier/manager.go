@@ -88,6 +88,22 @@ func (m *Manager) Stop() error {
 func (m *Manager) runWatchers(ctx context.Context) error {
 	log := logrus.WithField("component", "applier-manager")
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.WithError(err).Error("failed to create watcher")
+		return err
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(m.bundlePath)
+	if err != nil {
+		log.Warnf("Failed to start watcher: %s", err.Error())
+	}
+
+	// Add all directories after the bundle dir has been added to the watcher.
+	// Doing it the other way round introduces a race condition when directories
+	// get created after the initial listing but before the watch starts.
+
 	dirs, err := util.GetAllDirs(m.bundlePath)
 	if err != nil {
 		return err
@@ -100,17 +116,6 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 		}
 	}
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.WithError(err).Error("failed to create watcher")
-		return err
-	}
-	defer watcher.Close()
-
-	err = watcher.Add(m.bundlePath)
-	if err != nil {
-		log.Warnf("Failed to start watcher: %s", err.Error())
-	}
 	for {
 		select {
 		case err, ok := <-watcher.Errors:
