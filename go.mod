@@ -16,6 +16,7 @@ require (
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/estesp/manifest-tool/v2 v2.0.1-0.20220217152536-f3906340b65e
 	github.com/evanphx/json-patch v4.12.0+incompatible
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/go-openapi/jsonpointer v0.19.5
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.13
@@ -47,7 +48,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.47.0
-	gopkg.in/fsnotify.v1 v1.4.7
 	helm.sh/helm/v3 v3.9.0
 	sigs.k8s.io/controller-runtime v0.12.1
 	sigs.k8s.io/yaml v1.3.0
@@ -128,7 +128,6 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fullstorydev/grpcurl v1.8.5 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

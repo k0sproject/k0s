@@ -13,75 +13,90 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-// Package debounce provides functionality to "debounce" multiple events in given interval and handle all at once
-// For debounce pattern, see https://drailing.net/2018/01/debounce-function-for-golang/
-// As you can see, we draw some inspiration from that example. :)
-// Currently this is tied to fsnotify.Event as the event type since Go prohibits us to use fully generic chan interface{} type
-// Or rather, we cannot assign chan fsnotify.Event channel type to chan interface{}
-// If this pattern becomes common we'll need to look at something like https://github.com/eapache/channels/
+
+// Package debounce provides functionality to "debounce" multiple events in a
+// given interval and handle only the most recent one. For the debounce pattern,
+// see https://reactivex.io/documentation/operators/debounce.html. The blog post
+// that inspired this implementation can be found here:
+// https://drailing.net/2018/01/debounce-function-for-golang/.
 package debounce
 
 import (
 	"context"
 	"time"
-
-	"gopkg.in/fsnotify.v1"
 )
 
-// Callback defines the callback function when we trigger the debounce action
-type Callback func(arg fsnotify.Event)
+// Debouncer throttles the items read from its input. Debouncer does this by
+// forwarding items read from its input to its callback, except that it drops
+// items that are followed by newer items before a timeout expires.
+type Debouncer[T any] struct {
+	// Input is the input channel whose items shall be debounced.
+	Input <-chan T
 
-// Debouncer defines the debouncer interface
-type Debouncer interface {
-	Stop()
-	Start()
+	// Timeout defines the time that must pass without seeing any new items
+	// until the most recent item is forwarded to the callback.
+	Timeout time.Duration
+
+	// Filter controls which elements reset the time window and which elements
+	// are are simply silently dropped. It may be nil, in which case no items
+	// will be dropped.
+	Filter func(item T) bool
+
+	// Callback is the func that receives debounced items.
+	Callback func(item T)
 }
 
-type debouncer struct {
-	ctx      context.Context
-	cancel   context.CancelFunc
-	interval time.Duration
-	callback Callback
-	input    chan fsnotify.Event
-}
+// Run polls the input for items, throttles them and forwards them to the
+// callback. Run returns either without an error when the input is closed or
+// with the context's error if the context is done, whichever happens first.
+func (d *Debouncer[T]) Run(ctx context.Context) error {
+	// Create a timer that is initially expired
+	timer := time.NewTimer(0)
+	defer timer.Stop()
+	<-timer.C
 
-// New creates new Debouncer with given args
-func New(ctx context.Context, interval time.Duration, input chan fsnotify.Event, callback Callback) Debouncer {
-	dctx, cancel := context.WithCancel(ctx)
-	db := &debouncer{
-		cancel:   cancel,
-		interval: interval,
-		input:    input,
-		ctx:      dctx,
-		callback: callback,
-	}
-
-	return db
-}
-
-// Start starts the debouncer
-func (d *debouncer) Start() {
-	ticker := time.NewTimer(d.interval)
-	var item *fsnotify.Event
-	for {
+	for pendingItem := (*T)(nil); ; {
 		select {
-		case event := <-d.input:
-			if event.Op != fsnotify.Chmod {
-				item = &event
-				ticker.Reset(d.interval)
+		case <-ctx.Done():
+			return ctx.Err() // ctx is done, good bye ...
+
+		case item, ok := <-d.Input:
+			if !ok {
+				return nil // input channel closed, good bye ...
 			}
-		case <-ticker.C:
-			if item != nil {
-				d.callback(*item)
+
+			if d.Filter != nil && !d.Filter(item) {
+				continue // the current item has been filtered out ...
 			}
-		case <-d.ctx.Done():
-			return
+
+			// The current item needs to reset the timer.
+			// There are three possible states:
+			// https://stackoverflow.com/a/58631999
+			if pendingItem == nil {
+				// (1) The pendingItem has been consumed.
+				// The timer must have expired and its tick must have been consumed.
+			} else if timer.Stop() {
+				// (2) The timer was stopped before it expired.
+				// Its channel cannot hold a tick.
+			} else {
+				// (3) The timer has already expired, but the pendingItem has not been consumed yet.
+				// The pending tick needs to be consumed.
+				<-timer.C
+			}
+
+			timer.Reset(d.Timeout)
+
+			// Save the current item to be sent after the timeout.
+			pendingItem = &item
+
+			// Now it is safe to restart the timer.
+			timer.Reset(d.Timeout)
+
+		case <-timer.C:
+			d.Callback(*pendingItem)
+			// Clear out the item: Indicates that the timer tick has been
+			// consumed and allows the item to be GC'd.
+			pendingItem = nil
 		}
 	}
-}
-
-// Stop stops the debouncer, the blocking call to "Start()" wil lreturn and no more callback inivocations are done.
-// Not even if there would be "pending" events in the buffer.
-func (d *debouncer) Stop() {
-	d.cancel()
 }

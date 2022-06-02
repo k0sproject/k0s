@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/sirupsen/logrus"
 )
 
 // Manager is the Component interface wrapper for Applier
@@ -152,18 +152,18 @@ func (m *Manager) runWatchers(ctx context.Context) error {
 }
 
 func (m *Manager) createStack(ctx context.Context, name string) error {
-	// safeguard in case the fswatcher would trigger an event for an already existing watcher
+	// safeguard in case the fswatcher would trigger an event for an already existing stack
 	if _, ok := m.stacks[name]; ok {
 		return nil
 	}
 	m.log.WithField("stack", name).Info("registering new stack")
-	sa, err := NewStackApplier(name, m.KubeClientFactory)
+	sa, err := NewStackApplier(ctx, name, m.KubeClientFactory)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		_ = sa.Start(ctx)
+		_ = sa.Start()
 	}()
 
 	m.stacks[name] = sa
@@ -179,12 +179,8 @@ func (m *Manager) removeStack(ctx context.Context, name string) error {
 			Debug("attempted to remove non-existent stack, probably not a directory")
 		return nil
 	}
-	err := sa.Stop()
-	if err != nil {
-		m.log.WithField("stack", name).WithError(err).Warn("failed to stop stack applier")
-		return err
-	}
-	err = sa.DeleteStack(ctx)
+	sa.Stop()
+	err := sa.DeleteStack(ctx)
 	if err != nil {
 		m.log.WithField("stack", name).WithError(err).Warn("failed to stop and delete a stack applier")
 		return err
