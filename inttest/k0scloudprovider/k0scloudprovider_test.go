@@ -123,6 +123,7 @@ func TestK0sCloudProviderSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
+			LaunchMode:      "openrc",
 		},
 	})
 }
