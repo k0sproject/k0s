@@ -33,6 +33,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -59,6 +60,8 @@ type CSRApprover struct {
 	clientset         clientset.Interface
 }
 
+var _ component.Component = (*CSRApprover)(nil)
+
 // NewCSRApprover creates the CSRApprover component
 func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *CSRApprover {
 	d := atomic.Value{}
@@ -76,12 +79,6 @@ func (a *CSRApprover) Healthy() error { return nil }
 // Stop stops the CSRApprover
 func (a *CSRApprover) Stop() error {
 	a.stop()
-	return nil
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (a *CSRApprover) Reconcile() error {
-	logrus.Debug("reconcile method called for: CSRApprover")
 	return nil
 }
 

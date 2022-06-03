@@ -50,7 +50,6 @@ func (f *Fake) Stop() error {
 	f.StopCalled = true
 	return f.StopErr
 }
-func (f *Fake) Reconcile() error { return nil }
 func (f *Fake) Healthy() error {
 	f.HealthyCalled = true
 	return f.HealthyErr

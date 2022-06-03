@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
 
@@ -41,6 +42,8 @@ type Kine struct {
 	supervisor supervisor.Supervisor
 	uid        int
 }
+
+var _ component.Component = (*Kine)(nil)
 
 // Init extracts the needed binaries
 func (k *Kine) Init(_ context.Context) error {
@@ -105,12 +108,6 @@ func (k *Kine) Run(_ context.Context) error {
 // Stop stops kine
 func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (k *Kine) Reconcile() error {
-	logrus.Debug("reconcile method called for: Kine")
-	return nil
 }
 
 // Health-check interface
