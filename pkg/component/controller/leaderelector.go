@@ -31,11 +31,10 @@ type LeaderElector interface {
 	IsLeader() bool
 	AddAcquiredLeaseCallback(fn func())
 	AddLostLeaseCallback(fn func())
-	component.Component
 }
 
-type leaderElector struct {
-	L *logrus.Entry
+type LeasePoolLeaderElector struct {
+	log *logrus.Entry
 
 	stopCh            chan struct{}
 	leaderStatus      atomic.Value
@@ -46,29 +45,32 @@ type leaderElector struct {
 	lostLeaseCallbacks     []func()
 }
 
-// NewLeaderElector creates new leader elector
-func NewLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) LeaderElector {
+var _ LeaderElector = (*LeasePoolLeaderElector)(nil)
+var _ component.Component = (*LeasePoolLeaderElector)(nil)
+
+// NewLeasePoolLeaderElector creates new leader elector using a Kubernetes lease pool.
+func NewLeasePoolLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePoolLeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
-	return &leaderElector{
+	return &LeasePoolLeaderElector{
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
-		L:                 logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
+		log:               logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
 		leaderStatus:      d,
 	}
 }
 
-func (l *leaderElector) Init(_ context.Context) error {
+func (l *LeasePoolLeaderElector) Init(_ context.Context) error {
 	return nil
 }
 
-func (l *leaderElector) Run(ctx context.Context) error {
+func (l *LeasePoolLeaderElector) Run(ctx context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
 	leasePool, err := leaderelection.NewLeasePool(client, "k0s-endpoint-reconciler",
-		leaderelection.WithLogger(l.L),
+		leaderelection.WithLogger(l.log),
 		leaderelection.WithContext(ctx))
 	if err != nil {
 		return err
@@ -83,11 +85,11 @@ func (l *leaderElector) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-events.AcquiredLease:
-				l.L.Info("acquired leader lease")
+				l.log.Info("acquired leader lease")
 				l.leaderStatus.Store(true)
 				runCallbacks(l.acquiredLeaseCallbacks)
 			case <-events.LostLease:
-				l.L.Info("lost leader lease")
+				l.log.Info("lost leader lease")
 				l.leaderStatus.Store(false)
 				runCallbacks(l.lostLeaseCallbacks)
 			}
@@ -104,29 +106,23 @@ func runCallbacks(callbacks []func()) {
 	}
 }
 
-func (l *leaderElector) AddAcquiredLeaseCallback(fn func()) {
+func (l *LeasePoolLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
 }
 
-func (l *leaderElector) AddLostLeaseCallback(fn func()) {
+func (l *LeasePoolLeaderElector) AddLostLeaseCallback(fn func()) {
 	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
 }
 
-func (l *leaderElector) Stop() error {
+func (l *LeasePoolLeaderElector) Stop() error {
 	if l.leaseCancel != nil {
 		l.leaseCancel()
 	}
 	return nil
 }
 
-// Reconcile detects changes in configuration and applies them to the component
-func (l *leaderElector) Reconcile() error {
-	logrus.Debug("reconcile method called for: leaderElector")
-	return nil
-}
-
-func (l *leaderElector) IsLeader() bool {
+func (l *LeasePoolLeaderElector) IsLeader() bool {
 	return l.leaderStatus.Load().(bool)
 }
 
-func (l *leaderElector) Healthy() error { return nil }
+func (l *LeasePoolLeaderElector) Healthy() error { return nil }

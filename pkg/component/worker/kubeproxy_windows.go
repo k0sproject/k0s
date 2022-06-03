@@ -21,9 +21,9 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
-	"github.com/sirupsen/logrus"
 )
 
 type KubeProxy struct {
@@ -32,6 +32,8 @@ type KubeProxy struct {
 	LogLevel   string
 	supervisor supervisor.Supervisor
 }
+
+var _ component.Component = (*KubeProxy)(nil)
 
 // Init
 func (k KubeProxy) Init(_ context.Context) error {
@@ -73,12 +75,6 @@ func (k KubeProxy) Run(ctx context.Context) error {
 
 func (k KubeProxy) Stop() error {
 	return k.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (k KubeProxy) Reconcile() error {
-	logrus.Debug("reconcile method called for: worker KubeProxy")
-	return nil
 }
 
 func (k KubeProxy) Healthy() error {

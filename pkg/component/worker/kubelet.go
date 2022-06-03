@@ -41,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -60,6 +61,8 @@ type Kubelet struct {
 	Taints              []string
 	ExtraArgs           string
 }
+
+var _ component.Component = (*Kubelet)(nil)
 
 type kubeletConfig struct {
 	ClientCAFile       string
@@ -227,12 +230,6 @@ func (k *Kubelet) Run(ctx context.Context) error {
 // Stop stops kubelet
 func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (k *Kubelet) Reconcile() error {
-	logrus.Debug("reconcile method called for: Kubelet")
-	return nil
 }
 
 // Health-check interface

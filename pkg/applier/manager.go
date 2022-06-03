@@ -24,6 +24,7 @@ import (
 	"gopkg.in/fsnotify.v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -43,6 +44,8 @@ type Manager struct {
 
 	LeaderElector controller.LeaderElector
 }
+
+var _ component.Component = (*Manager)(nil)
 
 // Init initializes the Manager
 func (m *Manager) Init(ctx context.Context) error {
@@ -82,12 +85,6 @@ func (m *Manager) Stop() error {
 	if m.cancelWatcher != nil {
 		m.cancelWatcher()
 	}
-	return nil
-}
-
-// Reconcile reconciles the Manager
-func (m *Manager) Reconcile() error {
-	logrus.Debug("reconcile method called for: Manager")
 	return nil
 }
 

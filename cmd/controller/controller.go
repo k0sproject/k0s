@@ -206,11 +206,14 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		})
 	}
 
-	var leaderElector controller.LeaderElector
+	var leaderElector interface {
+		controller.LeaderElector
+		component.Component
+	}
 
 	// One leader elector per controller
 	if !c.SingleNode {
-		leaderElector = controller.NewLeaderElector(adminClientFactory)
+		leaderElector = controller.NewLeasePoolLeaderElector(adminClientFactory)
 	} else {
 		leaderElector = &controller.DummyLeaderElector{Leader: true}
 	}

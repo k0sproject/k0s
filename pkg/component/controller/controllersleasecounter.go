@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 
 	"github.com/sirupsen/logrus"
 
@@ -37,6 +38,8 @@ type K0sControllersLeaseCounter struct {
 	cancelFunc  context.CancelFunc
 	leaseCancel context.CancelFunc
 }
+
+var _ component.Component = (*K0sControllersLeaseCounter)(nil)
 
 // Init initializes the component needs
 func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {
@@ -96,12 +99,6 @@ func (l *K0sControllersLeaseCounter) Stop() error {
 	if l.cancelFunc != nil {
 		l.cancelFunc()
 	}
-	return nil
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (l *K0sControllersLeaseCounter) Reconcile() error {
-	logrus.Debug("reconcile method called for: K0sLease")
 	return nil
 }
 

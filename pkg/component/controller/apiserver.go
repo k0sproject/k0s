@@ -50,6 +50,8 @@ type APIServer struct {
 	uid                int
 }
 
+var _ component.Component = (*APIServer)(nil)
+
 var apiDefaultArgs = map[string]string{
 	"allow-privileged":                   "true",
 	"requestheader-extra-headers-prefix": "X-Remote-Extra-",
@@ -192,12 +194,6 @@ func (a *APIServer) writeKonnectivityConfig() error {
 // Stop stops APIServer
 func (a *APIServer) Stop() error {
 	return a.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (a *APIServer) Reconcile() error {
-	logrus.Debug("reconcile method called for: APIServer")
-	return nil
 }
 
 // Health-check interface
