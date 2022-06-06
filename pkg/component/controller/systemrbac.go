@@ -123,6 +123,12 @@ rules:
   - apiGroups: ["autopilot.k0sproject.io"]
     resources: ["*"]
     verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "pods/eviction"]
+    verbs: ["*"]
+  - apiGroups: ["apps"]
+    resources: ["*"]
+    verbs: ["*"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
