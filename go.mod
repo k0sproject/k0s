@@ -7,6 +7,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.24
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.11
@@ -22,7 +23,6 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/k0sproject/dig v0.2.0
-	github.com/k0sproject/k0sctl v0.12.3
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
