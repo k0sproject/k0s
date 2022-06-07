@@ -17,7 +17,7 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_ldflags =
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kubernetes_version = 1.24.0
+kubernetes_version = 1.24.1
 kubernetes_buildimage = golang:$(go_version)-alpine
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
@@ -42,7 +42,7 @@ etcd_build_go_ldflags = "-w -s"
 #etcd_build_go_ldflags_extra =
 
 konnectivity_buildimage = golang:$(go_version)-alpine
-konnectivity_version = 0.0.30-k0s
+konnectivity_version = 0.0.31-k0s
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0
 konnectivity_build_go_flags = "-a"

@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
 )
@@ -36,6 +37,8 @@ type Status struct {
 	listener          net.Listener
 	runCtx            context.Context
 }
+
+var _ component.Component = (*Status)(nil)
 
 // Healthy dummy implementation
 func (s *Status) Healthy() error { return nil }
@@ -89,12 +92,6 @@ func (s *Status) Stop() error {
 		return err
 	}
 	return os.Remove(s.Socket)
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (s *Status) Reconcile() error {
-	logrus.Debug("reconcile method called for: Status")
-	return nil
 }
 
 type statusHandler struct {

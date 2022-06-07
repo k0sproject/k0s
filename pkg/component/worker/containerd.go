@@ -27,6 +27,7 @@ import (
 	dirutil "github.com/k0sproject/k0s/internal/pkg/dir"
 	fileutil "github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -47,6 +48,8 @@ type ContainerD struct {
 
 	OCIBundlePath string
 }
+
+var _ component.Component = (*ContainerD)(nil)
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init(ctx context.Context) error {
@@ -101,12 +104,6 @@ func (c *ContainerD) setupConfig() error {
 // Stop stops containerD
 func (c *ContainerD) Stop() error {
 	return c.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (c *ContainerD) Reconcile() error {
-	logrus.Debug("reconcile method called for: ContainerD")
-	return nil
 }
 
 // Health-check interface

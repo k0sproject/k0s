@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -102,33 +103,60 @@ func NewK0sKubectlCmd() *cobra.Command {
 				}
 			}
 		}
-		c := CmdOpts(config.GetCmdOpts())
-		if os.Getenv("KUBECONFIG") == "" {
-			// Verify we can read the config before pushing it to env
-			file, err := os.OpenFile(c.K0sVars.AdminKubeConfigPath, os.O_RDONLY, 0600)
-			if err != nil {
-				logrus.Errorf("cannot read admin kubeconfig at %s, is the server running?", c.K0sVars.AdminKubeConfigPath)
-				return err
-			}
-			defer file.Close()
-			os.Setenv("KUBECONFIG", c.K0sVars.AdminKubeConfigPath)
+
+		if err := fallbackToK0sKubeconfig(args); err != nil {
+			return err
 		}
 
 		return originalPreRunE(cmd, args)
 	}
-
+	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
 	originalRun := cmd.Run
-	cmd.Run = func(cmd *cobra.Command, args []string) {
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
 			if err := kubectl.HandlePluginCommand(&kubectlPluginHandler{}, args); err != nil {
 				// note: the plugin exec will replace the k0s process and exit on it's own,
 				// the error here is a failure to exec, not the error-exit of the plugin.
-				logrus.Fatalf("kubectl plugin handler failed: %v", err)
+				return fmt.Errorf("kubectl plugin handler failed: %w", err)
 			}
 		}
 
 		originalRun(cmd, args)
+		return nil
 	}
+
 	logs.AddFlags(cmd.PersistentFlags())
 	return cmd
+}
+
+func fallbackToK0sKubeconfig(args []string) error {
+	for _, arg := range args {
+		if arg == "--" {
+			// no more options
+			break
+		}
+		if arg == "--kubeconfig" || strings.HasPrefix(arg, "--kubeconfig=") {
+			// kubeconfig set via args, no need to check if k0s kubeconfig is readable
+			return nil
+		}
+	}
+
+	if _, envSet := os.LookupEnv("KUBECONFIG"); envSet {
+		// kubeconfig environment variable set, don't override
+		return nil
+	}
+
+	kubeconfig := config.GetCmdOpts().K0sVars.AdminKubeConfigPath
+	// verify that k0s's kubeconfig is readable before pushing it to the env
+	file, err := os.Open(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("cannot read k0s kubeconfig, is the server running? (%w)", err)
+	}
+	file.Close()
+
+	if err := os.Setenv("KUBECONFIG", kubeconfig); err != nil {
+		return fmt.Errorf("failed to set k0s kubeconfig as default: %w", err)
+	}
+
+	return nil
 }

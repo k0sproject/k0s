@@ -34,8 +34,7 @@ var k0sVars = constant.GetConfig("")
 func Test_KubeletConfig(t *testing.T) {
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
-		k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
-		require.NoError(t, err)
+		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 
 		t.Log("starting to run...")
 		buf, err := k.createProfiles(cfg)
@@ -99,12 +98,20 @@ func Test_KubeletConfig(t *testing.T) {
 
 			// manually apple the same changes to default config and check that there is no diff
 			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, false, "cluster.local")
-			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["anonymous"].(map[string]interface{})["enabled"] = false
+			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
+				"anonymous": map[string]interface{}{
+					"enabled": false,
+				},
+			}
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
 			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, false, "cluster.local")
-			defaultProfileKubeletConfig["authentication"].(map[string]interface{})["webhook"].(map[string]interface{})["cacheTTL"] = "15s"
+			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
+				"webhook": map[string]interface{}{
+					"cacheTTL": "15s",
+				},
+			}
 			defaultWithChangesYYY, err := yaml.Marshal(defaultProfileKubeletConfig)
 
 			require.NoError(t, err)
@@ -116,8 +123,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k, err := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
-	require.NoError(t, err)
+	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 
 	cfgProfileX := map[string]interface{}{
 		"authentication": map[string]interface{}{

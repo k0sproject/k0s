@@ -34,20 +34,20 @@ import (
 
 // NodeRole implements the component interface to manage node role labels for worker nodes
 type NodeRole struct {
-	kubeClientFactory k8sutil.ClientFactoryInterface
+	log logrus.FieldLogger
 
-	log     *logrus.Entry
-	k0sVars constant.CfgVars
+	kubeClientFactory k8sutil.ClientFactoryInterface
+	k0sVars           constant.CfgVars
 }
 
 // NewNodeRole creates new NodeRole reconciler
-func NewNodeRole(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) (*NodeRole, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "noderole"})
+func NewNodeRole(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *NodeRole {
 	return &NodeRole{
+		log: logrus.WithFields(logrus.Fields{"component": "noderole"}),
+
 		kubeClientFactory: clientFactory,
-		log:               log,
 		k0sVars:           k0sVars,
-	}, nil
+	}
 }
 
 // Init no-op

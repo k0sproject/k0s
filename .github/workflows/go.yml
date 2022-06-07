@@ -46,6 +46,9 @@ jobs:
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
 
       - name: Cache embedded binaries
         uses: actions/cache@v3
@@ -270,6 +273,9 @@ jobs:
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
@@ -336,6 +342,12 @@ jobs:
           make bindata
           make --touch codegen
           make build
+
+      - name: Upload compiled binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: k0s-${{ matrix.arch }}
+          path: k0s
 
       - name: Unit tests
         run: make check-unit

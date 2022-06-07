@@ -21,26 +21,13 @@ import "github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 // RequireMachineID requires a Machine ID
 func RequireMachineID(parent ParentProbe) {
 	parent.Set("machine-id", func(path ProbePath, _ Probe) Probe {
-		return &requireMachineID{path}
+		return ProbeFn(func(r Reporter) error {
+			desc := NewProbeDesc("Machine ID", path)
+			machineID, err := machineid.Generate()
+			if err != nil {
+				return r.Error(desc, err)
+			}
+			return r.Pass(desc, machineID)
+		})
 	})
-}
-
-type requireMachineID struct {
-	path ProbePath
-}
-
-func (r *requireMachineID) Path() ProbePath {
-	return r.path
-}
-
-func (*requireMachineID) DisplayName() string {
-	return "Machine ID"
-}
-
-func (r *requireMachineID) Probe(reporter Reporter) error {
-	machineID, err := machineid.Generate()
-	if err != nil {
-		return reporter.Error(r, err)
-	}
-	return reporter.Pass(r, machineID)
 }

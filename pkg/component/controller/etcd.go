@@ -34,6 +34,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/certificate"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -52,6 +53,8 @@ type Etcd struct {
 	uid        int
 	gid        int
 }
+
+var _ component.Component = (*Etcd)(nil)
 
 // Init extracts the needed binaries
 func (e *Etcd) Init(_ context.Context) error {
@@ -207,12 +210,6 @@ func (e *Etcd) Run(ctx context.Context) error {
 // Stop stops etcd
 func (e *Etcd) Stop() error {
 	return e.supervisor.Stop()
-}
-
-// Reconcile detects changes in configuration and applies them to the component
-func (e *Etcd) Reconcile() error {
-	logrus.Debug("reconcile method called for: Etcd")
-	return nil
 }
 
 func (e *Etcd) setupCerts(ctx context.Context) error {
