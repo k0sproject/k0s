@@ -7,7 +7,6 @@ require (
 	github.com/Microsoft/hcsshim v0.8.24
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudflare/cfssl v1.4.1
 	github.com/containerd/containerd v1.5.11
@@ -31,6 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go v3.1.0+incompatible
+	github.com/segmentio/backo-go v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -40,6 +40,7 @@ require (
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4
