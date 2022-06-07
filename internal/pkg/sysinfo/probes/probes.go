@@ -74,6 +74,21 @@ type ProbedProp interface {
 	String() string
 }
 
+// StringProp is a convenience way of reporting an arbitrary string as a probed property.
+type StringProp string
+
+func (s StringProp) String() string {
+	return string(s)
+}
+
+// ErrorProp is a convenience way of reporting an arbitrary error as a probed property.
+func ErrorProp(err error) interface {
+	ProbedProp
+	error
+} {
+	return errorProp{err}
+}
+
 // Reporter receives the outcome of probes.
 type Reporter interface {
 	// Pass informs about a probe that passed.
@@ -114,6 +129,16 @@ type probeDesc struct {
 
 func (d *probeDesc) Path() ProbePath     { return d.path }
 func (d *probeDesc) DisplayName() string { return d.name }
+
+type errorProp struct{ error }
+
+func (e errorProp) String() string {
+	return e.Error()
+}
+
+func (e errorProp) Unwrap() error {
+	return e.error
+}
 
 type probes struct {
 	path   ProbePath
