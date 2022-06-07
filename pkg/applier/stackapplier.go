@@ -23,8 +23,9 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+
+	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
 )
 
 // StackApplier handles each directory as a Stack and watches for changes
@@ -34,11 +35,13 @@ type StackApplier struct {
 	fsWatcher *fsnotify.Watcher
 	applier   Applier
 	log       *logrus.Entry
-	done      chan bool
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInterface) (*StackApplier, error) {
+func NewStackApplier(ctx context.Context, path string, kubeClientFactory kubernetes.ClientFactoryInterface) (*StackApplier, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -51,46 +54,48 @@ func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInte
 	log := logrus.WithField("component", "applier-"+applier.Name)
 	log.WithField("path", path).Debug("created stack applier")
 
-	return &StackApplier{
+	sa := &StackApplier{
 		Path:      path,
 		fsWatcher: watcher,
 		applier:   applier,
 		log:       log,
-		done:      make(chan bool, 1),
-	}, nil
+	}
+
+	sa.ctx, sa.cancel = context.WithCancel(ctx)
+
+	return sa, nil
 }
 
 // Start both the initial apply and also the watch for a single stack
-func (s *StackApplier) Start(ctx context.Context) error {
-	debouncer := debounce.New(ctx, 1*time.Second, s.fsWatcher.Events, func(arg fsnotify.Event) {
-		s.log.Debug("debouncer triggering, applying...")
-		err := retry.OnError(retry.DefaultRetry, func(err error) bool {
-			return true
-		}, func() error {
-			return s.applier.Apply(ctx)
-		})
-		if err != nil {
-			s.log.Warnf("failed to apply manifests: %s", err.Error())
-		}
-	})
-	defer debouncer.Stop()
-	go debouncer.Start()
+func (s *StackApplier) Start() error {
+	debouncer := debounce.Debouncer[fsnotify.Event]{
+		Input:   s.fsWatcher.Events,
+		Timeout: 1 * time.Second,
+		Filter:  s.triggersApply,
+		Callback: func(fsnotify.Event) {
+			s.log.Debug("Debouncer triggering, applying...")
+			err := retry.OnError(retry.DefaultRetry, func(err error) bool {
+				return true
+			}, func() error {
+				return s.applier.Apply(s.ctx)
+			})
+			if err != nil {
+				s.log.WithError(err).Error("Failed to apply manifests")
+			}
+		},
+	}
 
-	// apply all changes on start
-	s.fsWatcher.Events <- fsnotify.Event{}
+	// Send an artificial event to ensure that an initial apply will happen.
+	go func() { s.fsWatcher.Events <- fsnotify.Event{} }()
 
-	<-s.done
-
+	_ = debouncer.Run(s.ctx)
 	return nil
 }
 
-// Stop stops the stack applier and removes the stack
-func (s *StackApplier) Stop() error {
-	s.log.WithField("stack", s.Path).Info("stopping and deleting stack")
-	s.done <- true
-	close(s.done)
-
-	return nil
+// Stop stops the stack applier.
+func (s *StackApplier) Stop() {
+	s.log.WithField("stack", s.Path).Info("Stopping stack")
+	s.cancel()
 }
 
 // DeleteStack deletes the associated stack
@@ -100,3 +105,17 @@ func (s *StackApplier) DeleteStack(ctx context.Context) error {
 
 // Health-check interface
 func (s *StackApplier) Healthy() error { return nil }
+
+func (*StackApplier) triggersApply(event fsnotify.Event) bool {
+	// always let the initial apply happen
+	if event == (fsnotify.Event{}) {
+		return true
+	}
+
+	// ignore chmods (3845479a0)
+	if event.Op == fsnotify.Chmod {
+		return false
+	}
+
+	return true
+}
