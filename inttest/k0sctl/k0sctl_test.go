@@ -34,7 +34,7 @@ import (
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
-const k0sctlVersion = "v0.13.0-rc.3"
+const k0sctlVersion = "v0.13.0"
 
 type K0sctlSuite struct {
 	common.FootlooseSuite
