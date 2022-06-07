@@ -15,7 +15,7 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-      - name: checkout k0s release
+      - name: Checkout k0s
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -32,11 +32,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: checkout k0s release
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Install dependencies
         run: |
@@ -60,12 +55,13 @@ jobs:
         run: |
           mike deploy --push head
 
-      # If this is a tag build, deploy as a new version
+      # If a release has been published, deploy it as a new version
       - name: mike deploy new version
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
+        if: github.event_name == 'release' && github.event.action == 'published' && !github.event.release.draft
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
         run: |
-          VERSION=${GITHUB_REF/refs\/tags\//}
-          mike deploy --push "${VERSION}"
+          mike deploy --push "$VERSION"
 
       - name: Update mike version aliases
         id: set_versions
