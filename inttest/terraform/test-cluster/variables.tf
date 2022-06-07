@@ -14,5 +14,5 @@ variable "worker_count" {
 
 variable "cluster_flavor" {
   type    = string
-  default = "t2.large"
+  default = "c4.xlarge"
 }

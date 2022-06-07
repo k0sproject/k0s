@@ -2,7 +2,7 @@
 ARCH = $(shell go env GOARCH)
 OS = $(shell go env GOOS)
 
-sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.53.2/sonobuoy_0.53.2_$(OS)_$(ARCH).tar.gz
+sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.56.6/sonobuoy_0.56.6_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
 
