@@ -1,6 +1,15 @@
 # Run k0s worker nodes in Windows
 
-**IMPORTANT**: Windows support for k0s is under active development and **must be** considered experimental.
+---
+
+## Note on Windows Node Support for k0s
+
+Windows support has been removed from k0s for version 1.24 and above ([issue #1629](https://github.com/k0sproject/k0s/issues/1629)).
+The instructions below are relevant for versions 1.23 and below.
+
+---
+
+**IMPORTANT**: Windows support for k0s 1.23 and below should be considered as experimental only.
 
 ## Prerequisites
 
