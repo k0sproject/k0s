@@ -34,7 +34,7 @@ const k0sPartialConfig = `
 spec:
   api:
     sans:
-	- 1.2.3.4
+    - 1.2.3.4
 `
 
 type SingleNodeSuite struct {
