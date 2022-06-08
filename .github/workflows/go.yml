@@ -43,6 +43,9 @@ jobs:
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
 
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
@@ -280,6 +283,9 @@ jobs:
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
 
       - name: Set up Go 1.x
         uses: actions/setup-go@v2

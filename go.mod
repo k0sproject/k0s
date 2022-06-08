@@ -22,7 +22,6 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/ishidawataru/sctp v0.0.0-20191218070446-00ab2ac2db07 // indirect
 	github.com/k0sproject/dig v0.2.0
-	github.com/k0sproject/k0sctl v0.12.3
 	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -31,6 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go v3.1.0+incompatible
+	github.com/segmentio/backo-go v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -40,6 +40,7 @@ require (
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
+	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4
