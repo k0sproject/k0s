@@ -199,7 +199,7 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Kind == "" {
 		c.Kind = "ClusterConfig"
 	}
-	c.Spec = DefaultClusterSpec()
+	c.Spec = DefaultClusterSpec(c.Spec.Storage)
 
 	type config ClusterConfig
 	jc := (*config)(c)

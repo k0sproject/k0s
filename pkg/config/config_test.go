@@ -223,13 +223,20 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 }
 
 func TestSingleNodeConfig(t *testing.T) {
+
+	yamlData := `
+spec:
+  api:
+    address: 1.2.3.4`
+
+	CfgFile = writeConfigFile(t, yamlData)
+
 	loadingRules := ClientConfigLoadingRules{
 		RuntimeConfigPath: nonExistentPath(t),
 		Nodeconfig:        true,
 	}
 	k0sVars := constant.GetConfig("")
 	k0sVars.DefaultStorageType = "kine"
-	CfgFile = ""
 
 	err := loadingRules.InitRuntimeConfig(k0sVars)
 	if err != nil {
