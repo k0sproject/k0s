@@ -1,7 +1,7 @@
 go_version = 1.18.3
 
 runc_version = 1.1.2
-runc_buildimage = golang:$(go_version)-alpine
+runc_buildimage = golang:$(go_version)-alpine3.16
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
 #runc_build_go_flags =
@@ -9,7 +9,7 @@ runc_build_go_tags = "seccomp"
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
 containerd_version = 1.6.6
-containerd_buildimage = golang:$(go_version)-alpine
+containerd_buildimage = golang:$(go_version)-alpine3.16
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_cgo_enabled =
@@ -18,7 +18,7 @@ containerd_build_shim_go_cgo_enabled = 0
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
 kubernetes_version = 1.24.1
-kubernetes_buildimage = golang:$(go_version)-alpine
+kubernetes_buildimage = golang:$(go_version)-alpine3.16
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
 kubernetes_build_go_flags = "-v"
@@ -26,7 +26,7 @@ kubernetes_build_go_flags = "-v"
 kubernetes_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
 kine_version = 0.9.1
-kine_buildimage = golang:$(go_version)-alpine
+kine_buildimage = golang:$(go_version)-alpine3.16
 #kine_build_go_tags =
 #kine_build_go_cgo_enabled =
 #kine_build_go_flags =
@@ -34,14 +34,14 @@ kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
 etcd_version = 3.5.4
-etcd_buildimage = golang:$(go_version)-alpine
+etcd_buildimage = golang:$(go_version)-alpine3.16
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
 #etcd_build_go_flags =
 etcd_build_go_ldflags = "-w -s"
 #etcd_build_go_ldflags_extra =
 
-konnectivity_buildimage = golang:$(go_version)-alpine
+konnectivity_buildimage = golang:$(go_version)-alpine3.16
 konnectivity_version = 0.0.31-k0s
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0

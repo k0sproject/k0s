@@ -1,5 +1,5 @@
 ARG ARCH
-FROM ${ARCH}alpine:3.15
+FROM ${ARCH}alpine:3.16
 ARG TARGETARCH
 
 RUN apk add --no-cache bash coreutils findutils curl tini
