@@ -59,10 +59,13 @@ func NewAPICmd() *cobra.Command {
 		Use:   "api",
 		Short: "Run the controller api",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetLevel(logrus.InfoLevel)
-			logrus.SetOutput(os.Stdout)
-
 			c := CmdOpts(config.GetCmdOpts())
+
+			logrus.SetOutput(os.Stdout)
+			if !c.Debug {
+				logrus.SetLevel(logrus.InfoLevel)
+			}
+
 			return c.startAPI()
 		},
 	}

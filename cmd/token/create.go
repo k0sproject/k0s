@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
@@ -41,8 +40,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 `,
 		PreRunE: checkCreateTokenRole,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Disable logrus for token commands
-			logrus.SetLevel(logrus.WarnLevel)
 			c := CmdOpts(config.GetCmdOpts())
 			expiry, err := time.ParseDuration(tokenExpiry)
 			if err != nil {
