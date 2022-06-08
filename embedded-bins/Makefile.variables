@@ -50,4 +50,4 @@ konnectivity_build_go_ldflags = "-w -s"
 konnectivity_build_go_ldflags_extra = "-extldflags=-static"
 
 iptables_version = 1.8.7
-iptables_buildimage = alpine:3.14
+iptables_buildimage = alpine:3.16
