@@ -1,7 +1,7 @@
 include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:

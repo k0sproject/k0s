@@ -70,10 +70,13 @@ func NewControllerCmd() *cobra.Command {
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetLevel(logrus.InfoLevel)
-			logrus.SetOutput(os.Stdout)
-
 			c := CmdOpts(config.GetCmdOpts())
+
+			logrus.SetOutput(os.Stdout)
+			if !c.Debug {
+				logrus.SetLevel(logrus.InfoLevel)
+			}
+
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
