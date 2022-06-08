@@ -223,9 +223,16 @@ func TestSingleNodeConfig(t *testing.T) {
 	defer os.Remove(configPathRuntimeTest)
 
 	loadingRules := ClientConfigLoadingRules{RuntimeConfigPath: configPathRuntimeTest, Nodeconfig: true}
+
+	yamlData := `
+spec:
+  api:
+    address: 1.2.3.4`
+
+	CfgFile = writeConfigFile(yamlData)
+
 	k0sVars := constant.GetConfig("")
 	k0sVars.DefaultStorageType = "kine"
-	CfgFile = ""
 
 	err := loadingRules.InitRuntimeConfig(k0sVars)
 	if err != nil {
