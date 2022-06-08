@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -34,7 +35,6 @@ type Status struct {
 	L                 *logrus.Entry
 	httpserver        http.Server
 	listener          net.Listener
-	runCtx            context.Context
 }
 
 // Healthy dummy implementation
@@ -73,8 +73,7 @@ func removeLeftovers(socket string) {
 }
 
 // Run runs the component
-func (s *Status) Run(ctx context.Context) error {
-	s.runCtx = ctx
+func (s *Status) Run(_ context.Context) error {
 	go func() {
 		if err := s.httpserver.Serve(s.listener); err != nil && err != http.ErrServerClosed {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)
@@ -85,7 +84,9 @@ func (s *Status) Run(ctx context.Context) error {
 
 // Stop stops status component and removes the unix socket
 func (s *Status) Stop() error {
-	if err := s.httpserver.Shutdown(s.runCtx); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.httpserver.Shutdown(ctx); err != nil && err != context.Canceled {
 		return err
 	}
 	return os.Remove(s.Socket)
