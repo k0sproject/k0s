@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"runtime"
 
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
@@ -41,10 +40,6 @@ func NewStatusCmd() *cobra.Command {
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
-			}
-
 			statusInfo, err := install.GetStatusInfo(config.StatusSocket)
 			if err != nil {
 				return err

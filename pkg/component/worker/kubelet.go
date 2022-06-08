@@ -77,10 +77,6 @@ type kubeletConfig struct {
 func (k *Kubelet) Init(_ context.Context) error {
 	cmds := []string{"kubelet", "xtables-legacy-multi"}
 
-	if runtime.GOOS == "windows" {
-		cmds = []string{"kubelet.exe"}
-	}
-
 	for _, cmd := range cmds {
 		err := assets.Stage(k.K0sVars.BinDir, cmd, constant.BinDirMode)
 		if err != nil {
@@ -121,10 +117,6 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		KubeReservedCgroup: "system.slice",
 		KubeletCgroups:     "/system.slice/containerd.service",
 	}
-	if runtime.GOOS == "windows" {
-		cmd = "kubelet.exe"
-	}
-
 	logrus.Info("Starting kubelet")
 	kubeletConfigPath := filepath.Join(k.K0sVars.DataDir, "kubelet-config.yaml")
 	// get the "real" resolv.conf file (in systemd-resolvd bases system,
@@ -145,25 +137,8 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
-	if runtime.GOOS == "windows" {
-		node, err := getNodeName(ctx)
-		if err != nil {
-			return fmt.Errorf("can't get hostname: %v", err)
-		}
-		kubeletConfigData.CgroupsPerQOS = false
-		kubeletConfigData.ResolvConf = ""
-		args["--enforce-node-allocatable"] = ""
-		args["--pod-infra-container-image"] = "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
-		args["--network-plugin"] = "cni"
-		args["--cni-bin-dir"] = "C:\\k\\cni"
-		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
-		args["--hostname-override"] = node
-		args["--hairpin-mode"] = "promiscuous-bridge"
-		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
-	} else {
-		kubeletConfigData.CgroupsPerQOS = true
-		kubeletConfigData.ResolvConf = resolvConfPath
-	}
+	kubeletConfigData.CgroupsPerQOS = true
+	kubeletConfigData.ResolvConf = resolvConfPath
 
 	if k.CRISocket != "" {
 		// Due to the removal of dockershim from kube 1.24, we no longer need to

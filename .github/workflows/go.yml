@@ -6,27 +6,27 @@ on:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
 
 jobs:
   build:
@@ -34,12 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [linux, windows]
+        target: [linux]
         include:
           - target: linux
             build-docker-image: k0sbuild
-          - target: windows
-            binary-suffix: .exe
 
     steps:
       - name: Check out code into the Go module directory
@@ -134,7 +132,7 @@ jobs:
 
       - name: Validate OCI images manifests
         run: make check-image-validity
-  
+
   smoketest:
     name: Smoke test
     needs: build

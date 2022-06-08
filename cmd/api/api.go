@@ -17,7 +17,6 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -32,10 +31,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
@@ -98,9 +95,6 @@ func (c *CmdOpts) startAPI() error {
 			c.controllerHandler(c.caHandler()),
 		)
 	}
-	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
-		c.workerHandler(c.kubeConfigHandler()),
-	)
 
 	srv := &http.Server{
 		Handler:      router,
@@ -167,69 +161,6 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 		}
 		resp.Header().Set("content-type", "application/json")
 		if err := json.NewEncoder(resp).Encode(etcdResp); err != nil {
-			sendError(err, resp)
-			return
-		}
-	})
-}
-
-func (c *CmdOpts) kubeConfigHandler() http.Handler {
-	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-		tpl := `apiVersion: v1
-kind: Config
-clusters:
-- name: kubernetes
-  cluster:
-    certificate-authority-data: {{ .Ca }}
-    server: {{ .Server }}
-contexts:
-- name: calico-windows@kubernetes
-  context:
-    cluster: kubernetes
-    namespace: kube-system
-    user: calico-windows
-current-context: calico-windows@kubernetes
-users:
-- name: calico-windows
-  user:
-    token: {{ .Token }}
-`
-		l, err := c.KubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
-		if err != nil {
-			sendError(err, resp)
-			return
-		}
-		found := false
-		var secretWithToken corev1.Secret
-		for _, secret := range l.Items {
-			if !strings.HasPrefix(secret.Name, "calico-node-token") {
-				continue
-			}
-			found = true
-			secretWithToken = secret
-			break
-		}
-		if !found {
-			sendError(fmt.Errorf("no calico-node-token secret found"), resp)
-			return
-		}
-
-		tw := templatewriter.TemplateWriter{
-			Name:     "kube-config",
-			Template: tpl,
-			Data: struct {
-				Server    string
-				Ca        string
-				Token     string
-				Namespace string
-			}{
-				Server:    c.NodeConfig.Spec.API.APIAddressURL(),
-				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
-				Token:     string(secretWithToken.Data["token"]),
-				Namespace: string(secretWithToken.Data["namespace"]),
-			},
-		}
-		if err := tw.WriteToBuffer(resp); err != nil {
 			sendError(err, resp)
 			return
 		}

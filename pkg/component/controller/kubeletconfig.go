@@ -135,13 +135,8 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
 		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
 	}
-	if err := k.writeConfigMapWithProfile(manifest, "default-windows", winDefaultProfile); err != nil {
-		return nil, fmt.Errorf("can't write manifest for default profile config map: %v", err)
-	}
-	configMapNames := []string{
-		formatProfileName("default"),
-		formatProfileName("default-windows"),
-	}
+	configMapNames := []string{formatProfileName("default")}
+
 	for _, profile := range clusterSpec.Spec.WorkerProfiles {
 		profileConfig := getDefaultProfile(dnsAddress, false, clusterSpec.Spec.Network.ClusterDomain) // Do not add dualstack feature gate to the custom profiles
 

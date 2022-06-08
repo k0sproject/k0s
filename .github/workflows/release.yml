@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
   #pull_request:
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           echo ::set-output name=IMAGE_TAGS::${TAGS}
   x64:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -105,49 +105,9 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
 
-
-  windows:
-    needs: release
-    runs-on: [self-hosted,linux,x64]
-    env:
-      SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
-      TARGET_OS: windows
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Build
-        run: make EMBEDDED_BINS_BUILDMODE=docker k0s.exe
-        env:
-          VERSION: ${{ needs.release.outputs.tag_name }}
-
-      - name: Clean Docker
-        run: |
-          docker system prune --all --volumes --force
-
-      - name: Upload Release Assets
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./k0s.exe
-          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
-          asset_content_type: application/octet-stream
-
   arm64:
     needs: release
-    runs-on: [self-hosted,linux,arm64]
+    runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -212,10 +172,9 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
 
-
   armv7:
     needs: release
-    runs-on: [self-hosted,linux,arm]
+    runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -274,14 +233,13 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
 
-
   build-image:
     needs:
       - release
       - x64
       - arm64
       - armv7
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -327,7 +285,6 @@ jobs:
             ghcr.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
             docker.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
           push: true
-
 
   conformance-test:
     needs:
@@ -409,12 +366,12 @@ jobs:
           terraform destroy -auto-approve
         if: ${{ always() }}
 
- #     - name: slack notify
- #       env:
- #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
- #       uses: 8398a7/action-slack@v3
- #       with:
- #         job_name: "Release - K8s Full Conformance"
- #         status: ${{ job.status }}
- #         fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
- #       if: ${{ always() }} # Pick up events even if the job fails or is canceled.
+  #     - name: slack notify
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #       uses: 8398a7/action-slack@v3
+  #       with:
+  #         job_name: "Release - K8s Full Conformance"
+  #         status: ${{ job.status }}
+  #         fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
+  #       if: ${{ always() }} # Pick up events even if the job fails or is canceled.

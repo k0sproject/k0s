@@ -54,11 +54,6 @@ func (s *K0sctlSuite) haveLatest() bool {
 func k0sctlFilename() string {
 	var ext string
 	os := runtime.GOOS
-	if os == "windows" {
-		os = "win"
-		ext = ".exe"
-	}
-
 	var arch string
 	switch runtime.GOARCH {
 	case "amd64":

@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"syscall"
 
@@ -51,19 +50,6 @@ func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environme
 		if exe, err := os.Executable(); err == nil {
 			logrus.Warnf("kubectl not found in $PATH. many kubectl plugins try to run 'kubectl'. you can use k0s as a replacement by creating a symlink, for example: `sudo ln -s \"%s\" /usr/local/bin/kubectl`", exe)
 		}
-	}
-
-	// Windows does not support exec syscall.
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command(executablePath, cmdArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
-		cmd.Env = environment
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-		os.Exit(0)
 	}
 
 	// invoke cmd binary relaying the environment and args given

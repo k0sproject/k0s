@@ -8,16 +8,9 @@ export TARGET_OS
 
 bindir = staging/${TARGET_OS}/bin
 posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi
-windows_bins = kubelet.exe kube-proxy.exe
 buildmode = docker
 
-
-
-ifeq ($(TARGET_OS),windows)
-bins = ${windows_bins}
-else
 bins = ${posix_bins}
-endif
 
 .PHONY: all
 all: $(addprefix $(bindir)/, $(bins))
@@ -53,16 +46,10 @@ $(bindir)/konnectivity-server: .container.konnectivity
 $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/kube-controller-manager: .container.kubernetes
 $(bindir)/xtables-legacy-multi: .container.iptables
 
-$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
-
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
 .container.%: .docker-image.%.stamp
-	docker create k0sbuild$(basename $<) > $@.tmp
-	mv $@.tmp $@
-
-.container.%.windows: .docker-image.%.windows.stamp
 	docker create k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
@@ -78,11 +65,3 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 		--build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
 		-f $< .
 	touch $@
-
-.docker-image.%.windows.stamp: %/Dockerfile.windows Makefile.variables
-	docker build -t k0sbuild$(basename $@) \
-		--build-arg VERSION=$($(patsubst %/Dockerfile.windows,%,$<)_version) \
-		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile.windows,%,$<)_buildimage) \
-		-f $< .
-	touch $@
-

@@ -89,11 +89,7 @@ GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=
 	$(GOLANG_IMAGE) go
 
 .PHONY: build
-ifeq ($(TARGET_OS),windows)
-build: k0s.exe
-else
 build: k0s
-endif
 
 .k0sbuild.docker-image.k0s: build/Dockerfile
 	docker build --rm \
@@ -103,7 +99,7 @@ endif
 	touch $@
 
 .PHONY: all
-all: k0s k0s.exe
+all: k0s 
 
 go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy
@@ -118,13 +114,12 @@ print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
 			"var BinData = map[string]struct{ offset, size int64 }{}" \
 			"var BinDataSize int64"
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
+pkg/assets/zz_generated_offsets_linux.go:
 	rm -f bindata_$(zz_os) && touch bindata_$(zz_os)
 	$(print_empty_generated_offsets) > $@
 else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
-pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
-pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s go.sum
+pkg/assets/zz_generated_offsets_linux.go: .k0sbuild.docker-image.k0s go.sum
 	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
@@ -139,21 +134,15 @@ k0s: BUILD_GO_CGO_ENABLED = 1
 k0s: GOLANG_IMAGE = "k0sbuild.docker-image.k0s"
 k0s: BUILD_GO_LDFLAGS_EXTRA = -extldflags=-static
 k0s: .k0sbuild.docker-image.k0s
-
-k0s.exe: TARGET_OS = windows
-k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine
-
-k0s.exe k0s: $(codegen_targets)
-
-k0s.exe k0s: $(GO_SRCS) go.sum
+k0s: $(codegen_targets)
+k0s: $(GO_SRCS) go.sum
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) GOARCH=$(GOARCH) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \
 		&& chmod +x $@.tmp \
 		&& mv $@.tmp $@
 
-.bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
+.bins.linux.stamp: embedded-bins/Makefile.variables
 	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
 	touch $@
 
@@ -198,7 +187,7 @@ clean-docker-image:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s .bins.*stamp bindata* static/gen_manifests.go
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C image-bundle clean

@@ -1,10 +1,6 @@
 include Makefile.variables
 
-ifeq ($(OS),Windows_NT)
-detected_OS := windows
-else
 detected_OS := $(shell uname | tr [:upper:] [:lower:])
-endif
 
 ifeq ($(detected_OS),darwin)
 sedopt := -i "" -e
@@ -26,23 +22,23 @@ docs: .require-mkdocs cli
 	  exit 1; \
 	}
 
-.PHONY: .k0s-download-url .k0s.exe-download-url
+.PHONY: .k0s-download-url
 ifeq ($(TARGET_VERSION),latest)
-.k0s-download-url .k0s.exe-download-url: release_metadata_url = $(k0s_releases_url)/latest
+.k0s-download-url: release_metadata_url = $(k0s_releases_url)/latest
 else
-.k0s-download-url .k0s.exe-download-url: release_metadata_url = $(k0s_releases_url)/tags/$(TARGET_VERSION)
+.k0s-download-url: release_metadata_url = $(k0s_releases_url)/tags/$(TARGET_VERSION)
 endif
-.k0s-download-url .k0s.exe-download-url:
+.k0s-download-url:
 	$(eval binary_suffix = $(patsubst .k0s%,%,$(@:-download-url=)))
 	curl -sS -- '$(release_metadata_url)' \
 	  | jq -r '. as {name: $$ver, assets: $$a} | $$a[] | select(.name == "k0s-"+$$ver+"-amd64$(binary_suffix)") | .browser_download_url'
 
-.PHONY: k0s k0s.exe
+.PHONY: k0s
 ifeq ($(TARGET_VERSION),local)
 cli: k0s_binary_path := $(abspath ..)
 else
 cli: k0s_binary_path := $(abspath .)
-k0s k0s.exe::
+k0s:
 	[ ! -f '$@.etag' ] || { if [ ! -f '$@' ] || [ '$@.etag' -ot '$@' ]; then rm -- '$@.etag'; fi }
 	touch -- '$@.etag'
 	@downloadUrl="$$($(MAKE) --no-print-directory -s '.$@-download-url')" \
@@ -58,13 +54,8 @@ k0s::
 endif
 
 .PHONY: cli
-ifeq ($(detected_OS),windows)
-cli: k0s.exe
-cli: k0s_binary = k0s.exe
-else
 cli: k0s
 cli: k0s_binary = k0s
-endif
 cli:
 	rm -rf cli
 	mkdir cli
@@ -80,7 +71,7 @@ cli:
 	touch -- '$@'
 
 clean-k0s:
-	rm -f k0s k0s.exe k0s.etag k0s.exe.etag
+	rm -f k0s k0s.etag
 
 .PHONY: clean
 clean: clean-k0s

@@ -17,7 +17,6 @@ package cleanup
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/vishvananda/netlink"
 )
@@ -31,10 +30,6 @@ func (b *bridge) Name() string {
 
 // Run removes found kube-bridge leftovers
 func (b *bridge) Run() error {
-	if runtime.GOOS == "windows" {
-		return nil
-	}
-
 	lnks, err := netlink.LinkList()
 	if err != nil {
 		return fmt.Errorf("failed to get link list from netlink: %v", err)

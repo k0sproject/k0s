@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -120,9 +119,6 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	}
 
 	componentManager := component.NewManager()
-	if runtime.GOOS == "windows" && c.CriSocket == "" {
-		return fmt.Errorf("windows worker needs to have external CRI")
-	}
 	if c.CriSocket == "" {
 		componentManager.Add(ctx, &worker.ContainerD{
 			LogLevel: c.Logging["containerd"],
@@ -131,10 +127,6 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 	}
 
 	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
-	if c.WorkerProfile == "default" && runtime.GOOS == "windows" {
-		c.WorkerProfile = "default-windows"
-	}
-
 	componentManager.Add(ctx, &worker.Kubelet{
 		CRISocket:           c.CriSocket,
 		EnableCloudProvider: c.CloudProvider,
@@ -146,23 +138,6 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		Taints:              c.Taints,
 		ExtraArgs:           c.KubeletExtraArgs,
 	})
-
-	if runtime.GOOS == "windows" {
-		if c.TokenArg == "" {
-			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
-		}
-		componentManager.Add(ctx, &worker.KubeProxy{
-			K0sVars:   c.K0sVars,
-			LogLevel:  c.Logging["kube-proxy"],
-			CIDRRange: c.CIDRRange,
-		})
-		componentManager.Add(ctx, &worker.CalicoInstaller{
-			Token:      c.TokenArg,
-			APIAddress: c.APIServer,
-			CIDRRange:  c.CIDRRange,
-			ClusterDNS: c.ClusterDNS,
-		})
-	}
 
 	if !c.SingleNode && !c.EnableWorker {
 		componentManager.Add(ctx, &status.Status{
