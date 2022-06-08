@@ -1,4 +1,4 @@
-go_version = 1.18.2
+go_version = 1.18.3
 
 runc_version = 1.1.2
 runc_buildimage = golang:$(go_version)-alpine
@@ -50,4 +50,4 @@ konnectivity_build_go_ldflags = "-w -s"
 konnectivity_build_go_ldflags_extra = "-extldflags=-static"
 
 iptables_version = 1.8.7
-iptables_buildimage = alpine:3.14
+iptables_buildimage = alpine:3.16
