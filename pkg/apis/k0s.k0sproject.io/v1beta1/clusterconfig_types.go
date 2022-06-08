@@ -202,7 +202,7 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.ClusterName == "" {
 		c.ClusterName = "k0s"
 	}
-	c.Spec = DefaultClusterSpec()
+	c.Spec = DefaultClusterSpec(c.Spec.Storage)
 
 	type config ClusterConfig
 	jc := (*config)(c)
