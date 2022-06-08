@@ -76,7 +76,7 @@ ifeq ($(go_controllergen),)
 go_controllergen := cd hack/ci-deps && go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0 && cd ../.. && "${GOPATH}/bin/controller-gen"
 endif
 
-GOLANG_IMAGE = golang:$(go_version)-alpine
+GOLANG_IMAGE = golang:$(go_version)-alpine3.16
 GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
@@ -97,7 +97,7 @@ endif
 
 .k0sbuild.docker-image.k0s: build/Dockerfile
 	docker build --rm \
-		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		--build-arg BUILDIMAGE=golang:$(go_version)-alpine3.16 \
 		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
 	touch $@
@@ -142,7 +142,7 @@ k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine
+k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine3.16
 
 k0s.exe k0s: $(codegen_targets)
 

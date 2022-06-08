@@ -74,7 +74,7 @@ Port 7946 (TCP & UDP) must be allowed between the nodes. In addition, before ins
         spec:
           containers:
           - name: httpd
-            image: httpd:2.4.48-alpine3.14
+            image: httpd:2.4.53-alpine
             ports:
             - containerPort: 80
     ---
