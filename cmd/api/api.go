@@ -265,7 +265,3 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 func (c *CmdOpts) controllerHandler(next http.Handler) http.Handler {
 	return c.authMiddleware(next, controllerRole)
 }
-
-func (c *CmdOpts) workerHandler(next http.Handler) http.Handler {
-	return c.authMiddleware(next, workerRole)
-}
