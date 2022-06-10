@@ -142,6 +142,9 @@ type PlanCommandK0sUpdate struct {
 	// Version is the version that `K0sUpdate` will be upgrading to.
 	Version string `json:"version"`
 
+	// ForceUpdate ensures that version checking is ignored and that all updates are applied.
+	ForceUpdate bool `json:"forceupdate"`
+
 	// Platforms is a map of PlanResourceUrls to platform identifiers, allowing a single k0s version
 	// to have multiple URL resources based on platform.
 	Platforms PlanPlatformResourceURLMap `json:"platforms"`
