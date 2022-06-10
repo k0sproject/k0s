@@ -337,7 +337,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
-      TF_VERSION: 0.13.4
+      TF_VERSION: 1.2.2
     name: "K8s Conformance Testing"
     runs-on: ubuntu-latest
     defaults:
@@ -409,12 +409,3 @@ jobs:
           terraform destroy -auto-approve
         if: ${{ always() }}
 
- #     - name: slack notify
- #       env:
- #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
- #       uses: 8398a7/action-slack@v3
- #       with:
- #         job_name: "Release - K8s Full Conformance"
- #         status: ${{ job.status }}
- #         fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
- #       if: ${{ always() }} # Pick up events even if the job fails or is canceled.
