@@ -80,7 +80,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 		return err
 	}
 
-	workerCommand := fmt.Sprintf(`nohup k0s worker --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
+	workerCommand := fmt.Sprintf(`nohup /usr/local/bin/k0s worker --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	_, err = sshWorker.ExecWithOutput(workerCommand)
 	if err != nil {
 		return err
