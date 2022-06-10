@@ -96,15 +96,15 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.Require().NoError(err)
 	s.Require().Contains(output, "/k0s-tenant/services/specs/kube-system/kube-dns")
 
-	etcdLeaveOutput, err := k0sControllerSSH.ExecWithOutput("k0s etcd leave")
+	etcdLeaveOutput, err := k0sControllerSSH.ExecWithOutput("/usr/local/bin/k0s etcd leave")
 	s.Require().Error(err)
 	s.Require().Contains(etcdLeaveOutput, "command 'k0s etcd' does not support external etcd cluster")
 
-	etcdListOutput, err := k0sControllerSSH.ExecWithOutput("k0s etcd member-list")
+	etcdListOutput, err := k0sControllerSSH.ExecWithOutput("/usr/local/bin/k0s etcd member-list")
 	s.Require().Error(err)
 	s.Require().Contains(etcdListOutput, "command 'k0s etcd' does not support external etcd cluster")
 
-	backupOutput, err := k0sControllerSSH.ExecWithOutput("k0s backup")
+	backupOutput, err := k0sControllerSSH.ExecWithOutput("/usr/local/bin/k0s backup")
 	s.Require().Error(err)
 	s.Require().Contains(backupOutput, "command 'k0s backup' does not support external etcd cluster")
 }

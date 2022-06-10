@@ -59,7 +59,7 @@ const (
 	lbNodeNameFormat         = "lb%d"
 	etcdNodeNameFormat       = "etcd%d"
 
-	defaultK0sBinaryFullPath = "/usr/bin/k0s"
+	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
 	k0sBindMountFullPath     = "/dist/k0s"
 )
 

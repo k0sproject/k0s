@@ -42,7 +42,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 
 	_, err = ssh.ExecWithOutput("chmod +x /bin/kubectl-foo")
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput("ln -s /usr/bin/k0s /usr/bin/kubectl")
+	_, err = ssh.ExecWithOutput("ln -s /usr/local/bin/k0s /usr/bin/kubectl")
 	s.Require().NoError(err)
 
 	s.T().Log("Check that different ways to call kubectl subcommand work")
@@ -54,7 +54,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	}{
 		{
 			Name:    "full subcommand name",
-			Command: "k0s kubectl version",
+			Command: "/usr/local/bin/k0s kubectl version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				s.Require().Contains(output, "Client Version: version.Info")
@@ -62,7 +62,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "short subcommand name",
-			Command: "k0s kc version",
+			Command: "/usr/local/bin/k0s kc version",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				s.Require().Contains(output, "Client Version: version.Info")
@@ -70,7 +70,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "full command arguments",
-			Command: "k0s kubectl version -v 8",
+			Command: "/usr/local/bin/k0s kubectl version -v 8",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				// Check for debug log messages
@@ -79,7 +79,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "short command arguments",
-			Command: "k0s kc version -v 8",
+			Command: "/usr/local/bin/k0s kc version -v 8",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				// Check for debug log messages
@@ -88,7 +88,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "full command plugin loader",
-			Command: "k0s kubectl foo",
+			Command: "/usr/local/bin/k0s kubectl foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				s.Require().Equal("foo-plugin", output, "Unexpected output: %v", output)
@@ -96,7 +96,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "short command plugin loader",
-			Command: "k0s kc foo",
+			Command: "/usr/local/bin/k0s kc foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				s.Require().Equal("foo-plugin", output, "Unexpected output: %v", output)
@@ -122,7 +122,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		},
 		{
 			Name:    "symlink plugin loader",
-			Command: "k0s kubectl foo",
+			Command: "/usr/local/bin/k0s kubectl foo",
 			Check: func(output string, e error) {
 				s.Require().NoError(e)
 				s.Require().Equal("foo-plugin", output, "Unexpected output: %v", output)

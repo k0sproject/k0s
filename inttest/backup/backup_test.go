@@ -170,7 +170,7 @@ func (s *BackupSuite) takeBackup() error {
 	}
 	defer ssh.Disconnect()
 
-	out, err := ssh.ExecWithOutput("k0s backup --save-path /root/")
+	out, err := ssh.ExecWithOutput("/usr/local/bin/k0s backup --save-path /root/")
 	if err != nil {
 		s.T().Errorf("backup failed with output:\n%s", out)
 		return err
@@ -186,7 +186,7 @@ func (s *BackupSuite) takeBackupStdout() error {
 	}
 	defer ssh.Disconnect()
 
-	out, err := ssh.ExecWithOutput("k0s backup --save-path - > backup.tar.gz")
+	out, err := ssh.ExecWithOutput("/usr/local/bin/k0s backup --save-path - > backup.tar.gz")
 	if err != nil {
 		s.T().Errorf("backup failed with output:\n%s", out)
 		return err
@@ -211,7 +211,7 @@ func (s *BackupSuite) restoreBackup() error {
 
 	s.T().Log("restoring controller from file")
 
-	out, err := ssh.ExecWithOutput("k0s restore $(ls /root/k0s_backup_*.tar.gz)")
+	out, err := ssh.ExecWithOutput("/usr/local/bin/k0s restore $(ls /root/k0s_backup_*.tar.gz)")
 	if err != nil {
 		s.T().Errorf("restore failed with output:\n%s", out)
 		return err
@@ -230,7 +230,7 @@ func (s *BackupSuite) restoreBackupStdin() error {
 
 	s.T().Log("restoring controller from stdin")
 
-	out, err := ssh.ExecWithOutput("cat backup.tar.gz | k0s restore -")
+	out, err := ssh.ExecWithOutput("cat backup.tar.gz | /usr/local/bin/k0s restore -")
 	if err != nil {
 		s.T().Errorf("restore failed with output:\n%s", out)
 		return err

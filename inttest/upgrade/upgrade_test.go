@@ -138,7 +138,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("cp -f /dist/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
@@ -157,7 +157,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("rm /usr/local/bin/k0s && cp /usr/bin/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput("cp -f /dist/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
