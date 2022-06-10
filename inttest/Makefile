@@ -25,7 +25,7 @@ bin:
 bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
-.footloose-alpine.stamp: footloose-alpine/Dockerfile
+.footloose-alpine.stamp: footloose-alpine/Dockerfile $(shell find footloose-alpine/root -type f)
 	docker build \
 	  --build-arg ETCD_ARCH=$(etcd_arch) \
 	  --build-arg ETCD_VERSION=$(etcd_version) \
