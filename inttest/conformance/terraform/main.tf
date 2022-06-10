@@ -12,8 +12,9 @@ resource "random_id" "cluster_identifier" {
 }
 
 module "k0s-sonobuoy" {
-  source       = "github.com/k0sproject/k0s/inttest/terraform/test-cluster"
+  source = "../../terraform/test-cluster"
   cluster_name = "sonobuoy_test-${random_id.cluster_identifier.hex}"
+  cluster_flavor = "c4.xlarge"
 }
 
 resource "null_resource" "controller" {
