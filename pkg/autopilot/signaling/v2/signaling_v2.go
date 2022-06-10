@@ -141,9 +141,10 @@ type Command struct {
 
 // CommandK0sUpdate describes what an update to `k0s` is.
 type CommandK0sUpdate struct {
-	URL     string `json:"url" validate:"required,url"`
-	Version string `json:"version" validate:"required"`
-	Sha256  string `json:"sha256,omitempty"`
+	URL         string `json:"url" validate:"required,url"`
+	Version     string `json:"version" validate:"required"`
+	Sha256      string `json:"sha256,omitempty"`
+	ForceUpdate bool   `json:"forceupdate,omitempty"`
 }
 
 // CommandAirgapUpdate describes what an update to `airgap` is.

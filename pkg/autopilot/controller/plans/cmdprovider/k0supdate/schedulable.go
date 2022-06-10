@@ -161,9 +161,10 @@ func signalNodeK0sUpdateCommandBuilder(node crcli.Object, cmd apv1beta2.PlanComm
 		return apsigv2.Command{
 			ID: &cmdStatus.ID,
 			K0sUpdate: &apsigv2.CommandK0sUpdate{
-				URL:     updateContent.URL,
-				Version: cmd.K0sUpdate.Version,
-				Sha256:  updateContent.Sha256,
+				URL:         updateContent.URL,
+				Version:     cmd.K0sUpdate.Version,
+				Sha256:      updateContent.Sha256,
+				ForceUpdate: cmd.K0sUpdate.ForceUpdate,
 			},
 		}
 	}, nil

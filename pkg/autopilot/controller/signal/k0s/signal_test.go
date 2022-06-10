@@ -339,6 +339,111 @@ func TestSignalControllerSameVersion(t *testing.T) {
 	}
 }
 
+// TestSignalControllerSameVersionForceUpdate ensures that when requesting the same k0s version when
+// 'forceupdate' is provided, the signaling response transitions to 'Completed'
+func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
+	logger := logrus.NewEntry(logrus.StandardLogger())
+
+	commonObjectMeta := metav1.ObjectMeta{
+		Name: "foo",
+		Annotations: map[string]string{
+			"k0sproject.io/autopilot-signal-version": "v2",
+			"k0sproject.io/autopilot-signal-data": `
+				{
+					"planId":"abc123",
+					"created":"now",
+					"command": {
+						"id": 123,
+						"k0supdate": {
+							"forceupdate": true,
+							"version": "v1.23.3+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
+							"timestamp": "2021-10-20T19:06:56Z",
+							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
+						}
+					}
+				}
+			`,
+		},
+	}
+
+	var tests = []struct {
+		name     string
+		objects  []crcli.Object
+		delegate apdel.ControllerDelegate
+	}{
+		{
+			"ControlNode",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: "autopilot.k0sproject.io/v1beta2",
+					},
+					ObjectMeta: commonObjectMeta,
+				},
+			},
+			apdel.ControlNodeControllerDelegate(),
+		},
+		{
+			"Node",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: commonObjectMeta,
+				},
+			},
+			apdel.NodeControllerDelegate(),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			assert.NoError(t, apscheme.AddToScheme(scheme))
+			assert.NoError(t, v1.AddToScheme(scheme))
+
+			client := crfake.NewClientBuilder().WithObjects(test.objects...).WithScheme(scheme).Build()
+
+			c := apsigcomm.NewSignalController(
+				logger,
+				client,
+				test.delegate,
+				&signalControllerHandler{
+					timeout:           SignalResponseProcessingTimeout,
+					k0sVersionHandler: echoedK0sVersionHandler("v1.23.3+k0s.0"),
+				},
+			)
+
+			req := crrec.Request{
+				NamespacedName: types.NamespacedName{Name: "foo"},
+			}
+
+			// Reconciling a signaling request that requests a version that matches the current installed version
+			// should jump immediately to 'Completed'.
+			_, err := c.Reconcile(context.TODO(), req)
+			assert.NoError(t, err)
+
+			// Re-fetch the signal node again to confirm the status update
+			signalNode := test.delegate.CreateObject()
+			assert.NoError(t, client.Get(context.TODO(), req.NamespacedName, signalNode))
+
+			var signalData apsigv2.SignalData
+			err = signalData.Unmarshal(signalNode.GetAnnotations())
+
+			assert.NoError(t, err)
+			assert.NotNil(t, signalData.Status)
+
+			if signalData.Status != nil {
+				assert.Equal(t, Downloading, signalData.Status.Status)
+			}
+		})
+	}
+}
+
 // TestSignalControllerNewVersion ensures that when requesting a new k0s version, the signaling
 // response transitions to 'Downloading' for all signal node implementations.
 func TestSignalControllerNewVersion(t *testing.T) {
