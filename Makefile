@@ -54,6 +54,7 @@ LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(KUBECTL_MAJOR)
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(KUBECTL_MINOR)
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
+LD_FLAGS += -X github.com/containerd/containerd/version.Version=v$(containerd_version)
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 golint := $(shell which golangci-lint 2>/dev/null)
