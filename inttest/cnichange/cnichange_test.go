@@ -41,7 +41,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.T().Log("restarting k0s with new cni, this should fail")
-	_, err = sshC1.ExecWithOutput("k0s controller --debug --config /tmp/k0s.yaml")
+	_, err = sshC1.ExecWithOutput("/usr/local/bin/k0s controller --debug --config /tmp/k0s.yaml")
 	s.Require().Error(err)
 }
 

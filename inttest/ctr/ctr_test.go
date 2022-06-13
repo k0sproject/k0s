@@ -34,10 +34,10 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("k0s install controller --enable-worker")
+	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install controller --enable-worker")
 	s.Require().NoError(err)
 
-	_, err = ssh.ExecWithOutput("k0s start")
+	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s start")
 	s.Require().NoError(err)
 
 	err = s.WaitForKubeAPI(s.ControllerNode(0))
@@ -49,7 +49,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
-	output, err := ssh.ExecWithOutput("k0s ctr namespaces list 2>/dev/null")
+	output, err := ssh.ExecWithOutput("/usr/local/bin/k0s ctr namespaces list 2>/dev/null")
 	s.Require().NoError(err)
 
 	flatOutput := removeRedundantSpaces(output)
