@@ -19,8 +19,6 @@ package k0s
 import (
 	"context"
 	"fmt"
-	"syscall"
-	"time"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -35,13 +33,15 @@ import (
 	crpred "sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const (
-	restartRequeueDuration = 5 * time.Second
-)
+type restarted struct {
+	log      *logrus.Entry
+	client   crcli.Client
+	delegate apdel.ControllerDelegate
+}
 
-// restartEventFilter creates a controller-runtime predicate that governs which
+// restartedEventFilter creates a controller-runtime predicate that governs which
 // objects will make it into reconciliation, and which will be ignored.
-func restartEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
+func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.Predicate {
 	return crpred.And(
 		apsigpred.SignalNamePredicate(hostname),
 		apsigpred.NewSignalDataPredicateAdapter(handler).And(
@@ -49,46 +49,42 @@ func restartEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred.
 			apsigpred.SignalDataStatusPredicate(Restart),
 		),
 		apcomm.FalseFuncs{
-			UpdateFunc: func(ue crev.UpdateEvent) bool {
+			CreateFunc: func(ce crev.CreateEvent) bool {
 				return true
 			},
 		},
 	)
 }
 
-type restart struct {
-	log      *logrus.Entry
-	client   crcli.Client
-	delegate apdel.ControllerDelegate
-}
-
-// registerRestart registers the 'restart' controller to the controller-runtime manager.
+// registerRestarted registers the 'restart' controller to the controller-runtime manager.
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestart(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
-	logger.Infof("Registering 'restart' reconciler for '%s'", delegate.Name())
+func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+	logger.Infof("Registering 'restarted' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			&restart{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restart", "object": delegate.Name()}),
+			&restarted{
+				log:      logger.WithFields(logrus.Fields{"reconciler": "restarted", "object": delegate.Name()}),
 				client:   mgr.GetClient(),
 				delegate: delegate,
 			},
 		)
 }
 
-// Reconcile for the 'restart' reconciler inspects the signaling data associated to
+// Reconcile for the 'restarted' reconciler inspects the signaling data associated to
 // the provided signal node, finding if the signaling status. If the status is `Restart`,
 // the `k0s` instance will be restarted.
 //
-// The main difference between this and the `restarted` reconciler is that this acts on
-// modified events (!created), indicating that the object has actively transitioned
-// to a new state.
-func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
+// The main difference between this and the `restart` reconciler is that this triggers
+// when the event is "created", indicating that `k0s` has actually restarted.
+//
+// If the installed `k0s` version is the version specified in the plan (or if a `forceupdate`),
+// the plan will move to 'Completed'.
+func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, error) {
 	signalNode := r.delegate.CreateObject()
 	if err := r.client.Get(ctx, req.NamespacedName, signalNode); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to get signal for node='%s': %w", req.NamespacedName.Name, err)
@@ -111,7 +107,9 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
 
-	if k0sVersion == signalData.Command.K0sUpdate.Version {
+	// Move to the next successful state 'UnCordoning' if our versions match
+
+	if k0sVersion == signalData.Command.K0sUpdate.Version || signalData.Command.K0sUpdate.ForceUpdate {
 		signalNodeCopy := r.delegate.DeepCopy(signalNode)
 		signalData.Status = apsigv2.NewStatus(UnCordoning)
 
@@ -125,25 +123,6 @@ func (r *restart) Reconcile(ctx context.Context, req cr.Request) (cr.Result, err
 		}
 
 		return cr.Result{}, nil
-	}
-
-	// If the found k0s version does not match the updated version, restart k0s.
-	// The fact that the version of k0s was determined by the status socket, the
-	// old k0s is still running.
-
-	logger.Info("Preparing to restart k0s")
-
-	k0sPid, err := getK0sPid(DefaultK0sStatusSocketPath)
-	if err != nil {
-		logger.Info("Unable to determine current k0s pid; requeuing")
-		return cr.Result{RequeueAfter: restartRequeueDuration}, fmt.Errorf("unable to get k0s pid: %w", err)
-	}
-
-	// We terminate `k0s` by sending it SIGTERM. It is expected that `k0s` will be restarted
-	// by some process init (systemctl, etc).
-
-	if err := syscall.Kill(k0sPid, syscall.SIGTERM); err != nil {
-		return cr.Result{}, fmt.Errorf("unable to send SIGTERM to k0s: %w", err)
 	}
 
 	return cr.Result{}, nil

@@ -17,21 +17,21 @@ package ha3x3
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 )
 
 type ha3x3Suite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 const haControllerConfig = `
@@ -57,7 +57,7 @@ func (s *ha3x3Suite) TearDownSuite() {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *ha3x3Suite) SetupTest() {
-	ipAddress := s.GetLoadBalancerIPAddress()
+	ipAddress := s.GetLBAddress()
 	var joinToken string
 
 	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
@@ -67,9 +67,6 @@ func (s *ha3x3Suite) SetupTest() {
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
-
-		// With k0s running, then start autopilot
-		s.Require().NoError(s.InitControllerAutopilot(idx, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
@@ -92,11 +89,6 @@ func (s *ha3x3Suite) SetupTest() {
 		s.Require().Len(s.GetMembers(idx), s.FootlooseSuite.ControllerCount)
 	}
 
-	// Collect an `admin.conf` from a controller for use with worker nodes, and add in the
-	// first controller
-	controllerAdminConfg := s.GetFileFromController(0, "/var/lib/k0s/pki/admin.conf")
-	controllerAdminConfg = strings.Replace(controllerAdminConfg, "localhost", ipAddress, -1)
-
 	// Create a worker join token
 	workerJoinToken, err := s.GetJoinToken("worker")
 	s.Require().NoError(err)
@@ -109,10 +101,6 @@ func (s *ha3x3Suite) SetupTest() {
 
 	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
-
-		// With k0s running, then start autopilot
-		s.PutFile(s.WorkerNode(idx), "/var/lib/k0s/admin.conf", controllerAdminConfg)
-		s.Require().NoError(s.InitWorkerAutopilot(idx, "--kubeconfig=/var/lib/k0s/admin.conf", "--mode=worker"))
 	}
 }
 
@@ -129,11 +117,11 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
+        forceupdate: true
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:
@@ -171,19 +159,23 @@ spec:
 		return false
 	})
 
+	// Ensure all state/status are completed
+
 	s.NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
-		k0sVersion, err := s.GetK0sVersion(s.ControllerNode(idx))
-		s.NoError(err)
-		s.Equal("v1.23.3+k0s.1", k0sVersion)
-	}
+	s.Equal(1, len(plan.Status.Commands))
+	cmd := plan.Status.Commands[0]
 
-	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
-		k0sVersion, err := s.GetK0sVersion(s.WorkerNode(idx))
-		s.NoError(err)
-		s.Equal("v1.23.3+k0s.1", k0sVersion)
+	s.Equal(appc.PlanCompleted, cmd.State)
+	s.NotNil(cmd.K0sUpdate)
+	s.NotNil(cmd.K0sUpdate.Controllers)
+	s.NotNil(cmd.K0sUpdate.Workers)
+
+	for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {
+		for _, node := range group {
+			s.Equal(appc.SignalCompleted, node.State)
+		}
 	}
 }
 
@@ -191,10 +183,12 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestHA3x3Suite(t *testing.T) {
 	suite.Run(t, &ha3x3Suite{
-		apitcomm.FootlooseSuite{
-			ControllerCount:    3,
-			WorkerCount:        3,
-			WithLB:             true,
+		common.FootlooseSuite{
+			ControllerCount: 3,
+			WorkerCount:     3,
+			WithLB:          true,
+			LaunchMode:      common.LaunchModeOpenRC,
+
 			ControllerNetworks: []string{network},
 			WorkerNetworks:     []string{network},
 		},
