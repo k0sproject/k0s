@@ -15,7 +15,13 @@ limitations under the License.
 */
 package common
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"path/filepath"
+
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+)
 
 // GetFile gets file from the controller with given index
 func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) string {
@@ -35,6 +41,28 @@ func (s *FootlooseSuite) PutFile(node, path, content string) {
 	defer ssh.Disconnect()
 	// TODO: send data via pipe instead, so we can write data with single quotes '
 	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
+
+	s.Require().NoError(err)
+}
+
+// PutFileTemplate writes content to file on given node using templated data
+func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template string, data interface{}) {
+	tw := templatewriter.TemplateWriter{
+		Name:     filepath.Base(filename),
+		Template: template,
+		Data:     data,
+		Path:     filename,
+	}
+
+	var buf bytes.Buffer
+	s.Require().NoError(tw.WriteToBuffer(&buf))
+
+	ssh, err := s.SSH(node)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	// TODO: send data via pipe instead, so we can write data with single quotes '
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", buf.String(), filename))
 
 	s.Require().NoError(err)
 }

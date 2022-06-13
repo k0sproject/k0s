@@ -70,6 +70,10 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 		return fmt.Errorf("unable to register k0s 'restart' controller: %w", err)
 	}
 
+	if err := registerRestarted(logger, mgr, restartedEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s restarted")), delegate); err != nil {
+		return fmt.Errorf("unable to register k0s 'restarted' controller: %w", err)
+	}
+
 	if err := registerUnCordoning(logger, mgr, unCordoningEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s uncordoning")), delegate); err != nil {
 		return fmt.Errorf("unable to register k0s 'uncordon' controller: %w", err)
 	}

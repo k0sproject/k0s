@@ -14,6 +14,7 @@ RUN rc-update add syslog boot
 RUN rc-update add machine-id boot
 RUN rc-update add sshd default
 RUN rc-update add local default
+RUN rc-update add nginx default
 # Ensures that /usr/local/bin/k0s is seeded from /dist at startup
 RUN rc-update add k0s-seed default
 
