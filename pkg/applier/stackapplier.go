@@ -17,10 +17,12 @@ package applier
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
+	"sync"
 	"time"
 
-	"k8s.io/client-go/util/retry"
-
+	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -28,83 +30,81 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// StackApplier handles each directory as a Stack and watches for changes
+// StackApplier applies a stack whenever the files on disk change.
 type StackApplier struct {
-	Path string
+	log  logrus.FieldLogger
+	path string
 
-	fsWatcher *fsnotify.Watcher
-	applier   Applier
-	log       *logrus.Entry
-
-	ctx    context.Context
-	cancel context.CancelFunc
+	doApply, doDelete func(context.Context) error
 }
 
 // NewStackApplier crates new stack applier to manage a stack
-func NewStackApplier(ctx context.Context, path string, kubeClientFactory kubernetes.ClientFactoryInterface) (*StackApplier, error) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, err
-	}
-	err = watcher.Add(path)
-	if err != nil {
-		return nil, err
-	}
+func NewStackApplier(path string, kubeClientFactory kubernetes.ClientFactoryInterface) *StackApplier {
+	var mu sync.Mutex
 	applier := NewApplier(path, kubeClientFactory)
-	log := logrus.WithField("component", "applier-"+applier.Name)
-	log.WithField("path", path).Debug("created stack applier")
 
-	sa := &StackApplier{
-		Path:      path,
-		fsWatcher: watcher,
-		applier:   applier,
-		log:       log,
+	return &StackApplier{
+		log:  logrus.WithField("component", "applier-"+applier.Name),
+		path: path,
+
+		doApply: func(ctx context.Context) error {
+			mu.Lock()
+			defer mu.Unlock()
+			return applier.Apply(ctx)
+		},
+
+		doDelete: func(ctx context.Context) error {
+			mu.Lock()
+			defer mu.Unlock()
+			return applier.Delete(ctx)
+		},
 	}
-
-	sa.ctx, sa.cancel = context.WithCancel(ctx)
-
-	return sa, nil
 }
 
-// Start both the initial apply and also the watch for a single stack
-func (s *StackApplier) Start() error {
+// Run executes the initial apply and watches the stack for updates.
+func (s *StackApplier) Run(ctx context.Context) error {
+	if ctx.Err() != nil {
+		return nil // The context is already done.
+	}
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("failed to create watcher: %w", err)
+	}
+	defer watcher.Close()
+
+	debounceCtx, cancelDebouncer := context.WithCancel(ctx)
+	defer cancelDebouncer()
+
 	debouncer := debounce.Debouncer[fsnotify.Event]{
-		Input:   s.fsWatcher.Events,
-		Timeout: 1 * time.Second,
-		Filter:  s.triggersApply,
-		Callback: func(fsnotify.Event) {
-			s.log.Debug("Debouncer triggering, applying...")
-			err := retry.OnError(retry.DefaultRetry, func(err error) bool {
-				return true
-			}, func() error {
-				return s.applier.Apply(s.ctx)
-			})
-			if err != nil {
-				s.log.WithError(err).Error("Failed to apply manifests")
-			}
-		},
+		Input:    watcher.Events,
+		Timeout:  1 * time.Second,
+		Filter:   s.triggersApply,
+		Callback: func(fsnotify.Event) { s.apply(debounceCtx) },
 	}
 
 	// Send an artificial event to ensure that an initial apply will happen.
-	go func() { s.fsWatcher.Events <- fsnotify.Event{} }()
+	go func() { watcher.Events <- fsnotify.Event{} }()
 
-	_ = debouncer.Run(s.ctx)
+	// Consume and log any errors.
+	go func() {
+		for {
+			err, ok := <-watcher.Errors
+			if !ok {
+				return
+			}
+			s.log.WithError(err).Error("Error while watching stack")
+		}
+	}()
+
+	err = watcher.Add(s.path)
+	if err != nil {
+		return fmt.Errorf("failed to watch %q: %w", s.path, err)
+	}
+
+	_ = debouncer.Run(debounceCtx)
 	return nil
 }
-
-// Stop stops the stack applier.
-func (s *StackApplier) Stop() {
-	s.log.WithField("stack", s.Path).Info("Stopping stack")
-	s.cancel()
-}
-
-// DeleteStack deletes the associated stack
-func (s *StackApplier) DeleteStack(ctx context.Context) error {
-	return s.applier.Delete(ctx)
-}
-
-// Health-check interface
-func (s *StackApplier) Healthy() error { return nil }
 
 func (*StackApplier) triggersApply(event fsnotify.Event) bool {
 	// always let the initial apply happen
@@ -117,5 +117,29 @@ func (*StackApplier) triggersApply(event fsnotify.Event) bool {
 		return false
 	}
 
-	return true
+	// Only consider events on manifest files
+	match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name))
+	return match
+}
+
+func (s *StackApplier) apply(ctx context.Context) {
+	s.log.Info("Applying manifests")
+
+	err := retry.Do(
+		func() error { return s.doApply(ctx) },
+		retry.OnRetry(func(attempt uint, err error) {
+			s.log.WithError(err).Warnf("Retrying after backoff, attempt #%d", attempt)
+		}),
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+	)
+
+	if err != nil {
+		s.log.WithError(err).Error("Failed to apply manifests")
+	}
+}
+
+// DeleteStack deletes the associated stack
+func (s *StackApplier) DeleteStack(ctx context.Context) error {
+	return s.doDelete(ctx)
 }
