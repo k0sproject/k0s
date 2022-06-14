@@ -135,6 +135,7 @@ jobs:
       fail-fast: false
       matrix:
         smoke-suite:
+          - check-ap-ha3x3
           - check-basic
           - check-addons
           - check-byocri
