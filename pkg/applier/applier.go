@@ -31,7 +31,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/util/retry"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -74,31 +73,23 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 	}
 }
 
-func (a *Applier) init() error {
-	c, err := a.clientFactory.GetDynamicClient()
-	if err != nil {
-		return err
-	}
-	discoveryClient, err := a.clientFactory.GetDiscoveryClient()
-	if err != nil {
-		return err
-	}
-
-	a.client = c
-	a.discoveryClient = discoveryClient
-
-	return nil
-}
-
-// just a wrapper for the retry as we need to init "lazily" from both apply and delete directions
 func (a *Applier) lazyInit() error {
-	if a.client == nil || a.discoveryClient == nil {
-		err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
-			return true
-		}, a.init)
+	if a.client == nil {
+		c, err := a.clientFactory.GetDynamicClient()
 		if err != nil {
 			return err
 		}
+
+		a.client = c
+	}
+
+	if a.discoveryClient == nil {
+		c, err := a.clientFactory.GetDiscoveryClient()
+		if err != nil {
+			return err
+		}
+
+		a.discoveryClient = c
 	}
 
 	return nil
