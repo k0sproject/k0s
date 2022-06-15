@@ -92,7 +92,7 @@ const (
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
 	KubeRouterCNIImageVersion          = "v1.4.0"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "0.1.0"
+	KubeRouterCNIInstallerImageVersion = "1.1.1-k0s.0"
 	OpenEBSRepository                  = "https://openebs.github.io/charts"
 	OpenEBSVersion                     = "3.0.3"
 
