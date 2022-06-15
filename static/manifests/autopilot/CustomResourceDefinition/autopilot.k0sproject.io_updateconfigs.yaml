@@ -272,7 +272,6 @@ spec:
                                 will be upgrading to.
                               type: string
                           required:
-                          - forceupdate
                           - platforms
                           - targets
                           - version
