@@ -17,21 +17,21 @@ package airgap
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 )
 
 type airgapSuite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 const network = "airgap"
@@ -51,14 +51,9 @@ func (s *airgapSuite) TearDownSuite() {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *airgapSuite) SetupTest() {
-	ipAddress := s.GetControllerIPAddress(0)
-
 	// Note that the token is intentionally empty for the first controller
 	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
-
-	// With k0s running, then start autopilot
-	s.Require().NoError(s.InitControllerAutopilot(0, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
 	cClient, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -67,11 +62,6 @@ func (s *airgapSuite) SetupTest() {
 	s.Require().NoError(perr)
 	_, cerr := apcomm.WaitForCRDByName(context.TODO(), cClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
-
-	// Collect an `admin.conf` from a controller for use with worker nodes, and add in the
-	// first controller
-	controllerAdminConfg := s.GetFileFromController(0, "/var/lib/k0s/pki/admin.conf")
-	controllerAdminConfg = strings.Replace(controllerAdminConfg, "localhost", ipAddress, -1)
 
 	// Create a worker join token
 	workerJoinToken, err := s.GetJoinToken("worker")
@@ -84,11 +74,6 @@ func (s *airgapSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(0), wClient))
-
-	// With k0s running, then start autopilot
-	s.PutFile(s.WorkerNode(0), "/var/lib/k0s/admin.conf", controllerAdminConfg)
-	s.Require().NoError(s.InitWorkerAutopilot(0, "--kubeconfig=/var/lib/k0s/admin.conf", "--mode=worker"))
-
 }
 
 func (s *airgapSuite) TestApply() {
@@ -102,22 +87,21 @@ spec:
   timestamp: now
   commands:
     - airgapupdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["airgap"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["airgap"]["sha256"] + `
+            url: http://localhost/dist/bundle.tar
         workers:
           discovery:
             static:
               nodes:
                 - worker0
     - k0supdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
+        forceupdate: true
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:
@@ -157,7 +141,7 @@ spec:
 	// We are not confirming the image importing functionality of k0s, but we can get a pretty good idea if it worked.
 
 	// Does the bundle exist on the worker, in the proper directory?
-	lsout, err := s.RunCommandWorker(0, "ls /var/lib/k0s/images/k0s-airgap-bundle-*")
+	lsout, err := s.RunCommandWorker(0, "ls /var/lib/k0s/images/bundle.tar")
 	s.NoError(err)
 	s.NotEmpty(lsout)
 }
@@ -166,9 +150,11 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestAirgapSuite(t *testing.T) {
 	suite.Run(t, &airgapSuite{
-		apitcomm.FootlooseSuite{
-			ControllerCount:    1,
-			WorkerCount:        1,
+		common.FootlooseSuite{
+			ControllerCount: 1,
+			WorkerCount:     1,
+			LaunchMode:      common.LaunchModeOpenRC,
+
 			ControllerNetworks: []string{network},
 			WorkerNetworks:     []string{network},
 		},
