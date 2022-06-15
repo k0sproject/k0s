@@ -197,7 +197,7 @@ lint: .k0sbuild.docker-image.k0s go.sum codegen
 	$(GO_ENV) golangci-lint run --verbose $(GO_DIRS)
 
 .PHONY: $(smoketests)
-check-airgap: image-bundle/bundle.tar
+check-airgap check-ap-airgap: image-bundle/bundle.tar
 $(smoketests): k0s
 	$(MAKE) -C inttest $@
 
