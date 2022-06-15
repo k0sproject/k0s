@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
   #pull_request:
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           echo ::set-output name=IMAGE_TAGS::${TAGS}
   x64:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -105,10 +105,9 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
 
-
   windows:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -147,7 +146,7 @@ jobs:
 
   arm64:
     needs: release
-    runs-on: [self-hosted,linux,arm64]
+    runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -212,10 +211,9 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
 
-
   armv7:
     needs: release
-    runs-on: [self-hosted,linux,arm]
+    runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -274,14 +272,13 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
 
-
   build-image:
     needs:
       - release
       - x64
       - arm64
       - armv7
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -328,7 +325,6 @@ jobs:
             docker.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
           push: true
 
-
   conformance-test:
     needs:
       - release
@@ -342,7 +338,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./inttest/conformance/terraform
+        working-directory: ./tests/smoke/conformance/terraform
     steps:
       - name: Run git checkout
         uses: actions/checkout@v3
@@ -388,7 +384,7 @@ jobs:
       - name: Run Full Conformance Check
         run: |
           make check-conformance
-        working-directory: ./inttest
+        working-directory: ./tests/smoke
 
       - name: Upload conformance test result to Release Assets
         uses: shogo82148/actions-upload-release-asset@v1.6.2 # Allows us to upload a file with wildcard patterns
@@ -396,7 +392,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
+          asset_path: tests/smoke/sonobuoy/*_sonobuoy_*.tar.gz
           asset_name: sonobuoy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
         if: ${{ always() }}
@@ -408,4 +404,3 @@ jobs:
 
           terraform destroy -auto-approve
         if: ${{ always() }}
-

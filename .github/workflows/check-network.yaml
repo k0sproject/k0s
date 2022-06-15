@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./inttest/terraform/test-cluster
+        working-directory: ./tests/integration/terraform/test-cluster
     steps:
       - name: Get PR Reference
         env:
@@ -100,7 +100,7 @@ jobs:
       - name: Check Network
         run: |
           make check-network-vm
-        working-directory: ./inttest
+        working-directory: ./tests/integration
 
       - name: Terraform Destroy
         run: |

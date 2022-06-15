@@ -1,7 +1,7 @@
 include embedded-bins/Makefile.variables
-include inttest/Makefile.variables
+include tests/smoke/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -path './tests/smoke/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:
@@ -167,7 +167,7 @@ lint: go.sum codegen
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
 $(smoketests): k0s
-	$(MAKE) -C inttest $@
+	$(MAKE) -C tests/smoke $@
 
 .PHONY: smoketests
 smoketests:  $(smoketests)
@@ -202,7 +202,7 @@ clean: clean-gocache clean-docker-image
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C image-bundle clean
-	-$(MAKE) -C inttest clean
+	-$(MAKE) -C tests/smoke clean
 
 .PHONY: manifests
 
