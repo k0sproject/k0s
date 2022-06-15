@@ -120,6 +120,3 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	a.previousConfig = args
 	return a.supervisor.Supervise()
 }
-
-// Health-check interface
-func (a *Scheduler) Healthy() error { return nil }

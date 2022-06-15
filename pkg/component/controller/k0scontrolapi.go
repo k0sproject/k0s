@@ -66,6 +66,3 @@ func (m *K0SControlAPI) Run(_ context.Context) error {
 func (m *K0SControlAPI) Stop() error {
 	return m.supervisor.Stop()
 }
-
-// Healthy for health-check interface
-func (m *K0SControlAPI) Healthy() error { return nil }

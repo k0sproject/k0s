@@ -97,9 +97,6 @@ func (a *APIEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.Clus
 	return a.reconcileEndpoints(ctx)
 }
 
-// Healthy dummy implementation
-func (a *APIEndpointReconciler) Healthy() error { return nil }
-
 func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 	if a.clusterConfig == nil {
 		return nil

@@ -149,9 +149,6 @@ func (m *Metrics) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	return nil
 }
 
-// Healthy is the health-check interface
-func (m *Metrics) Healthy() error { return nil }
-
 type job struct {
 	log logrus.FieldLogger
 

@@ -64,9 +64,6 @@ func NewKubeRouter(k0sVars constant.CfgVars, manifestsSaver manifestsSaver) *Kub
 // Init does nothing
 func (k *KubeRouter) Init(_ context.Context) error { return nil }
 
-// Healthy is a no-op check
-func (k *KubeRouter) Healthy() error { return nil }
-
 // Stop no-op as nothing running
 func (k *KubeRouter) Stop() error { return nil }
 

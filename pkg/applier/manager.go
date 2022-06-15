@@ -198,6 +198,3 @@ func (m *Manager) removeStack(ctx context.Context, name string) {
 
 	log.Info("Stack deleted successfully")
 }
-
-// Health-check interface
-func (m *Manager) Healthy() error { return nil }

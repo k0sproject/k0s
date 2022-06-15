@@ -158,6 +158,3 @@ func (a *Manager) Stop() error {
 	}
 	return nil
 }
-
-// Health-check interface
-func (a *Manager) Healthy() error { return nil }

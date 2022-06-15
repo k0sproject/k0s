@@ -120,6 +120,3 @@ func (n *NodeRole) addNodeLabel(ctx context.Context, client kubernetes.Interface
 func (n *NodeRole) Stop() error {
 	return nil
 }
-
-// Health-check interface
-func (n *NodeRole) Healthy() error { return nil }

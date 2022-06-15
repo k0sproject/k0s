@@ -55,6 +55,7 @@ type Etcd struct {
 }
 
 var _ component.Component = (*Etcd)(nil)
+var _ component.Healthz = (*Etcd)(nil)
 
 // Init extracts the needed binaries
 func (e *Etcd) Init(_ context.Context) error {

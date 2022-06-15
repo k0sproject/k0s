@@ -109,6 +109,3 @@ func (k *Kine) Run(_ context.Context) error {
 func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
 }
-
-// Health-check interface
-func (k *Kine) Healthy() error { return nil }

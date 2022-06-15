@@ -124,5 +124,3 @@ func (l *LeasePoolLeaderElector) Stop() error {
 func (l *LeasePoolLeaderElector) IsLeader() bool {
 	return l.leaderStatus.Load().(bool)
 }
-
-func (l *LeasePoolLeaderElector) Healthy() error { return nil }

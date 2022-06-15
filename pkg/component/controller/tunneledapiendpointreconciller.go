@@ -66,10 +66,6 @@ func (ter *TunneledEndpointReconciler) Stop() error {
 	return nil
 }
 
-func (ter *TunneledEndpointReconciler) Healthy() error {
-	return nil
-}
-
 func (ter *TunneledEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
 	ter.cfg = cfg
 	return nil

@@ -74,8 +74,6 @@ func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeC
 	}
 }
 
-func (a *CSRApprover) Healthy() error { return nil }
-
 // Stop stops the CSRApprover
 func (a *CSRApprover) Stop() error {
 	a.stop()

@@ -51,6 +51,7 @@ type APIServer struct {
 }
 
 var _ component.Component = (*APIServer)(nil)
+var _ component.Healthz = (*APIServer)(nil)
 
 var apiDefaultArgs = map[string]string{
 	"allow-privileged":                   "true",

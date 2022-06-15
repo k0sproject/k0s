@@ -325,6 +325,3 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
 `
-
-// Health-check interface
-func (k *KubeProxy) Healthy() error { return nil }

@@ -176,6 +176,11 @@ func isReconcileComponent(component Component) bool {
 
 // waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false
 func waitForHealthy(ctx context.Context, comp Component, name string, timeout time.Duration) error {
+	healthz, ok := comp.(Healthz)
+	if !ok {
+		return nil
+	}
+
 	ctx, cancelFunction := context.WithTimeout(ctx, timeout)
 
 	// clear up context after timeout
@@ -185,7 +190,7 @@ func waitForHealthy(ctx context.Context, comp Component, name string, timeout ti
 	ticker := time.NewTicker(100 * time.Millisecond)
 	for {
 		logrus.Debugf("checking %s for health", name)
-		if err := comp.Healthy(); err != nil {
+		if err := healthz.Healthy(); err != nil {
 			logrus.Debugf("health-check: %s not yet healthy: %v", name, err)
 		} else {
 			return nil

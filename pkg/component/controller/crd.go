@@ -74,7 +74,3 @@ func (c CRD) Run(_ context.Context) error {
 func (c CRD) Stop() error {
 	return nil
 }
-
-func (c CRD) Healthy() error {
-	return nil
-}
