@@ -146,6 +146,7 @@ jobs:
           - check-ap-quorumsafety
           - check-ap-selector
           - check-ap-single
+          - check-ap-updater
           - check-basic
           - check-byocri
           - check-calico

@@ -1,0 +1,11 @@
+name: stable
+version: v0.0.0
+downloadURLs:
+  k0s:
+    linux-amd64: http://localhost/dist/k0s
+    linux-arm64: http://localhost/dist/k0s
+    linux-arm: http://localhost/dist/k0s
+  airgap:
+    linux-amd64: ..../k0s-images-amd64
+    linux-arm64: ..../k0s-images-arm64
+    linux-arm: ..../k0s-images-arm

@@ -60,10 +60,11 @@ import (
 )
 
 const (
-	controllerNodeNameFormat = "controller%d"
-	workerNodeNameFormat     = "worker%d"
-	lbNodeNameFormat         = "lb%d"
-	etcdNodeNameFormat       = "etcd%d"
+	controllerNodeNameFormat   = "controller%d"
+	workerNodeNameFormat       = "worker%d"
+	lbNodeNameFormat           = "lb%d"
+	etcdNodeNameFormat         = "etcd%d"
+	updateServerNodeNameFormat = "updateserver%d"
 
 	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
 	k0sBindMountFullPath     = "/dist/k0s"
@@ -91,6 +92,7 @@ type FootlooseSuite struct {
 	WithExternalEtcd      bool
 	WithLB                bool
 	WorkerCount           int
+	WithUpdateServer      bool
 
 	/* context and cancellation */
 
@@ -1198,6 +1200,26 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		})
 	}
 
+	if s.WithUpdateServer {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec: config.Machine{
+				Name:       updateServerNodeNameFormat,
+				Image:      "update-server",
+				Privileged: true,
+				PortMappings: []config.PortMapping{
+					{
+						ContainerPort: 22, // SSH
+					},
+					{
+						ContainerPort: 80,
+					},
+				},
+				Networks: s.ControllerNetworks,
+			},
+			Count: 1,
+		})
+	}
+
 	footlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal footloose configuration")
@@ -1399,4 +1421,15 @@ func (s *FootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay ti
 	}
 
 	return fmt.Errorf("timed out waiting for ssh connection to '%s'", node)
+}
+
+// GetUpdateServerIPAddress returns the load balancers ip address
+func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
+	ssh, err := s.SSH("updateserver0")
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput("hostname -i")
+	s.Require().NoError(err)
+	return ipAddress
 }
