@@ -140,6 +140,7 @@ jobs:
           - check-ap-platformselect
           - check-ap-quorum
           - check-ap-quorumsafety
+          - check-ap-selector
           - check-basic
           - check-byocri
           - check-calico
