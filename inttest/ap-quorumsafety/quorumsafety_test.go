@@ -20,17 +20,18 @@ import (
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 )
 
 type quorumSafetySuite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 const k0sConfigWithMultiController = `
@@ -67,9 +68,6 @@ func (s *quorumSafetySuite) SetupTest() {
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
-
-		// With k0s running, then start autopilot
-		s.Require().NoError(s.InitControllerAutopilot(idx, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
@@ -128,11 +126,11 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
+        forceupdate: true
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:
@@ -172,9 +170,11 @@ spec:
 // test scenario covering the breaking of quorum.
 func TestQuorumSafetySuite(t *testing.T) {
 	suite.Run(t, &quorumSafetySuite{
-		apitcomm.FootlooseSuite{
-			ControllerCount:    2,
-			WorkerCount:        0,
+		common.FootlooseSuite{
+			ControllerCount: 2,
+			WorkerCount:     0,
+			LaunchMode:      common.LaunchModeOpenRC,
+
 			ControllerNetworks: []string{network},
 			WorkerNetworks:     []string{network},
 		},
