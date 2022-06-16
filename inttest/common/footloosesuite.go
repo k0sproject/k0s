@@ -271,7 +271,17 @@ func (s *FootlooseSuite) cleanupSuite() {
 			s.T().Logf("failed to ssh to node %s to get logs", m.Hostname())
 			continue
 		}
-		log, err := ssh.ExecWithOutput("cat /tmp/k0s-*.log")
+		logPathInContainer := ""
+		switch s.LaunchMode {
+		case LaunchModeOpenRC:
+			logPathInContainer = "/var/log/k0s.log"
+		case LaunchModeStandalone:
+			logPathInContainer = "/tmp/k0s-*.log"
+		default:
+			s.T().Logf(`unknown launchmode %s, dunno how to collect logs ¯\_(ツ)_/¯`, s.LaunchMode)
+		}
+
+		log, err := ssh.ExecWithOutput(fmt.Sprintf("cat %s", logPathInContainer))
 		if err != nil {
 			s.T().Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
 		}
