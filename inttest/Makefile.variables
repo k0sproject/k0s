@@ -5,6 +5,7 @@ smoketests := \
 	check-ap-platformselect \
 	check-ap-quorum \
 	check-ap-quorumsafety \
+	check-ap-selector \
 	check-backup \
 	check-basic \
 	check-byocri \

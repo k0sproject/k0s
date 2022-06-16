@@ -17,21 +17,21 @@ package selector
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/autopilot/inttest/common"
-	apv1beta2 "github.com/k0sproject/autopilot/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apcomm "github.com/k0sproject/autopilot/pkg/common"
-	apconst "github.com/k0sproject/autopilot/pkg/constant"
-	appc "github.com/k0sproject/autopilot/pkg/controller/plans/core"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
+	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+
+	"github.com/k0sproject/k0s/inttest/common"
 
 	"github.com/stretchr/testify/suite"
 )
 
 type selectorSuite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 const selectorControllerConfig = `
@@ -57,7 +57,7 @@ func (s *selectorSuite) TearDownSuite() {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *selectorSuite) SetupTest() {
-	ipAddress := s.GetLoadBalancerIPAddress()
+	ipAddress := s.GetLBAddress()
 	var joinToken string
 
 	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
@@ -68,9 +68,6 @@ func (s *selectorSuite) SetupTest() {
 		// Note that the token is intentionally empty for the first controller
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
-
-		// With k0s running, then start autopilot
-		s.Require().NoError(s.InitControllerAutopilot(idx, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
@@ -93,11 +90,6 @@ func (s *selectorSuite) SetupTest() {
 		s.Require().Len(s.GetMembers(idx), s.FootlooseSuite.ControllerCount)
 	}
 
-	// Collect an `admin.conf` from a controller for use with worker nodes, and add in the
-	// first controller
-	controllerAdminConfg := s.GetFileFromController(0, "/var/lib/k0s/pki/admin.conf")
-	controllerAdminConfg = strings.Replace(controllerAdminConfg, "localhost", ipAddress, -1)
-
 	// Create a worker join token
 	workerJoinToken, err := s.GetJoinToken("worker")
 	s.Require().NoError(err)
@@ -109,11 +101,7 @@ func (s *selectorSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
-		s.WaitForNodeReady(s.WorkerNode(idx), client)
-
-		// With k0s running, then start autopilot
-		s.PutFile(s.WorkerNode(idx), "/var/lib/k0s/admin.conf", controllerAdminConfg)
-		s.Require().NoError(s.InitWorkerAutopilot(idx, "--kubeconfig=/var/lib/k0s/admin.conf", "--mode=worker"))
+		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 }
 
@@ -130,11 +118,11 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
+        forceupdate: true
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:
@@ -177,27 +165,17 @@ spec:
 	s.NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
-		k0sVersion, err := s.GetK0sVersion(s.ControllerNode(idx))
-		s.NoError(err)
+	s.Equal(1, len(plan.Status.Commands))
+	cmd := plan.Status.Commands[0]
 
-		switch idx {
-		case 0:
-			s.Equal("v1.23.3+k0s.1", k0sVersion)
-		default:
-			s.Equal("v1.23.3+k0s.0", k0sVersion)
-		}
-	}
+	s.Equal(appc.PlanCompleted, cmd.State)
+	s.NotNil(cmd.K0sUpdate)
+	s.NotNil(cmd.K0sUpdate.Controllers)
+	s.NotNil(cmd.K0sUpdate.Workers)
 
-	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
-		k0sVersion, err := s.GetK0sVersion(s.WorkerNode(idx))
-		s.NoError(err)
-
-		switch idx {
-		case 1:
-			s.Equal("v1.23.3+k0s.1", k0sVersion)
-		default:
-			s.Equal("v1.23.3+k0s.0", k0sVersion)
+	for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {
+		for _, node := range group {
+			s.Equal(appc.SignalCompleted, node.State)
 		}
 	}
 }
@@ -206,10 +184,11 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestSelectorSuite(t *testing.T) {
 	suite.Run(t, &selectorSuite{
-		apitcomm.FootlooseSuite{
+		common.FootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     3,
 			WithLB:          true,
+			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	})
 }
