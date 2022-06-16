@@ -68,6 +68,9 @@ check-noderole: TIMEOUT=6m
 # Backup check runs two scenarios
 check-backup: TIMEOUT=6m
 
+# Autopilot 3x3 HA test can take a while to run
+check-ap-ha3x3: TIMEOUT=6m
+
 .PHONY: $(smoketests)
 include Makefile.variables
 
