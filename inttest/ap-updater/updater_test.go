@@ -17,10 +17,10 @@ package updater
 import (
 	"context"
 	"fmt"
+	"github.com/k0sproject/k0s/inttest/common"
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
@@ -34,7 +34,7 @@ const (
 )
 
 type plansSingleControllerSuite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -44,9 +44,6 @@ func (s *plansSingleControllerSuite) SetupTest() {
 
 	s.Require().NoError(s.InitController(0), "--disable-components=metrics-server")
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
-
-	// With k0s running, then launch autopilot
-	s.Require().NoError(s.InitControllerAutopilot(0, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
 
 	client, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -75,7 +72,17 @@ spec:
   planSpec:
     id: id123
     timestamp: now
-    commands: []
+    commands:
+    - k0supdate:
+        version: v0.0.0
+        forceupdate: true
+        platforms:
+          linux-amd64:
+            url: http://localhost/dist/k0s
+        targets:
+          controllers:
+            discovery:
+              selector: {}
 `
 
 	vars := struct {
@@ -106,20 +113,17 @@ spec:
 
 	s.NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
-
-	k0sVersion, err := s.GetK0sVersion(s.ControllerNode(0))
-	s.NoError(err)
-	s.Equal("v1.23.3+k0s.1", k0sVersion)
 }
 
 // TestPlansSingleControllerSuite sets up a suite using a single controller, running various
 // autopilot upgrade scenarios against it.
 func TestPlansSingleControllerSuite(t *testing.T) {
 	suite.Run(t, &plansSingleControllerSuite{
-		apitcomm.FootlooseSuite{
+		common.FootlooseSuite{
 			ControllerCount:  1,
 			WorkerCount:      0,
 			WithUpdateServer: true,
+			LaunchMode:       common.LaunchModeOpenRC,
 		},
 	})
 }

@@ -7,6 +7,7 @@ smoketests := \
 	check-ap-quorumsafety \
 	check-ap-selector \
 	check-ap-single \
+	check-ap-updater \
 	check-backup \
 	check-basic \
 	check-byocri \
