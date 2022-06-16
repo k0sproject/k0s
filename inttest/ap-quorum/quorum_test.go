@@ -20,17 +20,18 @@ import (
 	"testing"
 	"time"
 
-	apitcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 )
 
 type quorumSuite struct {
-	apitcomm.FootlooseSuite
+	common.FootlooseSuite
 }
 
 const k0sConfigWithMultiController = `
@@ -68,9 +69,6 @@ func (s *quorumSuite) SetupTest() {
 		s.Require().NoError(s.InitController(idx, "--config=/tmp/k0s.yaml", "--disable-components=metrics-server", joinToken))
 		s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(idx)))
 
-		// With k0s running, then start autopilot
-		s.Require().NoError(s.InitControllerAutopilot(idx, "--kubeconfig=/var/lib/k0s/pki/admin.conf", "--mode=controller"))
-
 		client, err := s.ExtensionsClient(s.ControllerNode(0))
 		s.Require().NoError(err)
 
@@ -106,11 +104,11 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: ` + apitcomm.TargetK0sVersion + `
+        version: v0.0.0
+        forceupdate: true
         platforms:
           linux-amd64:
-            url: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["url"] + `
-            sha256: ` + apitcomm.Versions[apitcomm.TargetK0sVersion]["linux-amd64"]["k0s"]["sha256"] + `
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:
@@ -144,10 +142,16 @@ spec:
 	s.NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
-		k0sVersion, err := s.GetK0sVersion(s.ControllerNode(idx))
-		s.NoError(err)
-		s.Equal("v1.23.3+k0s.1", k0sVersion)
+	s.Equal(1, len(plan.Status.Commands))
+	cmd := plan.Status.Commands[0]
+
+	s.Equal(appc.PlanCompleted, cmd.State)
+	s.NotNil(cmd.K0sUpdate)
+	s.NotNil(cmd.K0sUpdate.Controllers)
+	s.Empty(cmd.K0sUpdate.Workers)
+
+	for _, node := range cmd.K0sUpdate.Controllers {
+		s.Equal(appc.SignalCompleted, node.State)
 	}
 }
 
@@ -155,9 +159,11 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestQuorumSuite(t *testing.T) {
 	suite.Run(t, &quorumSuite{
-		apitcomm.FootlooseSuite{
-			ControllerCount:    3,
-			WorkerCount:        0,
+		common.FootlooseSuite{
+			ControllerCount: 3,
+			WorkerCount:     0,
+			LaunchMode:      common.LaunchModeOpenRC,
+
 			ControllerNetworks: []string{network},
 			WorkerNetworks:     []string{network},
 		},
