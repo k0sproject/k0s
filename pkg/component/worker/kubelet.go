@@ -54,6 +54,7 @@ type Kubelet struct {
 	K0sVars             constant.CfgVars
 	Kubeconfig          string
 	Configuration       kubeletv1beta1.KubeletConfiguration
+	StaticPods          StaticPods
 	LogLevel            string
 	dataDir             string
 	supervisor          supervisor.Supervisor
@@ -73,6 +74,7 @@ type kubeletConfig struct {
 	KubeletCgroups     string
 	CgroupsPerQOS      bool
 	ResolvConf         string
+	StaticPodURL       string
 }
 
 // Init extracts the needed binaries
@@ -132,11 +134,17 @@ func (k *Kubelet) Init(_ context.Context) error {
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
 
+	staticPodURL, err := k.StaticPods.ManifestURL()
+	if err != nil {
+		return err
+	}
+
 	kubeletConfigData := kubeletConfig{
 		ClientCAFile:       filepath.Join(k.K0sVars.CertRootDir, "ca.crt"),
 		VolumePluginDir:    k.K0sVars.KubeletVolumePluginDir,
 		KubeReservedCgroup: "system.slice",
 		KubeletCgroups:     "/system.slice/containerd.service",
+		StaticPodURL:       staticPodURL,
 	}
 	if runtime.GOOS == "windows" {
 		cmd = "kubelet.exe"
@@ -242,6 +250,7 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
 	preparedConfig.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
 	preparedConfig.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
+	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint
