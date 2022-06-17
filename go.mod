@@ -52,16 +52,16 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.0
-	k8s.io/api v0.22.10
-	k8s.io/apimachinery v0.22.10
-	k8s.io/cli-runtime v0.22.10
-	k8s.io/client-go v0.22.10
-	k8s.io/cloud-provider v0.22.10
-	k8s.io/component-base v0.22.10
-	k8s.io/cri-api v0.22.10
-	k8s.io/kube-aggregator v0.22.10
-	k8s.io/kubectl v0.22.10
-	k8s.io/mount-utils v0.22.10
+	k8s.io/api v0.22.11
+	k8s.io/apimachinery v0.22.11
+	k8s.io/cli-runtime v0.22.11
+	k8s.io/client-go v0.22.11
+	k8s.io/cloud-provider v0.22.11
+	k8s.io/component-base v0.22.11
+	k8s.io/cri-api v0.22.11
+	k8s.io/kube-aggregator v0.22.11
+	k8s.io/kubectl v0.22.11
+	k8s.io/mount-utils v0.22.11
 	k8s.io/system-validators v1.4.0
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/controller-runtime v0.10.0
