@@ -64,8 +64,9 @@ const (
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
 
-	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
-	k0sBindMountFullPath     = "/dist/k0s"
+	defaultK0sBinaryFullPath   = "/usr/local/bin/k0s"
+	k0sBindMountFullPath       = "/dist/k0s"
+	k0sAirgapBindMountFullPath = "/dist/bundle.tar"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -1024,6 +1025,8 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 	if binPath == "" {
 		return errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
 	}
+	airgapPath := os.Getenv("K0S_IMAGES_BUNDLE")
+
 	fileInfo, err := os.Stat(binPath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to locate k0s binary %s", binPath)
@@ -1043,6 +1046,15 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			Type:        "volume",
 			Destination: "/var/lib/k0s",
 		},
+	}
+
+	if airgapPath != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      airgapPath,
+			Destination: k0sAirgapBindMountFullPath,
+			ReadOnly:    true,
+		})
 	}
 
 	// Ensure that kernel config is available in the footloose boxes.
@@ -1314,6 +1326,15 @@ func (s *FootlooseSuite) DestroyNetwork(name string) error {
 // RunCommandController runs a command via SSH on a specified controller node
 func (s *FootlooseSuite) RunCommandController(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	return ssh.ExecWithOutput(command)
+}
+
+// RunCommandWorker runs a command via SSH on a specified controller node
+func (s *FootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
+	ssh, err := s.SSH(s.WorkerNode(idx))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
