@@ -35,6 +35,10 @@ bin/sonobuoy: | bin
 	  footloose-alpine
 	touch $@
 
+.update-server.stamp: update-server/Dockerfile update-server/html/stable/index.yaml
+	docker build -t update-server --build-arg BASE=footloose-alpine -f $< $(dir $<)
+	touch $@
+
 check-network: bin/sonobuoy .footloose-alpine.stamp
 	K0S_PATH=$(realpath ../k0s) SONOBUOY_PATH=$(realpath bin/sonobuoy) \
 		go test -count=1 -v -timeout 20m github.com/k0sproject/k0s/inttest/sonobuoy/ -run ^TestFootlooseNetworkSuite$
@@ -70,6 +74,8 @@ check-backup: TIMEOUT=6m
 
 # Autopilot 3x3 HA test can take a while to run
 check-ap-ha3x3: TIMEOUT=6m
+
+check-ap-updater: .update-server.stamp
 
 .PHONY: $(smoketests)
 include Makefile.variables
