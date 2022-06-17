@@ -15,7 +15,7 @@ resource "aws_instance" "cluster-controller" {
   root_block_device {
     volume_type = "gp3"
     volume_size = 20
-    iops        = 1000
+    iops        = 3000
   }
   connection {
     type        = "ssh"

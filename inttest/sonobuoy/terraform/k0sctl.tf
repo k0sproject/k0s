@@ -6,7 +6,6 @@ data "http" "k0s_version" {
 
 locals {
   use_remote_k0s_version = var.k0s_version == "stable" || var.k0s_version == "latest"
-
   k0sctl_tmpl = {
     apiVersion = "k0sctl.k0sproject.io/v1beta1"
     kind       = "cluster"
@@ -21,8 +20,9 @@ locals {
             user    = "ubuntu"
             keyPath = "./aws_private.pem"
           }
-          role         = host.tags["Role"]
-          uploadBinary = true
+          role          = host.tags["Role"]
+          uploadBinary  = true
+          k0sBinaryPath = local.use_remote_k0s_version ? null : "../../../k0s"
         }
       ]
       k0s = {

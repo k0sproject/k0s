@@ -1,5 +1,6 @@
 name: k0s Check Network
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       prNumber:
@@ -20,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./inttest/terraform/test-cluster
+        working-directory: ./inttest/sonobuoy/terraform
     steps:
       - name: Get PR Reference
         env:
@@ -59,21 +60,6 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Prepare Environment
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REF: ${{ github.ref }}
-        run: ./scripts/prepare-env.sh
-
-      - name: Terraform Apply
-        run: |
-          export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
-
-          # Start SSH Agent
-          eval `ssh-agent -s`
-
-          terraform apply -auto-approve
-
       - name: Bindata
         uses: actions/cache@v3
         id: generated-bindata
@@ -92,28 +78,43 @@ jobs:
         run: make build
         working-directory: ./
 
-      - name: Deploy k0s to Hosts
+      - name: Terraform Apply
         run: |
-          terraform output -json > out.json
-          ./scripts/deploy-k0s.sh
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
+          export TF_VAR_k0s_version=$(../../../k0s version)
 
-      - name: Check Network
+          # Start SSH Agent
+          eval `ssh-agent -s`
+
+          terraform apply -auto-approve
+
+      - name: Set-Up k0s using k0sctl
         run: |
-          make check-network-vm
-        working-directory: ./inttest
+          # install k0sctl
+          go install github.com/k0sproject/k0sctl@latest
+
+          k0sctl apply -c k0sctl.yaml
+
+      # - name: Check Network
+      #   run: |
+      #     make check-network-vm
+      #   working-directory: ./inttest
 
       - name: Terraform Destroy
         run: |
           export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
+          export TF_VAR_k0s_version=$(../../../k0s version)
+
           terraform destroy -auto-approve
         if: ${{ always() }}
 
-      - name: slack notify
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        uses: 8398a7/action-slack@v3
-        with:
-          job_name: "K8s Network Conformance Testing"
-          status: ${{ job.status }}
-          fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
-        if: ${{ always() }} # Pick up events even if the job fails or is canceled.
+      # - name: slack notify
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     job_name: "K8s Network Conformance Testing"
+      #     status: ${{ job.status }}
+      #     fields: workflow,ref,commit,author,job,took # selectable (default: repo,message)
+      #   if: ${{ always() }} # Pick up events even if the job fails or is canceled.

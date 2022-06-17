@@ -1,0 +1,29 @@
+"apiVersion": "k0sctl.k0sproject.io/v1beta1"
+"kind": "cluster"
+"metadata":
+  "name": "kalmogtest-07df04f1"
+"spec":
+  "hosts":
+  - "k0sBinaryPath": "../../../k0s"
+    "role": "controller"
+    "ssh":
+      "address": "52.212.100.177"
+      "keyPath": "./aws_private.pem"
+      "user": "ubuntu"
+    "uploadBinary": true
+  - "k0sBinaryPath": "../../../k0s"
+    "role": "worker"
+    "ssh":
+      "address": "54.154.204.41"
+      "keyPath": "./aws_private.pem"
+      "user": "ubuntu"
+    "uploadBinary": true
+  - "k0sBinaryPath": "../../../k0s"
+    "role": "worker"
+    "ssh":
+      "address": "54.246.26.234"
+      "keyPath": "./aws_private.pem"
+      "user": "ubuntu"
+    "uploadBinary": true
+  "k0s":
+    "version": "v1.23.1+k0s.0-519-g5234476b"
