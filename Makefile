@@ -172,7 +172,12 @@ k0s: .k0sbuild.docker-image.k0s
 k0s.exe: TARGET_OS = windows
 k0s.exe: CGO_ENABLED = 0
 
-k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
+test-k0s-0.0.1: VERSION=v0.0.1-test
+test-k0s-0.0.2: VERSION=v0.0.2-test
+
+test-bin: test-k0s-0.0.1 test-k0s-0.0.2
+
+k0s.exe k0s test-k0s-0.0.1 test-k0s-0.0.2: $(GO_SRCS) $(codegen_targets) go.sum
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
 	cat $@.code bindata_$(TARGET_OS) > $@.tmp \
 		&& rm -f $@.code \

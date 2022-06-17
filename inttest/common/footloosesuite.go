@@ -64,9 +64,10 @@ const (
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
 
-	defaultK0sBinaryFullPath   = "/usr/local/bin/k0s"
-	k0sBindMountFullPath       = "/dist/k0s"
-	k0sAirgapBindMountFullPath = "/dist/bundle.tar"
+	defaultK0sBinaryFullPath       = "/usr/local/bin/k0s"
+	k0sBindMountFullPath           = "/dist/k0s"
+	newK0sVersionBindMountFullPath = "/dist/test-k0s-0.0.2"
+	k0sAirgapBindMountFullPath     = "/dist/bundle.tar"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -1053,6 +1054,16 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			Type:        "bind",
 			Source:      airgapPath,
 			Destination: k0sAirgapBindMountFullPath,
+			ReadOnly:    true,
+		})
+	}
+
+	newK0sVersionPath := os.Getenv("K0S_NEW_PATH")
+	if newK0sVersionPath != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      newK0sVersionPath,
+			Destination: newK0sVersionBindMountFullPath,
 			ReadOnly:    true,
 		})
 	}

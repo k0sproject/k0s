@@ -117,26 +117,17 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: v0.0.0
-        forceupdate: true
+        version: v0.0.2-test
         platforms:
           linux-amd64:
-            url: http://localhost/dist/k0s
+            url: http://localhost/dist/test-k0s-0.0.2
         targets:
           controllers:
             discovery:
-              static:
-                nodes:
-                  - controller0
-                  - controller1
-                  - controller2
+              selector: {}
           workers:
             discovery:
-              static:
-                nodes:
-                  - worker0
-                  - worker1
-                  - worker2
+              selector: {}
 `
 
 	manifestFile := "/tmp/happy.yaml"

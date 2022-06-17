@@ -100,6 +100,18 @@ jobs:
           name: k0s${{ matrix.binary-suffix }}
           path: k0s${{ matrix.binary-suffix }}
 
+      - name: Build test binaries
+        if: matrix.target == 'linux'
+        run: |
+          make test-bin
+
+      - name: Upload test binaries
+        if: matrix.target == 'linux'
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-k0s
+          path: test-k0s-*
+
   unittest:
     name: Unit test
     needs: build
@@ -204,6 +216,11 @@ jobs:
         with:
           name: k0s
 
+      - name: Download test binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: test-k0s
+
       - name: Restore airgap bundle
         uses: actions/cache@v3
         with:
@@ -215,6 +232,11 @@ jobs:
         run: |
           chmod +x k0s
           ./k0s sysinfo
+
+      - name: Copy test binary
+        run: |
+          cp ./test-k0s-0.0.1 k0s
+          chmod +x k0s
 
       - name: Run inttest
         run: make -C inttest ${{ matrix.smoke-suite }}
