@@ -9,18 +9,23 @@ on:
     - cron: "0 23 * * *"
 
 jobs:
-  terraform:
+  check-network:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
+      SONOBUOY_VERSION: 0.56.7
 
     name: "K8s Network Conformance Testing"
     runs-on: ubuntu-latest
+    outputs:
+      k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}
+      kubernetes_version: ${{ steps.k0s_build.outputs.KUBERNETES_VERSION }}
+
     defaults:
       run:
-        working-directory: ./inttest/terraform/test-cluster
+        working-directory: ./inttest/sonobuoy/terraform
     steps:
       - name: Get PR Reference
         env:
@@ -41,6 +46,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ env.github_ref }}
+          # Dev builds rely on "git describe --tags" to set the binary version
+          fetch-depth: 0
 
       - name: Prepare build environment
         working-directory: ./
@@ -59,53 +66,91 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Prepare Environment
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REF: ${{ github.ref }}
-        run: ./scripts/prepare-env.sh
-
-      - name: Terraform Apply
-        run: |
-          export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
-
-          # Start SSH Agent
-          eval `ssh-agent -s`
-
-          terraform apply -auto-approve
-
-      - name: Bindata
+      - name: Cache embedded binaries
         uses: actions/cache@v3
-        id: generated-bindata
         with:
+          key: ${{ runner.os }}-embedded-bins-linux-${{ hashFiles('embedded-bins/**/*') }}
           path: |
             .bins.linux.stamp
             bindata_linux
             embedded-bins/staging/linux/bin/
             embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_linux.go
-
-          key: ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+      - name: Cache GOCACHE
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ hashFiles('**/embedded-bins/**/*') }}
+            ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-
+          path: |
+            build/cache/go/build
+      - name: Cache GOMODCACHE
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-build-gomodcache-linux-${{ hashFiles('go.sum') }}
+          path: |
+            build/cache/go/mod
 
       - name: Build k0s Binary
-        run: make build
+        id: k0s_build
+        run: |
+          make build
+          echo ::set-output name=KUBERNETES_VERSION::$(make print-kubernetes_version)
         working-directory: ./
 
-      - name: Deploy k0s to Hosts
+      - name: Set k0s' Version
+        id: bin_info
         run: |
-          terraform output -json > out.json
-          ./scripts/deploy-k0s.sh
+          # run k0s version
+          export ROOTDIR=${{ github.workspace }}
 
-      - name: Check Network
+          K0S_VER=$($ROOTDIR/k0s version)
+
+          if [ ${K0S_VER} == "" ]; then
+            echo "empty k0s version. failing..."
+            exit 1
+          fi
+
+          echo ::set-output name=K0S_VERSION::${K0S_VER}
+
+      - name: Terraform Apply
         run: |
-          make check-network-vm
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
+          export TF_VAR_k0s_version="${{ steps.bin_info.outputs.K0S_VERSION }}"
+          export TF_VAR_k0s_binary_path="${{ github.workspace }}/k0s"
+
+          # debug
+          echo "k0s_version = ${TF_VAR_k0s_version}"
+
+          # Start SSH Agent
+          eval `ssh-agent -s`
+
+          terraform apply -auto-approve
+
+      - name: Create k0s Cluster using k0sctl
+        id: k0sctl
+        run: |
+          # install k0sctl
+          go install github.com/k0sproject/k0sctl@latest
+
+          k0sctl apply -c k0sctl.yaml
+
+          # save kubeconfig file
+          k0sctl kubeconfig > ${{ github.workspace }}/kubeconfig
+
+      - name: Run Sonobuoy
+        run: |
+          export KUBECONFIG=${{ github.workspace }}/kubeconfig
+          SONOBUOY_VERSION=${{ env.SONOBUOY_VERSION}} make check-network
         working-directory: ./inttest
 
       - name: Terraform Destroy
         run: |
-          export TF_VAR_cluster_name=$(cat CLUSTER_NAME)
+          PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
+          export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
+          export TF_VAR_k0s_version=${{ steps.bin_info.outputs.K0S_VERSION }}
+
           terraform destroy -auto-approve
         if: ${{ always() }}
 
