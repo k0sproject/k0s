@@ -16,3 +16,9 @@ variable "cluster_flavor" {
   type    = string
   default = "c4.xlarge"
 }
+
+variable "k0s_version" {
+  type        = string
+  description = "The k0s version to deploy on the machines. May be an exact version, \"stable\" or \"latest\"."
+  default     = "stable"
+}

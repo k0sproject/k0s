@@ -3,18 +3,19 @@ resource "aws_instance" "cluster-controller" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.cluster_flavor
   tags = {
-    Name = format("%s-controller-%d", var.cluster_name, count.index)
+    Name = format("%s-controller-%d", local.cluster_unique_identifier, count.index)
+    Role = "controller"
   }
   key_name                    = aws_key_pair.cluster-key.key_name
   subnet_id                   = aws_subnet.cluster-subnet.id
   vpc_security_group_ids      = [aws_security_group.cluster_allow_ssh.id]
   associate_public_ip_address = true
-  source_dest_check = false
+  source_dest_check           = false
 
   root_block_device {
     volume_type = "gp3"
     volume_size = 20
-    iops = 1000
+    iops        = 1000
   }
   connection {
     type        = "ssh"
@@ -38,6 +39,7 @@ resource "aws_eip" "controller-ext" {
   instance = aws_instance.cluster-controller[count.index].id
   vpc      = true
   tags = {
-    Name = format("%s-controller-ip-%d", var.cluster_name, count.index)
+    Name = format("%s-controller-ip-%d", local.cluster_unique_identifier, count.index)
+    Role = "controller"
   }
 }

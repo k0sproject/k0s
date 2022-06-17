@@ -3,18 +3,19 @@ resource "aws_instance" "cluster-workers" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.cluster_flavor
   tags = {
-    Name = format("%s-worker-%d", var.cluster_name, count.index)
+    Name = format("%s-worker-%d", local.cluster_unique_identifier, count.index)
+    Role = "worker"
   }
   key_name                    = aws_key_pair.cluster-key.key_name
   subnet_id                   = aws_subnet.cluster-subnet.id
   vpc_security_group_ids      = [aws_security_group.cluster_allow_ssh.id]
   associate_public_ip_address = true
-  source_dest_check = false
+  source_dest_check           = false
 
   root_block_device {
     volume_type = "gp3"
     volume_size = 50
-    iops = 1000
+    iops        = 1000
   }
 
   connection {
