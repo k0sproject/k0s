@@ -206,6 +206,13 @@ jobs:
           name: smoketest-${{ matrix.smoke-suite }}-logs
           path: /tmp/*.log
 
+      - name: Collect cluster state
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: smoketest-${{ matrix.smoke-suite }}-cluster-state
+          path: /tmp/cluster-state.zip
+
   smoketest-airgap:
     name: Smoke test for airgap install
     needs: build
