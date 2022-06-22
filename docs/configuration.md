@@ -90,7 +90,7 @@ spec:
       version: v0.5.0
     kubeproxy:
       image: k8s.gcr.io/kube-proxy
-      version: v1.24.0
+      version: v1.24.2
     coredns:
       image: k8s.gcr.io/coredns/coredns
       version: v1.7.0
@@ -227,6 +227,7 @@ Note that there are several fields that cannot be overridden:
 - `clusterDomain`
 - `apiVersion`
 - `kind`
+- `staticPodURL`
 
 #### Examples
 

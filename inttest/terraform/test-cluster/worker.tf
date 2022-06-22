@@ -12,8 +12,9 @@ resource "aws_instance" "cluster-workers" {
   source_dest_check = false
 
   root_block_device {
-    volume_type = "gp2"
-    volume_size = 20
+    volume_type = "gp3"
+    volume_size = 50
+    iops = 1000
   }
 
   connection {

@@ -27,66 +27,51 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 )
 
-//revive:disable-next-line:exported
+// revive:disable-next-line:exported
 type LinuxProbes struct {
+	probes.Probes
+
 	path         probes.ProbePath
 	probeUname   unameProber
 	probeKConfig kConfigProber
-	probes       probes.Probes
 }
 
 func RequireLinux(parent probes.ParentProbe) (l *LinuxProbes) {
 	parent.Set("os", func(path probes.ProbePath, current probes.Probe) probes.Probe {
-		if r, ok := current.(*requireLinuxProbe); ok {
-			l = &r.LinuxProbes
-			return r
+		var ok bool
+		if l, ok = current.(*LinuxProbes); ok {
+			return l
 		}
 
-		r := &requireLinuxProbe{newLinuxProbes(path)}
-		l = &r.LinuxProbes
-		return r
+		l = newLinuxProbes(path)
+		return l
 	})
 
 	return
 }
 
-func newLinuxProbes(path probes.ProbePath) LinuxProbes {
+func newLinuxProbes(path probes.ProbePath) *LinuxProbes {
 	unameProber := newUnameProber()
-	return LinuxProbes{
+	return &LinuxProbes{
+		probes.NewProbesAtPath(path),
+
 		path,
 		unameProber,
 		newKConfigProber(unameProber),
-		probes.NewProbes(),
 	}
 }
 
-type requireLinuxDesc struct {
-	probes.ProbePath
-}
-
-func (r requireLinuxDesc) Path() probes.ProbePath {
-	return r.ProbePath
-}
-
-func (r requireLinuxDesc) DisplayName() string {
-	return "Operating system"
-}
-
-type requireLinuxProbe struct {
-	LinuxProbes
-}
-
-func (r *requireLinuxProbe) Probe(reporter probes.Reporter) error {
-	if err := r.probe(reporter); err != nil {
+func (l *LinuxProbes) Probe(reporter probes.Reporter) error {
+	if err := l.probe(reporter); err != nil {
 		return err
 	}
 
-	return r.probes.Probe(reporter)
+	return l.Probes.Probe(reporter)
 }
 
-func (r *requireLinuxProbe) probe(reporter probes.Reporter) error {
-	desc := requireLinuxDesc{r.path}
-	if uname, err := r.probeUname(); err != nil {
+func (l *LinuxProbes) probe(reporter probes.Reporter) error {
+	desc := probes.NewProbeDesc("Operating system", l.path)
+	if uname, err := l.probeUname(); err != nil {
 		return reporter.Error(desc, err)
 	} else if uname.osName.value == "Linux" {
 		return reporter.Pass(desc, uname.osName)

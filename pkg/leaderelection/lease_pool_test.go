@@ -17,56 +17,40 @@ package leaderelection
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	fakecoordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
+	const identity = "test-node"
+
 	fakeClient := fake.NewSimpleClientset()
-	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: v1.NamespaceSpec{},
-	}, metav1.CreateOptions{})
-	assert.NoError(t, err)
+	expectCreateNamespace(t, fakeClient)
+	expectCreateLease(t, fakeClient, identity)
 
-	identity := "test-node"
-	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Lease",
-			APIVersion: "coordination.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity: &identity,
-		},
-	}, metav1.CreateOptions{})
-
-	assert.NoError(t, err)
-
-	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.NoError(t, err)
+	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	require.NoError(t, err)
 
 	output := &LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	events, cancel, err := p.Watch(WithOutputChannels(output))
-	assert.NoError(t, err)
+	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	require.NoError(t, err)
+	defer cancel()
 
 	done := make(chan struct{})
 	failed := make(chan struct{})
@@ -84,114 +68,121 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 
 	select {
 	case <-done:
-		fmt.Println("successfully acquired lease")
+		t.Log("successfully acquired lease")
 	case <-failed:
-		t.Error("lost lease")
+		assert.Fail(t, "lost lease")
 	}
-
-	cancel()
 }
 
 func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
+	const identity = "test-node"
+
 	fakeClient := fake.NewSimpleClientset()
-	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: v1.NamespaceSpec{},
-	}, metav1.CreateOptions{})
-	assert.NoError(t, err)
+	expectCreateNamespace(t, fakeClient)
+	expectCreateLease(t, fakeClient, identity)
 
-	identity := "test-node"
-	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Lease",
-			APIVersion: "coordination.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity: &identity,
-		},
-	}, metav1.CreateOptions{})
-
-	assert.NoError(t, err)
-
-	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.NoError(t, err)
+	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	require.NoError(t, err)
 
 	output := &LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}
 
-	events, cancel, err := p.Watch(WithOutputChannels(output))
-	assert.NoError(t, err)
+	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	require.NoError(t, err)
 
 	<-events.AcquiredLease
-	fmt.Println("lease acquired, cancelling leaser")
+	t.Log("lease acquired, cancelling leaser")
 	cancel()
 	<-events.LostLease
-	fmt.Println("context cancelled and lease successfully lost")
+	t.Log("context cancelled and lease successfully lost")
+}
+
+func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
+	const identity = "test-node"
+
+	fakeClient := fake.NewSimpleClientset()
+	expectCreateNamespace(t, fakeClient)
+	expectCreateLease(t, fakeClient, identity)
+
+	givenLeaderElectorError := func() func(err error) {
+		var updateErr atomic.Value
+		fakeClient.CoordinationV1().(*fakecoordinationv1.FakeCoordinationV1).PrependReactor("update", "leases", func(action k8stesting.Action) (bool, runtime.Object, error) {
+			if err := *updateErr.Load().(*error); err != nil {
+				return true, nil, err
+			}
+			return false, nil, nil
+		})
+
+		return func(err error) {
+			updateErr.Store(&err)
+		}
+	}()
+
+	pool, err := NewLeasePool(fakeClient, "test",
+		WithIdentity(identity), WithNamespace("test"),
+		WithRetryPeriod(650*time.Millisecond),
+		WithRenewDeadline(1*time.Second),
+	)
+	require.NoError(t, err)
+
+	output := &LeaseEvents{
+		AcquiredLease: make(chan struct{}, 1),
+		LostLease:     make(chan struct{}, 1),
+	}
+
+	givenLeaderElectorError(nil)
+	events, cancel, err := pool.Watch(WithOutputChannels(output))
+	require.NoError(t, err)
+	defer cancel()
+
+	<-events.AcquiredLease
+	t.Log("Acquired lease, disrupting leader election and waiting to loose the lease")
+	givenLeaderElectorError(errors.New("leader election disrupted by test case"))
+
+	<-events.LostLease
+	t.Log("Lost lease, restoring leader election and waiting for the reacquisition of the lease")
+	givenLeaderElectorError(nil)
+
+	select {
+	case <-events.AcquiredLease:
+		t.Log("Reacquired lease, all good ...")
+	case <-time.After(10 * time.Second):
+		assert.Fail(t, "Timed out while waiting for the reacquisition of the lease")
+	}
 }
 
 func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
+	const (
+		identity  = "test-node"
+		identity2 = "test-node-2"
+	)
+
 	fakeClient := fake.NewSimpleClientset()
-	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: v1.NamespaceSpec{},
-	}, metav1.CreateOptions{})
-	assert.NoError(t, err)
+	expectCreateNamespace(t, fakeClient)
+	expectCreateLease(t, fakeClient, identity)
 
-	identity := "test-node"
-	leaseDurationSeconds := int32(1)
-	_, err = fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Lease",
-			APIVersion: "coordination.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test",
-		},
-		Spec: coordinationv1.LeaseSpec{
-			HolderIdentity:       &identity,
-			LeaseDurationSeconds: &leaseDurationSeconds,
-		},
-	}, metav1.CreateOptions{})
+	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	require.NoError(t, err)
 
-	assert.NoError(t, err)
-
-	p, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
-	assert.NoError(t, err)
-
-	events, cancel, err := p.Watch(WithOutputChannels(&LeaseEvents{
+	events, cancel, err := pool.Watch(WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
+	require.NoError(t, err)
+	defer cancel()
 
-	assert.NoError(t, err)
-	identity2 := "test-node-2"
-	p2, err := NewLeasePool(fakeClient, "test", WithIdentity(identity2), WithNamespace("test"))
-	assert.NoError(t, err)
+	pool2, err := NewLeasePool(fakeClient, "test", WithIdentity(identity2), WithNamespace("test"))
+	require.NoError(t, err)
 
-	events2, cancel2, err := p2.Watch(WithOutputChannels(&LeaseEvents{
+	events2, cancel2, err := pool2.Watch(WithOutputChannels(&LeaseEvents{
 		AcquiredLease: make(chan struct{}, 1),
 		LostLease:     make(chan struct{}, 1),
 	}))
-	assert.NoError(t, err)
-	fmt.Println("started second lease holder")
+	require.NoError(t, err)
 	defer cancel2()
+	t.Log("started second lease holder")
 
 	var receivedEvents []string
 
@@ -199,14 +190,14 @@ leaseEventLoop:
 	for {
 		select {
 		case <-events.AcquiredLease:
-			fmt.Println("lease acquired, cancelling leaser")
+			t.Log("lease acquired, cancelling leaser")
 			cancel()
 			receivedEvents = append(receivedEvents, "node1-acquired")
 		case <-events.LostLease:
-			fmt.Println("context cancelled and node 1 lease successfully lost")
+			t.Log("context cancelled and node 1 lease successfully lost")
 			receivedEvents = append(receivedEvents, "node1-lost")
 		case <-events2.AcquiredLease:
-			fmt.Println("node 2 lease acquired")
+			t.Log("node 2 lease acquired")
 			receivedEvents = append(receivedEvents, "node2-acquired")
 		default:
 			if len(receivedEvents) >= 3 {
@@ -218,4 +209,34 @@ leaseEventLoop:
 	assert.Equal(t, "node1-acquired", receivedEvents[0])
 	assert.Equal(t, "node1-lost", receivedEvents[1])
 	assert.Equal(t, "node2-acquired", receivedEvents[2])
+}
+
+func expectCreateNamespace(t *testing.T, fakeClient *fake.Clientset) {
+	_, err := fakeClient.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: v1.NamespaceSpec{},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+}
+
+func expectCreateLease(t *testing.T, fakeClient *fake.Clientset, identity string) {
+	_, err := fakeClient.CoordinationV1().Leases("test").Create(context.TODO(), &coordinationv1.Lease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Lease",
+			APIVersion: "coordination.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: coordinationv1.LeaseSpec{
+			HolderIdentity: &identity,
+		},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
 }

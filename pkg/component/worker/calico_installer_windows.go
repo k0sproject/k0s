@@ -13,6 +13,7 @@ import (
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/token"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,6 +25,8 @@ type CalicoInstaller struct {
 	CIDRRange  string
 	ClusterDNS string
 }
+
+var _ component.Component = (*CalicoInstaller)(nil)
 
 func (c CalicoInstaller) Init(_ context.Context) error {
 	path := "C:\\bootstrap.ps1"
@@ -103,11 +106,6 @@ func (c CalicoInstaller) Stop() error {
 }
 
 func (c CalicoInstaller) Healthy() error {
-	return nil
-}
-
-func (c CalicoInstaller) Reconcile() error {
-	logrus.Debug("reconcile method called for: CalicoInstaller")
 	return nil
 }
 

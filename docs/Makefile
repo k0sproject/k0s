@@ -75,7 +75,7 @@ cli:
 
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements.txt
 	docker build \
-	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine3.15 \
+	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine3.16 \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'
 

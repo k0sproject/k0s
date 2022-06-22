@@ -2,7 +2,7 @@ include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 include hack/tools/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:
@@ -51,9 +51,10 @@ LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(KUBECTL_VERSION)
 LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(KUBECTL_MAJOR)
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(KUBECTL_MINOR)
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
-LD_FLAGS += -X k8s.io/component-base/version.gitCommit="not_available"
+LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
+GOLANG_IMAGE = golang:$(go_version)-alpine3.16
 GO_ENV ?= docker run --rm \
 	-v '$(CURDIR)/build/cache':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
@@ -81,7 +82,7 @@ build/cache:
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | build/cache
 	docker build --rm \
-		--build-arg BUILDIMAGE=golang:$(go_version)-alpine \
+		--build-arg BUILDIMAGE=golang:$(go_version)-alpine3.16 \
 		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
 	touch $@
@@ -170,7 +171,8 @@ k0s: CGO_ENABLED = 1
 k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
-k0s.exe: CGO_ENABLED = 0
+k0s.exe: BUILD_GO_CGO_ENABLED = 0
+k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine3.16
 
 k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go

@@ -218,7 +218,12 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 	}
 
 	ctx, cancel := context.WithCancel(p.config.ctx)
-	go le.Run(ctx)
+
+	go func() {
+		for ctx.Err() == nil {
+			le.Run(ctx)
+		}
+	}()
 
 	return p.events, cancel, nil
 }

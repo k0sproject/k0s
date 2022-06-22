@@ -21,6 +21,7 @@ package worker
 import (
 	"context"
 
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -30,6 +31,8 @@ type CalicoInstaller struct {
 	CIDRRange  string
 	ClusterDNS string
 }
+
+var _ component.Component = (*CalicoInstaller)(nil)
 
 func (c CalicoInstaller) Init(_ context.Context) error {
 	panic("stub component is used: CalicoInstaller")
@@ -47,15 +50,13 @@ func (c CalicoInstaller) Healthy() error {
 	panic("stub component is used: CalicoInstaller")
 }
 
-func (c CalicoInstaller) Reconcile() error {
-	panic("stub component is used: CalicoInstaller")
-}
-
 type KubeProxy struct {
 	K0sVars   constant.CfgVars
 	CIDRRange string
 	LogLevel  string
 }
+
+var _ component.Component = (*KubeProxy)(nil)
 
 func (k KubeProxy) Init(_ context.Context) error {
 	panic("stub component is used: KubeProxy")
@@ -66,10 +67,6 @@ func (k KubeProxy) Run(_ context.Context) error {
 }
 
 func (k KubeProxy) Stop() error {
-	panic("stub component is used: KubeProxy")
-}
-
-func (k KubeProxy) Reconcile() error {
 	panic("stub component is used: KubeProxy")
 }
 

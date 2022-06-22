@@ -62,6 +62,12 @@ func TestWorkerProfile(t *testing.T) {
 					"kind": "Controller",
 				},
 				valid: false,
+			}, {
+				name: "Locked field staticPodURL",
+				spec: map[string]interface{}{
+					"staticPodURL": "foo",
+				},
+				valid: false,
 			},
 		}
 

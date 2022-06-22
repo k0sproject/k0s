@@ -37,7 +37,7 @@ func (a *assertDiskSpace) Probe(reporter Reporter) error {
 					continue
 				}
 			}
-			return reporter.Error(a, err)
+			return reporter.Error(a.desc(), err)
 		}
 
 		break
@@ -47,8 +47,8 @@ func (a *assertDiskSpace) Probe(reporter Reporter) error {
 	// Available blocks * size per block = available space in bytes
 	free := stat.Bavail * uint64(stat.Bsize)
 	if free >= a.minFree {
-		return reporter.Pass(a, iecBytes(free))
+		return reporter.Pass(a.desc(), iecBytes(free))
 	}
 
-	return reporter.Warn(a, iecBytes(free), fmt.Sprintf("%s recommended", iecBytes(a.minFree)))
+	return reporter.Warn(a.desc(), iecBytes(free), fmt.Sprintf("%s recommended", iecBytes(a.minFree)))
 }

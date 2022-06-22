@@ -19,10 +19,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	k8s "k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
@@ -121,9 +123,14 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 // XX: not a pretty hack, but we need the data-dir flag for the kubectl subcommand
 // XX: when other global flags cannot be used (specifically -d and -c)
 func GetKubeCtlFlagSet() *pflag.FlagSet {
+	debugDefault := false
+	if v, ok := os.LookupEnv("DEBUG"); ok {
+		debugDefault, _ = strconv.ParseBool(v)
+	}
+
 	flagset := &pflag.FlagSet{}
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
-	flagset.BoolVar(&Debug, "debug", false, "Debug logging (default: false)")
+	flagset.BoolVar(&Debug, "debug", debugDefault, "Debug logging [$DEBUG]")
 	return flagset
 }
 
@@ -230,6 +237,37 @@ func GetCmdOpts() CLIOptions {
 		DebugListenOn:    DebugListenOn,
 	}
 	return opts
+}
+
+// CallParentPersistentPreRun runs the parent command's persistent pre-run.
+// Cobra does not do this automatically.
+//
+// See: https://github.com/spf13/cobra/issues/216
+// See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
+func CallParentPersistentPreRun(c *cobra.Command, args []string) error {
+	for p := c.Parent(); p != nil; p = p.Parent() {
+		preRunE := p.PersistentPreRunE
+		preRun := p.PersistentPreRun
+
+		p.PersistentPreRunE = nil
+		p.PersistentPreRun = nil
+
+		defer func() {
+			p.PersistentPreRunE = preRunE
+			p.PersistentPreRun = preRun
+		}()
+
+		if preRunE != nil {
+			return preRunE(c, args)
+		}
+
+		if preRun != nil {
+			preRun(c, args)
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func PreRunValidateConfig(k0sVars constant.CfgVars) error {

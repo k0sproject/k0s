@@ -33,27 +33,27 @@ import (
 
 // KubeProxy is the component implementation to manage kube-proxy
 type KubeProxy struct {
-	log            *logrus.Entry
-	nodeConf       *v1beta1.ClusterConfig
-	K0sVars        constant.CfgVars
+	log logrus.FieldLogger
+
+	nodeConf    *v1beta1.ClusterConfig
+	K0sVars     constant.CfgVars
+	manifestDir string
+
 	previousConfig proxyConfig
-	manifestDir    string
 }
 
 var _ component.Component = (*KubeProxy)(nil)
 var _ component.ReconcilerComponent = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(configFile string, k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) (*KubeProxy, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "kubeproxy"})
-	proxyDir := path.Join(k0sVars.ManifestsDir, "kubeproxy")
+func NewKubeProxy(k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {
 	return &KubeProxy{
-		log:            log,
-		nodeConf:       nodeConfig,
-		K0sVars:        k0sVars,
-		previousConfig: proxyConfig{},
-		manifestDir:    proxyDir,
-	}, nil
+		log: logrus.WithFields(logrus.Fields{"component": "kubeproxy"}),
+
+		nodeConf:    nodeConfig,
+		K0sVars:     k0sVars,
+		manifestDir: path.Join(k0sVars.ManifestsDir, "kubeproxy"),
+	}
 }
 
 // Init does nothing

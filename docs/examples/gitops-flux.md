@@ -108,7 +108,7 @@ Create the following YAML file (simple-web-server-with-nodeport.yaml) into the s
         spec:
           containers:
           - name: httpd
-            image: httpd:2.4.53-alpine3.15
+            image: httpd:2.4.53-alpine
             ports:
             - containerPort: 80
   ---

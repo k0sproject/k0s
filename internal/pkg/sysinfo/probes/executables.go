@@ -1,6 +1,3 @@
-//go:build !linux
-// +build !linux
-
 /*
 Copyright 2022 k0s authors
 
@@ -19,6 +16,23 @@ limitations under the License.
 
 package probes
 
-func (a *assertDiskSpace) Probe(reporter Reporter) error {
-	return reporter.Warn(a.desc(), probeUnsupported("Disk space detection unsupported on this platform"), "")
+import (
+	"fmt"
+	"os/exec"
+)
+
+func AssertExecutablesInPath(p Probes, executables ...string) {
+	for _, executable := range executables {
+		p.Set(fmt.Sprintf("executableInPath:%s", executable), func(path ProbePath, _ Probe) Probe {
+			return ProbeFn(func(r Reporter) error {
+				desc := NewProbeDesc(fmt.Sprintf("Executable in path: %s", executable), path)
+				path, err := exec.LookPath(executable)
+				if err != nil {
+					return r.Warn(desc, ErrorProp(err), "")
+				}
+
+				return r.Pass(desc, StringProp(path))
+			})
+		})
+	}
 }

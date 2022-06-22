@@ -10,7 +10,7 @@ With k0sctl, you can create multi-node clusters in a manner that is automatic an
 
 ## Prerequisites
 
-You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are availble on the [k0sctl releases page](https://github.com/k0sproject/k0sctl)).
+You can execute k0sctl on any system that supports the Go language. Pre-compiled k0sctl binaries are available on the [k0sctl releases page](https://github.com/k0sproject/k0sctl)).
 
 **Note**: For target host prerequisites information, refer to the [k0s System Requirements](system-requirements.md).
 

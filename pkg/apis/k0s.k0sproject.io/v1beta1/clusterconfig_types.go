@@ -199,7 +199,14 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if c.Kind == "" {
 		c.Kind = "ClusterConfig"
 	}
-	c.Spec = DefaultClusterSpec()
+
+	// If there's already a storage configured, do not override it with default
+	// etcd config BEFORE unmarshaling
+	var storage *StorageSpec
+	if c.Spec != nil && c.Spec.Storage != nil {
+		storage = c.Spec.Storage
+	}
+	c.Spec = DefaultClusterSpec(storage)
 
 	type config ClusterConfig
 	jc := (*config)(c)

@@ -58,6 +58,11 @@ type ProbeDesc interface {
 	DisplayName() string
 }
 
+// NewProbeDesc returns a new ProbeDesc with the given display name and path.
+func NewProbeDesc(name string, path ProbePath) ProbeDesc {
+	return &probeDesc{path, name}
+}
+
 type ParentProbe interface {
 	Get(id string) Probe
 	Set(id string, setter func(path ProbePath, current Probe) Probe)
@@ -67,6 +72,21 @@ type ParentProbe interface {
 type ProbedProp interface {
 	// Name returns the string representation of this property.
 	String() string
+}
+
+// StringProp is a convenience way of reporting an arbitrary string as a probed property.
+type StringProp string
+
+func (s StringProp) String() string {
+	return string(s)
+}
+
+// ErrorProp is a convenience way of reporting an arbitrary error as a probed property.
+func ErrorProp(err error) interface {
+	ProbedProp
+	error
+} {
+	return errorProp{err}
 }
 
 // Reporter receives the outcome of probes.
@@ -92,9 +112,32 @@ type Probes interface {
 	Probe
 }
 
-// NewProbes returns a new, empty composite probe.
-func NewProbes() Probes {
-	return &probes{}
+// NewRootProbes returns a new, empty composite probe without a path.
+func NewRootProbes() Probes {
+	return &probes{nil, nil}
+}
+
+// NewProbesAtPath returns a new, empty composite probe at the given path.
+func NewProbesAtPath(path ProbePath) Probes {
+	return &probes{path, nil}
+}
+
+type probeDesc struct {
+	path ProbePath
+	name string
+}
+
+func (d *probeDesc) Path() ProbePath     { return d.path }
+func (d *probeDesc) DisplayName() string { return d.name }
+
+type errorProp struct{ error }
+
+func (e errorProp) String() string {
+	return e.Error()
+}
+
+func (e errorProp) Unwrap() error {
+	return e.error
 }
 
 type probes struct {

@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -30,12 +31,17 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
+	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -55,6 +61,8 @@ type Kubelet struct {
 	Taints              []string
 	ExtraArgs           string
 }
+
+var _ component.Component = (*Kubelet)(nil)
 
 type kubeletConfig struct {
 	ClientCAFile       string
@@ -137,10 +145,6 @@ func (k *Kubelet) Run(ctx context.Context) error {
 		args["--node-labels"] = strings.Join(k.Labels, ",")
 	}
 
-	if len(k.Taints) > 0 {
-		args["--register-with-taints"] = strings.Join(k.Taints, ",")
-	}
-
 	if runtime.GOOS == "windows" {
 		node, err := getNodeName(ctx)
 		if err != nil {
@@ -162,27 +166,17 @@ func (k *Kubelet) Run(ctx context.Context) error {
 	}
 
 	if k.CRISocket != "" {
-		rtType, rtSock, err := SplitRuntimeConfig(k.CRISocket)
+		// Due to the removal of dockershim from kube 1.24, we no longer need to
+		// handle any special docker case
+		_, rtSock, err := SplitRuntimeConfig(k.CRISocket)
 		if err != nil {
 			return err
 		}
-		args["--container-runtime"] = rtType
-		shimPath := "unix:///var/run/dockershim.sock"
-		if runtime.GOOS == "windows" {
-			shimPath = "npipe:////./pipe/dockershim"
-		}
-		if rtType == "docker" {
-			args["--docker-endpoint"] = rtSock
-			// this endpoint is actually pointing to the one kubelet itself creates as the cri shim between itself and docker
-			args["--container-runtime-endpoint"] = shimPath
-		} else {
-			args["--container-runtime-endpoint"] = rtSock
-		}
+		args["--container-runtime-endpoint"] = rtSock
+
 	} else {
 		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
-		args["--container-runtime"] = "remote"
 		args["--container-runtime-endpoint"] = fmt.Sprintf("unix://%s", sockPath)
-		args["--containerd"] = sockPath
 	}
 
 	// We only support external providers
@@ -211,13 +205,12 @@ func (k *Kubelet) Run(ctx context.Context) error {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
 			return err
 		}
-		tw := templatewriter.TemplateWriter{
-			Name:     "kubelet-config",
-			Template: kubeletconfig,
-			Data:     kubeletConfigData,
-			Path:     kubeletConfigPath,
+		kubeletconfig, err = k.prepareLocalKubeletConfig(kubeletconfig, kubeletConfigData)
+		if err != nil {
+			logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
+			return err
 		}
-		err = tw.Write()
+		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write kubelet config: %w", err)
 		}
@@ -239,14 +232,41 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
-// Reconcile detects changes in configuration and applies them to the component
-func (k *Kubelet) Reconcile() error {
-	logrus.Debug("reconcile method called for: Kubelet")
-	return nil
-}
-
 // Health-check interface
 func (k *Kubelet) Healthy() error { return nil }
+
+func (k *Kubelet) prepareLocalKubeletConfig(kubeletconfig string, kubeletConfigData kubeletConfig) (string, error) {
+	var kubeletConfiguration kubeletv1beta1.KubeletConfiguration
+	err := yaml.Unmarshal([]byte(kubeletconfig), &kubeletConfiguration)
+	if err != nil {
+		return "", fmt.Errorf("can't unmarshal kubelet config: %v", err)
+	}
+
+	kubeletConfiguration.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
+	kubeletConfiguration.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
+	kubeletConfiguration.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
+	kubeletConfiguration.KubeletCgroups = kubeletConfigData.KubeletCgroups
+	kubeletConfiguration.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
+	kubeletConfiguration.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
+
+	if len(k.Taints) > 0 {
+		var taints []corev1.Taint
+		for _, taint := range k.Taints {
+			parsedTaint, err := parseTaint(taint)
+			if err != nil {
+				return "", fmt.Errorf("can't parse taints for profile config map: %v", err)
+			}
+			taints = append(taints, parsedTaint)
+		}
+		kubeletConfiguration.RegisterWithTaints = taints
+	}
+
+	localKubeletConfig, err := yaml.Marshal(kubeletConfiguration)
+	if err != nil {
+		return "", fmt.Errorf("can't marshal kubelet config: %v", err)
+	}
+	return string(localKubeletConfig), nil
+}
 
 const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
 
@@ -266,4 +286,55 @@ func getNodeName(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("can't read aws hostname: %v", err)
 	}
 	return string(h), nil
+}
+
+func parseTaint(st string) (corev1.Taint, error) {
+	var taint corev1.Taint
+
+	var key string
+	var value string
+	var effect corev1.TaintEffect
+
+	parts := strings.Split(st, ":")
+	switch len(parts) {
+	case 1:
+		key = parts[0]
+	case 2:
+		effect = corev1.TaintEffect(parts[1])
+		if err := validateTaintEffect(effect); err != nil {
+			return taint, err
+		}
+
+		partsKV := strings.Split(parts[0], "=")
+		if len(partsKV) > 2 {
+			return taint, fmt.Errorf("invalid taint spec: %v", st)
+		}
+		key = partsKV[0]
+		if len(partsKV) == 2 {
+			value = partsKV[1]
+			if errs := validation.IsValidLabelValue(value); len(errs) > 0 {
+				return taint, fmt.Errorf("invalid taint spec: %v, %s", st, strings.Join(errs, "; "))
+			}
+		}
+	default:
+		return taint, fmt.Errorf("invalid taint spec: %v", st)
+	}
+
+	if errs := validation.IsQualifiedName(key); len(errs) > 0 {
+		return taint, fmt.Errorf("invalid taint spec: %v, %s", st, strings.Join(errs, "; "))
+	}
+
+	taint.Key = key
+	taint.Value = value
+	taint.Effect = effect
+
+	return taint, nil
+}
+
+func validateTaintEffect(effect corev1.TaintEffect) error {
+	if effect != corev1.TaintEffectNoSchedule && effect != corev1.TaintEffectPreferNoSchedule && effect != corev1.TaintEffectNoExecute {
+		return fmt.Errorf("invalid taint effect: %v, unsupported taint effect", effect)
+	}
+
+	return nil
 }

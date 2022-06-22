@@ -237,11 +237,13 @@ spec:
 
 // MetricServer is the reconciler implementation for metrics server
 type MetricServer struct {
-	log               *logrus.Entry
-	clusterConfig     *v1beta1.ClusterConfig
-	tickerDone        context.CancelFunc
+	log logrus.FieldLogger
+
 	K0sVars           constant.CfgVars
 	kubeClientFactory k8sutil.ClientFactoryInterface
+
+	clusterConfig *v1beta1.ClusterConfig
+	tickerDone    context.CancelFunc
 }
 
 type metricsConfig struct {
@@ -255,13 +257,13 @@ var _ component.Component = (*MetricServer)(nil)
 var _ component.ReconcilerComponent = (*MetricServer)(nil)
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) (*MetricServer, error) {
-	log := logrus.WithFields(logrus.Fields{"component": "metricServer"})
+func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {
 	return &MetricServer{
-		log:               log,
+		log: logrus.WithFields(logrus.Fields{"component": "metricServer"}),
+
 		K0sVars:           k0sVars,
 		kubeClientFactory: kubeClientFactory,
-	}, nil
+	}
 }
 
 // Init does nothing

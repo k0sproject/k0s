@@ -25,6 +25,7 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -34,6 +35,8 @@ type OCIBundleReconciler struct {
 	k0sVars constant.CfgVars
 	log     *logrus.Entry
 }
+
+var _ component.Component = (*OCIBundleReconciler)(nil)
 
 // NewOCIBundleReconciler builds new reconciler
 func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
@@ -104,8 +107,4 @@ func (a *OCIBundleReconciler) Stop() error {
 	return nil
 }
 
-func (a *OCIBundleReconciler) Reconcile() error {
-	logrus.Debug("reconcile method called for: OCIBundleReconciler")
-	return nil
-}
 func (a *OCIBundleReconciler) Healthy() error { return nil }
