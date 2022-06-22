@@ -48,6 +48,7 @@ type ClusterSpec struct {
 	Images            *ClusterImages         `json:"images"`
 	Extensions        *ClusterExtensions     `json:"extensions,omitempty"`
 	Konnectivity      *KonnectivitySpec      `json:"konnectivity,omitempty"`
+	BindAddress       string                 `json:"bindAddress,omitempty"`
 }
 
 // ClusterConfigStatus defines the observed state of ClusterConfig
@@ -297,8 +298,9 @@ func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *Cluste
 		ObjectMeta: c.ObjectMeta,
 		TypeMeta:   c.TypeMeta,
 		Spec: &ClusterSpec{
-			API:     c.Spec.API,
-			Storage: storageSpec,
+			BindAddress: c.Spec.BindAddress,
+			API:         c.Spec.API,
+			Storage:     storageSpec,
 			Network: &Network{
 				ServiceCIDR: c.Spec.Network.ServiceCIDR,
 				DualStack:   c.Spec.Network.DualStack,

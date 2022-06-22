@@ -149,6 +149,9 @@ func (k *Konnectivity) runServer(ctx context.Context) {
 			if count != k.serverCount && k.clusterConfig != nil {
 				args := k.defaultArgs()
 				args["--server-count"] = strconv.Itoa(count)
+				if k.clusterConfig.Spec.BindAddress != "" {
+					args["--agent-bind-address"] = k.clusterConfig.Spec.BindAddress
+				}
 				if args.Equals(previousArgs) {
 					logrus.Info("no changes detected for konnectivity-server")
 				}

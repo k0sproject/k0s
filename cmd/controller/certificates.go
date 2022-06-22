@@ -82,7 +82,11 @@ func (c *Certificates) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to read ca cert: %w", err)
 	}
 	c.CACert = string(cert)
-	kubeConfigAPIUrl := fmt.Sprintf("https://localhost:%d", c.ClusterSpec.API.Port)
+	apiHost := "localhost"
+	if c.ClusterSpec.BindAddress != "" {
+		apiHost = c.ClusterSpec.BindAddress
+	}
+	kubeConfigAPIUrl := fmt.Sprintf("https://%s:%d", apiHost, c.ClusterSpec.API.Port)
 	eg.Go(func() error {
 		// Front proxy CA
 		if err := c.CertManager.EnsureCA("front-proxy-ca", "kubernetes-front-proxy-ca"); err != nil {

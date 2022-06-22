@@ -16,6 +16,7 @@ limitations under the License.
 package common
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -36,6 +37,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/alessio/shellescape"
 	"github.com/go-openapi/jsonpointer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
@@ -841,6 +843,54 @@ func (s *FootlooseSuite) GetKubeletCMDLine(node string) (string, error) {
 	}
 
 	return output, nil
+}
+
+/*
+	Somewhat naive way to check that given process (or the process found with the search term) has the given args.
+	There could be some corner cases where this does not work properly.
+
+	Why "cat /proc..."? Turns out busybox pgrep truncates the output, see
+	- https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/procps.c#L282
+	- https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/procps.c#L67
+
+	Alternatives considered:
+	- Use regex filters for matching the proces and args via 'pgrep'; This would burden each developer to figure out the proper regex.
+		We'd need some cryptic regexes like: pgrep -f -a '.*konnectivity-server.*--agent-bind-address=172\.17\.0\.2.*'
+		Also regex is not so easy to do in a "position" independent way. I mean we do not really care about the order of the args.
+	- Constructing the pgrep regex dynamically; While doable, it suffers from the same ordering issue which is not so easy to solve.
+*/
+func (s *FootlooseSuite) VerifyProcessFlagsContains(node string, processSearchTerm string, flags ...string) {
+	ssh, err := s.SSH(node)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	// We need to first find the pids matching the given search
+	pgrepCmd := fmt.Sprintf(`pgrep -f %s`, shellescape.Quote(processSearchTerm))
+	s.T().Logf("finding procs with: %s", pgrepCmd)
+	procsOutput, err := ssh.ExecWithOutput(pgrepCmd)
+	s.Require().NoError(err, procsOutput)
+	pids := []int{}
+	scanner := bufio.NewScanner(strings.NewReader(procsOutput))
+	for scanner.Scan() {
+		line := scanner.Text()
+		pid, err := strconv.Atoi(line)
+		s.Require().NoError(err, line)
+		pids = append(pids, pid)
+	}
+
+	// Fail if more than one process found
+	if len(pids) != 1 {
+		s.FailNowf("more than one process found", "found more than one process with search '%s': %v", processSearchTerm, pids)
+	}
+
+	// Verify the cmdline contains expected flags
+	command := fmt.Sprintf(`cat /proc/%d/cmdline`, pids[0])
+	output, err := ssh.ExecWithOutput(command)
+	s.Require().NoError(err, output)
+	s.Require().NotEmpty(output)
+	for _, f := range flags {
+		s.Require().Contains(output, f)
+	}
 }
 
 func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {

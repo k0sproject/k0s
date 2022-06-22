@@ -27,9 +27,10 @@ import (
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
-	ConfigPath string
-	K0sVars    constant.CfgVars
-	supervisor supervisor.Supervisor
+	ConfigPath  string
+	K0sVars     constant.CfgVars
+	supervisor  supervisor.Supervisor
+	BindAddress string
 }
 
 var _ component.Component = (*K0SControlAPI)(nil)
@@ -48,15 +49,22 @@ func (m *K0SControlAPI) Run(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	args := []string{
+		"api",
+		fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
+	}
+
+	if m.BindAddress != "" {
+		args = append(args, fmt.Sprintf("--bind-address=%s", m.BindAddress))
+	}
+
 	m.supervisor = supervisor.Supervisor{
 		Name:    "k0s-control-api",
 		BinPath: selfExe,
 		RunDir:  m.K0sVars.RunDir,
 		DataDir: m.K0sVars.DataDir,
-		Args: []string{
-			"api",
-			fmt.Sprintf("--data-dir=%s", m.K0sVars.DataDir),
-		},
+		Args:    args,
 	}
 
 	return m.supervisor.Supervise()

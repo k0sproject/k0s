@@ -122,6 +122,9 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	if a.SingleNode {
 		args["leader-elect"] = "false"
 	}
+	if clusterConfig.Spec.BindAddress != "" {
+		args["bind-address"] = clusterConfig.Spec.BindAddress
+	}
 
 	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing

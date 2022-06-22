@@ -10,7 +10,7 @@ ARG BUILD_GO_LDFLAGS_EXTRA
 
 RUN apk add build-base git make protoc
 
-RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
+RUN git -c advice.detachedHead=false clone -b $VERSION --depth=1 https://github.com/jnummelin/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 RUN go version
 RUN go install github.com/golang/mock/mockgen@v1.4.4 && \

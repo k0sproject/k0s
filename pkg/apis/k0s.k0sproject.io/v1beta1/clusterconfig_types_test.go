@@ -27,6 +27,7 @@ func TestClusterDefaults(t *testing.T) {
 	c, err := ConfigFromString("apiVersion: k0s.k0sproject.io/v1beta1")
 	assert.NoError(t, err)
 	assert.Equal(t, DefaultStorageSpec(), c.Spec.Storage)
+	assert.Empty(t, c.Spec.BindAddress)
 }
 
 func TestUnknownFieldValidation(t *testing.T) {

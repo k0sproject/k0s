@@ -162,6 +162,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 
 	logrus.Infof("using api address: %s", c.NodeConfig.Spec.API.Address)
+	logrus.Infof("using bind address: %s", c.NodeConfig.Spec.BindAddress)
 	logrus.Infof("using listen port: %d", c.NodeConfig.Spec.API.Port)
 	logrus.Infof("using sans: %s", c.NodeConfig.Spec.API.SANs)
 	dnsAddress, err := c.NodeConfig.Spec.Network.DNSAddress()
@@ -230,8 +231,9 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
 		c.NodeComponents.Add(ctx, &controller.K0SControlAPI{
-			ConfigPath: c.CfgFile,
-			K0sVars:    c.K0sVars,
+			ConfigPath:  c.CfgFile,
+			K0sVars:     c.K0sVars,
+			BindAddress: c.NodeConfig.Spec.BindAddress,
 		})
 	}
 

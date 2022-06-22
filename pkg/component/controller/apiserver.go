@@ -150,6 +150,10 @@ func (a *APIServer) Run(_ context.Context) error {
 		args["endpoint-reconciler-type"] = "none"
 	}
 
+	if a.ClusterConfig.Spec.BindAddress != "" {
+		args["bind-address"] = a.ClusterConfig.Spec.BindAddress
+	}
+
 	var apiServerArgs []string
 	for name, value := range args {
 		apiServerArgs = append(apiServerArgs, fmt.Sprintf("--%s=%s", name, value))
@@ -221,7 +225,13 @@ func (a *APIServer) Healthy() error {
 		TLSClientConfig: tlsConfig,
 	}
 	client := &http.Client{Transport: tr}
-	resp, err := client.Get(fmt.Sprintf("https://localhost:%d/readyz?verbose", a.ClusterConfig.Spec.API.Port))
+
+	host := "localhost"
+	if a.ClusterConfig.Spec.BindAddress != "" {
+		host = a.ClusterConfig.Spec.BindAddress
+	}
+	address := fmt.Sprintf("https://%s:%d/readyz?verbose", host, a.ClusterConfig.Spec.API.Port)
+	resp, err := client.Get(address)
 	if err != nil {
 		return err
 	}

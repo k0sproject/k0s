@@ -37,6 +37,7 @@ type Scheduler struct {
 	K0sVars        constant.CfgVars
 	LogLevel       string
 	SingleNode     bool
+	BindAddress    string
 	supervisor     *supervisor.Supervisor
 	uid            int
 	previousConfig stringmap.StringMap
@@ -74,15 +75,20 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 
 	logrus.Info("Starting kube-scheduler")
 	schedulerAuthConf := filepath.Join(a.K0sVars.CertRootDir, "scheduler.conf")
+	bindAddress := "127.0.0.1"
+	if a.BindAddress != "" {
+		bindAddress = a.BindAddress
+	}
 	args := stringmap.StringMap{
 		"authentication-kubeconfig": schedulerAuthConf,
 		"authorization-kubeconfig":  schedulerAuthConf,
 		"kubeconfig":                schedulerAuthConf,
-		"bind-address":              "127.0.0.1",
+		"bind-address":              bindAddress,
 		"leader-elect":              "true",
 		"profiling":                 "false",
 		"v":                         a.LogLevel,
 	}
+
 	for name, value := range clusterConfig.Spec.Scheduler.ExtraArgs {
 		if args[name] != "" {
 			logrus.Warnf("overriding kube-scheduler flag with user provided value: %s", name)

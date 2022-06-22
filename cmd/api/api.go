@@ -49,6 +49,8 @@ const (
 	controllerRole = "controller"
 )
 
+var bindAddress = ""
+
 var allowedUsageByRole = map[string]string{
 	workerRole:     "usage-bootstrap-api-worker-calls",
 	controllerRole: "usage-controller-join",
@@ -71,6 +73,7 @@ func NewAPICmd() *cobra.Command {
 	}
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+	cmd.Flags().StringVarP(&bindAddress, "bind-address", "b", "", "Bind address for the k0s control api")
 	return cmd
 }
 
@@ -104,7 +107,7 @@ func (c *CmdOpts) startAPI() error {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
+		Addr:         fmt.Sprintf("%s:%d", c.NodeConfig.Spec.BindAddress, c.NodeConfig.Spec.API.K0sAPIPort),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
