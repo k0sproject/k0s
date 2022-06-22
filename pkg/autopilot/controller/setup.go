@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
@@ -111,6 +112,17 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	// Create the ControlNode object if needed
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
+		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
+		extClient, err := cf.GetExtensionClient()
+		if err != nil {
+			return fmt.Errorf("unable to obtain extensions client: %w", err)
+		}
+		if _, err := apcomm.WaitForCRDByName(ctx, extClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute); err != nil {
+			return fmt.Errorf("timed out waiting for autopilot 'controlnodes' CRD: %v", err)
+		}
+
+		logger.Info("Autopilot 'controlnodes' CRD found, continuing")
+
 		logger.Infof("ControlNode '%s' not found, creating", name)
 		node = &apv1beta2.ControlNode{
 			ObjectMeta: metav1.ObjectMeta{
