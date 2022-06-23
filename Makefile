@@ -56,27 +56,7 @@ LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
-golint := $(shell which golangci-lint 2>/dev/null)
-ifeq ($(golint),)
-golint := cd hack/ci-deps && go install github.com/golangci/golangci-lint/cmd/golangci-lint && cd ../.. && "${GOPATH}/bin/golangci-lint"
-endif
-
-go_bindata := $(shell which go-bindata 2>/dev/null)
-ifeq ($(go_bindata),)
-go_bindata := cd hack/ci-deps && go install github.com/kevinburke/go-bindata/... && cd ../.. && "${GOPATH}/bin/go-bindata"
-endif
-
-go_clientgen := $(shell which client-gen 2>/dev/null)
-ifeq ($(go_clientgen),)
-go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && "${GOPATH}/bin/client-gen"
-endif
-
-go_controllergen := $(shell which controller-gen 2>/dev/null)
-ifeq ($(go_controllergen),)
-go_controllergen := cd hack/ci-deps && go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0 && cd ../.. && "${GOPATH}/bin/controller-gen"
-endif
-
-GOLANG_IMAGE = golang:$(go_version)-alpine3.16
+GOLANG_IMAGE = golang:$(go_version)-alpine
 GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/mod docker run --rm \
 	-v "$(CURDIR)":/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
@@ -87,6 +67,13 @@ GO ?= GOCACHE=/go/src/github.com/k0sproject/k0s/build/cache/go/build GOMODCACHE=
 	-e GOMODCACHE \
 	--user $(BUILD_UID):$(BUILD_GID) \
 	$(GOLANG_IMAGE) go
+
+TOOLS_ENV ?= \
+	docker run \
+	    --user $(shell id -u) \
+	    --rm \
+	    -v $(PWD):/go/src/k0s \
+	    k0sbuild.docker-image.tools
 
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
@@ -100,6 +87,13 @@ endif
 		--build-arg BUILDIMAGE=golang:$(go_version)-alpine3.16 \
 		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
+	touch $@
+
+.k0sbuild.docker-image.tools: hack/tools/Dockerfile
+	docker build --rm \
+	    -f hack/tools/Dockerfile \
+	    -t k0sbuild.docker-image.tools \
+	    hack/tools
 	touch $@
 
 .PHONY: all
@@ -161,8 +155,8 @@ k0s.exe k0s: $(GO_SRCS) go.sum
 codegen: $(codegen_targets)
 
 .PHONY: lint
-lint: go.sum codegen
-	$(golint) run --verbose $(GO_DIRS)
+lint: .k0sbuild.docker-image.tools go.sum codegen
+	$(TOOLS_ENV) golangci-lint run --verbose $(GO_DIRS)
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
@@ -194,7 +188,9 @@ clean-gocache:
 
 clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f
+	-docker rmi k0sbuild.docker-image.tools -f
 	-rm -f .k0sbuild.docker-image.k0s
+	-rm -f .k0sbuild.docker-image.tools
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image
@@ -205,27 +201,38 @@ clean: clean-gocache clean-docker-image
 	-$(MAKE) -C inttest clean
 
 .PHONY: manifests
-
-ROOT_DIR := $(shell pwd)
-
 manifests: .helmCRD .cfgCRD
 
-.helmCRD:
-	$(go_controllergen) crd paths="./pkg/apis/helm.k0sproject.io/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/helm/CustomResourceDefinition object
+.PHONY: .helmCRD
+.helmCRD: .k0sbuild.docker-image.tools
+	$(TOOLS_ENV) controller-gen \
+	    crd \
+	    paths="./pkg/apis/helm.k0sproject.io/..." \
+	    output:crd:artifacts:config=./static/manifests/helm/CustomResourceDefinition \
+	    object
 
-.cfgCRD:
-	$(go_controllergen) crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
+.PHONY: .cfgCRD
+.cfgCRD: .k0sbuild.docker-image.tools
+	$(TOOLS_ENV) controller-gen \
+	    crd \
+	    paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." \
+	    output:crd:artifacts:config=./static/manifests/v1beta1/CustomResourceDefinition \
+	    object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
-	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
+	$(TOOLS_ENV) go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
 .PHONY: generate-bindata
 generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: generate-APIClient
-
-generate-APIClient: hack/client-gen/boilerplate.go.txt
-	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
+generate-APIClient: .k0sbuild.docker-image.tools hack/tools/boilerplate.go.txt
+	$(TOOLS_ENV) client-gen \
+	    --go-header-file hack/tools/boilerplate.go.txt \
+	    --input="k0s.k0sproject.io/v1beta1" \
+	    --input-base github.com/k0sproject/k0s/pkg/apis \
+	    --clientset-name="clientset" \
+	    -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
 image-bundle/image.list: k0s
 	./k0s airgap list-images > image-bundle/image.list
