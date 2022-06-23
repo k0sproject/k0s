@@ -46,12 +46,11 @@ var _ component.Component = (*DefaultPSP)(nil)
 var _ component.ReconcilerComponent = (*DefaultPSP)(nil)
 
 // NewDefaultPSP creates new system level RBAC reconciler
-func NewDefaultPSP(k0sVars constant.CfgVars) (*DefaultPSP, error) {
-	manifestDir := path.Join(k0sVars.ManifestsDir, "defaultpsp")
+func NewDefaultPSP(k0sVars constant.CfgVars) *DefaultPSP {
 	return &DefaultPSP{
 		k0sVars:     k0sVars,
-		manifestDir: manifestDir,
-	}, nil
+		manifestDir: path.Join(k0sVars.ManifestsDir, "defaultpsp"),
+	}
 }
 
 // Init does currently nothing

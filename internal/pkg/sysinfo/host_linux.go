@@ -38,11 +38,15 @@ func (s *K0sSysinfoSpec) addHostSpecificProbes(p probes.Probes) {
 		return ""
 	})
 
-	s.addKernelConfigs(linux)
+	linux.AssertProcessMaxFileDescriptors(65536)
 
 	if s.WorkerRoleEnabled {
+		probes.AssertExecutablesInPath(linux, "modprobe")
+		linux.RequireProcFS()
 		addCgroups(linux)
 	}
+
+	s.addKernelConfigs(linux)
 }
 
 func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {

@@ -34,7 +34,7 @@ import (
 
 func TestRequireLinux(t *testing.T) {
 
-	p := probes.NewProbes()
+	p := probes.NewRootProbes()
 	linuxProbes := RequireLinux(p)
 
 	t.Run("reusesPreviousProbe", func(t *testing.T) {

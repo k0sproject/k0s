@@ -35,51 +35,46 @@ import (
 )
 
 func (l *LinuxProbes) AssertKernelRelease(assert func(string) string) {
-	l.probes.Set("kernelRelease", func(path probes.ProbePath, current probes.Probe) probes.Probe {
-		return &assertKRelease{append(l.path, path...), l.probeUname, assert}
+	l.Set("kernelRelease", func(path probes.ProbePath, current probes.Probe) probes.Probe {
+		return probes.ProbeFn(func(r probes.Reporter) error {
+			desc := probes.NewProbeDesc("Linux kernel release", path)
+			if uname, err := l.probeUname(); err != nil {
+				return r.Error(desc, err)
+			} else if uname.osRelease.truncated {
+				return r.Error(desc, errors.New(uname.osRelease.String()))
+			} else if msg := assert(uname.osRelease.value); msg != "" {
+				return r.Warn(desc, uname.osRelease, msg)
+			} else {
+				return r.Pass(desc, uname.osRelease)
+			}
+		})
 	})
 }
 
 func (l *LinuxProbes) RequireKernelConfig(config, desc string, alternativeConfigs ...string) *KernelConfigProbes {
-	return l.newKProbes().RequireKernelConfig(config, desc, alternativeConfigs...)
+	return probeKConfig(l, l.probeKConfig, true, config, desc, alternativeConfigs...)
 }
 
 func (l *LinuxProbes) AssertKernelConfig(config, desc string, alternativeConfigs ...string) *KernelConfigProbes {
-	return l.newKProbes().AssertKernelConfig(config, desc, alternativeConfigs...)
-}
-
-func (l *LinuxProbes) newKProbes() (k *KernelConfigProbes) {
-	l.probes.Set("kernelConfig", func(path probes.ProbePath, current probes.Probe) probes.Probe {
-		var ok bool
-		if k, ok = current.(*KernelConfigProbes); !ok {
-			k = &KernelConfigProbes{path, l.probeKConfig, probes.NewProbes()}
-		}
-
-		return k
-	})
-
-	return
-}
-
-func (k *KernelConfigProbes) Probe(reporter probes.Reporter) error {
-	return k.probes.Probe(reporter)
+	return probeKConfig(l, l.probeKConfig, false, config, desc, alternativeConfigs...)
 }
 
 type KernelConfigProbes struct {
+	probes.Probes
+
 	path        probes.ProbePath
 	probeConfig kConfigProber
-	probes      probes.Probes
 }
 
 func (k *KernelConfigProbes) RequireKernelConfig(config, desc string, alternativeConfigs ...string) *KernelConfigProbes {
-	return k.probeKConfig(true, config, desc, alternativeConfigs...)
+	return probeKConfig(k, k.probeConfig, true, config, desc, alternativeConfigs...)
 }
 
 func (k *KernelConfigProbes) AssertKernelConfig(config, desc string, alternativeConfigs ...string) *KernelConfigProbes {
-	return k.probeKConfig(false, config, desc, alternativeConfigs...)
+	return probeKConfig(k, k.probeConfig, false, config, desc, alternativeConfigs...)
 }
 
-//revive:disable:var-naming
+// revive:disable:var-naming
 
 type kConfigSpec struct {
 	kConfig
@@ -88,51 +83,27 @@ type kConfigSpec struct {
 	require             bool
 }
 
-func (k *KernelConfigProbes) probeKConfig(require bool, config, desc string, alternativeConfigs ...string) *KernelConfigProbes {
+func probeKConfig(
+	parent probes.ParentProbe, probeConfig kConfigProber,
+	require bool, config, desc string, alternativeConfigs ...string,
+) *KernelConfigProbes {
 	spec := &kConfigSpec{ensureKConfig(config), desc, nil, require}
 	for _, alternativeConfig := range alternativeConfigs {
 		spec.alternativeKConfigs = append(spec.alternativeKConfigs, ensureKConfig(alternativeConfig))
 	}
 
 	var kp *kConfigProbe
-	k.probes.Set(config, func(path probes.ProbePath, current probes.Probe) probes.Probe {
-		path = append(k.path, path...)
+	parent.Set(config, func(path probes.ProbePath, current probes.Probe) probes.Probe {
 		if probe, ok := current.(*kConfigProbe); ok {
 			kp = probe
 			kp.kConfigSpec = spec
 		} else {
-			kp = &kConfigProbe{&KernelConfigProbes{path, k.probeConfig, probes.NewProbes()}, spec}
+			kp = &kConfigProbe{&KernelConfigProbes{probes.NewProbesAtPath(path), path, probeConfig}, spec}
 		}
 		return kp
 	})
 
 	return kp.KernelConfigProbes
-}
-
-type assertKRelease struct {
-	path       probes.ProbePath
-	probeUname unameProber
-	assert     func(string) string
-}
-
-func (a *assertKRelease) Path() probes.ProbePath {
-	return a.path
-}
-
-func (*assertKRelease) DisplayName() string {
-	return "Linux kernel release"
-}
-
-func (a *assertKRelease) Probe(reporter probes.Reporter) error {
-	if uname, err := a.probeUname(); err != nil {
-		return reporter.Error(a, err)
-	} else if uname.osRelease.truncated {
-		return reporter.Error(a, errors.New(uname.osRelease.String()))
-	} else if msg := a.assert(uname.osRelease.value); msg != "" {
-		return reporter.Warn(a, uname.osRelease, msg)
-	} else {
-		return reporter.Pass(a, uname.osRelease)
-	}
 }
 
 // https://github.com/torvalds/linux/blob/v4.3/Documentation/kbuild/kconfig-language.txt
@@ -245,7 +216,7 @@ func (k *kConfigProbe) Probe(reporter probes.Reporter) error {
 		return err
 	}
 
-	return k.probes.Probe(reporter)
+	return k.Probes.Probe(reporter)
 }
 
 func (k *kConfigProbe) probe(reporter probes.Reporter, option kConfigOption) error {

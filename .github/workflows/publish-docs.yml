@@ -12,7 +12,7 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-      - name: checkout k0s release
+      - name: Checkout k0s
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -21,7 +21,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -52,12 +52,17 @@ jobs:
         run: |
           mike deploy --push head
 
-      # If this is a tag build, deploy as a new version
+      # If a release has been published, deploy it as a new version
       - name: mike deploy new version
-        if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
+        if: >-
+          github.event_name == 'release' &&
+          github.event.action == 'published' &&
+          !github.event.release.draft &&
+          !github.event.release.prerelease
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
         run: |
-          VERSION=${GITHUB_REF/refs\/tags\//}
-          mike deploy --push "${VERSION}"
+          mike deploy --push "$VERSION"
 
       - name: Update mike version aliases
         id: set_versions
@@ -68,7 +73,6 @@ jobs:
           LATEST=$(echo "${TAGS}" | tail -1)
           STABLE=$(echo "${TAGS}" | grep -v -- "-" | tail -1)
           mike alias -u head main
-          mike alias -u "${LATEST}" latest
           mike alias -u "${STABLE}" stable
           mike set-default --push stable
           echo ::set-output name=LATEST::${LATEST}

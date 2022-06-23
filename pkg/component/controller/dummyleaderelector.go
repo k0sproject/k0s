@@ -15,17 +15,23 @@ limitations under the License.
 */
 package controller
 
-import "context"
+import (
+	"context"
+
+	"github.com/k0sproject/k0s/pkg/component"
+)
 
 type DummyLeaderElector struct {
 	Leader    bool
 	callbacks []func()
 }
 
+var _ LeaderElector = (*DummyLeaderElector)(nil)
+var _ component.Component = (*DummyLeaderElector)(nil)
+
 func (l *DummyLeaderElector) Init(_ context.Context) error { return nil }
 func (l *DummyLeaderElector) Stop() error                  { return nil }
 func (l *DummyLeaderElector) IsLeader() bool               { return l.Leader }
-func (l *DummyLeaderElector) Reconcile() error             { return nil }
 func (l *DummyLeaderElector) Healthy() error               { return nil }
 
 func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {

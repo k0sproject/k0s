@@ -76,23 +76,23 @@ const (
 	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "0.0.30-k0s"
+	KonnectivityImageVersion           = "0.0.31-k0s"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion            = "edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9"
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.5.2"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.24.0"
+	KubeProxyImageVersion              = "v1.24.2"
 	CoreDNSImage                       = "k8s.gcr.io/coredns/coredns"
 	CoreDNSImageVersion                = "v1.7.0"
 	CalicoImage                        = "docker.io/calico/cni"
-	CalicoComponentImagesVersion       = "v3.23.0"
+	CalicoComponentImagesVersion       = "v3.23.1"
 	CalicoNodeImage                    = "docker.io/calico/node"
 	KubeControllerImage                = "docker.io/calico/kube-controllers"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
 	KubeRouterCNIImageVersion          = "v1.4.0"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "0.1.0"
+	KubeRouterCNIInstallerImageVersion = "1.1.1-k0s.0"
 	OpenEBSRepository                  = "https://openebs.github.io/charts"
 	OpenEBSVersion                     = "3.0.3"
 
@@ -160,7 +160,10 @@ func GetConfig(dataDir string) CfgVars {
 	}
 
 	// fetch absolute path for dataDir
-	dataDir, _ = filepath.Abs(dataDir)
+	dataDir, err := filepath.Abs(dataDir)
+	if err != nil {
+		panic(err)
+	}
 
 	var runDir string
 	if os.Geteuid() == 0 {
