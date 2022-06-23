@@ -1336,18 +1336,18 @@
 <p><code>k0s</code> runs containerd with the following default values:</p>
 <div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd <span class="se">\</span>
     --root<span class="o">=</span>/var/lib/k0s/containerd <span class="se">\</span>
-    --state<span class="o">=</span>/var/lib/k0s/run/containerd <span class="se">\</span>
-    --address<span class="o">=</span>/var/lib/k0s/run/containerd.sock <span class="se">\</span>
+    --state<span class="o">=</span>/run/k0s/containerd <span class="se">\</span>
+    --address<span class="o">=</span>/run/k0s/containerd.sock <span class="se">\</span>
     --config<span class="o">=</span>/etc/k0s/containerd.toml
 </code></pre></div>
 <p>Next, add the following default values to the configuration file:</p>
 <div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"></span>
 <span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/containerd&quot;</span><span class="w"></span>
-<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/run/containerd&quot;</span><span class="w"></span>
+<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd&quot;</span><span class="w"></span>
 <span class="p">...</span><span class="w"></span>
 
 <span class="k">[grpc]</span><span class="w"></span>
-<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/run/containerd.sock&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span><span class="w"></span>
 </code></pre></div>
 <p>Finally, if you want to change CRI look into:</p>
 <div class="highlight"><pre><span></span><code><span class="w">  </span><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span><span class="w"></span>
