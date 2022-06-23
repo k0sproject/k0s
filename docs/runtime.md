@@ -17,8 +17,8 @@ containerd config default > /etc/k0s/containerd.toml
 ```shell
 /var/lib/k0s/bin/containerd \
     --root=/var/lib/k0s/containerd \
-    --state=/var/lib/k0s/run/containerd \
-    --address=/var/lib/k0s/run/containerd.sock \
+    --state=/run/k0s/containerd \
+    --address=/run/k0s/containerd.sock \
     --config=/etc/k0s/containerd.toml
 ```
 
@@ -27,11 +27,11 @@ Next, add the following default values to the configuration file:
 ```toml
 version = 2
 root = "/var/lib/k0s/containerd"
-state = "/var/lib/k0s/run/containerd"
+state = "/run/k0s/containerd"
 ...
 
 [grpc]
-  address = "/var/lib/k0s/run/containerd.sock"
+  address = "/run/k0s/containerd.sock"
 ```
 
 Finally, if you want to change CRI look into:
