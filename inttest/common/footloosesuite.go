@@ -16,6 +16,8 @@ limitations under the License.
 package common
 
 import (
+	"archive/zip"
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -233,6 +235,45 @@ func (s *FootlooseSuite) cleanupSuite() {
 	machines, err := s.InspectMachines(nil)
 	if err != nil {
 		s.T().Logf("failed to inspect machines")
+	}
+	if s.T().Failed() && s.ControllerCount > 0 {
+		ssh, err := s.SSH(s.ControllerNode(0))
+		if err != nil {
+			s.T().Logf("failed to ssh to node %s to get logs", s.ControllerNode(0))
+		}
+		_, err = ssh.ExecWithOutput(fmt.Sprintf("%s kc cluster-info dump -A --output-directory /tmp/cluster-state", s.K0sFullPath))
+		if err != nil {
+			s.T().Logf("failed to dump cluster state on machine %s: %s", s.ControllerNode(0), err)
+		}
+		fileList, err := ssh.ExecWithOutput(`find /tmp/cluster-state -name "*" -type f`)
+		if err != nil {
+			s.T().Logf("failed to list cluster state files on machine %s: %s", s.ControllerNode(0), err)
+		}
+
+		zipArchive, _ := os.Create("/tmp/cluster-state.zip")
+		defer func() {
+			_ = zipArchive.Close()
+		}()
+		writer := zip.NewWriter(zipArchive)
+
+		scanner := bufio.NewScanner(strings.NewReader(fileList))
+		for scanner.Scan() {
+			filePath := scanner.Text()
+			log, err := ssh.ExecWithOutput(fmt.Sprintf("cat %s", filePath))
+			if err != nil {
+				s.T().Logf("failed to cat file %s on machine %s: %s", filePath, s.ControllerNode(0), err)
+			} else {
+				w, err := writer.Create(strings.TrimPrefix(filePath, "/tmp/cluster-state"))
+				if err != nil {
+					s.T().Logf("failed to create file %s in the archive: %s", filePath, err)
+				}
+				if _, err = w.Write([]byte(log)); err != nil {
+					s.T().Logf("failed to write file %s to the archive: %s", filePath, err)
+				}
+			}
+		}
+		_ = writer.Close()
+		ssh.Disconnect()
 	}
 
 	for _, m := range machines {
