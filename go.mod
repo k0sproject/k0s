@@ -47,7 +47,7 @@ require (
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.47.0
 	helm.sh/helm/v3 v3.9.0
-	sigs.k8s.io/controller-runtime v0.12.1
+	sigs.k8s.io/controller-runtime v0.12.2
 	sigs.k8s.io/yaml v1.3.0
 )
 
