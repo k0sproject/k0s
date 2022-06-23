@@ -629,7 +629,7 @@ func (s *FootlooseSuite) initWorkerStandalone(conn *SSHConnection, token string,
 		return fmt.Errorf("got empty token for worker join")
 	}
 
-	cmd := fmt.Sprintf(`nohup %s --debug worker %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(k0sArgs, " "), token)
+	cmd := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(k0sArgs, " "), token)
 	if _, err := conn.ExecWithOutput(cmd); err != nil {
 		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
 	}
