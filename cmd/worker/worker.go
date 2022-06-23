@@ -220,12 +220,14 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		return err
 	}
 
-	go func() {
-		err := c.AutopilotRoot.Run(ctx)
-		if err != nil {
-			logrus.WithError(err).Error("error while running autopilot")
-		}
-	}()
+	if c.AutopilotRoot != nil {
+		go func() {
+			err := c.AutopilotRoot.Run(ctx)
+			if err != nil {
+				logrus.WithError(err).Error("error while running autopilot")
+			}
+		}()
+	}
 
 	worker.KernelSetup()
 	err = componentManager.Start(ctx)

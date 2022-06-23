@@ -62,6 +62,7 @@ type CLIOptions struct {
 	KubeClient       k8s.Interface
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
 	Verbose          bool
+	AutopilotRoot    aproot.Root
 }
 
 // Shared controller cli flags
@@ -94,7 +95,6 @@ type WorkerOptions struct {
 	TokenFile        string
 	TokenArg         string
 	WorkerProfile    string
-	AutopilotRoot    aproot.Root
 }
 
 func DefaultLogLevels() map[string]string {

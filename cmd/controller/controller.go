@@ -512,7 +512,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		workerErr = c.startControllerWorker(ctx, c.WorkerProfile, autopilotRoot)
+		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
 	} else {
 		go func() {
 			err := autopilotRoot.Run(ctx)
@@ -539,7 +539,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	return os.Remove(c.CfgFile)
 }
 
-func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string, autopilotRoot aproot.Root) error {
+func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
 	var bootstrapConfig string
 	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
@@ -576,7 +576,6 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string, aut
 	workerCmdOpts := *(*workercmd.CmdOpts)(c)
 	workerCmdOpts.TokenArg = bootstrapConfig
 	workerCmdOpts.WorkerProfile = profile
-	workerCmdOpts.AutopilotRoot = autopilotRoot
 	workerCmdOpts.Labels = append(workerCmdOpts.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
 	if !c.SingleNode && !c.NoTaints {
 		workerCmdOpts.Taints = append(workerCmdOpts.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
