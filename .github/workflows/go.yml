@@ -48,6 +48,9 @@ jobs:
           fetch-depth: 0 # for `git describe`
           persist-credentials: false
 
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
       - name: Cache embedded binaries
         uses: actions/cache@v3
         with:
