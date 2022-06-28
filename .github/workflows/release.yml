@@ -48,6 +48,10 @@ jobs:
         run: |
           docker system prune --all --volumes --force
 
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
+      - name: "Pre: Fixup directories"
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
@@ -109,6 +113,17 @@ jobs:
         if: always()
         run: |
           docker system prune --all --volumes --force
+      
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752
+      # Golang mod cache tends to set directories to read-only, which breaks any
+      # attempts to simply remove those directories. The `make clean-gocache`
+      # target takes care of this, but the mod cache can't be deleted here,
+      # since it shall be cached across builds, and caching takes place as a
+      # post build action. So, as a workaround, ensure that all subdirectories
+      # are writable.
+      - name: "Post: Fixup directories"
+        if: always()
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
   windows:
     needs: release
@@ -118,6 +133,10 @@ jobs:
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
+      - name: "Pre: Fixup directories"
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
@@ -141,6 +160,17 @@ jobs:
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
           asset_content_type: application/octet-stream
 
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752
+      # Golang mod cache tends to set directories to read-only, which breaks any
+      # attempts to simply remove those directories. The `make clean-gocache`
+      # target takes care of this, but the mod cache can't be deleted here,
+      # since it shall be cached across builds, and caching takes place as a
+      # post build action. So, as a workaround, ensure that all subdirectories
+      # are writable.
+      - name: "Post: Fixup directories"
+        if: always()
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
   arm64:
     needs: release
     runs-on: [self-hosted,linux,arm64]
@@ -148,6 +178,10 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
+      - name: "Pre: Fixup directories"
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
       - name: Clean Docker before build
         run: |
           docker system prune --all --volumes --force
@@ -214,6 +248,17 @@ jobs:
         run: |
           docker system prune --all --volumes --force
 
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752
+      # Golang mod cache tends to set directories to read-only, which breaks any
+      # attempts to simply remove those directories. The `make clean-gocache`
+      # target takes care of this, but the mod cache can't be deleted here,
+      # since it shall be cached across builds, and caching takes place as a
+      # post build action. So, as a workaround, ensure that all subdirectories
+      # are writable.
+      - name: "Post: Fixup directories"
+        if: always()
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
   armv7:
     needs: release
     runs-on: [self-hosted,linux,arm]
@@ -221,6 +266,10 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
+      - name: "Pre: Fixup directories"
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
       - name: Install GoLang for ARMHF
         run: "echo $HOME/.local/go/bin >> $GITHUB_PATH; rm -rf $HOME/.local/go && mkdir -p $HOME/.local/go && curl --silent -L https://golang.org/dl/$(curl --silent -L 'https://golang.org/VERSION?m=text').linux-armv6l.tar.gz | tar -C $HOME/.local -xz"
       - name: Go Version
@@ -275,6 +324,16 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
 
+      # https://github.com/actions/checkout/issues/273#issuecomment-642908752
+      # Golang mod cache tends to set directories to read-only, which breaks any
+      # attempts to simply remove those directories. The `make clean-gocache`
+      # target takes care of this, but the mod cache can't be deleted here,
+      # since it shall be cached across builds, and caching takes place as a
+      # post build action. So, as a workaround, ensure that all subdirectories
+      # are writable.
+      - name: "Post: Fixup directories"
+        if: always()
+        run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
 
   build-image:
     needs:
