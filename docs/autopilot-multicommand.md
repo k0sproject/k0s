@@ -5,20 +5,23 @@ executed, the **Signal Nodes** that each should be run on, and the status of
 each **Command**.
 
 A **Plan**:
+
 * Defines one or many **Commands** that specify what actions should be performed.
 * Specifies how **Signal Nodes** should be discovered per-**Command**.
 * Saves the status of the **Plan** execution by resolved **Signal Nodes**
 
 A **Command**:
+
 * An instructional step inside of a **Plan** that is applied against a **Signal Node**
 
 A **Signal Node**:
+
 * Any node (controller or worker) that can receive updates with Autopilot.
 
 ## **Execution**
+
 The execution of a **Plan** is the result of processing **Commands** through
 a number of **Processing States**.
-
 
 When a **Plan** is executed, each of the **Commands** are executed in the order
 of their appearance in the **Plan**.
@@ -32,6 +35,7 @@ current **Command** and **Plan** to abort processing.
 **Completed** state.
 
 ## **Status**
+
 The progress and state of each **Command** is recorded in the **Plan** status.
 
 * Every **Command** in the **Plan** has an associated status entry with the same index
@@ -43,12 +47,13 @@ as the **Command**
 ---
 
 ## **Example**
+
 The following is an example of a **Plan** that has been applied as is currently being
 processed by **autopilot**.
 
 (line numbers added for commentary below)
 
-```
+```yaml
  1: apiVersion: autopilot.k0sproject.io/v1beta2
  2:  kind: Plan
  3:  metadata:
@@ -117,6 +122,7 @@ that the **Signal Node** has been sent signaling information to perform an airga
 ---
 
 ## **Processing States**
+
 The following are the various states that both `Plan`s and `Command`s
 adhere to.
 
@@ -133,9 +139,11 @@ stateDiagram-v2
     Errors***-->[*]
     Completed-->[*]
 ```
+
 Note that the **Errors*** state is elaborated in detail below in **Error States**.
 
 ### **NewPlan**
+
 When a **Plan** is created with the name `autopilot`, the **NewPlan** state
 processing takes effect.
 
@@ -149,11 +157,13 @@ The main difference between **NewPlan** and all the other states is that
 active command.
 
 ### **SchedulableWait**
+
 Used to evaluate a **Command** to determine if it can be scheduled for processing.
 If the **Command** is determined that it can be processed, the state is set to
 **Schedulable**.
 
 ### **Schedulable**
+
 The **Schedulable** state is set by **SchedulableWait** to indicate that this
 command should execute. The execution of a **Command** in this state will be
 whichever logic is defined by the **Command**.
@@ -162,6 +172,7 @@ The ending of this state should either transition to **SchedulableWait** for
 further processing + completion detection, or transition to an error.
 
 ### **Completed**
+
 The **Completed** state indicates that the command has finished processing.
 Once a plan/command are in the **Completed** state, no further processing
 will occur on this plan/command.
@@ -169,6 +180,7 @@ will occur on this plan/command.
 ---
 
 ## **Error States**
+
 When a plan or command processing goes into one of the designated error
 states, this is considered fatal and the plan/command processing will
 terminate.
@@ -188,15 +200,16 @@ flowchart TD
 ```
 
 | Error State | Command | States | Description |
-|-------------|---------|--------|-------------| 
+|-------------|---------|--------|-------------|
 | **InconsistentTargets** | `k0supdate` | **Schedulable** | Indicates that a **Signal Node** probe has failed for any node that was previously discovered during **NewPlan**. |
-| **IncompleteTargets** | `airgapupdate`, `k0supdate` | **NewPlan**, **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no `ControlNode` or `Node` object) | 
+| **IncompleteTargets** | `airgapupdate`, `k0supdate` | **NewPlan**, **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no `ControlNode` or `Node` object) |
 | **Restricted** | `airgapupdate`, `k0supdate` | **NewPlan** | Indicates that a **Plan** has requested an update of a **Signal Node** type that contradicts the startup exclusions (the `--exclude-from-plans` argument) |
 | **MissingSignalNode** | `airgapupdate`, `k0supdate` | **Schedulable** | Indicates that a **Signal Node** that existed during the discover phase in **NewPlan** no longer exists (ie. no matching `ControlNode` or `Node` object) |
 
 ---
 
 ## **Sequence: Example**
+
 Using the example above as a reference, this outlines the basic sequence of events of
 state transitions to the operations performed on each object.
 
@@ -234,4 +247,3 @@ sequenceDiagram
 
   PlanStateHandler->>PlanStateHandler: Completed
 ```
-
