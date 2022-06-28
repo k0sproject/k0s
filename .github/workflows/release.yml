@@ -72,7 +72,7 @@ jobs:
         run: make check-basic
 
       - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+        run: make image-bundle/bundle.tar TARGET_PLATFORM=linux/amd64
 
       - name: Collect smoke test logs
         if: failure()
@@ -214,7 +214,7 @@ jobs:
         run: make check-basic
 
       - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+        run: make image-bundle/bundle.tar TARGET_PLATFORM=linux/arm64
 
       - name: Collect smoke test logs
         if: failure()
@@ -295,7 +295,7 @@ jobs:
         run: make check-basic
 
       - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+        run: make image-bundle/bundle.tar TARGET_PLATFORM=linux/arm/v7
 
       - name: Collect smoke test logs
         if: failure()
