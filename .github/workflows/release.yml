@@ -417,6 +417,7 @@ jobs:
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
+        working-directory: ./
 
       - name: Set up Go
         uses: actions/setup-go@v3
