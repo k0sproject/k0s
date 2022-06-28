@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-  #pull_request:
 
 jobs:
   release:
@@ -45,6 +44,10 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Clean Docker before build
+        run: |
+          docker system prune --all --volumes --force
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
@@ -60,9 +63,6 @@ jobs:
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
-      - name: Clean Docker
-        run: |
-          docker system prune --all --volumes --force
 
       - name: Run basic smoke test
         run: make check-basic
@@ -104,7 +104,11 @@ jobs:
           asset_path: ./image-bundle/bundle.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
-
+      
+      - name: Clean Docker after build
+        if: always()
+        run: |
+          docker system prune --all --volumes --force
 
   windows:
     needs: release
@@ -152,6 +156,10 @@ jobs:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
+      - name: Clean Docker before build
+        run: |
+          docker system prune --all --volumes --force
+
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
@@ -167,9 +175,6 @@ jobs:
         run: make EMBEDDED_BINS_BUILDMODE=docker
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
-      - name: Clean Docker
-        run: |
-          docker system prune --all --volumes --force
 
       - name: Run basic smoke test
         run: make check-basic
@@ -212,6 +217,10 @@ jobs:
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
 
+      - name: Clean Docker after build
+        if: always()
+        run: |
+          docker system prune --all --volumes --force
 
   armv7:
     needs: release
