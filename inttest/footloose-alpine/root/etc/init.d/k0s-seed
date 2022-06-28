@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+
+description="Copy seeded k0s to /usr/local/bin"
+
+depend() {
+	need root localmount
+}
+
+start() {
+	ebegin "Seeding k0s binary to /usr/local/bin"
+	/usr/bin/install -D -t /usr/local/bin /dist/k0s
+
+	eend $?
+}

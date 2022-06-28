@@ -48,7 +48,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 
 	_, err = ssh.ExecWithOutput("chmod +x /bin/kubectl-foo")
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput("ln -s /usr/bin/k0s /usr/bin/kubectl")
+	_, err = ssh.ExecWithOutput("ln -s /usr/local/bin/k0s /usr/bin/kubectl")
 	s.Require().NoError(err)
 
 	s.T().Log("Check that different ways to call kubectl subcommand work")
@@ -57,8 +57,8 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		name string
 		cmd  []string
 	}{
-		{"full_subcommand", []string{"k0s", "kubectl"}},
-		{"short_subcommand", []string{"k0s", "kc"}},
+		{"full_subcommand", []string{"/usr/local/bin/k0s", "kubectl"}},
+		{"short_subcommand", []string{"/usr/local/bin/k0s", "kc"}},
 		{"symlink", []string{"/usr/bin/kubectl"}},
 	}
 

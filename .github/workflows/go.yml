@@ -86,6 +86,18 @@ jobs:
           make --touch codegen
           make build
 
+      - name: Build airgap bundle (linux)
+        if: matrix.target == 'linux'
+        run: make image-bundle/bundle.tar
+
+      - name: Cache airgap bundle (linux)
+        if: matrix.target == 'linux'
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-build-airgap-bundle-${{ github.ref_name }}-${{ github.sha }}
+          path: |
+            image-bundle/bundle.tar
+
       - name: Upload compiled binary
         uses: actions/upload-artifact@v3
         with:
@@ -130,7 +142,7 @@ jobs:
 
       - name: Validate OCI images manifests
         run: make check-image-validity
-  
+
   smoketest:
     name: Smoke test
     needs: build
@@ -139,8 +151,17 @@ jobs:
       fail-fast: false
       matrix:
         smoke-suite:
-          - check-basic
           - check-addons
+          - check-airgap
+          - check-ap-airgap
+          - check-ap-ha3x3
+          - check-ap-platformselect
+          - check-ap-quorum
+          - check-ap-quorumsafety
+          - check-ap-selector
+          - check-ap-single
+          - check-ap-updater
+          - check-basic
           - check-byocri
           - check-calico
           - check-cnichange
@@ -187,6 +208,13 @@ jobs:
         with:
           name: k0s
 
+      - name: Restore airgap bundle
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-build-airgap-bundle-${{ github.ref_name }}-${{ github.sha }}
+          path: |
+            image-bundle/bundle.tar
+
       - name: k0s sysinfo
         run: |
           chmod +x k0s
@@ -208,59 +236,6 @@ jobs:
         with:
           name: smoketest-${{ matrix.smoke-suite }}-cluster-state
           path: /tmp/cluster-state.zip
-
-  smoketest-airgap:
-    name: Smoke test for airgap install
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
-
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Download compiled binary
-        uses: actions/download-artifact@v3
-        with:
-          name: k0s
-
-      - name: Create airgap image list
-        run: |
-          # Pretend that k0s has been built by make
-          chmod +x k0s
-          make -C embedded-bins staging/linux/bin
-          make -t k0s
-
-          # actually create the image list
-          make image-bundle/image.list
-
-      - name: Cache airgap image bundle
-        id: cache-bundle
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-airgap-image-bundle-${{ hashFiles('image-bundle/image.list') }}
-          path: image-bundle/bundle.tar
-
-      - name: Create airgap image bundle
-        if: steps.cache-bundle.outputs.cache-hit != 'true'
-        run: make image-bundle/bundle.tar
-
-      - name: Run test
-        run: make -C inttest check-airgap
-
-      - name: Collect test logs
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: smoketest-airgap-check-airgap-logs
-          path: /tmp/*.log
 
   smoketest-arm:
     name: Smoke test on armv7/arm64

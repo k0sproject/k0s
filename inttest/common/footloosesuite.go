@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -37,6 +38,9 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/pkg/errors"
@@ -56,15 +60,25 @@ import (
 )
 
 const (
-	controllerNodeNameFormat = "controller%d"
-	workerNodeNameFormat     = "worker%d"
-	lbNodeNameFormat         = "lb%d"
-	etcdNodeNameFormat       = "etcd%d"
+	controllerNodeNameFormat   = "controller%d"
+	workerNodeNameFormat       = "worker%d"
+	lbNodeNameFormat           = "lb%d"
+	etcdNodeNameFormat         = "etcd%d"
+	updateServerNodeNameFormat = "updateserver%d"
+
+	defaultK0sBinaryFullPath   = "/usr/local/bin/k0s"
+	k0sBindMountFullPath       = "/dist/k0s"
+	k0sAirgapBindMountFullPath = "/dist/bundle.tar"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
 type FootlooseSuite struct {
 	suite.Suite
+
+	// Provide alternate launch functionalities as-needed.
+
+	LaunchMode     LaunchMode
+	launchDelegate *LaunchDelegate
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
@@ -79,6 +93,7 @@ type FootlooseSuite struct {
 	WithExternalEtcd      bool
 	WithLB                bool
 	WorkerCount           int
+	WithUpdateServer      bool
 
 	/* context and cancellation */
 
@@ -91,12 +106,15 @@ type FootlooseSuite struct {
 	clusterDir    string
 	clusterConfig config.Config
 	cluster       *cluster.Cluster
+
+	ControllerNetworks []string
+	WorkerNetworks     []string
 }
 
 // initializeDefaults initializes any unset configuration knobs to their defaults.
 func (s *FootlooseSuite) initializeDefaults() {
 	if s.K0sFullPath == "" {
-		s.K0sFullPath = "/usr/bin/k0s"
+		s.K0sFullPath = defaultK0sBinaryFullPath
 	}
 	if s.K0sAPIExternalPort == 0 {
 		s.K0sAPIExternalPort = 9443
@@ -109,6 +127,18 @@ func (s *FootlooseSuite) initializeDefaults() {
 	}
 	if s.KubeAPIExternalPort == 0 {
 		s.KubeAPIExternalPort = 6443
+	}
+	if s.LaunchMode == "" {
+		s.LaunchMode = LaunchModeStandalone
+	}
+
+	switch s.LaunchMode {
+	case LaunchModeStandalone:
+		s.launchDelegate = s.StandaloneLaunchDelegate()
+	case LaunchModeOpenRC:
+		s.launchDelegate = s.OpenRCLaunchDelegate()
+	default:
+		s.Require().Fail("Missing launch delegate (standalone, openrc)")
 	}
 }
 
@@ -285,7 +315,17 @@ func (s *FootlooseSuite) cleanupSuite() {
 			s.T().Logf("failed to ssh to node %s to get logs", m.Hostname())
 			continue
 		}
-		log, err := ssh.ExecWithOutput("cat /tmp/k0s-*.log")
+		logPathInContainer := ""
+		switch s.LaunchMode {
+		case LaunchModeOpenRC:
+			logPathInContainer = "/var/log/k0s.log"
+		case LaunchModeStandalone:
+			logPathInContainer = "/tmp/k0s-*.log"
+		default:
+			s.T().Logf(`unknown launchmode %s, dunno how to collect logs ¯\_(ツ)_/¯`, s.LaunchMode)
+		}
+
+		log, err := ssh.ExecWithOutput(fmt.Sprintf("cat %s", logPathInContainer))
 		if err != nil {
 			s.T().Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
 		}
@@ -344,7 +384,7 @@ func (s *FootlooseSuite) startHAProxy() {
 
 	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput("haproxy -c -f /tmp/haproxy.cfg")
-	s.Require().NoError(err, "LB configuration is broken")
+	s.Require().NoError(err, "LB configuration is broken", err)
 	_, err = ssh.ExecWithOutput("haproxy -f /tmp/haproxy.cfg &")
 	s.Require().NoError(err, "Can't start LB")
 }
@@ -437,7 +477,13 @@ func (s *FootlooseSuite) getControllersIPAddresses() []string {
 	s.Require().NoError(err)
 
 	for i := 0; i < s.ControllerCount; i++ {
-		addresses[i] = machines[i].Status().IP
+		// If a network is supplied, the address will need to be obtained from there.
+		// Note that this currently uses the first network found.
+		if machines[i].Status().IP != "" {
+			addresses[i] = machines[i].Status().IP
+		} else if len(machines[i].Status().RuntimeNetworks) > 0 {
+			addresses[i] = machines[i].Status().RuntimeNetworks[0].IP
+		}
 	}
 	return addresses
 }
@@ -450,19 +496,81 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 		return err
 	}
 	defer ssh.Disconnect()
-	umaskCmd := ""
-	if s.ControllerUmask != 0 {
-		umaskCmd = fmt.Sprintf("umask %d;", s.ControllerUmask)
-	}
-	// Allow any arch for etcd in smokes
-	startCmd := fmt.Sprintf("%s ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", umaskCmd, runtime.GOARCH, s.K0sFullPath, strings.Join(k0sArgs, " "))
-	_, err = ssh.ExecWithOutput(startCmd)
-	if err != nil {
-		s.T().Logf("failed to execute '%s' on %s", startCmd, controllerNode)
+
+	if err := s.launchDelegate.InitController(ssh, k0sArgs...); err != nil {
+		s.T().Logf("failed to start k0scontroller on %s: %v", controllerNode, err)
 		return err
 	}
 
 	return s.WaitForKubeAPI(controllerNode, getDataDirOpt(k0sArgs))
+}
+
+// initControllerStandalone initializes a controller in 'standalone' mode, meaning that
+// the k0s executable is launched directly (vs. started from a service)
+func (s *FootlooseSuite) initControllerStandalone(conn *SSHConnection, k0sArgs ...string) error {
+	umaskCmd := ""
+	if s.ControllerUmask != 0 {
+		umaskCmd = fmt.Sprintf("umask %d;", s.ControllerUmask)
+	}
+
+	// Allow any arch for etcd in smokes
+	cmd := fmt.Sprintf("%s ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", umaskCmd, runtime.GOARCH, s.K0sFullPath, strings.Join(k0sArgs, " "))
+
+	if _, err := conn.ExecWithOutput(cmd); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	}
+
+	return nil
+}
+
+// initControllerOpenRC initializes a controller in 'openrc' mode, meaning that
+// the k0s executable is launched as a service managed by openrc.
+func (s *FootlooseSuite) initControllerOpenRC(conn *SSHConnection, k0sArgs ...string) error {
+	if err := s.installK0sServiceOpenRC(conn, "controller"); err != nil {
+		return fmt.Errorf("unable to install openrc k0s controller: %w", err)
+	}
+
+	// Configure k0s as a controller w/args
+	controllerArgs := fmt.Sprintf("controller --debug %s", strings.Join(k0sArgs, " "))
+	if err := configureK0sServiceArgs(conn, "controller", controllerArgs); err != nil {
+		return fmt.Errorf("failed to configure k0s with '%s'", controllerArgs)
+	}
+
+	cmd := "/etc/init.d/k0scontroller start"
+	if _, err := conn.ExecWithOutput(cmd); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	}
+
+	return nil
+}
+
+// installK0sServiceOpenRC will install an openrc k0s-type service (controller/worker)
+// if it does not already exist.
+func (s *FootlooseSuite) installK0sServiceOpenRC(conn *SSHConnection, k0sType string) error {
+	existsCommand := fmt.Sprintf("/usr/bin/file /etc/init.d/k0s%s", k0sType)
+	if _, err := conn.ExecWithOutput(existsCommand); err != nil {
+		cmd := fmt.Sprintf("%s install %s", s.K0sFullPath, k0sType)
+		if _, err := conn.ExecWithOutput(cmd); err != nil {
+			return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+		}
+	}
+
+	return nil
+}
+
+// configureK0sServiceArgs performs some reconfiguring of the `/etc/init.d/k0s[controller|worker]`
+// startup script to allow for different configurations at test time, using the same base
+// image.
+func configureK0sServiceArgs(conn *SSHConnection, k0sType string, args string) error {
+	k0sServiceFile := fmt.Sprintf("/etc/init.d/k0s%s", k0sType)
+	cmd := fmt.Sprintf("sed -i 's#^command_args=.*$#command_args=\"%s\"#g' %s", args, k0sServiceFile)
+
+	_, err := conn.ExecWithOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to execute '%s' on %s: %w", cmd, conn.Address, err)
+	}
+
+	return nil
 }
 
 // GetJoinToken generates join token for the asked role
@@ -498,25 +606,56 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 }
 
 func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
-	ssh, err := s.SSH("controller0")
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	if token == "" {
-		return fmt.Errorf("got empty token for worker join")
-	}
-	workerCommand := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(args, " "), token)
-
 	for i := 0; i < s.WorkerCount; i++ {
-		sshWorker, err := s.SSH(s.WorkerNode(i))
+		workerNode := s.WorkerNode(i)
+		sshWorker, err := s.SSH(workerNode)
 		if err != nil {
 			return err
 		}
 		defer sshWorker.Disconnect()
-		_, err = sshWorker.ExecWithOutput(workerCommand)
-		if err != nil {
+
+		if err := s.launchDelegate.InitWorker(sshWorker, token, args...); err != nil {
+			s.T().Logf("failed to start k0sworker on %s: %v", workerNode, err)
 			return err
 		}
 	}
+	return nil
+}
+
+// initWorkerStandalone initializes a worker in 'standalone' mode, meaning that
+// the k0s executable is launched directly (vs. started from a service)
+func (s *FootlooseSuite) initWorkerStandalone(conn *SSHConnection, token string, k0sArgs ...string) error {
+	if token == "" {
+		return fmt.Errorf("got empty token for worker join")
+	}
+
+	cmd := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(k0sArgs, " "), token)
+	if _, err := conn.ExecWithOutput(cmd); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	}
+
+	return nil
+}
+
+// initWorkerOpenRC initializes a worker in 'openrc' mode, meaning that
+// the k0s executable is launched as a service managed by openrc.
+func (s *FootlooseSuite) initWorkerOpenRC(conn *SSHConnection, token string, k0sArgs ...string) error {
+	if err := s.installK0sServiceOpenRC(conn, "worker"); err != nil {
+		return fmt.Errorf("unable to install openrc k0s worker: %w", err)
+	}
+
+	// Configure k0s as a worker w/args
+	workerArgs := fmt.Sprintf("worker --debug %s %s", strings.Join(k0sArgs, " "), token)
+
+	if err := configureK0sServiceArgs(conn, "worker", workerArgs); err != nil {
+		return fmt.Errorf("failed to configure k0s with '%s'", workerArgs)
+	}
+
+	cmd := "/etc/init.d/k0sworker start"
+	if _, err := conn.ExecWithOutput(cmd); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	}
+
 	return nil
 }
 
@@ -571,9 +710,28 @@ func (s *FootlooseSuite) StopController(name string) error {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	s.T().Log("killing k0s")
+
+	return s.launchDelegate.StopController(ssh)
+}
+
+// stopControllerStandalone stops a k0s controller that was started standalone.
+func (s *FootlooseSuite) stopControllerStandalone(conn *SSHConnection) error {
 	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.K0sFullPath, s.K0sFullPath)
-	_, err = ssh.ExecWithOutput(stopCommand)
-	return err
+	if _, err := conn.ExecWithOutput(stopCommand); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", stopCommand, err)
+	}
+
+	return nil
+}
+
+// stopControllerOpenRC stops a k0s controller that was started using openrc.
+func (s *FootlooseSuite) stopControllerOpenRC(conn *SSHConnection) error {
+	startCmd := "/etc/init.d/k0scontroller stop"
+	if _, err := conn.ExecWithOutput(startCmd); err != nil {
+		return fmt.Errorf("unable to execute '%s': %w", startCmd, err)
+	}
+
+	return nil
 }
 
 func (s *FootlooseSuite) Reset(name string) error {
@@ -701,6 +859,25 @@ func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*
 		return nil, err
 	}
 	return kubernetes.NewForConfig(cfg)
+}
+
+// AutopilotClient returns a client for accessing the autopilot schema
+func (s *FootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...string) (apclient.Interface, error) {
+	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+	if err != nil {
+		return nil, err
+	}
+	return apclient.NewForConfig(cfg)
+}
+
+// ExtensionsClient returns a client for accessing the extensions schema
+func (s *FootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...string) (*extclient.ApiextensionsV1Client, error) {
+	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return extclient.NewForConfig(cfg)
 }
 
 // WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API
@@ -889,6 +1066,8 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 	if binPath == "" {
 		return errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
 	}
+	airgapPath := os.Getenv("K0S_IMAGES_BUNDLE")
+
 	fileInfo, err := os.Stat(binPath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to locate k0s binary %s", binPath)
@@ -901,13 +1080,22 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		{
 			Type:        "bind",
 			Source:      binPath,
-			Destination: s.K0sFullPath,
+			Destination: k0sBindMountFullPath,
 			ReadOnly:    true,
 		},
 		{
 			Type:        "volume",
 			Destination: "/var/lib/k0s",
 		},
+	}
+
+	if airgapPath != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      airgapPath,
+			Destination: k0sAirgapBindMountFullPath,
+			ReadOnly:    true,
+		})
 	}
 
 	// Ensure that kernel config is available in the footloose boxes.
@@ -980,6 +1168,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.ControllerNetworks,
 				},
 			},
 			{
@@ -990,6 +1179,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 					Privileged:   true,
 					Volumes:      volumes,
 					PortMappings: portMaps,
+					Networks:     s.WorkerNetworks,
 				},
 			},
 		},
@@ -1004,6 +1194,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 				Volumes:      volumes,
 				PortMappings: portMaps,
 				Ignite:       nil,
+				Networks:     s.ControllerNetworks,
 			},
 			Count: 1,
 		})
@@ -1016,6 +1207,26 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 				Image:        "footloose-alpine",
 				Privileged:   true,
 				PortMappings: []config.PortMapping{{ContainerPort: 22}},
+			},
+			Count: 1,
+		})
+	}
+
+	if s.WithUpdateServer {
+		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
+			Spec: config.Machine{
+				Name:       updateServerNodeNameFormat,
+				Image:      "update-server",
+				Privileged: true,
+				PortMappings: []config.PortMapping{
+					{
+						ContainerPort: 22, // SSH
+					},
+					{
+						ContainerPort: 80,
+					},
+				},
+				Networks: s.ControllerNetworks,
 			},
 			Count: 1,
 		})
@@ -1083,6 +1294,159 @@ func (s *FootlooseSuite) GetExternalEtcdIPAddress() string {
 
 func (s *FootlooseSuite) getIPAddress(nodeName string) string {
 	ssh, err := s.SSH(nodeName)
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	ipAddress, err := ssh.ExecWithOutput("hostname -i")
+	s.Require().NoError(err)
+	return ipAddress
+}
+
+type LaunchMode string
+
+const (
+	LaunchModeStandalone LaunchMode = "standalone"
+	LaunchModeOpenRC     LaunchMode = "openrc"
+)
+
+// LaunchDelegate provides an indirection to the launch operations in footloosesuite
+// so that alternate behaviour can be performed.
+type LaunchDelegate struct {
+	InitController func(conn *SSHConnection, k0sArgs ...string) error
+	StopController func(conn *SSHConnection) error
+	InitWorker     func(conn *SSHConnection, token string, k0sArgs ...string) error
+}
+
+// StandaloneLaunchDelegate creates a footloosesuite LaunchDelegate that starts controllers/workers
+// in a 'standalone' mode, ie. not run from a service.
+func (s *FootlooseSuite) StandaloneLaunchDelegate() *LaunchDelegate {
+	return &LaunchDelegate{
+		InitController: func(conn *SSHConnection, k0sArgs ...string) error {
+			return s.initControllerStandalone(conn, k0sArgs...)
+		},
+		StopController: func(conn *SSHConnection) error {
+			return s.stopControllerStandalone(conn)
+		},
+		InitWorker: func(conn *SSHConnection, token string, k0sArgs ...string) error {
+			return s.initWorkerStandalone(conn, token, k0sArgs...)
+		},
+	}
+}
+
+// OpenRCLaunchDelegate creates a footloosesuite LaunchDelegate that starts controllers/workers
+// via an openrc service.
+func (s *FootlooseSuite) OpenRCLaunchDelegate() *LaunchDelegate {
+	return &LaunchDelegate{
+		InitController: func(conn *SSHConnection, k0sArgs ...string) error {
+			return s.initControllerOpenRC(conn, k0sArgs...)
+		},
+		StopController: func(conn *SSHConnection) error {
+			return s.stopControllerOpenRC(conn)
+		},
+		InitWorker: func(conn *SSHConnection, token string, k0sArgs ...string) error {
+			return s.initWorkerOpenRC(conn, token, k0sArgs...)
+		},
+	}
+}
+
+// CreateNetwork creates a docker network with the provided name, destroying
+// any network that has the same name first.
+func (s *FootlooseSuite) CreateNetwork(name string) error {
+	_ = s.DestroyNetwork(name)
+
+	cmd := exec.Command("/usr/bin/docker", "network", "create", name)
+	return cmd.Run()
+}
+
+// DestroyNetwork removes a docker network with the provided name.
+func (s *FootlooseSuite) DestroyNetwork(name string) error {
+	cmd := exec.Command("/usr/bin/docker", "network", "rm", name)
+	return cmd.Run()
+}
+
+// RunCommandController runs a command via SSH on a specified controller node
+func (s *FootlooseSuite) RunCommandController(idx int, command string) (string, error) {
+	ssh, err := s.SSH(s.ControllerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	return ssh.ExecWithOutput(command)
+}
+
+// RunCommandWorker runs a command via SSH on a specified controller node
+func (s *FootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
+	ssh, err := s.SSH(s.WorkerNode(idx))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	return ssh.ExecWithOutput(command)
+}
+
+// GetK0sVersion returns the `k0s version` output from a specific node.
+func (s *FootlooseSuite) GetK0sVersion(node string) (string, error) {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		return "", err
+	}
+	defer ssh.Disconnect()
+
+	version, err := ssh.ExecWithOutput("/usr/local/bin/k0s version")
+	if err != nil {
+		return "", err
+	}
+
+	return version, nil
+}
+
+// GetMembers returns all of the known etcd members for a given node
+func (s *FootlooseSuite) GetMembers(idx int) map[string]string {
+	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
+	// which in general even makes sense, we can test tooling as well
+	sshCon, err := s.SSH(s.ControllerNode(idx))
+	s.NoError(err)
+	defer sshCon.Disconnect()
+	output, err := sshCon.ExecWithOutput("/usr/local/bin/k0s etcd member-list")
+	output = lastLine(output)
+	s.NoError(err)
+
+	members := struct {
+		Members map[string]string `json:"members"`
+	}{}
+
+	err = json.Unmarshal([]byte(output), &members)
+	s.NoError(err, err)
+
+	return members.Members
+}
+
+func lastLine(text string) string {
+	if text == "" {
+		return ""
+	}
+	parts := strings.Split(text, "\n")
+	return parts[len(parts)-1]
+}
+
+// WaitForSSH ensures that an SSH connection can be successfully obtained, and retries
+// for up to a specific timeout/delay.
+func (s *FootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay time.Duration) error {
+	s.T().Logf("Waiting for SSH connection to '%s'", node)
+	for start := time.Now(); time.Since(start) < timeout; {
+		if conn, err := s.SSH(node); err == nil {
+			conn.Disconnect()
+			return nil
+		}
+
+		s.T().Logf("Unable to SSH to '%s', waiting %v for retry", node, delay)
+		time.Sleep(delay)
+	}
+
+	return fmt.Errorf("timed out waiting for ssh connection to '%s'", node)
+}
+
+// GetUpdateServerIPAddress returns the load balancers ip address
+func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
+	ssh, err := s.SSH("updateserver0")
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

@@ -62,10 +62,10 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		// e.g. execing via client-go is super complex and would require too much wiring
 		ssh, err := s.SSH(s.ControllerNode(0))
 		s.NoError(err)
-		_, err = ssh.ExecWithOutput("k0s kc run nginx --image docker.io/nginx:1-alpine")
+		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s kc run nginx --image docker.io/nginx:1-alpine")
 		s.NoError(err)
 		s.NoError(common.WaitForPod(kc, "nginx", "default"))
-		output, err := ssh.ExecWithOutput("k0s kc exec nginx -- cat /etc/resolv.conf")
+		output, err := ssh.ExecWithOutput("/usr/local/bin/k0s kc exec nginx -- cat /etc/resolv.conf")
 		s.NoError(err)
 		s.Contains(output, "search default.svc.something.local svc.something.local something.local")
 	})

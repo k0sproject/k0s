@@ -4,13 +4,20 @@ ARG ETCD_ARCH
 ARG ETCD_VERSION
 ARG KUBE_VERSION
 
-RUN apk add openrc openssh-server bash busybox-initscripts coreutils curl haproxy
+# Apply our changes to the image
+COPY root/ /
+
+RUN apk add openrc openssh-server bash busybox-initscripts coreutils curl haproxy nginx
 # enable syslog and sshd
 RUN rc-update add cgroups boot
 RUN rc-update add syslog boot
 RUN rc-update add machine-id boot
 RUN rc-update add sshd default
 RUN rc-update add local default
+RUN rc-update add nginx default
+# Ensures that /usr/local/bin/k0s is seeded from /dist at startup
+RUN rc-update add k0s-seed default
+
 # remove -docker keyword so we actually mount cgroups in container
 RUN sed -i -e '/keyword/s/-docker//' /etc/init.d/cgroups
 # disable ttys

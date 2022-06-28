@@ -143,7 +143,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 		ds.Require().NoError(err)
 		defer ssh.Disconnect()
 
-		out, err := ssh.ExecWithOutput("k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
+		out, err := ssh.ExecWithOutput("/usr/local/bin/k0s kubeconfig create user | awk '$1 == \"server:\" {print $2}'")
 		ds.Require().NoError(err)
 		ds.Require().Equal(fmt.Sprintf("https://%s:%d", ipAddress, kubeAPIPort), out)
 	})

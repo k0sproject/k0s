@@ -25,7 +25,7 @@ bin:
 bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
-.footloose-alpine.stamp: footloose-alpine/Dockerfile
+.footloose-alpine.stamp: footloose-alpine/Dockerfile $(shell find footloose-alpine/root -type f)
 	docker build \
 	  --build-arg ETCD_ARCH=$(etcd_arch) \
 	  --build-arg ETCD_VERSION=$(etcd_version) \
@@ -33,6 +33,10 @@ bin/sonobuoy: | bin
 	  -t footloose-alpine \
 	  -f footloose-alpine/Dockerfile \
 	  footloose-alpine
+	touch $@
+
+.update-server.stamp: update-server/Dockerfile update-server/html/stable/index.yaml
+	docker build -t update-server --build-arg BASE=footloose-alpine -f $< $(dir $<)
 	touch $@
 
 check-network: bin/sonobuoy .footloose-alpine.stamp
@@ -67,6 +71,11 @@ check-noderole: TIMEOUT=6m
 
 # Backup check runs two scenarios
 check-backup: TIMEOUT=6m
+
+# Autopilot 3x3 HA test can take a while to run
+check-ap-ha3x3: TIMEOUT=6m
+
+check-ap-updater: .update-server.stamp
 
 .PHONY: $(smoketests)
 include Makefile.variables
