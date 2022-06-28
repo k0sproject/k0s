@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18.1"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          make build
+
+      - name: Test
+        run: |
+          make test
+
+  smokes:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        test:
+          - check-airgap
+          - check-ha3x3
+          - check-platformselect
+          - check-nocontrollers
+          - check-quorum
+          - check-quorumsafety
+          - check-selector
+          - check-single
+          - check-updater
+
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18.1"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          make build
+
+      - name: Integration Tests
+        run: |
+          curl -sSLf https://get.k0s.sh | sudo sh
+          make -C inttest ${{ matrix.test }}
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "autopilot-logs"
+          path: |
+            /home/runner/work/autopilot/autopilot/inttest/logs/**/autopilot*.log

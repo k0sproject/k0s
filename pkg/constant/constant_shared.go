@@ -112,6 +112,7 @@ const (
 	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"
 	NodeRoleComponentName              = "node-role"
+	AutopilotComponentName             = "autopilot"
 
 	// ClusterConfigNamespace is the namespace where we expect to find the ClusterConfig CRs
 	ClusterConfigNamespace  = "kube-system"

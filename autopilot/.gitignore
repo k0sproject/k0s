@@ -1,0 +1,6 @@
+/.autopilot.*
+/.vscode
+/autopilot
+/inttest/.footloose-alpine.stamp
+/inttest/.update-server.stamp
+/inttest/logs/**/*.log

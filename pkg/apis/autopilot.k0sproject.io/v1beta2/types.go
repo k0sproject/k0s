@@ -113,8 +113,8 @@ type PlanList struct {
 
 // PlanSpec describes the behavior of the `Plan`
 type PlanSpec struct {
-	// Id is a user-provided identifier for this plan.
-	Id string `json:"id"` //nolint
+	// ID is a user-provided identifier for this plan.
+	ID string `json:"id"`
 
 	// Timestamp is a user-provided time that the plan was created.
 	Timestamp string `json:"timestamp"`
@@ -250,8 +250,8 @@ type PlanStatus struct {
 
 // PlanCommandStatus is the status of a known command.
 type PlanCommandStatus struct {
-	// Id is a unique identifier for this command in a Plan
-	Id int `json:"id"` //nolint
+	// ID is a unique identifier for this command in a Plan
+	ID int `json:"id"`
 
 	// State is the current state of the plan command.
 	State PlanStateType `json:"state"`

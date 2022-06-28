@@ -30,6 +30,7 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
@@ -61,6 +62,7 @@ type CLIOptions struct {
 	KubeClient       k8s.Interface
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
 	Verbose          bool
+	AutopilotRoot    aproot.Root
 }
 
 // Shared controller cli flags

@@ -1,0 +1,55 @@
+# An example plan that specifies an upgrade to `k0s v1.23.3+k0s.1` for three
+# controller nodes, and three worker nodes.
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: Plan
+metadata:
+  name: autopilot
+
+spec:
+  # This is an arbitrary user-supplied plan identification value.
+  id: id1234
+
+  # The timestamp is informational and has no logic behind it.
+  timestamp: now
+
+  # All operations that a performed in a plan are defined as 'commands', and
+  # are evaluated in their listed order.
+  commands:
+    # The 'k0supdate' command performs an update of 'k0s'
+    - k0supdate:
+        # This version is used during the final stages of the update process to determine if the updated
+        # k0s version matches this value.
+        version: v1.23.3+k0s.1
+
+        # Platforms are mapped by the format "<GOOS>-<GOARCH>"" and allow for separate binaries per-platform.
+        platforms:
+          linux-amd64:
+            # This just needs to point to a HTTP endpoint
+            url: https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64
+
+            # The SHA256 can be omitted if required
+            sha256: 0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e
+
+          windows-ppc64le:
+            url: https://pretend.this/exists
+            sha256: deadbeef
+
+        # All nodes that should be updated are outlined here, using the same underlying structures.
+        targets:
+          controllers:
+            discovery:
+              # The 'static' discovery method for controllers is a static list of nodes that have
+              # identified themselves as a `ControlNode`
+              static:
+                nodes:
+                  - ip-172-31-44-131
+                  - ip-172-31-42-134
+                  - ip-172-31-39-65
+
+          workers:
+            discovery:
+              # The 'selector' discovery method for workers queries the kubernetes API with the
+              # provided selectors, and the resulting nodes are used.
+              selector:
+                labels: environment=staging
+                fields: metadata.name=worker2

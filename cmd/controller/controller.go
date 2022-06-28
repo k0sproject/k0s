@@ -25,7 +25,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/install"
+	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
+	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -40,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -48,6 +50,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/token"
@@ -338,13 +341,23 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
 		}
 
-		c.ClusterComponents.Add(ctx, controller.NewCRD(helmSaver))
+		c.ClusterComponents.Add(ctx, controller.NewCRD(helmSaver, []string{"helm"}))
 		c.ClusterComponents.Add(ctx, controller.NewExtensionsController(
 			helmSaver,
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
 		))
+	}
+
+	if !stringslice.Contains(c.DisableComponents, constant.AutopilotComponentName) {
+		logrus.Debug("starting manifest saver")
+		manifestsSaver, err := controller.NewManifestsSaver("autopilot", c.K0sVars.DataDir)
+		if err != nil {
+			logrus.Warnf("failed to initialize reconcilers manifests saver: %s", err.Error())
+			return err
+		}
+		c.ClusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, []string{"autopilot"}))
 	}
 
 	if c.NodeConfig.Spec.API.TunneledNetworkingMode {
@@ -481,10 +494,33 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
 	go configSource.Release(ctx)
 
+	autopilotClientFactory, err := apcli.NewClientFactory(adminClientFactory.GetRESTConfig())
+	if err != nil {
+		return fmt.Errorf("creating autopilot client factory error: %w", err)
+	}
+	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
+		KubeConfig:          c.K0sVars.AdminKubeConfigPath,
+		K0sDataDir:          c.K0sVars.DataDir,
+		Mode:                "controller",
+		ManagerPort:         8899,
+		MetricsBindAddr:     "0",
+		HealthProbeBindAddr: "0",
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), autopilotClientFactory)
+	if err != nil {
+		return fmt.Errorf("failed to create autopilot controller: %w", err)
+	}
+
 	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
 		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
+	} else {
+		go func() {
+			err := autopilotRoot.Run(ctx)
+			if err != nil {
+				logrus.WithError(err).Error("error while running autopilot")
+			}
+		}()
 	}
 	perfTimer.Checkpoint("started-worker")
 
