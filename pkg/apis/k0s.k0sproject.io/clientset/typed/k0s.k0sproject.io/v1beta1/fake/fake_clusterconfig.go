@@ -104,7 +104,7 @@ func (c *FakeClusterConfigs) Update(ctx context.Context, clusterConfig *v1beta1.
 // Delete takes name of the clusterConfig and deletes it. Returns an error if one occurs.
 func (c *FakeClusterConfigs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(clusterconfigsResource, c.ns, name), &v1beta1.ClusterConfig{})
+		Invokes(testing.NewDeleteActionWithOptions(clusterconfigsResource, c.ns, name, opts), &v1beta1.ClusterConfig{})
 
 	return err
 }

@@ -33,7 +33,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
 
@@ -50,20 +49,21 @@ jobs:
         with:
           key: ${{ runner.os }}-lint-go-caches-${{ hashFiles('go.sum') }}
           path: |
+            build/cache
             ~/go/pkg/mod
             ~/.cache/go-build
             ~/.cache/golangci-lint
 
       - name: Check go.mod/go.sum to be consistent
-        run: go mod tidy && git diff --exit-code
+        run: make --always-make go.sum && git diff --exit-code
 
-      - name: codegen
-        run: make codegen EMBEDDED_BINS_BUILDMODE=none
+      - name: Check generated code to be consistent
+        run: make codegen EMBEDDED_BINS_BUILDMODE=none && git diff --exit-code
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.46.0
+          version: 'v${{ env.GOLANGCI_LINT_VERSION }}'
           skip-cache: true
           only-new-issues: false
           args: --verbose

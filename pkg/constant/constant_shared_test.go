@@ -16,13 +16,13 @@ limitations under the License.
 package constant
 
 import (
-	"bytes"
-	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKonnectivityVersion(t *testing.T) {
@@ -35,24 +35,19 @@ func TestKubeProxyVersion(t *testing.T) {
 
 func TestKubernetesMajorMinorVersion(t *testing.T) {
 	ver := strings.Split(getVersion(t, "kubernetes"), ".")
+	require.GreaterOrEqual(t, len(ver), 2, "failed to spilt Kubernetes version %q", ver)
 	kubeMinorMajor := ver[0] + "." + ver[1]
 
 	assert.Equal(t, kubeMinorMajor, KubernetesMajorMinorVersion)
 }
 
 func getVersion(t *testing.T, component string) string {
-	cmd := exec.Command("make", "--no-print-directory", "-f", "-", fmt.Sprintf("print-%s_version", component))
-	cmd.Stdin = bytes.NewBuffer([]byte(makefile))
+	cmd := exec.Command("./vars.sh", component+"_version")
+	cmd.Dir = filepath.Join("..", "..")
 
 	out, err := cmd.Output()
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	require.NotEmpty(t, out, "failed to get %s version", component)
 
 	return strings.TrimSuffix(string(out), "\n")
 }
-
-const makefile = `
-include ../../embedded-bins/Makefile.variables
-
-print-%:
-	@echo $($*)
-`
