@@ -26,6 +26,16 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/head/autopilot-multicommand/</loc>
+         <lastmod>2022-06-28</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://docs.k0sproject.io/head/autopilot/</loc>
+         <lastmod>2022-06-28</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/head/backup/</loc>
          <lastmod>2022-06-28</lastmod>
          <changefreq>daily</changefreq>

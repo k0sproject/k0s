@@ -13,24 +13,24 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/cli/k0s_install_worker/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/autopilot-multicommand/">
       
       
         
       
-      <link rel="icon" href="../../img/k0s_social.png">
+      <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
     
     
       
-        <title>K0s install worker - Documentation</title>
+        <title>**Multi-Command Plans** - Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.92048cb8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.73e53a79.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
         
       
       
@@ -46,7 +46,7 @@
     
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -73,7 +73,7 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
-    <script>function __scope(t,e="../.."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
     
       <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#k0s-install-worker" class="md-skip">
+        <a href="#multi-command-plans" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
             <div class="md-banner__inner md-grid md-typeset">
               
   You are not currently viewing the documentation for the current stable release of k0s.
-  <a href="../../..">
+  <a href="../..">
     <strong>Click here to go to the documentation of the current stable release.</strong>
   </a>
 
@@ -113,9 +113,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -131,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              K0s install worker
+              **Multi-Command Plans**
             
           </span>
         </div>
@@ -236,9 +236,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
       
-  <img src="../../img/k0s_social.png" alt="logo">
+  <img src="../img/k0s_social.png" alt="logo">
 
     </a>
     Documentation
@@ -267,7 +267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         Overview
       </a>
     </li>
@@ -308,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Quick Start Guide
       </a>
     </li>
@@ -322,7 +322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0sctl-install/" class="md-nav__link">
+      <a href="../k0sctl-install/" class="md-nav__link">
         Install using k0sctl
       </a>
     </li>
@@ -362,7 +362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-multi-node/" class="md-nav__link">
+      <a href="../k0s-multi-node/" class="md-nav__link">
         Manual Install (advanced)
       </a>
     </li>
@@ -376,7 +376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../k0s-in-docker/" class="md-nav__link">
+      <a href="../k0s-in-docker/" class="md-nav__link">
         Docker
       </a>
     </li>
@@ -390,7 +390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../experimental-windows/" class="md-nav__link">
+      <a href="../experimental-windows/" class="md-nav__link">
         Windows (experimental)
       </a>
     </li>
@@ -404,7 +404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../raspberry-pi4/" class="md-nav__link">
+      <a href="../raspberry-pi4/" class="md-nav__link">
         Raspberry Pi 4
       </a>
     </li>
@@ -418,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ansible-playbook/" class="md-nav__link">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
         Ansible Playbook
       </a>
     </li>
@@ -432,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../airgap-install/" class="md-nav__link">
+      <a href="../airgap-install/" class="md-nav__link">
         Airgap Install
       </a>
     </li>
@@ -453,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../upgrade/" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         Upgrade
       </a>
     </li>
@@ -467,7 +467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         Backup/Restore
       </a>
     </li>
@@ -481,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reset/" class="md-nav__link">
+      <a href="../reset/" class="md-nav__link">
         Uninstall/Reset
       </a>
     </li>
@@ -495,7 +495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-requirements/" class="md-nav__link">
+      <a href="../system-requirements/" class="md-nav__link">
         System Requirements
       </a>
     </li>
@@ -509,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../external-runtime-deps/" class="md-nav__link">
+      <a href="../external-runtime-deps/" class="md-nav__link">
         External runtime dependencies
       </a>
     </li>
@@ -557,7 +557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         Configuration Options
       </a>
     </li>
@@ -571,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dynamic-configuration/" class="md-nav__link">
+      <a href="../dynamic-configuration/" class="md-nav__link">
         Dynamic Configuration
       </a>
     </li>
@@ -585,7 +585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration-validation/" class="md-nav__link">
+      <a href="../configuration-validation/" class="md-nav__link">
         Configuration Validation
       </a>
     </li>
@@ -599,7 +599,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../worker-node-config/" class="md-nav__link">
+      <a href="../worker-node-config/" class="md-nav__link">
         Worker Node Configuration
       </a>
     </li>
@@ -613,7 +613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../networking/" class="md-nav__link">
+      <a href="../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
     </li>
@@ -627,7 +627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../runtime/" class="md-nav__link">
+      <a href="../runtime/" class="md-nav__link">
         Runtime (CRI)
       </a>
     </li>
@@ -641,7 +641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage/" class="md-nav__link">
+      <a href="../storage/" class="md-nav__link">
         Storage (CSI)
       </a>
     </li>
@@ -655,7 +655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system-monitoring/" class="md-nav__link">
+      <a href="../system-monitoring/" class="md-nav__link">
         System Components Monitoring
       </a>
     </li>
@@ -669,7 +669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manifests/" class="md-nav__link">
+      <a href="../manifests/" class="md-nav__link">
         Manifest Deployer
       </a>
     </li>
@@ -683,7 +683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../helm-charts/" class="md-nav__link">
+      <a href="../helm-charts/" class="md-nav__link">
         Helm Charts
       </a>
     </li>
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cloud-providers/" class="md-nav__link">
+      <a href="../cloud-providers/" class="md-nav__link">
         Cloud Providers
       </a>
     </li>
@@ -711,7 +711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dual-stack/" class="md-nav__link">
+      <a href="../dual-stack/" class="md-nav__link">
         IPv4/IPv6 Dual-Stack
       </a>
     </li>
@@ -725,7 +725,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../high-availability/" class="md-nav__link">
+      <a href="../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
     </li>
@@ -739,7 +739,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../shell-completion/" class="md-nav__link">
+      <a href="../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
     </li>
@@ -753,7 +753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../user-management/" class="md-nav__link">
+      <a href="../user-management/" class="md-nav__link">
         User Management
       </a>
     </li>
@@ -767,7 +767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../environment-variables/" class="md-nav__link">
+      <a href="../environment-variables/" class="md-nav__link">
         Configuration of Environment Variables
       </a>
     </li>
@@ -781,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
         OpenID Connect
       </a>
     </li>
@@ -795,7 +795,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../selinux/" class="md-nav__link">
+      <a href="../selinux/" class="md-nav__link">
         SELinux
       </a>
     </li>
@@ -809,7 +809,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../podsecurity/" class="md-nav__link">
+      <a href="../podsecurity/" class="md-nav__link">
         Pod Security Standards
       </a>
     </li>
@@ -857,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/metallb-loadbalancer/" class="md-nav__link">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
         MetalLB Load Balancer
       </a>
     </li>
@@ -871,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/nginx-ingress/" class="md-nav__link">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
         NGINX Ingress Controller
       </a>
     </li>
@@ -885,7 +885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/traefik-ingress/" class="md-nav__link">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
         Traefik Ingress Controller
       </a>
     </li>
@@ -899,7 +899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/ambassador-ingress/" class="md-nav__link">
+      <a href="../examples/ambassador-ingress/" class="md-nav__link">
         Ambassador API Gateway
       </a>
     </li>
@@ -913,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/rook-ceph/" class="md-nav__link">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
         Ceph Storage with Rook
       </a>
     </li>
@@ -927,7 +927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/gitops-flux/" class="md-nav__link">
+      <a href="../examples/gitops-flux/" class="md-nav__link">
         GitOps with Flux
       </a>
     </li>
@@ -975,7 +975,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../FAQ/" class="md-nav__link">
+      <a href="../FAQ/" class="md-nav__link">
         FAQ
       </a>
     </li>
@@ -989,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
     </li>
@@ -1037,7 +1037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         Architecture
       </a>
     </li>
@@ -1051,7 +1051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cis_benchmark/" class="md-nav__link">
+      <a href="../cis_benchmark/" class="md-nav__link">
         Kube-bench Security Benchmark
       </a>
     </li>
@@ -1073,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../releases/" class="md-nav__link">
+      <a href="../releases/" class="md-nav__link">
         Releases
       </a>
     </li>
@@ -1114,7 +1114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/overview/" class="md-nav__link">
+      <a href="../contributors/overview/" class="md-nav__link">
         Overview
       </a>
     </li>
@@ -1128,7 +1128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/github_workflow/" class="md-nav__link">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
         GitHub Workflow
       </a>
     </li>
@@ -1142,7 +1142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributors/testing/" class="md-nav__link">
+      <a href="../contributors/testing/" class="md-nav__link">
         Testing
       </a>
     </li>
@@ -1156,7 +1156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
         Documentation
       </a>
     </li>
@@ -1186,6 +1186,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1194,43 +1196,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#k0s-install-worker" class="md-nav__link">
-    k0s install worker
+  <a href="#execution" class="md-nav__link">
+    Execution
   </a>
   
-    <nav class="md-nav" aria-label="k0s install worker">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    Status
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processing-states" class="md-nav__link">
+    Processing States
+  </a>
+  
+    <nav class="md-nav" aria-label="Processing States">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    Examples
+  <a href="#newplan" class="md-nav__link">
+    NewPlan
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    Options
+  <a href="#schedulablewait" class="md-nav__link">
+    SchedulableWait
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
+  <a href="#schedulable" class="md-nav__link">
+    Schedulable
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    SEE ALSO
+  <a href="#completed" class="md-nav__link">
+    Completed
   </a>
   
 </li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-states" class="md-nav__link">
+    Error States
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequence-example" class="md-nav__link">
+    Sequence: Example
+  </a>
   
 </li>
       
@@ -1248,43 +1285,250 @@
                 
                 
                 
-                  <h1>K0s install worker</h1>
-                
-                <h2 id="k0s-install-worker">k0s install worker<a class="headerlink" href="#k0s-install-worker" title="Permanent link">#</a></h2>
-<p>Install k0s worker on a brand-new system. Must be run as root (or with sudo)</p>
-<div class="highlight"><pre><span></span><code>k0s install worker [flags]
-</code></pre></div>
-<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>Worker subcommand allows you to pass in all available worker parameters.
-All default values of worker command will be passed to the service stub unless overriden.
-
-Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;--cluster-dns&quot; will be ignored since install command doesn&#39;t yet support Windows services
-</code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --api-server string           HACK: api-server for the windows worker node
-      --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cluster-dns string          HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
-      --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
-      --enable-cloud-provider       Whether or not to enable cloud provider support in kubelet
-  -h, --help                        help for worker
-      --kubelet-extra-args string   extra args for kubelet
-      --labels strings              Node labels, list of key=value pairs
-  -l, --logging stringToString      Logging Levels for the different components (default [kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
-      --profile string              worker profile to use on the node (default &quot;default&quot;)
-      --taints strings              Node taints, list of key=value:effect strings
-      --token-file string           Path to the file containing token.
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --data-dir string        Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-  -d, --debug                  Debug logging (default: false)
-      --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
-      --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
-  -v, --verbose                Verbose logging (default: false)
-</code></pre></div>
-<h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
+                <h1 id="multi-command-plans"><strong>Multi-Command Plans</strong><a class="headerlink" href="#multi-command-plans" title="Permanent link">#</a></h1>
+<p><strong>Autopilot</strong> relies on a <strong>Plan</strong> for defining the <strong>Commands</strong> that should be
+executed, the <strong>Signal Nodes</strong> that each should be run on, and the status of
+each <strong>Command</strong>.</p>
+<p>A <strong>Plan</strong>:</p>
 <ul>
-<li><a href="../k0s_install/">k0s install</a>  - Install k0s on a brand-new system. Must be run as root (or with sudo)</li>
+<li>Defines one or many <strong>Commands</strong> that specify what actions should be performed.</li>
+<li>Specifies how <strong>Signal Nodes</strong> should be discovered per-<strong>Command</strong>.</li>
+<li>Saves the status of the <strong>Plan</strong> execution by resolved <strong>Signal Nodes</strong></li>
 </ul>
+<p>A <strong>Command</strong>:</p>
+<ul>
+<li>An instructional step inside of a <strong>Plan</strong> that is applied against a <strong>Signal Node</strong></li>
+</ul>
+<p>A <strong>Signal Node</strong>:</p>
+<ul>
+<li>Any node (controller or worker) that can receive updates with Autopilot.</li>
+</ul>
+<h2 id="execution"><strong>Execution</strong><a class="headerlink" href="#execution" title="Permanent link">#</a></h2>
+<p>The execution of a <strong>Plan</strong> is the result of processing <strong>Commands</strong> through
+a number of <strong>Processing States</strong>.</p>
+<p>When a <strong>Plan</strong> is executed, each of the <strong>Commands</strong> are executed in the order
+of their appearance in the <strong>Plan</strong>.</p>
+<ul>
+<li>A <strong>Plan</strong> transitions to the next <strong>Command</strong> only when the current <strong>Command</strong> posts
+a state of <strong>Completed</strong>.</li>
+<li>Any <strong>Command</strong> that posts one of the recognized <strong>Error States</strong> will result in the
+current <strong>Command</strong> and <strong>Plan</strong> to abort processing.<ul>
+<li>The status of the <strong>Command</strong> and <strong>Plan</strong> will reflect this.</li>
+</ul>
+</li>
+<li>A <strong>Plan</strong> is considered finished only when all of its defined <strong>Commands</strong> post a
+<strong>Completed</strong> state.</li>
+</ul>
+<h2 id="status"><strong>Status</strong><a class="headerlink" href="#status" title="Permanent link">#</a></h2>
+<p>The progress and state of each <strong>Command</strong> is recorded in the <strong>Plan</strong> status.</p>
+<ul>
+<li>Every <strong>Command</strong> in the <strong>Plan</strong> has an associated status entry with the same index
+as the <strong>Command</strong><ul>
+<li>ie. The second <strong>Command</strong> in a <strong>Plan</strong> has an index of <code>1</code>, and so does its status.</li>
+</ul>
+</li>
+<li>The status of all <strong>Commands</strong> is taken into consideration when determining if the
+<strong>Plan</strong> is finished.</li>
+</ul>
+<hr />
+<h2 id="example"><strong>Example</strong><a class="headerlink" href="#example" title="Permanent link">#</a></h2>
+<p>The following is an example of a <strong>Plan</strong> that has been applied as is currently being
+processed by <strong>autopilot</strong>.</p>
+<p>(line numbers added for commentary below)</p>
+<div class="highlight"><pre><span></span><code><span class="w"> </span><span class="nt">1</span><span class="p">:</span><span class="w"> </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
+<span class="w"> </span><span class="nt">2</span><span class="p">:</span><span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span><span class="w"></span>
+<span class="w"> </span><span class="nt">3</span><span class="p">:</span><span class="w">  </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w"> </span><span class="nt">4</span><span class="p">:</span><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span><span class="w"></span>
+<span class="w"> </span><span class="nt">5</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">&lt;omitted&gt;</span><span class="w"></span>
+<span class="w"> </span><span class="nt">6</span><span class="p">:</span><span class="w">  </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w"> </span><span class="nt">7</span><span class="p">:</span><span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
+<span class="w"> </span><span class="nt">8</span><span class="p">:</span><span class="w">    </span><span class="nt">- airgapupdate</span><span class="p">:</span><span class="w"></span>
+<span class="w"> </span><span class="nt">9</span><span class="p">:</span><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.23.3+k0s.1</span><span class="w"></span>
+<span class="nt">10</span><span class="p">:</span><span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
+<span class="nt">11</span><span class="p">:</span><span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
+<span class="nt">12</span><span class="p">:</span><span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64</span><span class="w"></span>
+<span class="nt">13</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">14</span><span class="p">:</span><span class="w">          </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="nt">15</span><span class="p">:</span><span class="w">            </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
+<span class="nt">16</span><span class="p">:</span><span class="w">              </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
+<span class="nt">17</span><span class="p">:</span><span class="w">              </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
+<span class="nt">18</span><span class="p">:</span><span class="w">    </span><span class="nt">- k0supdate</span><span class="p">:</span><span class="w"></span>
+<span class="nt">19</span><span class="p">:</span><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.23.3+k0s.1</span><span class="w"></span>
+<span class="nt">20</span><span class="p">:</span><span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
+<span class="nt">21</span><span class="p">:</span><span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
+<span class="nt">22</span><span class="p">:</span><span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64</span><span class="w"></span>
+<span class="nt">23</span><span class="p">:</span><span class="w">        </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
+<span class="nt">24</span><span class="p">:</span><span class="w">          </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">25</span><span class="p">:</span><span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="nt">26</span><span class="p">:</span><span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
+<span class="nt">27</span><span class="p">:</span><span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
+<span class="nt">28</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
+<span class="nt">29</span><span class="p">:</span><span class="w">          </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">30</span><span class="p">:</span><span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="nt">31</span><span class="p">:</span><span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
+<span class="nt">32</span><span class="p">:</span><span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
+<span class="nt">33</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
+<span class="nt">34</span><span class="p">:</span><span class="w">    </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id123</span><span class="w"></span>
+<span class="nt">35</span><span class="p">:</span><span class="w">    </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span><span class="w"></span>
+<span class="nt">36</span><span class="p">:</span><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"></span>
+<span class="nt">37</span><span class="p">:</span><span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
+<span class="nt">38</span><span class="p">:</span><span class="w">    </span><span class="nt">- airgapupdate</span><span class="p">:</span><span class="w"></span>
+<span class="nt">39</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">40</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
+<span class="nt">41</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
+<span class="nt">42</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalSent</span><span class="w"></span>
+<span class="nt">43</span><span class="p">:</span><span class="w">      </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="nt">44</span><span class="p">:</span><span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+<span class="nt">45</span><span class="p">:</span><span class="w">    </span><span class="nt">- id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
+<span class="nt">46</span><span class="p">:</span><span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
+<span class="nt">47</span><span class="p">:</span><span class="w">        </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">48</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
+<span class="nt">49</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
+<span class="nt">50</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<span class="nt">51</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="nt">52</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
+<span class="nt">53</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
+<span class="nt">54</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<span class="nt">55</span><span class="p">:</span><span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+<span class="nt">56</span><span class="p">:</span><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+</code></pre></div>
+<ul>
+<li>Lines <strong>7-33</strong> are the two <strong>Commands</strong> that make up this plan -- an <code>airgapupdate</code> and <code>k0supdate</code>.</li>
+<li>Lines <strong>38-55</strong> are the associated status entries for the two <strong>Commands</strong>.</li>
+</ul>
+<p>The state of this <strong>Plan</strong> exerpt is that <strong>autopilot</strong> has successfully processed the <strong>Plan</strong>, and
+has begun processing the <code>airgapupdate</code> <strong>Command</strong>. Its status indicates <strong>SignalSent</strong> which means
+that the <strong>Signal Node</strong> has been sent signaling information to perform an airgap update.</p>
+<hr />
+<h2 id="processing-states"><strong>Processing States</strong><a class="headerlink" href="#processing-states" title="Permanent link">#</a></h2>
+<p>The following are the various states that both <code>Plan</code>s and <code>Command</code>s
+adhere to.</p>
+<div class="highlight"><pre><span></span><code>stateDiagram-v2
+    [*]--&gt;NewPlan
+    NewPlan--&gt;SchedulableWait
+    NewPlan--&gt;Errors***
+
+    SchedulableWait--&gt;Schedulable
+    SchedulableWait--&gt;Completed
+    Schedulable--&gt;SchedulableWait
+
+    Errors***--&gt;[*]
+    Completed--&gt;[*]
+</code></pre></div>
+<p>Note that the <strong>Errors</strong><em> state is elaborated in detail below in </em><em>Error States</em>*.</p>
+<h3 id="newplan"><strong>NewPlan</strong><a class="headerlink" href="#newplan" title="Permanent link">#</a></h3>
+<p>When a <strong>Plan</strong> is created with the name <code>autopilot</code>, the <strong>NewPlan</strong> state
+processing takes effect.</p>
+<p>It is the responsibility of <strong>NewPlan</strong> to ensure that the status of <strong>all</strong>
+the <strong>Commands</strong> are represented in the <strong>Plan</strong> status. This <strong>Plan</strong> status
+is needed at later points in <strong>Plan</strong> processing to determine if the entire
+<strong>Plan</strong> is completed.</p>
+<p>The main difference between <strong>NewPlan</strong> and all the other states is that
+<strong>NewPlan</strong> will iterate over all commands; the other states deal with the
+active command.</p>
+<h3 id="schedulablewait"><strong>SchedulableWait</strong><a class="headerlink" href="#schedulablewait" title="Permanent link">#</a></h3>
+<p>Used to evaluate a <strong>Command</strong> to determine if it can be scheduled for processing.
+If the <strong>Command</strong> is determined that it can be processed, the state is set to
+<strong>Schedulable</strong>.</p>
+<h3 id="schedulable"><strong>Schedulable</strong><a class="headerlink" href="#schedulable" title="Permanent link">#</a></h3>
+<p>The <strong>Schedulable</strong> state is set by <strong>SchedulableWait</strong> to indicate that this
+command should execute. The execution of a <strong>Command</strong> in this state will be
+whichever logic is defined by the <strong>Command</strong>.</p>
+<p>The ending of this state should either transition to <strong>SchedulableWait</strong> for
+further processing + completion detection, or transition to an error.</p>
+<h3 id="completed"><strong>Completed</strong><a class="headerlink" href="#completed" title="Permanent link">#</a></h3>
+<p>The <strong>Completed</strong> state indicates that the command has finished processing.
+Once a plan/command are in the <strong>Completed</strong> state, no further processing
+will occur on this plan/command.</p>
+<hr />
+<h2 id="error-states"><strong>Error States</strong><a class="headerlink" href="#error-states" title="Permanent link">#</a></h2>
+<p>When a plan or command processing goes into one of the designated error
+states, this is considered fatal and the plan/command processing will
+terminate.</p>
+<p>Error states are generally defined by the <strong>Command</strong> implementation.
+The core <strong>autopilot</strong> functionality is only interested when in the
+4 core states (<strong>NewPlan</strong>, <strong>SchedulableWait</strong>, <strong>Schedulable</strong>, <strong>Completed</strong>),
+and treats all other states as an error.</p>
+<div class="highlight"><pre><span></span><code>flowchart TD
+    Errors --&gt; InconsistentTargets
+    Errors --&gt; IncompleteTargets
+    Errors --&gt; Restricted
+    Errors --&gt; MissingPlatform
+    Errors --&gt; MissingSignalNode
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Error State</th>
+<th>Command</th>
+<th>States</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>InconsistentTargets</strong></td>
+<td><code>k0supdate</code></td>
+<td><strong>Schedulable</strong></td>
+<td>Indicates that a <strong>Signal Node</strong> probe has failed for any node that was previously discovered during <strong>NewPlan</strong>.</td>
+</tr>
+<tr>
+<td><strong>IncompleteTargets</strong></td>
+<td><code>airgapupdate</code>, <code>k0supdate</code></td>
+<td><strong>NewPlan</strong>, <strong>Schedulable</strong></td>
+<td>Indicates that a <strong>Signal Node</strong> that existed during the discover phase in <strong>NewPlan</strong> no longer exists (ie. no <code>ControlNode</code> or <code>Node</code> object)</td>
+</tr>
+<tr>
+<td><strong>Restricted</strong></td>
+<td><code>airgapupdate</code>, <code>k0supdate</code></td>
+<td><strong>NewPlan</strong></td>
+<td>Indicates that a <strong>Plan</strong> has requested an update of a <strong>Signal Node</strong> type that contradicts the startup exclusions (the <code>--exclude-from-plans</code> argument)</td>
+</tr>
+<tr>
+<td><strong>MissingSignalNode</strong></td>
+<td><code>airgapupdate</code>, <code>k0supdate</code></td>
+<td><strong>Schedulable</strong></td>
+<td>Indicates that a <strong>Signal Node</strong> that existed during the discover phase in <strong>NewPlan</strong> no longer exists (ie. no matching <code>ControlNode</code> or <code>Node</code> object)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sequence-example"><strong>Sequence: Example</strong><a class="headerlink" href="#sequence-example" title="Permanent link">#</a></h2>
+<p>Using the example above as a reference, this outlines the basic sequence of events of
+state transitions to the operations performed on each object.</p>
+<div class="highlight"><pre><span></span><code>sequenceDiagram
+  PlanStateHandler-&gt;&gt;+AirgapUpdateCommand: State: NewPlan
+  AirgapUpdateCommand-&gt;&gt;-AirgapUpdateCommand: cmd.NewPlan() -- &gt;SchedulableWait
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: NewPlan
+  K0sUpdateCommand-&gt;&gt;-K0sUpdateCommand: cmd.NewPlan() --&gt; SchedulableWait
+  Note over PlanStateHandler,SignalNode(worker0): NewPlan Finished / All Commands
+
+  PlanStateHandler-&gt;&gt;+AirgapUpdateCommand: State: SchedulableWait
+  AirgapUpdateCommand-&gt;&gt;-AirgapUpdateCommand: cmd.SchedulableWait() --&gt; Schedulable
+  PlanStateHandler-&gt;&gt;+AirgapUpdateCommand: State: Schedulable
+  AirgapUpdateCommand-&gt;&gt;-SignalNode(worker0): signal_v2(airgap-data) --&gt; SchedulableWait
+  PlanStateHandler-&gt;&gt;+AirgapUpdateCommand: State: SchedulableWait
+  AirgapUpdateCommand-&gt;&gt;-AirgapUpdateCommand: cmd.SchedulableWait() --&gt; Completed
+  Note over PlanStateHandler,SignalNode(worker0): AirgapUpdate Finished / worker0
+
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: SchedulableWait
+  K0sUpdateCommand-&gt;&gt;-K0sUpdateCommand: cmd.SchedulableWait() --&gt; Schedulable
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: Schedulable
+  K0sUpdateCommand-&gt;&gt;-SignalNode(controller0): signal_v2(k0s-data) --&gt; SchedulableWait
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: SchedulableWait
+  K0sUpdateCommand-&gt;&gt;-K0sUpdateCommand: cmd.SchedulableWait() --&gt; Completed
+  Note over PlanStateHandler,SignalNode(controller0): K0sUpdate Finished / controller0
+
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: SchedulableWait
+  K0sUpdateCommand-&gt;&gt;-K0sUpdateCommand: cmd.SchedulableWait() --&gt; Schedulable
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: Schedulable
+  K0sUpdateCommand-&gt;&gt;-SignalNode(worker0): signal_v2(k0s-data) --&gt; SchedulableWait
+  PlanStateHandler-&gt;&gt;+K0sUpdateCommand: State: SchedulableWait
+  K0sUpdateCommand-&gt;&gt;-K0sUpdateCommand: cmd.SchedulableWait() --&gt; Completed
+  Note over PlanStateHandler,SignalNode(worker0): K0sUpdate Finished / worker0
+
+  PlanStateHandler-&gt;&gt;PlanStateHandler: Completed
+</code></pre></div>
                 
               
               
@@ -1350,10 +1594,10 @@ Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.82217815.min.js"></script>
+      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
       
     
   </body>
