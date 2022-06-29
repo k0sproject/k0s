@@ -166,25 +166,36 @@ func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 
 	p.Spec.ID = strconv.FormatInt(time.Now().Unix(), 10)
 	p.Spec.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
-	p.Spec.Commands = append(p.Spec.Commands, apv1beta2.PlanCommand{
-		K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
-			Version:   string(nextVersion.Version),
-			Platforms: platforms,
-			Targets: apv1beta2.PlanCommandTargets{
-				Controllers: apv1beta2.PlanCommandTarget{
-					Discovery: apv1beta2.PlanCommandTargetDiscovery{
-						Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{},
+
+	var updateCommandFound bool
+	for _, cmd := range p.Spec.Commands {
+		if cmd.K0sUpdate != nil || cmd.AirgapUpdate != nil {
+			updateCommandFound = true
+			break
+		}
+	}
+
+	// If update command is not specified, we add a default one to update all controller and workers in the cluster
+	if !updateCommandFound {
+		p.Spec.Commands = append(p.Spec.Commands, apv1beta2.PlanCommand{
+			K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+				Version:   string(nextVersion.Version),
+				Platforms: platforms,
+				Targets: apv1beta2.PlanCommandTargets{
+					Controllers: apv1beta2.PlanCommandTarget{
+						Discovery: apv1beta2.PlanCommandTargetDiscovery{
+							Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{},
+						},
 					},
-				},
-				Workers: apv1beta2.PlanCommandTarget{
-					Discovery: apv1beta2.PlanCommandTargetDiscovery{
-						Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{},
+					Workers: apv1beta2.PlanCommandTarget{
+						Discovery: apv1beta2.PlanCommandTargetDiscovery{
+							Selector: &apv1beta2.PlanCommandTargetDiscoverySelector{},
+						},
 					},
 				},
 			},
-			// TODO: Targets
-		},
-	})
+		})
+	}
 
 	return p
 }
