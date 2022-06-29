@@ -58,6 +58,7 @@ LD_FLAGS += -X github.com/containerd/containerd/version.Revision=$(shell ./embed
 endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
+GOLANG_IMAGE ?= golang:$(go_version)-alpine3.16
 GO_ENV ?= docker run --rm \
 	-v '$(CURDIR)/build/cache':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
@@ -85,7 +86,7 @@ build/cache:
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | build/cache
 	docker build --rm \
-		--build-arg BUILDIMAGE=golang:$(go_version)-alpine3.16 \
+		--build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
 		-f build/Dockerfile \
 		-t k0sbuild.docker-image.k0s build/
 	touch $@
@@ -175,7 +176,6 @@ k0s: .k0sbuild.docker-image.k0s
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:$(go_version)-alpine3.16
 
 k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
 	CGO_ENABLED=$(BUILD_GO_CGO_ENABLED) GOOS=$(TARGET_OS) $(GO) build $(BUILD_GO_FLAGS) -ldflags='$(LD_FLAGS)' -o $@.code main.go
