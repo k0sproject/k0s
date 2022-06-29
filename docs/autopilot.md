@@ -394,16 +394,3 @@ https://kubernetes.io/releases/version-skew-policy/
 
 > Make sure that your controllers are at the desired version **first** before
 > upgrading workers.
-
-### Q: If running workers in a Pod, what minimum RBAC access is needed?
-
-The following RBAC entries are required for running **autopilot** workers in Pods.
-
-| API Group | Resource | Verbs |
-| --------- | -------- | ----- |
-| `autopilot.k0sproject.io` | `plans` | `list`, `watch` |
-| `autopilot.k0sproject.io` | `plans/status` | `update` |
-| `apps` | `daemonsets` | `get` |
-| (empty) | `nodes` | `list`, `patch`, `update`, `watch` |
-| (empty) | `pods` | `list` |
-| (empty) | `pods/eviction` | `create` |
