@@ -13,20 +13,25 @@ function get_images() {
 
 function ensure_images() {
   for image in $(get_images); do
-    ${CTR_CMD} images pull $image
+    ${CTR_CMD} content fetch --platform ${TARGET_PLATFORM} $image
   done
 }
 
 function pack_images() {
   IMAGES=$(get_images)
 
-  ${CTR_CMD} images export $OUTPUT $IMAGES
+  ${CTR_CMD} images export --platform ${TARGET_PLATFORM} $OUTPUT $IMAGES
 }
 
 function build_bundle() {
   ensure_images
   pack_images
 }
+
+if [ -z "${TARGET_PLATFORM}" ]; then
+  echo "TARGET_PLATFORM must be set via env!!!"
+  exit 1 
+fi
 
 containerd &
 
