@@ -52,6 +52,10 @@ LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(KUBECTL_MAJOR)
 LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(KUBECTL_MINOR)
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
+LD_FLAGS += -X github.com/containerd/containerd/version.Version=v$(containerd_version)
+ifeq ($(EMBEDDED_BINS_BUILDMODE), docker)
+LD_FLAGS += -X github.com/containerd/containerd/version.Revision=$(shell ./embedded-bins/staging/linux/bin/containerd --version | awk '{print $$4}')
+endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 GO_ENV ?= docker run --rm \
