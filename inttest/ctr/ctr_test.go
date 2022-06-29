@@ -55,6 +55,10 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	flatOutput := removeRedundantSpaces(output)
 	errMsg := fmt.Sprintf("returned output of command 'k0s ctr namespaces list' is different than expected: %s", output)
 	s.Equal("NAME LABELS k8s.io", flatOutput, errMsg)
+
+	output, err = ssh.ExecWithOutput("/usr/local/bin/k0s ctr version")
+	s.Require().NoError(err)
+	s.Require().NotContains(output, "WARNING")
 }
 
 func TestCtrCommandSuite(t *testing.T) {
