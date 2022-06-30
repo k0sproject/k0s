@@ -24,6 +24,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/certificate"
+
+	k8skubeletcert "k8s.io/kubernetes/pkg/kubelet/certificate"
 )
 
 var _ certificate.Manager = (*certManager)(nil)
@@ -65,8 +67,7 @@ func GetRestConfig(ctx context.Context, kubeletClientConfigPath string) (*rest.C
 
 	transportConfig := rest.AnonymousClientConfig(restConfig)
 
-	_, err = updateTransport(ctx.Done(), 10*time.Second, transportConfig, certManager, 5*time.Minute)
-	if err != nil {
+	if _, err := k8skubeletcert.UpdateTransport(ctx.Done(), transportConfig, certManager, 5*time.Minute); err != nil {
 		return nil, err
 	}
 
