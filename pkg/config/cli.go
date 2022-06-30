@@ -79,6 +79,7 @@ type ControllerOptions struct {
 	NodeComponents                  *component.Manager
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
+	KubeControllerManagerExtraArgs  string
 }
 
 // Shared worker cli flags
@@ -192,6 +193,7 @@ func GetControllerFlags() *pflag.FlagSet {
 	flagset.AddFlagSet(GetCriSocketFlag())
 	flagset.BoolVar(&controllerOpts.EnableDynamicConfig, "enable-dynamic-config", false, "enable cluster-wide dynamic config based on custom resource")
 	flagset.BoolVar(&controllerOpts.EnableMetricsScraper, "enable-metrics-scraper", false, "enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)")
+	flagset.StringVar(&controllerOpts.KubeControllerManagerExtraArgs, "kube-controller-manager-extra-args", "", "extra args for kube-controller-manager")
 	flagset.AddFlagSet(FileInputFlag())
 	return flagset
 }

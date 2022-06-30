@@ -21,9 +21,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -42,6 +44,7 @@ type Manager struct {
 	uid            int
 	previousConfig stringmap.StringMap
 	SingleNode     bool
+	ExtraArgs      string
 }
 
 var cmDefaultArgs = stringmap.StringMap{
@@ -97,6 +100,13 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"profiling":                        "false",
 		"terminated-pod-gc-threshold":      "12500",
 		"v":                                a.LogLevel,
+	}
+
+	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	if a.ExtraArgs != "" {
+		// This service uses args without hyphens, so enforce that.
+		extras := flags.Split(strings.ReplaceAll(a.ExtraArgs, "--", ""))
+		args.Merge(extras)
 	}
 
 	if clusterConfig.Spec.Network.DualStack.Enabled {

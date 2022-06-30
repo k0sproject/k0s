@@ -461,6 +461,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			LogLevel:   c.Logging[constant.KubeControllerManagerComponentName],
 			K0sVars:    c.K0sVars,
 			SingleNode: c.SingleNode,
+			ExtraArgs:  c.KubeControllerManagerExtraArgs,
 		})
 	}
 
