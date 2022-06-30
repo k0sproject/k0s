@@ -48,6 +48,7 @@ func (c *certManager) Current() *tls.Certificate {
 }
 
 // TODO Do we need to implement these? In kubelet these are the bits that actually talk with API to get client certs
+// So AFAIK we don't
 func (c *certManager) Start()              {}
 func (c *certManager) Stop()               {}
 func (c *certManager) ServerHealthy() bool { return true }

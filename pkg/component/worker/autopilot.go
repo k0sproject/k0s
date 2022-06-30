@@ -25,10 +25,10 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 )
 
 var _ component.Component = (*Autopilot)(nil)
@@ -46,16 +46,15 @@ func (a *Autopilot) Run(ctx context.Context) error {
 	// Wait 5 mins till we see kubelet auth config in place
 	timeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
+	var restConfig *rest.Config
 	wait.PollUntilWithContext(timeout, 5*time.Second, func(ctx context.Context) (done bool, err error) {
-		exists := file.Exists(a.K0sVars.KubeletAuthConfigPath)
-		log.Infof("checking if %s exists: %t", a.K0sVars.KubeletAuthConfigPath, exists)
-		return exists, nil
+		restConfig, err = GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath)
+		log.Warnf("failed to load autopilot client config, retrying: %w", err)
+		if err != nil { // TODO We need to check some error details to see if we should retry or not
+			return false, nil
+		}
+		return true, nil
 	})
-
-	restConfig, err := GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath)
-	if err != nil {
-		return err
-	}
 
 	autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
 	if err != nil {
