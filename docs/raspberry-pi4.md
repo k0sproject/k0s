@@ -100,7 +100,7 @@ In addition, add each of these modules to your `/etc/modules-load.d/modules.conf
 Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.23.6%2Bk0s.1/k0s-v1.23.6+k0s.2-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.24.2%2Bk0s.0/k0s-v1.24.2+k0s.0-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -120,7 +120,7 @@ k0s version
 ```
 
 ```shell
-v1.23.6+k0s.2
+v1.24.2+k0s.0
 ```
 
 ### Deploy Kubernetes

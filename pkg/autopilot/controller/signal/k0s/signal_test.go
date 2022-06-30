@@ -251,11 +251,11 @@ func TestSignalControllerSameVersion(t *testing.T) {
 					"command": {
 						"id": 123,
 						"k0supdate": {
-							"version": "v1.23.3+k0s.0",
-							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-							"timestamp": "2021-10-20T19:06:56Z",
-							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-						}
+							"version": "v1.23.8+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-amd64",
+							"timestamp": "2022-06-22T12:18:54Z",
+							"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383"
+		}
 					}
 				}
 			`,
@@ -309,7 +309,7 @@ func TestSignalControllerSameVersion(t *testing.T) {
 				test.delegate,
 				&signalControllerHandler{
 					timeout:           SignalResponseProcessingTimeout,
-					k0sVersionHandler: echoedK0sVersionHandler("v1.23.3+k0s.0"),
+					k0sVersionHandler: echoedK0sVersionHandler("v1.23.8+k0s.0"),
 				},
 			)
 
@@ -356,11 +356,11 @@ func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
 						"id": 123,
 						"k0supdate": {
 							"forceupdate": true,
-							"version": "v1.23.3+k0s.0",
-							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-							"timestamp": "2021-10-20T19:06:56Z",
-							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-						}
+							"version": "v1.23.8+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-amd64",
+							"timestamp": "2022-06-22T12:18:54Z",
+							"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383"
+		}
 					}
 				}
 			`,
@@ -414,7 +414,7 @@ func TestSignalControllerSameVersionForceUpdate(t *testing.T) {
 				test.delegate,
 				&signalControllerHandler{
 					timeout:           SignalResponseProcessingTimeout,
-					k0sVersionHandler: echoedK0sVersionHandler("v1.23.3+k0s.0"),
+					k0sVersionHandler: echoedK0sVersionHandler("v1.23.8+k0s.0"),
 				},
 			)
 
@@ -460,11 +460,11 @@ func TestSignalControllerNewVersion(t *testing.T) {
 					"command": {
 						"id": 123,
 						"k0supdate": {
-							"version": "v1.23.3+k0s.0",
-							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.0/k0s-v1.23.3+k0s.0-amd64",
-							"timestamp": "2021-10-20T19:06:56Z",
-							"sha256": "aa170c7fa0ea3fe1194eaec6a18964543e1e139eab1cfbbbafec7f357fb1679d"
-						}
+							"version": "v1.23.8+k0s.0",
+							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-amd64",
+							"timestamp": "2022-06-22T12:18:54Z",
+							"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383"
+		}
 					}
 				}
 			`,

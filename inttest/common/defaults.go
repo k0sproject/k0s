@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	TargetK0sVersion = "v1.23.3+k0s.1"
+	TargetK0sVersion = "v1.23.8+k0s.0"
 )
 
 type K0sVersion string
@@ -31,31 +31,31 @@ type ResourceMap map[string]AttributeMap
 type AttributeMap map[string]string
 
 var Versions = K0sVersionedPlatformResourceMap{
-	"v1.23.3+k0s.1": {
+	"v1.23.8+k0s.0": {
 		"linux-amd64": {
 			"k0s": {
-				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64",
-				"sha256": "0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e",
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-amd64",
+				"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383",
 			},
 			"airgap": {
-				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
-				"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2",
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-airgap-bundle-v1.23.8+k0s.0-amd64",
+				"sha256": "5db2c1d3c7ff3e308eae1073a33f18a415e3096b4f901a3b4fe01ea568f18259",
 			},
 		},
 		"linux-arm64": {
 			"k0s": {
-				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-arm64",
-				"sha256": "350adde6c452abd56a3c8113bf5af254fc17bcc41946e32ae47b580626a9293c",
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-arm64",
+				"sha256": "9ec9dc3aa4e322335e304f375a1820b86e0a2199245a7a811cddb594f83c7786",
 			},
 			"airgap": {
-				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-arm64",
-				"sha256": "2fe4976a90193e2ec89d3cff4ebf6bd063b38cf23116071689415fd19f251f29",
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-airgap-bundle-v1.23.8+k0s.0-arm64",
+				"sha256": "193d9ef219db80f9e3b5b65afc92d51509ec1f95a3300cd48f646c7cbe7288e9",
 			},
 		},
 		"windows-amd64": {
 			"k0s": {
-				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64.exe",
-				"sha256": "f9e064f70c997e55dacbd3b36ca04029bb7995e84be8084d8bbd2cd75601fe30",
+				"url":    "https://github.com/k0sproject/k0s/releases/download/v1.23.8%2Bk0s.0/k0s-v1.23.8+k0s.0-amd64.exe",
+				"sha256": "5a9dab6c2e34f291c3aee4b9be664e9bbdcefcebd8422ca869cd80071b92186f",
 			},
 			// no airgap bundles published for windows
 		},

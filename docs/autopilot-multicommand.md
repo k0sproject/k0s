@@ -62,20 +62,20 @@ processed by **autopilot**.
  6:  spec:
  7:    commands:
  8:    - airgapupdate:
- 9:        version: v1.23.3+k0s.1
+ 9:        version: v1.24.2+k0s.0
 10:        platforms:
 11:          linux-amd64:
-12:            url: https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64
+12:            url: https://github.com/k0sproject/k0s/releases/download/v1.24.2%2Bk0s.0/k0s-airgap-bundle-v1.24.2+k0s.0-amd64
 13:        workers:
 14:          discovery:
 15:            static:
 16:              nodes:
 17:              - worker0
 18:    - k0supdate:
-19:        version: v1.23.3+k0s.1
+19:        version: v1.24.2+k0s.0
 20:        platforms:
 21:          linux-amd64:
-22:            url: https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64
+22:            url: https://github.com/k0sproject/k0s/releases/download/v1.24.2%2Bk0s.0/k0s-v1.24.2+k0s.0-amd64
 23:        targets:
 24:          controllers:
 25:            discovery:
