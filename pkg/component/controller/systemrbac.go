@@ -112,7 +112,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: system:bootstrappers:autopilot
+  name: system:nodes:autopilot
 rules:
   - apiGroups: ["autopilot.k0sproject.io"]
     resources: ["*"]
@@ -127,15 +127,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: system:bootstrappers:autopilot
+  name: system:nodes:autopilot
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: system:bootstrappers:autopilot
+  name: system:nodes:autopilot
 subjects:
   - apiGroup: rbac.authorization.k8s.io
     kind: Group
-    name: system:bootstrappers
+    name: system:nodes
 `
 
 // Health-check interface

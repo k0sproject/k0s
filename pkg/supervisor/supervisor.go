@@ -128,8 +128,8 @@ func (s *Supervisor) Supervise() error {
 			// get signals sent directly to parent.
 			s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
-			s.cmd.Stdout = s.log.Writer()
-			s.cmd.Stderr = s.log.Writer()
+			// s.cmd.Stdout = s.log.Writer()
+			// s.cmd.Stderr = s.log.Writer()
 
 			err := s.cmd.Start()
 			s.mutex.Unlock()
