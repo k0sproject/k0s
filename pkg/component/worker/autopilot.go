@@ -17,6 +17,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,6 +32,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	defaultPollDuration = 5 * time.Second
+	defaultPollTimeout  = 5 * time.Minute
+)
+
 var _ component.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
@@ -43,25 +49,37 @@ func (a *Autopilot) Init(ctx context.Context) error {
 
 func (a *Autopilot) Run(ctx context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "autopilot"})
+
 	// Wait 5 mins till we see kubelet auth config in place
-	timeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	timeout, cancel := context.WithTimeout(ctx, defaultPollTimeout)
 	defer cancel()
+
+	// Poll until the kubelet config can be loaded successfully, as this is the access to the kube api
+	// needed by autopilot.
+
 	var restConfig *rest.Config
-	wait.PollUntilWithContext(timeout, 5*time.Second, func(ctx context.Context) (done bool, err error) {
-		restConfig, err = GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath)
-		log.Warnf("failed to load autopilot client config, retrying: %w", err)
-		if err != nil { // TODO We need to check some error details to see if we should retry or not
+	wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
+		log.Debugf("Attempting to load autopilot client config")
+		if restConfig, err = GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath); err != nil {
+			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
 			return false, nil
 		}
+
 		return true, nil
 	})
+
+	// Without the config, there is nothing that we can do.
+
+	if restConfig == nil {
+		return errors.New("unable to create an autopilot client -- timed out")
+	}
 
 	autopilotClientFactory, err := apcli.NewClientFactory(restConfig)
 	if err != nil {
 		return fmt.Errorf("creating autopilot client factory error: %w", err)
 	}
 
-	log.Info("client factory created, booting up worker root controller")
+	log.Info("Autopilot client factory created, booting up worker root controller")
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
 		KubeConfig:          a.K0sVars.KubeletAuthConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
@@ -75,9 +93,10 @@ func (a *Autopilot) Run(ctx context.Context) error {
 	}
 
 	go func() {
-		err := autopilotRoot.Run(ctx)
-		if err != nil {
-			logrus.WithError(err).Error("error while running autopilot")
+		if err := autopilotRoot.Run(ctx); err != nil {
+			logrus.WithError(err).Error("Error running autopilot")
+
+			// TODO: We now have a service with nothing running.. now what?
 		}
 	}()
 
