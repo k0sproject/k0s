@@ -52,7 +52,7 @@ func (s *kubeletCertRotateSuite) TearDownSuite() {
 // state which we can run tests against.
 func (s *kubeletCertRotateSuite) SetupTest() {
 	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
-	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server", "--kube-controller-manager-extra-args='--cluster-signing-duration=2m'"))
+	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server", "--kube-controller-manager-extra-args='--cluster-signing-duration=3m'"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
 	extClient, err := s.ExtensionsClient(s.ControllerNode(0))
@@ -76,6 +76,15 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
+
+	// Knowing that `kube-controller-manager` is issuing certificates that live for
+	// only 3m, if we can successfully apply autopilot plans AFTER kubelet key/certs have changed, we should
+	// be able to confidentally say that the transport cert rotation is fine.
+	workerSSH, err := s.SSH(s.WorkerNode(0))
+	s.Require().NoError(err)
+	s.T().Log("waiting to see kubelet rotating the client cert before triggering Plan creation")
+	workerSSH.ExecWithOutput("inotifywait --no-dereference /var/lib/k0s/kubelet/pki/kubelet-client-current.pem")
+	s.TestApply()
 }
 
 func (s *kubeletCertRotateSuite) applyPlan(id string) {
@@ -101,6 +110,11 @@ spec:
           linux-amd64:
             url: http://localhost/dist/k0s
         targets:
+          controllers:
+            discovery:
+              static:
+                nodes:
+                  - controller0
           workers:
             discovery:
               static:
@@ -140,7 +154,7 @@ spec:
 
 	s.Equal(appc.PlanCompleted, cmd.State)
 	s.NotNil(cmd.K0sUpdate)
-	s.Nil(cmd.K0sUpdate.Controllers)
+	//s.Nil(cmd.K0sUpdate.Controllers)
 	s.NotNil(cmd.K0sUpdate.Workers)
 
 	for _, group := range [][]apv1beta2.PlanCommandTargetStatus{cmd.K0sUpdate.Controllers, cmd.K0sUpdate.Workers} {
@@ -157,11 +171,6 @@ func (s *kubeletCertRotateSuite) TestApply() {
 	// unless you clear the autopilot metadata from the controlnode/node.
 	//
 	// Leaving this as 1 for now until the issue is fixed.
-
-	// Knowing that `kube-controller-manager` is issuing certificates that live for
-	// only 2m, if we can successfully apply autopilot plans across a set of 2m
-	// intervals, *AND* confirm that the kubelet key/certs have changed, we should
-	// be able to confidentally say that the transport cert rotation is fine.
 
 	for i := 0; i < 1; i++ {
 		s.T().Logf("Applying autopilot plan #%d", i)
