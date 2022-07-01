@@ -75,7 +75,7 @@ func (h *planStateHandler) Handle(ctx context.Context, plan *apv1beta2.Plan) (Pr
 		// for executing the command.
 
 		originalPlanCommandState := cmdStatus.State
-		nextState, retry, err := h.adapter(ctx, cmdHandler, cmd, cmdStatus)
+		nextState, retry, err := h.adapter(ctx, cmdHandler, plan.Spec.ID, cmd, cmdStatus)
 
 		// If we're asked to retry, we can ignore any errors and state transition as this is an effective
 		// 'redo' of the operation.

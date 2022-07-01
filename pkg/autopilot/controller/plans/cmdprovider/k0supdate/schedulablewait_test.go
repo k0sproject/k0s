@@ -277,6 +277,7 @@ func TestSchedulableWait(t *testing.T) {
 						Name: "controller0",
 						Annotations: signalNodeStatusDataAnnotations(
 							apsigv2.SignalData{
+								PlanID:  "id123",
 								Created: "now",
 								Command: apsigv2.Command{
 									ID: new(int),
@@ -411,6 +412,102 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker2", appc.SignalPending),
 			},
 		},
+
+		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
+		// an update has completed, with a different plan ID from the test data. This should
+		// result in the v1.Node autopilot state NOT getting reconciled as current, and ignored.
+		{
+			"WorkerNoPlanIDMatch",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": apsigv2.Version,
+							"k0sproject.io/autopilot-signal-data":    `{"planId":"id999","created":"2022-07-01T00:56:19Z","command":{"id":0,"k0supdate":{"url":"http://localhost/dist/k0s","version":"v0.0.0","forceupdate":true}},"status":{"status":"Completed","timestamp":"2022-07-01T00:56:27Z"}}`,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Targets: apv1beta2.PlanCommandTargets{
+						Workers: apv1beta2.PlanCommandTarget{
+							Limits: apv1beta2.PlanCommandTargetLimits{
+								Concurrent: 1,
+							},
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulable,
+			false,
+			false,
+			nil,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+			},
+		},
+
+		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
+		// an update has completed, with the same plan ID as the test data. This should result
+		// in the v1.Node autopilot state getting reconciled as current.
+		{
+			"WorkerPlanIDMatch",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": apsigv2.Version,
+							"k0sproject.io/autopilot-signal-data":    `{"planId":"id123","created":"2022-07-01T00:56:19Z","command":{"id":0,"k0supdate":{"url":"http://localhost/dist/k0s","version":"v0.0.0","forceupdate":true}},"status":{"status":"Completed","timestamp":"2022-07-01T00:56:27Z"}}`,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{
+					Targets: apv1beta2.PlanCommandTargets{
+						Workers: apv1beta2.PlanCommandTarget{
+							Limits: apv1beta2.PlanCommandTargetLimits{
+								Concurrent: 1,
+							},
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanCompleted,
+			false,
+			false,
+			nil,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
+			},
+		},
 	}
 
 	scheme := runtime.NewScheme()
@@ -432,7 +529,7 @@ func TestSchedulableWait(t *testing.T) {
 			)
 
 			ctx := context.TODO()
-			nextState, retry, err := provider.SchedulableWait(ctx, test.command, &test.status)
+			nextState, retry, err := provider.SchedulableWait(ctx, "id123", test.command, &test.status)
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)

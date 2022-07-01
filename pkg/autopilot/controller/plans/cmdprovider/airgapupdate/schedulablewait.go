@@ -26,7 +26,7 @@ import (
 )
 
 // SchedulableWait handles the provider state 'schedulablewait'
-func (aup *airgapupdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+func (aup *airgapupdate) SchedulableWait(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := aup.logger.WithField("state", "schedulablewait")
 	logger.Info("Processing")
 

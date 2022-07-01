@@ -68,7 +68,7 @@ func TestInitProvidersHandle(t *testing.T) {
 			},
 			NewInitProvidersHandler(
 				logger,
-				func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 					return provider.NewPlan(ctx, cmd, status)
 				},
 				PlanSchedulableWait,
@@ -79,10 +79,10 @@ func TestInitProvidersHandle(t *testing.T) {
 
 						return PlanSchedulableWait, false, nil
 					},
-					handlerSchedulable: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+					handlerSchedulable: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						return PlanSchedulableWait, false, fmt.Errorf("should not have reached schedulable")
 					},
-					handlerSchedulableWait: func(ctx context.Context, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+					handlerSchedulableWait: func(ctx context.Context, planID string, pc apv1beta2.PlanCommand, pcs *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 						return PlanSchedulableWait, false, fmt.Errorf("should not have reached schedulablewait")
 					},
 				},
@@ -114,8 +114,8 @@ func TestInitProvidersHandle(t *testing.T) {
 			},
 			NewInitProvidersHandler(
 				logger,
-				func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-					return provider.Schedulable(ctx, cmd, status)
+				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+					return provider.Schedulable(ctx, planID, cmd, status)
 				},
 				PlanSchedulableWait,
 				fakePlanCommandProvider{
@@ -146,8 +146,8 @@ func TestInitProvidersHandle(t *testing.T) {
 			},
 			NewInitProvidersHandler(
 				logger,
-				func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-					return provider.Schedulable(ctx, cmd, status)
+				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+					return provider.Schedulable(ctx, planID, cmd, status)
 				},
 				PlanSchedulableWait,
 				fakePlanCommandProvider{
@@ -176,7 +176,7 @@ func TestInitProvidersHandle(t *testing.T) {
 			},
 			NewInitProvidersHandler(
 				logger,
-				func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+				func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 					return PlanSchedulableWait, false, fmt.Errorf("intentional error")
 				},
 				PlanSchedulableWait,

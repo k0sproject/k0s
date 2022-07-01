@@ -25,8 +25,8 @@ import (
 type fakePlanCommandProvider struct {
 	commandID              string
 	handlerNewPlan         func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
-	handlerSchedulable     func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
-	handlerSchedulableWait func(context.Context, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
+	handlerSchedulable     func(context.Context, string, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
+	handlerSchedulableWait func(context.Context, string, apv1beta2.PlanCommand, *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 }
 
 var _ PlanCommandProvider = (*fakePlanCommandProvider)(nil)
@@ -39,10 +39,10 @@ func (f fakePlanCommandProvider) NewPlan(ctx context.Context, cmd apv1beta2.Plan
 	return f.handlerNewPlan(ctx, cmd, status)
 }
 
-func (f fakePlanCommandProvider) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-	return f.handlerSchedulable(ctx, cmd, status)
+func (f fakePlanCommandProvider) Schedulable(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+	return f.handlerSchedulable(ctx, planID, cmd, status)
 }
 
-func (f fakePlanCommandProvider) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-	return f.handlerSchedulableWait(ctx, cmd, status)
+func (f fakePlanCommandProvider) SchedulableWait(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+	return f.handlerSchedulableWait(ctx, planID, cmd, status)
 }

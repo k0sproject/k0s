@@ -57,6 +57,7 @@ func NewStatus(status string) *Status {
 // SignalData provides all of the details of the requested `autopilot` operation,
 // as well as its current status.
 type SignalData struct {
+	PlanID  string  `json:"planId" validate:"required"`
 	Created string  `json:"created" validate:"required"`
 	Command Command `json:"command" validate:"required"`
 	Status  *Status `json:"status,omitempty"`

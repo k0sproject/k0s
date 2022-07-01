@@ -199,7 +199,7 @@ func TestSchedulable(t *testing.T) {
 			)
 
 			ctx := context.TODO()
-			nextState, retry, err := provider.Schedulable(ctx, test.command, &test.status)
+			nextState, retry, err := provider.Schedulable(ctx, "id123", test.command, &test.status)
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)

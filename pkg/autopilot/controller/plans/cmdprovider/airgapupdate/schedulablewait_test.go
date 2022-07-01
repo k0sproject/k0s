@@ -186,6 +186,7 @@ func TestSchedulableWait(t *testing.T) {
 						Name: "worker0",
 						Annotations: signalNodeStatusDataAnnotations(
 							apsigv2.SignalData{
+								PlanID:  "id123",
 								Created: "now",
 								Command: apsigv2.Command{
 									AirgapUpdate: &apsigv2.CommandAirgapUpdate{
@@ -245,7 +246,7 @@ func TestSchedulableWait(t *testing.T) {
 			)
 
 			ctx := context.TODO()
-			nextState, retry, err := provider.SchedulableWait(ctx, test.command, &test.status)
+			nextState, retry, err := provider.SchedulableWait(ctx, "id123", test.command, &test.status)
 
 			assert.Equal(t, test.expectedNextState, nextState)
 			assert.Equal(t, test.expectedRetry, retry)
