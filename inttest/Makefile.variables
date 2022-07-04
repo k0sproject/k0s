@@ -26,6 +26,7 @@ smoketests := \
 	check-hacontrolplane \
 	check-k0scloudprovider \
 	check-kine \
+	check-kubeletcertrotate \
 	check-metrics \
 	check-multicontroller \
 	check-noderole \

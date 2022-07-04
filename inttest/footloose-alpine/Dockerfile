@@ -7,7 +7,7 @@ ARG KUBE_VERSION
 # Apply our changes to the image
 COPY root/ /
 
-RUN apk add openrc openssh-server bash busybox-initscripts coreutils curl haproxy nginx
+RUN apk add openrc openssh-server bash busybox-initscripts coreutils curl haproxy nginx inotify-tools
 # enable syslog and sshd
 RUN rc-update add cgroups boot
 RUN rc-update add syslog boot

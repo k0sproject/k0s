@@ -171,6 +171,7 @@ jobs:
           - check-externaletcd
           - check-hacontrolplane
           - check-kine
+          - check-kubeletcertrotate
           - check-metrics
           - check-multicontroller
           - check-noderole
