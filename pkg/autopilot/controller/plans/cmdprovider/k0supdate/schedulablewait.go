@@ -27,7 +27,7 @@ import (
 )
 
 // SchedulableWait handles the provider state 'schedulablewait'
-func (kp *k0supdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+func (kp *k0supdate) SchedulableWait(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "schedulablewait")
 	logger.Info("Processing")
 
@@ -35,7 +35,7 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanComm
 	// of their respective signal node objects.
 
 	logger.Info("Reconciling controller/worker signal node statuses")
-	if err := kp.reconcileSignalNodeStatus(ctx, status); err != nil {
+	if err := kp.reconcileSignalNodeStatus(ctx, planID, status); err != nil {
 		return status.State, false, fmt.Errorf("failed to reconcile signal node status: %w", err)
 	}
 
@@ -73,7 +73,7 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, cmd apv1beta2.PlanComm
 
 // reconcileSignalNodeStatus performs a reconciliation of the status of every signal node (controller/worker)
 // defined in the update status, ensuring that signal nodes marked as 'Completed' are updated in the plan status.
-func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmdStatus *apv1beta2.PlanCommandStatus) error {
+func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, planID string, cmdStatus *apv1beta2.PlanCommandStatus) error {
 	var targets = []struct {
 		nodes []apv1beta2.PlanCommandTargetStatus
 		label string
@@ -88,7 +88,7 @@ func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmdStatus *a
 			return fmt.Errorf("unable to find controller delegate '%s'", target.label)
 		}
 
-		kp.reconcileSignalNodeStatusTarget(ctx, *cmdStatus, delegate, target.nodes)
+		kp.reconcileSignalNodeStatusTarget(ctx, planID, *cmdStatus, delegate, target.nodes)
 	}
 
 	return nil
@@ -97,12 +97,8 @@ func (kp *k0supdate) reconcileSignalNodeStatus(ctx context.Context, cmdStatus *a
 // reconcileSignalNodeStatusTarget performs a reconciliation of the status of every signal node provided
 // against the current state maintained in the plan status. This ensures that any signal nodes that
 // have been transitioned to 'Completed' will also appear in the plan status as 'Completed'.
-func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmdStatus apv1beta2.PlanCommandStatus, delegate apdel.ControllerDelegate, signalNodes []apv1beta2.PlanCommandTargetStatus) {
+func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, planID string, cmdStatus apv1beta2.PlanCommandStatus, delegate apdel.ControllerDelegate, signalNodes []apv1beta2.PlanCommandTargetStatus) {
 	for i := 0; i < len(signalNodes); i++ {
-		if signalNodes[i].State == appc.SignalCompleted {
-			continue
-		}
-
 		key := delegate.CreateNamespacedName(signalNodes[i].Name)
 		signalNode := delegate.CreateObject()
 
@@ -114,12 +110,20 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, cmdSta
 		if apsigv2.IsSignalingPresent(signalNode.GetAnnotations()) {
 			var signalData apsigv2.SignalData
 			if err := signalData.Unmarshal(signalNode.GetAnnotations()); err == nil {
-				// Ensure that the commands are the same, but their status's are different before we check completed.
-				if appku.IsSignalDataSameCommand(cmdStatus, signalData) && appku.IsSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
-					if signalData.Status.Status == apsigcomm.Completed {
-						kp.logger.Infof("Signal node '%s' status changed from '%s' to '%s'", signalNodes[i].Name, signalNodes[i].State, signalData.Status.Status)
-						signalNodes[i].State = appc.SignalCompleted
+				if signalData.PlanID == planID {
+					if signalNodes[i].State == appc.SignalCompleted {
+						continue
 					}
+
+					// Ensure that the commands are the same, but their status's are different before we check completed.
+					if appku.IsSignalDataSameCommand(cmdStatus, signalData) && appku.IsSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
+						if signalData.Status.Status == apsigcomm.Completed {
+							kp.logger.Infof("Signal node '%s' status changed from '%s' to '%s'", signalNodes[i].Name, signalNodes[i].State, signalData.Status.Status)
+							signalNodes[i].State = appc.SignalCompleted
+						}
+					}
+				} else {
+					kp.logger.Warnf("Current planid '%v' doesn't match signal node planid '%v'", planID, signalData.PlanID)
 				}
 			} else {
 				kp.logger.Warnf("Unable to unmarshal signaling data from signal node '%s'", signalNode.GetName())

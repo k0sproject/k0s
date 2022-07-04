@@ -65,7 +65,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 func registerNewPlanStateController(logger *logrus.Entry, mgr crman.Manager, providers []appc.PlanCommandProvider) error {
 	handler := appc.NewInitProvidersHandler(
 		logger,
-		func(ctx context.Context, provider appc.PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+		func(ctx context.Context, provider appc.PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 			return provider.NewPlan(ctx, cmd, status)
 		},
 		appc.PlanSchedulableWait,
@@ -80,8 +80,8 @@ func registerNewPlanStateController(logger *logrus.Entry, mgr crman.Manager, pro
 func registerSchedulableWaitStateController(logger *logrus.Entry, mgr crman.Manager, providers []appc.PlanCommandProvider) error {
 	handler := appc.NewPlanStateHandler(
 		logger,
-		func(ctx context.Context, provider appc.PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-			return provider.SchedulableWait(ctx, cmd, status)
+		func(ctx context.Context, provider appc.PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+			return provider.SchedulableWait(ctx, planID, cmd, status)
 		},
 		providers...,
 	)
@@ -94,8 +94,8 @@ func registerSchedulableWaitStateController(logger *logrus.Entry, mgr crman.Mana
 func registerSchedulableStateController(logger *logrus.Entry, mgr crman.Manager, providers []appc.PlanCommandProvider) error {
 	handler := appc.NewPlanStateHandler(
 		logger,
-		func(ctx context.Context, provider appc.PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
-			return provider.Schedulable(ctx, cmd, status)
+		func(ctx context.Context, provider appc.PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+			return provider.Schedulable(ctx, planID, cmd, status)
 		},
 		providers...,
 	)

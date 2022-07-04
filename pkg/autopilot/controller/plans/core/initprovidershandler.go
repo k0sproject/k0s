@@ -70,7 +70,7 @@ func (ah *initProvidersHandler) Handle(ctx context.Context, plan *apv1beta2.Plan
 		// It is the adapters implementation who is responsible for providing the proper status
 		// for executing the command.
 
-		nextState, _, err := ah.adapter(ctx, cmdHandler, cmd, &plan.Status.Commands[len(plan.Status.Commands)-1])
+		nextState, _, err := ah.adapter(ctx, cmdHandler, plan.Spec.ID, cmd, &plan.Status.Commands[len(plan.Status.Commands)-1])
 
 		// Given that this is a fixed-initialization, we expect that all of the command initialization should
 		// succeed, but in the case that it doesn't make the caller aware.

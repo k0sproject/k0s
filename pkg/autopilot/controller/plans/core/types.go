@@ -59,7 +59,7 @@ type PlanStateHandler interface {
 
 // PlanStateHandlerAdapter defines an adapter function between the `PlanStateController`, and the
 // specific function to call in the resolved `PlanCommandProvider`.
-type PlanStateHandlerAdapter func(ctx context.Context, provider PlanCommandProvider, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
+type PlanStateHandlerAdapter func(ctx context.Context, provider PlanCommandProvider, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 
 // PlanCommandProviderMap is a mapping of command names to `PlanCommandProvider` instances.
 type PlanCommandProviderMap map[string]PlanCommandProvider
@@ -77,8 +77,8 @@ type PlanCommandProvider interface {
 	NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 
 	// Schedulable handles the provider state 'schedulable'
-	Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
+	Schedulable(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 
 	// SchedulableWait handles the provider state 'schedulablewait'
-	SchedulableWait(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
+	SchedulableWait(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error)
 }

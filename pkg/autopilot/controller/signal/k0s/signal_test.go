@@ -562,6 +562,7 @@ func TestCheckExpiredInvalid(t *testing.T) {
 		{
 			"Downloading in progress + not-expired",
 			&apsigv2.SignalData{
+				PlanID:  "id123",
 				Created: "now",
 				Command: apsigv2.Command{
 					ID: new(int),
@@ -585,6 +586,7 @@ func TestCheckExpiredInvalid(t *testing.T) {
 		{
 			"Processing in ApplyingUpdate + expired",
 			&apsigv2.SignalData{
+				PlanID:  "id123",
 				Created: "now",
 				Command: apsigv2.Command{
 					ID: new(int),
@@ -608,6 +610,7 @@ func TestCheckExpiredInvalid(t *testing.T) {
 		{
 			"Invalid status timestamp",
 			&apsigv2.SignalData{
+				PlanID:  "id123",
 				Created: "now",
 				Command: apsigv2.Command{
 					ID: new(int),

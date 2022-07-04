@@ -29,7 +29,7 @@ import (
 )
 
 // Schedulable handles the provider state 'schedulable'
-func (kp *k0supdate) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
+func (kp *k0supdate) Schedulable(ctx context.Context, planID string, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "schedulable")
 	logger.Info("Processing")
 
@@ -93,7 +93,7 @@ func (kp *k0supdate) Schedulable(ctx context.Context, cmd apv1beta2.PlanCommand,
 		return appc.PlanIncompleteTargets, false, nil
 	}
 
-	if err := appku.UpdateSignalNode(signalNodeCopy, signalNodeCommandBuilder); err != nil {
+	if err := appku.UpdateSignalNode(signalNodeCopy, planID, signalNodeCommandBuilder); err != nil {
 		logger.Warnf("Unable to update signal node: %v", err)
 		return appc.PlanIncompleteTargets, false, nil
 	}

@@ -58,10 +58,11 @@ func TestSignalDataValid(t *testing.T) {
 		successful bool
 	}{
 		// K0s data
-		{"Happy", SignalData{"now", commandK0s, status}, true},
-		{"MissingTimestamp", SignalData{"", commandK0s, status}, false},
-		{"MissingStatus", SignalData{"now", commandK0s, nil}, true},
-		{"MissingCommand", SignalData{"now", Command{}, status}, false},
+		{"Happy", SignalData{"id123", "now", commandK0s, status}, true},
+		{"MissingPlanID", SignalData{"", "now", commandK0s, status}, false},
+		{"MissingTimestamp", SignalData{"id123", "", commandK0s, status}, false},
+		{"MissingStatus", SignalData{"id123", "now", commandK0s, nil}, true},
+		{"MissingCommand", SignalData{"id123", "now", Command{}, status}, false},
 	}
 
 	for _, test := range tests {
@@ -77,6 +78,7 @@ func TestSignalDataValid(t *testing.T) {
 func TestSignalDataUpdateK0sValid(t *testing.T) {
 	makeSignalData := func(url, version, sha256 string) SignalData {
 		return SignalData{
+			PlanID:  "id123",
 			Created: "now",
 			Command: Command{
 				ID: new(int),
@@ -121,6 +123,7 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 		{
 			"K0sRequired",
 			SignalData{
+				PlanID:  "id123",
 				Created: "now",
 				Command: Command{
 					ID:        new(int),
@@ -141,6 +144,7 @@ func TestSignalDataUpdateK0sValid(t *testing.T) {
 
 func TestMarshaling(t *testing.T) {
 	signalData1 := SignalData{
+		PlanID:  "id123",
 		Created: "now",
 		Command: Command{
 			ID: new(int),
