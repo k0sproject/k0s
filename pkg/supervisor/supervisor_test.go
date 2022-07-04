@@ -17,8 +17,10 @@ package supervisor
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"syscall"
@@ -124,31 +126,48 @@ func TestGetEnv(t *testing.T) {
 }
 
 func TestRespawn(t *testing.T) {
-	truePath, err := exec.LookPath("true")
+	tmpDir := t.TempDir()
+	pingFifoPath := filepath.Join(tmpDir, "pingfifo")
+	pongFifoPath := filepath.Join(tmpDir, "pongfifo")
+
+	err := syscall.Mkfifo(pingFifoPath, 0666)
 	if err != nil {
-		t.Errorf("could not find a path for 'true' executable: %s", err)
+		t.Errorf("Failed to create fifo %s: %v", pingFifoPath, err)
+	}
+	err = syscall.Mkfifo(pongFifoPath, 0666)
+	if err != nil {
+		t.Errorf("Failed to create fifo %s: %v", pongFifoPath, err)
 	}
 
 	s := Supervisor{
 		Name:           "supervisor-test-respawn",
-		BinPath:        truePath,
+		BinPath:        "/bin/sh",
 		RunDir:         ".",
-		Args:           []string{},
-		TimeoutRespawn: 10 * time.Millisecond,
+		Args:           []string{"-c", fmt.Sprintf("cat %s && echo pong > %s", pingFifoPath, pongFifoPath)},
+		TimeoutRespawn: 1 * time.Millisecond,
 	}
 	err = s.Supervise()
 	if err != nil {
 		t.Errorf("Failed to start %s: %v", s.Name, err)
 	}
 
-	// wait til the process exits
-	process := s.GetProcess()
-	for process != nil && process.Signal(syscall.Signal(0)) == nil {
-		time.Sleep(time.Millisecond)
+	// wait til process starts up. fifo will block the write til process reads it
+	err = ioutil.WriteFile(pingFifoPath, []byte("ping 1"), 0644)
+	if err != nil {
+		t.Errorf("Failed to write to fifo %s: %v", pingFifoPath, err)
 	}
 
-	// wait enought time for new process to be respawned
-	time.Sleep((18 * s.TimeoutRespawn) / 10)
+	// save the pid
+	process := s.GetProcess()
+
+	// read the pong to unblock the process so it can exit
+	_, _ = ioutil.ReadFile(pongFifoPath)
+
+	// wait til the respawned process again reads the ping fifo
+	err = ioutil.WriteFile(pingFifoPath, []byte("ping 2"), 0644)
+	if err != nil {
+		t.Errorf("Failed to write to fifo %s: %v", pingFifoPath, err)
+	}
 
 	// test that a new process got re-spawned
 	if process.Pid == s.GetProcess().Pid {
