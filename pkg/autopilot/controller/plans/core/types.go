@@ -30,6 +30,7 @@ var (
 	PlanIncompleteTargets   apv1beta2.PlanStateType = "IncompleteTargets"
 	PlanRestricted          apv1beta2.PlanStateType = "Restricted"
 	PlanMissingSignalNode   apv1beta2.PlanStateType = "MissingSignalNode"
+	PlanApplyFailed         apv1beta2.PlanStateType = "ApplyFailed"
 )
 
 // PlanCommandStatusType
@@ -39,6 +40,7 @@ var (
 	SignalCompleted       apv1beta2.PlanCommandTargetStateType = "SignalCompleted"
 	SignalMissingNode     apv1beta2.PlanCommandTargetStateType = "SignalMissingNode"
 	SignalMissingPlatform apv1beta2.PlanCommandTargetStateType = "SignalMissingPlatform"
+	SignalApplyFailed     apv1beta2.PlanCommandTargetStateType = "SignalApplyFailed"
 )
 
 type ProviderResult int

@@ -39,6 +39,14 @@ func (kp *k0supdate) SchedulableWait(ctx context.Context, planID string, cmd apv
 		return status.State, false, fmt.Errorf("failed to reconcile signal node status: %w", err)
 	}
 
+	// If any of the nodes have reported a failure in applying an update, the
+	// plan is marked as a failure.
+
+	if appku.IsNotRecoverable(status.K0sUpdate.Controllers, status.K0sUpdate.Workers) {
+		logger.Info("Plan is non-recoverable due to apply failure")
+		return appc.PlanApplyFailed, false, nil
+	}
+
 	controllersDone := appku.IsCompleted(status.K0sUpdate.Controllers)
 	workersDone := appku.IsCompleted(status.K0sUpdate.Workers)
 
@@ -117,10 +125,17 @@ func (kp *k0supdate) reconcileSignalNodeStatusTarget(ctx context.Context, planID
 
 					// Ensure that the commands are the same, but their status's are different before we check completed.
 					if appku.IsSignalDataSameCommand(cmdStatus, signalData) && appku.IsSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
+						origState := signalNodes[i].State
+
+						if signalData.Status.Status == apsigcomm.Failed || signalData.Status.Status == apsigcomm.FailedDownload {
+							signalNodes[i].State = appc.SignalApplyFailed
+						}
+
 						if signalData.Status.Status == apsigcomm.Completed {
-							kp.logger.Infof("Signal node '%s' status changed from '%s' to '%s'", signalNodes[i].Name, signalNodes[i].State, signalData.Status.Status)
 							signalNodes[i].State = appc.SignalCompleted
 						}
+
+						kp.logger.Infof("Signal node '%s' status changed from '%s' to '%s' (reason: %s)", signalNodes[i].Name, origState, signalNodes[i].State, signalData.Status.Status)
 					}
 				} else {
 					kp.logger.Warnf("Current planid '%v' doesn't match signal node planid '%v'", planID, signalData.PlanID)
