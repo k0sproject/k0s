@@ -245,7 +245,7 @@ data:
       tcpTimeout: 0s
       udpTimeout: 0s
     kind: KubeProxyConfiguration
-    metricsBindAddress: ""
+    metricsBindAddress: "0.0.0.0:10249"
     nodePortAddresses: null
     oomScoreAdj: null
     portRange: ""
