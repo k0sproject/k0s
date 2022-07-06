@@ -83,7 +83,7 @@ func (lw *leaseWatcher) StartWatcher(ctx context.Context, namespace string, name
 					leaderelection.WithNamespace(namespace),
 				}
 
-				leasePool, err := leaderelection.NewLeasePool(lw.client, name, leasePoolOpts...)
+				leasePool, err := leaderelection.NewLeasePool(ctx, lw.client, name, leasePoolOpts...)
 				if err != nil {
 					errorCh <- fmt.Errorf("failed to create lease pool: %w", err)
 					cancel()
