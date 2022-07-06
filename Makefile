@@ -2,7 +2,7 @@ include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 include hack/tools/Makefile.variables
 
-GO_SRCS := $(shell find . -type f -name '*.go' -not -path './build/cache/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
+GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:
@@ -10,7 +10,7 @@ GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 #   none	does not embed any binaries
 
 EMBEDDED_BINS_BUILDMODE ?= docker
-
+K0S_GO_BUILD_CACHE ?= build/cache
 # k0s runs on linux even if its built on mac or windows
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
@@ -59,8 +59,9 @@ endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 GOLANG_IMAGE ?= golang:$(go_version)-alpine3.16
+K0S_GO_BUILD_CACHE_VOLUME_PATH=$(shell realpath $(K0S_GO_BUILD_CACHE))
 GO_ENV ?= docker run --rm \
-	-v '$(CURDIR)/build/cache':/run/k0s-build \
+	-v '$(K0S_GO_BUILD_CACHE_VOLUME_PATH)':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
 	-w /go/src/github.com/k0sproject/k0s \
 	-e GOOS \
@@ -81,10 +82,10 @@ endif
 .PHONY: all
 all: k0s k0s.exe
 
-build/cache:
+$(K0S_GO_BUILD_CACHE):
 	mkdir -p -- '$@'
 
-.k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | build/cache
+.k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
 	docker build --rm \
 		--build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
 		-f build/Dockerfile \
@@ -219,8 +220,8 @@ check-image-validity: go.sum
 
 .PHONY: clean-gocache
 clean-gocache:
-	-find build/cache/go/mod -type d -exec chmod u+w '{}' \;
-	rm -rf build/cache/go
+	-find $(K0S_GO_BUILD_CACHE)/go/mod -type d -exec chmod u+w '{}' \;
+	rm -rf $(K0S_GO_BUILD_CACHE)/go
 
 clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f
@@ -229,7 +230,7 @@ clean-docker-image:
 .PHONY: clean
 clean: clean-gocache clean-docker-image
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
-	-rm -rf build/cache 
+	-rm -rf $(K0S_GO_BUILD_CACHE) 
 	-find pkg/apis -type f \( -name .client-gen.stamp -or -name .controller-gen.stamp \) -delete
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
