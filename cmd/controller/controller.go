@@ -25,9 +25,6 @@ import (
 	"syscall"
 	"time"
 
-	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
-	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
-
 	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/sirupsen/logrus"
@@ -41,7 +38,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
-	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -471,6 +467,11 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		KubeClientFactory: adminClientFactory,
 	})
 
+	c.ClusterComponents.Add(ctx, &controller.Autopilot{
+		K0sVars:            c.K0sVars,
+		AdminClientFactory: adminClientFactory,
+	})
+
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
 	if err := c.ClusterComponents.Init(ctx); err != nil {
@@ -495,46 +496,21 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	// At this point all the components should be initialized and running, thus we can release the config for reconcilers
 	go configSource.Release(ctx)
 
-	autopilotClientFactory, err := apcli.NewClientFactory(adminClientFactory.GetRESTConfig())
-	if err != nil {
-		return fmt.Errorf("creating autopilot client factory error: %w", err)
-	}
-	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
-		KubeConfig:          c.K0sVars.AdminKubeConfigPath,
-		K0sDataDir:          c.K0sVars.DataDir,
-		Mode:                "controller",
-		ManagerPort:         8899,
-		MetricsBindAddr:     "0",
-		HealthProbeBindAddr: "0",
-	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), autopilotClientFactory)
-	if err != nil {
-		return fmt.Errorf("failed to create autopilot controller: %w", err)
-	}
-
-	var workerErr error
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-		workerErr = c.startControllerWorker(ctx, c.WorkerProfile)
-	} else {
-		go func() {
-			err := autopilotRoot.Run(ctx)
-			if err != nil {
-				logrus.WithError(err).Error("error while running autopilot")
-			}
-		}()
+
+		if err := c.startControllerWorker(ctx, c.WorkerProfile); err != nil {
+			logrus.WithError(err).Error("Failed to start controller worker")
+		} else {
+			perfTimer.Checkpoint("started-worker")
+		}
 	}
-	perfTimer.Checkpoint("started-worker")
 
 	perfTimer.Output()
 
-	if workerErr != nil {
-		logrus.WithError(workerErr).Error("Failed to start controller worker")
-	} else {
-		// Wait for k0s process termination
-		<-ctx.Done()
-		logrus.Debug("Context done in main")
-	}
-
+	// Wait for k0s process termination
+	<-ctx.Done()
+	logrus.Debug("Context done in main")
 	logrus.Info("Shutting down k0s controller")
 
 	perfTimer.Output()
