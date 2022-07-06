@@ -10,6 +10,10 @@ You should plan to allocate the control plane nodes into different zones. This w
 
 For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the [etcd documentation](https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members).
 
+## System considerations
+
+If your controllers are cloned virtual machines or deployed from a template, make sure that `/etc/machine-id` is unique on every controller. If not you may get unexpected results with some components, e.g. Konnectivity connections).
+
 ## Load Balancer
 
 Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:
