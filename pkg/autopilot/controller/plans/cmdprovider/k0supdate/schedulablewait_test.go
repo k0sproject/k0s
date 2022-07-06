@@ -319,6 +319,58 @@ func TestSchedulableWait(t *testing.T) {
 			nil,
 		},
 
+		// Cover the scenario where a node fails to apply an update, and that the failure
+		// is propagated back up to the plan state, resulting in the plan terminating.
+		{
+			"SignalNodeApplyFailure",
+			[]crcli.Object{
+				&apv1beta2.ControlNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "controller0",
+						Annotations: signalNodeStatusDataAnnotations(
+							apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID: new(int),
+									K0sUpdate: &apsigv2.CommandK0sUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
+									},
+								},
+								Status: &apsigv2.Status{
+									Status:    apsigcomm.Failed,
+									Timestamp: "now",
+								},
+							},
+						),
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ControlNode",
+						APIVersion: "autopilot.k0sproject.io/v1beta2",
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				K0sUpdate: &apv1beta2.PlanCommandK0sUpdateStatus{
+					Controllers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("controller0", appc.SignalApplyFailed),
+			},
+			nil,
+		},
+
 		// Controller + worker combinations
 
 		// Ensures that with controller concurrency == 1, and a controller has already been signaled, that

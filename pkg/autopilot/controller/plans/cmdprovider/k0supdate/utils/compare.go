@@ -52,3 +52,16 @@ func IsCompleted(targets []apv1beta2.PlanCommandTargetStatus) bool {
 
 	return true
 }
+
+// IsNotRecoverable determines if any of the PlanCommandTargetStatus is considered non-recoverable.
+func IsNotRecoverable(groups ...[]apv1beta2.PlanCommandTargetStatus) bool {
+	for _, group := range groups {
+		for _, target := range group {
+			if target.State == appc.SignalApplyFailed {
+				return true
+			}
+		}
+	}
+
+	return false
+}
