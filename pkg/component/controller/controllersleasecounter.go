@@ -62,7 +62,7 @@ func (l *K0sControllersLeaseCounter) Run(ctx context.Context) error {
 	}
 	leaseID := fmt.Sprintf("k0s-ctrl-%s", holderIdentity)
 
-	leasePool, err := leaderelection.NewLeasePool(client, leaseID,
+	leasePool, err := leaderelection.NewLeasePool(ctx, client, leaseID,
 		leaderelection.WithLogger(log),
 		leaderelection.WithContext(ctx))
 	if err != nil {

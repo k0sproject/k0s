@@ -69,7 +69,7 @@ func (l *LeasePoolLeaderElector) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(client, "k0s-endpoint-reconciler",
+	leasePool, err := leaderelection.NewLeasePool(ctx, client, "k0s-endpoint-reconciler",
 		leaderelection.WithLogger(l.log),
 		leaderelection.WithContext(ctx))
 	if err != nil {

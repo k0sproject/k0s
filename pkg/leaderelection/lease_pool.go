@@ -113,14 +113,14 @@ func WithNamespace(namespace string) LeaseOpt {
 }
 
 // NewLeasePool creates a new LeasePool struct to interact with a lease
-func NewLeasePool(client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
+func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
 		log:           logrus.NewEntry(logrus.StandardLogger()),
 		duration:      60 * time.Second,
 		renewDeadline: 15 * time.Second,
 		retryPeriod:   5 * time.Second,
-		ctx:           context.TODO(),
+		ctx:           ctx,
 		namespace:     "kube-node-lease",
 		name:          name,
 	}

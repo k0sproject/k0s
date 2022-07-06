@@ -40,7 +40,7 @@ func TestLeasePoolWatcherTriggersOnLeaseAcquisition(t *testing.T) {
 	expectCreateNamespace(t, fakeClient)
 	expectCreateLease(t, fakeClient, identity)
 
-	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -81,7 +81,7 @@ func TestLeasePoolTriggersLostLeaseWhenCancelled(t *testing.T) {
 	expectCreateNamespace(t, fakeClient)
 	expectCreateLease(t, fakeClient, identity)
 
-	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
 	require.NoError(t, err)
 
 	output := &LeaseEvents{
@@ -120,7 +120,7 @@ func TestLeasePoolWatcherReacquiresLostLease(t *testing.T) {
 		}
 	}()
 
-	pool, err := NewLeasePool(fakeClient, "test",
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test",
 		WithIdentity(identity), WithNamespace("test"),
 		WithRetryPeriod(650*time.Millisecond),
 		WithRenewDeadline(1*time.Second),
@@ -163,7 +163,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	expectCreateNamespace(t, fakeClient)
 	expectCreateLease(t, fakeClient, identity)
 
-	pool, err := NewLeasePool(fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
+	pool, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity), WithNamespace("test"))
 	require.NoError(t, err)
 
 	events, cancel, err := pool.Watch(WithOutputChannels(&LeaseEvents{
@@ -173,7 +173,7 @@ func TestSecondWatcherAcquiresReleasedLease(t *testing.T) {
 	require.NoError(t, err)
 	defer cancel()
 
-	pool2, err := NewLeasePool(fakeClient, "test", WithIdentity(identity2), WithNamespace("test"))
+	pool2, err := NewLeasePool(context.TODO(), fakeClient, "test", WithIdentity(identity2), WithNamespace("test"))
 	require.NoError(t, err)
 
 	events2, cancel2, err := pool2.Watch(WithOutputChannels(&LeaseEvents{
