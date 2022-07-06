@@ -115,7 +115,13 @@ func (s *Supervisor) Supervise() error {
 	var ctx context.Context
 	ctx, s.cancel = context.WithCancel(context.Background())
 	started := make(chan error)
+	s.done = make(chan bool)
+
 	go func() {
+		defer func() {
+			close(s.done)
+		}()
+
 		s.log.Info("Starting to supervise")
 		restarts := 0
 		for {
@@ -142,10 +148,6 @@ func (s *Supervisor) Supervise() error {
 			} else {
 				if restarts == 0 {
 					s.log.Info("Started successfully, go nuts")
-					s.done = make(chan bool)
-					defer func() {
-						s.done <- true
-					}()
 					started <- nil
 				} else {
 					s.log.Infof("Restarted (%d)", restarts)
