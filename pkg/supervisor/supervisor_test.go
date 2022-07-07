@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -209,4 +210,25 @@ func TestStopWhileRespawn(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to stop %s: %v", s.Name, err)
 	}
+}
+
+func TestMultiThread(t *testing.T) {
+	s := Supervisor{
+		Name:    "supervisor-test-multithread",
+		BinPath: "/bin/sh",
+		RunDir:  ".",
+		Args:    []string{"-c", "sleep 1s"},
+	}
+	var wg sync.WaitGroup
+	_ = s.Supervise()
+	for i := 0; i < 255; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = s.Stop()
+			_ = s.Supervise()
+		}()
+	}
+	wg.Wait()
+	_ = s.Stop()
 }

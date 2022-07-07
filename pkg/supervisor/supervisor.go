@@ -49,11 +49,12 @@ type Supervisor struct {
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
 
-	cmd    *exec.Cmd
-	done   chan bool
-	log    *logrus.Entry
-	mutex  sync.Mutex
-	cancel context.CancelFunc
+	cmd            *exec.Cmd
+	done           chan bool
+	log            *logrus.Entry
+	mutex          sync.Mutex
+	startStopMutex sync.Mutex
+	cancel         context.CancelFunc
 }
 
 // processWaitQuit waits for a process to exit or a shut down signal
@@ -98,6 +99,13 @@ func (s *Supervisor) processWaitQuit(ctx context.Context) bool {
 
 // Supervise Starts supervising the given process
 func (s *Supervisor) Supervise() error {
+	s.startStopMutex.Lock()
+	defer s.startStopMutex.Unlock()
+	// check if it is already started
+	if s.cancel != nil {
+		s.log.Warn("Already started")
+		return nil
+	}
 	s.log = logrus.WithField("component", s.Name)
 	s.PidFile = path.Join(s.RunDir, s.Name) + ".pid"
 	if err := dir.Init(s.RunDir, constant.RunDirMode); err != nil {
@@ -147,7 +155,7 @@ func (s *Supervisor) Supervise() error {
 				}
 			} else {
 				if restarts == 0 {
-					s.log.Info("Started successfully, go nuts")
+					s.log.Infof("Started successfully, go nuts pid %d", s.cmd.Process.Pid)
 					started <- nil
 				} else {
 					s.log.Infof("Restarted (%d)", restarts)
@@ -175,15 +183,17 @@ func (s *Supervisor) Supervise() error {
 
 // Stop stops the supervised
 func (s *Supervisor) Stop() error {
-	if s.log != nil {
-		s.log.Debug("Sending stop message")
+	s.startStopMutex.Lock()
+	defer s.startStopMutex.Unlock()
+	if s.cancel == nil || s.log == nil {
+		s.log.Warn("Not started")
+		return nil
 	}
-	if s.cancel != nil {
-		s.cancel()
-	}
-	if s.log != nil {
-		s.log.Debug("Waiting for stopping is done")
-	}
+	s.log.Debug("Sending stop message")
+
+	s.cancel()
+	s.cancel = nil
+	s.log.Debug("Waiting for stopping is done")
 	if s.done != nil {
 		<-s.done
 	}
