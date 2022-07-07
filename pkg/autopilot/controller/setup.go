@@ -25,6 +25,7 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 
+	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -76,9 +77,16 @@ func (sc *setupController) Run(ctx context.Context) error {
 
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
-	logger.Infof("Creating controlnode '%s'", hostname)
-	if err := sc.createControlNode(ctx, sc.clientFactory, hostname); err != nil {
-		return fmt.Errorf("unable to create controlnode '%s': %w", hostname, err)
+	if err := retry.Do(func() error {
+		logger.Infof("Attempting to create controlnode '%s'", hostname)
+		if err := sc.createControlNode(ctx, sc.clientFactory, hostname); err != nil {
+			return fmt.Errorf("create controlnode '%s' attempt failed, retrying: %w", hostname, err)
+		}
+
+		return nil
+
+	}); err != nil {
+		return fmt.Errorf("failed to create controlnode '%s' after max attempts: %w", hostname, err)
 	}
 
 	return nil
