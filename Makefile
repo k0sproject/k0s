@@ -2,6 +2,8 @@ include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 include hack/tools/Makefile.variables
 
+K0S_GO_BUILD_CACHE ?= build/cache
+
 GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
@@ -10,7 +12,6 @@ GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 #   none	does not embed any binaries
 
 EMBEDDED_BINS_BUILDMODE ?= docker
-K0S_GO_BUILD_CACHE ?= build/cache
 # k0s runs on linux even if its built on mac or windows
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
