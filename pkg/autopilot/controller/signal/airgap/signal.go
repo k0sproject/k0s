@@ -81,6 +81,12 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 // Handle will move the status to `Downloading` in order to start the airgap bundle download.
 // At this time, there is no reliable version information on airgap bundles.
 func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.SignalControllerContext) (cr.Result, error) {
+	// A nil SignalData indicates that the request is completed, or invalid. Either way,
+	// there is nothing to process.
+	if sctx.SignalData == nil {
+		return cr.Result{}, nil
+	}
+
 	sctx.Log.Infof("Found available signaling update request")
 
 	// We have no way at the moment to identify what version an airgap bundle is, or what version is
