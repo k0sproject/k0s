@@ -225,6 +225,57 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
 		},
+
+		// Cover the scenario where a node fails to apply an update, and that the failure
+		// is propagated back up to the plan state, resulting in the plan terminating.
+		{
+			"SignalNodeApplyFailure",
+			[]crcli.Object{
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: signalNodeStatusDataAnnotations(
+							apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID: new(int),
+									AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
+									},
+								},
+								Status: &apsigv2.Status{
+									Status:    apsigcomm.Failed,
+									Timestamp: "now",
+								},
+							},
+						),
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalApplyFailed),
+			},
+		},
 	}
 
 	scheme := runtime.NewScheme()

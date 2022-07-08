@@ -36,6 +36,14 @@ func (aup *airgapupdate) SchedulableWait(ctx context.Context, planID string, cmd
 	logger.Info("Reconciling controller/worker signal node statuses")
 	aup.reconcileSignalNodeStatusTarget(ctx, *status, aup.controllerDelegateMap["worker"], status.AirgapUpdate.Workers)
 
+	// If any of the nodes have reported a failure in applying an update, the
+	// plan is marked as a failure.
+
+	if appku.IsNotRecoverable(status.AirgapUpdate.Workers) {
+		logger.Info("Plan is non-recoverable due to apply failure")
+		return appc.PlanApplyFailed, false, nil
+	}
+
 	if appku.IsCompleted(status.AirgapUpdate.Workers) {
 		logger.Info("Workers completed")
 		return appc.PlanCompleted, false, nil
@@ -74,10 +82,17 @@ func (aup *airgapupdate) reconcileSignalNodeStatusTarget(ctx context.Context, cm
 			if err := signalData.Unmarshal(signalNode.GetAnnotations()); err == nil {
 				// Ensure that the commands are the same, but their status's are different before we check completed.
 				if appku.IsSignalDataSameCommand(cmdStatus, signalData) && appku.IsSignalDataStatusDifferent(signalNodes[i], signalData.Status) {
+					origState := signalNodes[i].State
+
+					if signalData.Status.Status == apsigcomm.Failed || signalData.Status.Status == apsigcomm.FailedDownload {
+						signalNodes[i].State = appc.SignalApplyFailed
+					}
+
 					if signalData.Status.Status == apsigcomm.Completed {
-						aup.logger.Infof("Signal node '%s' status changed from '%s' to '%s'", signalNodes[i].Name, signalNodes[i].State, signalData.Status.Status)
 						signalNodes[i].State = appc.SignalCompleted
 					}
+
+					aup.logger.Infof("Signal node '%s' status changed from '%s' to '%s' (reason: %s)", signalNodes[i].Name, origState, signalNodes[i].State, signalData.Status.Status)
 				}
 			} else {
 				aup.logger.Warnf("Unable to unmarshal signaling data from signal node '%s'", signalNode.GetName())
