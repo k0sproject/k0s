@@ -225,6 +225,147 @@ func TestSchedulableWait(t *testing.T) {
 				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
 			},
 		},
+
+		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
+		// an update has completed, with a different plan ID from the test data. This should
+		// result in the v1.Node autopilot state NOT getting reconciled as current, and ignored.
+		{
+			"WorkerNoPlanIDMatch",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": apsigv2.Version,
+							"k0sproject.io/autopilot-signal-data":    `{"planId":"id999","created":"2022-07-01T00:56:19Z","command":{"id":0,"airgapupdate":{"url":"http://localhost/dist/k0s","version":"v0.0.0","forceupdate":true}},"status":{"status":"Completed","timestamp":"2022-07-01T00:56:27Z"}}`,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
+					Workers: apv1beta2.PlanCommandTarget{
+						Limits: apv1beta2.PlanCommandTargetLimits{
+							Concurrent: 1,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanSchedulable,
+			false,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+			},
+		},
+
+		// Covers the scenario of a v1.Node that contains autopilot state that indicates that
+		// an update has completed, with the same plan ID as the test data. This should result
+		// in the v1.Node autopilot state getting reconciled as current.
+		{
+			"WorkerPlanIDMatch",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": apsigv2.Version,
+							"k0sproject.io/autopilot-signal-data":    `{"planId":"id123","created":"2022-07-01T00:56:19Z","command":{"id":0,"airgapupdate":{"url":"http://localhost/dist/k0s","version":"v0.0.0","forceupdate":true}},"status":{"status":"Completed","timestamp":"2022-07-01T00:56:27Z"}}`,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
+					Workers: apv1beta2.PlanCommandTarget{
+						Limits: apv1beta2.PlanCommandTargetLimits{
+							Concurrent: 1,
+						},
+					},
+				},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalPending),
+					},
+				},
+			},
+			appc.PlanCompleted,
+			false,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalCompleted),
+			},
+		},
+
+		// Cover the scenario where a node fails to apply an update, and that the failure
+		// is propagated back up to the plan state, resulting in the plan terminating.
+		{
+			"SignalNodeApplyFailure",
+			[]crcli.Object{
+				&v1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "worker0",
+						Annotations: signalNodeStatusDataAnnotations(
+							apsigv2.SignalData{
+								PlanID:  "id123",
+								Created: "now",
+								Command: apsigv2.Command{
+									ID: new(int),
+									AirgapUpdate: &apsigv2.CommandAirgapUpdate{
+										URL:     "https://foo.bar.baz/download.tar.gz",
+										Version: "v1.2.3",
+									},
+								},
+								Status: &apsigv2.Status{
+									Status:    apsigcomm.Failed,
+									Timestamp: "now",
+								},
+							},
+						),
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+				},
+			},
+			apv1beta2.PlanCommand{
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{},
+			},
+			apv1beta2.PlanCommandStatus{
+				State: appc.PlanSchedulableWait,
+				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdateStatus{
+					Workers: []apv1beta2.PlanCommandTargetStatus{
+						apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalSent),
+					},
+				},
+			},
+			appc.PlanApplyFailed,
+			false,
+			false,
+			[]apv1beta2.PlanCommandTargetStatus{
+				apv1beta2.NewPlanCommandTargetStatus("worker0", appc.SignalApplyFailed),
+			},
+		},
 	}
 
 	scheme := runtime.NewScheme()

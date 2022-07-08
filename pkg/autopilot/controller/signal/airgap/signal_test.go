@@ -235,45 +235,13 @@ func TestSignalControllerEventFilter(t *testing.T) {
 func TestHandle(t *testing.T) {
 	logger := logrus.NewEntry(logrus.StandardLogger())
 
-	commonObjectMeta := metav1.ObjectMeta{
-		Name: "foo",
-		Annotations: map[string]string{
-			"k0sproject.io/autopilot-signal-version": "v2",
-			"k0sproject.io/autopilot-signal-data": `
-				{
-					"planId":"abc123",
-					"created":"now",
-					"command": {
-						"id": 123,
-						"airgapupdate": {
-							"version": "v1.23.3+k0s.1",
-							"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
-							"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
-						}
-					}
-				}
-			`,
-		},
-	}
-
 	var tests = []struct {
-		name     string
-		objects  []crcli.Object
-		delegate apdel.ControllerDelegate
+		name                     string
+		objects                  []crcli.Object
+		delegate                 apdel.ControllerDelegate
+		expectedSignalDataStatus string
 	}{
-		{
-			"ControlNode",
-			[]crcli.Object{
-				&apv1beta2.ControlNode{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       "ControlNode",
-						APIVersion: "autopilot.k0sproject.io/v1beta2",
-					},
-					ObjectMeta: commonObjectMeta,
-				},
-			},
-			apdel.ControlNodeControllerDelegate(),
-		},
+		// A happy-path scenario where a Node has been signaled to apply an update.
 		{
 			"Node",
 			[]crcli.Object{
@@ -282,10 +250,73 @@ func TestHandle(t *testing.T) {
 						Kind:       "Node",
 						APIVersion: "v1",
 					},
-					ObjectMeta: commonObjectMeta,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": "v2",
+							"k0sproject.io/autopilot-signal-data": `
+								{
+									"planId":"abc123",
+									"created":"now",
+									"command": {
+										"id": 123,
+										"airgapupdate": {
+											"version": "v1.23.3+k0s.1",
+											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
+											"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
+										}
+									},
+									"status": {
+										"status": "Downloading",
+										"timestamp": "now"
+									}
+								}
+							`,
+						},
+					},
 				},
 			},
 			apdel.NodeControllerDelegate(),
+			"Downloading",
+		},
+
+		// Ensure that a command that is completed is properly skipped
+		{
+			"NodeAirgapUpdateCommandCompleted",
+			[]crcli.Object{
+				&v1.Node{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Node",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+						Annotations: map[string]string{
+							"k0sproject.io/autopilot-signal-version": "v2",
+							"k0sproject.io/autopilot-signal-data": `
+								{
+									"planId":"abc123",
+									"created":"now",
+									"command": {
+										"id": 123,
+										"airgapupdate": {
+											"version": "v1.23.3+k0s.1",
+											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
+											"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
+										}
+									},
+									"status": {
+										"status": "Completed",
+										"timestamp": "now"
+									}
+								}
+							`,
+						},
+					},
+				},
+			},
+			apdel.NodeControllerDelegate(),
+			"Completed",
 		},
 	}
 
@@ -321,11 +352,7 @@ func TestHandle(t *testing.T) {
 			err = signalData.Unmarshal(signalNode.GetAnnotations())
 
 			assert.NoError(t, err)
-			assert.NotNil(t, signalData.Status)
-
-			if signalData.Status != nil {
-				assert.Equal(t, Downloading, signalData.Status.Status)
-			}
+			assert.Equal(t, test.expectedSignalDataStatus, signalData.Status.Status)
 		})
 	}
 }
