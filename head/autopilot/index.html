@@ -1203,6 +1203,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#automatic-updates" class="md-nav__link">
+    Automatic updates
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#safeguards" class="md-nav__link">
     Safeguards
   </a>
@@ -1211,8 +1218,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stateless-controllers" class="md-nav__link">
-    Stateless Controllers
+  <a href="#stateless-component" class="md-nav__link">
+    Stateless Component
   </a>
   
 </li>
@@ -1340,6 +1347,33 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#updateconfig" class="md-nav__link">
+    UpdateConfig
+  </a>
+  
+    <nav class="md-nav" aria-label="UpdateConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updateconfig-core-fields" class="md-nav__link">
+    UpdateConfig Core Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec" class="md-nav__link">
+    Spec
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#faq" class="md-nav__link">
     FAQ
   </a>
@@ -1398,14 +1432,6 @@
 <p>A tool for updating your <code>k0s</code> controller and worker nodes using specialized plans.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
 <ul>
-<li>You run <strong>autopilot</strong> instances alongside the controller and/or worker nodes that you want to
-have updated.<ul>
-<li>For controllers, <strong>autopilot</strong> can be run standalone as <code>root</code> in order to access the
-  running <code>k0s</code> (also typically <code>root</code>)</li>
-<li>For workers, these can be run in privileged pods that have <code>hostPID=true</code> configured,
-  or can also be run standalone as <code>root</code>.</li>
-</ul>
-</li>
 <li>You create a <code>Plan</code> YAML<ul>
 <li>Defining the update payload (new version of <code>k0s</code>, URLs for platforms, etc)</li>
 <li>Add definitions for all the nodes that should receive the update.<ul>
@@ -1423,11 +1449,33 @@ have updated.<ul>
 </ul>
 </li>
 </ul>
+<h2 id="automatic-updates">Automatic updates<a class="headerlink" href="#automatic-updates" title="Permanent link">#</a></h2>
+<p>To enable automatic updates, create an <code>UpdaterConfig</code> object:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdaterConfig</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span><span class="w"></span>
+<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span><span class="w"></span>
+<span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span><span class="w"></span>
+<span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w">                  </span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update</span><span class="w"></span>
+<span class="w">    </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">      </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+</code></pre></div>
 <h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
 <p>There are a number of safeguards in place to avoid breaking a cluster.</p>
-<h3 id="stateless-controllers">Stateless Controllers<a class="headerlink" href="#stateless-controllers" title="Permanent link">#</a></h3>
+<h3 id="stateless-component">Stateless Component<a class="headerlink" href="#stateless-component" title="Permanent link">#</a></h3>
 <ul>
-<li>The <strong>autopilot</strong> controllers were designed to not require any heavy state, or
+<li>The <strong>autopilot</strong> component were designed to not require any heavy state, or
 massive synchronization. Controllers can disappear, and backup controllers can
 resume the <strong>autopilot</strong> operations.</li>
 </ul>
@@ -1761,6 +1809,33 @@ update operation. There are a number of statuses available:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="updateconfig">UpdateConfig<a class="headerlink" href="#updateconfig" title="Permanent link">#</a></h2>
+<h3 id="updateconfig-core-fields">UpdateConfig Core Fields<a class="headerlink" href="#updateconfig-core-fields" title="Permanent link">#</a></h3>
+<h4 id="apiversion-string-required-field"><code>apiVersion &lt;string&gt; (required field)</code><a class="headerlink" href="#apiversion-string-required-field" title="Permanent link">#</a></h4>
+<ul>
+<li>API version. The current version of the Autopilot API is <code>v1beta2</code>, with a full group-version of <code>autopilot.k0sproject.io/v1beta2</code></li>
+</ul>
+<h4 id="metadataname-string-required-field"><code>metadata.name &lt;string&gt; (required field)</code><a class="headerlink" href="#metadataname-string-required-field" title="Permanent link">#</a></h4>
+<ul>
+<li>Name of the config.</li>
+</ul>
+<h3 id="spec">Spec<a class="headerlink" href="#spec" title="Permanent link">#</a></h3>
+<h4 id="specchannel-string-optional"><code>spec.channel &lt;string&gt; (optional)</code><a class="headerlink" href="#specchannel-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>Update channel to use. Supported values: <code>stable</code>(default), <code>unstable</code>.</li>
+</ul>
+<h4 id="specupdateserver-string-optional"><code>spec.updateServer &lt;string&gt; (optional)</code><a class="headerlink" href="#specupdateserver-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>Update server url.</li>
+</ul>
+<h4 id="specupgradestrategycron-string-optional"><code>spec.upgradeStrategy.cron &lt;string&gt; (optional)</code><a class="headerlink" href="#specupgradestrategycron-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>Schedule to check for updates in crontab format.</li>
+</ul>
+<h4 id="specplanspec-string-optional"><code>spec.planSpec &lt;string&gt; (optional)</code><a class="headerlink" href="#specplanspec-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li><a href="#Spec Fields">Plan specification</a>.</li>
+</ul>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">#</a></h2>
 <h3 id="q-how-do-i-apply-the-plan-and-controlnode-crds">Q: How do I apply the <code>Plan</code> and <code>ControlNode</code> CRDs?<a class="headerlink" href="#q-how-do-i-apply-the-plan-and-controlnode-crds" title="Permanent link">#</a></h3>
 <p>A: These CRD definitions are embedded in the <strong>autopilot</strong> binary and applied on startup.
