@@ -22,6 +22,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const defaultChannel = "stable"
+
 type Client interface {
 	GetUpdate(channel, clusterID, lastUpdateStatus, k0sVersion string) (*Update, error)
 }
@@ -48,6 +50,9 @@ func NewClient(updateServer string, authToken string) (Client, error) {
 }
 
 func (c *client) GetUpdate(channel, clusterID, lastUpdateStatus, currentVersion string) (*Update, error) {
+	if channel == "" {
+		channel = defaultChannel
+	}
 	u := *c.updateServerURL
 	u.Path = channel
 	query := url.Values{}

@@ -4,12 +4,6 @@ A tool for updating your `k0s` controller and worker nodes using specialized pla
 
 ## How it works
 
-* You run **autopilot** instances alongside the controller and/or worker nodes that you want to
-have updated.
-  * For controllers, **autopilot** can be run standalone as `root` in order to access the
-    running `k0s` (also typically `root`)
-  * For workers, these can be run in privileged pods that have `hostPID=true` configured,
-    or can also be run standalone as `root`.
 * You create a `Plan` YAML
   * Defining the update payload (new version of `k0s`, URLs for platforms, etc)
   * Add definitions for all the nodes that should receive the update.
@@ -19,13 +13,39 @@ have updated.
 * Monitor the progress
   * The applied `Plan` provides a status that details the progress.
 
+## Automatic updates
+
+To enable automatic updates, create an `UpdaterConfig` object:
+
+```yaml
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: UpdaterConfig
+metadata:
+  name: example
+spec:
+  channel: stable
+  updateServer: https://updates.k0sproject.io/
+  upgradeStrategy:
+    cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
+  # Optional. Specifies a created Plan object
+  planSpec:                  
+    command: update
+    targets:
+      controllers:
+        discovery:
+          selector: {}
+      workers:
+        discovery:
+          selector: {}
+```
+
 ## Safeguards
 
 There are a number of safeguards in place to avoid breaking a cluster.
 
-### Stateless Controllers
+### Stateless Component
 
-* The **autopilot** controllers were designed to not require any heavy state, or
+* The **autopilot** component were designed to not require any heavy state, or
 massive synchronization. Controllers can disappear, and backup controllers can
 resume the **autopilot** operations.
 
@@ -321,6 +341,36 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 | `SignalSent` | Update signaling has been successfully applied to this node. |
 | `MissingPlatform` | This node is a platform that an update has not been provided for. |
 | `MissingSignalNode` | This node does have an associated `Node` (worker) or `ControlNode` (controller) object. |
+
+## UpdateConfig
+
+### UpdateConfig Core Fields
+
+#### `apiVersion <string> (required field)`
+
+* API version. The current version of the Autopilot API is `v1beta2`, with a full group-version of `autopilot.k0sproject.io/v1beta2`
+
+#### `metadata.name <string> (required field)`
+
+* Name of the config.
+
+### Spec
+
+#### `spec.channel <string> (optional)`
+
+* Update channel to use. Supported values: `stable`(default), `unstable`.
+
+#### `spec.updateServer <string> (optional)`
+
+* Update server url.
+
+#### `spec.upgradeStrategy.cron <string> (optional)`
+
+* Schedule to check for updates in crontab format.
+
+#### `spec.planSpec <string> (optional)`
+
+* [Plan specification](#Spec Fields).
 
 ## FAQ
 
