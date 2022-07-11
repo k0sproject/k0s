@@ -1,0 +1,1895 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for k0s, the Zero friction Kubernetes distribution.">
+      
+      
+      
+        <meta name="author" content="Mirantis, Inc.">
+      
+      
+        <link rel="canonical" href="https://docs.k0sproject.io/v1.24.2+k0s.0/autopilot/">
+      
+      
+        
+      
+      <link rel="icon" href="../img/k0s_social.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.1.8+insiders-2.9.2">
+    
+    
+      
+        <title>Autopilot - Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.92048cb8.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.73e53a79.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JMV1409T2T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-JMV1409T2T');
+  </script>
+
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    <script>function __scope(t,e=".."){return new URL(e,location).pathname+"."+t}function __get(t,e=localStorage,n){return JSON.parse(e.getItem(__scope(t,n)))}function __set(t,e,n=localStorage,o){try{n.setItem(__scope(t,o),JSON.stringify(e))}catch(t){}}</script>
+    
+      <script>var palette=__get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#autopilot" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-component="outdated" hidden>
+        <aside class="md-banner md-banner--warning">
+          
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You are not currently viewing the documentation for the current stable release of k0s.
+  <a href="../..">
+    <strong>Click here to go to the documentation of the current stable release.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          
+        </aside>
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentation" class="md-header__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s_social.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Autopilot
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2m10-3a5 5 0 0 1 5 5 5 5 0 0 1-5 5H7a5 5 0 0 1-5-5 5 5 0 0 1 5-5h10M7 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3h10a3 3 0 0 0 3-3 3 3 0 0 0-3-3H7z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentation" class="md-nav__button md-logo" aria-label="Documentation" data-md-component="logo">
+      
+  <img src="../img/k0s_social.png" alt="logo">
+
+    </a>
+    Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/k0sproject/k0s" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Install
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Install" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Install
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        Quick Start Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0sctl-install/" class="md-nav__link">
+        Install using k0sctl
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3">
+          Alternative Install Methods
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Alternative Install Methods" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          Alternative Install Methods
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-multi-node/" class="md-nav__link">
+        Manual Install (advanced)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k0s-in-docker/" class="md-nav__link">
+        Docker
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experimental-windows/" class="md-nav__link">
+        Windows (experimental)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../raspberry-pi4/" class="md-nav__link">
+        Raspberry Pi 4
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/ansible-playbook/" class="md-nav__link">
+        Ansible Playbook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airgap-install/" class="md-nav__link">
+        Airgap Install
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrade/" class="md-nav__link">
+        Upgrade
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        Backup/Restore
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reset/" class="md-nav__link">
+        Uninstall/Reset
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-requirements/" class="md-nav__link">
+        System Requirements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../external-runtime-deps/" class="md-nav__link">
+        External runtime dependencies
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        Configuration Options
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamic-configuration/" class="md-nav__link">
+        Dynamic Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration-validation/" class="md-nav__link">
+        Configuration Validation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../worker-node-config/" class="md-nav__link">
+        Worker Node Configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
+        Networking (CNI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runtime/" class="md-nav__link">
+        Runtime (CRI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        Storage (CSI)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system-monitoring/" class="md-nav__link">
+        System Components Monitoring
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manifests/" class="md-nav__link">
+        Manifest Deployer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../helm-charts/" class="md-nav__link">
+        Helm Charts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-providers/" class="md-nav__link">
+        Cloud Providers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dual-stack/" class="md-nav__link">
+        IPv4/IPv6 Dual-Stack
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-availability/" class="md-nav__link">
+        Control Plane High Availability
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shell-completion/" class="md-nav__link">
+        Shell Completion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-management/" class="md-nav__link">
+        User Management
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environment-variables/" class="md-nav__link">
+        Configuration of Environment Variables
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/oidc/oidc-cluster-configuration/" class="md-nav__link">
+        OpenID Connect
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../selinux/" class="md-nav__link">
+        SELinux
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../podsecurity/" class="md-nav__link">
+        Pod Security Standards
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Extensions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Extensions" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Extensions
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/metallb-loadbalancer/" class="md-nav__link">
+        MetalLB Load Balancer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/nginx-ingress/" class="md-nav__link">
+        NGINX Ingress Controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/traefik-ingress/" class="md-nav__link">
+        Traefik Ingress Controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/ambassador-ingress/" class="md-nav__link">
+        Ambassador API Gateway
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/rook-ceph/" class="md-nav__link">
+        Ceph Storage with Rook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/gitops-flux/" class="md-nav__link">
+        GitOps with Flux
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Troubleshooting
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Troubleshooting" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Troubleshooting
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FAQ/" class="md-nav__link">
+        FAQ
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        Common Pitfalls
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        Architecture
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cis_benchmark/" class="md-nav__link">
+        Kube-bench Security Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        Releases
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/overview/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/github_workflow/" class="md-nav__link">
+        GitHub Workflow
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributors/testing/" class="md-nav__link">
+        Testing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internal/publishing_docs_using_mkdocs/" class="md-nav__link">
+        Documentation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    How it works
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safeguards" class="md-nav__link">
+    Safeguards
+  </a>
+  
+    <nav class="md-nav" aria-label="Safeguards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stateless-controllers" class="md-nav__link">
+    Stateless Controllers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workers-update-only-after-controllers" class="md-nav__link">
+    Workers Update Only After Controllers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plans-are-immutable" class="md-nav__link">
+    Plans are Immutable
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-quorum-safety" class="md-nav__link">
+    Controller Quorum Safety
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controllers-update-sequentially" class="md-nav__link">
+    Controllers Update Sequentially
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-payload-verification" class="md-nav__link">
+    Update Payload Verification
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-fields" class="md-nav__link">
+    Core Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec-fields" class="md-nav__link">
+    Spec Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k0supdate-command" class="md-nav__link">
+    k0supdate Command
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airgapupdate-command" class="md-nav__link">
+    airgapupdate Command
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-discovery" class="md-nav__link">
+    Static Discovery
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selector-target-discovery" class="md-nav__link">
+    Selector Target Discovery
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-reporting" class="md-nav__link">
+    Status Reporting
+  </a>
+  
+    <nav class="md-nav" aria-label="Status Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plan-status" class="md-nav__link">
+    Plan Status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-status" class="md-nav__link">
+    Node Status
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-apply-the-plan-and-controlnode-crds" class="md-nav__link">
+    Q: How do I apply the Plan and ControlNode CRDs?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-will-controlnode-instances-get-removed" class="md-nav__link">
+    Q: How will ControlNode instances get removed?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-i-upgraded-my-workers-and-now-kubelets-are-no-longer-reporting" class="md-nav__link">
+    Q: I upgraded my workers, and now Kubelets are no longer reporting
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed" class="md-nav__link">
+    Q: If running workers in a Pod, what minimum RBAC access is needed?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                
+                <h1 id="autopilot">Autopilot<a class="headerlink" href="#autopilot" title="Permanent link">#</a></h1>
+<p>A tool for updating your <code>k0s</code> controller and worker nodes using specialized plans.</p>
+<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
+<ul>
+<li>You run <strong>autopilot</strong> instances alongside the controller and/or worker nodes that you want to
+have updated.<ul>
+<li>For controllers, <strong>autopilot</strong> can be run standalone as <code>root</code> in order to access the
+  running <code>k0s</code> (also typically <code>root</code>)</li>
+<li>For workers, these can be run in privileged pods that have <code>hostPID=true</code> configured,
+  or can also be run standalone as <code>root</code>.</li>
+</ul>
+</li>
+<li>You create a <code>Plan</code> YAML<ul>
+<li>Defining the update payload (new version of <code>k0s</code>, URLs for platforms, etc)</li>
+<li>Add definitions for all the nodes that should receive the update.<ul>
+<li>Either statically, or dynamically using label/field selectors</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Apply the <code>Plan</code><ul>
+<li>Applying a <code>Plan</code> is a simple <code>kubectl apply</code> operation.</li>
+</ul>
+</li>
+<li>Monitor the progress<ul>
+<li>The applied <code>Plan</code> provides a status that details the progress.</li>
+</ul>
+</li>
+</ul>
+<h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
+<p>There are a number of safeguards in place to avoid breaking a cluster.</p>
+<h3 id="stateless-controllers">Stateless Controllers<a class="headerlink" href="#stateless-controllers" title="Permanent link">#</a></h3>
+<ul>
+<li>The <strong>autopilot</strong> controllers were designed to not require any heavy state, or
+massive synchronization. Controllers can disappear, and backup controllers can
+resume the <strong>autopilot</strong> operations.</li>
+</ul>
+<h3 id="workers-update-only-after-controllers">Workers Update Only After Controllers<a class="headerlink" href="#workers-update-only-after-controllers" title="Permanent link">#</a></h3>
+<ul>
+<li>The versioning that Kubelet and the Kubernetes API server adhere to requires that Kubelets
+should <strong>not</strong> be of a newer version than the API server.</li>
+</ul>
+<ul>
+<li>How <strong>autopilot</strong> handles this is that when a <code>Plan</code> is applied that has both controller
+and worker nodes, <strong>all</strong> of the controller nodes will be updated first. It is only when
+<strong>all</strong> controllers have updated <strong>successfully</strong> that worker nodes will receive their
+update instructions.</li>
+</ul>
+<h3 id="plans-are-immutable">Plans are Immutable<a class="headerlink" href="#plans-are-immutable" title="Permanent link">#</a></h3>
+<ul>
+<li>When you apply a <code>Plan</code>, <strong>autopilot</strong> evaluates all of the controllers and workers that
+should be included into the <code>Plan</code>, and tracks them in the status. After this point, no
+additional changes to the plan (other than status) will be recognized.<ul>
+<li>This helps in largely dynamic worker node environments where nodes that may have been
+  matched by the <code>selector</code> discovery method no longer exist by the time the update
+  is ready to be scheduled.</li>
+</ul>
+</li>
+</ul>
+<h3 id="controller-quorum-safety">Controller Quorum Safety<a class="headerlink" href="#controller-quorum-safety" title="Permanent link">#</a></h3>
+<ul>
+<li>Prior to scheduling a controller update, <strong>autopilot</strong> queries the API server of <strong>all</strong>
+  controllers to ensure that they report a successful <code>/ready</code></li>
+<li>Only once all controllers are <code>/ready</code> will the current controller get sent update signaling.</li>
+<li>In the event that <strong>any</strong> controller reports a non-ready, the <code>Plan</code> transitions into an
+  <code>InconsistentTargets</code> state, and the <code>Plan</code> execution ends.</li>
+</ul>
+<h3 id="controllers-update-sequentially">Controllers Update Sequentially<a class="headerlink" href="#controllers-update-sequentially" title="Permanent link">#</a></h3>
+<ul>
+<li>Despite having the configuration options for controllers to set concurrency, only <strong>one</strong>
+  controller will be updated at a time.</li>
+</ul>
+<h3 id="update-payload-verification">Update Payload Verification<a class="headerlink" href="#update-payload-verification" title="Permanent link">#</a></h3>
+<ul>
+<li>Each <code>update</code> object payload can provide an optional <code>sha256</code> hash of the update content
+  (specified in <code>url</code>), which is compared against the update content after it downloads.</li>
+</ul>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
+<p><strong>Autopilot</strong> relies on a <code>Plan</code> object on its instructions on what to update.</p>
+<p>Here is an arbitrary <strong>Autopilot</strong> plan:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot</span><span class="w"></span>
+
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id1234</span><span class="w"></span>
+<span class="w">  </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span><span class="w"></span>
+
+<span class="w">  </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.23.3+k0s.1</span><span class="w"></span>
+<span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.23.3%2Bk0s.1/k0s-v1.23.3+k0s.1-amd64</span><span class="w"></span>
+<span class="w">            </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0cd1f7c49ef81e18d3873a77ccabb5e4095db1c3647ca3fa8fc3eb16566e204e</span><span class="w"></span>
+<span class="w">        </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
+<span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span><span class="w"></span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span><span class="w"></span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span><span class="w"></span>
+<span class="w">          </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="nt">limits</span><span class="p">:</span><span class="w"></span>
+<span class="w">              </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
+<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
+<span class="w">              </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">                </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
+<span class="w">                </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
+</code></pre></div>
+<h3 id="core-fields">Core Fields<a class="headerlink" href="#core-fields" title="Permanent link">#</a></h3>
+<h4 id="apiversion-string-required"><code>apiVersion &lt;string&gt; (required)</code><a class="headerlink" href="#apiversion-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>The current version of the Autopilot API is <code>v1beta2</code>, with a full group-version of <code>autopilot.k0sproject.io/v1beta2</code></li>
+</ul>
+<h4 id="metadataname-string-required"><code>metadata.name &lt;string&gt; (required)</code><a class="headerlink" href="#metadataname-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>The name of the plan should always be <code>autopilot</code><ul>
+<li><strong>Note:</strong> Plans will not execute if they don't follow this convention.</li>
+</ul>
+</li>
+</ul>
+<h3 id="spec-fields">Spec Fields<a class="headerlink" href="#spec-fields" title="Permanent link">#</a></h3>
+<h4 id="specid-string-optional"><code>spec.id &lt;string&gt; (optional)</code><a class="headerlink" href="#specid-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>An identifier that can be provided by the creator for informational and tracking purposes.</li>
+</ul>
+<h4 id="spectimestamp-string-optional"><code>spec.timestamp &lt;string&gt; (optional)</code><a class="headerlink" href="#spectimestamp-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>A timestamp value that can be provided by the creator for informational purposes. <strong>Autopilot</strong>
+does nothing with this information.</li>
+</ul>
+<h4 id="speccommands-required"><code>spec.commands[] (required)</code><a class="headerlink" href="#speccommands-required" title="Permanent link">#</a></h4>
+<ul>
+<li>The <code>commands</code> contains all of the commands that should be performed as a part of the plan.</li>
+</ul>
+<h3 id="k0supdate-command"><strong><code>k0supdate</code></strong> Command<a class="headerlink" href="#k0supdate-command" title="Permanent link">#</a></h3>
+<h4 id="speccommandsk0supdateversion-string-required"><code>spec.commands[].k0supdate.version &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsk0supdateversion-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>The version of the binary being updated. This version is used to compare against the installed
+version before and after update to ensure success.</li>
+</ul>
+<h4 id="speccommandsk0supdateplatformsurl-string-required"><code>spec.commands[].k0supdate.platforms.*.url &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsk0supdateplatformsurl-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>An URL providing where the updated binary should be downloaded from, for this specific platform.<ul>
+<li>The naming of platforms is a combination of <code>$GOOS</code> and <code>$GOARCH</code>, separated by a hyphen (<code>-</code>)<ul>
+<li>eg: <code>linux-amd64</code>, <code>linux-arm64</code>, <code>linux-arm</code></li>
+</ul>
+</li>
+<li><strong>Note:</strong> The main supported platform is <code>linux</code>. <strong>Autopilot</strong> may work on other platforms, however
+this has not been tested.</li>
+</ul>
+</li>
+</ul>
+<h4 id="speccommandsk0supdateplatformssha256-string-optional"><code>spec.commands[].k0supdate.platforms.*.sha256 &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdateplatformssha256-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.</li>
+</ul>
+<h4 id="speccommandsk0supdatetargetscontrollers-object-optional"><code>spec.commands[].k0supdate.targets.controllers &lt;object&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetscontrollers-object-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>This object provides the details of how <code>controllers</code> should be updated.</li>
+</ul>
+<h4 id="speccommandsk0supdatetargetscontrollerslimitsconcurrent-int-fixed-as-1"><code>spec.commands[].k0supdate.targets.controllers.limits.concurrent &lt;int&gt; (fixed as 1)</code><a class="headerlink" href="#speccommandsk0supdatetargetscontrollerslimitsconcurrent-int-fixed-as-1" title="Permanent link">#</a></h4>
+<ul>
+<li>The configuration allows for specifying the number of concurrent controller updates
+through the plan spec, however for controller targets this is fixed always to <code>1</code>.</li>
+<li>By ensuring that only one controller updates at a time, we aim to avoid scenarios
+where quorom may be disrupted.</li>
+</ul>
+<h4 id="speccommandsk0supdatetargetsworkers-object-optional"><code>spec.commands[].k0supdate.targets.workers &lt;object&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetsworkers-object-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>This object provides the details of how <code>workers</code> should be updated.</li>
+</ul>
+<h4 id="speccommandsk0supdatetargetsworkerslimitsconcurrent-int-optional-default-1"><code>spec.commands[].k0supdate.targets.workers.limits.concurrent &lt;int&gt; (optional, default = 1)</code><a class="headerlink" href="#speccommandsk0supdatetargetsworkerslimitsconcurrent-int-optional-default-1" title="Permanent link">#</a></h4>
+<ul>
+<li>Specifying a <code>concurrent</code> value for worker targets will allow for that number of workers
+to be updated at a time. If no value is provided, <code>1</code> is assumed.</li>
+</ul>
+<h3 id="airgapupdate-command"><strong><code>airgapupdate</code></strong> Command<a class="headerlink" href="#airgapupdate-command" title="Permanent link">#</a></h3>
+<h4 id="speccommandsairgapupdateversion-string-required"><code>spec.commands[].airgapupdate.version &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsairgapupdateversion-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>The version of the airgap bundle being updated.</li>
+</ul>
+<h4 id="speccommandsairgapupdateplatformsurl-string-required"><code>spec.commands[].airgapupdate.platforms.*.url &lt;string&gt; (required)</code><a class="headerlink" href="#speccommandsairgapupdateplatformsurl-string-required" title="Permanent link">#</a></h4>
+<ul>
+<li>An URL providing where the updated binary should be downloaded from, for this specific platform.<ul>
+<li>The naming of platforms is a combination of <code>$GOOS</code> and <code>$GOARCH</code>, separated by a hyphen (<code>-</code>)<ul>
+<li>eg: <code>linux-amd64</code>, <code>linux-arm64</code>, <code>linux-arm</code></li>
+</ul>
+</li>
+<li><strong>Note:</strong> The main supported platform is <code>linux</code>. <strong>Autopilot</strong> may work on other platforms, however
+this has not been tested.</li>
+</ul>
+</li>
+</ul>
+<h4 id="speccommandsairgapupdateplatformssha256-string-optional"><code>spec.commands[].airgapupdate.platforms.*.sha256 &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsairgapupdateplatformssha256-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>If a SHA256 hash is provided for the binary, the completed downloaded will be verified against it.</li>
+</ul>
+<h4 id="speccommandsairgapupdatetargetsworkers-object-optional"><code>spec.commands[].airgapupdate.targets.workers &lt;object&gt; (optional)</code><a class="headerlink" href="#speccommandsairgapupdatetargetsworkers-object-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>This object provides the details of how <code>workers</code> should be updated.</li>
+</ul>
+<h4 id="speccommandsairgapupdatetargetsworkerslimitsconcurrent-int-optional-default-1"><code>spec.commands[].airgapupdate.targets.workers.limits.concurrent &lt;int&gt; (optional, default = 1)</code><a class="headerlink" href="#speccommandsairgapupdatetargetsworkerslimitsconcurrent-int-optional-default-1" title="Permanent link">#</a></h4>
+<ul>
+<li>Specifying a <code>concurrent</code> value for worker targets will allow for that number of workers
+to be updated at a time. If no value is provided, <code>1</code> is assumed.</li>
+</ul>
+<h3 id="static-discovery">Static Discovery<a class="headerlink" href="#static-discovery" title="Permanent link">#</a></h3>
+<p>This defines the <code>static</code> discovery method used for this set of targets (<code>controllers</code>, <code>workers</code>). The <code>static</code> discovery method relies on a fixed set of hostnames defined
+in <code>.nodes</code>.</p>
+<p>It is expected that a <code>Node</code> (workers) or <code>ControlNode</code> (controllers) object exists with
+the same name.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span><span class="w"></span>
+</code></pre></div>
+<h4 id="speccommandsk0supdatetargetsdiscoverystaticnodes-string-required-for-static"><code>spec.commands[].k0supdate.targets.*.discovery.static.nodes[] &lt;string&gt; (required for static)</code><a class="headerlink" href="#speccommandsk0supdatetargetsdiscoverystaticnodes-string-required-for-static" title="Permanent link">#</a></h4>
+<ul>
+<li>A list of hostnames that should be included in target set (<code>controllers</code>, <code>workers</code>).</li>
+</ul>
+<h3 id="selector-target-discovery">Selector Target Discovery<a class="headerlink" href="#selector-target-discovery" title="Permanent link">#</a></h3>
+<p>The <code>selector</code> target discovery method relies on a dynamic query to the Kubernetes API
+using labels and fields to produce a set of hosts that should be updated.</p>
+<p>Providing both <code>labels</code> and <code>fields</code> in the <code>selector</code> definition will result in a logical <code>AND</code> of both operands.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
+</code></pre></div>
+<p>Specifying an empty selector will result in <em>all</em> nodes being selected for this target set.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+</code></pre></div>
+<h4 id="speccommandsk0supdatetargetsdiscoveryselectorlabels-string-optional"><code>spec.commands[].k0supdate.targets.*.discovery.selector.labels &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetsdiscoveryselectorlabels-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>A collection of name/value labels that should be used for finding the appropriate nodes
+for the update of this target set.</li>
+</ul>
+<h4 id="speccommandsk0supdatetargetsdiscoveryselectorfields-string-optional"><code>spec.commands[].k0supdate.targets.*.discovery.selector.fields &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetsdiscoveryselectorfields-string-optional" title="Permanent link">#</a></h4>
+<ul>
+<li>A collection of name/value fields that should be used for finding the appropriate nodes
+for the update of this target set.<ul>
+<li><strong>Note:</strong> Currently only the field <code>metadata.name</code> is available as a query field.</li>
+</ul>
+</li>
+</ul>
+<h2 id="status-reporting">Status Reporting<a class="headerlink" href="#status-reporting" title="Permanent link">#</a></h2>
+<p>After a <code>Plan</code> has been applied, its progress can be viewed in the <code>.status</code> of the
+<code>autopilot</code> Plan.</p>
+<div class="highlight"><pre><span></span><code>    kubectl get plan autopilot -oyaml
+</code></pre></div>
+<p>An example of a <code>Plan</code> status:</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+<span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+<span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:44Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller1</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller2</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker1</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker2</span><span class="w"></span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+</code></pre></div>
+<p>To read this status, this indicates that:</p>
+<ul>
+<li>The overall status of the update is <code>SchedulableWait</code>, meaning that <strong>autopilot</strong> is
+  waiting for the next opportunity to process a command.</li>
+<li>There are three controller nodes<ul>
+<li>Two controllers have <code>SignalCompleted</code> successfully</li>
+<li>One is waiting to be signalled (<code>SignalPending</code>)</li>
+</ul>
+</li>
+<li>There are also three worker nodes<ul>
+<li>All are awaiting signaling updates (<code>SignalPending</code>)</li>
+</ul>
+</li>
+</ul>
+<h3 id="plan-status">Plan Status<a class="headerlink" href="#plan-status" title="Permanent link">#</a></h3>
+<p>The <code>Plan</code> status at <code>.status.status</code> represents the overall status of the <strong>autopilot</strong>
+update operation. There are a number of statuses available:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Ends Plan?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IncompleteTargets</code></td>
+<td>There are nodes in the resolved <code>Plan</code> that do not have associated <code>Node</code> (worker) or <code>ControlNode</code> (controller) objects.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>InconsistentTargets</code></td>
+<td>A controller has reported itself as not-ready during the selection of the next controller to update.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Schedulable</code></td>
+<td>Indicates that the <code>Plan</code> can be re-evaluated to determine which next node to update.</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>SchedulableWait</code></td>
+<td>Scheduling operations are in progress, and no further update scheduling should occur.</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>Completed</code></td>
+<td>The <code>Plan</code> has run successfully to completion.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Restricted</code></td>
+<td>The <code>Plan</code> included node types (controller or worker) that violates the <code>--exclude-from-plans</code> restrictions.</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="node-status">Node Status<a class="headerlink" href="#node-status" title="Permanent link">#</a></h3>
+<p>Similar to the <strong>Plan Status</strong>, the individual nodes can have their own statuses:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SignalPending</code></td>
+<td>The node is available and awaiting an update signal</td>
+</tr>
+<tr>
+<td><code>SignalSent</code></td>
+<td>Update signaling has been successfully applied to this node.</td>
+</tr>
+<tr>
+<td><code>MissingPlatform</code></td>
+<td>This node is a platform that an update has not been provided for.</td>
+</tr>
+<tr>
+<td><code>MissingSignalNode</code></td>
+<td>This node does have an associated <code>Node</code> (worker) or <code>ControlNode</code> (controller) object.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">#</a></h2>
+<h3 id="q-how-do-i-apply-the-plan-and-controlnode-crds">Q: How do I apply the <code>Plan</code> and <code>ControlNode</code> CRDs?<a class="headerlink" href="#q-how-do-i-apply-the-plan-and-controlnode-crds" title="Permanent link">#</a></h3>
+<p>A: These CRD definitions are embedded in the <strong>autopilot</strong> binary and applied on startup.
+No additional action is needed.</p>
+<h3 id="q-how-will-controlnode-instances-get-removed">Q: How will <code>ControlNode</code> instances get removed?<a class="headerlink" href="#q-how-will-controlnode-instances-get-removed" title="Permanent link">#</a></h3>
+<p>A: <code>ControlNode</code> instances are created by <strong>autopilot</strong> controllers as they startup. When
+controllers disappear, they will <strong>not</strong> remove their associated <code>ControlNode</code> instance. It
+is the responsibility of the operator/administrator to ensure their maintenance.</p>
+<h3 id="q-i-upgraded-my-workers-and-now-kubelets-are-no-longer-reporting">Q: I upgraded my workers, and now Kubelets are no longer reporting<a class="headerlink" href="#q-i-upgraded-my-workers-and-now-kubelets-are-no-longer-reporting" title="Permanent link">#</a></h3>
+<p>You probably upgraded your workers to an API version greater than what is
+available on the API server.</p>
+<p>https://kubernetes.io/releases/version-skew-policy/</p>
+<blockquote>
+<p>Make sure that your controllers are at the desired version <strong>first</strong> before
+upgrading workers.</p>
+</blockquote>
+<h3 id="q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed">Q: If running workers in a Pod, what minimum RBAC access is needed?<a class="headerlink" href="#q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed" title="Permanent link">#</a></h3>
+<p>The following RBAC entries are required for running <strong>autopilot</strong> workers in Pods.</p>
+<table>
+<thead>
+<tr>
+<th>API Group</th>
+<th>Resource</th>
+<th>Verbs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>autopilot.k0sproject.io</code></td>
+<td><code>plans</code></td>
+<td><code>list</code>, <code>watch</code></td>
+</tr>
+<tr>
+<td><code>autopilot.k0sproject.io</code></td>
+<td><code>plans/status</code></td>
+<td><code>update</code></td>
+</tr>
+<tr>
+<td><code>apps</code></td>
+<td><code>daemonsets</code></td>
+<td><code>get</code></td>
+</tr>
+<tr>
+<td>(empty)</td>
+<td><code>nodes</code></td>
+<td><code>list</code>, <code>patch</code>, <code>update</code>, <code>watch</code></td>
+</tr>
+<tr>
+<td>(empty)</td>
+<td><code>pods</code></td>
+<td><code>list</code></td>
+</tr>
+<tr>
+<td>(empty)</td>
+<td><code>pods/eviction</code></td>
+<td><code>create</code></td>
+</tr>
+</tbody>
+</table>
+                
+              
+              
+                
+
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 <a href="https://mirantis.com/">Mirantis Inc.</a> - All rights reserved.
+          </div>
+        
+        
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+      <a href="https://github.com/k0sproject/k0s" target="_blank" rel="noopener" title="k0s on GitHub" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+      </a>
+    
+      
+      
+      <a href="https://twitter.com/k0sproject" target="_blank" rel="noopener" title="k0s on Twitter" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+      </a>
+    
+      
+      
+      <a href="http://k8slens.slack.com/" target="_blank" rel="noopener" title="k0s on Slack" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 315.1c0-25.9 21.16-47.06 47.06-47.06h47.06v47.06zm23.72 0c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06V315.1zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06H164.9zm0 23.72c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 196.9s21.16-47.06 47.06-47.06H164.9zm188.98 47.06c0-25.9 21.16-47.06 47.06-47.06 25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06h-47.06V196.9zm-23.72 0c0 25.9-21.16 47.06-47.06 47.06-25.9 0-47.06-21.16-47.06-47.06V79.06c0-25.9 21.16-47.06 47.06-47.06 25.9 0 47.06 21.16 47.06 47.06V196.9zM283.1 385.88c25.9 0 47.06 21.16 47.06 47.06 0 25.9-21.16 47.06-47.06 47.06-25.9 0-47.06-21.16-47.06-47.06v-47.06h47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-47.06 0-25.9 21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06 0 25.9-21.16 47.06-47.06 47.06H283.1z"/></svg>
+      </a>
+    
+      
+      
+      <a href="https://k0sproject.io/" target="_blank" rel="noopener" title="k0s Website" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.df8cae7d.min.js", "version": {"provider": "mike", "default": "stable"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.82217815.min.js"></script>
+      
+    
+  </body>
+</html>
