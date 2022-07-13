@@ -1271,13 +1271,15 @@ With the controller subcommand you can setup a single node cluster by running:
       --enable-cloud-provider                          Whether or not to enable cloud provider support in kubelet
       --enable-dynamic-config                          enable cluster-wide dynamic config based on custom resource
       --enable-k0s-cloud-provider                      enables the k0s-cloud-provider (default false)
+      --enable-metrics-scraper                         enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)
       --enable-worker                                  enable worker (default false)
   -h, --help                                           help for controller
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)
       --k0s-cloud-provider-update-frequency duration   the frequency of k0s-cloud-provider node updates (default 2m0s)
+      --kube-controller-manager-extra-args string      extra args for kube-controller-manager
       --kubelet-extra-args string                      extra args for kubelet
       --labels strings                                 Node labels, list of key=value pairs
-  -l, --logging stringToString                         Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
+  -l, --logging stringToString                         Logging Levels for the different components (default [kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1])
       --no-taints                                      disable default taints for controller node
       --profile string                                 worker profile to use on the node (default &quot;default&quot;)
       --single                                         enable single node (implies --enable-worker, default false)
@@ -1288,6 +1290,8 @@ With the controller subcommand you can setup a single node cluster by running:
 <div class="highlight"><pre><span></span><code>      --data-dir string        Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                  Debug logging (default: false)
       --debugListenOn string   Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
+  -e, --env stringArray        set environment variable
+      --force                  force init script creation
       --status-socket string   Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
   -v, --verbose                Verbose logging (default: false)
 </code></pre></div>

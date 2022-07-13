@@ -1216,13 +1216,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     SEE ALSO
   </a>
@@ -1269,18 +1262,23 @@
       --cluster-dns string                             HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
   -c, --config string                                  config file, use &#39;-&#39; to read the config from stdin (default &quot;/etc/k0s/k0s.yaml&quot;)
       --cri-socket string                              container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+      --data-dir string                                Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+  -d, --debug                                          Debug logging (default: false)
       --debugListenOn string                           Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
       --disable-components strings                     disable components (valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac)
       --enable-cloud-provider                          Whether or not to enable cloud provider support in kubelet
       --enable-dynamic-config                          enable cluster-wide dynamic config based on custom resource
       --enable-k0s-cloud-provider                      enables the k0s-cloud-provider (default false)
+      --enable-metrics-scraper                         enable scraping metrics from the controller components (kube-scheduler, kube-controller-manager)
       --enable-worker                                  enable worker (default false)
   -h, --help                                           help for controller
+      --ignore-pre-flight-checks                       continue even if pre-flight checks fail
       --k0s-cloud-provider-port int                    the port that k0s-cloud-provider binds on (default 10258)
       --k0s-cloud-provider-update-frequency duration   the frequency of k0s-cloud-provider node updates (default 2m0s)
+      --kube-controller-manager-extra-args string      extra args for kube-controller-manager
       --kubelet-extra-args string                      extra args for kubelet
       --labels strings                                 Node labels, list of key=value pairs
-  -l, --logging stringToString                         Logging Levels for the different components (default [containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info])
+  -l, --logging stringToString                         Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
       --no-taints                                      disable default taints for controller node
       --profile string                                 worker profile to use on the node (default &quot;default&quot;)
       --single                                         enable single node (implies --enable-worker, default false)
@@ -1288,10 +1286,6 @@
       --taints strings                                 Node taints, list of key=value:effect strings
       --token-file string                              Path to the file containing join-token.
   -v, --verbose                                        Verbose logging (default: false)
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --data-dir string   Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-      --debug             Debug logging [$DEBUG]
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>

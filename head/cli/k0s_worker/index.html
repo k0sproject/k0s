@@ -1216,13 +1216,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#options-inherited-from-parent-commands" class="md-nav__link">
-    Options inherited from parent commands
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     SEE ALSO
   </a>
@@ -1268,21 +1261,20 @@
       --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
       --cluster-dns string          HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
       --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
+      --data-dir string             Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
+  -d, --debug                       Debug logging (default: false)
       --debugListenOn string        Http listenOn for Debug pprof handler (default &quot;:6060&quot;)
       --enable-cloud-provider       Whether or not to enable cloud provider support in kubelet
   -h, --help                        help for worker
+      --ignore-pre-flight-checks    continue even if pre-flight checks fail
       --kubelet-extra-args string   extra args for kubelet
       --labels strings              Node labels, list of key=value pairs
-  -l, --logging stringToString      Logging Levels for the different components (default [kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1])
+  -l, --logging stringToString      Logging Levels for the different components (default [kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1])
       --profile string              worker profile to use on the node (default &quot;default&quot;)
       --status-socket string        Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
       --taints strings              Node taints, list of key=value:effect strings
       --token-file string           Path to the file containing token.
   -v, --verbose                     Verbose logging (default: false)
-</code></pre></div>
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands<a class="headerlink" href="#options-inherited-from-parent-commands" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --data-dir string   Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
-      --debug             Debug logging [$DEBUG]
 </code></pre></div>
 <h3 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h3>
 <ul>
