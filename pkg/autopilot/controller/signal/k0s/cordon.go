@@ -105,10 +105,8 @@ func (r *cordoning) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 	if err := signalData.Unmarshal(signalNode.GetAnnotations()); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to unmarshal signal data for node='%s': %w", req.NamespacedName.Name, err)
 	}
-
-	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
-	if kind != "Node" {
-		logger.Infof("ignoring non Node kind: %s", kind)
+	if !needsCordoning(signalNode) {
+		logger.Infof("ignoring non worker node")
 
 		return cr.Result{}, r.moveToNextState(ctx, signalNode, ApplyingUpdate)
 	}

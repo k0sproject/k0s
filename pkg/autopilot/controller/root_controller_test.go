@@ -59,7 +59,7 @@ func TestModeSwitch(t *testing.T) {
 	logger := logrus.New().WithField("app", "autopilot-test")
 	clientFactory := aptu.NewFakeClientFactory()
 
-	rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, clientFactory)
+	rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory)
 	assert.NoError(t, err)
 
 	rootController, ok := rootControllerInterface.(*rootController)

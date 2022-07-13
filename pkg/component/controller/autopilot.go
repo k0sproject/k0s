@@ -34,6 +34,7 @@ var _ component.Component = (*Autopilot)(nil)
 type Autopilot struct {
 	K0sVars            constant.CfgVars
 	AdminClientFactory kubernetes.ClientFactoryInterface
+	EnableWorker       bool
 }
 
 func (a *Autopilot) Init(ctx context.Context) error {
@@ -55,7 +56,7 @@ func (a *Autopilot) Run(ctx context.Context) error {
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
 		HealthProbeBindAddr: "0",
-	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), autopilotClientFactory)
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.EnableWorker, autopilotClientFactory)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot controller: %w", err)
 	}
