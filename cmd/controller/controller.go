@@ -470,6 +470,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	c.ClusterComponents.Add(ctx, &controller.Autopilot{
 		K0sVars:            c.K0sVars,
 		AdminClientFactory: adminClientFactory,
+		EnableWorker:       c.EnableWorker,
 	})
 
 	perfTimer.Checkpoint("starting-cluster-components-init")

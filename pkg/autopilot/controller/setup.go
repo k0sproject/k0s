@@ -44,16 +44,18 @@ type setupController struct {
 	log           *logrus.Entry
 	clientFactory apcli.FactoryInterface
 	k0sDataDir    string
+	enableWorker  bool
 }
 
 var _ SetupController = (*setupController)(nil)
 
 // NewSetupController creates a `SetupController`
-func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir string) SetupController {
+func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir string, enableWorker bool) SetupController {
 	return &setupController{
 		log:           logger.WithField("controller", "setup"),
 		clientFactory: cf,
 		k0sDataDir:    k0sDataDir,
+		enableWorker:  enableWorker,
 	}
 }
 
@@ -132,6 +134,10 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 		logger.Info("Autopilot 'controlnodes' CRD found, continuing")
 
 		logger.Infof("ControlNode '%s' not found, creating", name)
+		mode := apconst.K0SControlNodeModeController
+		if sc.enableWorker {
+			mode = apconst.K0SControlNodeModeControllerWorker
+		}
 		node = &apv1beta2.ControlNode{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
@@ -140,6 +146,9 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 					v1.LabelHostname:   name,
 					v1.LabelOSStable:   runtime.GOOS,
 					v1.LabelArchStable: runtime.GOARCH,
+				},
+				Annotations: map[string]string{
+					apconst.K0SControlNodeModeAnnotation: mode,
 				},
 			},
 		}

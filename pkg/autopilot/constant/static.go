@@ -15,11 +15,14 @@
 package constant
 
 const (
-	AutopilotName       = "autopilot"
-	AutopilotNamespace  = "k0s-autopilot"
-	AutopilotConfigName = AutopilotName
-	K0sBinaryDir        = "/usr/local/bin"
-	K0sDefaultDataDir   = "/var/lib/k0s"
-	K0sManifestSubDir   = "manifests"
-	K0sImagesDir        = "images"
+	AutopilotName                      = "autopilot"
+	AutopilotNamespace                 = "k0s-autopilot"
+	AutopilotConfigName                = AutopilotName
+	K0sBinaryDir                       = "/usr/local/bin"
+	K0sDefaultDataDir                  = "/var/lib/k0s"
+	K0sManifestSubDir                  = "manifests"
+	K0sImagesDir                       = "images"
+	K0SControlNodeModeAnnotation       = "autopilot.k0sproject.io/mode"
+	K0SControlNodeModeController       = "controller"
+	K0SControlNodeModeControllerWorker = "controller+worker"
 )

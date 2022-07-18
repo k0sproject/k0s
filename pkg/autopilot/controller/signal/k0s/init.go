@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
+	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
@@ -26,6 +27,7 @@ import (
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -108,4 +110,17 @@ func signalDataUpdateCommandK0sPredicate() apsigpred.SignalDataPredicate {
 	return func(signalData apsigv2.SignalData) bool {
 		return signalData.Command.K0sUpdate != nil
 	}
+}
+
+func needsCordoning(signalNode client.Object) bool {
+	kind := signalNode.GetObjectKind().GroupVersionKind().Kind
+	if kind == "Node" {
+		return true
+	}
+	for k, v := range signalNode.GetAnnotations() {
+		if k == apconst.K0SControlNodeModeAnnotation && v == apconst.K0SControlNodeModeControllerWorker {
+			return true
+		}
+	}
+	return false
 }

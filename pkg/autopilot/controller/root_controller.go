@@ -57,7 +57,7 @@ type rootController struct {
 var _ aproot.Root = (*rootController)(nil)
 
 // NewRootController builds a root for autopilot "controller" operations.
-func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, cf apcli.FactoryInterface) (aproot.Root, error) {
+func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker bool, cf apcli.FactoryInterface) (aproot.Root, error) {
 	c := &rootController{
 		cfg:           cfg,
 		log:           logger,
@@ -70,7 +70,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, cf apcli.Fac
 	c.stopSubHandler = c.stopSubControllers
 	c.leaseWatcherCreator = NewLeaseWatcher
 	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
-		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir)
+		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, enableWorker)
 		return setupController.Run(ctx)
 	}
 
