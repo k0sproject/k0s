@@ -47,12 +47,12 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/zap v1.21.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
 	google.golang.org/grpc v1.47.0
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.9.0
+	helm.sh/helm/v3 v3.9.1
 )
 
 // Kubernetes
@@ -84,7 +84,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
-	github.com/Masterminds/squirrel v1.5.2 // indirect
+	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -117,9 +117,9 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20160507010035-511bcaf42ccd // indirect
 	github.com/deislabs/oras v0.9.0 // indirect
-	github.com/docker/cli v20.10.11+incompatible // indirect
+	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.14+incompatible // indirect
+	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.1-0.20190612165340-fd1b1942c4d5 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
@@ -169,7 +169,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ishidawataru/sctp v0.0.0-20210707070123-9a39160e9062 // indirect
 	github.com/jhump/protoreflect v1.10.1 // indirect
-	github.com/jmoiron/sqlx v1.3.4 // indirect
+	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -178,7 +178,7 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/lib/pq v1.10.4 // indirect
+	github.com/lib/pq v1.10.6 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
@@ -278,7 +278,7 @@ require (
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/metrics v0.24.2 // indirect
-	oras.land/oras-go v1.1.1 // indirect
+	oras.land/oras-go v1.2.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
