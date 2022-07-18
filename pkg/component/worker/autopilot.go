@@ -58,7 +58,7 @@ func (a *Autopilot) Run(ctx context.Context) error {
 	// needed by autopilot.
 
 	var restConfig *rest.Config
-	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
+	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(_ context.Context) (done bool, err error) {
 		log.Debugf("Attempting to load autopilot client config")
 		if restConfig, err = GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath); err != nil {
 			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
