@@ -58,9 +58,13 @@ func (a *Autopilot) Run(ctx context.Context) error {
 	// needed by autopilot.
 
 	var restConfig *rest.Config
-	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(_ context.Context) (done bool, err error) {
+	// wait.PollUntilWithContext passes it is own ctx argument as a ctx to the given function
+	// we can't use timeouted context as an argument for the GetRestConfig and the default argument naming in the condition-function
+	// shadows the parent context so saving it here as an explicit variable to use
+	parentCtx := ctx
+	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
 		log.Debugf("Attempting to load autopilot client config")
-		if restConfig, err = GetRestConfig(ctx, a.K0sVars.KubeletAuthConfigPath); err != nil {
+		if restConfig, err = GetRestConfig(parentCtx, a.K0sVars.KubeletAuthConfigPath); err != nil {
 			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
 			return false, nil
 		}
