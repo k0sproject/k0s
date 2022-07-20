@@ -31,6 +31,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -184,7 +185,17 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		)),
 	}
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir); err != nil {
+	cl, err := c.clientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+	ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	clusterID := string(ns.UID)
+
+	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
 		logger.WithError(err).Error("unable to register 'signal' controllers")
 		return err
 	}
@@ -194,7 +205,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.clientFactory, leaderMode); err != nil {
+	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.clientFactory, leaderMode, clusterID); err != nil {
 		logger.WithError(err).Error("unable to register 'update' controllers")
 		return err
 	}

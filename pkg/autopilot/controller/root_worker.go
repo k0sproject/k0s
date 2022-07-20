@@ -27,6 +27,7 @@ import (
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cr "sigs.k8s.io/controller-runtime"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -79,11 +80,21 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	}, func(err error) bool {
 		return true
 	}, func() error {
+		cl, err := w.clientFactory.GetClient()
+		if err != nil {
+			return err
+		}
+		ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		clusterID := string(ns.UID)
+
 		if err := RegisterIndexers(ctx, mgr, "worker"); err != nil {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir); err != nil {
+		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
 			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
 		}
 		// The controller-runtime start blocks until the context is cancelled.

@@ -17,7 +17,6 @@ package k0s
 import (
 	"context"
 	"fmt"
-
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
@@ -42,7 +41,7 @@ const (
 
 // RegisterControllers registers all of the autopilot controllers used for updating `k0s`
 // to the controller-runtime manager.
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate) error {
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, delegate apdel.ControllerDelegate, clusterID string) error {
 	logger = logger.WithField("controller", delegate.Name())
 
 	hostname, err := apcomm.FindEffectiveHostname()
@@ -52,7 +51,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 
 	logger.Infof("Using effective hostname = '%v'", hostname)
 
-	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate); err != nil {
+	if err := registerSignalController(logger, mgr, signalControllerEventFilter(hostname, apsigpred.DefaultErrorHandler(logger, "k0s signal")), delegate, clusterID); err != nil {
 		return fmt.Errorf("unable to register k0s 'signal' controller: %w", err)
 	}
 

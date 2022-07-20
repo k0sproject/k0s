@@ -22,8 +22,6 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
@@ -39,16 +37,7 @@ type updateController struct {
 	updater *updater
 }
 
-func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, leaderMode bool) error {
-	cl, err := clientFactory.GetClient()
-	if err != nil {
-		return err
-	}
-	ns, err := cl.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
+func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, leaderMode bool, clusterID string) error {
 	return cr.NewControllerManagedBy(mgr).
 		For(&apv1beta2.UpdateConfig{}).
 		Complete(
@@ -56,7 +45,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 				log:           logger.WithField("reconciler", "updater"),
 				client:        mgr.GetClient(),
 				clientFactory: clientFactory,
-				clusterID:     string(ns.UID),
+				clusterID:     clusterID,
 			},
 		)
 }
