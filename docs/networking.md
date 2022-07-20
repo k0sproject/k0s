@@ -17,6 +17,7 @@ Kube-router is built into k0s, and so by default the distribution uses it for ne
 - Uses bit less resources (~15%)
 - Does NOT support dual-stack (IPv4/IPv6) networking
 - Does NOT support Windows nodes
+- Does NOT activate hairpin mode by default
 
 ### Calico
 

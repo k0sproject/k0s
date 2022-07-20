@@ -46,6 +46,7 @@ type kubeRouterConfig struct {
 	AutoMTU           bool
 	CNIInstallerImage string
 	CNIImage          string
+	HairpinMode       bool
 	PeerRouterIPs     string
 	PeerRouterASNs    string
 	PullPolicy        string
@@ -87,6 +88,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
 		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
 		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
+		HairpinMode:       clusterConfig.Spec.Network.KubeRouter.HairpinMode,
 		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
 		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
@@ -147,6 +149,7 @@ data:
              "auto-mtu": {{ .AutoMTU }},
              "bridge":"kube-bridge",
              "isDefaultGateway":true,
+             "hairpinMode": {{ .HairpinMode }},
              "ipam":{
                 "type":"host-local"
              }
@@ -253,6 +256,7 @@ spec:
         - "--run-service-proxy=false"
         - "--bgp-graceful-restart=true"
         - "--metrics-port=8080"
+        - "--hairpin-mode={{ .HairpinMode }}"
         {{- if .PeerRouterIPs }}
         - "--peer-router-ips={{ .PeerRouterIPs }}"
         {{- end }}

@@ -24,6 +24,7 @@ import (
 	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +41,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.MTU = 1450
 	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
+	cfg.Spec.Network.KubeRouter.HairpinMode = true
 
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
@@ -56,6 +58,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	require.NotNil(t, ds)
 	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-ips=1.2.3.4,4.3.2.1")
 	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-asns=12345,67890")
+	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
 
 	cm, err := findConfig(resources)
 	require.NoError(t, err)
@@ -65,6 +68,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, false, p.Dig("auto-mtu"))
 	require.Equal(t, float64(1450), p.Dig("mtu"))
+	require.Equal(t, true, p.Dig("hairpinMode"))
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
@@ -86,6 +90,8 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, ds)
 
+	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
+
 	cm, err := findConfig(resources)
 	require.NoError(t, err)
 	require.NotNil(t, cm)
@@ -94,6 +100,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, true, p.Dig("auto-mtu"))
 	require.Nil(t, p.Dig("mtu"))
+	require.Equal(t, false, p.Dig("hairpinMode"))
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {

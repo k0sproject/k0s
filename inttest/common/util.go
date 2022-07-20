@@ -128,14 +128,24 @@ func waitForDeployment(kc *kubernetes.Clientset, name string) wait.ConditionWith
 
 // WaitForPod waits for pod be running
 func WaitForPod(kc *kubernetes.Clientset, name, namespace string) error {
-	return fallbackPoll(func(ctx context.Context) (done bool, err error) {
+	return fallbackPoll(waitForPod(kc, name, namespace))
+}
+
+// WaitForPod waits until a pod is running as long as the given context isn't
+// canceled.
+func WaitForPodWithContext(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+	return Poll(ctx, waitForPod(kc, name, namespace))
+}
+
+func waitForPod(kc *kubernetes.Clientset, name, namespace string) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (done bool, err error) {
 		ds, err := kc.CoreV1().Pods(namespace).Get(ctx, name, v1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 
 		return ds.Status.Phase == "Running", nil
-	})
+	}
 }
 
 // WaitForPodLogs picks the first Ready pod from the list of pods in given namespace and gets the logs of it
