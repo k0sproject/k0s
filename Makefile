@@ -25,10 +25,6 @@ ifeq ($(DEBUG), false)
 LD_FLAGS ?= -w -s
 endif
 
-KUBECTL_VERSION = $(shell go mod graph |  grep "github.com/k0sproject/k0s" |  grep kubectl  | cut -d "@" -f 2 | sed "s/v0\./1./")
-KUBECTL_MAJOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 1)
-KUBECTL_MINOR= $(shell echo ${KUBECTL_VERSION} | cut -d "." -f 2)
-
 # https://reproducible-builds.org/docs/source-date-epoch/#makefile
 # https://reproducible-builds.org/docs/source-date-epoch/#git
 # https://stackoverflow.com/a/15103333
@@ -48,9 +44,9 @@ LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.EtcdVersion=$(etcd_version)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.KonnectivityVersion=$(konnectivity_version)
 LD_FLAGS += -X "github.com/k0sproject/k0s/pkg/build.EulaNotice=$(EULA_NOTICE)"
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/telemetry.segmentToken=$(SEGMENT_TOKEN)
-LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(KUBECTL_VERSION)
-LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(KUBECTL_MAJOR)
-LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(KUBECTL_MINOR)
+LD_FLAGS += -X k8s.io/component-base/version.gitVersion=v$(kubernetes_version)
+LD_FLAGS += -X k8s.io/component-base/version.gitMajor=$(shell echo '$(kubernetes_version)' | cut -d. -f1)
+LD_FLAGS += -X k8s.io/component-base/version.gitMinor=$(shell echo '$(kubernetes_version)' | cut -d. -f2)
 LD_FLAGS += -X k8s.io/component-base/version.buildDate=$(BUILD_DATE)
 LD_FLAGS += -X k8s.io/component-base/version.gitCommit=not_available
 LD_FLAGS += -X github.com/containerd/containerd/version.Version=$(containerd_version)
