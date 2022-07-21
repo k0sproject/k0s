@@ -80,12 +80,16 @@ func printStatus(status *install.K0sStatus, output string) {
 		fmt.Println("Role:", status.Role)
 		fmt.Println("Workloads:", status.Workloads)
 		fmt.Println("SingleNode:", status.SingleNode)
-
+		if status.Workloads {
+			fmt.Println("Kube-api probing successful:", status.WorkerToApiConnectionStatus.Success)
+			fmt.Println("Kube-api probing last error: ", status.WorkerToApiConnectionStatus.Message)
+		}
 		if status.SysInit != "" {
 			fmt.Println("Init System:", status.SysInit)
 		}
 		if status.StubFile != "" {
 			fmt.Println("Service file:", status.StubFile)
 		}
+
 	}
 }

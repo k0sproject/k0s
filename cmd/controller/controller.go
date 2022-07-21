@@ -45,6 +45,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/status"
+	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/install"
@@ -251,7 +252,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			),
 		)
 	}
-
 	c.NodeComponents.Add(ctx, &status.Status{
 		StatusInformation: install.K0sStatus{
 			Pid:           os.Getpid(),
@@ -263,7 +263,8 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 			K0sVars:       c.K0sVars,
 			ClusterConfig: c.NodeConfig,
 		},
-		Socket: config.StatusSocket,
+		Socket:      config.StatusSocket,
+		CertManager: worker.NewCertificateManager(ctx, c.K0sVars.KubeletAuthConfigPath),
 	})
 
 	perfTimer.Checkpoint("starting-certificates-init")

@@ -41,7 +41,8 @@ const (
 var _ component.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
-	K0sVars constant.CfgVars
+	K0sVars     constant.CfgVars
+	CertManager *CertificateManager
 }
 
 func (a *Autopilot) Init(ctx context.Context) error {
@@ -55,17 +56,13 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	timeout, cancel := context.WithTimeout(ctx, defaultPollTimeout)
 	defer cancel()
 
-	// Poll until the kubelet config can be loaded successfully, as this is the access to the kube api
-	// needed by autopilot.
-
 	var restConfig *rest.Config
 	// wait.PollUntilWithContext passes it is own ctx argument as a ctx to the given function
-	// we can't use timeouted context as an argument for the GetRestConfig and the default argument naming in the condition-function
-	// shadows the parent context so saving it here as an explicit variable to use
-	parentCtx := ctx
+	// Poll until the kubelet config can be loaded successfully, as this is the access to the kube api
+	// needed by autopilot.
 	if err := wait.PollUntilWithContext(timeout, defaultPollDuration, func(ctx context.Context) (done bool, err error) {
 		log.Debugf("Attempting to load autopilot client config")
-		if restConfig, err = GetRestConfig(parentCtx, a.K0sVars.KubeletAuthConfigPath); err != nil {
+		if restConfig, err = a.CertManager.GetRestConfig(); err != nil {
 			log.WithError(err).Warnf("Failed to load autopilot client config, retrying in %v", defaultPollDuration)
 			return false, nil
 		}

@@ -28,18 +28,24 @@ import (
 )
 
 type K0sStatus struct {
-	Version       string
-	Pid           int
-	PPid          int
-	Role          string
-	SysInit       string
-	StubFile      string
-	Output        string
-	Workloads     bool
-	SingleNode    bool
-	Args          []string
-	ClusterConfig *config.ClusterConfig
-	K0sVars       constant.CfgVars
+	Version                     string
+	Pid                         int
+	PPid                        int
+	Role                        string
+	SysInit                     string
+	StubFile                    string
+	Output                      string
+	Workloads                   bool
+	SingleNode                  bool
+	Args                        []string
+	WorkerToApiConnectionStatus ProbeStatus
+	ClusterConfig               *config.ClusterConfig
+	K0sVars                     constant.CfgVars
+}
+
+type ProbeStatus struct {
+	Message string
+	Success bool
 }
 
 func GetStatusInfo(socketPath string) (status *K0sStatus, err error) {
