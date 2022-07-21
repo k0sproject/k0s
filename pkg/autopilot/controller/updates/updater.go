@@ -48,7 +48,7 @@ type updater struct {
 	k0sVersion     string
 }
 
-var patchOpts []client.PatchOption = []crcli.PatchOption{
+var patchOpts = []crcli.PatchOption{
 	crcli.FieldOwner("autopilot"),
 	crcli.ForceOwnership,
 }
