@@ -5,6 +5,52 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 5
+    ignore:
+      # Kubernetes
+      - dependency-name: k8s.io/api
+      - dependency-name: k8s.io/apiextensions-apiserver
+      - dependency-name: k8s.io/apimachinery
+      - dependency-name: k8s.io/apiserver
+      - dependency-name: k8s.io/cli-runtime
+      - dependency-name: k8s.io/client-go
+      - dependency-name: k8s.io/cloud-provider
+      - dependency-name: k8s.io/cluster-bootstrap
+      - dependency-name: k8s.io/code-generator
+      - dependency-name: k8s.io/component-base
+      - dependency-name: k8s.io/component-helpers
+      - dependency-name: k8s.io/controller-manager
+      - dependency-name: k8s.io/cri-api
+      - dependency-name: k8s.io/csi-translation-lib
+      - dependency-name: k8s.io/kube-aggregator
+      - dependency-name: k8s.io/kube-controller-manager
+      - dependency-name: k8s.io/kube-proxy
+      - dependency-name: k8s.io/kube-scheduler
+      - dependency-name: k8s.io/kubectl
+      - dependency-name: k8s.io/kubelet
+      - dependency-name: k8s.io/legacy-cloud-providers
+      - dependency-name: k8s.io/metrics
+      - dependency-name: k8s.io/mount-utils
+      - dependency-name: k8s.io/pod-security-admission
+      - dependency-name: k8s.io/sample-apiserver
+      - dependency-name: k8s.io/sample-cli-plugin
+      - dependency-name: k8s.io/sample-controller
+
+      # etcd
+      - dependency-name: go.etcd.io/etcd/api/v3
+      - dependency-name: go.etcd.io/etcd/client/pkg/v3
+      - dependency-name: go.etcd.io/etcd/client/v2
+      - dependency-name: go.etcd.io/etcd/client/v3
+      - dependency-name: go.etcd.io/etcd/etcdctl/v3
+      - dependency-name: go.etcd.io/etcd/etcdutl/v3
+      - dependency-name: go.etcd.io/etcd/pkg/v3
+      - dependency-name: go.etcd.io/etcd/raft/v3
+      - dependency-name: go.etcd.io/etcd/server/v3
+      - dependency-name: go.etcd.io/etcd/tests/v3
+      - dependency-name: go.etcd.io/etcd/v3
+
+      # runc/containerd
+      - dependency-name: github.com/containerd/containerd
+      - dependency-name: github.com/opencontainers/runc
 
   - package-ecosystem: github-actions
     directory: /
