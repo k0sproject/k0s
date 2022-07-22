@@ -53,7 +53,7 @@ require (
 	golang.org/x/tools v0.1.10-0.20220218145154-897bd77cd717
 	google.golang.org/grpc v1.48.0
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.9.1
+	helm.sh/helm/v3 v3.9.2
 )
 
 // Kubernetes
