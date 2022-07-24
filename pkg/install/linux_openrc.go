@@ -26,6 +26,7 @@ command={{.Path|cmdEscape}}
 command_args="{{range .Arguments}}'{{.}}' {{end}}"
 {{- end }}
 name=$(basename $(readlink -f $command))
+pidfile="/run/${name}.pid"
 supervise_daemon_args="--stdout /var/log/${name}.log --stderr /var/log/${name}.err"
 
 : "${rc_ulimit=-n 1048576 -u unlimited}"
