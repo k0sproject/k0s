@@ -19,7 +19,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"time"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -67,7 +66,7 @@ func GetRestConfig(ctx context.Context, kubeletClientConfigPath string) (*rest.C
 
 	transportConfig := rest.AnonymousClientConfig(restConfig)
 
-	if _, err := k8skubeletcert.UpdateTransport(ctx.Done(), transportConfig, certManager, 5*time.Minute); err != nil {
+	if _, err := k8skubeletcert.UpdateTransport(ctx.Done(), transportConfig, certManager, 0); err != nil {
 		return nil, err
 	}
 
