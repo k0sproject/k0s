@@ -63,6 +63,7 @@ func signalControllerEventFilter(hostname string, handler apsigpred.ErrorHandler
 
 type signalControllerHandler struct {
 	timeout           time.Duration
+	clusterID         string
 	k0sVersionHandler k0sVersionHandlerFunc
 }
 
@@ -70,7 +71,7 @@ type signalControllerHandler struct {
 //
 // This controller is only interested in changes to its own annotations, and is the main
 // mechanism in identifying incoming autopilot k0s signaling updates.
-func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "k0s"})
 
 	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
@@ -84,7 +85,8 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 				mgr.GetClient(),
 				delegate,
 				&signalControllerHandler{
-					timeout: SignalResponseProcessingTimeout,
+					timeout:   SignalResponseProcessingTimeout,
+					clusterID: clusterID,
 					k0sVersionHandler: func() (string, error) {
 						return getK0sVersion(DefaultK0sStatusSocketPath)
 					},
@@ -121,6 +123,10 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	// Populate the response into the annotations
 	signalNodeCopy := sctx.Delegate.DeepCopy(sctx.SignalNode)
 
+	var oldStatus string
+	if sctx.SignalData.Status != nil {
+		oldStatus = sctx.SignalData.Status.Status
+	}
 	sctx.SignalData.Status = apsigv2.NewStatus(status)
 	if err := sctx.SignalData.Marshal(signalNodeCopy.GetAnnotations()); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to marshal k0s signal data for node='%s': %w", signalNodeCopy.GetName(), err)
@@ -130,6 +136,12 @@ func (h *signalControllerHandler) Handle(ctx context.Context, sctx apsigcomm.Sig
 	if err := sctx.Client.Update(ctx, signalNodeCopy, &crcli.UpdateOptions{}); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to update k0s signal node='%s' with status='%s': %w", signalNodeCopy.GetName(), status, err)
 	}
+
+	_ = apcomm.ReportEvent(&apcomm.Event{
+		ClusterID: h.clusterID,
+		OldStatus: oldStatus,
+		NewStatus: status,
+	})
 
 	return cr.Result{}, nil
 }

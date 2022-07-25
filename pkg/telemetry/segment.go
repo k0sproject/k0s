@@ -29,6 +29,13 @@ type analyticsClient interface {
 	Close() error
 }
 
+func NewDefaultSegmentClient() analyticsClient {
+	if segmentToken == "" {
+		return nil
+	}
+	return newSegmentClient(segmentToken)
+}
+
 func newSegmentClient(segmentToken string) analyticsClient {
 	return analytics.New(segmentToken)
 }

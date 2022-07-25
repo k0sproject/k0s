@@ -118,7 +118,7 @@ rules:
     resources: ["*"]
     verbs: ["*"]
   - apiGroups: [""]
-    resources: ["nodes", "pods", "pods/eviction"]
+    resources: ["nodes", "pods", "pods/eviction", "namespaces"]
     verbs: ["*"]
   - apiGroups: ["apps"]
     resources: ["*"]
