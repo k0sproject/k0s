@@ -342,6 +342,9 @@ jobs:
       - name: Run smoketest
         run: make -C inttest check-basic
 
+      - name: Run airgap test
+        run: make check-airgap TARGET_PLATFORM=linux/${{ matrix.arch }}
+
       - name: Collect test logs
         if: failure()
         uses: actions/upload-artifact@v3
