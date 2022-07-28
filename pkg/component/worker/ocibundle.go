@@ -24,6 +24,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -61,7 +62,7 @@ func (a *OCIBundleReconciler) Run(ctx context.Context) error {
 	var client *containerd.Client
 	sock := filepath.Join(a.k0sVars.RunDir, "containerd.sock")
 	err = retry.Do(func() error {
-		client, err = containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"))
+		client, err = containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"), containerd.WithDefaultPlatform(platforms.OnlyStrict(platforms.DefaultSpec())))
 		if err != nil {
 			logrus.WithError(err).Errorf("can't connect to containerd socket %s", sock)
 			return err
