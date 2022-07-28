@@ -23,7 +23,7 @@
     
     
       
-        <title>Autopilot - Documentation</title>
+        <title>Overview - Documentation</title>
       
     
     
@@ -131,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Autopilot
+              Overview
             
           </span>
         </div>
@@ -829,23 +829,332 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
       
       
       
       
         <label class="md-nav__link" for="__nav_4">
+          Auto Updates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Auto Updates" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Auto Updates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Overview
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    How it works
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-updates" class="md-nav__link">
+    Automatic updates
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safeguards" class="md-nav__link">
+    Safeguards
+  </a>
+  
+    <nav class="md-nav" aria-label="Safeguards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stateless-component" class="md-nav__link">
+    Stateless Component
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workers-update-only-after-controllers" class="md-nav__link">
+    Workers Update Only After Controllers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plans-are-immutable" class="md-nav__link">
+    Plans are Immutable
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-quorum-safety" class="md-nav__link">
+    Controller Quorum Safety
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controllers-update-sequentially" class="md-nav__link">
+    Controllers Update Sequentially
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-payload-verification" class="md-nav__link">
+    Update Payload Verification
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-fields" class="md-nav__link">
+    Core Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec-fields" class="md-nav__link">
+    Spec Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k0supdate-command" class="md-nav__link">
+    k0supdate Command
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airgapupdate-command" class="md-nav__link">
+    airgapupdate Command
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-discovery" class="md-nav__link">
+    Static Discovery
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selector-target-discovery" class="md-nav__link">
+    Selector Target Discovery
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-reporting" class="md-nav__link">
+    Status Reporting
+  </a>
+  
+    <nav class="md-nav" aria-label="Status Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plan-status" class="md-nav__link">
+    Plan Status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-status" class="md-nav__link">
+    Node Status
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#updateconfig" class="md-nav__link">
+    UpdateConfig
+  </a>
+  
+    <nav class="md-nav" aria-label="UpdateConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updateconfig-core-fields" class="md-nav__link">
+    UpdateConfig Core Fields
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spec" class="md-nav__link">
+    Spec
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-apply-the-plan-and-controlnode-crds" class="md-nav__link">
+    Q: How do I apply the Plan and ControlNode CRDs?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-will-controlnode-instances-get-removed" class="md-nav__link">
+    Q: How will ControlNode instances get removed?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-i-upgraded-my-workers-and-now-kubelets-are-no-longer-reporting" class="md-nav__link">
+    Q: I upgraded my workers, and now Kubelets are no longer reporting
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autopilot-multicommand/" class="md-nav__link">
+        Multi-Command Plans
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
           Extensions
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" aria-label="Extensions" data-md-level="1">
-        <label class="md-nav__title" for="__nav_4">
+        <label class="md-nav__title" for="__nav_5">
           <span class="md-nav__icon md-icon"></span>
           Extensions
         </label>
@@ -952,18 +1261,18 @@
     <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
       
       
       
       
-        <label class="md-nav__link" for="__nav_5">
+        <label class="md-nav__link" for="__nav_6">
           Troubleshooting
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" aria-label="Troubleshooting" data-md-level="1">
-        <label class="md-nav__title" for="__nav_5">
+        <label class="md-nav__title" for="__nav_6">
           <span class="md-nav__icon md-icon"></span>
           Troubleshooting
         </label>
@@ -1014,18 +1323,18 @@
     <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
       
       
       
       
-        <label class="md-nav__link" for="__nav_6">
+        <label class="md-nav__link" for="__nav_7">
           Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" aria-label="Reference" data-md-level="1">
-        <label class="md-nav__title" for="__nav_6">
+        <label class="md-nav__title" for="__nav_7">
           <span class="md-nav__icon md-icon"></span>
           Reference
         </label>
@@ -1091,18 +1400,18 @@
     <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
       
       
       
       
-        <label class="md-nav__link" for="__nav_8">
+        <label class="md-nav__link" for="__nav_9">
           Contributing
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <nav class="md-nav" aria-label="Contributing" data-md-level="1">
-        <label class="md-nav__title" for="__nav_8">
+        <label class="md-nav__title" for="__nav_9">
           <span class="md-nav__icon md-icon"></span>
           Contributing
         </label>
@@ -1398,13 +1707,6 @@
           <li class="md-nav__item">
   <a href="#q-i-upgraded-my-workers-and-now-kubelets-are-no-longer-reporting" class="md-nav__link">
     Q: I upgraded my workers, and now Kubelets are no longer reporting
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed" class="md-nav__link">
-    Q: If running workers in a Pod, what minimum RBAC access is needed?
   </a>
   
 </li>
@@ -1852,49 +2154,6 @@ available on the API server.</p>
 <p>Make sure that your controllers are at the desired version <strong>first</strong> before
 upgrading workers.</p>
 </blockquote>
-<h3 id="q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed">Q: If running workers in a Pod, what minimum RBAC access is needed?<a class="headerlink" href="#q-if-running-workers-in-a-pod-what-minimum-rbac-access-is-needed" title="Permanent link">#</a></h3>
-<p>The following RBAC entries are required for running <strong>autopilot</strong> workers in Pods.</p>
-<table>
-<thead>
-<tr>
-<th>API Group</th>
-<th>Resource</th>
-<th>Verbs</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>autopilot.k0sproject.io</code></td>
-<td><code>plans</code></td>
-<td><code>list</code>, <code>watch</code></td>
-</tr>
-<tr>
-<td><code>autopilot.k0sproject.io</code></td>
-<td><code>plans/status</code></td>
-<td><code>update</code></td>
-</tr>
-<tr>
-<td><code>apps</code></td>
-<td><code>daemonsets</code></td>
-<td><code>get</code></td>
-</tr>
-<tr>
-<td>(empty)</td>
-<td><code>nodes</code></td>
-<td><code>list</code>, <code>patch</code>, <code>update</code>, <code>watch</code></td>
-</tr>
-<tr>
-<td>(empty)</td>
-<td><code>pods</code></td>
-<td><code>list</code></td>
-</tr>
-<tr>
-<td>(empty)</td>
-<td><code>pods/eviction</code></td>
-<td><code>create</code></td>
-</tr>
-</tbody>
-</table>
                 
               
               
@@ -1911,6 +2170,41 @@ upgrading workers.</p>
       
         
 <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../podsecurity/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Pod Security Standards" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Pod Security Standards
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../autopilot-multicommand/" class="md-footer__link md-footer__link--next" aria-label="Next: Multi-Command Plans" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Multi-Command Plans
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
