@@ -30,6 +30,7 @@ jobs:
         with:
           # required to find all branches
           fetch-depth: 0
+          token: ${{ secrets.GH_BACKPORT_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Create backport PRs
         # should be kept in sync with `version`
