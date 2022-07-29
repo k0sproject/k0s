@@ -243,9 +243,9 @@ spec:
     - name: custom-feature-gate      # name of the worker profile
       values:
          featureGates:        # feature gates mapping
-            DevicePlugins: "true"
-            Accelerators: "true"
-            AllowExtTrafficLocalEndpoints: "false"
+            DevicePlugins: true
+            Accelerators: true
+            AllowExtTrafficLocalEndpoints: false
 ```
 
 ##### Custom volumePluginDir
