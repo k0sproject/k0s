@@ -48,6 +48,10 @@ var getters = getter.Providers{
 		Schemes: []string{"http", "https"},
 		New:     getter.NewHTTPGetter,
 	},
+	getter.Provider{
+		Schemes: []string{"oci"},
+		New:     getter.NewOCIGetter,
+	},
 }
 
 // NewCommands builds new Commands instance with default values
