@@ -32,7 +32,7 @@ type UpgradeSuite struct {
 	common.FootlooseSuite
 }
 
-const previousVersion = "v1.23.6+k0s.2"
+const previousVersion = "v1.23.8+k0s.0"
 
 func (s *UpgradeSuite) TestK0sGetsUp() {
 	dlCommand := fmt.Sprintf("curl -sSfL https://get.k0s.sh | K0S_VERSION=%s sh", previousVersion)
