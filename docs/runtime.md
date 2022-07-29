@@ -122,26 +122,18 @@ Finally, if you want to change CRI look into:
 By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing `runc` with `nvidia-container-runtime`:
 
 ```toml
-[plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
-runtime_type = "io.containerd.runtime.v1.linux"
-runtime_engine = ""
-runtime_root = ""
-privileged_without_host_devices = false
-base_runtime_spec = ""
-[plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
-Runtime = "nvidia-container-runtime"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvdia]
-runtime_type = "io.containerd.runtime.v1.linux"
-runtime_engine = ""
-runtime_root = ""
-privileged_without_host_devices = false
-base_runtime_spec = ""
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvdia.options]
-Runtime = "nvidia-container-runtime"
+[plugins."io.containerd.grpc.v1.cri".containerd]
+    default_runtime_name = "nvidia"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+    privileged_without_host_devices = false
+    runtime_engine = ""
+    runtime_root = ""
+    runtime_type = "io.containerd.runc.v1"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+    BinaryName = "/usr/bin/nvidia-container-runtime"
 ```
 
-**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://josephb.org/blog/containerd-nvidia/).
+**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
 
 After editing the configuration, restart `k0s` to get containerd using the newly configured runtime.
 
