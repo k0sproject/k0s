@@ -343,6 +343,10 @@ spec:
                       autoMTU:
                         description: 'Auto-detection of used MTU (default: true)'
                         type: boolean
+                      hairpinMode:
+                        description: Activate Hairpin Mode (allow a Pod behind a Service
+                          to communicate to its own ClusterIP:Port)
+                        type: boolean
                       mtu:
                         description: Override MTU setting (autoMTU must be set to
                           false)

@@ -21,6 +21,8 @@ type KubeRouter struct {
 	AutoMTU bool `json:"autoMTU"`
 	// Override MTU setting (autoMTU must be set to false)
 	MTU int `json:"mtu"`
+	// Activate Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
+	HairpinMode bool `json:"hairpinMode"`
 	// Comma-separated list of global peer addresses
 	PeerRouterASNs string `json:"peerRouterASNs"`
 	// Comma-separated list of global peer ASNs

@@ -63,6 +63,7 @@ spec:
       peerRouterIPs: ""
       peerRouterASNs: ""
       autoMTU: true
+      hairpinMode: false
     kubeProxy:
       disabled: false
       mode: iptables
@@ -171,6 +172,7 @@ spec:
 | `mtu`            | Override MTU setting, if `autoMTU` must be set to `false`).                                                                                        |
 | `peerRouterIPs`  | Comma-separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers). |
 | `peerRouterASNs` | Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).      |
+| `hairpinMode`    | Activate hairpinMode (default: `false`) (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode)               |
 
 **Note**: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the [Kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)).
 
