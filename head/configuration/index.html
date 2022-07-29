@@ -1600,6 +1600,7 @@ sudo k0s start
 <span class="w">      </span><span class="nt">peerRouterIPs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
 <span class="w">      </span><span class="nt">peerRouterASNs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
 <span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">      </span><span class="nt">hairpinMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
 <span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
 <span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iptables</span><span class="w"></span>
@@ -1811,6 +1812,10 @@ sudo k0s start
 <tr>
 <td><code>peerRouterASNs</code></td>
 <td>Comma-separated list of <a href="https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers">global peer ASNs</a>.</td>
+</tr>
+<tr>
+<td><code>hairpinMode</code></td>
+<td>Activate hairpinMode (default: <code>false</code>) (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode)</td>
 </tr>
 </tbody>
 </table>
