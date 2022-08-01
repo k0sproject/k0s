@@ -36,5 +36,5 @@ locals {
 resource "local_file" "k0sctl_config" {
   file_permission = "600"
   filename        = format("%s/%s", path.module, "k0sctl.yaml")
-  content         = yamlencode(local.k0sctl_tmpl)
+  content         = replace(yamlencode(local.k0sctl_tmpl), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:")
 }
