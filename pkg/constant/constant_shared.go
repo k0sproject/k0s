@@ -90,7 +90,7 @@ const (
 	CalicoNodeImage                    = "docker.io/calico/node"
 	KubeControllerImage                = "docker.io/calico/kube-controllers"
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
-	KubeRouterCNIImageVersion          = "v1.4.0"
+	KubeRouterCNIImageVersion          = "v1.5.1"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
 	KubeRouterCNIInstallerImageVersion = "1.1.1-k0s.0"
 	OpenEBSRepository                  = "https://openebs.github.io/charts"
