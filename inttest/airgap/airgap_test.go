@@ -17,12 +17,10 @@ package airgap
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/config"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -74,7 +72,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
 
 	// at that moment we can assume that all pods has at least started
 	events, err := kc.CoreV1().Events("kube-system").List(context.TODO(), v1.ListOptions{
@@ -110,13 +108,8 @@ func TestAirgapSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
-			ExtraVolumes: []config.Volume{
-				{
-					Type:        "bind",
-					Source:      os.Getenv("K0S_IMAGES_BUNDLE"),
-					Destination: "/var/lib/k0s/images/bundle.tar",
-				},
-			},
+
+			AirgapImageBundleMountPoints: []string{"/var/lib/k0s/images/bundle.tar"},
 		},
 	}
 	suite.Run(t, &s)

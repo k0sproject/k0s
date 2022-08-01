@@ -61,8 +61,8 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
-      - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+      - name: Create airgap image bundle
+        run: make airgap-image-bundle-linux-amd64.tar
 
       - name: Collect smoke test logs
         if: failure()
@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./image-bundle/bundle.tar
+          asset_path: ./airgap-image-bundle-linux-amd64.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
 
@@ -201,9 +201,8 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
-
-      - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+      - name: Create airgap image bundle
+        run: make airgap-image-bundle-linux-arm64.tar
 
       - name: Collect smoke test logs
         if: failure()
@@ -230,7 +229,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./image-bundle/bundle.tar
+          asset_path: ./airgap-image-bundle-linux-arm64.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm64
           asset_content_type: application/octet-stream
 
@@ -258,8 +257,8 @@ jobs:
       - name: Run basic smoke test
         run: make check-basic
 
-      - name: Build bundle for air gap installation
-        run: make image-bundle/bundle.tar
+      - name: Create airgap image bundle
+        run: make airgap-image-bundle-linux-arm.tar
 
       - name: Collect smoke test logs
         if: failure()
@@ -286,7 +285,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./image-bundle/bundle.tar
+          asset_path: ./airgap-image-bundle-linux-arm.tar
           asset_name: k0s-airgap-bundle-${{ needs.release.outputs.tag_name }}-arm
           asset_content_type: application/octet-stream
 
