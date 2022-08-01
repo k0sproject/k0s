@@ -42,6 +42,7 @@ type AddonsSuite struct {
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
+	ociAddonName := "oci-test"
 	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
 
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
@@ -50,7 +51,16 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.NoError(err)
 	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
 	as.NoError(err)
-	as.waitForTestRelease(addonName, 1)
+	as.waitForTestRelease(addonName, "0.4.0", 1)
+	as.waitForTestRelease(ociAddonName, "0.6.0", 1)
+	pods, err := kc.CoreV1().Pods("kube-system").List(as.Context(), v1.ListOptions{
+		Limit: 100,
+	})
+	as.NoError(err)
+
+	podCount := len(pods.Items)
+	as.T().Logf("found %d pods in kube-system", podCount)
+	as.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	values := map[string]interface{}{
 		"replicaCount": 2,
@@ -59,7 +69,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 		},
 	}
 	as.doTestAddonUpdate(addonName, values)
-	chart := as.waitForTestRelease(addonName, 2)
+	chart := as.waitForTestRelease(addonName, "0.4.0", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.doPrometheusDelete(chart)
 }
@@ -92,7 +102,7 @@ func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	}))
 }
 
-func (as *AddonsSuite) waitForTestRelease(addonName string, rev int64) *v1beta1.Chart {
+func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, rev int64) *v1beta1.Chart {
 	as.T().Logf("waiting to see test-addon release ready in kube API, generation %d", rev)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
@@ -124,7 +134,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName string, rev int64) *v1beta1.
 		}
 
 		as.Require().Equal("default", chart.Status.Namespace)
-		as.Require().Equal("0.4.0", chart.Status.AppVersion)
+		as.Require().Equal(appVersion, chart.Status.AppVersion)
 		as.Require().Equal("default", chart.Status.Namespace)
 		as.Require().NotEmpty(chart.Status.ReleaseName)
 		as.Require().Empty(chart.Status.Error)
@@ -205,6 +215,11 @@ spec:
           - name: %s
             chartname: ealenn/echo-server
             version: "0.3.1"
+            values: ""
+            namespace: default
+          - name: oci-test
+            chartname: oci://ghcr.io/makhov/k0s-charts/echo-server
+            version: "0.5.0"
             values: ""
             namespace: default
 `
