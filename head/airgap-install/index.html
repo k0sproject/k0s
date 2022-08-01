@@ -1447,6 +1447,7 @@
 <h2 id="1-create-your-own-image-bundle-optional">1. Create your own image bundle (optional)<a class="headerlink" href="#1-create-your-own-image-bundle-optional" title="Permanent link">#</a></h2>
 <p>k0s/containerd uses OCI (Open Container Initiative) bundles for airgap installation. OCI bundles must be uncompressed. As OCI bundles are built specifically for each architecture, create an OCI bundle that uses the same processor architecture (x86-64, ARM64, ARMv7) as on the target system.</p>
 <p>k0s offers two methods for creating OCI bundles, one using Docker and the other using a previously set up k0s worker. Be aware, though, that you cannot use the Docker method for the ARM architectures due to <a href="https://github.com/kubernetes/kubernetes/issues/98229">kube-proxy image multiarch manifest problem</a>.</p>
+<p><strong>Note:</strong> k0s strictly matches image architecture, e.g. arm/v7 images won't work for arm64.</p>
 <h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">#</a></h3>
 <ol>
 <li>
