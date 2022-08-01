@@ -361,8 +361,3 @@ func (ec *ExtensionsController) Run(ctx context.Context) error {
 func (ec *ExtensionsController) Stop() error {
 	return nil
 }
-
-// Healthy
-func (ec *ExtensionsController) Healthy() error {
-	return nil
-}

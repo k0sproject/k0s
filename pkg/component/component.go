@@ -44,16 +44,19 @@ type Component interface {
 	// Stop when cancelled. It's merely used to cancel the component's startup.
 	Run(context.Context) error
 
-	// Healthy performs a health check and indicates that the component is
-	// running and functional. Whenever this is not the case, a non-nil error is
-	// returned.
-	Healthy() error
-
 	// Stop stops this component, potentially cleaning up any temporary
 	// resources attached to it. Stop itself may be called in any lifecycle
 	// phase. All other lifecycle methods have to return an error after Stop
 	// returns. Stop may be called more than once.
 	Stop() error
+}
+
+// Healthz represents a component that can be checked for its health.
+type Healthz interface {
+	// Healthy performs a health check and indicates that the component is
+	// running and functional. Whenever this is not the case, a non-nil error is
+	// returned.
+	Healthy() error
 }
 
 // ReconcilerComponent defines the component interface that is reconciled based

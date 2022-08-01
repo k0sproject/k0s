@@ -101,6 +101,8 @@ type staticPods struct {
 	stopped     sync.WaitGroup
 }
 
+var _ component.Healthz = (*staticPods)(nil)
+
 // NewStaticPods creates a new static_pods component.
 func NewStaticPods() interface {
 	StaticPods

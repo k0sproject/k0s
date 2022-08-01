@@ -40,9 +40,6 @@ type Status struct {
 
 var _ component.Component = (*Status)(nil)
 
-// Healthy dummy implementation
-func (s *Status) Healthy() error { return nil }
-
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {
 	s.L = logrus.WithFields(logrus.Fields{"component": "status"})

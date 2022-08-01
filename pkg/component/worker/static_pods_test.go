@@ -176,8 +176,8 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	log, logs := test.NewNullLogger()
 	log.SetLevel(logrus.DebugLevel)
 
-	underTest := NewStaticPods()
-	underTest.(*staticPods).log = log
+	underTest := NewStaticPods().(*staticPods)
+	underTest.log = log
 	podUnderTest, err := underTest.ClaimStaticPod("default", "dummy-test")
 	require.NoError(t, err)
 	assert.NoError(t, podUnderTest.SetManifest(dummyPod))

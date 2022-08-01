@@ -172,10 +172,6 @@ func (r *ClusterConfigReconciler) Stop() error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) Healthy() error {
-	return nil
-}
-
 func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1beta1.ClusterConfig, reconcileError error) {
 	hostname, err := os.Hostname()
 	if err != nil {

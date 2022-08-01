@@ -107,5 +107,3 @@ func (a OCIBundleReconciler) unpackBundle(ctx context.Context, client *container
 func (a *OCIBundleReconciler) Stop() error {
 	return nil
 }
-
-func (a *OCIBundleReconciler) Healthy() error { return nil }

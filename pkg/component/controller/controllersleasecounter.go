@@ -101,6 +101,3 @@ func (l *K0sControllersLeaseCounter) Stop() error {
 	}
 	return nil
 }
-
-// Healthy is a no-op healchcheck
-func (l *K0sControllersLeaseCounter) Healthy() error { return nil }

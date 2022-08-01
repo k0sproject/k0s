@@ -84,8 +84,3 @@ func (c *K0sCloudProvider) Stop() error {
 
 	return nil
 }
-
-// Healthy in the k0s-cloud-provider intentionally does nothing.
-func (c *K0sCloudProvider) Healthy() error {
-	return nil
-}

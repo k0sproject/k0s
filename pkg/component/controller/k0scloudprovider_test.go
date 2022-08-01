@@ -100,12 +100,6 @@ func (suite *K0sCloudProviderSuite) TestRunStop() {
 	assert.Equal(suite.T(), true, suite.cancelled)
 }
 
-// TestHealthy covers the `Healthy()` function post-init.
-func (suite *K0sCloudProviderSuite) TestHealthy() {
-	assert.Nil(suite.T(), suite.ccp.Init(context.TODO()))
-	assert.Nil(suite.T(), suite.ccp.Healthy())
-}
-
 // TestK0sCloudProviderTestSuite sets up the suite for testing.
 func TestK0sCloudProviderTestSuite(t *testing.T) {
 	suite.Run(t, new(K0sCloudProviderSuite))

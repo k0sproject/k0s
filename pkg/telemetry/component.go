@@ -115,11 +115,6 @@ func (c *Component) Reconcile(ctx context.Context, clusterCfg *v1beta1.ClusterCo
 	return nil
 }
 
-// Healthy checks health
-func (c *Component) Healthy() error {
-	return nil
-}
-
 func (c Component) run(ctx context.Context) {
 	c.stopCh = make(chan struct{})
 	ticker := time.NewTicker(interval)

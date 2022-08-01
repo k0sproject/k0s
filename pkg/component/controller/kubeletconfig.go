@@ -306,6 +306,3 @@ func mergeProfiles(a *unstructuredYamlObject, b unstructuredYamlObject) (unstruc
 	}
 	return *a, nil
 }
-
-// Health-check interface
-func (k *KubeletConfig) Healthy() error { return nil }

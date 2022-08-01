@@ -232,9 +232,6 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
-// Health-check interface
-func (k *Kubelet) Healthy() error { return nil }
-
 func (k *Kubelet) prepareLocalKubeletConfig(kubeletconfig string, kubeletConfigData kubeletConfig) (string, error) {
 	var kubeletConfiguration kubeletv1beta1.KubeletConfiguration
 	err := yaml.Unmarshal([]byte(kubeletconfig), &kubeletConfiguration)

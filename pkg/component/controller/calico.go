@@ -238,6 +238,3 @@ func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error 
 	}
 	return nil
 }
-
-// Health-check interface
-func (c *Calico) Healthy() error { return nil }

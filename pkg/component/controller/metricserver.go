@@ -334,9 +334,6 @@ func (m *MetricServer) Reconcile(_ context.Context, clusterConfig *v1beta1.Clust
 	return nil
 }
 
-// Healthy is the health-check interface
-func (m *MetricServer) Healthy() error { return nil }
-
 // Mostly for calculating the resource needs based on node numbers. From https://github.com/kubernetes-sigs/metrics-server#scaling :
 // Starting from v0.5.0 Metrics Server comes with default resource requests that should guarantee good performance for most cluster configurations up to 100 nodes:
 // - 100m core of CPU

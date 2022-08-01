@@ -387,6 +387,3 @@ func (c *CoreDNS) Reconcile(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	c.lastKnownClusterConfig = clusterConfig
 	return nil
 }
-
-// Health-check interface
-func (c *CoreDNS) Healthy() error { return nil }

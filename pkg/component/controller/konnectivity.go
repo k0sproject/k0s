@@ -379,6 +379,3 @@ spec:
                   path: konnectivity-agent-token
                   audience: system:konnectivity-server
 `
-
-// Healthy is a no-op check
-func (k *Konnectivity) Healthy() error { return nil }

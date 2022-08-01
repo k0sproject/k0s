@@ -105,6 +105,3 @@ func (c *ContainerD) setupConfig() error {
 func (c *ContainerD) Stop() error {
 	return c.supervisor.Stop()
 }
-
-// Health-check interface
-func (c *ContainerD) Healthy() error { return nil }
