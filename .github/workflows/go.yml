@@ -38,8 +38,12 @@ jobs:
         include:
           - target: linux
             build-docker-image: k0sbuild
+            airgap-image-bundle: airgap-image-bundle-linux-amd64.tar
           - target: windows
             binary-suffix: .exe
+
+    outputs:
+      airgap-image-bundle-hash-linux: ${{ steps.create-airgap-image-list.outputs.linux-hash }}
 
     steps:
       - name: Check out code into the Go module directory
@@ -86,23 +90,44 @@ jobs:
           make --touch codegen
           make build
 
-      - name: Build airgap bundle (linux)
-        if: matrix.target == 'linux'
-        run: make image-bundle/bundle.tar
-
-      - name: Cache airgap bundle (linux)
-        if: matrix.target == 'linux'
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-build-airgap-bundle-${{ github.ref_name }}-${{ github.sha }}
-          path: |
-            image-bundle/bundle.tar
-
       - name: Upload compiled binary
         uses: actions/upload-artifact@v3
         with:
           name: k0s${{ matrix.binary-suffix }}
           path: k0s${{ matrix.binary-suffix }}
+
+      - name: Create airgap image list
+        id: create-airgap-image-list
+        if: matrix.airgap-image-bundle
+        # Capture the calculated image bundle hash in a build output, so it can
+        # be shared between the cache actions in this job and in the integration
+        # test matrix. A cleaner solution would have been to use the cache here,
+        # and then upload the cached image bundle, to be downloaded later on in
+        # the integration tests. That's the way it's done for the k0s binary.
+        # Unfortunately, the upload action is significantly slower than the
+        # cache action, for unclear reasons, so stick with this solution for
+        # faster builds. See:
+        # * https://github.com/actions/upload-artifact/issues/199#issuecomment-1190171851
+        run: |
+          make airgap-images.txt
+          echo ::set-output name=${{ matrix.target }}-hash::${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+
+      - name: Cache airgap image bundle
+        id: cache-airgap-image-bundle
+        if: matrix.airgap-image-bundle
+        uses: actions/cache@v3
+        # Technically, there's no need to restore the cache here, since this
+        # is more like a create-if-not-exists logic. Currently, there's no way
+        # to achieve this directly via actions/cache. See:
+        # * https://github.com/actions/cache/issues/321
+        # * https://github.com/actions/cache/pull/420
+        with:
+          key: ${{ matrix.airgap-image-bundle }}-${{ steps.create-airgap-image-list.outputs[format('{0}-hash', matrix.target)] }}
+          path: ${{ matrix.airgap-image-bundle }}
+
+      - name: Create airgap image bundle if not cached
+        if: matrix.airgap-image-bundle && steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
+        run: make ${{ matrix.airgap-image-bundle }}
 
   unittest:
     name: Unit test
@@ -210,20 +235,28 @@ jobs:
         with:
           name: k0s
 
-      - name: Restore airgap bundle
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-build-airgap-bundle-${{ github.ref_name }}-${{ github.sha }}
-          path: |
-            image-bundle/bundle.tar
-
       - name: k0s sysinfo
         run: |
           chmod +x k0s
           ./k0s sysinfo
 
+      - name: Cache airgap image bundle
+        id: cache-airgap-image-bundle
+        if: contains(matrix.smoke-suite, 'airgap')
+        uses: actions/cache@v3
+        with:
+          key: airgap-image-bundle-linux-amd64.tar-${{ needs.build.outputs.airgap-image-bundle-hash-linux }}
+          path: airgap-image-bundle-linux-amd64.tar
+
       - name: Run inttest
-        run: make -C inttest ${{ matrix.smoke-suite }}
+        env:
+          NEEDS_AIRGAP_IMAGE_BUNDLE: ${{ contains(matrix.smoke-suite, 'airgap') }}
+        run: |
+          [ "$NEEDS_AIRGAP_IMAGE_BUNDLE" != true ] || [ -f airgap-image-bundle-linux-amd64.tar ] || {
+            echo Airgap image bundle file missing!
+            exit 1
+          }
+          make -C inttest ${{ matrix.smoke-suite }}
 
       - name: Collect test logs
         if: failure()
@@ -341,10 +374,26 @@ jobs:
         run: ./k0s sysinfo
 
       - name: Run smoketest
-        run: make -C inttest check-basic
+        run: make check-basic
+
+      - name: Create airgap image list
+        run: make airgap-images.txt
+
+      - name: Cache airgap image bundle
+        id: cache-airgap-image-bundle
+        uses: actions/cache@v3
+        with:
+          key: airgap-image-bundle-linux-${{ matrix.arch }}.tar-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+
+      - name: Create airgap image bundle if not cached
+        if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
+        run: make airgap-image-bundle-linux-${{ matrix.arch }}.tar
 
       - name: Run airgap test
-        run: make check-airgap TARGET_PLATFORM=linux/${{ matrix.arch }}
+        run: |
+          touch --no-create airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          make check-airgap
 
       - name: Collect test logs
         if: failure()

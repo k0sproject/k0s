@@ -155,6 +155,8 @@ func TestAirgapSuite(t *testing.T) {
 			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,
 
+			AirgapImageBundleMountPoints: []string{"/dist/bundle.tar"},
+
 			ControllerNetworks: []string{network},
 			WorkerNetworks:     []string{network},
 		},
