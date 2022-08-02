@@ -1037,12 +1037,12 @@ func lastLine(text string) string {
 func (s *FootlooseSuite) CreateNetwork(name string) error {
 	_ = s.DestroyNetwork(name)
 
-	cmd := exec.Command("/usr/bin/docker", "network", "create", name)
+	cmd := exec.Command("docker", "network", "create", name)
 	return cmd.Run()
 }
 
 // DestroyNetwork removes a docker network with the provided name.
 func (s *FootlooseSuite) DestroyNetwork(name string) error {
-	cmd := exec.Command("/usr/bin/docker", "network", "rm", name)
+	cmd := exec.Command("docker", "network", "rm", name)
 	return cmd.Run()
 }
