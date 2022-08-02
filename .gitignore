@@ -1,3 +1,7 @@
+/airgap-images.txt
+/airgap-image-bundle-linux-amd64.tar
+/airgap-image-bundle-linux-arm64.tar
+/airgap-image-bundle-linux-arm.tar
 /build/cache/*
 /k0s
 /k0s.code
