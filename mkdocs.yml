@@ -45,6 +45,9 @@ nav:
       - OpenID Connect: ./examples/oidc/oidc-cluster-configuration.md
       - SELinux:                          selinux.md
       - Pod Security Standards:           podsecurity.md
+  - Auto Updates:
+      - Overview:                         autopilot.md
+      - Multi-Command Plans:              autopilot-multicommand.md
   - Extensions:
       - MetalLB Load Balancer:            examples/metallb-loadbalancer.md
       - NGINX Ingress Controller:         examples/nginx-ingress.md
@@ -101,6 +104,11 @@ markdown_extensions:
   - toc:
         permalink: "#"
         toc_depth: 3
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra:
   generator: false
