@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // Package v1beta2 contains API Schema definitions for the v1beta2 API group
-//+kubebuilder:object:generate=true
-//+groupName=autopilot.k0sproject.io
+// +kubebuilder:object:generate=true
+// +groupName=autopilot.k0sproject.io
 package v1beta2
 
 import (

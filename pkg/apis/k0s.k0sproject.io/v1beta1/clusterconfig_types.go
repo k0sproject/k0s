@@ -135,7 +135,7 @@ func DefaultSchedulerSpec() *SchedulerSpec {
 	}
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // +genclient
 // +genclient:onlyVerbs=create
 // ClusterConfigList contains a list of ClusterConfig
