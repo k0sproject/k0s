@@ -24,12 +24,12 @@ import (
 
 // Component defines the lifecycle of managed components.
 //
-//    Created ――――――――――――――――――――――►(Stop)―――╮
-//    ╰―(Init)―► Initialized ―――――――►(Stop)――╮│
-//               ╰―(Run)―► Running ―►(Stop)―╮││
-//                  ╭(Healthy)╯▲            ▼▼▼
-//                  ╰――――――――――╯         ╭► Terminated╮
-//                                       ╰――――(Stop)――╯
+//	Created ――――――――――――――――――――――►(Stop)―――╮
+//	╰―(Init)―► Initialized ―――――――►(Stop)――╮│
+//	           ╰―(Run)―► Running ―►(Stop)―╮││
+//	              ╭(Healthy)╯▲            ▼▼▼
+//	              ╰――――――――――╯         ╭► Terminated╮
+//	                                   ╰――――(Stop)――╯
 type Component interface {
 	// Init initializes the component and prepares it for execution. This should
 	// include any fallible operations that can be performed without actually
@@ -60,12 +60,12 @@ type Component interface {
 // ReconcilerComponent defines the component interface that is reconciled based
 // on changes on the global config CR object changes.
 //
-//    Created ――――――――――――――――――――――――►(Stop)―――――╮
-//    ╰―(Init)―► Initialized ―――――――――►(Stop)――――╮│
-//   ╭(Reconcile)╯▲╰―(Run)―► Running ―►(Stop)―――╮││
-//   ╰――――――――――――╯╭(Reconcile)╯▲▲╰(Healthy)╮   ▼▼▼
-//                 ╰――――――――――――╯╰――――――――――╯╭► Terminated╮
-//                                           ╰――――(Stop)――╯
+//	 Created ――――――――――――――――――――――――►(Stop)―――――╮
+//	 ╰―(Init)―► Initialized ―――――――――►(Stop)――――╮│
+//	╭(Reconcile)╯▲╰―(Run)―► Running ―►(Stop)―――╮││
+//	╰――――――――――――╯╭(Reconcile)╯▲▲╰(Healthy)╮   ▼▼▼
+//	              ╰――――――――――――╯╰――――――――――╯╭► Terminated╮
+//	                                        ╰――――(Stop)――╯
 type ReconcilerComponent interface {
 	Component
 
