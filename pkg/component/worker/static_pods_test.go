@@ -19,7 +19,7 @@ package worker
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -292,7 +292,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 
 		assert.Equal(t, resp.StatusCode, http.StatusOK)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.JSONEq(t, expectedContent, string(body))

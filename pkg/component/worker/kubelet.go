@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -230,7 +229,7 @@ func (k *Kubelet) Run(ctx context.Context) error {
 			logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
 			return err
 		}
-		err = ioutil.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0644)
+		err = os.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write kubelet config: %w", err)
 		}

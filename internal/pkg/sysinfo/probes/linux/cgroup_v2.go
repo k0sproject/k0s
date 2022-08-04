@@ -22,7 +22,7 @@ package linux
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -60,7 +60,7 @@ func (s *cgroupV2) loadControllers(seen func(string, string)) error {
 		return err
 	}
 
-	controllerData, err := ioutil.ReadFile(filepath.Join(s.mountPoint, "cgroup.controllers"))
+	controllerData, err := os.ReadFile(filepath.Join(s.mountPoint, "cgroup.controllers"))
 	if err != nil {
 		return err
 	}
