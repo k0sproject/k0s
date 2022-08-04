@@ -275,13 +275,13 @@ func (c *CmdOpts) caHandler() http.Handler {
 	})
 }
 
-/** The token is in form of xyz.foobar where:
-- xyz: the token "ID" in kube api
-- foobar: the token itself
-We need to validate:
-- that we find a secret with the ID
-- that the token matches whats inside the secret
-*/
+// The token is in form of xyz.foobar where:
+//   - xyz: the token "ID" in kube api
+//   - foobar: the token itself
+//
+// We need to validate:
+//   - that we find a secret with the ID
+//   - that the token matches whats inside the secret
 func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
