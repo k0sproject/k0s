@@ -282,7 +282,12 @@ We need to validate:
 - that the token matches whats inside the secret
 */
 func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) bool {
-	parts := strings.Split(token, ".")
+	// Sanitize token header input
+	// see: https://github.com/github/codeql/blob/fd7561cf279f64ee266ccdc6746e8d66d81c6b8e/go/ql/src/Security/CWE-117/LogInjection.ql
+	escapedToken := strings.Replace(token, "\n", "", -1)
+	escapedToken = strings.Replace(escapedToken, "\r", "", -1)
+
+	parts := strings.Split(escapedToken, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
 		return false
