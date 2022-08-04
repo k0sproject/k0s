@@ -383,8 +383,10 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v3
         with:
-          key: airgap-image-bundle-linux-${{ matrix.arch }}.tar-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
-          path: airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          key: airgap-image-bundle-linux-${{ matrix.arch }}-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          path: |
+            airgap-images.txt
+            airgap-image-bundle-linux-${{ matrix.arch }}.tar
 
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
@@ -392,7 +394,7 @@ jobs:
 
       - name: Run airgap test
         run: |
-          touch --no-create airgap-image-bundle-linux-${{ matrix.arch }}.tar
+          make --touch airgap-image-bundle-linux-${{ matrix.arch }}.tar
           make check-airgap
 
       - name: Collect test logs
