@@ -365,8 +365,10 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v3
         with:
-          key: airgap-image-bundle-linux-arm64.tar-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
-          path: airgap-image-bundle-linux-arm64.tar
+          key: airgap-image-bundle-linux-arm64-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          path: |
+            airgap-images.txt
+            airgap-image-bundle-linux-arm64.tar
 
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
@@ -374,7 +376,7 @@ jobs:
 
       - name: Run airgap test
         run: |
-          touch --no-create airgap-image-bundle-linux-arm64.tar
+          make --touch airgap-image-bundle-linux-arm64.tar
           make check-airgap
 
       - name: Collect test logs
@@ -429,8 +431,10 @@ jobs:
         id: cache-airgap-image-bundle
         uses: actions/cache@v3
         with:
-          key: airgap-image-bundle-linux-arm.tar-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
-          path: airgap-image-bundle-linux-arm.tar
+          key: airgap-image-bundle-linux-arm-${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          path: |
+            airgap-images.txt
+            airgap-image-bundle-linux-arm.tar
 
       - name: Create airgap image bundle if not cached
         if: steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
@@ -438,7 +442,7 @@ jobs:
 
       - name: Run airgap test
         run: |
-          touch --no-create airgap-image-bundle-linux-arm.tar
+          make --touch airgap-image-bundle-linux-arm.tar
           make check-airgap
       - name: Collect test logs
         if: failure()
