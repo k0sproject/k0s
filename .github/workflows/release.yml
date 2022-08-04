@@ -289,7 +289,7 @@ jobs:
           echo "Setup go stable version $GO_VERSION"
           rm -rf -- "$HOME/.local/go"
           mkdir -p -- "$HOME/.local/go"
-          curl --silent -L "https://golang.org/dl/go${GO_VERSION}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
+          curl --silent -L "https://go.dev/dl/go${GO_VERSION%%.0}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
 
           echo "$HOME/.local/go/bin" >>"$GITHUB_PATH"
           export PATH="$PATH:$HOME/.local/go/bin"
