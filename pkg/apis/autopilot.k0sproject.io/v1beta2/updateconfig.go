@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+groupName=autopilot.k0sproject.io
+// +groupName=autopilot.k0sproject.io
 package v1beta2
 
 import (
@@ -26,11 +26,11 @@ func init() {
 	)
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+genclient
-//+genclient:onlyVerbs=create,delete,list,get,watch,update
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +genclient
+// +genclient:onlyVerbs=create,delete,list,get,watch,update
+// +genclient:nonNamespaced
 // +groupName=autopilot.k0sproject.io
 type UpdateConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -50,11 +50,11 @@ type UpgradeStrategy struct {
 	Cron string `json:"cron"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+genclient
-//+genclient:onlyVerbs=create
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +genclient
+// +genclient:onlyVerbs=create
+// +genclient:nonNamespaced
 type UpdateConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
