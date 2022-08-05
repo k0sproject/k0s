@@ -285,6 +285,14 @@ jobs:
       - ${{ matrix.arch }}
 
     steps:
+      # Our self-hosted runners are one static VMs and will hit docker rate limits easily as all traffic is coming from same IP
+      # By authenticating we can get 200 pulls / 6 hours
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
