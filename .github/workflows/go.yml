@@ -395,7 +395,7 @@ jobs:
       - name: Run airgap test
         run: |
           make --touch airgap-image-bundle-linux-${{ matrix.arch }}.tar
-          make check-airgap
+          make check-airgap TIMEOUT=10m
 
       - name: Collect test logs
         if: failure()
