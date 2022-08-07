@@ -6,27 +6,27 @@ on:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
 
 jobs:
   build:
@@ -84,7 +84,7 @@ jobs:
 
       - name: Build
         env:
-          TARGET_OS: '${{ matrix.target }}'
+          TARGET_OS: "${{ matrix.target }}"
         run: |
           make bindata
           make --touch codegen
@@ -414,3 +414,44 @@ jobs:
       - name: "Post: Fixup directories"
         if: always()
         run: find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["go"]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+    needs: build
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Download compiled binary
+        uses: actions/download-artifact@v3
+        with:
+          name: k0s
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
