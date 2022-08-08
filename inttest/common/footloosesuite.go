@@ -69,6 +69,9 @@ const (
 
 	defaultK0sBinaryFullPath = "/usr/local/bin/k0s"
 	k0sBindMountFullPath     = "/dist/k0s"
+	k0sNewBindMountFullPath  = "/dist/k0s-new"
+
+	defaultK0sUpdateVersion = "v0.0.0"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -95,6 +98,7 @@ type FootlooseSuite struct {
 	WithLB                       bool
 	WorkerCount                  int
 	WithUpdateServer             bool
+	K0sUpdateVersion             string
 
 	/* context and cancellation */
 
@@ -131,6 +135,11 @@ func (s *FootlooseSuite) initializeDefaults() {
 	}
 	if s.LaunchMode == "" {
 		s.LaunchMode = LaunchModeStandalone
+	}
+
+	s.K0sUpdateVersion = os.Getenv("K0S_UPDATE_TO_VERSION")
+	if s.K0sUpdateVersion == "" {
+		s.K0sUpdateVersion = defaultK0sUpdateVersion
 	}
 
 	switch s.LaunchMode {
@@ -1078,15 +1087,31 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 
 	volumes := []config.Volume{
 		{
+			Type:        "volume",
+			Destination: "/var/lib/k0s",
+		},
+	}
+
+	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
+	if updateFromBinPath != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      updateFromBinPath,
+			Destination: k0sBindMountFullPath,
+			ReadOnly:    true,
+		}, config.Volume{
+			Type:        "bind",
+			Source:      binPath,
+			Destination: k0sNewBindMountFullPath,
+			ReadOnly:    true,
+		})
+	} else {
+		volumes = append(volumes, config.Volume{
 			Type:        "bind",
 			Source:      binPath,
 			Destination: k0sBindMountFullPath,
 			ReadOnly:    true,
-		},
-		{
-			Type:        "volume",
-			Destination: "/var/lib/k0s",
-		},
+		})
 	}
 
 	if len(s.AirgapImageBundleMountPoints) > 0 {

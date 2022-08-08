@@ -272,6 +272,88 @@ jobs:
           name: smoketest-${{ matrix.smoke-suite }}-cluster-state
           path: /tmp/cluster-state.zip
 
+  autopilot-smoketest-matrix:
+    name: Release matrix
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - id: set-matrix
+        run: |
+          matrix=$(./hack/tools/gen-matrix.sh 1.24.2 1.24.3)
+          echo "::set-output name=matrix::$matrix"
+
+  autopilot-smoketest:
+    name: Autopilot smoke test
+    needs:
+    - build
+    - autopilot-smoketest-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{fromJson(needs.autopilot-smoketest-matrix.outputs.matrix)}}
+        smoke-suite:
+          - check-ap-ha3x3
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download compiled binary
+        uses: actions/download-artifact@v3
+        with:
+          name: k0s
+
+      - name: Download latest release
+        if: matrix.smoke-suite == 'check-ap-ha3x3'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -L -o k0s-${{ matrix.version }} https://github.com/k0sproject/k0s/releases/download/${{ matrix.version }}/k0s-${{ matrix.version }}-amd64
+          chmod +x k0s-${{ matrix.version }}
+
+      - name: k0s sysinfo
+        run: |
+          chmod +x k0s
+          ./k0s sysinfo
+
+      - name: Run inttest
+        run: |
+          make -C inttest ${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN=../k0s-${{ matrix.version }}
+
+      - name: Collect test logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-logs
+          path: /tmp/*.log
+
+      - name: Collect cluster state
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-cluster-state
+          path: /tmp/cluster-state.zip
+
   smoketest-arm:
     name: Smoke test on armv7/arm64
     strategy:
@@ -403,6 +485,13 @@ jobs:
         with:
           name: smoketest-${{ matrix.arch }}-check-basic-logs
           path: /tmp/*.log
+
+      - name: Collect cluster state
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: smoketest-${{ matrix.arch }}-smoke-cluster-state
+          path: /tmp/cluster-state.zip
 
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752
       # Golang mod cache tends to set directories to read-only, which breaks any
