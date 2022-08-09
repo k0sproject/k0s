@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/suite"
 	"github.com/weaveworks/footloose/pkg/config"
 
@@ -79,6 +80,17 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	if err != nil {
 		return err
 	}
+
+	s.T().Log("Waiting for cri-dockerd to start up")
+
+	s.Require().NoError(retry.Do(
+		func() error {
+			_, err = sshWorker.ExecWithOutput("[ -e /var/run/cri-dockerd.sock ]")
+			return err
+		},
+		retry.LastErrorOnly(true),
+		retry.Context(s.Context()),
+	), "The socket file for cri-dockerd doesn't exist. Is it running?")
 
 	workerCommand := fmt.Sprintf(`nohup /usr/local/bin/k0s worker --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
 	_, err = sshWorker.ExecWithOutput(workerCommand)
