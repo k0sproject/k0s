@@ -28,12 +28,12 @@ import (
 )
 
 // EmbeddedBinaryNeedsUpdate returns true if the provided embedded binary file should
-// be updated. This determination is based on the modification times of both the provided
-// executable, and embedded binary executable. It is expected that the embedded binary
+// be updated. This determination is based on the modification times and file sizes of both
+// the provided executable and the embedded executable. It is expected that the embedded binary
 // modification times should match the main `k0s` executable.
-func EmbeddedBinaryNeedsUpdate(exinfo os.FileInfo, embeddedBinaryPath string) bool {
+func EmbeddedBinaryNeedsUpdate(exinfo os.FileInfo, embeddedBinaryPath string, size int64) bool {
 	if pathinfo, err := os.Stat(embeddedBinaryPath); err == nil {
-		return !exinfo.ModTime().Equal(pathinfo.ModTime())
+		return !exinfo.ModTime().Equal(pathinfo.ModTime()) || pathinfo.Size() != size
 	}
 
 	// If the stat fails, the file is either missing or permissions are missing
@@ -81,11 +81,6 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 		return fmt.Errorf("unable to stat '%s': %w", selfexe, err)
 	}
 
-	if !EmbeddedBinaryNeedsUpdate(exinfo, p) {
-		logrus.Debug("Re-use existing file:", p)
-		return nil
-	}
-
 	gzname := "bin/" + name + ".gz"
 	bin, embedded := BinData[gzname]
 	if !embedded {
@@ -93,6 +88,11 @@ func Stage(dataDir string, name string, filemode os.FileMode) error {
 		return nil
 	}
 	logrus.Debugf("%s is at offset %d", gzname, bin.offset)
+
+	if !EmbeddedBinaryNeedsUpdate(exinfo, p, bin.originalSize) {
+		logrus.Debug("Re-use existing file:", p)
+		return nil
+	}
 
 	infile, err := os.Open(selfexe)
 	if err != nil {

@@ -33,6 +33,16 @@ type BasicSuite struct {
 
 func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
+
+	// Create an empty file to prove that k0s manage to rewrite a partially written file
+	ssh, err := s.SSH(s.ControllerNode(0))
+	s.NoError(err)
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
+	s.NoError(err)
+	_, err = ssh.ExecWithOutput(fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
+	s.NoError(err)
+
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
 	s.NoError(s.InitController(0, dataDirOpt))
 
