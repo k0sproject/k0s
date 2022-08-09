@@ -220,17 +220,24 @@ airgap-images.txt: k0s
 	  exit $$code ; \
 	}
 
-airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
-airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
-airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
 airgap-image-bundle-linux-amd64.tar \
 airgap-image-bundle-linux-arm64.tar \
-airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
+airgap-image-bundle-linux-arm.tar :
 	docker run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
+	  -e DOCKER_USER='$(DOCKER_USER)' \
+	  -e DOCKER_PASSWORD='$(DOCKER_PASSWORD)' \
 	  k0sbuild.image-bundler < airgap-images.txt > '$@' || { \
 	    code=$$? && rm -f -- '$@' && exit $$code ; \
 	  }
+
+airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
+airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
+airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
+
+airgap-image-bundle-linux-arm64.tar: .k0sbuild.image-bundler.stamp airgap-images.txt airgap-image-bundle-linux-arm64.tar
+airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt airgap-image-bundle-linux-arm.tar 
+airgap-image-bundle-linux-amd64.tar: .k0sbuild.image-bundler.stamp airgap-images.txt airgap-image-bundle-linux-arm.tar 
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/*
 	docker build -t k0sbuild.image-bundler hack/image-bundler

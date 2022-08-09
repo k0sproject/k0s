@@ -1,9 +1,10 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-set -eu
+set -eu -o pipefail
 
 containerd </dev/null >&2 &
 #shellcheck disable=SC2064
+
 trap "{ kill -- $! && wait -- $!; } || true" INT EXIT
 
 while ! ctr version </dev/null >/dev/null; do
@@ -14,11 +15,16 @@ done
 
 echo containerd up >&2
 
-set --
+set +u 
 
 while read -r image; do
+  if [[ ! -z $DOCKER_USER || ! -z $DOCKER_PASSWORD ]]; then
+    auth="--user $DOCKER_USER:$DOCKER_PASSWORD"
+  else
+    auth=""
+  fi
   echo Fetching content of "$image" ... >&2
-  out="$(ctr content fetch --platform "$TARGET_PLATFORM" -- "$image")" || {
+  out="$(ctr content fetch --platform "$TARGET_PLATFORM" $auth -- "$image")" || {
     code=$?
     echo "$out" >&2
     exit $code
