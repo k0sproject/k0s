@@ -24,6 +24,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
 
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v3
@@ -32,7 +34,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r docs/requirements.txt
           go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
 

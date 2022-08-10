@@ -93,6 +93,14 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
+  - exclude:
+      glob:
+        - '*.etag'
+        - Dockerfile.serve-dev
+        - k0s
+        - k0s.exe
+        - Makefile*
+        - requirements.txt
 
 markdown_extensions:
   - pymdownx.highlight: {}
