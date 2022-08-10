@@ -1,3 +1,6 @@
+# Keep in sync with the plugins.exclude section in mkdocs.yml as MkDocs will
+# copy over everything despite hidden files.
+
 /*.etag
 /.docker-image.*
 /k0s
