@@ -1,0 +1,40 @@
+name: Build docs
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - docs/**
+      - mkdocs.yml
+
+jobs:
+  build:
+    name: Build docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout k0s
+        uses: actions/checkout@v3
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Generate docs
+        run: make -C docs docs
+
+      - name: Upload site/
+        uses: actions/upload-artifact@v3
+        with:
+          name: site
+          path: site/
