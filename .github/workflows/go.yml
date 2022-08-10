@@ -43,6 +43,7 @@ jobs:
             binary-suffix: .exe
 
     outputs:
+      smoke-test-matrix: ${{ steps.list-smoke-tests.outputs.linux-matrix }}
       airgap-image-bundle-hash-linux: ${{ steps.create-airgap-image-list.outputs.linux-hash }}
 
     steps:
@@ -95,6 +96,12 @@ jobs:
         with:
           name: k0s${{ matrix.binary-suffix }}
           path: k0s${{ matrix.binary-suffix }}
+
+      - name: List smoke tests
+        id: list-smoke-tests
+        run: |
+          ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
+              'split(" ") | [ .[] | select(. != "") ] | "::set-output name=${{ matrix.target }}-matrix::" + tojson'
 
       - name: Create airgap image list
         id: create-airgap-image-list
@@ -175,48 +182,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        smoke-suite:
-          - check-addons
-          - check-airgap
-          - check-ap-airgap
-          - check-ap-ha3x3
-          - check-ap-platformselect
-          - check-ap-quorum
-          - check-ap-quorumsafety
-          - check-ap-selector
-          - check-ap-single
-          - check-ap-updater
-          - check-basic
-          - check-byocri
-          - check-calico
-          - check-cnichange
-          - check-ctr
-          - check-customports
-          - check-dualstack
-          - check-externaletcd
-          - check-hacontrolplane
-          - check-kine
-          - check-kuberouter
-          - check-kubeletcertrotate
-          - check-metrics
-          - check-multicontroller
-          - check-noderole
-          - check-singlenode
-          - check-backup
-          - check-k0scloudprovider
-          - check-cli
-          - check-disabledcomponents
-          - check-extraargs
-          - check-configchange
-          - check-upgrade
-          - check-psp
-          - check-statussocket
-          - check-tunneledkas
-          - check-workerrestart
-          - check-kubectl
-          - check-k0sctl
-          - check-metricscraper
-          - check-customdomain
+        smoke-suite: ${{ fromJson(needs.build.outputs.smoke-test-matrix) }}
 
     steps:
       - name: Check out code into the Go module directory
