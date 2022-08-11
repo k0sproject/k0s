@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+groupName=autopilot.k0sproject.io
+// +groupName=autopilot.k0sproject.io
 package v1beta2
 
 import (
@@ -32,12 +32,12 @@ func init() {
 // ControlNode is a node which behaves as a controller, able to receive autopilot
 // signaling updates.
 //
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+kubebuilder:subresource:status
-//+genclient
-//+genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:subresource:status
+// +genclient
+// +genclient:onlyVerbs=create,delete,list,get,watch,update,updateStatus
+// +genclient:nonNamespaced
 // +groupName=autopilot.k0sproject.io
 type ControlNode struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -62,11 +62,11 @@ func (c *ControlNodeStatus) GetInternalIP() string {
 
 // ControlNodeList is a list of ControlNode instances.
 //
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+genclient
-//+genclient:onlyVerbs=create
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +genclient
+// +genclient:onlyVerbs=create
+// +genclient:nonNamespaced
 type ControlNodeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -77,14 +77,14 @@ type ControlNodeList struct {
 // Plan provides all details of what to execute as a part of the plan, and
 // the current status of its execution.
 //
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-//+genclient
-//+genclient:onlyVerbs=create,delete,list,get,watch,update
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +genclient
+// +genclient:onlyVerbs=create,delete,list,get,watch,update
+// +genclient:nonNamespaced
 type Plan struct {
 	metav1.TypeMeta `json:",omitempty,inline"`
 	// Standard object's metadata.
@@ -99,11 +99,11 @@ type Plan struct {
 
 // PlanList is a list of Plan instances.
 //
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+genclient
-//+genclient:onlyVerbs=create
-//+genclient:nonNamespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +genclient
+// +genclient:onlyVerbs=create
+// +genclient:nonNamespaced
 type PlanList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

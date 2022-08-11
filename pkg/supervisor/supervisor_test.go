@@ -13,11 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package supervisor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -153,7 +153,7 @@ func TestRespawn(t *testing.T) {
 	}
 
 	// wait til process starts up. fifo will block the write til process reads it
-	err = ioutil.WriteFile(pingFifoPath, []byte("ping 1"), 0644)
+	err = os.WriteFile(pingFifoPath, []byte("ping 1"), 0644)
 	if err != nil {
 		t.Errorf("Failed to write to fifo %s: %v", pingFifoPath, err)
 	}
@@ -162,10 +162,10 @@ func TestRespawn(t *testing.T) {
 	process := s.GetProcess()
 
 	// read the pong to unblock the process so it can exit
-	_, _ = ioutil.ReadFile(pongFifoPath)
+	_, _ = os.ReadFile(pongFifoPath)
 
 	// wait til the respawned process again reads the ping fifo
-	err = ioutil.WriteFile(pingFifoPath, []byte("ping 2"), 0644)
+	err = os.WriteFile(pingFifoPath, []byte("ping 2"), 0644)
 	if err != nil {
 		t.Errorf("Failed to write to fifo %s: %v", pingFifoPath, err)
 	}
