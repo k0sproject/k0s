@@ -164,7 +164,7 @@ codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
 print_empty_generated_offsets = printf "%s\n\n%s\n%s\n" \
 			"package assets" \
-			"var BinData = map[string]struct{ offset, size int64 }{}" \
+			"var BinData = map[string]struct{ offset, size, originalSize int64 }{}" \
 			"var BinDataSize int64"
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go:
