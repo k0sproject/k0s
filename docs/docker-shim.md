@@ -1,6 +1,10 @@
 # Dockershim Deprecation - What Does It Mean For K0s?
 
-Back in December 2020, Kubernetes have anounced the [deprecation of the docker-shim from version 1.24 onwards](https://kubernetes.io/blog/2020/12/02/dockershim-faq/). Now that kubernetes 1.24 is out, the 1.24 release of k0s will no longer support the docker-shim as well.
+Back in December 2020, Kubernetes have announced the [deprecation of the
+docker-shim from version 1.24 onwards][deprecate-dockershim]. As a consequence,
+k0s 1.24 and above don't support the docker-shim as well.
+
+[deprecate-dockershim]: https://kubernetes.io/blog/2020/12/02/dockershim-faq/
 
 ## What Is Dockershim, and Why Was It Deprecated?
 
