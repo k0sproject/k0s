@@ -18,9 +18,10 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/utils/strings/slices"
 	"path/filepath"
 	"strings"
+
+	"k8s.io/utils/strings/slices"
 
 	"github.com/sirupsen/logrus"
 
@@ -153,7 +154,7 @@ func DefaultEtcdConfig() *EtcdConfig {
 // DefaultKineConfig creates KineConfig with sane defaults
 func DefaultKineConfig(dataDir string) *KineConfig {
 	return &KineConfig{
-		DataSource: "sqlite://" + dataDir + "/db/state.db?more=rwc&_journal=WAL&cache=shared",
+		DataSource: "sqlite://" + dataDir + "/db/state.db?mode=rwc&_journal=WAL&cache=shared",
 	}
 }
 
