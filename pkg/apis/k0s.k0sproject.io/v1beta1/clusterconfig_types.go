@@ -42,7 +42,6 @@ type ClusterSpec struct {
 	Scheduler         *SchedulerSpec         `json:"scheduler,omitempty"`
 	Storage           *StorageSpec           `json:"storage"`
 	Network           *Network               `json:"network"`
-	PodSecurityPolicy *PodSecurityPolicy     `json:"podSecurityPolicy"`
 	WorkerProfiles    WorkerProfiles         `json:"workerProfiles,omitempty"`
 	Telemetry         *ClusterTelemetry      `json:"telemetry"`
 	Install           *InstallSpec           `json:"installConfig,omitempty"`
@@ -90,9 +89,6 @@ func (c *ClusterConfig) StripDefaults() *ClusterConfig {
 	}
 	if reflect.DeepEqual(copy.Spec.Network, DefaultNetwork()) {
 		copy.Spec.Network = nil
-	}
-	if reflect.DeepEqual(copy.Spec.PodSecurityPolicy, DefaultPodSecurityPolicy()) {
-		copy.Spec.PodSecurityPolicy = nil
 	}
 	if reflect.DeepEqual(copy.Spec.Telemetry, DefaultClusterTelemetry()) {
 		copy.Spec.Telemetry = nil
@@ -234,7 +230,6 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 		API:               DefaultAPISpec(),
 		ControllerManager: DefaultControllerManagerSpec(),
 		Scheduler:         DefaultSchedulerSpec(),
-		PodSecurityPolicy: DefaultPodSecurityPolicy(),
 		Install:           DefaultInstallSpec(),
 		Images:            DefaultClusterImages(),
 		Telemetry:         DefaultClusterTelemetry(),
@@ -274,7 +269,6 @@ func (c *ClusterConfig) Validate() []error {
 	errors = append(errors, validateSpecs(c.Spec.Scheduler)...)
 	errors = append(errors, validateSpecs(c.Spec.Storage)...)
 	errors = append(errors, validateSpecs(c.Spec.Network)...)
-	errors = append(errors, validateSpecs(c.Spec.PodSecurityPolicy)...)
 	errors = append(errors, validateSpecs(c.Spec.WorkerProfiles)...)
 	errors = append(errors, validateSpecs(c.Spec.Telemetry)...)
 	errors = append(errors, validateSpecs(c.Spec.Install)...)
@@ -331,12 +325,11 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 				PodCIDR:    c.Spec.Network.PodCIDR,
 				Provider:   c.Spec.Network.Provider,
 			},
-			PodSecurityPolicy: c.Spec.PodSecurityPolicy,
-			WorkerProfiles:    c.Spec.WorkerProfiles,
-			Telemetry:         c.Spec.Telemetry,
-			Images:            c.Spec.Images,
-			Extensions:        c.Spec.Extensions,
-			Konnectivity:      c.Spec.Konnectivity,
+			WorkerProfiles: c.Spec.WorkerProfiles,
+			Telemetry:      c.Spec.Telemetry,
+			Images:         c.Spec.Images,
+			Extensions:     c.Spec.Extensions,
+			Konnectivity:   c.Spec.Konnectivity,
 		},
 		Status: c.Status,
 	}

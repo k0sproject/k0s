@@ -73,8 +73,6 @@ const (
 	KonnectivityServerUser = "konnectivity-server"
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.25"
-	// DefaultPSP defines the system level default PSP to apply
-	DefaultPSP = "00-k0s-privileged"
 	// Image Constants
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.32-k0s1"
@@ -102,7 +100,6 @@ const (
 	ControlAPIComponentName            = "control-api"
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
-	DefaultPspComponentName            = "default-psp"
 	HelmComponentName                  = "helm"
 	KonnectivityServerComponentName    = "konnectivity-server"
 	KubeControllerManagerComponentName = "kube-controller-manager"

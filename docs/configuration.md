@@ -67,8 +67,6 @@ spec:
     kubeProxy:
       disabled: false
       mode: iptables
-  podSecurityPolicy:
-    defaultPolicy: 00-k0s-privileged
   telemetry:
     enabled: true
   controllerManager:
@@ -182,19 +180,6 @@ spec:
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `disabled`       | Disable kube-proxy altogether (default: `false`).                                                                                                       |
 | `mode`           | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
-
-### `spec.podSecurityPolicy`
-
-Use the `spec.podSecurityPolicy` key to configure the default [PSP](https://kubernetes.io/docs/concepts/policy/pod-security-policy/).
-
-k0s creates two PSPs out-of-the-box:
-
-| PSP                 | Description                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `00-k0s-privileged` | Default; no restrictions; used also for Kubernetes/k0s level system pods.           |
-| `99-k0s-restricted` | Does not allow any host namespaces or root users, nor any bind mounts from the host |
-
-**Note**: Users can create supplemental PSPs and bind them to users / access accounts as necessary.
 
 ### `spec.controllerManager`
 
@@ -373,7 +358,7 @@ spec:
 k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:
 
 ```sh
---disable-components strings                     disable components (valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac)
+--disable-components strings                     disable components (valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac)
 ```
 
 If you use k0sctl just add the flag when installing the cluster for the first controller at `spec.hosts.installFlags` in the config file like e.g.:

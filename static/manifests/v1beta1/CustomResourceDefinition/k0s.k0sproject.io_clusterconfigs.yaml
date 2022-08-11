@@ -369,14 +369,6 @@ spec:
                     description: Network CIDR to use for cluster VIP services
                     type: string
                 type: object
-              podSecurityPolicy:
-                description: PodSecurityPolicy defines the config options for setting
-                  system level default PSP
-                properties:
-                  defaultPolicy:
-                    description: default PSP for the cluster (00-k0s-privileged/99-k0s-restricted)
-                    type: string
-                type: object
               scheduler:
                 description: SchedulerSpec defines the fields for the Scheduler
                 properties:

@@ -31,7 +31,6 @@ smoketests := \
 	check-metrics \
 	check-multicontroller \
 	check-noderole \
-	check-psp \
 	check-singlenode \
 	check-statussocket \
 	check-tunneledkas \
