@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: docs/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r docs/requirements.txt
+        run: pip install --require-hashes -r docs/requirements.txt
 
       - name: Generate docs
         run: make -C docs docs
