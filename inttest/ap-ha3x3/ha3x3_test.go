@@ -117,11 +117,10 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: v0.0.0
-        forceupdate: true
+        version: ` + s.K0sUpdateVersion + `
         platforms:
           linux-amd64:
-            url: http://localhost/dist/k0s
+            url: http://localhost/dist/k0s-new
         targets:
           controllers:
             discovery:
@@ -177,6 +176,10 @@ spec:
 			s.Equal(appc.SignalCompleted, node.State)
 		}
 	}
+
+	version, err := s.GetK0sVersion(s.ControllerNode(0))
+	s.NoError(err)
+	s.Equal(s.K0sUpdateVersion, version)
 }
 
 // TestHA3x3Suite sets up a suite using 3 controllers for quorum, and runs various
