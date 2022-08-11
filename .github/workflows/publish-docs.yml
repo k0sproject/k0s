@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r docs/requirements.txt
+          pip install --require-hashes -r docs/requirements.txt
           go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
 
       - name: Generate docs

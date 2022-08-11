@@ -286,13 +286,11 @@ manifests: .helmCRD .cfgCRD
 docs:
 	$(MAKE) -C docs
 
-DOCS_DEV_PORT = 8000
-
 .PHONY: docs-serve-dev
+docs-serve-dev: DOCS_DEV_PORT ?= 8000
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
 	docker run --rm \
-	  -v "$(CURDIR):/docs:ro" \
-	  -w /docs \
+	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev

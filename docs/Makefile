@@ -22,7 +22,7 @@ docs: .require-mkdocs cli
 .PHONY: .require-mkdocs
 .require-mkdocs:
 	@which mkdocs >/dev/null 2>/dev/null || { \
-	  echo 'mkdocs required, use pip install mkdocs' >&2; \
+	  echo 'mkdocs required, use pip install --require-hashes -r $(CURDIR)/requirements.txt' >&2; \
 	  exit 1; \
 	}
 
