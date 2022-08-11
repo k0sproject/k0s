@@ -286,13 +286,15 @@ manifests: .helmCRD .cfgCRD
 docs:
 	$(MAKE) -C docs
 
-DOCS_DEV_PORT = 8000
-
 .PHONY: docs-serve-dev
+docs-serve-dev: DOCS_DEV_PORT ?= 8000
+docs-serve-dev: GIT_DIR ?= $(realpath $(shell git rev-parse --git-dir))
+docs-serve-dev: GIT_COMMON_DIR ?= $(realpath $(shell git rev-parse --git-common-dir))
 docs-serve-dev:
 	$(MAKE) -C docs .docker-image.serve-dev.stamp
 	docker run --rm \
-	  -v "$(CURDIR):/docs:ro" \
-	  -w /docs \
+	  -v "$(CURDIR):/k0s:ro" \
+	  -v "$(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro" \
+	  -v "$(GIT_DIR):$(GIT_DIR):ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev

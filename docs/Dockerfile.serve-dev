@@ -2,30 +2,23 @@ ARG PYTHON_IMAGE_VERSION
 
 FROM python:${PYTHON_IMAGE_VERSION} as builder
 
+# Prepare Python virtual env
 ENV PYTHONUNBUFFERED 1
-
-# Set build directory
-WORKDIR /wheels
-
-# Copy files necessary
-COPY ./requirements.txt .
-
-# Perform build and cleanup artifacts
 RUN \
   apk add --no-cache \
     git \
-    git-fast-import \
-    curl \
-    jq \
-  && apk add --no-cache --virtual .build gcc musl-dev \
-  && python -m pip install --upgrade pip \
-  && pip install -r requirements.txt \
-  && apk del .build gcc musl-dev \
-  && rm -rf /usr/local/lib/python3.8/site-packages/mkdocs/themes/*/* \
-  && rm -rf /tmp/*
+    pythonispython3 \
+  && git config --global --add safe.directory /k0s \
+  && python -m venv --upgrade-deps /mkdocs/venv
 
-# Set final MkDocs working directory
-WORKDIR /docs
+# Copy requirements.txt
+COPY ./requirements.txt /mkdocs/requirements.txt
+
+# Install python dependencies
+ENV VIRTUAL_ENV=/deps/venv PATH=/mkdocs/venv/bin:$PATH
+RUN pip install -r /mkdocs/requirements.txt
+
+WORKDIR /k0s
 
 # Expose MkDocs development server port
 EXPOSE 8000

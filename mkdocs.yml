@@ -93,6 +93,8 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
+  - git-revision-date-localized:
+      fallback_to_build_date: true
   - exclude:
       glob:
         - '*.etag'
