@@ -20,5 +20,5 @@ smoketests := \
 	check-disabledcomponents \
 	check-extraargs \
 	check-configchange \
-	check-upgrade
-
+	check-upgrade \
+	check-capitalhostnames \
