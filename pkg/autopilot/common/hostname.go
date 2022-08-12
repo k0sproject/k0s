@@ -14,7 +14,11 @@
 
 package common
 
-import "os"
+import (
+	"os"
+
+	nodeutil "k8s.io/kubernetes/pkg/util/node"
+)
 
 const (
 	envAutopilotHostname = "AUTOPILOT_HOSTNAME"
@@ -24,9 +28,6 @@ const (
 // for an AUTOPILOT_HOSTNAME environment variable, falling back to whatever the OS
 // returns.
 func FindEffectiveHostname() (string, error) {
-	if hostname, found := os.LookupEnv(envAutopilotHostname); found {
-		return hostname, nil
-	}
-
-	return os.Hostname()
+	// nodeutil.GetHostname will return the "object name safe" hostname, overridden via the env var if non-empty value
+	return nodeutil.GetHostname(os.Getenv(envAutopilotHostname))
 }
