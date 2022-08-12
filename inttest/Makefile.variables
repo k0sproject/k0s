@@ -40,3 +40,4 @@ smoketests := \
 	check-k0sctl \
 	check-metricscraper \
 	check-customdomain \
+	check-capitalhostnames \
