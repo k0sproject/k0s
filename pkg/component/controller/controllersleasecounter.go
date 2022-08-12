@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 
@@ -11,6 +10,8 @@ import (
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
+	nodeutil "k8s.io/kubernetes/pkg/util/node"
 )
 
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.
@@ -38,7 +39,8 @@ func (l *K0sControllersLeaseCounter) Run(ctx context.Context) error {
 	}
 
 	// hostname used to make the lease names be clear to which controller they belong to
-	holderIdentity, err := os.Hostname()
+	// follow kubelet convention for naming so we e.g. use lowercase hostname etc.
+	holderIdentity, err := nodeutil.GetHostname("")
 	if err != nil {
 		return nil
 	}
