@@ -1,13 +1,6 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-ARG VERSION
-ARG BUILD_GO_TAGS
-ARG BUILD_GO_CGO_ENABLED
-ARG BUILD_SHIM_GO_CGO_ENABLED
-ARG BUILD_GO_FLAGS
-ARG BUILD_GO_LDFLAGS
-ARG BUILD_GO_LDFLAGS_EXTRA
 ENV GOPATH=/go
 
 RUN apk upgrade -U -a && apk add \
@@ -15,9 +8,18 @@ RUN apk upgrade -U -a && apk add \
 	btrfs-progs-dev btrfs-progs-static \
 	protoc
 
+ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
 WORKDIR /go/src/github.com/containerd/containerd
+
+ARG BUILD_GO_TAGS \
+  BUILD_GO_CGO_ENABLED \
+  BUILD_SHIM_GO_CGO_ENABLED \
+  BUILD_GO_FLAGS \
+  BUILD_GO_LDFLAGS \
+  BUILD_GO_LDFLAGS_EXTRA
+
 RUN go version
 RUN make \
 	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
