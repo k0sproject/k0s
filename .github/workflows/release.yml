@@ -3,10 +3,14 @@ name: Release
 on:
   push:
     tags:
-      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+      - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   release:
+    env:
+      TF_VAR_k0s_binary_path: "${{ github.workspace }}/k0s"
+      KOSCTL_VERSION: 0.13.2
+      KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
     runs-on: ubuntu-latest
     outputs:
@@ -415,7 +419,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
-      SONOBUOY_VERSION: 0.56.7
 
     name: "K8s Conformance Testing"
     runs-on: ubuntu-latest
@@ -451,12 +454,9 @@ jobs:
 
       - name: Launch Test Environment
         env:
-          K0S_VER: ${{ needs.release.outputs.tag_name }}
+          TF_VAR_cluster_name: "k0s_conformance"
+          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
         run: |
-          export TF_VAR_k0s_binary_path="${{ github.workspace }}/k0s"
-          export TF_VAR_k0s_version=${KOS_VER}
-          export TF_VAR_cluster_name="k0s_conformance"
-
           # Start SSH Agent
           eval `ssh-agent -s`
 
@@ -465,24 +465,21 @@ jobs:
       - name: Create k0s Cluster using k0sctl
         id: k0sctl
         run: |
-          # install k0sctl
-          go install github.com/k0sproject/k0sctl@latest
-
-          k0sctl apply -c k0sctl.yaml
+          # download k0sctl
+          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${KOSCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          chmod +x ./k0sctl
+          ./k0sctl apply -c k0sctl.yaml
 
           # save kubeconfig file
-          k0sctl kubeconfig > ${{ github.workspace }}/kubeconfig
+          ./k0sctl kubeconfig > $KUBECONFIG
 
       - name: Run Full Conformance Check
-        run: |
-          export KUBECONFIG=${{ github.workspace }}/kubeconfig
-          SONOBUOY_VERSION=${{ env.SONOBUOY_VERSION}} make check-conformance
+        run: make check-conformance
         working-directory: ./inttest
 
       - name: Retrieve Sonobuoy Results
         run: |
-          export KUBECONFIG=${{ github.workspace }}/kubeconfig
-          SONOBUOY_VERSION=${{ env.SONOBUOY_VERSION}} make get-conformance-results
+          make get-conformance-results
         working-directory: ./inttest
 
       - name: Upload conformance test result to Release Assets
@@ -497,10 +494,8 @@ jobs:
         if: ${{ always() }}
       - name: Clean-Up Environment
         env:
-          K0S_VER: ${{ needs.release.outputs.tag_name }}
+          TF_VAR_cluster_name: "k0s_conformance"
+          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
         run: |
-          export TF_VAR_k0s_binary_path="${{ github.workspace }}/k0s"
-          export TF_VAR_k0s_version=${KOS_VER}
-
           terraform destroy -auto-approve
         if: ${{ always() }}

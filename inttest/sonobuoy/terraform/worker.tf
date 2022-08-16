@@ -1,7 +1,7 @@
 resource "aws_instance" "cluster-workers" {
   count         = var.worker_count
   ami           = data.aws_ami.ubuntu.id
-  instance_type = var.cluster_flavor
+  instance_type = var.instance_type
   tags = {
     Name = format("%s-worker-%d", local.cluster_unique_identifier, count.index)
     Role = "worker"

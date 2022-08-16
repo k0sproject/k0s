@@ -15,7 +15,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
-      SONOBUOY_VERSION: 0.56.7
+      KOSCTL_VERSION: 0.13.2
+      KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Network Conformance Testing"
     runs-on: ubuntu-latest
@@ -114,11 +115,13 @@ jobs:
           echo ::set-output name=K0S_VERSION::${K0S_VER}
 
       - name: Terraform Apply
+        env:
+          TF_VAR_k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}
+          TF_VAR_k0s_binary_path: ${{ github.workspace }}/k0s
+
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
-          export TF_VAR_k0s_version="${{ steps.bin_info.outputs.K0S_VERSION }}"
-          export TF_VAR_k0s_binary_path="${{ github.workspace }}/k0s"
 
           # debug
           echo "k0s_version = ${TF_VAR_k0s_version}"
@@ -131,25 +134,24 @@ jobs:
       - name: Create k0s Cluster using k0sctl
         id: k0sctl
         run: |
-          # install k0sctl
-          go install github.com/k0sproject/k0sctl@latest
-
-          k0sctl apply -c k0sctl.yaml
+          # download k0sctl
+          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${KOSCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          chmod +x ./k0sctl
+          ./k0sctl apply -c k0sctl.yaml
 
           # save kubeconfig file
-          k0sctl kubeconfig > ${{ github.workspace }}/kubeconfig
+          ./k0sctl kubeconfig > $KUBECONFIG
 
       - name: Run Sonobuoy
-        run: |
-          export KUBECONFIG=${{ github.workspace }}/kubeconfig
-          SONOBUOY_VERSION=${{ env.SONOBUOY_VERSION}} make check-network
+        run: make check-network
         working-directory: ./inttest
 
       - name: Terraform Destroy
+        env:
+          TF_VAR_k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}
         run: |
           PR_NUMBER=$(echo ${GITHUB_REF} | cut -d / -f 3 )
           export TF_VAR_cluster_name="k0s_pr_${PR_NUMBER}"
-          export TF_VAR_k0s_version=${{ steps.bin_info.outputs.K0S_VERSION }}
 
           terraform destroy -auto-approve
         if: ${{ always() }}

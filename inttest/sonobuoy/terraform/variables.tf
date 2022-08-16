@@ -12,7 +12,7 @@ variable "worker_count" {
   default = 2
 }
 
-variable "cluster_flavor" {
+variable "instance_type" {
   type    = string
   default = "c4.xlarge"
 }

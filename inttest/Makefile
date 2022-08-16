@@ -96,5 +96,5 @@ $(smoketests): .footloose-alpine.stamp
 .PHONY: clean
 
 clean:
-	$(realpath bin/sonobuoy) delete
+	-[ -x bin/sonobuoy ] && bin/sonobuoy delete
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp

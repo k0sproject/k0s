@@ -1,7 +1,7 @@
 resource "aws_instance" "cluster-controller" {
   count         = var.controller_count
   ami           = data.aws_ami.ubuntu.id
-  instance_type = var.cluster_flavor
+  instance_type = var.instance_type
   tags = {
     Name = format("%s-controller-%d", local.cluster_unique_identifier, count.index)
     Role = "controller"

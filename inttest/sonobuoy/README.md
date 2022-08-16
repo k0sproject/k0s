@@ -21,6 +21,7 @@ export TF_VAR_k0s_version=latest # refers to release tags from https://github.co
 
 cd terraform
 
+terraform init
 terraform plan # to view the planned changes
 terraform apply
 ```
@@ -60,7 +61,7 @@ spec:
       user: "ubuntu"
     uploadBinary: true
   k0s:
-    version: "v1.24.2+k0s.0"
+    version: "1.24.3+k0s.0"
 ```
 
 To deploy a k0s cluster on the AWS machine, run:
@@ -79,7 +80,7 @@ Example output:
 ⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
 ⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
-k0sctl 0.0.0 Copyright 2021, k0sctl authors.
+k0sctl 0.13.2 Copyright 2021, k0sctl authors.
 Anonymized telemetry of usage will be sent to the authors.
 By continuing to use k0sctl you agree to these terms:
 https://k0sproject.io/licenses/eula
@@ -97,9 +98,9 @@ INFO ==> Running phase: Gather host facts
 .
 .
 .
-INFO [ssh] 3.250.52.147:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.2+k0s.0
-INFO [ssh] 63.32.21.232:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.2+k0s.0
-INFO [ssh] 54.216.71.108:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.2+k0s.0
+INFO [ssh] 3.250.52.147:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.3+k0s.0
+INFO [ssh] 63.32.21.232:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.3+k0s.0
+INFO [ssh] 54.216.71.108:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.24.3+k0s.0
 INFO ==> Running phase: Configure k0s
 WARN [ssh] 63.32.21.232:22: generating default configuration
 INFO [ssh] 63.32.21.232:22: validating configuration
@@ -123,7 +124,7 @@ INFO [ssh] 3.250.52.147:22: waiting for node to become ready
 INFO ==> Running phase: Release exclusive host lock
 INFO ==> Running phase: Disconnect from hosts
 INFO ==> Finished in 1m42s
-INFO k0s cluster version v1.24.2+k0s.0 is now installed
+INFO k0s cluster version v1.24.3+k0s.0 is now installed
 INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
 INFO      k0sctl kubeconfig
 ```

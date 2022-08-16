@@ -36,5 +36,9 @@ locals {
 resource "local_file" "k0sctl_config" {
   file_permission = "600"
   filename        = format("%s/%s", path.module, "k0sctl.yaml")
-  content         = replace(yamlencode(local.k0sctl_tmpl), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:")
+  content         = yamlencode(local.k0sctl_tmpl)
+
+  // for nicer looking output, use the regex below (see https://github.com/hashicorp/terraform/issues/23322)
+  // otherwise, the un-regexed version will work just fine
+  // content         = replace(yamlencode(local.k0sctl_tmpl), "/((?:^|\n)[\\s-]*)\"([\\w-]+)\":/", "$1$2:")
 }

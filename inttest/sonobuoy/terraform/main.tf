@@ -2,11 +2,6 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-# variable "sonobuoy_version" {
-#   type    = string
-#   default = "0.53.2"
-# }
-
 resource "random_id" "cluster_identifier" {
   byte_length = 4
 }
