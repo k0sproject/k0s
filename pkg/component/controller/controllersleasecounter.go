@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 
@@ -10,8 +12,6 @@ import (
 
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-
-	nodeutil "k8s.io/kubernetes/pkg/util/node"
 )
 
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.
@@ -40,7 +40,7 @@ func (l *K0sControllersLeaseCounter) Run(ctx context.Context) error {
 
 	// hostname used to make the lease names be clear to which controller they belong to
 	// follow kubelet convention for naming so we e.g. use lowercase hostname etc.
-	holderIdentity, err := nodeutil.GetHostname("")
+	holderIdentity, err := getHostname()
 	if err != nil {
 		return nil
 	}
@@ -92,3 +92,21 @@ func (l *K0sControllersLeaseCounter) Reconcile() error {
 
 // Healthy is a no-op healchcheck
 func (l *K0sControllersLeaseCounter) Healthy() error { return nil }
+
+// Adapted from https://github.com/kubernetes/kubernetes/blob/v1.24.3/pkg/util/node/node.go#L46
+// We have our own helper func so we don't need to manage whole kubernetes/kubernetes deps in go.mod
+func getHostname() (string, error) {
+	nodeName, err := os.Hostname()
+	if err != nil {
+		return "", fmt.Errorf("couldn't determine hostname: %v", err)
+	}
+	hostName := nodeName
+
+	// Trim whitespaces first to avoid getting an empty hostname
+	// For linux, the hostname is read from file /proc/sys/kernel/hostname directly
+	hostName = strings.TrimSpace(hostName)
+	if len(hostName) == 0 {
+		return "", fmt.Errorf("empty hostname is invalid")
+	}
+	return strings.ToLower(hostName), nil
+}

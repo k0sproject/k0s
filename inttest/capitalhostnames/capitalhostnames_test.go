@@ -67,13 +67,6 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	// Verify API that we get proper controller counter lease
 	_, err = kc.CoordinationV1().Leases("kube-node-lease").Get(s.Context(), "k0s-ctrl-k0s-controller", v1.GetOptions{})
 	s.NoError(err)
-
-	// Verify the autopilot controller node is created
-	apClient, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
-	s.NotEmpty(apClient)
-	_, err = apClient.AutopilotV1beta2().ControlNodes().Get(s.Context(), "k0s-controller", v1.GetOptions{})
-	s.NoError(err)
 }
 
 func (s *CapitalHostnamesSuite) setHostname(node, hostname string) error {
