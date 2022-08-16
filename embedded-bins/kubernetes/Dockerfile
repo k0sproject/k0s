@@ -1,20 +1,21 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-ARG VERSION
-ARG BUILD_GO_TAGS
-ARG BUILD_GO_CGO_ENABLED
-ARG BUILD_GO_FLAGS
-ARG BUILD_GO_LDFLAGS
-ARG BUILD_GO_LDFLAGS_EXTRA
 ENV GOPATH=/go
 ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
 
 RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
 
+ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes/kubernetes.git $GOPATH/src/github.com/kubernetes/kubernetes
 WORKDIR /go/src/github.com/kubernetes/kubernetes
+
+ARG BUILD_GO_TAGS \
+  BUILD_GO_CGO_ENABLED \
+  BUILD_GO_FLAGS \
+  BUILD_GO_LDFLAGS \
+  BUILD_GO_LDFLAGS_EXTRA
 
 RUN go version
 RUN \
@@ -35,4 +36,3 @@ COPY --from=build \
 	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kube-scheduler \
 	/go/src/github.com/kubernetes/kubernetes/_output/local/bin/linux/*/kube-controller-manager \
 	/bin/
-CMD ["/bin/kubelet"]

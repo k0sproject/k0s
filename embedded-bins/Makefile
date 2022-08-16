@@ -59,11 +59,11 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
 .container.%: .docker-image.%.stamp
-	docker create k0sbuild$(basename $<) > $@.tmp
+	docker create --entrypoint /dev/null k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
 .container.%.windows: .docker-image.%.windows.stamp
-	docker create k0sbuild$(basename $<) > $@.tmp
+	docker create --entrypoint /dev/null k0sbuild$(basename $<) > $@.tmp
 	mv $@.tmp $@
 
 .docker-image.%.stamp: %/Dockerfile Makefile.variables
