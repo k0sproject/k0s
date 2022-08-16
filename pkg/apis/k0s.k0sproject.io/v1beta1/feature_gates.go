@@ -24,7 +24,6 @@ import (
 
 const (
 	ServiceInternalTrafficPolicyFeatureGate = "ServiceInternalTrafficPolicy"
-	DualStackFeatureGate                    = "IPv6DualStack"
 )
 
 // EnableFeatureGate enables given feature gate in the arguments

@@ -127,10 +127,10 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 		return nil, fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
 	}
 	manifest := bytes.NewBuffer([]byte{})
-	defaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled, clusterSpec.Spec.Network.ClusterDomain)
+	defaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain)
 	defaultProfile["cgroupsPerQOS"] = true
 
-	winDefaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.DualStack.Enabled, clusterSpec.Spec.Network.ClusterDomain)
+	winDefaultProfile := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain)
 	winDefaultProfile["cgroupsPerQOS"] = false
 
 	if err := k.writeConfigMapWithProfile(manifest, "default", defaultProfile); err != nil {
@@ -144,7 +144,7 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 		formatProfileName("default-windows"),
 	}
 	for _, profile := range clusterSpec.Spec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress, false, clusterSpec.Spec.Network.ClusterDomain) // Do not add dualstack feature gate to the custom profiles
+		profileConfig := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain) // Do not add dualstack feature gate to the custom profiles
 
 		var workerValues unstructuredYamlObject
 		err := json.Unmarshal(profile.Config, &workerValues)
@@ -222,7 +222,7 @@ func (k *KubeletConfig) writeRbacRoleBindings(w io.Writer, configMapNames []stri
 	return tw.WriteToBuffer(w)
 }
 
-func getDefaultProfile(dnsAddress string, dualStack bool, clusterDomain string) unstructuredYamlObject {
+func getDefaultProfile(dnsAddress string, clusterDomain string) unstructuredYamlObject {
 	// the motivation to keep it like this instead of the yaml template:
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
@@ -247,11 +247,6 @@ func getDefaultProfile(dnsAddress string, dualStack bool, clusterDomain string) 
 		"rotateCertificates": true,
 		"serverTLSBootstrap": true,
 		"eventRecordQPS":     0,
-	}
-	if dualStack {
-		profile["featureGates"] = map[string]bool{
-			"IPv6DualStack": true,
-		}
 	}
 	return profile
 }

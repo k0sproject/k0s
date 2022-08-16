@@ -55,14 +55,8 @@ func Test_KubeletConfig(t *testing.T) {
 			requireRoleBinding(t, manifestYamls[3])
 		})
 	})
-	t.Run("default_profile_must_have_feature_gates_if_dualstack_setup", func(t *testing.T) {
-		profile := getDefaultProfile(dnsAddr, true, "cluster.local")
-		require.Equal(t, map[string]bool{
-			"IPv6DualStack": true,
-		}, profile["featureGates"])
-	})
 	t.Run("default_profile_must_pass_down_cluster_domain", func(t *testing.T) {
-		profile := getDefaultProfile(dnsAddr, true, "cluster.local.custom")
+		profile := getDefaultProfile(dnsAddr, "cluster.local.custom")
 		require.Equal(t, string(
 			"cluster.local.custom",
 		), profile["clusterDomain"])
@@ -98,7 +92,7 @@ func Test_KubeletConfig(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal([]byte(manifestYamls[3]), &profileYYY))
 
 			// manually apple the same changes to default config and check that there is no diff
-			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, false, "cluster.local")
+			defaultProfileKubeletConfig := getDefaultProfile(dnsAddr, "cluster.local")
 			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
 				"anonymous": map[string]interface{}{
 					"enabled": false,
@@ -107,7 +101,7 @@ func Test_KubeletConfig(t *testing.T) {
 			defaultWithChangesXXX, err := yaml.Marshal(defaultProfileKubeletConfig)
 			require.NoError(t, err)
 
-			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, false, "cluster.local")
+			defaultProfileKubeletConfig = getDefaultProfile(dnsAddr, "cluster.local")
 			defaultProfileKubeletConfig["authentication"] = map[string]interface{}{
 				"webhook": map[string]interface{}{
 					"cacheTTL": "15s",
