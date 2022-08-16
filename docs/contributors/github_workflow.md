@@ -1,4 +1,4 @@
-# Github Workflow
+# GitHub Workflow
 
 This guide assumes you have already cloned the upstream repo to your system via git clone, or via `go get github.com/k0sproject/k0s`.
 
@@ -115,7 +115,7 @@ git push --set-upstream my_fork my_feature_branch
 
 ## Open a Pull Request
 
-[Github Docs](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork)
+[GitHub Docs](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork)
 
 ### Get a code review
 

@@ -39,7 +39,7 @@ k0s is distributed as a single binary with zero host OS dependencies besides the
 ## Community Support
 
 - [Community Slack](https://join.slack.com/t/k8slens/shared_invite/zt-wcl8jq3k-68R5Wcmk1o95MLBE5igUDQ) - Request for support and help from the k0s community via Slack (shared Slack channel with Lens).
-- [Github Issues](https://github.com/k0sproject/k0s/issues) - Submit your issues and feature requests via Github.
+- [GitHub Issues](https://github.com/k0sproject/k0s/issues) - Submit your issues and feature requests via GitHub.
 
 We welcome your help in building k0s! If you are interested, we invite you to check out the [Contributing Guide](contributors/overview.md) and the [Code of Conduct](contributors/CODE_OF_CONDUCT.md).
 

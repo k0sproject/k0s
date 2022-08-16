@@ -52,7 +52,7 @@ If you'd like to try k0s, please jump in to our:
 ## Join the Community
 
 - [Community Slack](https://join.slack.com/t/k8slens/shared_invite/zt-wcl8jq3k-68R5Wcmk1o95MLBE5igUDQ) - Request for support and help from the k0s community via Slack (shared Slack channel with Lens).
-- [Github Issues](https://github.com/k0sproject/k0s/issues) - Submit your issues and feature requests via Github.
+- [GitHub Issues](https://github.com/k0sproject/k0s/issues) - Submit your issues and feature requests via GitHub.
 
 We welcome your help in building k0s! If you are interested, we invite you to check out the [Contributing Guide](https://docs.k0sproject.io/latest/contributors/overview/) and the [Code of Conduct](https://docs.k0sproject.io/latest/contributors/CODE_OF_CONDUCT/).
 

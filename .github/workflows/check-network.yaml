@@ -33,7 +33,7 @@ jobs:
             exit 0
           else
             # PR number was not set manually
-            echo "no manual override: leaving Github reference unchanged."
+            echo "no manual override: leaving GitHub reference unchanged."
             echo "github_ref=$GITHUB_REF" >> $GITHUB_ENV
           fi
         working-directory: ./
