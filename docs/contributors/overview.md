@@ -12,10 +12,12 @@ Our code of conduct can be found in the link below. Please follow it in all your
 
 ## GitHub Workflow
 
-We Use [GitHub Flow](https://guides.github.com/introduction/flow/index.html), so all code changes are tracked via Pull Requests.
-A detailed guide on the recommended workflow can be found below:
+We use [GitHub flow], so all code changes are tracked via Pull Requests. A
+detailed guide on the recommended workflow can be found below:
 
 - [GitHub Workflow](./github_workflow.md)
+
+[GitHub flow]: https://docs.github.com/get-started/quickstart/github-flow
 
 ## Code Testing
 

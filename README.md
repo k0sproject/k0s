@@ -85,18 +85,36 @@ With strong enough arguments we might take in new addons, but in general those s
 
 ## Build
 
-`k0s` can be built in two different ways:
+The requirements for building k0s from source are as follows:
 
-Build Kubernetes components from source as static binaries (requires docker):
+- GNU Make (v3.81 or newer)
+- coreutils
+- findutils
+- Docker
+
+All of the compilation steps are performed inside Docker containers, no
+installation of Go is required.
+
+The k0s binary can be built in two different ways:
+
+The "k0s" way, self-contained, all binaries compiled from source, statically
+linked and embedded:
 
 ```shell
-make EMBEDDED_BINS_BUILDMODE=docker
+make
 ```
 
-Build k0s without any embedded binaries (requires that Kubernetes binaries are pre-installed on the runtime system):
+The "package maintainer" way, without any embedded binaries (requires that the
+required binaries are provided separately at runtime):
 
 ```shell
 make EMBEDDED_BINS_BUILDMODE=none
+```
+
+The embedded binaries can be built on their own:
+
+```shell
+make -C embedded-bins
 ```
 
 Builds can be done in parallel:
@@ -107,7 +125,12 @@ make -j$(nproc)
 
 ## Smoke test
 
-To run a smoke test after build:
+Additionally to the requirements for building k0s, the smoke tests _do_ require
+a local Go installation. you can run `./vars.sh go_version` in a terminal to
+find out the version that's being used to build k0s. It will print the
+corresponding Go version to stdout.
+
+To run a basic smoke test after build:
 
 ```shell
 make check-basic

@@ -14,7 +14,6 @@ else
   endif
   HOST_ARCH := amd64
 endif
-undefine HOST_HARDWARE
 endif
 
 K0S_GO_BUILD_CACHE ?= build/cache
