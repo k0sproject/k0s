@@ -216,6 +216,7 @@ jobs:
           - check-k0sctl
           - check-metricscraper
           - check-customdomain
+          - check-capitalhostnames
 
     steps:
       - name: Check out code into the Go module directory
