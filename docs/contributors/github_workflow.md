@@ -1,6 +1,6 @@
 # GitHub Workflow
 
-This guide assumes you have already cloned the upstream repo to your system via git clone, or via `go get github.com/k0sproject/k0s`.
+This guide assumes you have already cloned the upstream repo to your system via `git clone`, or via `go get github.com/k0sproject/k0s`.
 
 ## Fork The Project
 
@@ -56,7 +56,7 @@ git fetch origin && \
 Current branch my_feature_branch is up to date.
 ```
 
-Please don't use `git pull` instead of the above `fetch / rebase`. `git pull` does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.
+Please don't use `git pull` instead of the above `fetch` / `rebase`. `git pull` does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.
 
 ## Commit & Push
 
@@ -115,7 +115,9 @@ git push --set-upstream my_fork my_feature_branch
 
 ## Open a Pull Request
 
-[GitHub Docs](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork)
+See GitHub's docs on how to [create a pull request from a fork][pr-from-fork].
+
+[pr-from-fork]: https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork
 
 ### Get a code review
 
