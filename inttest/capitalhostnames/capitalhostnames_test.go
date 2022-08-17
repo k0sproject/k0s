@@ -16,6 +16,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -47,7 +48,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("k0s-worker", kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
+	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
 		Limit: 100,
 	})
 	s.NoError(err)
@@ -58,14 +59,14 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
 
 	// Test that we get logs, it's a signal that konnectivity tunnels work
 	s.T().Log("waiting to get logs from pods")
 	s.Require().NoError(common.WaitForPodLogs(kc, "kube-system"))
 
 	// Verify API that we get proper controller counter lease
-	_, err = kc.CoordinationV1().Leases("kube-node-lease").Get(s.Context(), "k0s-ctrl-k0s-controller", v1.GetOptions{})
+	_, err = kc.CoordinationV1().Leases("kube-node-lease").Get(context.TODO(), "k0s-ctrl-k0s-controller", v1.GetOptions{})
 	s.NoError(err)
 }
 
