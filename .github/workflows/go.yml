@@ -172,6 +172,7 @@ jobs:
           - check-workerrestart
           - check-kubectl
           - check-k0sctl
+          - check-capitalhostnames
 
     steps:
       - name: Get PR Reference and Set Cache Name
