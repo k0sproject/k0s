@@ -2,13 +2,13 @@
 /airgap-image-bundle-linux-amd64.tar
 /airgap-image-bundle-linux-arm64.tar
 /airgap-image-bundle-linux-arm.tar
+/bindata_*
 /build/cache/*
 /k0s
 /k0s.code
 /k0s.exe
 /k0s.exe.code
 /pkg/assets/zz_generated_offsets*.go
-bindata*
 .*.stamp
 .tmp
 .terraform
