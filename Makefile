@@ -174,7 +174,7 @@ else
 pkg/assets/zz_generated_offsets_linux.go: .bins.linux.stamp
 pkg/assets/zz_generated_offsets_windows.go: .bins.windows.stamp
 pkg/assets/zz_generated_offsets_linux.go pkg/assets/zz_generated_offsets_windows.go: .k0sbuild.docker-image.k0s go.sum
-	GOOS=${GOHOSTOS} $(GO) run hack/gen-bindata/main.go -o bindata_$(zz_os) -pkg assets \
+	GOOS=${GOHOSTOS} $(GO) run -tags=hack hack/gen-bindata/cmd/main.go -o bindata_$(zz_os) -pkg assets \
 	     -gofile pkg/assets/zz_generated_offsets_$(zz_os).go \
 	     -prefix embedded-bins/staging/$(zz_os)/ embedded-bins/staging/$(zz_os)/bin
 endif
@@ -247,11 +247,11 @@ smoketests: $(smoketests)
 .PHONY: check-unit
 check-unit: GO_TEST_RACE ?= -race
 check-unit: go.sum codegen
-	$(GO) test $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list $(GO_DIRS)`
+	$(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_DIRS)`
 
 .PHONY: check-image-validity
 check-image-validity: go.sum
-	$(GO) run hack/validate-images/main.go -architectures amd64,arm64,arm
+	$(GO) run -tags=hack hack/validate-images/main.go -architectures amd64,arm64,arm
 
 .PHONY: clean-gocache
 clean-gocache:
