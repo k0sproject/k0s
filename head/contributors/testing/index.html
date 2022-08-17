@@ -1205,6 +1205,8 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           Testing
@@ -1221,6 +1223,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1229,36 +1233,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#testing-your-code" class="md-nav__link">
-    Testing Your Code
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Your Code">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#run-local-verifications" class="md-nav__link">
     Run Local Verifications
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#opening-a-pull-request" class="md-nav__link">
     Opening A Pull Request
+  </a>
+  
+    <nav class="md-nav" aria-label="Opening A Pull Request">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#draft-mode" class="md-nav__link">
+    Draft Mode
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#cleanup-the-local-workspace" class="md-nav__link">
-    Cleanup the local workspace
+  <a href="#conformance-testing" class="md-nav__link">
+    Conformance Testing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-requisites-for-pr-merge" class="md-nav__link">
+    Pre-Requisites for PR Merge
   </a>
   
 </li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup-the-local-workspace" class="md-nav__link">
+    Cleanup the local workspace
+  </a>
   
 </li>
       
@@ -1308,6 +1326,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1316,36 +1336,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#testing-your-code" class="md-nav__link">
-    Testing Your Code
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing Your Code">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
   <a href="#run-local-verifications" class="md-nav__link">
     Run Local Verifications
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#opening-a-pull-request" class="md-nav__link">
     Opening A Pull Request
+  </a>
+  
+    <nav class="md-nav" aria-label="Opening A Pull Request">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#draft-mode" class="md-nav__link">
+    Draft Mode
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#cleanup-the-local-workspace" class="md-nav__link">
-    Cleanup the local workspace
+  <a href="#conformance-testing" class="md-nav__link">
+    Conformance Testing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-requisites-for-pr-merge" class="md-nav__link">
+    Pre-Requisites for PR Merge
   </a>
   
 </li>
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup-the-local-workspace" class="md-nav__link">
+    Cleanup the local workspace
+  </a>
   
 </li>
       
@@ -1363,20 +1397,20 @@
                 
 
 
-  <h1>Testing</h1>
-
-<h2 id="testing-your-code">Testing Your Code<a class="headerlink" href="#testing-your-code" title="Permanent link">#</a></h2>
+<h1 id="testing-your-code">Testing Your Code<a class="headerlink" href="#testing-your-code" title="Permanent link">#</a></h1>
 <p>k0s uses github actions to run automated tests on any PR, before merging.
 However, a PR will not be reviewed before all tests are green, so to save time and prevent your PR from going stale, it is best to test it before submitting the PR.</p>
-<h3 id="run-local-verifications">Run Local Verifications<a class="headerlink" href="#run-local-verifications" title="Permanent link">#</a></h3>
+<h2 id="run-local-verifications">Run Local Verifications<a class="headerlink" href="#run-local-verifications" title="Permanent link">#</a></h2>
 <p>Please run the following style and formatting commands and fix/check-in any changes:</p>
 <ol>
 <li>
 <p>Linting</p>
-<p>We use <a href="https://golangci-lint.run/usage/install/#local-installation">golangci-lint</a> for style verification.
+<p>We use <a href="https://golangci-lint.run/"><code>golangci-lint</code></a> for style verification.
   In the repository's root directory, simply run:</p>
 <div class="highlight"><pre><span></span><code>make lint
 </code></pre></div>
+<p>There's no need to install <code>golangci-lint</code> manually. The build system will
+  take care of that.</p>
 </li>
 <li>
 <p>Go fmt</p>
@@ -1391,22 +1425,27 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <li>
 <p>Pre-submit Flight Checks</p>
 <p>In the repository root directory, make sure that:</p>
-<p>* <code>make build &amp;&amp; git diff --exit-code</code> runs successfully.
-  * <code>make check-basic</code> runs successfully.
-  * <code>make check-unit</code> has no errors.
-  * <code>make check-hacontrolplane</code> runs successfully.</p>
+<p>* <code>make build &amp;&amp; git diff --exit-code</code> runs successfully.<br />
+    Verifies that the build is working and that the generated source code
+    matches the one that's checked into source control.
+  * <code>make check-unit</code> runs successfully.
+    Verifies that all the unit tests pass.
+  * <code>make check-basic</code> runs successfully.<br />
+    Verifies basic cluster functionality using one controller and two workers.
+  * <code>make check-hacontrolplane</code> runs successfully.<br />
+    Verifies that joining of controllers works.</p>
 <p>Please note that this last test is prone to "flakiness", so it might fail on occasion. If it fails constantly, take a deeper look at your code to find the source of the problem.</p>
 <p>If you find that all tests passed, you may open a pull request upstream.</p>
 </li>
 </ol>
-<h3 id="opening-a-pull-request">Opening A Pull Request<a class="headerlink" href="#opening-a-pull-request" title="Permanent link">#</a></h3>
-<h4 id="draft-mode">Draft Mode<a class="headerlink" href="#draft-mode" title="Permanent link">#</a></h4>
+<h2 id="opening-a-pull-request">Opening A Pull Request<a class="headerlink" href="#opening-a-pull-request" title="Permanent link">#</a></h2>
+<h3 id="draft-mode">Draft Mode<a class="headerlink" href="#draft-mode" title="Permanent link">#</a></h3>
 <p>You may open a pull request in <a href="https://github.blog/2019-02-14-introducing-draft-pull-requests">draft mode</a>.
 All automated tests will still run against the PR, but the PR will not be assigned for review.
 Once a PR is ready for review, transition it from Draft mode, and code owners will be notified.</p>
-<h4 id="conformance-testing">Conformance Testing<a class="headerlink" href="#conformance-testing" title="Permanent link">#</a></h4>
+<h3 id="conformance-testing">Conformance Testing<a class="headerlink" href="#conformance-testing" title="Permanent link">#</a></h3>
 <p>Once a PR has been reviewed and all other tests have passed, a code owner will run a full end-to-end conformance test against the PR. This is usually the last step before merging.</p>
-<h4 id="pre-requisites-for-pr-merge">Pre-Requisites for PR Merge<a class="headerlink" href="#pre-requisites-for-pr-merge" title="Permanent link">#</a></h4>
+<h3 id="pre-requisites-for-pr-merge">Pre-Requisites for PR Merge<a class="headerlink" href="#pre-requisites-for-pr-merge" title="Permanent link">#</a></h3>
 <p>In order for a PR to be merged, the following conditions should exist:</p>
 <ol>
 <li>The PR has passed all the automated tests (style, build &amp; conformance tests).</li>
@@ -1414,7 +1453,7 @@ Once a PR is ready for review, transition it from Draft mode, and code owners wi
 <li>PR was reviewed and approved by a code owner.</li>
 <li>PR is rebased against upstream's main branch.</li>
 </ol>
-<h3 id="cleanup-the-local-workspace">Cleanup the local workspace<a class="headerlink" href="#cleanup-the-local-workspace" title="Permanent link">#</a></h3>
+<h2 id="cleanup-the-local-workspace">Cleanup the local workspace<a class="headerlink" href="#cleanup-the-local-workspace" title="Permanent link">#</a></h2>
 <p>In order to clean up the local workspace, run <code>make clean</code>. It will clean up all
 of the intermediate files and directories created during the k0s build. Note
 that you can't just use <code>git clean -X</code> or even <code>rm -rf</code>, since the Go modules

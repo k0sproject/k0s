@@ -1426,7 +1426,7 @@
 
 
 <h1 id="github-workflow">GitHub Workflow<a class="headerlink" href="#github-workflow" title="Permanent link">#</a></h1>
-<p>This guide assumes you have already cloned the upstream repo to your system via git clone, or via <code>go get github.com/k0sproject/k0s</code>.</p>
+<p>This guide assumes you have already cloned the upstream repo to your system via <code>git clone</code>, or via <code>go get github.com/k0sproject/k0s</code>.</p>
 <h2 id="fork-the-project">Fork The Project<a class="headerlink" href="#fork-the-project" title="Permanent link">#</a></h2>
 <ol>
 <li>Go to http://github.com/k0sproject/k0s</li>
@@ -1462,7 +1462,7 @@ my_fork git@github.com:<span class="o">{</span> github_username <span class="o">
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>Current branch my_feature_branch is up to date.
 </code></pre></div>
-<p>Please don't use <code>git pull</code> instead of the above <code>fetch / rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
+<p>Please don't use <code>git pull</code> instead of the above <code>fetch</code> / <code>rebase</code>. <code>git pull</code> does a merge, which leaves merge commits. These make the commit history messy and violate the principle that commits ought to be individually understandable and useful.</p>
 <h2 id="commit-push">Commit &amp; Push<a class="headerlink" href="#commit-push" title="Permanent link">#</a></h2>
 <p>Commit and sign your changes:</p>
 <div class="highlight"><pre><span></span><code>git commit --signoff
@@ -1505,7 +1505,7 @@ Signed-off-by: Name Lastname &lt;user@example.com&gt;
 <div class="highlight"><pre><span></span><code>git push --set-upstream my_fork my_feature_branch
 </code></pre></div>
 <h2 id="open-a-pull-request">Open a Pull Request<a class="headerlink" href="#open-a-pull-request" title="Permanent link">#</a></h2>
-<p><a href="https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork">GitHub Docs</a></p>
+<p>See GitHub's docs on how to <a href="https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork">create a pull request from a fork</a>.</p>
 <h3 id="get-a-code-review">Get a code review<a class="headerlink" href="#get-a-code-review" title="Permanent link">#</a></h3>
 <p>Once your pull request has been opened it will be assigned to one or more reviewers, and will go through a series of smoke tests.</p>
 <p>Commit changes made in response to review comments should be added to the same branch on your fork.</p>
