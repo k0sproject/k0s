@@ -54,7 +54,7 @@ type ExtensionsController struct {
 }
 
 var _ component.Component = (*ExtensionsController)(nil)
-var _ component.ReconcilerComponent = (*ExtensionsController)(nil)
+var _ component.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
 func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *ExtensionsController {
@@ -297,7 +297,7 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 }
 
 // Run
-func (ec *ExtensionsController) Run(ctx context.Context) error {
+func (ec *ExtensionsController) Start(ctx context.Context) error {
 	config, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)

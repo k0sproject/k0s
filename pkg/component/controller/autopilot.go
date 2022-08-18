@@ -42,7 +42,7 @@ func (a *Autopilot) Init(ctx context.Context) error {
 	return nil
 }
 
-func (a *Autopilot) Run(ctx context.Context) error {
+func (a *Autopilot) Start(ctx context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "autopilot"})
 
 	autopilotClientFactory, err := apcli.NewClientFactory(a.AdminClientFactory.GetRESTConfig())
@@ -72,9 +72,5 @@ func (a *Autopilot) Run(ctx context.Context) error {
 }
 
 func (a *Autopilot) Stop() error {
-	return nil
-}
-
-func (a *Autopilot) Healthy() error {
 	return nil
 }

@@ -99,7 +99,7 @@ func (r *ClusterConfigReconciler) Init(_ context.Context) error {
 	return nil
 }
 
-func (r *ClusterConfigReconciler) Run(ctx context.Context) error {
+func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
 		// We need to wait until we either succees getting the object or creating it
 		err := wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {

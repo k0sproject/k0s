@@ -44,7 +44,7 @@ type KubeProxy struct {
 }
 
 var _ component.Component = (*KubeProxy)(nil)
-var _ component.ReconcilerComponent = (*KubeProxy)(nil)
+var _ component.Reconciler = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
 func NewKubeProxy(k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {
@@ -63,7 +63,7 @@ func (k *KubeProxy) Init(_ context.Context) error {
 }
 
 // Run runs the kube-proxy reconciler
-func (k *KubeProxy) Run(_ context.Context) error { return nil }
+func (k *KubeProxy) Start(_ context.Context) error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {

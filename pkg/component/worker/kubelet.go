@@ -112,7 +112,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 }
 
 // Run runs kubelet
-func (k *Kubelet) Run(ctx context.Context) error {
+func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
 
 	kubeletConfigData := kubeletConfig{

@@ -37,7 +37,7 @@ import (
 
 // Dummy checks so we catch easily if we miss some interface implementation
 var _ component.Component = (*Calico)(nil)
-var _ component.ReconcilerComponent = (*Calico)(nil)
+var _ component.Reconciler = (*Calico)(nil)
 
 var calicoCRDOnce sync.Once
 
@@ -94,7 +94,7 @@ func (c *Calico) Init(_ context.Context) error {
 }
 
 // Run nothing really running, all logic based on reactive reconcile
-func (c *Calico) Run(_ context.Context) error {
+func (c *Calico) Start(_ context.Context) error {
 	return nil
 }
 

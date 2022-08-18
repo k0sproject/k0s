@@ -39,7 +39,7 @@ func (c CalicoInstaller) Init(_ context.Context) error {
 	panic("stub component is used: CalicoInstaller")
 }
 
-func (c CalicoInstaller) Run(_ context.Context) error {
+func (c CalicoInstaller) Start(_ context.Context) error {
 	panic("stub component is used: CalicoInstaller")
 }
 
@@ -59,7 +59,7 @@ func (k KubeProxy) Init(_ context.Context) error {
 	panic("stub component is used: KubeProxy")
 }
 
-func (k KubeProxy) Run(_ context.Context) error {
+func (k KubeProxy) Start(_ context.Context) error {
 	panic("stub component is used: KubeProxy")
 }
 

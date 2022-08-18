@@ -46,7 +46,7 @@ func (c CRD) Init(_ context.Context) error {
 }
 
 // Run unpacks manifests from bindata
-func (c CRD) Run(_ context.Context) error {
+func (c CRD) Start(_ context.Context) error {
 	for _, bundle := range c.bundles {
 		crds, err := static.AssetDir(fmt.Sprintf("manifests/%s/CustomResourceDefinition", bundle))
 		if err != nil {

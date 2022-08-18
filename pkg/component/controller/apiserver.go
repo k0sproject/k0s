@@ -91,7 +91,7 @@ func (a *APIServer) Init(_ context.Context) error {
 }
 
 // Run runs kube api
-func (a *APIServer) Run(_ context.Context) error {
+func (a *APIServer) Start(_ context.Context) error {
 	logrus.Info("Starting kube-apiserver")
 	args := stringmap.StringMap{
 		"advertise-address":                a.ClusterConfig.Spec.API.Address,

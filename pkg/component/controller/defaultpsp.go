@@ -44,7 +44,7 @@ type DefaultPSP struct {
 }
 
 var _ component.Component = (*DefaultPSP)(nil)
-var _ component.ReconcilerComponent = (*DefaultPSP)(nil)
+var _ component.Reconciler = (*DefaultPSP)(nil)
 
 // NewDefaultPSP creates new system level RBAC reconciler
 func NewDefaultPSP(k0sVars constant.CfgVars) *DefaultPSP {
@@ -64,7 +64,7 @@ func (d *DefaultPSP) Init(_ context.Context) error {
 }
 
 // Run reconciles the k0s default PSP rules
-func (d *DefaultPSP) Run(_ context.Context) error {
+func (d *DefaultPSP) Start(_ context.Context) error {
 	return nil
 }
 

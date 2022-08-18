@@ -43,7 +43,7 @@ func (ter TunneledEndpointReconciler) Init(_ context.Context) error {
 	return nil
 }
 
-func (ter *TunneledEndpointReconciler) Run(ctx context.Context) error {
+func (ter *TunneledEndpointReconciler) Start(ctx context.Context) error {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()

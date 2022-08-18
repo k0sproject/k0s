@@ -93,7 +93,7 @@ func (a *CSRApprover) Init(_ context.Context) error {
 }
 
 // Run every 10 seconds checks for newly issued CSRs and approves them
-func (a *CSRApprover) Run(ctx context.Context) error {
+func (a *CSRApprover) Start(ctx context.Context) error {
 	ctx, a.stop = context.WithCancel(ctx)
 	go func() {
 		defer a.stop()

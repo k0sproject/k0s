@@ -35,7 +35,7 @@ import (
 
 // Dummy checks so we catch easily if we miss some interface implementation
 var _ component.Component = (*APIEndpointReconciler)(nil)
-var _ component.ReconcilerComponent = (*APIEndpointReconciler)(nil)
+var _ component.Reconciler = (*APIEndpointReconciler)(nil)
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {
@@ -64,7 +64,7 @@ func (a *APIEndpointReconciler) Init(_ context.Context) error {
 }
 
 // Run runs the main loop for reconciling the externalAddress
-func (a *APIEndpointReconciler) Run(ctx context.Context) error {
+func (a *APIEndpointReconciler) Start(ctx context.Context) error {
 
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)

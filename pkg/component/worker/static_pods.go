@@ -335,7 +335,7 @@ func (s *staticPods) Init(context.Context) error {
 	return nil
 }
 
-func (s *staticPods) Run(ctx context.Context) error {
+func (s *staticPods) Start(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

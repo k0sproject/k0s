@@ -86,7 +86,7 @@ func (k *Kine) Init(_ context.Context) error {
 }
 
 // Run runs kine
-func (k *Kine) Run(_ context.Context) error {
+func (k *Kine) Start(_ context.Context) error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
 

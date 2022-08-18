@@ -40,7 +40,7 @@ func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
 
 func (l *DummyLeaderElector) AddLostLeaseCallback(func()) {}
 
-func (l *DummyLeaderElector) Run(_ context.Context) error {
+func (l *DummyLeaderElector) Start(_ context.Context) error {
 	if !l.Leader {
 		return nil
 	}

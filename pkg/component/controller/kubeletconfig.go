@@ -42,7 +42,7 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.ReconcilerComponent = (*KubeletConfig)(nil)
+var _ component.Reconciler = (*KubeletConfig)(nil)
 var _ component.Component = (*KubeletConfig)(nil)
 
 // KubeletConfig is the reconciler for generic kubelet configs
@@ -75,7 +75,7 @@ func (k *KubeletConfig) Stop() error {
 }
 
 // Run dumps the needed manifest objects
-func (k *KubeletConfig) Run(_ context.Context) error {
+func (k *KubeletConfig) Start(_ context.Context) error {
 
 	return nil
 }

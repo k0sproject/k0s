@@ -42,7 +42,7 @@ func (m *K0SControlAPI) Init(_ context.Context) error {
 }
 
 // Run runs k0s control api as separate process
-func (m *K0SControlAPI) Run(_ context.Context) error {
+func (m *K0SControlAPI) Start(_ context.Context) error {
 	// TODO: Make the api process to use some other user
 
 	selfExe, err := os.Executable()
