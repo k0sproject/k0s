@@ -125,7 +125,7 @@ spec:
 | Element           | Description                                                                                                                                                                                                                 |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `externalAddress` | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster. |
-| `address`         | Local address on wihich to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                 |
+| `address`         | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                  |
 | `sans`            | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                |
 | `extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
 | `port`¹           | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
@@ -140,7 +140,7 @@ spec:
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`             | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes. |
 | `etcd.peerAddress` | Node address used for etcd cluster peering.                                                                                                                            |
-| `kine.dataSource`  | [kine](https://github.com/rancher/kine/) datasource URL.                                                                                                               |
+| `kine.dataSource`  | [kine](https://github.com/k3s-io/kine) datasource URL.                                                                                                                 |
 
 ### `spec.network`
 

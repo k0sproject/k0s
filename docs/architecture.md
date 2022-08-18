@@ -24,7 +24,7 @@ Using k0s you can create, manage, and configure each of the components, running 
 
 ## Storage
 
-Kubernetes control plane typically supports only etcd as the datastore. k0s, however, supports many other datastore options in addition to etcd, which it achieves by including [kine](https://github.com/rancher/kine/). Kine allows the use of a wide variety of backend data stores, such as MySQL, PostgreSQL, SQLite, and dqlite (refer to the [`spec.storage` documentation](configuration.md#specstorage)).
+Kubernetes control plane typically supports only etcd as the datastore. k0s, however, supports many other datastore options in addition to etcd, which it achieves by including [kine](https://github.com/k3s-io/kine). Kine allows the use of a wide variety of backend data stores, such as MySQL, PostgreSQL, SQLite, and dqlite (refer to the [`spec.storage` documentation](configuration.md#specstorage)).
 
 In the case of k0s managed etcd, k0s manages the full lifecycle of the etcd cluster. For example, by joining a new controller node with `k0s controller "long-join-token"` k0s  atomatically adjusts the etcd cluster membership info to allow the new member to join the cluster.
 
