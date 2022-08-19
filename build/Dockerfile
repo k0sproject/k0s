@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.16-alpine
+ARG BUILDIMAGE=golang:1.19-alpine
 
 FROM $BUILDIMAGE
 RUN apk add --no-cache gcc musl-dev binutils-gold
