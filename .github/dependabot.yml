@@ -27,6 +27,7 @@ updates:
       - dependency-name: k8s.io/kube-scheduler
       - dependency-name: k8s.io/kubectl
       - dependency-name: k8s.io/kubelet
+      - dependency-name: k8s.io/kubernetes
       - dependency-name: k8s.io/legacy-cloud-providers
       - dependency-name: k8s.io/metrics
       - dependency-name: k8s.io/mount-utils
