@@ -22,6 +22,15 @@ body:
         - label: You're looking at docs for the released version, "main" branch docs are usually ahead of released versions.
           required: true
 
+  # Should actually be included in `k0s sysinfo` or something like `k0s version --full`
+  - type: textarea
+    attributes:
+      label: Platform
+      description: >-
+        Which platform did you run k0s on?
+        Use: `uname -srvmo; cat /etc/os-release || lsb_release -a`
+      render: shell
+
   - type: input
     attributes:
       label: Version
@@ -29,9 +38,14 @@ body:
 
   - type: textarea
     attributes:
-      label: Platform
-      description: "Which platform did you run k0s on? Use: `lsb_release -a`"
-      render: shell
+      label: Sysinfo
+      description: "Use: `k0s sysinfo`"
+      value: |
+        <details><summary>`k0s sysinfo`</summary>
+        ```text
+        ➡️ Please replace this text with the output of `k0s sysinfo`. ⬅️
+        ```
+        </details>
 
   - type: textarea
     attributes:
@@ -63,7 +77,7 @@ body:
       description: |
         If applicable, add screenshots to help explain your problem.
         Also add any output from kubectl if applicable.
-        Use: `kubectl logs --kubeconfig /var/lib/k0s/pki/admin.conf`
+        Use: `k0s kubectl logs`
 
   - type: textarea
     attributes:
