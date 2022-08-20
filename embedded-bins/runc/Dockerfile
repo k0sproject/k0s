@@ -7,7 +7,7 @@ RUN apk add build-base git \
 
 ENV GOPATH=/go
 
-ARG LIBSECCOMP_VERSION=2.5.1
+ARG LIBSECCOMP_VERSION=2.5.4
 RUN curl -L https://github.com/seccomp/libseccomp/releases/download/v$LIBSECCOMP_VERSION/libseccomp-$LIBSECCOMP_VERSION.tar.gz \
 	| tar -C / -zx
 
