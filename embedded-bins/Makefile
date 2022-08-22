@@ -77,7 +77,7 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 		--build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
 		--build-arg BUILD_GO_LDFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) \
 		--build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
-		-f $< .
+		$(dir $<)
 	touch $@
 
 .docker-image.%.windows.stamp: %/Dockerfile.windows Makefile.variables
