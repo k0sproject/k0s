@@ -165,6 +165,7 @@ jobs:
           - check-upgrade
           # skipped, originally titled "Smoke-test for network":
           # - check-etcd
+          - check-capitalhostnames
 
     steps:
       - name: Get PR Reference and Set Cache Name
