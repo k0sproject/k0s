@@ -125,7 +125,7 @@ Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For
 example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.24.3+k0s.0/k0s-v1.24.3+k0s.0-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.24.4+k0s.0/k0s-v1.24.4+k0s.0-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -142,7 +142,7 @@ At this point you can run `k0s`:
 
 ```console
 ubuntu@ubuntu:~$ k0s version
-v1.24.3+k0s.0
+v1.24.4+k0s.0
 ```
 
 To check if k0s's [system requirements](system-requirements.md) and [external
