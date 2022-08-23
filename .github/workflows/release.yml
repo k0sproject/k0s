@@ -3,10 +3,14 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   release:
+    env:
+      TF_VAR_k0s_binary_path: "${{ github.workspace }}/k0s"
+      KOSCTL_VERSION: 0.13.2
+      KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
     runs-on: ubuntu-latest
     outputs:
@@ -39,7 +43,7 @@ jobs:
           echo ::set-output name=IMAGE_TAGS::${TAGS}
   x64:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -127,7 +131,7 @@ jobs:
 
   windows:
     needs: release
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -173,7 +177,7 @@ jobs:
 
   arm64:
     needs: release
-    runs-on: [self-hosted,linux,arm64]
+    runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -262,7 +266,7 @@ jobs:
 
   armv7:
     needs: release
-    runs-on: [self-hosted,linux,arm]
+    runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
       EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
@@ -359,7 +363,7 @@ jobs:
       - x64
       - arm64
       - armv7
-    runs-on: [self-hosted,linux,x64]
+    runs-on: [self-hosted, linux, x64]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -415,11 +419,12 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
+
     name: "K8s Conformance Testing"
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./inttest/conformance/terraform
+        working-directory: ./inttest/sonobuoy/terraform
     steps:
       - name: Run git checkout
         uses: actions/checkout@v3
@@ -445,27 +450,36 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: k0s-amd64
+          path: ${{ github.workspace }}/k0s
 
       - name: Launch Test Environment
         env:
-          K0S_VER: ${{ needs.release.outputs.tag_name }}
+          TF_VAR_cluster_name: "k0s_conformance"
+          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
         run: |
           # Start SSH Agent
           eval `ssh-agent -s`
 
-          export TF_VAR_k0s_version=${KOS_VER}
-
           terraform apply -auto-approve
 
-      - name: Get Terraform Output Data
-        run: ./get_outputs.sh
+      - name: Create k0s Cluster using k0sctl
+        id: k0sctl
+        run: |
+          # download k0sctl
+          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${KOSCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          chmod +x ./k0sctl
+          ./k0sctl apply -c k0sctl.yaml
 
-      - name: Deploy k0s to Hosts
-        run: ./deploy-k0s.sh
+          # save kubeconfig file
+          ./k0sctl kubeconfig > $KUBECONFIG
 
       - name: Run Full Conformance Check
+        run: make check-conformance
+        working-directory: ./inttest
+
+      - name: Retrieve Sonobuoy Results
         run: |
-          make check-conformance
+          make get-conformance-results
         working-directory: ./inttest
 
       - name: Upload conformance test result to Release Assets
@@ -474,15 +488,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
+          asset_path: inttest/*_sonobuoy_*.tar.gz
           asset_name: sonobuoy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
         if: ${{ always() }}
       - name: Clean-Up Environment
         env:
-          K0S_VER: ${{ needs.release.outputs.tag_name }}
+          TF_VAR_cluster_name: "k0s_conformance"
+          TF_VAR_k0s_version: ${{ needs.release.outputs.tag_name }}
         run: |
-          export TF_VAR_k0s_version=${K0S_VER}
-
           terraform destroy -auto-approve
         if: ${{ always() }}

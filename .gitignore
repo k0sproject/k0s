@@ -21,3 +21,4 @@ static/gen_manifests.go
 .k0sbuild.docker-image.*
 docs/cli
 site
+k0sctl.yaml
