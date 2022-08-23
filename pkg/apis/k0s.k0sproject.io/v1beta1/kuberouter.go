@@ -22,6 +22,8 @@ type KubeRouter struct {
 	AutoMTU bool `json:"autoMTU"`
 	// Override MTU setting (autoMTU must be set to false)
 	MTU int `json:"mtu"`
+	// Kube-router metrics server port. Set to 0 to disable metrics  (default: 8080)
+	MetricsPort int `json:"metricsPort"`
 	// Activate Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
 	HairpinMode bool `json:"hairpinMode"`
 	// Comma-separated list of global peer addresses
@@ -33,7 +35,8 @@ type KubeRouter struct {
 // DefaultKubeRouter returns the default config for kube-router
 func DefaultKubeRouter() *KubeRouter {
 	return &KubeRouter{
-		MTU:     0,
-		AutoMTU: true,
+		MTU:         0,
+		AutoMTU:     true,
+		MetricsPort: 8080,
 	}
 }
