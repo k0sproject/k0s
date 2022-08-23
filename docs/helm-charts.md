@@ -15,22 +15,22 @@ Adding Helm charts into the k0s configuration file gives you a declarative way i
 
 Each chart is proccesed the same way CLI tool does with following options:
 
-- --wait
-- --wait-for-jobs
-- --timeout 10m
+- `--wait`
+- `--wait-for-jobs`
+- `--timeout 10m`
 
 It is possible to customize timeout by using `.Timeout` field.
 
 ### Chart configuration
 
-| Field | Default value | Description |
-
-| name | - | Release name |
-| chartname | - | chartname in form "repository/chartname"|
-| version | - | version to install |
-| timeout | 10m | timeout to wait for release install |
-| values | - | yaml as a string, custom chart values |
-| namespace | - | namespace to install chart into |
+| Field     | Default value | Description                              |
+|-----------|---------------|------------------------------------------|
+| name      | -             | Release name                             |
+| chartname | -             | chartname in form "repository/chartname" |
+| version   | -             | version to install                       |
+| timeout   | 10m           | timeout to wait for release install      |
+| values    | -             | yaml as a string, custom chart values    |
+| namespace | -             | namespace to install chart into          |
 
 ## Example
 
@@ -57,6 +57,12 @@ spec:
           server:
             persistentVolume:
               enabled: false
+        namespace: default
+      # We don't need to specify the repo in the repositories section for OCI charts
+      - name: oci-chart
+        chartname: oci://registry:8080/chart
+        version: "0.0.1"
+        values: ""
         namespace: default
 ```
 
