@@ -45,6 +45,7 @@ var _ component.ReconcilerComponent = (*KubeRouter)(nil)
 type kubeRouterConfig struct {
 	MTU               int
 	AutoMTU           bool
+	MetricsPort       int
 	CNIInstallerImage string
 	CNIImage          string
 	HairpinMode       bool
@@ -84,6 +85,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	cfg := kubeRouterConfig{
 		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
 		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
+		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
 		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
 		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
 		HairpinMode:       clusterConfig.Spec.Network.KubeRouter.HairpinMode,
@@ -180,9 +182,11 @@ spec:
       labels:
         k8s-app: kube-router
         tier: node
+      {{- if gt .MetricsPort 0 }}
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
+        prometheus.io/port: "{{ .MetricsPort }}"
+      {{- end }}
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: kube-router
@@ -253,7 +257,7 @@ spec:
         - "--run-firewall=true"
         - "--run-service-proxy=false"
         - "--bgp-graceful-restart=true"
-        - "--metrics-port=8080"
+        - "--metrics-port={{ .MetricsPort }}"
         - "--hairpin-mode={{ .HairpinMode }}"
         {{- if .PeerRouterIPs }}
         - "--peer-router-ips={{ .PeerRouterIPs }}"

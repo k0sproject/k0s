@@ -167,9 +167,10 @@ spec:
 #### `spec.network.kuberouter`
 
 | Element          | Description                                                                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ---------------- |----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `autoMTU`        | Autodetection of used MTU (default: `true`).                                                                                                       |
 | `mtu`            | Override MTU setting, if `autoMTU` must be set to `false`).                                                                                        |
+| `metricsPort`    | Kube-router metrics server port. Set to 0 to disable metrics  (default: `8080`).                                                                   |
 | `peerRouterIPs`  | Comma-separated list of [global peer addresses](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers). |
 | `peerRouterASNs` | Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).      |
 | `hairpinMode`    | Activate hairpinMode (default: `false`) (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode)               |

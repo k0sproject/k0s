@@ -347,6 +347,10 @@ spec:
                         description: Activate Hairpin Mode (allow a Pod behind a Service
                           to communicate to its own ClusterIP:Port)
                         type: boolean
+                      metricsPort:
+                        description: 'Kube-router metrics server port. Set to 0 to
+                          disable metrics  (default: 8080)'
+                        type: integer
                       mtu:
                         description: Override MTU setting (autoMTU must be set to
                           false)
