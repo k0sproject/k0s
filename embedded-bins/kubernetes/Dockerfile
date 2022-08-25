@@ -9,7 +9,7 @@ ARG BUILD_GO_LDFLAGS
 ARG BUILD_GO_LDFLAGS_EXTRA
 ENV GOPATH=/go
 ENV COMMANDS="kubelet kube-apiserver kube-scheduler kube-controller-manager"
-COPY kubernetes/armv7.patch /tmp/armv7.patch
+COPY armv7.patch /tmp/armv7.patch
 RUN apk add build-base git go-bindata linux-headers rsync grep coreutils bash
 
 RUN mkdir -p $GOPATH/src/github.com/kubernetes/kubernetes
