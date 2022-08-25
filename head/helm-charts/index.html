@@ -1381,19 +1381,53 @@
 <h3 id="wait-for-install">Wait for install<a class="headerlink" href="#wait-for-install" title="Permanent link">#</a></h3>
 <p>Each chart is proccesed the same way CLI tool does with following options:</p>
 <ul>
-<li>--wait</li>
-<li>--wait-for-jobs</li>
-<li>--timeout 10m</li>
+<li><code>--wait</code></li>
+<li><code>--wait-for-jobs</code></li>
+<li><code>--timeout 10m</code></li>
 </ul>
 <p>It is possible to customize timeout by using <code>.Timeout</code> field.</p>
 <h3 id="chart-configuration">Chart configuration<a class="headerlink" href="#chart-configuration" title="Permanent link">#</a></h3>
-<p>| Field | Default value | Description |</p>
-<p>| name | - | Release name |
-| chartname | - | chartname in form "repository/chartname"|
-| version | - | version to install |
-| timeout | 10m | timeout to wait for release install |
-| values | - | yaml as a string, custom chart values |
-| namespace | - | namespace to install chart into |</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>-</td>
+<td>Release name</td>
+</tr>
+<tr>
+<td>chartname</td>
+<td>-</td>
+<td>chartname in form "repository/chartname"</td>
+</tr>
+<tr>
+<td>version</td>
+<td>-</td>
+<td>version to install</td>
+</tr>
+<tr>
+<td>timeout</td>
+<td>10m</td>
+<td>timeout to wait for release install</td>
+</tr>
+<tr>
+<td>values</td>
+<td>-</td>
+<td>yaml as a string, custom chart values</td>
+</tr>
+<tr>
+<td>namespace</td>
+<td>-</td>
+<td>namespace to install chart into</td>
+</tr>
+</tbody>
+</table>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
 <p>In the example, Prometheus is configured from "stable" Helms chart repository. Add the following to <code>k0s.yaml</code> and restart k0s, after which Prometheus should start automatically with k0s.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
@@ -1416,6 +1450,12 @@
 <span class="w">          </span><span class="no">server:</span><span class="w"></span>
 <span class="w">            </span><span class="no">persistentVolume:</span><span class="w"></span>
 <span class="w">              </span><span class="no">enabled: false</span><span class="w"></span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># We don&#39;t need to specify the repo in the repositories section for OCI charts</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci-chart</span><span class="w"></span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://registry:8080/chart</span><span class="w"></span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
 <span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
 </code></pre></div>
 <p>Example extensions that you can use with Helm charts include:</p>
