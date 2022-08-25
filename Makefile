@@ -150,7 +150,7 @@ k0s.exe k0s: $(GO_SRCS)
 
 .PHONY: lint
 lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
-	$(golint) run --verbose ./...
+	$(golint) run --verbose . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 .PHONY: $(smoketests)
 check-airgap: image-bundle/bundle.tar
