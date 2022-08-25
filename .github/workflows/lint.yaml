@@ -63,5 +63,6 @@ jobs:
       - name: Run linter
         env:
           EMBEDDED_BINS_BUILDMODE: none
+          GOLANGCI_LINT_FLAGS: --out-format=github-actions
         run: |
           make lint
