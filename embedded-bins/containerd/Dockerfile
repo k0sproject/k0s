@@ -13,7 +13,8 @@ RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
 WORKDIR /go/src/github.com/containerd/containerd
 
-ARG BUILD_GO_TAGS \
+ARG TARGET_OS \
+  BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_SHIM_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \

@@ -1,7 +1,6 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-
 RUN apk add build-base git \
 	curl linux-headers gperf bash pkgconf
 
@@ -22,7 +21,8 @@ RUN mkdir -p $GOPATH/src/github.com/opencontainers/runc
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/opencontainers/runc.git $GOPATH/src/github.com/opencontainers/runc
 WORKDIR /go/src/github.com/opencontainers/runc
 
-ARG BUILD_GO_TAGS \
+ARG TARGET_OS \
+  BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \

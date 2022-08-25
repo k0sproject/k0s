@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=alpine:3.16
+ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
 RUN apk add build-base git file curl \
@@ -12,6 +12,7 @@ COPY \
   use-uint-instead-of-u_int.patch \
   revert-fix-eth-alen.patch \
   /
+ARG TARGET_OS
 RUN cd /iptables-$VERSION && \
   git apply /use-uint-instead-of-u_int.patch && \
   git apply /revert-fix-eth-alen.patch && \

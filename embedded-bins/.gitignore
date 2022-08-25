@@ -1,5 +1,3 @@
-.container.*
-.docker-image.*
-*.tar
-staging/
-
+/.container.*
+/.docker-image.*
+/staging/

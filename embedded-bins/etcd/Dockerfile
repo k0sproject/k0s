@@ -8,7 +8,8 @@ RUN cd / && git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https:
 WORKDIR /etcd/server
 RUN go version
 
-ARG BUILD_GO_TAGS \
+ARG TARGET_OS \
+  BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \
