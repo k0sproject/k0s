@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.17-alpine
+ARG BUILDIMAGE=golang:1.18.5-alpine
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
