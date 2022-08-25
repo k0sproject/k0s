@@ -6,8 +6,8 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   #pull_request:
 env:
-  GO_VERSION: ~1.16
-  GO_VERSION_WIN: ~1.16
+  GO_VERSION: ~1.18.5
+  GO_VERSION_WIN: ~1.18.5
 
 jobs:
   release:
@@ -44,7 +44,7 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set up Go 1.16
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}

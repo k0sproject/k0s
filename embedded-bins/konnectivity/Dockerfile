@@ -1,4 +1,4 @@
-ARG BUILDIMAGE=golang:1.16-alpine
+ARG BUILDIMAGE=golang:1.18.5-alpine
 FROM $BUILDIMAGE AS build
 
 ARG VERSION
@@ -13,7 +13,7 @@ RUN apk add build-base git make
 RUN git clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 RUN go version
-RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.4.4 && \
+RUN GO111MODULE=on go install github.com/golang/mock/mockgen@v1.4.4 && \
     make gen && \
     CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
     GOOS=linux \
