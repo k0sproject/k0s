@@ -82,7 +82,7 @@ const (
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
 	KubeProxyImageVersion              = "v1.22.13"
 	CoreDNSImage                       = "k8s.gcr.io/coredns/coredns"
-	CoreDNSImageVersion                = "v1.7.0"
+	CoreDNSImageVersion                = "v1.7.1"
 	CalicoImage                        = "docker.io/calico/cni"
 	CalicoComponentImagesVersion       = "v3.18.6"
 	CalicoNodeImage                    = "docker.io/calico/node"
