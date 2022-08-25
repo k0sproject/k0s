@@ -11,8 +11,6 @@ posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 con
 windows_bins = kubelet.exe kube-proxy.exe
 buildmode = docker
 
-
-
 ifeq ($(TARGET_OS),windows)
 bins = ${windows_bins}
 else
@@ -25,16 +23,17 @@ all: $(addprefix $(bindir)/, $(bins))
 .PHONY: clean
 clean:
 	for i in .container.*; do \
-		if [ -f $$i ]; then \
-			docker rm $$(cat $$i) && rm $$i; \
-		fi; \
+	  [ -f "$$i" ] || continue; \
+	  docker rm -- $$(cat -- "$$i") && rm -- "$$i"; \
 	done
-	for i in .docker-image.*; do \
-		if [ -f $$i ]; then \
-			docker rmi -f k0sbuild$$(basename $$i .stamp) && rm $$i;\
-		fi; \
+	for i in .docker-image.*.stamp; do \
+	  [ -f "$$i" ] || continue; \
+	  tags=$$(docker inspect --format='{{range $$tag := .RepoTags}}{{$$tag}} {{end}}' -- $$(cat -- "$$i")) && \
+	  docker rmi -f -- $$tags && \
+	  rm -f -- "$$i"; \
 	done
-	rm -rf staging .tmp/* *.tmp
+	rm -rf staging
+	@echo 'cleaned up; you may want to run `docker system prune` in order to free dangling resources ...'
 
 $(bindir):
 	mkdir -p $@
@@ -58,32 +57,28 @@ $(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
-.container.%: .docker-image.%.stamp
-	docker create --entrypoint /dev/null k0sbuild$(basename $<) > $@.tmp
+define build_docker_container =
+	docker create --entrypoint=/dev/null $(shell cat -- $<) > $@.tmp
 	mv $@.tmp $@
+endef
+.container.%: .docker-image.%.stamp ; $(build_docker_container)
+.container.%.windows: .docker-image.%.windows.stamp ; $(build_docker_container)
 
-.container.%.windows: .docker-image.%.windows.stamp
-	docker create --entrypoint /dev/null k0sbuild$(basename $<) > $@.tmp
+define build_docker_image =
+	docker build -t k0sbuild$(basename $@):latest \
+	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
+	  --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
+	  --build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
+	  --build-arg BUILD_GO_TAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_tags) \
+	  --build-arg BUILD_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_enabled) \
+	  --build-arg BUILD_GO_CGO_CFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_cflags) \
+	  --build-arg BUILD_SHIM_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_shim_go_cgo_enabled) \
+	  --build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
+	  --build-arg BUILD_GO_LDFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) \
+	  --build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
+	  -- $(dir $<)
+	docker images -q k0sbuild$(basename $@):latest > $@.tmp
 	mv $@.tmp $@
-
-.docker-image.%.stamp: %/Dockerfile Makefile.variables
-	docker build -t k0sbuild$(basename $@) \
-		--build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
-		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
-		--build-arg BUILD_GO_TAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_tags) \
-		--build-arg BUILD_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_enabled) \
-		--build-arg BUILD_GO_CGO_CFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_cflags) \
-		--build-arg BUILD_SHIM_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_shim_go_cgo_enabled) \
-		--build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
-		--build-arg BUILD_GO_LDFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) \
-		--build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
-		$(dir $<)
-	touch $@
-
-.docker-image.%.windows.stamp: %/Dockerfile.windows Makefile.variables
-	docker build -t k0sbuild$(basename $@) \
-		--build-arg VERSION=$($(patsubst %/Dockerfile.windows,%,$<)_version) \
-		--build-arg BUILDIMAGE=$($(patsubst %/Dockerfile.windows,%,$<)_buildimage) \
-		-f $< .
-	touch $@
-
+endef
+.docker-image.%.stamp: %/Dockerfile Makefile.variables ; $(build_docker_image)
+.docker-image.%.windows.stamp: %/Dockerfile Makefile.variables ; $(build_docker_image)
