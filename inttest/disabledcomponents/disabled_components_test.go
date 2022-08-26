@@ -33,7 +33,7 @@ type DisabledComponentsSuite struct {
 
 func (s *DisabledComponentsSuite) TestK0sGetsUp() {
 
-	s.NoError(s.InitController(0, "--disable-components konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac"))
+	s.NoError(s.InitController(0, "--disable-components konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)

@@ -1,5 +1,5 @@
 name: unstable
-version: v1.23.3-rc.1+k0s.0
+version: v1.24.4+k0s.0
 downloadURLs:
   k0s:
     linux-amd64: ..../k0s-amd64

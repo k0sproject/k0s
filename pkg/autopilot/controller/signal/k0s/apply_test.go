@@ -57,10 +57,10 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 									"command": {
 										"id": 123,
 										"k0supdate": {
-											"version": "v1.23.8+k0s.0",
-											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.8+k0s.0/k0s-v1.23.8+k0s.0-amd64",
-											"timestamp": "2022-06-22T12:18:54Z",
-											"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383"
+											"version": "v99.99.99",
+											"url": "https://k0s.example.com/downloads/k0s-v99.99.99",
+											"timestamp": "1980-01-01T00:00:00Z",
+											"sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 										}
 									},
 									"status": {
@@ -99,10 +99,10 @@ func TestApplyingUpdateEventFilter(t *testing.T) {
 									"command": {
 										"id": 123,
 										"k0supdate": {
-											"version": "v1.23.8+k0s.0",
-											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.8+k0s.0/k0s-v1.23.8+k0s.0-amd64",
-											"timestamp": "2022-06-22T12:18:54Z",
-											"sha256": "8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383"
+											"version": "v99.99.99",
+											"url": "https://k0s.example.com/downloads/k0s-v99.99.99",
+											"timestamp": "1980-01-01T00:00:00Z",
+											"sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 										}
 									},
 									"status": {

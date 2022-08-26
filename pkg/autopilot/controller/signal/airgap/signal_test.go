@@ -261,9 +261,9 @@ func TestHandle(t *testing.T) {
 									"command": {
 										"id": 123,
 										"airgapupdate": {
-											"version": "v1.23.3+k0s.1",
-											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3+k0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
-											"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
+											"version": "v99.99.99",
+											"url": "https://k0s.example.com/downloads/k0s-airgap-bundle-v99.99.99",
+											"sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 										}
 									},
 									"status": {
@@ -300,9 +300,9 @@ func TestHandle(t *testing.T) {
 									"command": {
 										"id": 123,
 										"airgapupdate": {
-											"version": "v1.23.3+k0s.1",
-											"url": "https://github.com/k0sproject/k0s/releases/download/v1.23.3+k0s.1/k0s-airgap-bundle-v1.23.3+k0s.1-amd64",
-											"sha256": "258f3edd0c260a23c579406f5cc04a599a6f59cc1707f9bd523d7a9abc07f0e2"
+											"version": "v99.99.99",
+											"url": "https://k0s.example.com/downloads/k0s-airgap-bundle-v99.99.99",
+											"sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 										}
 									},
 									"status": {

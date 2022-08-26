@@ -116,7 +116,7 @@ func (a *APIServer) Start(_ context.Context) error {
 		"profiling":                        "false",
 		"v":                                a.LogLevel,
 		"kubelet-certificate-authority":    path.Join(a.K0sVars.CertRootDir, "ca.crt"),
-		"enable-admission-plugins":         "NodeRestriction,PodSecurityPolicy",
+		"enable-admission-plugins":         "NodeRestriction",
 	}
 
 	apiAudiences := []string{"https://kubernetes.default.svc"}
