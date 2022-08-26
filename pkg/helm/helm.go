@@ -23,9 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -35,6 +33,10 @@ import (
 	"helm.sh/helm/v3/pkg/repo"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"sigs.k8s.io/yaml"
+
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Commands run different helm command in the same way as CLI tool
@@ -42,6 +44,11 @@ type Commands struct {
 	repoFile     string
 	helmCacheDir string
 	kubeConfig   string
+}
+
+func logFn(format string, args ...interface{}) {
+	log := logrus.WithField("component", "helm")
+	log.Debugf(format, args...)
 }
 
 var getters = getter.Providers{
@@ -76,7 +83,7 @@ func (hc *Commands) getActionCfg(namespace string) (*action.Configuration, error
 		ImpersonateGroup: &impersonateGroup,
 	}
 	actionConfig := &action.Configuration{}
-	if err := actionConfig.Init(cfg, namespace, "secret", func(format string, v ...interface{}) {}); err != nil {
+	if err := actionConfig.Init(cfg, namespace, "secret", logFn); err != nil {
 		return nil, err
 	}
 	return actionConfig, nil
