@@ -208,9 +208,10 @@ codegen: $(codegen_targets)
 bindata: static/gen_manifests.go pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: lint
+lint: GOLANGCI_LINT_FLAGS ?=
 lint: .k0sbuild.docker-image.k0s go.sum codegen
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
-	$(GO_ENV) golangci-lint run --verbose $(GO_DIRS)
+	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_DIRS)
 
 airgap-images.txt: k0s
 	./k0s airgap list-images > '$@' || { \
