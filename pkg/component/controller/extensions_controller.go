@@ -217,7 +217,9 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 		timeout = defaultTimeout
 	}
 	defer func() {
-		cr.updateStatus(ctx, chart, chartRelease, err)
+		if err != nil {
+			cr.updateStatus(ctx, chart, chartRelease, err)
+		}
 	}()
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
@@ -233,24 +235,34 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 			return fmt.Errorf("can't reconcile installation for `%s`: %v", chart.GetName(), err)
 		}
 	} else {
-		// update
-		chartRelease, err = cr.helm.UpgradeChart(chart.Spec.ChartName,
-			chart.Status.Version,
-			chart.Status.ReleaseName,
-			chart.Status.Namespace,
-			chart.Spec.YamlValues(),
-			timeout,
-		)
-		if err != nil {
-			return fmt.Errorf("can't reconcile upgrade for `%s`: %v", chart.GetName(), err)
+		if cr.chartNeedsUpgrade(chart) {
+			// update
+			chartRelease, err = cr.helm.UpgradeChart(chart.Spec.ChartName,
+				chart.Status.Version,
+				chart.Status.ReleaseName,
+				chart.Status.Namespace,
+				chart.Spec.YamlValues(),
+				timeout,
+			)
+			if err != nil {
+				return fmt.Errorf("can't reconcile upgrade for `%s`: %v", chart.GetName(), err)
+			}
 		}
 	}
 	cr.updateStatus(ctx, chart, chartRelease, nil)
 	return nil
 }
 
+func (cr *ChartReconciler) chartNeedsUpgrade(chart v1beta1.Chart) bool {
+	return !(chart.Status.Namespace == chart.Spec.Namespace &&
+		chart.Status.ReleaseName == chart.Spec.ReleaseName &&
+		chart.Status.Version == chart.Spec.Version &&
+		chart.Status.ValuesHash == chart.Spec.HashValues())
+}
+
 func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart, chartRelease *release.Release, err error) {
 
+	chart.Spec.YamlValues()
 	if chartRelease != nil {
 		chart.Status.ReleaseName = chartRelease.Name
 		chart.Status.Version = chartRelease.Chart.Metadata.Version
@@ -262,6 +274,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart
 	if err != nil {
 		chart.Status.Error = err.Error()
 	}
+	chart.Status.ValuesHash = chart.Spec.HashValues()
 	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
 		cr.L.Errorf("Failed to update status for chart release %s: %s", chart.Name, updErr)
 	}

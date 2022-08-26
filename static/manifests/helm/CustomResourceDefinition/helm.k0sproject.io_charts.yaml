@@ -66,6 +66,8 @@ spec:
                 type: string
               updated:
                 type: string
+              valuesHash:
+                type: string
               version:
                 type: string
             type: object
