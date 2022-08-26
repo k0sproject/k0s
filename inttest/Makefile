@@ -63,9 +63,10 @@ check-backup: TIMEOUT=6m
 .PHONY: $(smoketests)
 include Makefile.variables
 
+$(smoketests): K0S_PATH ?= $(realpath ../k0s)
+$(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-amd64.tar)
 $(smoketests): .footloose-alpine.stamp
-	K0S_IMAGES_BUNDLE="$(realpath ../image-bundle/bundle.tar)" K0S_PATH="$(realpath ../k0s)" go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
-
+	K0S_PATH='$(K0S_PATH)' K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
 .PHONY: clean
 clean:
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp

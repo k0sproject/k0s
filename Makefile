@@ -1,6 +1,21 @@
 include embedded-bins/Makefile.variables
 include inttest/Makefile.variables
 
+ifndef HOST_ARCH
+HOST_HARDWARE := $(shell uname -m)
+ifneq (, $(filter $(HOST_HARDWARE), aarch64 arm64 armv8l))
+  HOST_ARCH := arm64
+else ifneq (, $(filter $(HOST_HARDWARE), armv7l arm))
+  HOST_ARCH := arm
+else
+  ifeq (, $(filter $(HOST_HARDWARE), x86_64 amd64 x64))
+    $(warning unknown machine hardware name $(HOST_HARDWARE), assuming amd64)
+  endif
+  HOST_ARCH := amd64
+endif
+undefine HOST_HARDWARE
+endif
+
 GO_SRCS := $(shell find . -type f -name '*.go' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
 
 # EMBEDDED_BINS_BUILDMODE can be either:
@@ -9,7 +24,7 @@ GO_SRCS := $(shell find . -type f -name '*.go' -not -path './inttest/*' -not -na
 
 EMBEDDED_BINS_BUILDMODE ?= docker
 
-# k0s runs on linux even if its built on mac or windows
+# k0s runs on linux even if it's built on mac or windows
 TARGET_OS ?= linux
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
@@ -152,10 +167,33 @@ k0s.exe k0s: $(GO_SRCS)
 lint: pkg/assets/zz_generated_offsets_$(shell go env GOOS).go
 	$(golint) run --verbose . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
+airgap-images.txt: k0s
+	./k0s airgap list-images > '$@' || { \
+	  code=$$? && \
+	  rm -f -- '$@' && \
+	  exit $$code ; \
+	}
+
+airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
+airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
+airgap-image-bundle-linux-arm.tar:   TARGET_PLATFORM := linux/arm/v7
+airgap-image-bundle-linux-amd64.tar \
+airgap-image-bundle-linux-arm64.tar \
+airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
+	docker run --rm -i --privileged \
+	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
+	  k0sbuild.image-bundler < airgap-images.txt > '$@' || { \
+	    code=$$? && rm -f -- '$@' && exit $$code ; \
+	  }
+
+.k0sbuild.image-bundler.stamp: hack/image-bundler/*
+	docker build -t k0sbuild.image-bundler hack/image-bundler
+	touch -- '$@'
+
 .PHONY: $(smoketests)
-check-airgap: image-bundle/bundle.tar
+check-airgap: airgap-image-bundle-linux-$(HOST_ARCH).tar
 $(smoketests): k0s
-	$(MAKE) -C inttest $@
+	$(MAKE) -C inttest K0S_IMAGES_BUNDLE='$(CURDIR)/airgap-image-bundle-linux-$(HOST_ARCH).tar' $@
 
 .PHONY: smoketests
 smoketests:  $(smoketests)
@@ -174,13 +212,17 @@ clean-docker-image:
 	-docker rmi k0sbuild.docker-image.k0s -f
 	-rm -f .k0sbuild.docker-image.k0s
 
+clean-airgap-image-bundles:
+	-docker rmi -f k0sbuild.image-bundler.k0s
+	-rm airgap-images.txt .k0sbuild.image-bundler.stamp
+	-rm airgap-image-bundle-linux-amd64.tar airgap-image-bundle-linux-arm64.tar airgap-image-bundle-linux-arm.tar
+
 .PHONY: clean
-clean: clean-gocache clean-docker-image
+clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
 	rm -rf site
 	rm -rf docs/cli
 	-$(MAKE) -C embedded-bins clean
-	-$(MAKE) -C image-bundle clean
 	-$(MAKE) -C inttest clean
 
 .PHONY: manifests
@@ -206,11 +248,6 @@ generate-bindata: pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 generate-APIClient: hack/client-gen/boilerplate.go.txt
 	$(go_clientgen) --go-header-file hack/client-gen/boilerplate.go.txt --input="k0s.k0sproject.io/v1beta1" --input-base github.com/k0sproject/k0s/pkg/apis --clientset-name="clientset" -p github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/
 
-image-bundle/image.list: k0s
-	./k0s airgap list-images > image-bundle/image.list
-
-image-bundle/bundle.tar: image-bundle/image.list
-	$(MAKE) -C image-bundle bundle.tar
 
 .PHONY: docs
 docs:

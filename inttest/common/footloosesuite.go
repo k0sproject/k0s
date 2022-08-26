@@ -36,6 +36,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
@@ -66,17 +67,18 @@ type FootlooseSuite struct {
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
-	ControllerCount       int
-	ControllerUmask       int
-	ExtraVolumes          []config.Volume
-	K0sFullPath           string
-	K0sAPIExternalPort    int
-	KonnectivityAdminPort int
-	KonnectivityAgentPort int
-	KubeAPIExternalPort   int
-	WithExternalEtcd      bool
-	WithLB                bool
-	WorkerCount           int
+	ControllerCount              int
+	ControllerUmask              int
+	ExtraVolumes                 []config.Volume
+	K0sFullPath                  string
+	AirgapImageBundleMountPoints []string
+	K0sAPIExternalPort           int
+	KonnectivityAdminPort        int
+	KonnectivityAgentPort        int
+	KubeAPIExternalPort          int
+	WithExternalEtcd             bool
+	WithLB                       bool
+	WorkerCount                  int
 
 	/* context and cancellation */
 
@@ -867,6 +869,24 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			Type:        "volume",
 			Destination: "/var/lib/k0s",
 		},
+	}
+
+	if len(s.AirgapImageBundleMountPoints) > 0 {
+		airgapPath, ok := os.LookupEnv("K0S_IMAGES_BUNDLE")
+		if !ok {
+			return errors.New("cannot bind-mount airgap image bundle, environment variable K0S_IMAGES_BUNDLE not set")
+		} else if !file.Exists(airgapPath) {
+			return fmt.Errorf("cannot bind-mount airgap image bundle, no such file: %q", airgapPath)
+		}
+
+		for _, dest := range s.AirgapImageBundleMountPoints {
+			volumes = append(volumes, config.Volume{
+				Type:        "bind",
+				Source:      airgapPath,
+				Destination: dest,
+				ReadOnly:    true,
+			})
+		}
 	}
 
 	volumes = append(volumes, s.ExtraVolumes...)
