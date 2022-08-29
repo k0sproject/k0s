@@ -4,6 +4,8 @@
 
 k0s can be installed without a config file. In that case the default configuration will be used. You can, though, create and run your own non-default configuration (used by the k0s controller nodes).
 
+k0s supports providing only partial configurations. In case of partial configuration is provided, k0s will use the defaults for any missing values.
+
 1. Generate a yaml config file that uses the default settings.
 
     ```shell
@@ -11,7 +13,7 @@ k0s can be installed without a config file. In that case the default configurati
     k0s config create > /etc/k0s/k0s.yaml
     ```
 
-2. Modify the new yaml config file according to your needs, refer to [Configuration file reference](#configuration-file-reference) below.
+2. Modify the new yaml config file according to your needs, refer to [Configuration file reference](#configuration-file-reference) below. You can remove the default values if wanted as k0s supports partial configs too.
 
 3. Install k0s with your new config file.
 
