@@ -256,7 +256,7 @@ jobs:
 
       - id: set-matrix
         run: |
-          matrix=$(./hack/tools/gen-matrix.sh 1.24.2 1.24.3)
+          matrix=$(./hack/tools/gen-matrix.sh 1.24.3 1.24.4)
           echo "::set-output name=matrix::$matrix"
 
   autopilot-smoketest:
