@@ -9,6 +9,7 @@ spec:
   network:
     podCIDR: "10.244.0.0/16"
     serviceCIDR: "10.96.0.0/12"
+    provider: calico
     calico:
       mode: "bird"
     dualStack:
