@@ -57,3 +57,12 @@ For example, running `k0s worker --token-file=k0s.token --kubelet-extra-args="--
 kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom `kubelet.config.k8s.io` object.
 To see examples of k0s.yaml containing worker profiles: [go here](./configuration.md#specworkerprofiles).
 For a list of possible kubelet configuration keys: [go here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
+
+## IPTables Mode
+
+k0s detects iptables backend automatically based on the existing records. On a brand-new setup, `iptables-nft` will be used.  
+There is a `--iptables-mode` flag to specify the mode explicitly. Valid values: `nft`, `legacy` and `auto` (default).
+
+```shell
+k0s worker --iptables-mode=nft
+```
