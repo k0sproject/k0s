@@ -159,7 +159,7 @@ func (s *SchedulerSpec) IsZero() bool {
 
 func ConfigFromString(yml string, defaultStorage ...*StorageSpec) (*ClusterConfig, error) {
 	config := DefaultClusterConfig(defaultStorage...)
-	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval")
+	err := strictyaml.YamlUnmarshalStrictIgnoringFields([]byte(yml), config, "interval", "podSecurityPolicy")
 	if err != nil {
 		return config, err
 	}
