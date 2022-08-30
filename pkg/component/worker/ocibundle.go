@@ -52,7 +52,7 @@ func (a *OCIBundleReconciler) Init(_ context.Context) error {
 	return dir.Init(a.k0sVars.OCIBundleDir, constant.ManifestsDirMode)
 }
 
-func (a *OCIBundleReconciler) Run(ctx context.Context) error {
+func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
 	if err != nil {
 		return fmt.Errorf("can't read bundles directory")

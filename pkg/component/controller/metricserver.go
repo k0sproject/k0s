@@ -258,7 +258,7 @@ type metricsConfig struct {
 }
 
 var _ component.Component = (*MetricServer)(nil)
-var _ component.ReconcilerComponent = (*MetricServer)(nil)
+var _ component.Reconciler = (*MetricServer)(nil)
 
 // NewMetricServer creates new MetricServer reconciler
 func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {
@@ -276,7 +276,7 @@ func (m *MetricServer) Init(_ context.Context) error {
 }
 
 // Run runs the metric server reconciler
-func (m *MetricServer) Run(ctx context.Context) error {
+func (m *MetricServer) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
 	msDir := path.Join(m.K0sVars.ManifestsDir, "metricserver")

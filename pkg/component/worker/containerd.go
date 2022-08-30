@@ -66,7 +66,7 @@ func (c *ContainerD) Init(ctx context.Context) error {
 }
 
 // Run runs containerD
-func (c *ContainerD) Run(_ context.Context) error {
+func (c *ContainerD) Start(_ context.Context) error {
 	logrus.Info("Starting containerD")
 
 	if err := c.setupConfig(); err != nil {

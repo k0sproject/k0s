@@ -45,7 +45,7 @@ type Component struct {
 }
 
 var _ component.Component = (*Component)(nil)
-var _ component.ReconcilerComponent = (*Component)(nil)
+var _ component.Reconciler = (*Component)(nil)
 
 var interval = time.Minute * 10
 
@@ -74,7 +74,7 @@ func (c *Component) retrieveKubeClient(ch chan struct{}) {
 }
 
 // Run runs work cycle
-func (c *Component) Run(_ context.Context) error {
+func (c *Component) Start(_ context.Context) error {
 	return nil
 }
 

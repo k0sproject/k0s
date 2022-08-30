@@ -57,7 +57,7 @@ func (n *NodeRole) Init(_ context.Context) error {
 }
 
 // Run checks and adds labels
-func (n *NodeRole) Run(ctx context.Context) error {
+func (n *NodeRole) Start(ctx context.Context) error {
 	client, err := n.kubeClientFactory.GetClient()
 	if err != nil {
 		return err

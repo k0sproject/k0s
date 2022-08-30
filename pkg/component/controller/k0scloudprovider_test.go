@@ -92,7 +92,7 @@ func (suite *K0sCloudProviderSuite) TestInit() {
 func (suite *K0sCloudProviderSuite) TestRunStop() {
 	ctx := context.TODO()
 	assert.Nil(suite.T(), suite.ccp.Init(ctx))
-	assert.Nil(suite.T(), suite.ccp.Run(ctx))
+	assert.Nil(suite.T(), suite.ccp.Start(ctx))
 
 	// Ensures that the stopping mechanism actually closes the stop channel.
 	assert.Nil(suite.T(), suite.ccp.Stop())

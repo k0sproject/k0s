@@ -59,7 +59,7 @@ var cmDefaultArgs = stringmap.StringMap{
 }
 
 var _ component.Component = (*Manager)(nil)
-var _ component.ReconcilerComponent = (*Manager)(nil)
+var _ component.Reconciler = (*Manager)(nil)
 
 // Init extracts the needed binaries
 func (a *Manager) Init(_ context.Context) error {
@@ -79,7 +79,7 @@ func (a *Manager) Init(_ context.Context) error {
 }
 
 // Run runs kube Manager
-func (a *Manager) Run(_ context.Context) error { return nil }
+func (a *Manager) Start(_ context.Context) error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {

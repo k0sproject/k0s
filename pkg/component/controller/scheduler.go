@@ -44,7 +44,7 @@ type Scheduler struct {
 }
 
 var _ component.Component = (*Scheduler)(nil)
-var _ component.ReconcilerComponent = (*Scheduler)(nil)
+var _ component.Reconciler = (*Scheduler)(nil)
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init(_ context.Context) error {
@@ -57,7 +57,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 }
 
 // Run runs kube scheduler
-func (a *Scheduler) Run(_ context.Context) error {
+func (a *Scheduler) Start(_ context.Context) error {
 	return nil
 }
 

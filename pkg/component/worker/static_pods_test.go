@@ -189,7 +189,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("fails_to_run_without_init", func(t *testing.T) {
-		err := underTest.Run(context.TODO())
+		err := underTest.Start(context.TODO())
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet initialized", err.Error())
 	})
@@ -239,7 +239,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	t.Cleanup(cancel)
 
 	t.Run("runs", func(runT *testing.T) {
-		if assert.NoError(runT, underTest.Run(ctx)) {
+		if assert.NoError(runT, underTest.Start(ctx)) {
 			t.Cleanup(func() { assert.NoError(t, underTest.Stop()) })
 
 			var lastLog *logrus.Entry
@@ -257,7 +257,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("another_run_fails", func(t *testing.T) {
-		err := underTest.Run(ctx)
+		err := underTest.Start(ctx)
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already running", err.Error())
 	})
@@ -347,7 +347,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("rerun_fails", func(t *testing.T) {
-		err := underTest.Run(context.TODO())
+		err := underTest.Start(context.TODO())
 		require.Error(t, err)
 		assert.Equal(t, "static_pods component is already stopped", err.Error())
 	})

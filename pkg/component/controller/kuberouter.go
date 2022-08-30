@@ -40,7 +40,7 @@ type KubeRouter struct {
 }
 
 var _ component.Component = (*KubeRouter)(nil)
-var _ component.ReconcilerComponent = (*KubeRouter)(nil)
+var _ component.Reconciler = (*KubeRouter)(nil)
 
 type kubeRouterConfig struct {
 	MTU               int
@@ -119,7 +119,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 }
 
 // Run runs the kube-router reconciler
-func (k *KubeRouter) Run(_ context.Context) error {
+func (k *KubeRouter) Start(_ context.Context) error {
 	k.log.Info("starting to dump manifests")
 
 	return nil

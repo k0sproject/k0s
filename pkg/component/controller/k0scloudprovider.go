@@ -68,7 +68,7 @@ func (c *K0sCloudProvider) Init(_ context.Context) error {
 
 // Run will create a k0s-cloud-provider command, and run it on a goroutine.
 // Failures to create this command will be returned as an error.
-func (c *K0sCloudProvider) Run(_ context.Context) error {
+func (c *K0sCloudProvider) Start(_ context.Context) error {
 	command, err := c.commandBuilder()
 	if err != nil {
 		return err

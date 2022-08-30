@@ -42,7 +42,7 @@ func TestCalicoManifests(t *testing.T) {
 		saver := inMemorySaver{}
 		crdSaver := inMemorySaver{}
 		calico := NewCalico(k0sVars, crdSaver, saver)
-		require.NoError(t, calico.Run(context.Background()))
+		require.NoError(t, calico.Start(context.Background()))
 		require.NoError(t, calico.Stop())
 
 		for k := range crdSaver {

@@ -82,7 +82,7 @@ func (m *Manager) Start(ctx context.Context) error {
 		compName := reflect.TypeOf(comp).Elem().Name()
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s", compName))
 		logrus.Infof("starting %v", compName)
-		if err := comp.Run(ctx); err != nil {
+		if err := comp.Start(ctx); err != nil {
 			_ = m.Stop()
 			return err
 		}
@@ -156,7 +156,7 @@ func (m *Manager) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) err
 }
 
 func (m *Manager) reconcileComponent(ctx context.Context, component Component, cfg *v1beta1.ClusterConfig) error {
-	clusterComponent, ok := component.(ReconcilerComponent)
+	clusterComponent, ok := component.(Reconciler)
 	compName := reflect.TypeOf(component).String()
 	if !ok {
 		logrus.Debugf("%s does not implement the ReconcileComponent interface --> not reconciling it", compName)
@@ -171,7 +171,7 @@ func (m *Manager) reconcileComponent(ctx context.Context, component Component, c
 }
 
 func isReconcileComponent(component Component) bool {
-	_, ok := component.(ReconcilerComponent)
+	_, ok := component.(Reconciler)
 	return ok
 }
 

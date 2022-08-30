@@ -24,10 +24,10 @@ import (
 
 // Component defines the lifecycle of managed components.
 //
-//	Created ――――――――――――――――――――――►(Stop)―――╮
-//	╰―(Init)―► Initialized ―――――――►(Stop)――╮│
-//	           ╰―(Run)―► Running ―►(Stop)―╮││
-//	              ╭(Healthy)╯▲            ▼▼▼
+//	Created ――――――――――――――――――――――►(Stop)―――――╮
+//	╰―(Init)―► Initialized ―――――――►(Stop)――――╮│
+//	           ╰―(Start)―► Running ―►(Stop)―╮││
+//	              ╭(Healthy)╯▲              ▼▼▼
 //	              ╰――――――――――╯         ╭► Terminated╮
 //	                                   ╰――――(Stop)――╯
 type Component interface {
@@ -38,12 +38,12 @@ type Component interface {
 	// component's lifecycle. Init must be called only once.
 	Init(context.Context) error
 
-	// Run starts the component. When Run returns, the component is executing in
+	// Start starts the component. When Start returns, the component is executing in
 	// the background. Run may be called only once after Init. If the component
-	// is a ReconcilerComponent, a call to Reconcile may be required before Run
+	// is a Reconciler, a call to Reconcile may be required before Start
 	// can be called. The given context is not intended to replace a call to
-	// Stop when cancelled. It's merely used to cancel the component's startup.
-	Run(context.Context) error
+	// Stop when canceled. It's merely used to cancel the component's startup.
+	Start(context.Context) error
 
 	// Stop stops this component, potentially cleaning up any temporary
 	// resources attached to it. Stop itself may be called in any lifecycle
@@ -60,18 +60,16 @@ type Healthz interface {
 	Healthy() error
 }
 
-// ReconcilerComponent defines the component interface that is reconciled based
+// Reconciler defines the component interface that is reconciled based
 // on changes on the global config CR object changes.
 //
-//	 Created ――――――――――――――――――――――――►(Stop)―――――╮
-//	 ╰―(Init)―► Initialized ―――――――――►(Stop)――――╮│
-//	╭(Reconcile)╯▲╰―(Run)―► Running ―►(Stop)―――╮││
-//	╰――――――――――――╯╭(Reconcile)╯▲▲╰(Healthy)╮   ▼▼▼
+//	Created ――――――――――――――――――――――――――►(Stop)―――――╮
+//	╰―(Init)―► Initialized ―――――――――――►(Stop)――――╮│
+//	╭(Reconcile)╯▲╰―(Start)―► Running ―►(Stop)―――╮││
+//	╰――――――――――――╯╭(Reconcile)╯▲▲╰(Healthy)╮     ▼▼▼
 //	              ╰――――――――――――╯╰――――――――――╯╭► Terminated╮
 //	                                        ╰――――(Stop)――╯
-type ReconcilerComponent interface {
-	Component
-
+type Reconciler interface {
 	// Reconcile aligns the actual state of this component with the desired cluster
 	// configuration. Reconcile may only be called after Init and before Stop.
 	Reconcile(context.Context, *v1beta1.ClusterConfig) error

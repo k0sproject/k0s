@@ -46,7 +46,7 @@ func (s *SystemRBAC) Init(_ context.Context) error {
 }
 
 // Run reconciles the k0s related system RBAC rules
-func (s *SystemRBAC) Run(_ context.Context) error {
+func (s *SystemRBAC) Start(_ context.Context) error {
 	rbacDir := path.Join(s.manifestDir, "bootstraprbac")
 	err := dir.Init(rbacDir, constant.ManifestsDirMode)
 	if err != nil {

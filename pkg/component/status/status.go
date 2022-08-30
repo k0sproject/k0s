@@ -74,7 +74,7 @@ func removeLeftovers(socket string) {
 }
 
 // Run runs the component
-func (s *Status) Run(_ context.Context) error {
+func (s *Status) Start(_ context.Context) error {
 	go func() {
 		if err := s.httpserver.Serve(s.listener); err != nil && err != http.ErrServerClosed {
 			s.L.Errorf("failed to start status server at %s: %s", s.Socket, err)

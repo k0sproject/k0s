@@ -48,7 +48,7 @@ func (a *Autopilot) Init(ctx context.Context) error {
 	return nil
 }
 
-func (a *Autopilot) Run(ctx context.Context) error {
+func (a *Autopilot) Start(ctx context.Context) error {
 	log := logrus.WithFields(logrus.Fields{"component": "autopilot"})
 
 	// Wait 5 mins till we see kubelet auth config in place
@@ -114,6 +114,3 @@ func (a *Autopilot) Run(ctx context.Context) error {
 func (a *Autopilot) Stop() error {
 	return nil
 }
-
-// Health-check interface
-func (a *Autopilot) Healthy() error { return nil }

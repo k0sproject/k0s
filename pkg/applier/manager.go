@@ -83,7 +83,7 @@ func (m *Manager) Init(ctx context.Context) error {
 }
 
 // Run runs the Manager
-func (m *Manager) Run(_ context.Context) error {
+func (m *Manager) Start(_ context.Context) error {
 	return nil
 }
 

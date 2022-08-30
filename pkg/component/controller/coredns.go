@@ -249,7 +249,7 @@ spec:
 const HostsPerExtraReplica = 10.0
 
 var _ component.Component = (*CoreDNS)(nil)
-var _ component.ReconcilerComponent = (*CoreDNS)(nil)
+var _ component.Reconciler = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {
@@ -293,7 +293,7 @@ func (c *CoreDNS) Init(_ context.Context) error {
 }
 
 // Run runs the CoreDNS reconciler component
-func (c *CoreDNS) Run(ctx context.Context) error {
+func (c *CoreDNS) Start(ctx context.Context) error {
 	ctx, c.stopFunc = context.WithCancel(ctx)
 
 	go func() {

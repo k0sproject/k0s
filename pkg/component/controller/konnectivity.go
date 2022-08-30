@@ -63,7 +63,7 @@ type Konnectivity struct {
 }
 
 var _ component.Component = (*Konnectivity)(nil)
-var _ component.ReconcilerComponent = (*Konnectivity)(nil)
+var _ component.Reconciler = (*Konnectivity)(nil)
 
 // Init ...
 func (k *Konnectivity) Init(_ context.Context) error {
@@ -88,7 +88,7 @@ func (k *Konnectivity) Init(_ context.Context) error {
 }
 
 // Run ..
-func (k *Konnectivity) Run(ctx context.Context) error {
+func (k *Konnectivity) Start(ctx context.Context) error {
 	// Buffered chan to send updates for the count of servers
 	k.serverCountChan = make(chan int, 1)
 

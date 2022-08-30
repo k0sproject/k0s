@@ -42,7 +42,7 @@ func (f *Fake) Init(_ context.Context) error {
 	f.InitCalled = true
 	return f.InitErr
 }
-func (f *Fake) Run(_ context.Context) error {
+func (f *Fake) Start(_ context.Context) error {
 	f.RunCalled = true
 	return f.RunErr
 }

@@ -56,7 +56,7 @@ type Metrics struct {
 }
 
 var _ component.Component = (*Metrics)(nil)
-var _ component.ReconcilerComponent = (*Metrics)(nil)
+var _ component.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
 func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface) (*Metrics, error) {
@@ -99,7 +99,7 @@ func (m *Metrics) Init(_ context.Context) error {
 }
 
 // Run runs the metric server reconciler
-func (m *Metrics) Run(ctx context.Context) error {
+func (m *Metrics) Start(ctx context.Context) error {
 	ctx, m.tickerDone = context.WithCancel(ctx)
 
 	for _, j := range m.jobs {
