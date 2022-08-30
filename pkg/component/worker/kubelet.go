@@ -1,5 +1,5 @@
 /*
-Copyright 2021 k0s authors
+Copyright 2022 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package worker
 
 import (
@@ -33,6 +34,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
+	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
@@ -53,6 +55,7 @@ type Kubelet struct {
 	ClusterDNS          string
 	Labels              []string
 	ExtraArgs           string
+	IPTablesMode        string
 }
 
 type kubeletConfig struct {
@@ -66,7 +69,7 @@ type kubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init() error {
-	cmds := []string{"kubelet", "xtables-legacy-multi"}
+	cmds := []string{"kubelet", "xtables-legacy-multi", "xtables-nft-multi"}
 
 	if runtime.GOOS == "windows" {
 		cmds = []string{"kubelet.exe"}
@@ -80,13 +83,24 @@ func (k *Kubelet) Init() error {
 	}
 
 	if runtime.GOOS == "linux" {
+		iptablesMode := k.IPTablesMode
+		if iptablesMode == "" || iptablesMode == "auto" {
+			var err error
+			iptablesMode, err = iptablesutils.DetectIPTablesMode(k.K0sVars.BinDir)
+			if err != nil {
+				logrus.Errorf("error detecting iptables mode: %v, using iptables-nft by default", err)
+				iptablesMode = "nft"
+			}
+		}
+		logrus.Infof("using iptables-%s", iptablesMode)
+		oldpath := fmt.Sprintf("xtables-%s-multi", iptablesMode)
 		for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
 			symlinkPath := filepath.Join(k.K0sVars.BinDir, symlink)
 
 			// remove if it exist and ignore error if it doesn't
 			_ = os.Remove(symlinkPath)
 
-			err := os.Symlink("xtables-legacy-multi", symlinkPath)
+			err := os.Symlink(oldpath, symlinkPath)
 			if err != nil {
 				return fmt.Errorf("failed to create symlink %s: %w", symlink, err)
 			}
