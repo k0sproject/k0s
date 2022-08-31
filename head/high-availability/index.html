@@ -1412,6 +1412,7 @@
 <h1 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h1>
 <p>You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.</p>
 <p><img alt="k0s high availability" src="../img/k0s_high_availability.png" /></p>
+<p><strong>Note:</strong> In this context even 2 node controlplane is considered HA even though it's not really HA from etcd point of view. The same requirement for <a href="#load-balancer">LB</a> still applies.</p>
 <h2 id="network-considerations">Network considerations<a class="headerlink" href="#network-considerations" title="Permanent link">#</a></h2>
 <p>You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.</p>
 <p>For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the <a href="https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members">etcd documentation</a>.</p>
