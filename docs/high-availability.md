@@ -4,6 +4,8 @@ You can create high availability for the control plane by distributing the contr
 
 ![k0s high availability](img/k0s_high_availability.png)
 
+**Note:** In this context even 2 node controlplane is considered HA even though it's not really HA from etcd point of view. The same requirement for [LB](#load-balancer) still applies.
+
 ## Network considerations
 
 You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.
