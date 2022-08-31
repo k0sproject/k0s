@@ -35,7 +35,7 @@ kine_buildimage = golang:$(go_version)-alpine3.16
 kine_build_go_cgo_cflags = "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1" # Flags taken from https://github.com/k3s-io/kine/blob/v0.9.3/scripts/build#L16
 #kine_build_go_flags =
 kine_build_go_ldflags = "-w -s"
-kine_build_go_ldflags_extra = "-extldflags=-static"
+kine_build_go_ldflags_extra = "-extldflags=-static -X github.com/k3s-io/kine/pkg/version.Version=${kine_version}"
 
 etcd_version = 3.5.4
 etcd_buildimage = golang:$(go_version)-alpine3.16
