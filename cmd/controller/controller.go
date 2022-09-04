@@ -30,12 +30,12 @@ import (
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/slices"
 
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
-	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
@@ -85,7 +85,7 @@ func NewControllerCmd() *cobra.Command {
 			}
 			if len(c.DisableComponents) > 0 {
 				for _, cmp := range c.DisableComponents {
-					if !stringslice.Contains(config.AvailableComponents(), cmp) {
+					if !slices.Contains(config.AvailableComponents(), cmp) {
 						return fmt.Errorf("unknown component %s", cmp)
 					}
 				}
@@ -193,7 +193,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars)
-	enableKonnectivity := !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
+	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
 	c.NodeComponents.Add(ctx, &controller.APIServer{
 		ClusterConfig:      c.NodeConfig,
 		K0sVars:            c.K0sVars,
@@ -228,14 +228,14 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		LeaderElector:     leaderElector,
 	})
 
-	if !c.SingleNode && !stringslice.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
+	if !c.SingleNode && !slices.Contains(c.DisableComponents, constant.ControlAPIComponentName) {
 		c.NodeComponents.Add(ctx, &controller.K0SControlAPI{
 			ConfigPath: c.CfgFile,
 			K0sVars:    c.K0sVars,
 		})
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.CsrApproverComponentName) {
 		c.NodeComponents.Add(ctx, controller.NewCSRApprover(c.NodeConfig,
 			leaderElector,
 			adminClientFactory))
@@ -312,7 +312,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	}
 	defer configSource.Stop()
 
-	if !stringslice.Contains(c.DisableComponents, constant.APIConfigComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.APIConfigComponentName) {
 		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
@@ -332,7 +332,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		c.ClusterComponents.Add(ctx, cfgReconciler)
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.HelmComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.HelmComponentName) {
 		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
@@ -347,7 +347,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.AutopilotComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.AutopilotComponentName) {
 		logrus.Debug("starting manifest saver")
 		manifestsSaver, err := controller.NewManifestsSaver("autopilot", c.K0sVars.DataDir)
 		if err != nil {
@@ -371,15 +371,15 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewDefaultPSP(c.K0sVars))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, c.NodeConfig))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
+	if !slices.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
 		coreDNS, err := controller.NewCoreDNS(c.K0sVars, adminClientFactory)
 		if err != nil {
 			return fmt.Errorf("failed to create CoreDNS reconciler: %w", err)
@@ -387,7 +387,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		c.ClusterComponents.Add(ctx, coreDNS)
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.NetworkProviderComponentName) {
 		logrus.Infof("Creating network reconcilers")
 
 		calicoSaver, err := controller.NewManifestsSaver("calico", c.K0sVars.DataDir)
@@ -407,7 +407,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		c.ClusterComponents.Add(ctx, controller.NewKubeRouter(c.K0sVars, kubeRouterSaver))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.MetricsServerComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewMetricServer(c.K0sVars, adminClientFactory))
 	}
 
@@ -423,15 +423,15 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		c.ClusterComponents.Add(ctx, metrics)
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewSystemRBAC(c.K0sVars.ManifestsDir))
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
 	}
 
@@ -445,7 +445,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		})
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.KubeSchedulerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Scheduler{
 			LogLevel:   c.Logging[constant.KubeSchedulerComponentName],
 			K0sVars:    c.K0sVars,
@@ -453,7 +453,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		})
 	}
 
-	if !stringslice.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.KubeControllerManagerComponentName) {
 		c.ClusterComponents.Add(ctx, &controller.Manager{
 			LogLevel:   c.Logging[constant.KubeControllerManagerComponentName],
 			K0sVars:    c.K0sVars,
