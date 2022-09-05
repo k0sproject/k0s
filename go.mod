@@ -38,7 +38,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
-	github.com/urfave/cli v1.22.9
+	github.com/urfave/cli v1.22.10
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
