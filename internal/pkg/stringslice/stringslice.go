@@ -16,32 +16,6 @@ limitations under the License.
 
 package stringslice
 
-import (
-	"reflect"
-	"sort"
-)
-
-// Contains check whether the given string slice contains the other string
-func Contains(strSlice []string, str string) bool {
-	for _, s := range strSlice {
-		if s == str {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsEqual returns true if an array of strings is equal, regardless of order
-func IsEqual(a1 []string, a2 []string) bool {
-	sort.Strings(a1)
-	sort.Strings(a2)
-	if len(a1) == len(a2) {
-		return reflect.DeepEqual(a1, a2)
-	}
-	return false
-}
-
 // Unique returns only the unique items from given input slice
 func Unique(input []string) []string {
 	m := make(map[string]bool)
