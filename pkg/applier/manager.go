@@ -65,20 +65,20 @@ func (m *Manager) Init(ctx context.Context) error {
 	m.bundlePath = m.K0sVars.ManifestsDir
 
 	m.applier = NewApplier(m.K0sVars.ManifestsDir, m.KubeClientFactory)
-
-	m.LeaderElector.AddAcquiredLeaseCallback(func() {
-		watcherCtx, cancel := context.WithCancel(ctx)
-		m.cancelWatcher = cancel
-		go func() {
-			_ = m.runWatchers(watcherCtx)
-		}()
+	m.LeaderElector.AddCallback("applier-manager", controller.LeaseCallback{
+		OnAcquired: func() {
+			watcherCtx, cancel := context.WithCancel(ctx)
+			m.cancelWatcher = cancel
+			go func() {
+				_ = m.runWatchers(watcherCtx)
+			}()
+		},
+		OnLost: func() {
+			if m.cancelWatcher != nil {
+				m.cancelWatcher()
+			}
+		},
 	})
-	m.LeaderElector.AddLostLeaseCallback(func() {
-		if m.cancelWatcher != nil {
-			m.cancelWatcher()
-		}
-	})
-
 	return err
 }
 

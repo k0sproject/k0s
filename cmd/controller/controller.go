@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -216,7 +217,20 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	// One leader elector per controller
 	if !c.SingleNode {
-		leaderElector = controller.NewLeasePoolLeaderElector(adminClientFactory)
+		leaderElector = controller.NewLeasePoolLeaderElector(func() (controller.LeasePoolWatcher, error) {
+			// blocks until pool is ready
+			client, err := adminClientFactory.GetClient()
+			if err != nil {
+				return nil, fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
+			}
+			leasePool, err := leaderelection.NewLeasePool(ctx, client, "k0s-endpoint-reconciler",
+				leaderelection.WithLogger(logrus.WithFields(logrus.Fields{"component": "lease_pool_factory"})),
+				leaderelection.WithContext(ctx))
+			if err != nil {
+				return nil, err
+			}
+			return leasePool, nil
+		})
 	} else {
 		leaderElector = &controller.DummyLeaderElector{Leader: true}
 	}

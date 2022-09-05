@@ -219,7 +219,7 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 	}
 
 	ctx, cancel := context.WithCancel(p.config.ctx)
-
+	// TODO: never ending goroutine on each watch, possible leak
 	go func() {
 		for ctx.Err() == nil {
 			le.Run(ctx)

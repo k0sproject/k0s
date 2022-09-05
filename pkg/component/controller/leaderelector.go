@@ -19,10 +19,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/k0sproject/k0s/pkg/component"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
 )
@@ -30,34 +30,49 @@ import (
 // LeaderElector is the common leader elector component to manage each controller leader status
 type LeaderElector interface {
 	IsLeader() bool
-	AddAcquiredLeaseCallback(fn func())
-	AddLostLeaseCallback(fn func())
+	AddCallback(string, LeaseCallback)
+	RemoveCallback(string)
 }
 
+// LeaseCallback acquired and lost lease callbacks
+type LeaseCallback struct {
+	OnAcquired CallbackFn
+	OnLost     CallbackFn
+}
+
+type getPoolFn func() (LeasePoolWatcher, error)
 type LeasePoolLeaderElector struct {
-	log *logrus.Entry
-
-	stopCh            chan struct{}
-	leaderStatus      atomic.Value
-	kubeClientFactory kubeutil.ClientFactoryInterface
-	leaseCancel       context.CancelFunc
-
-	acquiredLeaseCallbacks []func()
-	lostLeaseCallbacks     []func()
+	log                     *logrus.Entry
+	newComponentRegistrated chan registrationEvent
+	componentDeregistrated  chan registrationEvent
+	leaderStatus            atomic.Value
+	leaseCancel             context.CancelFunc
+	getPool                 getPoolFn
+	callbacks               map[string]LeaseCallback
+	callbacksLock           sync.Mutex
 }
+
+type registrationEvent struct {
+	Name     string
+	Callback CallbackFn
+}
+
+type CallbackFn func()
 
 var _ LeaderElector = (*LeasePoolLeaderElector)(nil)
 var _ component.Component = (*LeasePoolLeaderElector)(nil)
 
 // NewLeasePoolLeaderElector creates new leader elector using a Kubernetes lease pool.
-func NewLeasePoolLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePoolLeaderElector {
+func NewLeasePoolLeaderElector(getPool getPoolFn) *LeasePoolLeaderElector {
 	d := atomic.Value{}
 	d.Store(false)
 	return &LeasePoolLeaderElector{
-		stopCh:            make(chan struct{}),
-		kubeClientFactory: kubeClientFactory,
-		log:               logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
-		leaderStatus:      d,
+		log:                     logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
+		leaderStatus:            d,
+		getPool:                 getPool,
+		newComponentRegistrated: make(chan registrationEvent),
+		componentDeregistrated:  make(chan registrationEvent),
+		callbacks:               make(map[string]LeaseCallback),
 	}
 }
 
@@ -65,20 +80,18 @@ func (l *LeasePoolLeaderElector) Init(_ context.Context) error {
 	return nil
 }
 
+type LeasePoolWatcher interface {
+	Watch(...leaderelection.WatchOpt) (*leaderelection.LeaseEvents, context.CancelFunc, error)
+}
+
 func (l *LeasePoolLeaderElector) Start(ctx context.Context) error {
-	client, err := l.kubeClientFactory.GetClient()
+	pool, err := l.getPool()
 	if err != nil {
-		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
+		return fmt.Errorf("can't get lease pool: %w", err)
 	}
-	leasePool, err := leaderelection.NewLeasePool(ctx, client, "k0s-endpoint-reconciler",
-		leaderelection.WithLogger(l.log),
-		leaderelection.WithContext(ctx))
+	events, cancel, err := pool.Watch()
 	if err != nil {
-		return err
-	}
-	events, cancel, err := leasePool.Watch()
-	if err != nil {
-		return err
+		return fmt.Errorf("can't start watching lease pool: %w", err)
 	}
 	l.leaseCancel = cancel
 
@@ -88,31 +101,77 @@ func (l *LeasePoolLeaderElector) Start(ctx context.Context) error {
 			case <-events.AcquiredLease:
 				l.log.Info("acquired leader lease")
 				l.leaderStatus.Store(true)
-				runCallbacks(l.acquiredLeaseCallbacks)
+				go l.runCallbacks(acquiredEventType, l.callbacks)
 			case <-events.LostLease:
 				l.log.Info("lost leader lease")
 				l.leaderStatus.Store(false)
-				runCallbacks(l.lostLeaseCallbacks)
+				go l.runCallbacks(lostEventType, l.callbacks)
+			case c := <-l.newComponentRegistrated:
+				go l.runCallbacks(acquiredEventType, map[string]LeaseCallback{
+					c.Name: {OnAcquired: c.Callback},
+				})
+			case c := <-l.componentDeregistrated:
+				go l.runCallbacks(lostEventType, map[string]LeaseCallback{
+					c.Name: {OnLost: c.Callback},
+				})
 			}
 		}
 	}()
 	return nil
 }
 
-func runCallbacks(callbacks []func()) {
-	for _, fn := range callbacks {
+type leaseEventType int
+
+const acquiredEventType = 1
+const lostEventType = 2
+
+func (l *LeasePoolLeaderElector) runCallbacks(event leaseEventType, callbacks map[string]LeaseCallback) {
+	var wg sync.WaitGroup
+	l.callbacksLock.Lock()
+	for _, cb := range callbacks {
+		var fn CallbackFn
+		switch event {
+		case acquiredEventType:
+			fn = cb.OnAcquired
+		case lostEventType:
+			fn = cb.OnLost
+		}
 		if fn != nil {
-			fn()
+			wg.Add(1)
+			go func() {
+				fn()
+				wg.Done()
+			}()
+		}
+	}
+	l.callbacksLock.Unlock()
+	wg.Wait()
+}
+
+func (l *LeasePoolLeaderElector) AddCallback(name string, cb LeaseCallback) {
+	l.callbacksLock.Lock()
+	l.callbacks[name] = cb
+	l.callbacksLock.Unlock()
+	if l.IsLeader() && cb.OnAcquired != nil {
+		// schedpe ule new callback for run if the current instance is leader
+		l.newComponentRegistrated <- registrationEvent{
+			Name:     name,
+			Callback: cb.OnAcquired,
 		}
 	}
 }
 
-func (l *LeasePoolLeaderElector) AddAcquiredLeaseCallback(fn func()) {
-	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
-}
-
-func (l *LeasePoolLeaderElector) AddLostLeaseCallback(fn func()) {
-	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
+func (l *LeasePoolLeaderElector) RemoveCallback(name string) {
+	l.callbacksLock.Lock()
+	cb := l.callbacks[name]
+	delete(l.callbacks, name)
+	l.callbacksLock.Unlock()
+	if l.IsLeader() && cb.OnLost != nil {
+		l.componentDeregistrated <- registrationEvent{
+			Name:     name,
+			Callback: cb.OnLost,
+		}
+	}
 }
 
 func (l *LeasePoolLeaderElector) Stop() error {

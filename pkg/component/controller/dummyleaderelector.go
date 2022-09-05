@@ -24,7 +24,7 @@ import (
 
 type DummyLeaderElector struct {
 	Leader    bool
-	callbacks []func()
+	callbacks []CallbackFn
 }
 
 var _ LeaderElector = (*DummyLeaderElector)(nil)
@@ -34,7 +34,10 @@ func (l *DummyLeaderElector) Init(_ context.Context) error { return nil }
 func (l *DummyLeaderElector) Stop() error                  { return nil }
 func (l *DummyLeaderElector) IsLeader() bool               { return l.Leader }
 
-func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
+func (l *DummyLeaderElector) AddCallback(name string, cb LeaseCallback) {}
+func (l *DummyLeaderElector) RemoveCallback(string)                     {}
+
+func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn CallbackFn) {
 	l.callbacks = append(l.callbacks, fn)
 }
 
