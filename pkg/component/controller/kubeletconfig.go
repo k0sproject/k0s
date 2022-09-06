@@ -144,7 +144,7 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 		formatProfileName("default-windows"),
 	}
 	for _, profile := range clusterSpec.Spec.WorkerProfiles {
-		profileConfig := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain) // Do not add dualstack feature gate to the custom profiles
+		profileConfig := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain)
 
 		var workerValues unstructuredYamlObject
 		err := json.Unmarshal(profile.Config, &workerValues)
