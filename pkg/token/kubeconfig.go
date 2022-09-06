@@ -19,15 +19,16 @@ package token
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 const (
@@ -35,56 +36,48 @@ const (
 	RoleWorker     = "worker"
 )
 
-var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
-apiVersion: v1
-clusters:
-- cluster:
-    server: {{.JoinURL}}
-    certificate-authority-data: {{.CACert}}
-  name: k0s
-contexts:
-- context:
-    cluster: k0s
-    user: {{.User}}
-  name: k0s
-current-context: k0s
-kind: Config
-preferences: {}
-users:
-- name: {{.User}}
-  user:
-    token: {{.Token}}
-`))
-
-func CreateKubeletBootstrapConfig(ctx context.Context, api *v1beta1.APISpec, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
-	data := struct {
-		CACert  string
-		Token   string
-		User    string
-		JoinURL string
-		APIUrl  string
-	}{}
-
-	var err error
-	data.User, data.JoinURL, err = loadUserAndJoinURL(api, role)
-	if err != nil {
-		return "", err
-	}
-	data.CACert, err = loadCACert(k0sVars)
-	if err != nil {
-		return "", err
-	}
-	data.Token, err = loadToken(ctx, k0sVars, role, expiry)
+// CreateKubeletBootstrapToken creates a new k0s bootstrap token.
+func CreateKubeletBootstrapToken(ctx context.Context, api *v1beta1.APISpec, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {
+	userName, joinURL, err := loadUserAndJoinURL(api, role)
 	if err != nil {
 		return "", err
 	}
 
-	var buf bytes.Buffer
-	err = kubeconfigTemplate.Execute(&buf, &data)
+	caCert, err := loadCACert(k0sVars)
 	if err != nil {
 		return "", err
 	}
-	return JoinEncode(&buf)
+
+	token, err := loadToken(ctx, k0sVars, role, expiry)
+	if err != nil {
+		return "", err
+	}
+
+	kubeconfig, err := generateKubeconfig(joinURL, caCert, userName, token)
+	if err != nil {
+		return "", err
+	}
+
+	return joinEncode(bytes.NewReader(kubeconfig))
+}
+
+func generateKubeconfig(joinURL string, caCert []byte, userName string, token string) ([]byte, error) {
+	const k0sContextName = "k0s"
+	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
+		Clusters: map[string]*clientcmdapi.Cluster{k0sContextName: {
+			Server:                   joinURL,
+			CertificateAuthorityData: caCert,
+		}},
+		Contexts: map[string]*clientcmdapi.Context{k0sContextName: {
+			Cluster:  k0sContextName,
+			AuthInfo: userName,
+		}},
+		CurrentContext: k0sContextName,
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
+			Token: token,
+		}},
+	})
+	return kubeconfig, err
 }
 
 func loadUserAndJoinURL(api *v1beta1.APISpec, role string) (string, string, error) {
@@ -98,14 +91,14 @@ func loadUserAndJoinURL(api *v1beta1.APISpec, role string) (string, string, erro
 	}
 }
 
-func loadCACert(k0sVars constant.CfgVars) (string, error) {
+func loadCACert(k0sVars constant.CfgVars) ([]byte, error) {
 	crtFile := filepath.Join(k0sVars.CertRootDir, "ca.crt")
 	caCert, err := os.ReadFile(crtFile)
 	if err != nil {
-		return "", fmt.Errorf("failed to read cluster CA from %q: %w; check if the control plane is initialized on this node", crtFile, err)
+		return nil, fmt.Errorf("failed to read cluster CA from %q: %w; check if the control plane is initialized on this node", crtFile, err)
 	}
 
-	return base64.StdEncoding.EncodeToString(caCert), nil
+	return caCert, nil
 }
 
 func loadToken(ctx context.Context, k0sVars constant.CfgVars, role string, expiry time.Duration) (string, error) {

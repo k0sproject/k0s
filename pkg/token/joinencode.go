@@ -23,15 +23,15 @@ import (
 	"io"
 )
 
-// JoinEncode compresses and base64 encodes a join token
-func JoinEncode(inBuf *bytes.Buffer) (string, error) {
+// joinEncode compresses and base64 encodes a join token
+func joinEncode(in io.Reader) (string, error) {
 	var outBuf bytes.Buffer
 	gz, err := gzip.NewWriterLevel(&outBuf, gzip.BestCompression)
 	if err != nil {
 		return "", err
 	}
 
-	_, err = io.Copy(gz, inBuf)
+	_, err = io.Copy(gz, in)
 	gzErr := gz.Close()
 	if err != nil {
 		return "", err

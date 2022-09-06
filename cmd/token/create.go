@@ -70,7 +70,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 					return err
 				}
 
-				bootstrapConfig, err = token.CreateKubeletBootstrapConfig(cmd.Context(), c.NodeConfig.Spec.API, c.K0sVars, createTokenRole, expiry)
+				bootstrapConfig, err = token.CreateKubeletBootstrapToken(cmd.Context(), c.NodeConfig.Spec.API, c.K0sVars, createTokenRole, expiry)
 				return err
 			})
 			if err != nil {
