@@ -629,13 +629,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#specpodsecuritypolicy" class="md-nav__link">
-    spec.podSecurityPolicy
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#speccontrollermanager" class="md-nav__link">
     spec.controllerManager
   </a>
@@ -1449,13 +1442,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#specpodsecuritypolicy" class="md-nav__link">
-    spec.podSecurityPolicy
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#speccontrollermanager" class="md-nav__link">
     spec.controllerManager
   </a>
@@ -1599,8 +1585,6 @@ sudo k0s start
 <span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
 <span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">iptables</span><span class="w"></span>
-<span class="w">  </span><span class="nt">podSecurityPolicy</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">defaultPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">00-k0s-privileged</span><span class="w"></span>
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 <span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"></span>
@@ -1623,7 +1607,7 @@ sudo k0s start
 <span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.5.0</span><span class="w"></span>
 <span class="w">    </span><span class="nt">kubeproxy</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.gcr.io/kube-proxy</span><span class="w"></span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.24.4</span><span class="w"></span>
+<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.25.0</span><span class="w"></span>
 <span class="w">    </span><span class="nt">coredns</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s.gcr.io/coredns/coredns</span><span class="w"></span>
 <span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.7.0</span><span class="w"></span>
@@ -1838,28 +1822,6 @@ sudo k0s start
 </tr>
 </tbody>
 </table>
-<h3 id="specpodsecuritypolicy"><code>spec.podSecurityPolicy</code><a class="headerlink" href="#specpodsecuritypolicy" title="Permanent link">#</a></h3>
-<p>Use the <code>spec.podSecurityPolicy</code> key to configure the default <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">PSP</a>.</p>
-<p>k0s creates two PSPs out-of-the-box:</p>
-<table>
-<thead>
-<tr>
-<th>PSP</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>00-k0s-privileged</code></td>
-<td>Default; no restrictions; used also for Kubernetes/k0s level system pods.</td>
-</tr>
-<tr>
-<td><code>99-k0s-restricted</code></td>
-<td>Does not allow any host namespaces or root users, nor any bind mounts from the host</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Note</strong>: Users can create supplemental PSPs and bind them to users / access accounts as necessary.</p>
 <h3 id="speccontrollermanager"><code>spec.controllerManager</code><a class="headerlink" href="#speccontrollermanager" title="Permanent link">#</a></h3>
 <table>
 <thead>
@@ -2023,7 +1985,7 @@ The default value <code>external</code> makes no storage deployed.</p>
 </code></pre></div>
 <h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
 <p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
-<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,default-psp,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac<span class="o">)</span>
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac<span class="o">)</span>
 </code></pre></div>
 <p>If you use k0sctl just add the flag when installing the cluster for the first controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>

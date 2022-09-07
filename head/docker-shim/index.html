@@ -1334,7 +1334,9 @@
 
 
 <h1 id="dockershim-deprecation-what-does-it-mean-for-k0s">Dockershim Deprecation - What Does It Mean For K0s?<a class="headerlink" href="#dockershim-deprecation-what-does-it-mean-for-k0s" title="Permanent link">#</a></h1>
-<p>Back in December 2020, Kubernetes have anounced the <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">deprecation of the docker-shim from version 1.24 onwards</a>. Now that kubernetes 1.24 is out, the 1.24 release of k0s will no longer support the docker-shim as well.</p>
+<p>Back in December 2020, Kubernetes have announced the <a href="https://kubernetes.io/blog/2020/12/02/dockershim-faq/">deprecation of the
+docker-shim</a> from version 1.24 onwards. As a consequence,
+k0s 1.24 and above don't support the docker-shim as well.</p>
 <h2 id="what-is-dockershim-and-why-was-it-deprecated">What Is Dockershim, and Why Was It Deprecated?<a class="headerlink" href="#what-is-dockershim-and-why-was-it-deprecated" title="Permanent link">#</a></h2>
 <p>The dockershim is a transparent library that intercepts API calls to the kubernetes API and handles their operation in the Docker API. Early versions of Kubernetes used this shim in order to allow containers to run over docker. Later versions of Kubernetes started creating containers via the CRI (Container Runtime Interface). Since CRI has become the de-facto default runtime for Kubernetes, maintaining the dockershim turned into a heavy burden for Kubernetes maintainers, and so the decision to deprecate the built-in dockershim support came into being.</p>
 <h3 id="so-whats-going-to-happen-to-dockershim">So What's going to happen to Dockershim?<a class="headerlink" href="#so-whats-going-to-happen-to-dockershim" title="Permanent link">#</a></h3>
@@ -1349,8 +1351,8 @@
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS   ROLES           AGE   VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   52m   v1.23.8+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          12s   v1.23.8+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   52m   v1.25.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          12s   v1.25.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
 <p>cordon and drain the nodes (migrate one by one):</p>
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl cordon ip-10-0-62-250.eu-west-1.compute.internal 
@@ -1359,8 +1361,8 @@ sudo k0s kubectl drain ip-10-0-62-250.eu-west-1.compute.internal --ignore-daemon
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS                     ROLES           AGE     VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   56m     v1.23.8+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          3m40s   v1.23.8+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   56m     v1.25.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          3m40s   v1.25.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
 <p>Stop k0s on the node:</p>
 <div class="highlight"><pre><span></span><code>sudo k0s stop
@@ -1428,8 +1430,8 @@ fb888cbc5ae0   k8s_POD_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS                     ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.24.3+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          64m    v1.24.3+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.25.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   &lt;none&gt;          64m    v1.25.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
 <h3 id="uncordon-the-node">Uncordon the Node<a class="headerlink" href="#uncordon-the-node" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl uncordon ip-10-0-62-250.eu-west-1.compute.internal
@@ -1440,8 +1442,8 @@ node/ip-10-0-62-250.eu-west-1.compute.internal uncordoned
 <div class="highlight"><pre><span></span><code>sudo k0s kubectl get nodes -o wide
 
 NAME                                        STATUS   ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.24.3+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          66m    v1.24.3+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.25.0+k0s   <span class="m">10</span>.0.49.188   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    &lt;none&gt;          66m    v1.25.0+k0s   <span class="m">10</span>.0.62.250   &lt;none&gt;        Ubuntu <span class="m">20</span>.04.4 LTS   <span class="m">5</span>.13.0-1017-aws   docker://20.10.16
 </code></pre></div>
 
 
