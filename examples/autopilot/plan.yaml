@@ -1,4 +1,4 @@
-# An example plan that specifies an upgrade to `k0s v1.23.8+k0s.0` for three
+# An example plan that specifies an upgrade to `k0s v1.24.4+k0s.0` for three
 # controller nodes, and three worker nodes.
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -19,16 +19,16 @@ spec:
     - k0supdate:
         # This version is used during the final stages of the update process to determine if the updated
         # k0s version matches this value.
-        version: v1.23.8+k0s.0
+        version: v1.24.4+k0s.0
 
         # Platforms are mapped by the format "<GOOS>-<GOARCH>"" and allow for separate binaries per-platform.
         platforms:
           linux-amd64:
             # This just needs to point to a HTTP endpoint
-            url: https://github.com/k0sproject/k0s/releases/download/v1.23.8+k0s.0/k0s-v1.23.8+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/v1.24.4+k0s.0/k0s-v1.24.4+k0s.0-amd64
 
             # The SHA256 can be omitted if required
-            sha256: 8b955202e923612f6196bf3eaea7744f56347a5494b4ffe8c2d4618212193383
+            sha256: c94fb7da760cbdde5ef90e0183cf9c2dd32be139d82e64c3f6ab83d614049383
 
           windows-ppc64le:
             url: https://pretend.this/exists

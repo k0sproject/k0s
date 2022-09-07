@@ -65,64 +65,35 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	_, err = ssh.ExecWithOutput(fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
 	s.NoError(err)
 
-	s.T().Run("successfully_deploy_non-priveleged_pod", func(t *testing.T) {
-		nonPrivelegedPodReq := &corev1.Pod{
-			TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-			ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{{Name: "pause", Image: "k8s.gcr.io/pause"}},
-			},
-		}
+	nonPrivelegedPodReq := &corev1.Pod{
+		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "pause", Image: "k8s.gcr.io/pause"}},
+		},
+	}
 
-		_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), nonPrivelegedPodReq, v1.CreateOptions{})
-		s.NoError(err)
-	})
+	_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), nonPrivelegedPodReq, v1.CreateOptions{})
+	s.NoError(err)
 
-	s.T().Run("returns_error_for_priveleged_pod", func(t *testing.T) {
-		privelegedPodReq := &corev1.Pod{
-			TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-			ObjectMeta: v1.ObjectMeta{Name: "test-pod-privileged"},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "pause",
-						Image: "k8s.gcr.io/pause",
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: boolptr(true),
-						},
+	privelegedPodReq := &corev1.Pod{
+		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: v1.ObjectMeta{Name: "test-pod-privileged"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "pause",
+					Image: "k8s.gcr.io/pause",
+					SecurityContext: &corev1.SecurityContext{
+						RunAsUser: int64ptr(0),
 					},
 				},
 			},
-		}
+		},
+	}
 
-		_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), privelegedPodReq, v1.CreateOptions{})
-		// Should return and error:
-		// pods "test-pod-privileged" is forbidden: PodSecurityPolicy: unable to admit pod: [spec.containers[0].securityContext.privileged: Invalid value: true: Privileged containers are not allowed]
-		s.Error(err)
-	})
-
-	s.T().Run("returns_error_for_run_as_root", func(t *testing.T) {
-		privelegedPodReq := &corev1.Pod{
-			TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-			ObjectMeta: v1.ObjectMeta{Name: "test-pod-privileged"},
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "pause",
-						Image: "k8s.gcr.io/pause",
-						SecurityContext: &corev1.SecurityContext{
-							RunAsUser: int64ptr(0),
-						},
-					},
-				},
-			},
-		}
-
-		_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), privelegedPodReq, v1.CreateOptions{})
-		// Should return and error:
-		// pods "test-pod-privileged" is forbidden: PodSecurityPolicy: unable to admit pod: [spec.containers[0].securityContext.runAsUser: Invalid value: 0: running with the root UID is forbidden]
-		s.Error(err)
-	})
+	_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), privelegedPodReq, v1.CreateOptions{})
+	s.NoError(err)
 }
 
 func TestPSPSuite(t *testing.T) {

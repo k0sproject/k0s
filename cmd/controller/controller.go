@@ -371,10 +371,6 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 		))
 	}
 
-	if !slices.Contains(c.DisableComponents, constant.DefaultPspComponentName) {
-		c.ClusterComponents.Add(ctx, controller.NewDefaultPSP(c.K0sVars))
-	}
-
 	if !slices.Contains(c.DisableComponents, constant.KubeProxyComponentName) {
 		c.ClusterComponents.Add(ctx, controller.NewKubeProxy(c.K0sVars, c.NodeConfig))
 	}

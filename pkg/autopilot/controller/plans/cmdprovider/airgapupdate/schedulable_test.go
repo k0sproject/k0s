@@ -66,27 +66,27 @@ func TestSchedulable(t *testing.T) {
 			},
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
-					Version: "v1.22.2+k0s.1",
+					Version: "v99.99.99",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
+							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
 						},
 						"linux-arm64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm64",
+							Sha256: "234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1",
 						},
 						"linux-arm": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm",
+							Sha256: "34567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
 						},
 						"darwin-amd64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-v1.22.2+k0s.1-amd64",
-							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-amd64",
+							Sha256: "4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123",
 						},
 						"darwin-arm64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-v1.22.2+k0s.1-amd64",
-							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-arm64",
+							Sha256: "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234",
 						},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
@@ -132,27 +132,27 @@ func TestSchedulable(t *testing.T) {
 			},
 			apv1beta2.PlanCommand{
 				AirgapUpdate: &apv1beta2.PlanCommandAirgapUpdate{
-					Version: "v1.22.2+k0s.1",
+					Version: "v99.99.99",
 					Platforms: apv1beta2.PlanPlatformResourceURLMap{
 						"linux-amd64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
+							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
 						},
 						"linux-arm64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm64",
+							Sha256: "234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1",
 						},
 						"linux-arm": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-airgap-bundle-v1.22.2+k0s.1-amd64",
-							Sha256: "7e96a9827360ff0184faacdbaa82cb8db318532a89acc8f4ec1bdac244757d23",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm",
+							Sha256: "34567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
 						},
 						"darwin-amd64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-v1.22.2+k0s.1-amd64",
-							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-amd64",
+							Sha256: "4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123",
 						},
 						"darwin-arm64": {
-							URL:    "https://github.com/k0sproject/k0s/releases/download/v1.22.2+k0s.1/k0s-v1.22.2+k0s.1-amd64",
-							Sha256: "08840f0883d704e70a9119f1a95906c14fa75e91529e2daca27a081001a96fdb",
+							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-arm64",
+							Sha256: "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234",
 						},
 					},
 					Workers: apv1beta2.PlanCommandTarget{

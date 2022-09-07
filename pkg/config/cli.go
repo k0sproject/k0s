@@ -167,7 +167,6 @@ func AvailableComponents() []string {
 		constant.KubeControllerManagerComponentName,
 		constant.ControlAPIComponentName,
 		constant.CsrApproverComponentName,
-		constant.DefaultPspComponentName,
 		constant.KubeProxyComponentName,
 		constant.CoreDNSComponentname,
 		constant.NetworkProviderComponentName,

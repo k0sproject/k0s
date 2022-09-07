@@ -217,5 +217,4 @@ func TestStripDefaults(t *testing.T) {
 	a.Nil(stripped.Spec.ControllerManager)
 	a.Nil(stripped.Spec.Scheduler)
 	a.Nil(stripped.Spec.Network)
-	a.Nil(stripped.Spec.PodSecurityPolicy)
 }

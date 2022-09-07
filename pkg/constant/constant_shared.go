@@ -72,9 +72,7 @@ const (
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.24"
-	// DefaultPSP defines the system level default PSP to apply
-	DefaultPSP = "00-k0s-privileged"
+	KubernetesMajorMinorVersion = "1.25"
 	// Image Constants
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.32-k0s1"
@@ -83,7 +81,7 @@ const (
 	MetricsImage                       = "k8s.gcr.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.1"
 	KubeProxyImage                     = "k8s.gcr.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.24.4"
+	KubeProxyImageVersion              = "v1.25.0"
 	CoreDNSImage                       = "k8s.gcr.io/coredns/coredns"
 	CoreDNSImageVersion                = "v1.9.3"
 	CalicoImage                        = "docker.io/calico/cni"
@@ -102,7 +100,6 @@ const (
 	ControlAPIComponentName            = "control-api"
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
-	DefaultPspComponentName            = "default-psp"
 	HelmComponentName                  = "helm"
 	KonnectivityServerComponentName    = "konnectivity-server"
 	KubeControllerManagerComponentName = "kube-controller-manager"

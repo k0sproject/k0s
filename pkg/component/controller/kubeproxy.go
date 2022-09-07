@@ -218,9 +218,6 @@ data:
     configSyncPeriod: 0s
     featureGates:
       ServiceInternalTrafficPolicy: true
-    {{ if .DualStack }}
-      IPv6DualStack: true
-    {{ end }}
     mode: "{{ .Mode }}"
     conntrack:
       maxPerCore: 0
