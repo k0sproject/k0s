@@ -214,7 +214,47 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 
-	return decoder.Decode(jc)
+	err := decoder.Decode(jc)
+	if err != nil {
+		return err
+	}
+
+	if jc.Spec == nil {
+		jc.Spec = DefaultClusterSpec(storage)
+		return nil
+	}
+	if jc.Spec.Storage == nil {
+		jc.Spec.Storage = DefaultStorageSpec()
+	}
+	if jc.Spec.Extensions == nil {
+		jc.Spec.Extensions = DefaultExtensions()
+	}
+	if jc.Spec.Network == nil {
+		jc.Spec.Network = DefaultNetwork()
+	}
+	if jc.Spec.API == nil {
+		jc.Spec.API = DefaultAPISpec()
+	}
+	if jc.Spec.ControllerManager == nil {
+		jc.Spec.ControllerManager = DefaultControllerManagerSpec()
+	}
+	if jc.Spec.Scheduler == nil {
+		jc.Spec.Scheduler = DefaultSchedulerSpec()
+	}
+	if jc.Spec.Install == nil {
+		jc.Spec.Install = DefaultInstallSpec()
+	}
+	if jc.Spec.Images == nil {
+		jc.Spec.Images = DefaultClusterImages()
+	}
+	if jc.Spec.Telemetry == nil {
+		jc.Spec.Telemetry = DefaultClusterTelemetry()
+	}
+	if jc.Spec.Konnectivity == nil {
+		jc.Spec.Konnectivity = DefaultKonnectivitySpec()
+	}
+
+	return nil
 }
 
 // DefaultClusterSpec default settings
