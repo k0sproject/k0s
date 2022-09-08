@@ -1526,6 +1526,7 @@
 <h1 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h1>
 <h2 id="using-a-configuration-file">Using a configuration file<a class="headerlink" href="#using-a-configuration-file" title="Permanent link">#</a></h2>
 <p>k0s can be installed without a config file. In that case the default configuration will be used. You can, though, create and run your own non-default configuration (used by the k0s controller nodes).</p>
+<p>k0s supports providing only partial configurations. In case of partial configuration is provided, k0s will use the defaults for any missing values.</p>
 <ol>
 <li>
 <p>Generate a yaml config file that uses the default settings.</p>
@@ -1534,7 +1535,7 @@ k0s config create &gt; /etc/k0s/k0s.yaml
 </code></pre></div>
 </li>
 <li>
-<p>Modify the new yaml config file according to your needs, refer to <a href="#configuration-file-reference">Configuration file reference</a> below.</p>
+<p>Modify the new yaml config file according to your needs, refer to <a href="#configuration-file-reference">Configuration file reference</a> below. You can remove the default values if wanted as k0s supports partial configs too.</p>
 </li>
 <li>
 <p>Install k0s with your new config file.</p>
