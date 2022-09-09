@@ -5,11 +5,13 @@ on:
     tags:
       - v* # Push events to matching v*, i.e. v1.0, v20.15.10
 
+env:
+  K0SCTL_VERSION: 0.13.2
+
 jobs:
   release:
     env:
       TF_VAR_k0s_binary_path: "${{ github.workspace }}/k0s"
-      KOSCTL_VERSION: 0.13.2
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
     name: release
     runs-on: ubuntu-latest
@@ -466,7 +468,7 @@ jobs:
         id: k0sctl
         run: |
           # download k0sctl
-          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${KOSCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
           chmod +x ./k0sctl
           ./k0sctl apply -c k0sctl.yaml
 

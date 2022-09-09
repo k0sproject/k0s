@@ -15,7 +15,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
-      KOSCTL_VERSION: 0.13.2
+      K0SCTL_VERSION: 0.13.2
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Network Conformance Testing"
@@ -135,7 +135,7 @@ jobs:
         id: k0sctl
         run: |
           # download k0sctl
-          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${KOSCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
+          curl --silent -L "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-x64" -o k0sctl
           chmod +x ./k0sctl
           ./k0sctl apply -c k0sctl.yaml
 
