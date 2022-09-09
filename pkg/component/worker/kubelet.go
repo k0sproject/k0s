@@ -81,7 +81,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 	}
 
 	if runtime.GOOS == "linux" {
-		for _, symlink := range []string{"iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
+		for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
 			symlinkPath := filepath.Join(k.K0sVars.BinDir, symlink)
 
 			// remove if it exist and ignore error if it doesn't
