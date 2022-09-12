@@ -165,6 +165,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		})
 	}
 
+	certManager := worker.NewCertificateManager(ctx, c.K0sVars.KubeletAuthConfigPath)
 	if !c.SingleNode && !c.EnableWorker {
 		componentManager.Add(ctx, &status.Status{
 			StatusInformation: install.K0sStatus{
@@ -177,12 +178,14 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 				K0sVars:       c.K0sVars,
 				ClusterConfig: c.ClusterConfig,
 			},
-			Socket: config.StatusSocket,
+			CertManager: certManager,
+			Socket:      config.StatusSocket,
 		})
 	}
 
 	componentManager.Add(ctx, &worker.Autopilot{
-		K0sVars: c.K0sVars,
+		K0sVars:     c.K0sVars,
+		CertManager: certManager,
 	})
 
 	// extract needed components

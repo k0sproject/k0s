@@ -16,6 +16,7 @@ package kubeletcertrotate
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -24,6 +25,7 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/k0sproject/k0s/inttest/common"
 
@@ -46,6 +48,10 @@ func (s *kubeletCertRotateSuite) SetupSuite() {
 func (s *kubeletCertRotateSuite) TearDownSuite() {
 	s.FootlooseSuite.TearDownSuite()
 	s.Require().NoError(s.DestroyNetwork(network))
+}
+
+type statusJSON struct {
+	WorkerToAPIConnectionStatus install.ProbeStatus
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -84,6 +90,11 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	s.Require().NoError(err)
 	s.T().Log("waiting to see kubelet rotating the client cert before triggering Plan creation")
 	workerSSH.ExecWithOutput("inotifywait --no-dereference /var/lib/k0s/kubelet/pki/kubelet-client-current.pem")
+	output, err := workerSSH.ExecWithOutput("k0s status -ojson")
+	s.Require().NoError(err)
+	status := statusJSON{}
+	s.Require().NoError(json.Unmarshal([]byte(output), &status))
+	s.Require().True(status.WorkerToAPIConnectionStatus.Success)
 	s.TestApply()
 }
 
