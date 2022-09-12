@@ -48,13 +48,15 @@ type APISpec struct {
 	SANs []string `json:"sans"`
 }
 
+const defaultKasPort = 6443
+
 // DefaultAPISpec default settings for api
 func DefaultAPISpec() *APISpec {
 	// Collect all nodes addresses for sans
 	addresses, _ := iface.AllAddresses()
 	publicAddress, _ := iface.FirstPublicAddress()
 	return &APISpec{
-		Port:                   6443,
+		Port:                   defaultKasPort,
 		K0sAPIPort:             9443,
 		SANs:                   addresses,
 		Address:                publicAddress,
@@ -127,6 +129,8 @@ func (a *APISpec) Validate() []error {
 	if !govalidator.IsIP(a.Address) {
 		errors = append(errors, fmt.Errorf("spec.api.address: %q is not IP address", a.Address))
 	}
-
+	if a.TunneledNetworkingMode && a.Port == defaultKasPort {
+		errors = append(errors, fmt.Errorf("can't use default kubeapi port if TunneledNetworkingMode is enabled"))
+	}
 	return errors
 }

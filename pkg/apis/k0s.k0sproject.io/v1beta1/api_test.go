@@ -66,6 +66,14 @@ func (s *APISuite) TestValidation() {
 		s.Len(errors, 1)
 		s.Contains(errors[0].Error(), "is not a valid address for sans")
 	})
+	s.T().Run("TunneledNetworkingMode_and_default_kas_port_is_invalid", func(t *testing.T) {
+		a := DefaultAPISpec()
+		a.TunneledNetworkingMode = true
+		errors := a.Validate()
+		s.NotNil(errors)
+		s.Len(errors, 1)
+		s.Contains(errors[0].Error(), "can't use default kubeapi port if TunneledNetworkingMode is enabled")
+	})
 }
 
 func TestApiSuite(t *testing.T) {

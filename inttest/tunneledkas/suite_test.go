@@ -35,6 +35,7 @@ type Suite struct {
 const config = `
 spec:
   api:
+    port: 7443
     tunneledNetworkingMode: true
 `
 
@@ -87,8 +88,9 @@ func (s *Suite) TestK0sTunneledKasMode() {
 func TestK0sTunneledKasModeSuite(t *testing.T) {
 	s := Suite{
 		common.FootlooseSuite{
-			ControllerCount: 1,
-			WorkerCount:     2,
+			ControllerCount:     1,
+			WorkerCount:         2,
+			KubeAPIExternalPort: 7443,
 		},
 	}
 	suite.Run(t, &s)
