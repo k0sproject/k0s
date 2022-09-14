@@ -17,6 +17,7 @@ limitations under the License.
 package ctr
 
 import (
+	"fmt"
 	"os"
 	"path"
 
@@ -25,6 +26,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/urfave/cli"
 )
+
+const pathEnv = "PATH"
 
 func NewCtrCommand() *cobra.Command {
 	containerdCtr := app.New()
@@ -37,6 +40,10 @@ func NewCtrCommand() *cobra.Command {
 		DisableFlagParsing: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			args := extractCtrCommand(os.Args)
+			newPath := fmt.Sprintf("%s%s%s", config.GetCmdOpts().K0sVars.BinDir,
+				string(os.PathListSeparator),
+				os.Getenv(pathEnv))
+			os.Setenv(pathEnv, newPath)
 			return containerdCtr.Run(args)
 		},
 	}
