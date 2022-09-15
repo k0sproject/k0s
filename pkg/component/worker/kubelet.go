@@ -39,6 +39,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
+	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -60,6 +61,7 @@ type Kubelet struct {
 	Labels              []string
 	Taints              []string
 	ExtraArgs           string
+	IPTablesMode        string
 }
 
 var _ component.Component = (*Kubelet)(nil)
@@ -75,7 +77,7 @@ type kubeletConfig struct {
 
 // Init extracts the needed binaries
 func (k *Kubelet) Init(_ context.Context) error {
-	cmds := []string{"kubelet", "xtables-legacy-multi"}
+	cmds := []string{"kubelet", "xtables-legacy-multi", "xtables-nft-multi"}
 
 	if runtime.GOOS == "windows" {
 		cmds = []string{"kubelet.exe"}
@@ -89,13 +91,24 @@ func (k *Kubelet) Init(_ context.Context) error {
 	}
 
 	if runtime.GOOS == "linux" {
+		iptablesMode := k.IPTablesMode
+		if iptablesMode == "" || iptablesMode == "auto" {
+			var err error
+			iptablesMode, err = iptablesutils.DetectIPTablesMode(k.K0sVars.BinDir)
+			if err != nil {
+				logrus.Errorf("error detecting iptables mode: %v, using iptables-nft by default", err)
+				iptablesMode = "nft"
+			}
+		}
+		logrus.Infof("using iptables-%s", iptablesMode)
+		oldpath := fmt.Sprintf("xtables-%s-multi", iptablesMode)
 		for _, symlink := range []string{"iptables", "iptables-save", "iptables-restore", "ip6tables", "ip6tables-save", "ip6tables-restore"} {
 			symlinkPath := filepath.Join(k.K0sVars.BinDir, symlink)
 
 			// remove if it exist and ignore error if it doesn't
 			_ = os.Remove(symlinkPath)
 
-			err := os.Symlink("xtables-legacy-multi", symlinkPath)
+			err := os.Symlink(oldpath, symlinkPath)
 			if err != nil {
 				return fmt.Errorf("failed to create symlink %s: %w", symlink, err)
 			}
