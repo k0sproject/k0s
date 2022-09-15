@@ -1,0 +1,79 @@
+name: arm build
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
+      - LICENSE
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
+      - LICENSE
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
+
+jobs:
+  smoketest-arm:
+    name: Smoke test on armv7/arm64 - updated
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      # We cannot rely on this for arm: https://github.com/actions/setup-go/issues/106
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Disable race checker
+        run: echo GO_TEST_RACE= >>"$GITHUB_ENV"
+
+      - name: Build
+        uses: pguyot/arm-runner-action@v2
+        id: build_image
+        with:
+          base_image: dietpi:rpi_armv7_bullseye
+          commands: |
+            echo "Setup go stable version $GO_VERSION"
+            rm -rf -- "$HOME/.local/go"
+            mkdir -p -- "$HOME/.local/go"
+            curl --silent -L "https://go.dev/dl/go${GO_VERSION%%.0}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
+
+            echo "$HOME/.local/go/bin" >>"$GITHUB_PATH"
+            export PATH="$PATH:$HOME/.local/go/bin"
+            echo Added go to the path
+
+            echo "Successfully setup go version $GO_VERSION"
+            go version
+            echo ::group::go env
+            go env
+            echo ::endgroup::
+
+            find . -type d -not -perm /u+w -exec chmod u+w '{}' \;
+            make bindata
+            make --touch codegen
+            make build

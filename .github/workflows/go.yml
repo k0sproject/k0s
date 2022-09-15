@@ -6,27 +6,27 @@ on:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
   pull_request:
     branches:
       - main
       - release-*
     paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
+      - "docs/**"
+      - "examples/**"
+      - "**.md"
       - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
+      - "**.svg"
+      - ".github/workflows/docs.yml"
+      - ".github/workflows/mkdocs-set-default-version.yml"
+      - "mkdocs.yml"
 
 jobs:
   build:
@@ -85,7 +85,7 @@ jobs:
 
       - name: Build
         env:
-          TARGET_OS: '${{ matrix.target }}'
+          TARGET_OS: "${{ matrix.target }}"
         run: |
           make bindata
           make --touch codegen
@@ -262,8 +262,8 @@ jobs:
   autopilot-smoketest:
     name: Autopilot smoke test
     needs:
-    - build
-    - autopilot-smoketest-matrix
+      - build
+      - autopilot-smoketest-matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -330,6 +330,7 @@ jobs:
     runs-on:
       - self-hosted
       - linux
+      - dynamic
       - ${{ matrix.arch }}
 
     steps:
