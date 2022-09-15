@@ -655,6 +655,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#iptables-mode" class="md-nav__link">
+    IPTables Mode
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1343,6 +1350,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#iptables-mode" class="md-nav__link">
+    IPTables Mode
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1390,6 +1404,11 @@ worker0       &lt;none&gt;
 <p>kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom <code>kubelet.config.k8s.io</code> object.
 To see examples of k0s.yaml containing worker profiles: <a href="../configuration/#specworkerprofiles">go here</a>.
 For a list of possible kubelet configuration keys: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go here</a>.</p>
+<h2 id="iptables-mode">IPTables Mode<a class="headerlink" href="#iptables-mode" title="Permanent link">#</a></h2>
+<p>k0s detects iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.<br />
+There is a <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
+<div class="highlight"><pre><span></span><code>k0s worker --iptables-mode<span class="o">=</span>nft
+</code></pre></div>
 
 
 
