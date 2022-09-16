@@ -144,7 +144,7 @@ pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: gen_output_dir = $(g
 
 pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
 	rm -rf 'pkg/apis/$(gen_output_dir)/clientset/'
-	CGO_ENABLED=0 $(GO) install k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version))
+	CGO_ENABLED=0 $(GO) install k8s.io/code-generator/cmd/client-gen@v0.25.1
 	$(GO_ENV) client-gen \
 	  --go-header-file hack/tools/boilerplate.go.txt \
 	  --input=$(groupver) \
