@@ -83,6 +83,7 @@ type WorkerOptions struct {
 	TokenFile        string
 	TokenArg         string
 	WorkerProfile    string
+	IPTablesMode     string
 }
 
 func DefaultLogLevels() map[string]string {
@@ -135,6 +136,7 @@ func GetWorkerFlags() *pflag.FlagSet {
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.StringSliceVarP(&workerOpts.Labels, "labels", "", []string{}, "Node labels, list of key=value pairs")
 	flagset.StringVar(&workerOpts.KubeletExtraArgs, "kubelet-extra-args", "", "extra args for kubelet")
+	flagset.StringVar(&workerOpts.IPTablesMode, "iptables-mode", "", "iptables mode (valid values: nft, legacy, auto). default: auto")
 	flagset.AddFlagSet(GetCriSocketFlag())
 
 	return flagset

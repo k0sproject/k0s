@@ -21,3 +21,12 @@ worker0   NotReady   <none>   10s   v1.20.2-k0s1   beta.kubernetes.io/arch=amd64
 The `k0s worker` command accepts a generic flag to pass in any set of arguments for kubelet process.
 
 For example, running `k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"` passes in the given flags to kubelet as-is. As such, you must confirm that any flags you are passing in are properly formatted and valued as k0s will not validate those flags.
+
+## IPTables Mode
+
+k0s detects iptables backend automatically based on the existing records. On a brand-new setup, `iptables-nft` will be used.  
+There is a `--iptables-mode` flag to specify the mode explicitly. Valid values: `nft`, `legacy` and `auto` (default).
+
+```shell
+k0s worker --iptables-mode=nft
+```

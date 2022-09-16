@@ -123,6 +123,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		Profile:             c.WorkerProfile,
 		Labels:              c.Labels,
 		ExtraArgs:           c.KubeletExtraArgs,
+		IPTablesMode:        c.WorkerOptions.IPTablesMode,
 	})
 
 	if runtime.GOOS == "windows" {
