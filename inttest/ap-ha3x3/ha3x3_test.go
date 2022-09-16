@@ -17,6 +17,7 @@ package ha3x3
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -146,6 +147,14 @@ spec:
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
 
+	ssh, err := s.SSH(s.WorkerNode(0))
+	s.NoError(err)
+	defer ssh.Disconnect()
+	out, err = ssh.ExecWithOutput("/var/lib/k0s/bin/iptables-save -V")
+	s.NoError(err)
+	iptablesVersionParts := strings.Split(out, " ")
+	iptablesModeBeforeUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]
+
 	client, err := s.AutopilotClient(s.ControllerNode(0))
 	s.NoError(err)
 	s.NotEmpty(client)
@@ -177,6 +186,12 @@ spec:
 			s.Equal(appc.SignalCompleted, node.State)
 		}
 	}
+
+	out, err = ssh.ExecWithOutput("/var/lib/k0s/bin/iptables-save -V")
+	s.NoError(err)
+	iptablesVersionParts = strings.Split(out, " ")
+	iptablesModeAfterUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]
+	s.Equal(iptablesModeBeforeUpdate, iptablesModeAfterUpdate)
 }
 
 // TestHA3x3Suite sets up a suite using 3 controllers for quorum, and runs various

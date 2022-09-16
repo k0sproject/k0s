@@ -145,6 +145,7 @@ func (c *CmdOpts) StartWorker(ctx context.Context) error {
 		Labels:              c.Labels,
 		Taints:              c.Taints,
 		ExtraArgs:           c.KubeletExtraArgs,
+		IPTablesMode:        c.WorkerOptions.IPTablesMode,
 	})
 
 	if runtime.GOOS == "windows" {
