@@ -145,7 +145,7 @@ k0s: .k0sbuild.docker-vol.gocache
 
 k0s.exe: TARGET_OS = windows
 k0s.exe: BUILD_GO_CGO_ENABLED = 0
-k0s.exe: GOLANG_IMAGE = golang:1.18.5-alpine
+k0s.exe: GOLANG_IMAGE = golang:1.18.6-alpine
 k0s.exe: pkg/assets/zz_generated_offsets_windows.go
 k0s.exe: .k0sbuild.docker-vol.gocache
 
