@@ -156,6 +156,7 @@ pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.
 codegen_targets += static/gen_manifests.go
 static/gen_manifests.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
 static/gen_manifests.go: $(shell find static/manifests -type f)
+	-rm -f -- '$@'
 	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
 	$(GO_ENV) go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
 
