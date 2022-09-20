@@ -238,6 +238,7 @@ manifests: .helmCRD .cfgCRD
 	$(go_controllergen) crd paths="./pkg/apis/k0s.k0sproject.io/v1beta1/..." output:crd:artifacts:config=$(ROOT_DIR)/static/manifests/v1beta1/CustomResourceDefinition object
 
 static/gen_manifests.go: $(shell find static/manifests -type f)
+	-rm -f -- '$@'
 	$(go_bindata) -o static/gen_manifests.go -pkg static -prefix static static/...
 
 .PHONY: generate-bindata
