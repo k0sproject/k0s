@@ -306,7 +306,12 @@ func (c *command) start(ctx context.Context) error {
 	if c.EnableDynamicConfig {
 		configSource, err = clusterconfig.NewAPIConfigSource(adminClientFactory)
 	} else {
-		configSource, err = clusterconfig.NewStaticSource(c.ClusterConfig)
+		var clusterConfig *v1beta1.ClusterConfig
+		clusterConfig, err = config.LoadClusterConfig(c.K0sVars)
+		if err != nil {
+			return fmt.Errorf("failed to load cluster config: %w", err)
+		}
+		configSource, err = clusterconfig.NewStaticSource(clusterConfig)
 	}
 	if err != nil {
 		return err

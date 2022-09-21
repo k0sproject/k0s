@@ -168,6 +168,11 @@ func (c *Command) Start(ctx context.Context) error {
 
 	certManager := worker.NewCertificateManager(ctx, c.K0sVars.KubeletAuthConfigPath)
 	if !c.SingleNode && !c.EnableWorker {
+		clusterConfig, err := config.LoadClusterConfig(c.K0sVars)
+		if err != nil {
+			return fmt.Errorf("failed to load cluster config: %w", err)
+		}
+
 		componentManager.Add(ctx, &status.Status{
 			StatusInformation: install.K0sStatus{
 				Pid:           os.Getpid(),
@@ -177,7 +182,7 @@ func (c *Command) Start(ctx context.Context) error {
 				Workloads:     true,
 				SingleNode:    false,
 				K0sVars:       c.K0sVars,
-				ClusterConfig: c.ClusterConfig,
+				ClusterConfig: clusterConfig,
 			},
 			CertManager: certManager,
 			Socket:      config.StatusSocket,
