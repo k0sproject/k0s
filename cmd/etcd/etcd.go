@@ -35,10 +35,10 @@ func NewEtcdCmd() *cobra.Command {
 			}
 
 			c := config.GetCmdOpts()
-			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
-				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
+			if c.NodeConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
+				return fmt.Errorf("wrong storage type: %s", c.NodeConfig.Spec.Storage.Type)
 			}
-			if c.ClusterConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
+			if c.NodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return fmt.Errorf("command 'k0s etcd' does not support external etcd cluster")
 			}
 			return nil

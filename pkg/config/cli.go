@@ -54,7 +54,6 @@ type CLIOptions struct {
 	WorkerOptions
 	ControllerOptions
 	CfgFile          string
-	ClusterConfig    *v1beta1.ClusterConfig
 	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
 	DebugListenOn    string
@@ -231,7 +230,6 @@ func GetCmdOpts() CLIOptions {
 		WorkerOptions:     workerOpts,
 
 		CfgFile:          CfgFile,
-		ClusterConfig:    getClusterConfig(K0sVars),
 		NodeConfig:       getNodeConfig(K0sVars),
 		Debug:            Debug,
 		Verbose:          Verbose,
@@ -281,6 +279,7 @@ func PreRunValidateConfig(k0sVars constant.CfgVars) error {
 	}
 	return nil
 }
+
 func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
 	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, K0sVars: k0sVars}
 	cfg, err := loadingRules.Load()
@@ -290,11 +289,7 @@ func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
 	return cfg
 }
 
-func getClusterConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
+func LoadClusterConfig(k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
 	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
-	cfg, err := loadingRules.Load()
-	if err != nil {
-		return nil
-	}
-	return cfg
+	return loadingRules.Load()
 }
