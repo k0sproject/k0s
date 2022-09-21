@@ -18,6 +18,7 @@ package config
 
 import (
 	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,7 @@ func NewValidateCmd() *cobra.Command {
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 
 			loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
 			_, err := loadingRules.ParseRuntimeConfig()

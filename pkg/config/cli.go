@@ -24,16 +24,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	k8s "k8s.io/client-go/kubernetes"
-	cloudprovider "k8s.io/cloud-provider"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	cloudprovider "k8s.io/cloud-provider"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -60,7 +60,6 @@ type CLIOptions struct {
 	DebugListenOn    string
 	DefaultLogLevels map[string]string
 	K0sVars          constant.CfgVars
-	KubeClient       k8s.Interface
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
 	Verbose          bool
 	AutopilotRoot    aproot.Root

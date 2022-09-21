@@ -18,49 +18,43 @@ package install
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
+
+	"github.com/spf13/cobra"
 )
 
-var (
+type command config.CLIOptions
+
+type installFlags struct {
 	force   bool
 	envVars []string
-)
-
-type CmdOpts config.CLIOptions
+}
 
 func NewInstallCmd() *cobra.Command {
+	var installFlags installFlags
+
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install k0s on a brand-new system. Must be run as root (or with sudo)",
 	}
 
-	cmd.AddCommand(installControllerCmd())
-	cmd.AddCommand(installWorkerCmd())
-	cmd.PersistentFlags().AddFlagSet(getInstallFlags())
+	cmd.AddCommand(installControllerCmd(&installFlags))
+	cmd.AddCommand(installWorkerCmd(&installFlags))
+	cmd.PersistentFlags().BoolVar(&installFlags.force, "force", false, "force init script creation")
+	cmd.PersistentFlags().StringArrayVarP(&installFlags.envVars, "env", "e", nil, "set environment variable")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
-func getInstallFlags() *pflag.FlagSet {
-	flagSet := &pflag.FlagSet{}
-
-	flagSet.BoolVar(&force, "force", false, "force init script creation")
-	flagSet.StringArrayVarP(&envVars, "env", "e", nil, "set environment variable")
-
-	return flagSet
-}
-
-// the setup functions:
-// * Ensures that the proper users are created
-// * sets up startup and logging for k0s
-func (c *CmdOpts) setup(role string, args []string, envVars []string, force bool) error {
+// The setup functions:
+//   - Ensures that the proper users are created.
+//   - Sets up startup and logging for k0s.
+func (c *command) setup(role string, args []string, installFlags *installFlags) error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -70,16 +64,16 @@ func (c *CmdOpts) setup(role string, args []string, envVars []string, force bool
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
-	err := install.EnsureService(args, envVars, force)
+	err := install.EnsureService(args, installFlags.envVars, installFlags.force)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %v", err)
 	}
 	return nil
 }
 
-// this command converts the file paths in the Cmd Opts struct to Absolute Paths
-// for flags passed to service init file, see the cmdFlagsToArgs func
-func (c *CmdOpts) convertFileParamsToAbsolute() (err error) {
+// This command converts the file paths in the command struct to absolute paths.
+// For flags passed to service init file, see the [cmdFlagsToArgs] func.
+func (c *command) convertFileParamsToAbsolute() (err error) {
 	// don't convert if cfgFile is empty
 
 	if c.CfgFile != "" {

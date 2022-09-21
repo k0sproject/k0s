@@ -19,13 +19,11 @@ package airgap
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/config"
-)
 
-type CmdOpts config.CLIOptions
+	"github.com/spf13/cobra"
+)
 
 func NewAirgapListImagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -33,7 +31,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			uris := airgap.GetImageURIs(c.ClusterConfig.Spec.Images)
 			for _, uri := range uris {
 				fmt.Println(uri)

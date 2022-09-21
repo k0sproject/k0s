@@ -24,17 +24,16 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
 
-	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
-
-type CmdOpts config.CLIOptions
 
 type kubectlPluginHandler struct{}
 

@@ -24,9 +24,6 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
@@ -36,13 +33,16 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
-
-var ignorePreFlightChecks bool
+type Command config.CLIOptions
 
 func NewWorkerCmd() *cobra.Command {
+	var ignorePreFlightChecks bool
+
 	cmd := &cobra.Command{
 		Use:   "worker [join-token]",
 		Short: "Run worker",
@@ -54,7 +54,7 @@ func NewWorkerCmd() *cobra.Command {
 	$ k0s worker --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := Command(config.GetCmdOpts())
 
 			logrus.SetOutput(os.Stdout)
 			if !c.Debug {
@@ -91,7 +91,7 @@ func NewWorkerCmd() *cobra.Command {
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
 
-			return c.StartWorker(ctx)
+			return c.Start(ctx)
 		},
 	}
 
@@ -102,8 +102,8 @@ func NewWorkerCmd() *cobra.Command {
 	return cmd
 }
 
-// StartWorker starts the worker components based on the CmdOpts config
-func (c *CmdOpts) StartWorker(ctx context.Context) error {
+// Start starts the worker components based on the given [config.CLIOptions].
+func (c *Command) Start(ctx context.Context) error {
 	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
 	}

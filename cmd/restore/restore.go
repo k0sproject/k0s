@@ -37,16 +37,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
-
-var restoredConfigPath string
+type command struct {
+	config.CLIOptions
+	restoredConfigPath string
+}
 
 func NewRestoreCmd() *cobra.Command {
+	var c command
+
 	cmd := &cobra.Command{
 		Use:   "restore filename",
 		Short: "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c.CLIOptions = config.GetCmdOpts()
 			if len(args) != 1 {
 				return fmt.Errorf("path to backup archive expected")
 			}
@@ -62,12 +65,12 @@ func NewRestoreCmd() *cobra.Command {
 	}
 
 	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)
-	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", restoredConfigPathDescription)
+	cmd.Flags().StringVar(&c.restoredConfigPath, "config-out", "", restoredConfigPathDescription)
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
 
-func (c *CmdOpts) restore(path string) error {
+func (c *command) restore(path string) error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -91,10 +94,10 @@ func (c *CmdOpts) restore(path string) error {
 	if err != nil {
 		return err
 	}
-	if restoredConfigPath == "" {
-		restoredConfigPath = defaultConfigFileOutputPath(path)
+	if c.restoredConfigPath == "" {
+		c.restoredConfigPath = defaultConfigFileOutputPath(path)
 	}
-	return mgr.RunRestore(path, c.K0sVars, restoredConfigPath)
+	return mgr.RunRestore(path, c.K0sVars, c.restoredConfigPath)
 }
 
 // set output config file name and path according to input archive Timestamps

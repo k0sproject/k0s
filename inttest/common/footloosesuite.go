@@ -23,6 +23,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -44,21 +45,20 @@ import (
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
-	"github.com/go-openapi/jsonpointer"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/cluster"
-	"github.com/weaveworks/footloose/pkg/config"
-	"golang.org/x/sync/errgroup"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/yaml"
 
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"github.com/go-openapi/jsonpointer"
+	"github.com/stretchr/testify/suite"
+	"github.com/weaveworks/footloose/pkg/cluster"
+	"github.com/weaveworks/footloose/pkg/config"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -895,7 +895,7 @@ func (s *FootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...stri
 func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset) error {
 	s.T().Logf("waiting to see %s ready in kube API", node)
 	return Poll(s.ctx, func(ctx context.Context) (done bool, err error) {
-		n, err := kc.CoreV1().Nodes().Get(ctx, node, v1.GetOptions{})
+		n, err := kc.CoreV1().Nodes().Get(ctx, node, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -913,7 +913,7 @@ func (s *FootlooseSuite) WaitForNodeReady(node string, kc *kubernetes.Clientset)
 
 // GetNodeLabels return the labels of given node
 func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (map[string]string, error) {
-	n, err := kc.CoreV1().Nodes().Get(s.ctx, node, v1.GetOptions{})
+	n, err := kc.CoreV1().Nodes().Get(s.ctx, node, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -941,7 +941,7 @@ func (s *FootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelK
 
 // GetNodeLabels return the labels of given node
 func (s *FootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
-	n, err := kc.CoreV1().Nodes().Get(s.ctx, node, v1.GetOptions{})
+	n, err := kc.CoreV1().Nodes().Get(s.ctx, node, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -962,7 +962,7 @@ func (s *FootlooseSuite) AddNodeAnnotation(node string, kc *kubernetes.Clientset
 func nodeValuePatchAdd(ctx context.Context, node string, kc *kubernetes.Clientset, path string, key string, value string) (*corev1.Node, error) {
 	keyPath := fmt.Sprintf("%s/%s", path, jsonpointer.Escape(key))
 	patch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, keyPath, value)
-	return kc.CoreV1().Nodes().Patch(ctx, node, types.JSONPatchType, []byte(patch), v1.PatchOptions{})
+	return kc.CoreV1().Nodes().Patch(ctx, node, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 }
 
 // WaitForKubeAPI waits until we see kube API online on given node.
@@ -1045,7 +1045,7 @@ func (s *FootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
 func (s *FootlooseSuite) initializeFootlooseCluster() error {
 	dir, err := os.MkdirTemp("", s.T().Name()+"-footloose.")
 	if err != nil {
-		return errors.Wrap(err, "failed to create temporary directory for footloose configuration")
+		return fmt.Errorf("failed to create temporary directory for footloose configuration: %w", err)
 	}
 
 	err = s.initializeFootlooseClusterInDir(dir)
@@ -1080,10 +1080,10 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 
 	fileInfo, err := os.Stat(binPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to locate k0s binary %s", binPath)
+		return fmt.Errorf("failed to locate k0s binary %s: %w", binPath, err)
 	}
 	if fileInfo.IsDir() {
-		return errors.Errorf("failed to locate k0s binary %s: is a directory", binPath)
+		return fmt.Errorf("failed to locate k0s binary %s: is a directory", binPath)
 	}
 
 	volumes := []config.Volume{
@@ -1269,22 +1269,22 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 
 	footlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal footloose configuration")
+		return fmt.Errorf("failed to marshal footloose configuration: %w", err)
 	}
 
 	if err = os.WriteFile(path.Join(dir, "footloose.yaml"), footlooseYaml, 0700); err != nil {
-		return errors.Wrap(err, "failed to write footloose configuration to file")
+		return fmt.Errorf("failed to write footloose configuration to file: %w", err)
 	}
 
 	cluster, err := cluster.New(cfg)
 	if err != nil {
-		return errors.Wrap(err, "failed to setup a new footloose cluster")
+		return fmt.Errorf("failed to setup a new footloose cluster: %w", err)
 	}
 
 	// we first try to delete instances from previous runs, if they happen to exist
 	_ = cluster.Delete()
 	if err := cluster.Create(); err != nil {
-		return errors.Wrap(err, "failed to create footloose cluster")
+		return fmt.Errorf("failed to create footloose cluster: %w", err)
 	}
 
 	s.clusterDir = dir

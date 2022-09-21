@@ -26,12 +26,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/avast/retry-go"
-	"github.com/k0sproject/k0s/pkg/telemetry"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"golang.org/x/exp/slices"
-
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -51,14 +45,20 @@ import (
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
+	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"golang.org/x/exp/slices"
 )
 
-type CmdOpts config.CLIOptions
-
-var ignorePreFlightChecks bool
+type command config.CLIOptions
 
 func NewControllerCmd() *cobra.Command {
+	var ignorePreFlightChecks bool
+
 	cmd := &cobra.Command{
 		Use:     "controller [join-token]",
 		Short:   "Run controller",
@@ -71,7 +71,7 @@ func NewControllerCmd() *cobra.Command {
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := command(config.GetCmdOpts())
 
 			logrus.SetOutput(os.Stdout)
 			if !c.Debug {
@@ -111,7 +111,7 @@ func NewControllerCmd() *cobra.Command {
 
 			ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
-			return c.startController(ctx)
+			return c.start(ctx)
 		},
 	}
 
@@ -123,7 +123,7 @@ func NewControllerCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *CmdOpts) startController(ctx context.Context) error {
+func (c *command) start(ctx context.Context) error {
 	c.NodeComponents = component.NewManager()
 	c.ClusterComponents = component.NewManager()
 
@@ -498,7 +498,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
 
-		if err := c.startControllerWorker(ctx, c.WorkerProfile); err != nil {
+		if err := c.startWorker(ctx, c.WorkerProfile); err != nil {
 			logrus.WithError(err).Error("Failed to start controller worker")
 		} else {
 			perfTimer.Checkpoint("started-worker")
@@ -516,7 +516,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 	return os.Remove(c.CfgFile)
 }
 
-func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) error {
+func (c *command) startWorker(ctx context.Context, profile string) error {
 	var bootstrapConfig string
 	if !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
 		// wait for controller to start up
@@ -546,22 +546,21 @@ func (c *CmdOpts) startControllerWorker(ctx context.Context, profile string) err
 			return err
 		}
 	}
-	// cast and make a copy of the controller cmdOpts
-	// so we can use the same opts to start the worker
-	// Needs to be a copy so we don't mess up the original
-	// token and possibly other args
-	workerCmdOpts := *(*workercmd.CmdOpts)(c)
-	workerCmdOpts.TokenArg = bootstrapConfig
-	workerCmdOpts.WorkerProfile = profile
-	workerCmdOpts.Labels = append(workerCmdOpts.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
+	// Cast and make a copy of the controller command so it can use the same
+	// opts to start the worker. Needs to be a copy so the original token and
+	// possibly other args won't get messed up.
+	wc := workercmd.Command(*(*config.CLIOptions)(c))
+	wc.TokenArg = bootstrapConfig
+	wc.WorkerProfile = profile
+	wc.Labels = append(wc.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
 	if !c.SingleNode && !c.NoTaints {
-		workerCmdOpts.Taints = append(workerCmdOpts.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
+		wc.Taints = append(wc.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
 	}
-	return workerCmdOpts.StartWorker(ctx)
+	return wc.Start(ctx)
 }
 
 // If we've got CA in place we assume the node has already joined previously
-func (c *CmdOpts) needToJoin() bool {
+func (c *command) needToJoin() bool {
 	if file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.key")) &&
 		file.Exists(filepath.Join(c.K0sVars.CertRootDir, "ca.crt")) {
 		return false

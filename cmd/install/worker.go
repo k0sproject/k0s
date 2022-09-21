@@ -22,16 +22,16 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-func installWorkerCmd() *cobra.Command {
+func installWorkerCmd(installFlags *installFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "worker",
 		Short: "Install k0s worker on a brand-new system. Must be run as root (or with sudo)",
 		Example: `Worker subcommand allows you to pass in all available worker parameters.
-All default values of worker command will be passed to the service stub unless overriden.
+All default values of worker command will be passed to the service stub unless overridden.
 
 Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ignored since install command doesn't yet support Windows services`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := command(config.GetCmdOpts())
 			if err := c.convertFileParamsToAbsolute(); err != nil {
 				cmd.SilenceUsage = true
 				return err
@@ -39,7 +39,7 @@ Windows flags like "--api-server", "--cidr-range" and "--cluster-dns" will be ig
 
 			flagsAndVals := []string{"worker"}
 			flagsAndVals = append(flagsAndVals, cmdFlagsToArgs(cmd)...)
-			if err := c.setup("worker", flagsAndVals, envVars, force); err != nil {
+			if err := c.setup("worker", flagsAndVals, installFlags); err != nil {
 				cmd.SilenceUsage = true
 				return err
 			}

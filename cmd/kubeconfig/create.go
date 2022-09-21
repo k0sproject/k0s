@@ -24,17 +24,14 @@ import (
 	"os"
 	"path"
 
-	"github.com/cloudflare/cfssl/log"
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/cloudflare/cfssl/log"
+	"github.com/spf13/cobra"
 )
 
-var (
-	groups string
-
-	userKubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
+var userKubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
 apiVersion: v1
 clusters:
 - cluster:
@@ -55,9 +52,10 @@ users:
     client-certificate-data: {{.ClientCert}}
     client-key-data: {{.ClientKey}}
 `))
-)
 
 func kubeconfigCreateCmd() *cobra.Command {
+	var groups string
+
 	cmd := &cobra.Command{
 		Use:   "create username",
 		Short: "Create a kubeconfig for a user",
@@ -77,7 +75,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				return fmt.Errorf("username is mandatory")
 			}
 			username := args[0]
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			clusterAPIURL := c.NodeConfig.Spec.API.APIAddressURL()
 
 			caCert, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))

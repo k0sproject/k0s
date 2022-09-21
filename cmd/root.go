@@ -21,14 +21,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
-
 	"github.com/k0sproject/k0s/cmd/airgap"
 	"github.com/k0sproject/k0s/cmd/api"
 	"github.com/k0sproject/k0s/cmd/backup"
-	cfg "github.com/k0sproject/k0s/cmd/config"
+	configcmd "github.com/k0sproject/k0s/cmd/config"
 	"github.com/k0sproject/k0s/cmd/controller"
 	"github.com/k0sproject/k0s/cmd/ctr"
 	"github.com/k0sproject/k0s/cmd/etcd"
@@ -47,18 +43,20 @@ import (
 	"github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
-var longDesc string
-
-type cliOpts config.CLIOptions
-
 func NewRootCmd() *cobra.Command {
+	var longDesc string
+
 	cmd := &cobra.Command{
 		Use:   "k0s",
 		Short: "k0s - Zero Friction Kubernetes",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			c := cliOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 
 			if c.Verbose {
 				logrus.SetLevel(logrus.InfoLevel)
@@ -84,7 +82,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(backup.NewBackupCmd())
 	cmd.AddCommand(controller.NewControllerCmd())
 	cmd.AddCommand(ctr.NewCtrCommand())
-	cmd.AddCommand(cfg.NewConfigCmd())
+	cmd.AddCommand(configcmd.NewConfigCmd())
 	cmd.AddCommand(etcd.NewEtcdCmd())
 	cmd.AddCommand(install.NewInstallCmd())
 	cmd.AddCommand(kubeconfig.NewKubeConfigCmd())
@@ -132,7 +130,7 @@ func newDocsCmd() *cobra.Command {
 }
 
 func newDefaultConfigCmd() *cobra.Command {
-	cmd := cfg.NewCreateCmd()
+	cmd := configcmd.NewCreateCmd()
 	cmd.Hidden = true
 	cmd.Deprecated = "use 'k0s config create' instead"
 	cmd.Use = "default-config"

@@ -22,20 +22,15 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
-)
 
-type CmdOpts config.CLIOptions
-
-var (
-	output string
+	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 )
 
 func NewStatusCmd() *cobra.Command {
+	var output string
 	cmd := &cobra.Command{
 		Use:     "status",
 		Short:   "Get k0s instance status information",

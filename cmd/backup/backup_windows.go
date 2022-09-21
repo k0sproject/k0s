@@ -17,13 +17,10 @@ limitations under the License.
 package backup
 
 import (
-	"fmt"
+	"errors"
 
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/spf13/cobra"
 )
-
-type CmdOpts config.CLIOptions
 
 var savePath string
 
@@ -32,7 +29,7 @@ func NewBackupCmd() *cobra.Command {
 		Use:   "backup",
 		Short: "Back-Up k0s configuration. Not supported on Windows OS",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("unsupported Operating System for this command")
+			return errors.New("unsupported Operating System for this command")
 		},
 	}
 	cmd.SilenceUsage = true
