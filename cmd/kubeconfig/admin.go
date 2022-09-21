@@ -21,9 +21,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/cloudflare/cfssl/log"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ func kubeConfigAdminCmd() *cobra.Command {
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			if file.Exists(c.K0sVars.AdminKubeConfigPath) {
 				content, err := os.ReadFile(c.K0sVars.AdminKubeConfigPath)
 				if err != nil {

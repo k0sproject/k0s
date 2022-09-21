@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,7 @@ func NewEditCmd() *cobra.Command {
 		Use:   "edit",
 		Short: "Launch the editor configured in your shell to edit k0s configuration",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			os.Args = []string{os.Args[0], "kubectl", "--data-dir", c.K0sVars.DataDir, "-n", "kube-system", "edit", "clusterconfig", "k0s"}
 			return cmd.Execute()
 		},

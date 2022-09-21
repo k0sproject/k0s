@@ -21,27 +21,38 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
-
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
+
+	"github.com/spf13/cobra"
 )
 
-var createTokenRole string
-
 func tokenCreateCmd() *cobra.Command {
+	var (
+		createTokenRole string
+		tokenExpiry     string
+		waitCreate      bool
+	)
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create join token",
 		Example: `k0s token create --role worker --expiry 100h //sets expiration time to 100 hours
 k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
 `,
-		PreRunE: checkCreateTokenRole,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := checkTokenRole(createTokenRole)
+			if err != nil {
+				cmd.SilenceUsage = true
+			}
+			return err
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			expiry, err := time.ParseDuration(tokenExpiry)
 			if err != nil {
 				return err
@@ -64,7 +75,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 				if statusInfo == nil {
 					return errors.New("k0s is not running")
 				}
-				if err = ensureTokenCreationAcceptable(statusInfo); err != nil {
+				if err = ensureTokenCreationAcceptable(createTokenRole, statusInfo); err != nil {
 					waitCreate = false
 					cmd.SilenceUsage = true
 					return err
@@ -89,7 +100,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 	return cmd
 }
 
-func ensureTokenCreationAcceptable(statusInfo *install.K0sStatus) error {
+func ensureTokenCreationAcceptable(createTokenRole string, statusInfo *install.K0sStatus) error {
 	if statusInfo.SingleNode {
 		return errors.New("refusing to create token: cannot join into a single node cluster")
 	}
@@ -98,12 +109,4 @@ func ensureTokenCreationAcceptable(statusInfo *install.K0sStatus) error {
 	}
 
 	return nil
-}
-
-func checkCreateTokenRole(cmd *cobra.Command, args []string) error {
-	err := checkTokenRole(createTokenRole)
-	if err != nil {
-		cmd.SilenceUsage = true
-	}
-	return err
 }

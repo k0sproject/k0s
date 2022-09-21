@@ -29,21 +29,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
+type command struct {
+	config.CLIOptions
+	client kubernetes.Interface
+}
 
 const (
 	workerRole     = "worker"
@@ -58,16 +62,16 @@ var allowedUsageByRole = map[string]string{
 func NewAPICmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
-		Short: "Run the controller api",
+		Short: "Run the controller API",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := command{CLIOptions: config.GetCmdOpts()}
 
 			logrus.SetOutput(os.Stdout)
 			if !c.Debug {
 				logrus.SetLevel(logrus.InfoLevel)
 			}
 
-			return c.startAPI()
+			return c.start()
 		},
 	}
 	cmd.SilenceUsage = true
@@ -75,13 +79,13 @@ func NewAPICmd() *cobra.Command {
 	return cmd
 }
 
-func (c *CmdOpts) startAPI() error {
+func (c *command) start() (err error) {
 	// Single kube client for whole lifetime of the API
-	kc, err := kubernetes.NewClient(c.K0sVars.AdminKubeConfigPath)
+	c.client, err = kubeutil.NewClient(c.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}
-	c.KubeClient = kc
+
 	prefix := "/v1beta1"
 	router := mux.NewRouter()
 	storage := c.NodeConfig.Spec.Storage
@@ -118,7 +122,7 @@ func (c *CmdOpts) startAPI() error {
 	return nil
 }
 
-func (c *CmdOpts) etcdHandler() http.Handler {
+func (c *command) etcdHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		var etcdReq v1beta1.EtcdRequest
@@ -174,7 +178,7 @@ func (c *CmdOpts) etcdHandler() http.Handler {
 	})
 }
 
-func (c *CmdOpts) kubeConfigHandler() http.Handler {
+func (c *command) kubeConfigHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		tpl := `apiVersion: v1
 kind: Config
@@ -195,7 +199,7 @@ users:
   user:
     token: {{ .Token }}
 `
-		l, err := c.KubeClient.CoreV1().Secrets("kube-system").List(context.Background(), v1.ListOptions{})
+		l, err := c.client.CoreV1().Secrets("kube-system").List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			sendError(err, resp)
 			return
@@ -237,7 +241,7 @@ users:
 	})
 }
 
-func (c *CmdOpts) caHandler() http.Handler {
+func (c *command) caHandler() http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		caResp := v1beta1.CaResponse{}
 		key, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.key"))
@@ -282,7 +286,7 @@ func (c *CmdOpts) caHandler() http.Handler {
 // We need to validate:
 //   - that we find a secret with the ID
 //   - that the token matches whats inside the secret
-func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) bool {
+func (c *command) isValidToken(ctx context.Context, token string, role string) bool {
 	parts := strings.Split(token, ".")
 	logrus.Debugf("token parts: %v", parts)
 	if len(parts) != 2 {
@@ -290,7 +294,7 @@ func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) b
 	}
 
 	secretName := fmt.Sprintf("bootstrap-token-%s", parts[0])
-	secret, err := c.KubeClient.CoreV1().Secrets("kube-system").Get(ctx, secretName, v1.GetOptions{})
+	secret, err := c.client.CoreV1().Secrets("kube-system").Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("failed to get bootstrap token: %s", err.Error())
 		return false
@@ -308,7 +312,7 @@ func (c *CmdOpts) isValidToken(ctx context.Context, token string, role string) b
 	return true
 }
 
-func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
+func (c *command) authMiddleware(next http.Handler, role string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
@@ -332,10 +336,10 @@ func (c *CmdOpts) authMiddleware(next http.Handler, role string) http.Handler {
 	})
 }
 
-func (c *CmdOpts) controllerHandler(next http.Handler) http.Handler {
+func (c *command) controllerHandler(next http.Handler) http.Handler {
 	return c.authMiddleware(next, controllerRole)
 }
 
-func (c *CmdOpts) workerHandler(next http.Handler) http.Handler {
+func (c *command) workerHandler(next http.Handler) http.Handler {
 	return c.authMiddleware(next, workerRole)
 }

@@ -19,13 +19,11 @@ package etcd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
-)
 
-type CmdOpts config.CLIOptions
+	"github.com/spf13/cobra"
+)
 
 func NewEtcdCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -36,7 +34,7 @@ func NewEtcdCmd() *cobra.Command {
 				return err
 			}
 
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			if c.ClusterConfig.Spec.Storage.Type != v1beta1.EtcdStorageType {
 				return fmt.Errorf("wrong storage type: %s", c.ClusterConfig.Spec.Storage.Type)
 			}

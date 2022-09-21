@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/build"
+
 	"github.com/spf13/cobra"
 )
 

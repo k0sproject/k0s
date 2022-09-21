@@ -18,10 +18,9 @@ package kubeconfig
 
 import (
 	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/spf13/cobra"
 )
-
-type CmdOpts config.CLIOptions
 
 func NewKubeConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{

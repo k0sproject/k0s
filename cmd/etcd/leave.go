@@ -22,18 +22,19 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var etcdPeerAddress string
-
 func etcdLeaveCmd() *cobra.Command {
+	var etcdPeerAddress string
+
 	cmd := &cobra.Command{
 		Use:   "leave",
 		Short: "Sign off a given etc node from etcd cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			ctx := context.Background()
 			if etcdPeerAddress == "" {
 				etcdPeerAddress = c.NodeConfig.Spec.Storage.Etcd.PeerAddress

@@ -19,17 +19,9 @@ package token
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
-	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
-)
 
-type CmdOpts config.CLIOptions
-
-var (
-	tokenExpiry string
-	waitCreate  bool
+	"github.com/spf13/cobra"
 )
 
 func NewTokenCmd() *cobra.Command {

@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/install"
+
 	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 )

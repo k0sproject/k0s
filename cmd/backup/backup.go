@@ -24,33 +24,33 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/backup"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-type CmdOpts config.CLIOptions
-
-var savePath string
+type command config.CLIOptions
 
 func NewBackupCmd() *cobra.Command {
+	var savePath string
+
 	cmd := &cobra.Command{
 		Use:   "backup",
 		Short: "Back-Up k0s configuration. Must be run as root (or with sudo)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := command(config.GetCmdOpts())
 			if c.NodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return fmt.Errorf("command 'k0s backup' does not support external etcd cluster")
 			}
-			return c.backup()
+			return c.backup(savePath)
 		},
-		PreRunE: func(c *cobra.Command, args []string) error {
-			cmdOpts := CmdOpts(config.GetCmdOpts())
-			return config.PreRunValidateConfig(cmdOpts.K0sVars)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			c := command(config.GetCmdOpts())
+			return config.PreRunValidateConfig(c.K0sVars)
 		},
 	}
 	cmd.Flags().StringVar(&savePath, "save-path", "", "destination directory path for backup assets, use '-' for stdout")
@@ -59,7 +59,7 @@ func NewBackupCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *CmdOpts) backup() error {
+func (c *command) backup(savePath string) error {
 	if os.Geteuid() != 0 {
 		logrus.Fatal("this command must be run as root!")
 	}

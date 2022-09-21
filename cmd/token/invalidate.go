@@ -17,11 +17,13 @@ limitations under the License.
 package token
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
+
 	"github.com/spf13/cobra"
 )
 
@@ -31,9 +33,9 @@ func tokenInvalidateCmd() *cobra.Command {
 		Short:   "Invalidates existing join token",
 		Example: "k0s token invalidate xyz123",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := CmdOpts(config.GetCmdOpts())
+			c := config.GetCmdOpts()
 			if len(args) < 1 {
-				return fmt.Errorf("invalidate requires at least one token Id to invalidate")
+				return errors.New("invalidate requires at least one token ID to invalidate")
 			}
 			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
 			if err != nil {
@@ -45,7 +47,7 @@ func tokenInvalidateCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("token %s deleted succesfully\n", id)
+				fmt.Printf("token %s deleted successfully\n", id)
 			}
 			return nil
 		},

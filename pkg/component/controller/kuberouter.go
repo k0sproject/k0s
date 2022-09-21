@@ -25,7 +25,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/pkg/errors"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -108,12 +108,12 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 
 	err := tw.WriteToBuffer(output)
 	if err != nil {
-		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
+		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
 
 	err = k.saver.Save("kube-router.yaml", output.Bytes())
 	if err != nil {
-		return errors.Wrap(err, "error writing kube-router manifests, will NOT retry")
+		return fmt.Errorf("error writing kube-router manifests, will NOT retry: %w", err)
 	}
 	return nil
 }
