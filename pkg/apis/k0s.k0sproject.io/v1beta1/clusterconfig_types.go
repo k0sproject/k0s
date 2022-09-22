@@ -300,8 +300,9 @@ func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *Cluste
 			API:     c.Spec.API,
 			Storage: storageSpec,
 			Network: &Network{
-				ServiceCIDR: c.Spec.Network.ServiceCIDR,
-				DualStack:   c.Spec.Network.DualStack,
+				ServiceCIDR:   c.Spec.Network.ServiceCIDR,
+				DualStack:     c.Spec.Network.DualStack,
+				ClusterDomain: c.Spec.Network.ClusterDomain,
 			},
 			Install: c.Spec.Install,
 		},
