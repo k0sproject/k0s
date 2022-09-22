@@ -56,18 +56,16 @@ func NewRootCmd() *cobra.Command {
 		Use:   "k0s",
 		Short: "k0s - Zero Friction Kubernetes",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			c := config.GetCmdOpts()
-
-			if c.Verbose {
+			if config.Verbose {
 				logrus.SetLevel(logrus.InfoLevel)
 			}
 
-			if c.Debug {
+			if config.Debug {
 				logrus.SetLevel(logrus.DebugLevel)
 				go func() {
-					log := logrus.WithField("debug_server", c.DebugListenOn)
+					log := logrus.WithField("debug_server", config.DebugListenOn)
 					log.Debug("Starting debug server")
-					if err := http.ListenAndServe(c.DebugListenOn, nil); err != http.ErrServerClosed {
+					if err := http.ListenAndServe(config.DebugListenOn, nil); err != http.ErrServerClosed {
 						log.WithError(err).Debug("Failed to start debug server")
 					} else {
 						log.Debug("Debug server closed")
