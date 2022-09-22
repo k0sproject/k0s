@@ -264,7 +264,7 @@ func (c *CmdOpts) startController(ctx context.Context) error {
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
-		ClusterSpec: c.NodeConfig.Spec,
+		ClusterSpec: c.ClusterConfig.Spec,
 		CertManager: certificateManager,
 		K0sVars:     c.K0sVars,
 	}
