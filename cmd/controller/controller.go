@@ -269,7 +269,7 @@ func (c *command) start(ctx context.Context) error {
 
 	perfTimer.Checkpoint("starting-certificates-init")
 	certs := &Certificates{
-		ClusterSpec: c.ClusterConfig.Spec,
+		ClusterSpec: c.NodeConfig.Spec,
 		CertManager: certificateManager,
 		K0sVars:     c.K0sVars,
 	}
