@@ -87,6 +87,10 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
 	s.Require().NoError(common.WaitForLease(s.Context(), kc, "kube-scheduler", "kube-system"))
 	s.Require().NoError(common.WaitForLease(s.Context(), kc, "kube-controller-manager", "kube-system"))
+
+	for i := 0; i < s.WorkerCount; i++ {
+		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, s.WorkerNode(i)))
+	}
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
