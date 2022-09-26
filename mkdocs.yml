@@ -14,12 +14,13 @@ nav:
       - Quick Start Guide:                install.md
       - Install using k0sctl:             k0sctl-install.md
       - Alternative Install Methods:
-          - Manual Install (advanced):    k0s-multi-node.md
-          - Docker:                       k0s-in-docker.md
-          - Windows (experimental):       experimental-windows.md
-          - Raspberry Pi 4:               raspberry-pi4.md
-          - Ansible Playbook:             examples/ansible-playbook.md
-          - Airgap Install:               airgap-install.md
+          - Manual Install (advanced):              k0s-multi-node.md
+          - Docker:                                 k0s-in-docker.md
+          - Windows (experimental):                 experimental-windows.md
+          - Raspberry Pi 4:                         raspberry-pi4.md
+          - Ansible Playbook:                       examples/ansible-playbook.md
+          - Airgap Install:                         airgap-install.md
+          - Using custom CA certificate (advanced): custom-ca.md
       - Upgrade:                          upgrade.md
       - Backup/Restore:                   backup.md
       - Uninstall/Reset:                  reset.md
