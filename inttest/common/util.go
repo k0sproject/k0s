@@ -16,9 +16,14 @@ limitations under the License.
 package common
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"fmt"
+	"regexp"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/constant"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -178,4 +183,25 @@ func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, na
 		// Verify that there's a valid holder on the lease
 		return *lease.Spec.HolderIdentity != "", nil
 	})
+}
+
+// VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
+func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node string) error {
+	metrics, err := kc.CoreV1().RESTClient().Get().AbsPath("/api/v1/nodes/worker0/proxy/metrics/cadvisor").Param("format", "text").DoRaw(ctx)
+	if err != nil {
+		return err
+	}
+
+	image := fmt.Sprintf("%s:%s", constant.KubeRouterCNIImage, constant.KubeRouterCNIImageVersion)
+	containerRegex := regexp.MustCompile(fmt.Sprintf(`container_cpu_usage_seconds_total{container="kube-router".*image="%s"`, image))
+
+	scanner := bufio.NewScanner(bytes.NewReader(metrics))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if containerRegex.MatchString(line) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("container and image label not found in kubelet metrics")
 }
