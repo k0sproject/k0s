@@ -34,6 +34,7 @@ func NewTokenCmd() *cobra.Command {
 	cmd.AddCommand(tokenCreateCmd())
 	cmd.AddCommand(tokenListCmd())
 	cmd.AddCommand(tokenInvalidateCmd())
+	cmd.AddCommand(preSharedCmd())
 	return cmd
 }
 
