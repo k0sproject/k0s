@@ -1312,7 +1312,7 @@
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code>Worker subcommand allows you to pass in all available worker parameters.
-All default values of worker command will be passed to the service stub unless overriden.
+All default values of worker command will be passed to the service stub unless overridden.
 
 Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;--cluster-dns&quot; will be ignored since install command doesn&#39;t yet support Windows services
 </code></pre></div>
@@ -1323,9 +1323,10 @@ Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;
       --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --enable-cloud-provider       Whether or not to enable cloud provider support in kubelet
   -h, --help                        help for worker
+      --iptables-mode string        iptables mode (valid values: nft, legacy, auto). default: auto
       --kubelet-extra-args string   extra args for kubelet
       --labels strings              Node labels, list of key=value pairs
-  -l, --logging stringToString      Logging Levels for the different components (default [containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info])
+  -l, --logging stringToString      Logging Levels for the different components (default [kubelet=1,kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1])
       --profile string              worker profile to use on the node (default &quot;default&quot;)
       --taints strings              Node taints, list of key=value:effect strings
       --token-file string           Path to the file containing token.
