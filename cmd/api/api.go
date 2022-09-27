@@ -64,7 +64,7 @@ func NewAPICmd() *cobra.Command {
 		Use:   "api",
 		Short: "Run the controller API",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logrus.SetOutput(os.Stdout)
+			logrus.SetOutput(cmd.OutOrStdout())
 			logrus.SetLevel(logrus.InfoLevel)
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
