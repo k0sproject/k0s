@@ -18,7 +18,6 @@ package token
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -54,12 +53,12 @@ func tokenListCmd() *cobra.Command {
 				return err
 			}
 			if len(tokens) == 0 {
-				fmt.Println("No k0s join tokens found")
+				fmt.Fprintln(cmd.OutOrStdout(), "No k0s join tokens found")
 				return nil
 			}
 
-			//fmt.Printf("Tokens: %v \n", tokens)
-			table := tablewriter.NewWriter(os.Stdout)
+			//fmt.Fprintf(cmd.OutOrStdout(), "Tokens: %v \n", tokens)
+			table := tablewriter.NewWriter(cmd.OutOrStdout())
 			table.SetHeader([]string{"ID", "Role", "Expires at"})
 			table.SetAutoWrapText(false)
 			table.SetAutoFormatHeaders(true)

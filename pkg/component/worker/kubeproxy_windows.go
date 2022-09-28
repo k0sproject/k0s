@@ -46,7 +46,7 @@ func (k KubeProxy) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't get hostname: %v", err)
 	}
-	fmt.Println(31)
+
 	sourceVip, err := getSourceVip()
 	if err != nil {
 		return fmt.Errorf("can't get source vip: %v", err)

@@ -19,6 +19,7 @@ package status
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 	"runtime"
 
@@ -46,9 +47,9 @@ func NewStatusCmd() *cobra.Command {
 				return err
 			}
 			if statusInfo != nil {
-				printStatus(statusInfo, output)
+				printStatus(cmd.OutOrStdout(), statusInfo, output)
 			} else {
-				fmt.Println("K0s is not running")
+				fmt.Fprintln(cmd.OutOrStdout(), "K0s is not running")
 			}
 			return nil
 		},
@@ -61,29 +62,29 @@ func NewStatusCmd() *cobra.Command {
 	return cmd
 }
 
-func printStatus(status *install.K0sStatus, output string) {
+func printStatus(w io.Writer, status *install.K0sStatus, output string) {
 	switch output {
 	case "json":
 		jsn, _ := json.MarshalIndent(status, "", "   ")
-		fmt.Println(string(jsn))
+		fmt.Fprintln(w, string(jsn))
 	case "yaml":
 		ym, _ := yaml.Marshal(status)
-		fmt.Println(string(ym))
+		fmt.Fprintln(w, string(ym))
 	default:
-		fmt.Println("Version:", status.Version)
-		fmt.Println("Process ID:", status.Pid)
-		fmt.Println("Role:", status.Role)
-		fmt.Println("Workloads:", status.Workloads)
-		fmt.Println("SingleNode:", status.SingleNode)
+		fmt.Fprintln(w, "Version:", status.Version)
+		fmt.Fprintln(w, "Process ID:", status.Pid)
+		fmt.Fprintln(w, "Role:", status.Role)
+		fmt.Fprintln(w, "Workloads:", status.Workloads)
+		fmt.Fprintln(w, "SingleNode:", status.SingleNode)
 		if status.Workloads {
-			fmt.Println("Kube-api probing successful:", status.WorkerToAPIConnectionStatus.Success)
-			fmt.Println("Kube-api probing last error: ", status.WorkerToAPIConnectionStatus.Message)
+			fmt.Fprintln(w, "Kube-api probing successful:", status.WorkerToAPIConnectionStatus.Success)
+			fmt.Fprintln(w, "Kube-api probing last error: ", status.WorkerToAPIConnectionStatus.Message)
 		}
 		if status.SysInit != "" {
-			fmt.Println("Init System:", status.SysInit)
+			fmt.Fprintln(w, "Init System:", status.SysInit)
 		}
 		if status.StubFile != "" {
-			fmt.Println("Service file:", status.StubFile)
+			fmt.Fprintln(w, "Service file:", status.StubFile)
 		}
 
 	}

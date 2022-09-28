@@ -35,7 +35,7 @@ func NewCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%s", cfg)
+			fmt.Fprintf(cmd.OutOrStdout(), "%s", cfg)
 			return nil
 		},
 	}

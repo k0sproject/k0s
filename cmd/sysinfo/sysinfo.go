@@ -19,7 +19,6 @@ package sysinfo
 import (
 	"errors"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
@@ -44,9 +43,10 @@ func NewSysinfoCmd() *cobra.Command {
 
 			sysinfoSpec.AddDebugProbes = true
 			probes := sysinfoSpec.NewSysinfoProbes()
+			out := cmd.OutOrStdout()
 			cli := &cliReporter{
-				w:      os.Stdout,
-				colors: aurora.NewAurora(term.IsTerminal(os.Stdout)),
+				w:      out,
+				colors: aurora.NewAurora(term.IsTerminal(out)),
 			}
 
 			if err := probes.Probe(cli); err != nil {

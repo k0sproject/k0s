@@ -118,7 +118,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 			if err != nil {
 				return err
 			}
-			_, err = os.Stdout.Write(buf.Bytes())
+			_, err = cmd.OutOrStdout().Write(buf.Bytes())
 			if err != nil {
 				return err
 			}
