@@ -24,7 +24,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -33,7 +34,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 
-	"github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/sirupsen/logrus"
 )
 
 // manifestFilePattern is the glob pattern that all applicable manifest files need to match.
@@ -105,10 +106,12 @@ func (a *Applier) Apply(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	files, err := filepath.Glob(path.Join(a.Dir, manifestFilePattern))
 	if err != nil {
 		return err
 	}
+
 	resources, err := a.parseFiles(files)
 	if err != nil {
 		return err

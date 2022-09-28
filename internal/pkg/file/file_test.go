@@ -18,7 +18,6 @@ package file
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestExists(t *testing.T) {
 		t.Errorf("test non-existing: got %t, wanted %t", got, want)
 	}
 
-	existingFileName := path.Join(dir, "existing")
+	existingFileName := filepath.Join(dir, "existing")
 	require.NoError(t, os.WriteFile(existingFileName, []byte{}, 0644))
 
 	// test existing

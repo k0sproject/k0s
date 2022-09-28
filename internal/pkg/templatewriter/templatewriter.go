@@ -19,11 +19,11 @@ package templatewriter
 import (
 	"fmt"
 	"io"
-	"os"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -35,14 +35,9 @@ type TemplateWriter struct {
 	Path     string
 }
 
-// Write writes executes the template and writes the results on disk
+// Write executes the template and writes the results on disk
 func (p *TemplateWriter) Write() error {
-	podFile, err := os.OpenFile(p.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertMode)
-	if err != nil {
-		return fmt.Errorf("failed to open pod file for %s: %w", p.Name, err)
-	}
-	defer podFile.Close()
-	return p.WriteToBuffer(podFile)
+	return file.WriteAtomically(p.Path, constant.CertMode, p.WriteToBuffer)
 }
 
 // WriteToBuffer writes executed template tot he given writer
