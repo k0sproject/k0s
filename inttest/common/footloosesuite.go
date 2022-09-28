@@ -32,7 +32,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -82,7 +81,7 @@ type FootlooseSuite struct {
 	// Provide alternate launch functionalities as-needed.
 
 	LaunchMode     LaunchMode
-	launchDelegate *LaunchDelegate
+	launchDelegate launchDelegate
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
@@ -145,11 +144,11 @@ func (s *FootlooseSuite) initializeDefaults() {
 
 	switch s.LaunchMode {
 	case LaunchModeStandalone:
-		s.launchDelegate = s.StandaloneLaunchDelegate()
+		s.launchDelegate = &standaloneLaunchDelegate{s.K0sFullPath, s.ControllerUmask}
 	case LaunchModeOpenRC:
-		s.launchDelegate = s.OpenRCLaunchDelegate()
+		s.launchDelegate = &openRCLaunchDelegate{s.K0sFullPath}
 	default:
-		s.Require().Fail("Missing launch delegate (standalone, openrc)")
+		s.Require().Fail("Unknown launch mode", s.LaunchMode)
 	}
 }
 
@@ -516,74 +515,6 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	return s.WaitForKubeAPI(controllerNode, getDataDirOpt(k0sArgs))
 }
 
-// initControllerStandalone initializes a controller in 'standalone' mode, meaning that
-// the k0s executable is launched directly (vs. started from a service)
-func (s *FootlooseSuite) initControllerStandalone(conn *SSHConnection, k0sArgs ...string) error {
-	umaskCmd := ""
-	if s.ControllerUmask != 0 {
-		umaskCmd = fmt.Sprintf("umask %d;", s.ControllerUmask)
-	}
-
-	// Allow any arch for etcd in smokes
-	cmd := fmt.Sprintf("%s ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", umaskCmd, runtime.GOARCH, s.K0sFullPath, strings.Join(k0sArgs, " "))
-
-	if _, err := conn.ExecWithOutput(cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
-	}
-
-	return nil
-}
-
-// initControllerOpenRC initializes a controller in 'openrc' mode, meaning that
-// the k0s executable is launched as a service managed by openrc.
-func (s *FootlooseSuite) initControllerOpenRC(conn *SSHConnection, k0sArgs ...string) error {
-	if err := s.installK0sServiceOpenRC(conn, "controller"); err != nil {
-		return fmt.Errorf("unable to install openrc k0s controller: %w", err)
-	}
-
-	// Configure k0s as a controller w/args
-	controllerArgs := fmt.Sprintf("controller --debug %s", strings.Join(k0sArgs, " "))
-	if err := configureK0sServiceArgs(conn, "controller", controllerArgs); err != nil {
-		return fmt.Errorf("failed to configure k0s with '%s'", controllerArgs)
-	}
-
-	cmd := "/etc/init.d/k0scontroller start"
-	if _, err := conn.ExecWithOutput(cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
-	}
-
-	return nil
-}
-
-// installK0sServiceOpenRC will install an openrc k0s-type service (controller/worker)
-// if it does not already exist.
-func (s *FootlooseSuite) installK0sServiceOpenRC(conn *SSHConnection, k0sType string) error {
-	existsCommand := fmt.Sprintf("/usr/bin/file /etc/init.d/k0s%s", k0sType)
-	if _, err := conn.ExecWithOutput(existsCommand); err != nil {
-		cmd := fmt.Sprintf("%s install %s", s.K0sFullPath, k0sType)
-		if _, err := conn.ExecWithOutput(cmd); err != nil {
-			return fmt.Errorf("unable to execute '%s': %w", cmd, err)
-		}
-	}
-
-	return nil
-}
-
-// configureK0sServiceArgs performs some reconfiguring of the `/etc/init.d/k0s[controller|worker]`
-// startup script to allow for different configurations at test time, using the same base
-// image.
-func configureK0sServiceArgs(conn *SSHConnection, k0sType string, args string) error {
-	k0sServiceFile := fmt.Sprintf("/etc/init.d/k0s%s", k0sType)
-	cmd := fmt.Sprintf("sed -i 's#^command_args=.*$#command_args=\"%s\"#g' %s", args, k0sServiceFile)
-
-	_, err := conn.ExecWithOutput(cmd)
-	if err != nil {
-		return fmt.Errorf("failed to execute '%s' on %s: %w", cmd, conn.Address, err)
-	}
-
-	return nil
-}
-
 // GetJoinToken generates join token for the asked role
 func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
@@ -630,43 +561,6 @@ func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error
 			return err
 		}
 	}
-	return nil
-}
-
-// initWorkerStandalone initializes a worker in 'standalone' mode, meaning that
-// the k0s executable is launched directly (vs. started from a service)
-func (s *FootlooseSuite) initWorkerStandalone(conn *SSHConnection, token string, k0sArgs ...string) error {
-	if token == "" {
-		return fmt.Errorf("got empty token for worker join")
-	}
-
-	cmd := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.K0sFullPath, strings.Join(k0sArgs, " "), token)
-	if _, err := conn.ExecWithOutput(cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
-	}
-
-	return nil
-}
-
-// initWorkerOpenRC initializes a worker in 'openrc' mode, meaning that
-// the k0s executable is launched as a service managed by openrc.
-func (s *FootlooseSuite) initWorkerOpenRC(conn *SSHConnection, token string, k0sArgs ...string) error {
-	if err := s.installK0sServiceOpenRC(conn, "worker"); err != nil {
-		return fmt.Errorf("unable to install openrc k0s worker: %w", err)
-	}
-
-	// Configure k0s as a worker w/args
-	workerArgs := fmt.Sprintf("worker --debug %s %s", strings.Join(k0sArgs, " "), token)
-
-	if err := configureK0sServiceArgs(conn, "worker", workerArgs); err != nil {
-		return fmt.Errorf("failed to configure k0s with '%s'", workerArgs)
-	}
-
-	cmd := "/etc/init.d/k0sworker start"
-	if _, err := conn.ExecWithOutput(cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
-	}
-
 	return nil
 }
 
@@ -723,26 +617,6 @@ func (s *FootlooseSuite) StopController(name string) error {
 	s.T().Log("killing k0s")
 
 	return s.launchDelegate.StopController(ssh)
-}
-
-// stopControllerStandalone stops a k0s controller that was started standalone.
-func (s *FootlooseSuite) stopControllerStandalone(conn *SSHConnection) error {
-	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.K0sFullPath, s.K0sFullPath)
-	if _, err := conn.ExecWithOutput(stopCommand); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", stopCommand, err)
-	}
-
-	return nil
-}
-
-// stopControllerOpenRC stops a k0s controller that was started using openrc.
-func (s *FootlooseSuite) stopControllerOpenRC(conn *SSHConnection) error {
-	startCmd := "/etc/init.d/k0scontroller stop"
-	if _, err := conn.ExecWithOutput(startCmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", startCmd, err)
-	}
-
-	return nil
 }
 
 func (s *FootlooseSuite) Reset(name string) error {
@@ -1335,53 +1209,6 @@ func (s *FootlooseSuite) getIPAddress(nodeName string) string {
 	ipAddress, err := ssh.ExecWithOutput("hostname -i")
 	s.Require().NoError(err)
 	return ipAddress
-}
-
-type LaunchMode string
-
-const (
-	LaunchModeStandalone LaunchMode = "standalone"
-	LaunchModeOpenRC     LaunchMode = "openrc"
-)
-
-// LaunchDelegate provides an indirection to the launch operations in footloosesuite
-// so that alternate behaviour can be performed.
-type LaunchDelegate struct {
-	InitController func(conn *SSHConnection, k0sArgs ...string) error
-	StopController func(conn *SSHConnection) error
-	InitWorker     func(conn *SSHConnection, token string, k0sArgs ...string) error
-}
-
-// StandaloneLaunchDelegate creates a footloosesuite LaunchDelegate that starts controllers/workers
-// in a 'standalone' mode, ie. not run from a service.
-func (s *FootlooseSuite) StandaloneLaunchDelegate() *LaunchDelegate {
-	return &LaunchDelegate{
-		InitController: func(conn *SSHConnection, k0sArgs ...string) error {
-			return s.initControllerStandalone(conn, k0sArgs...)
-		},
-		StopController: func(conn *SSHConnection) error {
-			return s.stopControllerStandalone(conn)
-		},
-		InitWorker: func(conn *SSHConnection, token string, k0sArgs ...string) error {
-			return s.initWorkerStandalone(conn, token, k0sArgs...)
-		},
-	}
-}
-
-// OpenRCLaunchDelegate creates a footloosesuite LaunchDelegate that starts controllers/workers
-// via an openrc service.
-func (s *FootlooseSuite) OpenRCLaunchDelegate() *LaunchDelegate {
-	return &LaunchDelegate{
-		InitController: func(conn *SSHConnection, k0sArgs ...string) error {
-			return s.initControllerOpenRC(conn, k0sArgs...)
-		},
-		StopController: func(conn *SSHConnection) error {
-			return s.stopControllerOpenRC(conn)
-		},
-		InitWorker: func(conn *SSHConnection, token string, k0sArgs ...string) error {
-			return s.initWorkerOpenRC(conn, token, k0sArgs...)
-		},
-	}
 }
 
 // CreateNetwork creates a docker network with the provided name, destroying
