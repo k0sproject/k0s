@@ -21,7 +21,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"github.com/k0sproject/k0s/pkg/config"
@@ -90,11 +89,11 @@ func NewK0sKubectlCmd() *cobra.Command {
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
+		if err := fallbackToK0sKubeconfig(cmd); err != nil {
 			return err
 		}
 
-		if err := fallbackToK0sKubeconfig(args); err != nil {
+		if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
 			return err
 		}
 
@@ -119,34 +118,31 @@ func NewK0sKubectlCmd() *cobra.Command {
 	return cmd
 }
 
-func fallbackToK0sKubeconfig(args []string) error {
-	for _, arg := range args {
-		if arg == "--" {
-			// no more options
-			break
-		}
-		if arg == "--kubeconfig" || strings.HasPrefix(arg, "--kubeconfig=") {
-			// kubeconfig set via args, no need to check if k0s kubeconfig is readable
-			return nil
-		}
+func fallbackToK0sKubeconfig(cmd *cobra.Command) error {
+	kubeconfigFlag := cmd.Flags().Lookup("kubeconfig")
+	if kubeconfigFlag == nil {
+		return fmt.Errorf("kubeconfig flag not found")
 	}
 
-	if _, envSet := os.LookupEnv("KUBECONFIG"); envSet {
-		// kubeconfig environment variable set, don't override
+	if kubeconfigFlag.Changed {
+		// prioritize flag over env
+		_ = os.Unsetenv("KUBECONFIG")
+		return nil
+	}
+
+	if _, ok := os.LookupEnv("KUBECONFIG"); ok {
 		return nil
 	}
 
 	kubeconfig := config.GetCmdOpts().K0sVars.AdminKubeConfigPath
+
 	// verify that k0s's kubeconfig is readable before pushing it to the env
-	file, err := os.Open(kubeconfig)
-	if err != nil {
-		return fmt.Errorf("cannot read k0s kubeconfig, is the server running? (%w)", err)
-	}
-	file.Close()
-
-	if err := os.Setenv("KUBECONFIG", kubeconfig); err != nil {
-		return fmt.Errorf("failed to set k0s kubeconfig as default: %w", err)
+	if _, err := os.Stat(kubeconfig); err != nil {
+		return fmt.Errorf("cannot stat k0s kubeconfig, is the server running?: %w", err)
 	}
 
+	if err := kubeconfigFlag.Value.Set(kubeconfig); err != nil {
+		return fmt.Errorf("failed to set kubeconfig flag: %w", err)
+	}
 	return nil
 }
