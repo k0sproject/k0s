@@ -71,9 +71,6 @@ check-customports: TIMEOUT=6m
 # Config change smoke runs actually many cases hence a bit longer timeout
 check-configchange: TIMEOUT=8m
 
-# Node role check runs several cases
-check-noderole: TIMEOUT=6m
-
 # Backup check runs two scenarios
 check-backup: TIMEOUT=10m
 
