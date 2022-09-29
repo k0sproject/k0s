@@ -47,7 +47,7 @@ func tokenInvalidateCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("token %s deleted successfully\n", id)
+				fmt.Fprintf(cmd.OutOrStdout(), "token %s deleted successfully\n", id)
 			}
 			return nil
 		},

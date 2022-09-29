@@ -87,7 +87,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			if err != nil {
 				return err
 			}
-			fmt.Println(bootstrapConfig)
+			fmt.Fprintln(cmd.OutOrStdout(), bootstrapConfig)
 			return nil
 		},
 	}

@@ -44,14 +44,14 @@ type Manager struct {
 }
 
 // RunBackup backups cluster
-func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string) error {
+func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string, out io.Writer) error {
 	configLoader := config.ClientConfigLoadingRules{}
 	_, err := configLoader.Load()
 	if err != nil {
 		return err
 	}
 
-	bm.discoverSteps(configLoader.RuntimeConfigPath, nodeSpec, vars, "backup", "")
+	bm.discoverSteps(configLoader.RuntimeConfigPath, nodeSpec, vars, "backup", "", out)
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -66,7 +66,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVar
 	}
 
 	if savePathDir == "-" {
-		return createArchive(os.Stdout, assets, bm.dataDir)
+		return createArchive(out, assets, bm.dataDir)
 	}
 
 	backupFileName := fmt.Sprintf("k0s_backup_%s.tar.gz", timeStamp())
@@ -82,7 +82,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVar
 	return nil
 }
 
-func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string) {
+func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string, out io.Writer) {
 	if nodeSpec.Storage.Type == v1beta1.EtcdStorageType && !nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	} else if nodeSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(nodeSpec.Storage.Kine.DataSource, "sqlite://") {
@@ -103,7 +103,7 @@ func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.Cluste
 		}
 		bm.Add(NewFilesystemStep(path))
 	}
-	bm.Add(newConfigurationStep(configFilePath, restoredConfigPath))
+	bm.Add(newConfigurationStep(configFilePath, restoredConfigPath, out))
 }
 
 // Add adds backup step
@@ -138,7 +138,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 }
 
 // RunRestore restores cluster
-func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desiredRestoredConfigPath string) error {
+func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desiredRestoredConfigPath string, out io.Writer) error {
 	var input io.Reader
 	if archivePath == "-" {
 		input = os.Stdin
@@ -158,7 +158,7 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desi
 	if err != nil {
 		return fmt.Errorf("failed to parse backed-up configuration file, check the backup archive: %v", err)
 	}
-	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath)
+	bm.discoverSteps(fmt.Sprintf("%s/k0s.yaml", bm.tmpDir), cfg.Spec, k0sVars, "restore", desiredRestoredConfigPath, out)
 	logrus.Info("Starting restore")
 
 	for _, step := range bm.steps {

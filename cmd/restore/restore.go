@@ -21,6 +21,7 @@ package restore
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -53,7 +54,7 @@ func NewRestoreCmd() *cobra.Command {
 			if len(args) != 1 {
 				return fmt.Errorf("path to backup archive expected")
 			}
-			return c.restore(args[0])
+			return c.restore(args[0], cmd.OutOrStdout())
 		},
 	}
 
@@ -70,7 +71,7 @@ func NewRestoreCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) restore(path string) error {
+func (c *command) restore(path string, out io.Writer) error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("this command must be run as root")
 	}
@@ -97,7 +98,7 @@ func (c *command) restore(path string) error {
 	if c.restoredConfigPath == "" {
 		c.restoredConfigPath = defaultConfigFileOutputPath(path)
 	}
-	return mgr.RunRestore(path, c.K0sVars, c.restoredConfigPath)
+	return mgr.RunRestore(path, c.K0sVars, c.restoredConfigPath, out)
 }
 
 // set output config file name and path according to input archive Timestamps

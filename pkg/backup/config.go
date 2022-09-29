@@ -32,12 +32,14 @@ import (
 type configurationStep struct {
 	cfgPath            string
 	restoredConfigPath string
+	out                io.Writer
 }
 
-func newConfigurationStep(cfgPath string, restoredConfigPath string) *configurationStep {
+func newConfigurationStep(cfgPath, restoredConfigPath string, out io.Writer) *configurationStep {
 	return &configurationStep{
 		cfgPath:            cfgPath,
 		restoredConfigPath: restoredConfigPath,
+		out:                out,
 	}
 }
 
@@ -68,7 +70,7 @@ func (c configurationStep) Restore(restoreFrom, restoreTo string) error {
 			return fmt.Errorf("couldn't get a file handle for %s", c.restoredConfigPath)
 		}
 		defer f.Close()
-		_, err = io.Copy(os.Stdout, f)
+		_, err = io.Copy(c.out, f)
 		return err
 	}
 

@@ -21,6 +21,7 @@ package backup
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -46,7 +47,7 @@ func NewBackupCmd() *cobra.Command {
 			if c.NodeConfig.Spec.Storage.Etcd.IsExternalClusterUsed() {
 				return fmt.Errorf("command 'k0s backup' does not support external etcd cluster")
 			}
-			return c.backup(savePath)
+			return c.backup(savePath, cmd.OutOrStdout())
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			c := command(config.GetCmdOpts())
@@ -59,7 +60,7 @@ func NewBackupCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *command) backup(savePath string) error {
+func (c *command) backup(savePath string, out io.Writer) error {
 	if os.Geteuid() != 0 {
 		logrus.Fatal("this command must be run as root!")
 	}
@@ -83,7 +84,7 @@ func (c *command) backup(savePath string) error {
 		if err != nil {
 			return err
 		}
-		return mgr.RunBackup(c.NodeConfig.Spec, c.K0sVars, savePath)
+		return mgr.RunBackup(c.NodeConfig.Spec, c.K0sVars, savePath, out)
 	}
 	return fmt.Errorf("backup command must be run on the controller node, have `%s`", status.Role)
 }
