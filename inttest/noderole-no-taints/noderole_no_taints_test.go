@@ -77,3 +77,9 @@ func TestNodeRoleNoTaintsSuite(t *testing.T) {
 	}
 	suite.Run(t, &s)
 }
+
+const k0sConfigWithNodeRole = `
+spec:
+  api:
+    externalAddress: %s
+`
