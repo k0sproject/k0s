@@ -130,12 +130,11 @@ func fallbackToK0sKubeconfig(cmd *cobra.Command) error {
 		return nil
 	}
 
-	kubeconfig, envSet := os.LookupEnv("KUBECONFIG")
-	if envSet {
-		_ = os.Unsetenv("KUBECONFIG")
-	} else {
-		kubeconfig = config.GetCmdOpts().K0sVars.AdminKubeConfigPath
+	if _, ok := os.LookupEnv("KUBECONFIG"); ok {
+		return nil
 	}
+
+	kubeconfig := config.GetCmdOpts().K0sVars.AdminKubeConfigPath
 
 	// verify that k0s's kubeconfig is readable before pushing it to the env
 	if _, err := os.Stat(kubeconfig); err != nil {
