@@ -17,6 +17,7 @@ package k0supdate
 import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,13 +32,14 @@ type k0supdate struct {
 	client                crcli.Client
 	controllerDelegateMap apdel.ControllerDelegateMap
 	excludedFromPlans     map[string]struct{}
+	cf                    kubernetes.ClientFactoryInterface
 }
 
 var _ appc.PlanCommandProvider = (*k0supdate)(nil)
 
 // NewK0sUpdatePlanCommandProvider builds a `PlanCommandProvider` for the
 // `K0sUpdate` command.
-func NewK0sUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Client, dm apdel.ControllerDelegateMap, excludeFromPlans []string) appc.PlanCommandProvider {
+func NewK0sUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Client, dm apdel.ControllerDelegateMap, cf kubernetes.ClientFactoryInterface, excludeFromPlans []string) appc.PlanCommandProvider {
 	excludedFromPlans := make(map[string]struct{})
 	for _, excluded := range excludeFromPlans {
 		excludedFromPlans[excluded] = struct{}{}
@@ -47,6 +49,7 @@ func NewK0sUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Client, 
 		logger:                logger.WithField("command", "k0supdate"),
 		client:                client,
 		controllerDelegateMap: dm,
+		cf:                    cf,
 		excludedFromPlans:     excludedFromPlans,
 	}
 }

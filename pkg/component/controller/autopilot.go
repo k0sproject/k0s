@@ -57,7 +57,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
 		HealthProbeBindAddr: "0",
-	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.EnableWorker, autopilotClientFactory)
+	}, logrus.WithFields(logrus.Fields{"component": "autopilot"}), a.EnableWorker, a.AdminClientFactory, autopilotClientFactory)
 	if err != nil {
 		return fmt.Errorf("failed to create autopilot controller: %w", err)
 	}

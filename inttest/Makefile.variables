@@ -9,6 +9,7 @@ smoketests := \
 	check-ap-selector \
 	check-ap-single \
 	check-ap-updater \
+	check-ap-removedapis \
 	check-backup \
 	check-basic \
 	check-byocri \

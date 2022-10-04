@@ -16,8 +16,8 @@ package airgapupdate
 
 import (
 	"context"
-
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	"github.com/k0sproject/k0s/pkg/autopilot/checks"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 )
 
@@ -25,6 +25,12 @@ import (
 func (aup *airgapupdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := aup.logger.WithField("state", "newplan")
 	logger.Info("Processing")
+
+	if err := checks.CanUpdate(aup.cf, cmd.AirgapUpdate.Version); err != nil {
+		status.State = appc.PlanWarning
+		status.Description = err.Error()
+		return appc.PlanWarning, false, err
+	}
 
 	// Setup the response status
 	status.State = appc.PlanSchedulableWait

@@ -25,6 +25,7 @@ var (
 	PlanSchedulable     apv1beta2.PlanStateType = "Schedulable"
 	PlanSchedulableWait apv1beta2.PlanStateType = "SchedulableWait"
 	PlanCompleted       apv1beta2.PlanStateType = "Completed"
+	PlanWarning         apv1beta2.PlanStateType = "Warning"
 
 	PlanInconsistentTargets apv1beta2.PlanStateType = "InconsistentTargets"
 	PlanIncompleteTargets   apv1beta2.PlanStateType = "IncompleteTargets"

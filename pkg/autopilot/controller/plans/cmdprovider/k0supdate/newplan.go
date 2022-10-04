@@ -16,8 +16,8 @@ package k0supdate
 
 import (
 	"context"
-
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	"github.com/k0sproject/k0s/pkg/autopilot/checks"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appkd "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/discovery"
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
@@ -31,6 +31,14 @@ import (
 func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, status *apv1beta2.PlanCommandStatus) (apv1beta2.PlanStateType, bool, error) {
 	logger := kp.logger.WithField("state", "newplan")
 	logger.Info("Processing")
+
+	if !cmd.K0sUpdate.ForceUpdate {
+		if err := checks.CanUpdate(kp.cf, cmd.K0sUpdate.Version); err != nil {
+			status.State = appc.PlanWarning
+			status.Description = err.Error()
+			return appc.PlanWarning, false, err
+		}
+	}
 
 	// Setup the response status
 	status.State = appc.PlanSchedulableWait
