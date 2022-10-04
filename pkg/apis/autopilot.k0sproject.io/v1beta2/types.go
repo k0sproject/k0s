@@ -256,6 +256,9 @@ type PlanCommandStatus struct {
 	// State is the current state of the plan command.
 	State PlanStateType `json:"state"`
 
+	// Description is the additional information about the plan command state.
+	Description string `json:"description,omitempty"`
+
 	// K0sUpdate is the status of the `K0sUpdate` command.
 	K0sUpdate *PlanCommandK0sUpdateStatus `json:"k0supdate,omitempty"`
 

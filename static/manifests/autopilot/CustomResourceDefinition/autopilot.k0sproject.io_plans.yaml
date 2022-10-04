@@ -324,6 +324,10 @@ spec:
                             type: object
                           type: array
                       type: object
+                    description:
+                      description: Description is the additional information about
+                        the plan command state.
+                      type: string
                     id:
                       description: ID is a unique identifier for this command in a
                         Plan

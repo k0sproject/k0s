@@ -22,6 +22,7 @@ import (
 	appkd "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/discovery"
 	appku "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/utils"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	"github.com/k0sproject/k0s/pkg/kubernetes"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -37,11 +38,12 @@ type airgapupdate struct {
 	client                crcli.Client
 	controllerDelegateMap apdel.ControllerDelegateMap
 	excludedFromPlans     map[string]struct{}
+	cf                    kubernetes.ClientFactoryInterface
 }
 
 var _ appc.PlanCommandProvider = (*airgapupdate)(nil)
 
-func NewAirgapUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Client, dm apdel.ControllerDelegateMap, excludeFromPlans []string) appc.PlanCommandProvider {
+func NewAirgapUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Client, dm apdel.ControllerDelegateMap, cf kubernetes.ClientFactoryInterface, excludeFromPlans []string) appc.PlanCommandProvider {
 	excludedFromPlans := make(map[string]struct{})
 	for _, excluded := range excludeFromPlans {
 		excludedFromPlans[excluded] = struct{}{}
@@ -51,6 +53,7 @@ func NewAirgapUpdatePlanCommandProvider(logger *logrus.Entry, client crcli.Clien
 		logger:                logger.WithField("command", "airgapupdate"),
 		client:                client,
 		controllerDelegateMap: dm,
+		cf:                    cf,
 		excludedFromPlans:     excludedFromPlans,
 	}
 }
