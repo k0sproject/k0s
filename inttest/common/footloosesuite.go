@@ -50,7 +50,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/yaml"
 
 	"github.com/go-openapi/jsonpointer"
@@ -626,42 +625,6 @@ func (s *FootlooseSuite) Reset(name string) error {
 	resetCommand := fmt.Sprintf("%s reset --debug", s.K0sFullPath)
 	_, err = ssh.ExecWithOutput(resetCommand)
 	return err
-}
-
-// GetKubeClientConfig returns the kubeconfig as clientcmdapi.Config struct so it can be used and loaded with clientsets directly
-func (s *FootlooseSuite) GetKubeClientConfig(node string, k0sKubeconfigArgs ...string) (*clientcmdapi.Config, error) {
-	machine, err := s.MachineForName(node)
-	if err != nil {
-		return nil, err
-	}
-	ssh, err := s.SSH(node)
-	if err != nil {
-		return nil, err
-	}
-	defer ssh.Disconnect()
-
-	kubeConfigCmd := fmt.Sprintf("%s kubeconfig admin %s 2>/dev/null", s.K0sFullPath, strings.Join(k0sKubeconfigArgs, " "))
-	kubeConf, err := ssh.ExecWithOutput(kubeConfigCmd)
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := clientcmd.Load([]byte(kubeConf))
-	s.Require().NoError(err)
-
-	hostURL, err := url.Parse(cfg.Clusters["local"].Server)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse port value `%s`: %w", cfg.Clusters["local"].Server, err)
-	}
-	port, err := strconv.ParseInt(hostURL.Port(), 10, 32)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse port value `%s`: %w", hostURL.Port(), err)
-	}
-	hostPort, err := machine.HostPort(int(port))
-	if err != nil {
-		return nil, fmt.Errorf("footloose machine has to have %d port mapped: %w", port, err)
-	}
-	cfg.Clusters["local"].Server = fmt.Sprintf("https://localhost:%d", hostPort)
-	return cfg, nil
 }
 
 // KubeClient return kube client by loading the admin access config from given node
