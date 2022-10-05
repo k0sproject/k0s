@@ -43,6 +43,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	_, err = ssh.ExecWithOutput(fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
 	s.NoError(err)
+	_, err = ssh.ExecWithOutput(s.Context(), "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
+	s.NoError(err)
 
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
 	s.NoError(s.InitController(0, dataDirOpt))
