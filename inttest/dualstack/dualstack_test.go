@@ -108,6 +108,8 @@ func (s *DualstackSuite) SetupSuite() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), client)
 	s.Require().NoError(err)
 
+	s.Require().NoError(common.WaitForDeployment(client, "calico-node"))
+
 	s.client = client
 
 }
