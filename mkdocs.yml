@@ -45,6 +45,7 @@ nav:
       - OpenID Connect: ./examples/oidc/oidc-cluster-configuration.md
       - SELinux:                          selinux.md
       - Pod Security Standards:           podsecurity.md
+      - Re-install:                       reinstall-k0sctl.md
   - Auto Updates:
       - Overview:                         autopilot.md
       - Multi-Command Plans:              autopilot-multicommand.md
