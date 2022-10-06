@@ -202,7 +202,8 @@ func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node st
 
 	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
 
-		metrics, err := kc.CoreV1().RESTClient().Get().AbsPath("/api/v1/nodes/worker0/proxy/metrics/cadvisor").Param("format", "text").DoRaw(ctx)
+		path := fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/cadvisor", node)
+		metrics, err := kc.CoreV1().RESTClient().Get().AbsPath(path).Param("format", "text").DoRaw(ctx)
 		if err != nil {
 			return false, nil // do not return the error so we keep on polling
 		}
