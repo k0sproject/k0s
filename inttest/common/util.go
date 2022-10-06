@@ -197,22 +197,27 @@ func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, na
 }
 
 // VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
+// It does it via polling as it takes some time for kubelet to start reporting metrics.
 func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node string) error {
-	metrics, err := kc.CoreV1().RESTClient().Get().AbsPath("/api/v1/nodes/worker0/proxy/metrics/cadvisor").Param("format", "text").DoRaw(ctx)
-	if err != nil {
-		return err
-	}
 
-	image := fmt.Sprintf("%s:%s", constant.KubeRouterCNIImage, constant.KubeRouterCNIImageVersion)
-	containerRegex := regexp.MustCompile(fmt.Sprintf(`container_cpu_usage_seconds_total{container="kube-router".*image="%s"`, image))
+	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
 
-	scanner := bufio.NewScanner(bytes.NewReader(metrics))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if containerRegex.MatchString(line) {
-			return nil
+		metrics, err := kc.CoreV1().RESTClient().Get().AbsPath("/api/v1/nodes/worker0/proxy/metrics/cadvisor").Param("format", "text").DoRaw(ctx)
+		if err != nil {
+			return false, nil // do not return the error so we keep on polling
 		}
-	}
 
-	return fmt.Errorf("container and image label not found in kubelet metrics")
+		image := fmt.Sprintf("%s:%s", constant.KubeRouterCNIImage, constant.KubeRouterCNIImageVersion)
+		containerRegex := regexp.MustCompile(fmt.Sprintf(`container_cpu_usage_seconds_total{container="kube-router".*image="%s"`, image))
+
+		scanner := bufio.NewScanner(bytes.NewReader(metrics))
+		for scanner.Scan() {
+			line := scanner.Text()
+			if containerRegex.MatchString(line) {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
 }
