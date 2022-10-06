@@ -92,7 +92,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	// via the API.
 	s.Require().NoError(common.WaitForPodLogs(kc, "kube-system"))
 	for i := 0; i < s.WorkerCount; i++ {
-		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, s.WorkerNode(i)))
+		node := s.WorkerNode(i)
+		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
+		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, node))
 	}
 }
 
