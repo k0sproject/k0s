@@ -47,6 +47,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -206,29 +207,31 @@ func (s *FootlooseSuite) waitForSSH() {
 		nodes = append(nodes, s.LBNode(0))
 	}
 
-	s.T().Logf("total of %d nodes: %v", len(nodes), nodes)
+	s.T().Logf("Waiting for SSH connections to %d nodes: %v", len(nodes), nodes)
 
-	g := errgroup.Group{}
+	g, ctx := errgroup.WithContext(s.Context())
 	for _, node := range nodes {
 		nodeName := node
 		g.Go(func() error {
-			for i := 0; i < 30; i++ {
-				err := s.cluster.SSH(nodeName, "root", "hostname")
-				if err == nil {
-					return nil
+			return wait.PollUntilWithContext(ctx, 1*time.Second, func(ctx context.Context) (bool, error) {
+				ssh, err := s.SSH(nodeName)
+				if err != nil {
+					return false, nil
 				}
-				s.T().Logf("retrying ssh to %s", nodeName)
-				time.Sleep(1 * time.Second)
-			}
-			return fmt.Errorf("failed to get working SSH connection to %s", nodeName)
+				defer ssh.Disconnect()
+
+				_, err = ssh.ExecWithOutput("hostname")
+				if err != nil {
+					return false, nil
+				}
+
+				s.T().Logf("SSH connection to %s successful", nodeName)
+				return true, nil
+			})
 		})
 	}
 
-	err := g.Wait()
-	if err != nil {
-		s.FailNow("failed to ssh one or many nodes", err)
-		return
-	}
+	s.Require().NoError(g.Wait(), "Failed to ssh into all nodes")
 }
 
 // Context returns this suite's context, which should be passed to all blocking operations.
