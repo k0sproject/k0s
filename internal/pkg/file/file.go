@@ -18,9 +18,13 @@ package file
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
+
+	"go.uber.org/multierr"
 )
 
 // Exists checks if a file exists and is not a directory before we
@@ -71,15 +75,89 @@ func Copy(src, dst string) error {
 	return nil
 }
 
+// WriteAtomically will atomically create or replace a file. The contents of the
+// file will be those that the write callback writes to the Writer that gets
+// passed in. The Writer will be unbuffered. WriteAtomically will buffer the
+// contents in a hidden (i.e. its name will start with a dot), temporary file
+// (it will have a .tmp extension). When write returns without an error, the
+// temporary file will be renamed to fileName, otherwise it will be deleted
+// without touching the target file.
+//
+// Note that this function is only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) error {
+	var fd *os.File
+	fd, err := os.CreateTemp(filepath.Dir(fileName), fmt.Sprintf(".%s.*.tmp", filepath.Base(fileName)))
+	if err != nil {
+		return err
+	}
+
+	tmpFileName := fd.Name()
+	close := true
+	defer func() {
+		remove := err != nil
+		if close {
+			err = multierr.Append(err, fd.Close())
+		}
+		if remove {
+			err = multierr.Append(err, os.Remove(tmpFileName))
+		}
+	}()
+
+	err = write(fd)
+	if err != nil {
+		return err
+	}
+
+	// https://github.com/google/renameio/blob/v2.0.0/tempfile.go#L150-L157
+	err = fd.Sync()
+	if err != nil {
+		return err
+	}
+
+	err = fd.Close()
+	close = false
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(tmpFileName, perm)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(tmpFileName, fileName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteContentAtomically will atomically create or replace a file with the
+// given content. WriteContentAtomically will create a hidden (i.e. its name
+// will start with a dot), temporary file (it will have a .tmp extension) with
+// the given content. Afterwards, the temporary file will be renamed to
+// fileName, otherwise it will be deleted without touching the target file.
+//
+// Note that this function is only best-effort on Windows:
+// https://github.com/golang/go/issues/22397#issuecomment-498856679
+func WriteContentAtomically(fileName string, content []byte, perm os.FileMode) error {
+	return WriteAtomically(fileName, perm, func(file io.Writer) error {
+		_, err := file.Write(content)
+		return err
+	})
+}
+
 func WriteTmpFile(data string, prefix string) (path string, err error) {
 	tmpFile, err := os.CreateTemp("", prefix)
 	if err != nil {
-		return "", fmt.Errorf("cannot create temporary file: %v", err)
+		return "", fmt.Errorf("cannot create temporary file: %w", err)
 	}
 
 	text := []byte(data)
 	if _, err = tmpFile.Write(text); err != nil {
-		return "", fmt.Errorf("failed to write to temporary file: %v", err)
+		return "", fmt.Errorf("failed to write to temporary file: %w", err)
 	}
 
 	return tmpFile.Name(), nil

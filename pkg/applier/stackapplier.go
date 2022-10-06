@@ -108,19 +108,17 @@ func (s *StackApplier) Run(ctx context.Context) error {
 }
 
 func (*StackApplier) triggersApply(event fsnotify.Event) bool {
-	// always let the initial apply happen
+	// Always let the initial apply happen
 	if event == (fsnotify.Event{}) {
 		return true
 	}
 
-	// ignore chmods (3845479a0)
-	if event.Op == fsnotify.Chmod {
+	// Only consider events on manifest files
+	if match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name)); !match {
 		return false
 	}
 
-	// Only consider events on manifest files
-	match, _ := filepath.Match(manifestFilePattern, filepath.Base(event.Name))
-	return match
+	return true
 }
 
 func (s *StackApplier) apply(ctx context.Context) {
