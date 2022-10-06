@@ -12,14 +12,14 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/networking/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/reinstall-k0sctl/">
       
       <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.4.2">
     
     
       
-        <title>Networking (CNI) - Documentation</title>
+        <title>Re-install - Documentation</title>
       
     
     
@@ -79,7 +79,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#networking" class="md-skip">
+        <a href="#reinstall-a-node" class="md-skip">
           Skip to content
         </a>
       
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Networking (CNI)
+              Re-install
             
           </span>
         </div>
@@ -606,100 +606,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Networking (CNI)
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
         Networking (CNI)
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#in-cluster-networking" class="md-nav__link">
-    In-cluster networking
-  </a>
-  
-    <nav class="md-nav" aria-label="In-cluster networking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kube-router" class="md-nav__link">
-    Kube-router
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calico" class="md-nav__link">
-    Calico
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-cni-configuration" class="md-nav__link">
-    Custom CNI configuration
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-worker-communication" class="md-nav__link">
-    Controller-Worker communication
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-ports-and-protocols" class="md-nav__link">
-    Required ports and protocols
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -905,11 +816,52 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../reinstall-k0sctl/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Re-install
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Re-install
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#steps" class="md-nav__link">
+    Steps
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1357,56 +1309,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#in-cluster-networking" class="md-nav__link">
-    In-cluster networking
-  </a>
-  
-    <nav class="md-nav" aria-label="In-cluster networking">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kube-router" class="md-nav__link">
-    Kube-router
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calico" class="md-nav__link">
-    Calico
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-cni-configuration" class="md-nav__link">
-    Custom CNI configuration
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#controller-worker-communication" class="md-nav__link">
-    Controller-Worker communication
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-ports-and-protocols" class="md-nav__link">
-    Required ports and protocols
+  <a href="#steps" class="md-nav__link">
+    Steps
   </a>
   
 </li>
@@ -1425,100 +1329,34 @@
                 
 
 
-<h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">#</a></h1>
-<h2 id="in-cluster-networking">In-cluster networking<a class="headerlink" href="#in-cluster-networking" title="Permanent link">#</a></h2>
-<p>k0s supports two Container Network Interface (CNI) providers out-of-box, <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> and <a href="https://www.projectcalico.org/">Calico</a>. In addition, k0s can support your own CNI configuration.</p>
-<h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">#</a></h3>
-<ul>
-<li>When deploying k0s with the default settings, all pods on a node can communicate with all pods on all nodes. No configuration changes are needed to get started.</li>
-<li>Once you initialize the cluster with a network provider the only way to change providers is through a full cluster redeployment.</li>
-</ul>
-<h3 id="kube-router">Kube-router<a class="headerlink" href="#kube-router" title="Permanent link">#</a></h3>
-<p>Kube-router is built into k0s, and so by default the distribution uses it for network provision. Kube-router uses the standard Linux networking stack and toolset, and you can set up CNI networking without any overlays by using BGP as the main mechanism for in-cluster networking.</p>
-<ul>
-<li>Supports armv7 (among many other archs)</li>
-<li>Uses bit less resources (~15%)</li>
-<li>Does NOT support dual-stack (IPv4/IPv6) networking</li>
-<li>Does NOT support Windows nodes</li>
-<li>Does NOT activate hairpin mode by default</li>
-</ul>
-<h3 id="calico">Calico<a class="headerlink" href="#calico" title="Permanent link">#</a></h3>
-<p>In addition to Kube-router, k0s also offers <a href="https://www.projectcalico.org/">Calico</a> as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).</p>
-<ul>
-<li>Does NOT support armv7</li>
-<li>Uses bit more resources</li>
-<li>Supports dual-stack (IPv4/IPv6) networking</li>
-<li>Supports Windows nodes</li>
-</ul>
-<h3 id="custom-cni-configuration">Custom CNI configuration<a class="headerlink" href="#custom-cni-configuration" title="Permanent link">#</a></h3>
-<p>You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure <code>custom</code> as the network provider in the k0s configuration file (<code>k0s.yaml</code>). You can do this, for example, by pushing network provider manifests into <code>/var/lib/k0s/manifests</code>, from where k0s controllers will collect them for deployment into the cluster (for more information, refer to <a href="../manifests/">Manifest Deployer</a>.</p>
-<h2 id="controller-worker-communication">Controller-Worker communication<a class="headerlink" href="#controller-worker-communication" title="Permanent link">#</a></h2>
-<p>One goal of k0s is to allow for the deployment of an isolated control plane, which may prevent the establishment of an IP route between controller nodes and the pod network. Thus, to enable this communication path (which is mandated by conformance tests), k0s deploys <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/">Konnectivity service</a> to proxy traffic from the API server (control plane) into the worker nodes. This ensures that we can always fulfill all the Kubernetes API functionalities, but still operate the control plane in total isolation from the workers.</p>
-<p><strong>Note</strong>: To allow Konnectivity agents running on the worker nodes to establish the connection, configure your firewalls for outbound access, port 8132. Moreover, configure your firewalls for outbound access, port 6443, in order to access Kube-API from the worker nodes.</p>
-<p><img alt="k0s controller_worker_networking" src="../img/k0s_controller_worker_networking.png" /></p>
-<h2 id="required-ports-and-protocols">Required ports and protocols<a class="headerlink" href="#required-ports-and-protocols" title="Permanent link">#</a></h2>
-<table>
-<thead>
-<tr>
-<th>Protocol</th>
-<th>Port</th>
-<th>Service</th>
-<th>Direction</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>TCP</td>
-<td>2380</td>
-<td>etcd peers</td>
-<td>controller &lt;-&gt; controller</td>
-<td></td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>6443</td>
-<td>kube-apiserver</td>
-<td>Worker, CLI =&gt; controller</td>
-<td>Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>179</td>
-<td>kube-router</td>
-<td>worker &lt;-&gt; worker</td>
-<td>BGP routing sessions between peers</td>
-</tr>
-<tr>
-<td>UDP</td>
-<td>4789</td>
-<td>Calico</td>
-<td>worker &lt;-&gt; worker</td>
-<td>Calico VXLAN overlay</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>10250</td>
-<td>kubelet</td>
-<td>Master, Worker =&gt; Host <code>*</code></td>
-<td>Authenticated kubelet API for the master node <code>kube-apiserver</code> (and <code>heapster</code>/<code>metrics-server</code> addons) using TLS client certs</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>9443</td>
-<td>k0s-api</td>
-<td>controller &lt;-&gt; controller</td>
-<td>k0s controller join API, TLS with token auth</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>8132</td>
-<td>konnectivity</td>
-<td>worker &lt;-&gt; controller</td>
-<td>Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets</td>
-</tr>
-</tbody>
-</table>
+<h1 id="reinstall-a-node">Reinstall a node<a class="headerlink" href="#reinstall-a-node" title="Permanent link">#</a></h1>
+<p><code>k0sctl</code> currently does not support changing all the configuration of containerd (<code>state</code>, <code>root</code>) on the fly.</p>
+<p>For example, in order to move containerd's <code>root</code> directory to a new partition/drive, you have to provide <code>--data-dir /new/drive</code> in your k0sctl <code>installFlags</code> for each (worker) node. <code>--data-dir</code> is an option of <code>k0s</code> and then added to the service unit.</p>
+<p>The following is an example of that:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># spec.hosts[*].installFlags</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span><span class="w"></span>
+<span class="w">    </span><span class="nt">installFlags</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--profile flatcar</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--enable-cloud-provider</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--data-dir /new/drive</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--kubelet-extra-args=&quot;--cloud-provider=external&quot;</span><span class="w"></span>
+</code></pre></div>
+<p>However, the <code>installFlags</code> are only used when the node is installed.</p>
+<h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">#</a></h2>
+<p>Drain the node:</p>
+<div class="highlight"><pre><span></span><code>kubectl drain node.hostname
+</code></pre></div>
+<p>Access your node (e.g. via ssh) to stop and reset k0s:</p>
+<div class="highlight"><pre><span></span><code>sudo k0s stop
+sudo k0s reset
+</code></pre></div>
+<p>Reboot the node (for good measure):</p>
+<div class="highlight"><pre><span></span><code>sudo systemctl reboot
+</code></pre></div>
+<p>Once the node is available again, run <code>k0sctl apply</code> to integrate it into your cluster and uncordon the node to allow pods to be scheduled:</p>
+<div class="highlight"><pre><span></span><code>k0sctl apply -c config.yaml
+kubectl uncordon node.hostname
+</code></pre></div>
 
 
 
@@ -1537,7 +1375,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../worker-node-config/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Worker Node Configuration" rel="prev">
+        <a href="../podsecurity/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Pod Security Standards" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -1546,20 +1384,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Worker Node Configuration
+              Pod Security Standards
             </div>
           </div>
         </a>
       
       
         
-        <a href="../runtime/" class="md-footer__link md-footer__link--next" aria-label="Next: Runtime (CRI)" rel="next">
+        <a href="../autopilot/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Runtime (CRI)
+              Overview
             </div>
           </div>
           <div class="md-footer__button md-icon">
