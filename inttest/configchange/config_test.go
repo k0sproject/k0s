@@ -19,23 +19,21 @@ package configchange
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type ConfigSuite struct {
@@ -148,7 +146,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		timeout := time.After(20 * time.Second)
 		select {
 		case e := <-w.ResultChan():
-			cm := e.Object.(*v1.ConfigMap)
+			cm := e.Object.(*corev1.ConfigMap)
 			cniConf := cm.Data["cni-conf.json"]
 			s.Contains(cniConf, `"mtu": 1300`)
 			s.Contains(cniConf, `"auto-mtu": false`)
@@ -158,11 +156,11 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	})
 }
 
-func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*v1.Event, error) {
+func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1.Event, error) {
 	timeout := time.After(20 * time.Second)
 	select {
 	case e := <-eventWatch.ResultChan():
-		event := e.Object.(*v1.Event)
+		event := e.Object.(*corev1.Event)
 		return event, nil
 	case <-timeout:
 		return nil, fmt.Errorf("timeout waiting for reconcile event")
@@ -173,32 +171,15 @@ func (s *ConfigSuite) clearConfigEvents(kc *kubernetes.Clientset) error {
 	return kc.CoreV1().Events("kube-system").DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
 }
 
-// Helper to dump the kubeconfig into temp file so we can load the clusterconfig client with it
+// Get the ClusterConfig client from the controller node's kubeconfig.
 func (s *ConfigSuite) getConfigClient() (cfgClient.ClusterConfigInterface, error) {
-	kubeConfig, err := s.GetKubeClientConfig(s.ControllerNode(0))
+	config, err := s.GetKubeConfig(s.ControllerNode(0))
 	if err != nil {
-		return nil, err
-	}
-
-	f, err := os.CreateTemp("", "kubeconfig-*")
-	if err != nil {
-		return nil, err
-	}
-
-	s.T().Logf("temp kubeconfig at %s", f.Name())
-
-	err = clientcmd.WriteToFile(*kubeConfig, f.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", f.Name())
-	if err != nil {
-		return nil, fmt.Errorf("can't read kubeconfig: %v", err)
+		return nil, fmt.Errorf("can't get kubeconfig: %w", err)
 	}
 	c, err := cfgClient.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %v", err)
+		return nil, fmt.Errorf("can't create kubernetes typed client for cluster config: %w", err)
 	}
 	return c.ClusterConfigs(constant.ClusterConfigNamespace), nil
 }
