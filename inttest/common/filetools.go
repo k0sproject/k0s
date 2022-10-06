@@ -29,7 +29,7 @@ func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) s
 	sshCon, err := s.SSH(s.ControllerNode(controllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
-	content, err := sshCon.ExecWithOutput(fmt.Sprintf("cat %s", path))
+	content, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("cat %s", path))
 	s.Require().NoError(err)
 
 	return content
@@ -41,7 +41,7 @@ func (s *FootlooseSuite) PutFile(node, path, content string) {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", content, path))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >%s", content, path))
 
 	s.Require().NoError(err)
 }
@@ -63,7 +63,7 @@ func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template 
 	defer ssh.Disconnect()
 
 	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >%s", buf.String(), filename))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >%s", buf.String(), filename))
 
 	s.Require().NoError(err)
 }
@@ -74,7 +74,7 @@ func (s *FootlooseSuite) AppendFile(node, path, content string) {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("echo '%s' >> %s", content, path))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >> %s", content, path))
 
 	s.Require().NoError(err)
 }
@@ -84,6 +84,6 @@ func (s *FootlooseSuite) MakeDir(node, path string) {
 	ssh, err := s.SSH(node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("mkdir %s", path))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir %s", path))
 	s.Require().NoError(err)
 }

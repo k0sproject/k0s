@@ -37,12 +37,12 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
 	s.T().Log("killing k0s")
-	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.T().Log("restarting k0s with new cni, this should fail")
-	_, err = sshC1.ExecWithOutput("/usr/local/bin/k0s controller --debug --config /tmp/k0s.yaml")
+	_, err = sshC1.ExecWithOutput(s.Context(), "/usr/local/bin/k0s controller --debug --config /tmp/k0s.yaml")
 	s.Require().Error(err)
 }
 

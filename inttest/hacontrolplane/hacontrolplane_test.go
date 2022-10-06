@@ -38,7 +38,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
 	s.NoError(err)
 	defer sshCon.Disconnect()
-	output, err := sshCon.ExecWithOutput("/usr/local/bin/k0s etcd member-list 2>/dev/null")
+	output, err := sshCon.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list 2>/dev/null")
 	s.T().Logf("k0s etcd member-list output: %s", output)
 	s.NoError(err)
 
@@ -55,7 +55,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 	s.NoError(err)
 	defer sshCon.Disconnect()
 	for i := 0; i < 20; i++ {
-		_, err := sshCon.ExecWithOutput(fmt.Sprintf("/usr/local/bin/k0s etcd leave --peer-address %s", peerAddress))
+		_, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/local/bin/k0s etcd leave --peer-address %s", peerAddress))
 		if err == nil {
 			break
 		}
@@ -69,7 +69,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	// Verify that k0s return failure (https://github.com/k0sproject/k0s/issues/790)
 	sshC0, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
-	_, err = sshC0.ExecWithOutput("/usr/local/bin/k0s etcd member-list")
+	_, err = sshC0.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list")
 	s.Require().Error(err)
 
 	s.NoError(s.InitController(0))
@@ -106,7 +106,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	sshC1, err := s.SSH(s.ControllerNode(1))
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
-	_, err = sshC1.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 	s.NoError(s.InitController(1, token))
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(1)))

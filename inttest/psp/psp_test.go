@@ -62,7 +62,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
 	s.NoError(err)
 
 	nonPrivelegedPodReq := &corev1.Pod{

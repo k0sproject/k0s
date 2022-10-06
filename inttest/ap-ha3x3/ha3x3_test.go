@@ -149,7 +149,7 @@ spec:
 	ssh, err := s.SSH(s.WorkerNode(0))
 	s.NoError(err)
 	defer ssh.Disconnect()
-	out, err = ssh.ExecWithOutput("/var/lib/k0s/bin/iptables-save -V")
+	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")
 	s.NoError(err)
 	iptablesVersionParts := strings.Split(out, " ")
 	iptablesModeBeforeUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]
@@ -190,7 +190,7 @@ spec:
 	s.NoError(err)
 	s.Equal(s.K0sUpdateVersion, version)
 
-	out, err = ssh.ExecWithOutput("/var/lib/k0s/bin/iptables-save -V")
+	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")
 	s.NoError(err)
 	iptablesVersionParts = strings.Split(out, " ")
 	iptablesModeAfterUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]

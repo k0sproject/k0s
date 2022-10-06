@@ -65,7 +65,7 @@ func (s *DualstackSuite) verifyKubeAPIServiceClusterIPRangeFlag(node string) err
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(`grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-apiserver)/cmdline`)
+	output, err := ssh.ExecWithOutput(s.Context(), `grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-apiserver)/cmdline`)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (s *DualstackSuite) verifyKubeControllerManagerServiceClusterIPRangeFlag(no
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(`grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-controller-manager)/cmdline`)
+	output, err := ssh.ExecWithOutput(s.Context(), `grep -e '--service-cluster-ip-range=10.96.0.0/12,fd01::/108' /proc/$(pidof kube-controller-manager)/cmdline`)
 	if err != nil {
 		return err
 	}

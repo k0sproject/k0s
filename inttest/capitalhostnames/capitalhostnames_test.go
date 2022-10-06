@@ -83,7 +83,7 @@ func (s *CapitalHostnamesSuite) setHostname(node, hostname string) error {
 	}
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("hostname " + hostname)
+	_, err = ssh.ExecWithOutput(s.Context(), "hostname "+hostname)
 	return err
 }
 

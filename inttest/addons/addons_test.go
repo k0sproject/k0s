@@ -80,7 +80,7 @@ func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("rm /var/lib/k0s/manifests/helm/addon_crd_manifest_test-addon.yaml")
+	_, err = ssh.ExecWithOutput(as.Context(), "rm /var/lib/k0s/manifests/helm/addon_crd_manifest_test-addon.yaml")
 	as.Require().NoError(err)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))

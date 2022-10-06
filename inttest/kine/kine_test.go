@@ -66,18 +66,18 @@ func (s *KineSuite) TestK0sGetsUp() {
 		defer ssh.Disconnect()
 
 		t.Run(("kineIsUsedAsStorage"), func(t *testing.T) {
-			_, err = ssh.ExecWithOutput("test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
+			_, err = ssh.ExecWithOutput(s.Context(), "test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
 			assert.NoError(t, err)
 		})
 
 		t.Run(("noControllerJoinTokens"), func(t *testing.T) {
-			noToken, err := ssh.ExecWithOutput(fmt.Sprintf("'%s' token create --role=controller", s.K0sFullPath))
+			noToken, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=controller", s.K0sFullPath))
 			assert.Error(t, err)
 			assert.Equal(t, "Error: refusing to create token: cannot join controller into current storage", noToken)
 		})
 
 		t.Run(("workerJoinTokens"), func(t *testing.T) {
-			_, err := ssh.ExecWithOutput(fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
+			_, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
 			assert.NoError(t, err)
 		})
 	})
