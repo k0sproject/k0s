@@ -71,18 +71,18 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 		defer ssh.Disconnect()
 
 		t.Run(("kineIsDefaultStorage"), func(t *testing.T) {
-			_, err = ssh.ExecWithOutput("test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
+			_, err = ssh.ExecWithOutput(s.Context(), "test -e /var/lib/k0s/bin/kine && ps xa | grep kine")
 			assert.NoError(t, err)
 		})
 
 		t.Run(("noControllerJoinTokens"), func(t *testing.T) {
-			noToken, err := ssh.ExecWithOutput(fmt.Sprintf("'%s' token create --role=controller", s.K0sFullPath))
+			noToken, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=controller", s.K0sFullPath))
 			assert.Error(t, err)
 			assert.Equal(t, "Error: refusing to create token: cannot join into a single node cluster", noToken)
 		})
 
 		t.Run(("noWorkerJoinTokens"), func(t *testing.T) {
-			noToken, err := ssh.ExecWithOutput(fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
+			noToken, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
 			assert.Error(t, err)
 			assert.Equal(t, "Error: refusing to create token: cannot join into a single node cluster", noToken)
 		})
@@ -101,7 +101,7 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 
 		// test with etcd backend in config
 		t.Run(("killK0s"), func(t *testing.T) {
-			_, err = ssh.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+			_, err = ssh.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 			assert.NoError(t, err)
 		})
 
@@ -111,7 +111,7 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 		s.NoError(s.InitController(0, "--single", "--config=/tmp/k0s.yaml"))
 
 		t.Run(("etcdIsRunning"), func(t *testing.T) {
-			_, err = ssh.ExecWithOutput("test -e /var/lib/k0s/bin/etcd && ps xa | grep etcd")
+			_, err = ssh.ExecWithOutput(s.Context(), "test -e /var/lib/k0s/bin/etcd && ps xa | grep etcd")
 			assert.NoError(t, err)
 		})
 	})

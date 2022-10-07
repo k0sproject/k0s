@@ -77,7 +77,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 			},
 		} {
 			t.Run(test.desc, func(t *testing.T) {
-				output, err := ssh.ExecWithOutput(fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
+				output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
 				if !assert.NoError(t, err) || !assert.Contains(t, output, "Thank you for using nginx.") {
 					t.Log(output)
 				}

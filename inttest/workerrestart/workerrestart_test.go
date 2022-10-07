@@ -45,7 +45,7 @@ func (s *WorkerRestartSuite) TestK0sWorkerRestart() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	s.T().Log("killing k0s")
-	_, err = ssh.ExecWithOutput("kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
+	_, err = ssh.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
 	// restart worker and make sure it comes up

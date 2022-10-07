@@ -39,9 +39,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	ssh, err := s.SSH(s.ControllerNode(0))
 	s.NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
 	s.NoError(err)
-	_, err = ssh.ExecWithOutput(fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
 	s.NoError(err)
 
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
@@ -105,7 +105,7 @@ func (s *BasicSuite) checkCertPerms(node string) error {
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(`find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
+	output, err := ssh.ExecWithOutput(s.Context(), `find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(`grep -e '--address=0.0.0.0' /proc/$(pidof kubelet)/cmdline`)
+	output, err := ssh.ExecWithOutput(s.Context(), `grep -e '--address=0.0.0.0' /proc/$(pidof kubelet)/cmdline`)
 	if err != nil {
 		return err
 	}

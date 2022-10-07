@@ -46,9 +46,9 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput("chmod +x /bin/kubectl-foo")
+	_, err = ssh.ExecWithOutput(s.Context(), "chmod +x /bin/kubectl-foo")
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput("ln -s /usr/local/bin/k0s /usr/bin/kubectl")
+	_, err = ssh.ExecWithOutput(s.Context(), "ln -s /usr/local/bin/k0s /usr/bin/kubectl")
 	s.Require().NoError(err)
 
 	s.T().Log("Check that different ways to call kubectl subcommand work")
@@ -88,7 +88,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			s.T().Run(fmt.Sprint(callingConvention.name, "_", subcommand.name), func(t *testing.T) {
 				cmd := strings.Join(append(callingConvention.cmd, subcommand.cmd...), " ")
 				t.Log("Executing", cmd)
-				output, err := ssh.ExecWithOutput(cmd)
+				output, err := ssh.ExecWithOutput(s.Context(), cmd)
 				t.Cleanup(func() {
 					if t.Failed() {
 						t.Log("Error: ", err)

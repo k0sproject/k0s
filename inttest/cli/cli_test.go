@@ -39,19 +39,19 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 	defer ssh.Disconnect()
 
 	// k0s controller command should fail if non existent path to config is passed
-	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s controller --config /some/fake/path")
+	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s controller --config /some/fake/path")
 	s.Require().Error(err)
 
 	// k0s install command should fail if non existent path to config is passed
-	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install controller --config /some/fake/path")
+	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --config /some/fake/path")
 	s.Require().Error(err)
 
 	// k0s start should fail if service is not installed
-	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s start")
+	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
 	s.Require().Error(err)
 
 	// k0s stop should fail if service is not installed
-	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s stop")
+	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s stop")
 	s.Require().Error(err)
 }
 
@@ -61,7 +61,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	defer ssh.Disconnect()
 
 	s.T().Run("sysinfoSmoketest", func(t *testing.T) {
-		out, err := ssh.ExecWithOutput(fmt.Sprintf("%s sysinfo", s.K0sFullPath))
+		out, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s sysinfo", s.K0sFullPath))
 		assert.NoError(t, err, "k0s sysinfo has non-zero exit code")
 		t.Logf(out)
 		assert.Regexp(t, "^Machine ID: ", out)
@@ -74,7 +74,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 
 	s.T().Run("k0sInstall", func(t *testing.T) {
 		// Install with some arbitrary kubelet flags so we see those get properly passed to the kubelet
-		out, err := ssh.ExecWithOutput("/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--event-qps=7 --enable-load-reader=true'")
+		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--event-qps=7 --enable-load-reader=true'")
 		assert.NoError(t, err)
 		assert.Equal(t, "", out)
 	})
@@ -83,12 +83,12 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s start")
+		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
 		require.NoError(err)
 
 		require.NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 
-		output, err := ssh.ExecWithOutput("/usr/local/bin/k0s kubectl get namespaces -o json 2>/dev/null")
+		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubectl get namespaces -o json 2>/dev/null")
 		require.NoError(err)
 
 		namespaces := &K8sNamespaces{}
@@ -129,25 +129,25 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 	})
 
 	s.T().Log("waiting for k0s to terminate")
-	_, err = ssh.ExecWithOutput("/usr/local/bin/k0s stop")
+	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s stop")
 	s.NoError(err)
-	_, err = ssh.ExecWithOutput("while pidof k0s containerd kubelet; do sleep 0.1s; done")
+	_, err = ssh.ExecWithOutput(s.Context(), "while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
 
 	s.T().Run("k0sReset", func(t *testing.T) {
 		assert := assert.New(t)
-		resetOutput, err := ssh.ExecWithOutput("/usr/local/bin/k0s reset --debug")
+		resetOutput, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s reset --debug")
 		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
 		// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
 		// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
 		assert.Error(err)
 
-		fileCount, err := ssh.ExecWithOutput("find /var/lib/k0s -type f | wc -l")
+		fileCount, err := ssh.ExecWithOutput(s.Context(), "find /var/lib/k0s -type f | wc -l")
 		assert.NoError(err)
 		assert.Equal("0", fileCount, "expected to see 0 files under /var/lib/k0s")
 
-		newPodCount, err := ssh.ExecWithOutput("ps aux | grep '[c]ontainerd-shim-runc-v2' | wc -l")
+		newPodCount, err := ssh.ExecWithOutput(s.Context(), "ps aux | grep '[c]ontainerd-shim-runc-v2' | wc -l")
 		assert.NoError(err)
 		assert.Equal("0", newPodCount, "expected to see 0 pods after reset command")
 	})

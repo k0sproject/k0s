@@ -44,15 +44,15 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 			return err
 		}
 		defer ssh.Disconnect()
-		_, err = ssh.ExecWithOutput(dlCommand)
+		_, err = ssh.ExecWithOutput(s.Context(), dlCommand)
 		if err != nil {
 			return err
 		}
-		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install controller")
+		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller")
 		if err != nil {
 			return err
 		}
-		_, err = ssh.ExecWithOutput("/usr/local/bin/k0s start")
+		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s start")
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput(dlCommand)
+			_, err = ssh.ExecWithOutput(s.Context(), dlCommand)
 			if err != nil {
 				return err
 			}
@@ -93,12 +93,12 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 			}
 			defer ssh.Disconnect()
 			s.PutFile(node, "/etc/k0s.token", token)
-			_, err = ssh.ExecWithOutput("/usr/local/bin/k0s install worker --token-file /etc/k0s.token")
+			_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install worker --token-file /etc/k0s.token")
 			if err != nil {
 				return err
 			}
 			// plain "k0s start" does not seem to work on open-rc
-			_, err = ssh.ExecWithOutput("service k0sworker start")
+			_, err = ssh.ExecWithOutput(s.Context(), "service k0sworker start")
 			if err != nil {
 				return err
 			}
@@ -139,11 +139,11 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("cp -f /dist/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput(s.Context(), "cp -f /dist/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
-			_, err = ssh.ExecWithOutput("service k0scontroller restart")
+			_, err = ssh.ExecWithOutput(s.Context(), "service k0scontroller restart")
 			if err != nil {
 				return err
 			}
@@ -158,11 +158,11 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 				return err
 			}
 			defer ssh.Disconnect()
-			_, err = ssh.ExecWithOutput("cp -f /dist/k0s /usr/local/bin/k0s")
+			_, err = ssh.ExecWithOutput(s.Context(), "cp -f /dist/k0s /usr/local/bin/k0s")
 			if err != nil {
 				return err
 			}
-			_, err = ssh.ExecWithOutput("service k0sworker restart")
+			_, err = ssh.ExecWithOutput(s.Context(), "service k0sworker restart")
 			if err != nil {
 				return err
 			}

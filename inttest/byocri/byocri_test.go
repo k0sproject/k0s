@@ -72,12 +72,12 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	}
 	defer sshWorker.Disconnect()
 
-	_, err = sshWorker.ExecWithOutput("apk add docker && rc-service docker start")
+	_, err = sshWorker.ExecWithOutput(s.Context(), "apk add docker && rc-service docker start")
 	if err != nil {
 		return err
 	}
 	// We need to also start the cri-dockerd as the shim is no longer bundled with kubelet codebase
-	_, err = sshWorker.ExecWithOutput("rc-service cri-dockerd start")
+	_, err = sshWorker.ExecWithOutput(s.Context(), "rc-service cri-dockerd start")
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 
 	s.Require().NoError(retry.Do(
 		func() error {
-			_, err = sshWorker.ExecWithOutput("[ -e /var/run/cri-dockerd.sock ]")
+			_, err = sshWorker.ExecWithOutput(s.Context(), "[ -e /var/run/cri-dockerd.sock ]")
 			return err
 		},
 		retry.LastErrorOnly(true),
@@ -94,7 +94,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	), "The socket file for cri-dockerd doesn't exist. Is it running?")
 
 	workerCommand := fmt.Sprintf(`nohup /usr/local/bin/k0s worker --debug --cri-socket remote:unix:///var/run/cri-dockerd.sock "%s" >/tmp/k0s-worker.log 2>&1 &`, token)
-	_, err = sshWorker.ExecWithOutput(workerCommand)
+	_, err = sshWorker.ExecWithOutput(s.Context(), workerCommand)
 	if err != nil {
 		return err
 	}

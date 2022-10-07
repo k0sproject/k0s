@@ -57,7 +57,7 @@ func (s *DisabledComponentsSuite) TestK0sGetsUp() {
 }
 
 func (s *DisabledComponentsSuite) processExists(procName string, ssh *common.SSHConnection) bool {
-	_, err := ssh.ExecWithOutput(fmt.Sprintf("pidof %s", procName))
+	_, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("pidof %s", procName))
 	return err == nil // `pidof xyz` return 1 if the process does not exist
 }
 
