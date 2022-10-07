@@ -102,35 +102,36 @@ func (r *ClusterConfigReconciler) Init(_ context.Context) error {
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
 		// We need to wait until we either succees getting the object or creating it
-		err := wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {
+		err := wait.Poll(1*time.Second, 20*time.Second, func() (bool, error) {
 			timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
+
 			// Create the config object if it does not exist already
-			_, e := r.configClient.Get(timeoutCtx, constant.ClusterConfigObjectName, getOpts)
-			if e != nil {
-				if errors.IsNotFound(e) {
-					// ClusterConfig CR cannot be found, which means we can create it
-					r.log.Debugf("didn't find cluster-config object: %v", err)
-
-					if !r.leaderElector.IsLeader() {
-						r.log.Debug("I am not the leader, not writing cluster configuration")
-						return true, nil
-					}
-
-					_, e = r.copyRunningConfigToCR(ctx)
-					if e != nil {
-						r.log.Errorf("failed to save cluster-config  %v\n", err)
-						return false, nil
-					}
-				} else {
-					r.log.Errorf("error getting cluster-config: %v", err)
-					return false, nil
-				}
+			if _, err := r.configClient.Get(timeoutCtx, constant.ClusterConfigObjectName, getOpts); err == nil {
+				return true, nil
+			} else if !errors.IsNotFound(err) {
+				r.log.WithError(err).Error("Failed to get cluster configuration")
+				return false, nil
 			}
+
+			// ClusterConfig CR cannot be found, which means we can create it
+			r.log.Debug("No cluster configuration found")
+
+			if !r.leaderElector.IsLeader() {
+				r.log.Debug("I am not the leader, not creating cluster configuration")
+				return true, nil
+			}
+
+			if _, err := r.copyRunningConfigToCR(ctx); err != nil {
+				r.log.WithError(err).Errorf("Failed to create cluster configuration")
+				return false, nil
+			}
+
+			r.log.Info("Cluster configuration created successfully")
 			return true, nil
 		})
 		if err != nil {
-			return fmt.Errorf("not able to get or create the cluster config: %v", err)
+			return fmt.Errorf("not able to get or create the cluster config: %w", err)
 		}
 	}
 
@@ -227,7 +228,6 @@ func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context)
 		return nil, err
 	}
 
-	r.log.Info("successfully wrote cluster-config to API")
 	return clusterConfig, nil
 }
 
