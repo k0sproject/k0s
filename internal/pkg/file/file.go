@@ -17,8 +17,10 @@ limitations under the License.
 package file
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -85,9 +87,9 @@ func Copy(src, dst string) error {
 //
 // Note that this function is only best-effort on Windows:
 // https://github.com/golang/go/issues/22397#issuecomment-498856679
-func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) error {
+func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Writer) error) (err error) {
 	var fd *os.File
-	fd, err := os.CreateTemp(filepath.Dir(fileName), fmt.Sprintf(".%s.*.tmp", filepath.Base(fileName)))
+	fd, err = os.CreateTemp(filepath.Dir(fileName), fmt.Sprintf(".%s.*.tmp", filepath.Base(fileName)))
 	if err != nil {
 		return err
 	}
@@ -100,7 +102,13 @@ func WriteAtomically(fileName string, perm os.FileMode, write func(file io.Write
 			err = multierr.Append(err, fd.Close())
 		}
 		if remove {
-			err = multierr.Append(err, os.Remove(tmpFileName))
+			removeErr := os.Remove(tmpFileName)
+			// Don't propagate any fs.ErrNotExist errors. There is no point in
+			// doing this, since the desired state is already reached: The
+			// temporary file is no longer present on the file system.
+			if removeErr != nil && !errors.Is(err, fs.ErrNotExist) {
+				err = multierr.Append(err, removeErr)
+			}
 		}
 	}()
 
