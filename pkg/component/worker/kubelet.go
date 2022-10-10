@@ -192,6 +192,7 @@ func (k *Kubelet) Run(ctx context.Context) error {
 	} else {
 		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
 		args["--container-runtime-endpoint"] = fmt.Sprintf("unix://%s", sockPath)
+		args["--containerd"] = sockPath
 	}
 
 	// We only support external providers

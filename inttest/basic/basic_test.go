@@ -76,6 +76,15 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
 	s.Require().NoError(common.WaitForLease(s.Context(), kc, "kube-scheduler", "kube-system"))
 	s.Require().NoError(common.WaitForLease(s.Context(), kc, "kube-controller-manager", "kube-system"))
+
+	// We need to first wait till we see pod logs, that's a signal that konnectivity tunnels are up and thus we can then connect to kubelet
+	// via the API.
+	s.Require().NoError(common.WaitForPodLogs(kc, "kube-system"))
+	for i := 0; i < s.WorkerCount; i++ {
+		node := s.WorkerNode(i)
+		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
+		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, node))
+	}
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
