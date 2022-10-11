@@ -53,15 +53,15 @@ func CreateKubeletBootstrapToken(ctx context.Context, api *v1beta1.APISpec, k0sV
 		return "", err
 	}
 
-	kubeconfig, err := generateKubeconfig(joinURL, caCert, userName, token)
+	kubeconfig, err := GenerateKubeconfig(joinURL, caCert, userName, token)
 	if err != nil {
 		return "", err
 	}
 
-	return joinEncode(bytes.NewReader(kubeconfig))
+	return JoinEncode(bytes.NewReader(kubeconfig))
 }
 
-func generateKubeconfig(joinURL string, caCert []byte, userName string, token string) ([]byte, error) {
+func GenerateKubeconfig(joinURL string, caCert []byte, userName string, token string) ([]byte, error) {
 	const k0sContextName = "k0s"
 	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
 		Clusters: map[string]*clientcmdapi.Cluster{k0sContextName: {
