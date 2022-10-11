@@ -31,7 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
@@ -39,12 +39,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
-)
-
-var (
-	resourceType = v1.TypeMeta{APIVersion: "k0s.k0sproject.io/v1beta1", Kind: "clusterconfigs"}
-	cOpts        = v1.CreateOptions{TypeMeta: resourceType}
-	getOpts      = v1.GetOptions{TypeMeta: resourceType}
 )
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
@@ -101,36 +95,33 @@ func (r *ClusterConfigReconciler) Init(_ context.Context) error {
 
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
-		// We need to wait until we either succees getting the object or creating it
-		err := wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {
-			timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			// Create the config object if it does not exist already
-			_, e := r.configClient.Get(timeoutCtx, constant.ClusterConfigObjectName, getOpts)
-			if e != nil {
-				if errors.IsNotFound(e) {
-					// ClusterConfig CR cannot be found, which means we can create it
-					r.log.Debugf("didn't find cluster-config object: %v", err)
-
-					if !r.leaderElector.IsLeader() {
-						r.log.Debug("I am not the leader, not writing cluster configuration")
-						return true, nil
-					}
-
-					_, e = r.copyRunningConfigToCR(ctx)
-					if e != nil {
-						r.log.Errorf("failed to save cluster-config  %v\n", err)
-						return false, nil
-					}
-				} else {
-					r.log.Errorf("error getting cluster-config: %v", err)
-					return false, nil
+		// We need to wait until the cluster configuration exists or we succeed in creating it.
+		err := wait.PollImmediateWithContext(ctx, 1*time.Second, 20*time.Second, func(ctx context.Context) (bool, error) {
+			var err error
+			if r.leaderElector.IsLeader() {
+				err = r.createClusterConfig(ctx)
+				if err == nil {
+					r.log.Debug("Cluster configuration created")
+					return true, nil
+				}
+				if errors.IsAlreadyExists(err) {
+					// An already existing configuration is just fine.
+					r.log.Debug("Cluster configuration already exists")
+					return true, nil
+				}
+			} else {
+				err = r.clusterConfigExists(ctx)
+				if err == nil {
+					r.log.Debug("Cluster configuration exists")
+					return true, nil
 				}
 			}
-			return true, nil
+
+			r.log.WithError(err).Debug("Failed to ensure the existence of the cluster configuration")
+			return false, nil
 		})
 		if err != nil {
-			return fmt.Errorf("not able to get or create the cluster config: %v", err)
+			return fmt.Errorf("failed to ensure the existence of the cluster configuration: %w", err)
 		}
 	}
 
@@ -185,12 +176,12 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 		r.log.Error("failed to get kube client:", err)
 	}
 	e := &corev1.Event{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "k0s.",
 		},
-		EventTime:      v1.NowMicro(),
-		FirstTimestamp: v1.Now(),
-		LastTimestamp:  v1.Now(),
+		EventTime:      metav1.NowMicro(),
+		FirstTimestamp: metav1.Now(),
+		LastTimestamp:  metav1.Now(),
 		InvolvedObject: corev1.ObjectReference{
 			Kind:            v1beta1.ClusterConfigKind,
 			Namespace:       config.Namespace,
@@ -209,26 +200,28 @@ func (r *ClusterConfigReconciler) reportStatus(ctx context.Context, config *v1be
 		e.Type = corev1.EventTypeWarning
 	} else {
 		e.Reason = "SuccessfulReconcile"
-		e.Message = "Succesfully reconciled cluster config"
+		e.Message = "Successfully reconciled cluster config"
 		e.Type = corev1.EventTypeNormal
 	}
-	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(ctx, e, v1.CreateOptions{})
+	_, err = client.CoreV1().Events(constant.ClusterConfigNamespace).Create(ctx, e, metav1.CreateOptions{})
 	if err != nil {
 		r.log.Error("failed to create event for config reconcile:", err)
 	}
 }
 
-func (r *ClusterConfigReconciler) copyRunningConfigToCR(baseCtx context.Context) (*v1beta1.ClusterConfig, error) {
-	ctx, cancel := context.WithTimeout(baseCtx, 5*time.Second)
+func (r *ClusterConfigReconciler) clusterConfigExists(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_, err := r.configClient.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
+	return err
+}
+
+func (r *ClusterConfigReconciler) createClusterConfig(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	clusterWideConfig := r.YamlConfig.GetClusterWideConfig().StripDefaults().CRValidator()
-	clusterConfig, err := r.configClient.Create(ctx, clusterWideConfig, cOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	r.log.Info("successfully wrote cluster-config to API")
-	return clusterConfig, nil
+	_, err := r.configClient.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
+	return err
 }
 
 func (r *ClusterConfigReconciler) writeCRD() error {
