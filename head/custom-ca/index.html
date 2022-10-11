@@ -12,14 +12,14 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/high-availability/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/custom-ca/">
       
       <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.4.0, mkdocs-material-8.4.2">
     
     
       
-        <title>Control Plane High Availability - Documentation</title>
+        <title>Using custom CA certificate (advanced) - Documentation</title>
       
     
     
@@ -79,7 +79,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#control-plane-high-availability" class="md-skip">
+        <a href="#install-using-custom-ca-certificate" class="md-skip">
           Skip to content
         </a>
       
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Control Plane High Availability
+              Using custom CA certificate (advanced)
             
           </span>
         </div>
@@ -273,12 +273,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
       
       
@@ -327,12 +329,14 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" checked>
       
       
       
@@ -437,11 +441,52 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../custom-ca/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Using custom CA certificate (advanced)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Using custom CA certificate (advanced)
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pre-generated-tokens" class="md-nav__link">
+    Pre-generated tokens
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -536,14 +581,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
       
       
       
@@ -732,99 +775,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Control Plane High Availability
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../high-availability/" class="md-nav__link">
         Control Plane High Availability
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#network-considerations" class="md-nav__link">
-    Network considerations
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
-  </a>
-  
-    <nav class="md-nav" aria-label="Load Balancer">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-configuration-haproxy" class="md-nav__link">
-    Example configuration: HAProxy
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#k0s-configuration" class="md-nav__link">
-    k0s configuration
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration-using-k0syaml-for-each-controller" class="md-nav__link">
-    Configuration using k0s.yaml (for each controller)
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuration-using-k0sctlyaml-for-k0sctl" class="md-nav__link">
-    Configuration using k0sctl.yaml (for k0sctl)
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1370,56 +1325,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#network-considerations" class="md-nav__link">
-    Network considerations
+  <a href="#pre-generated-tokens" class="md-nav__link">
+    Pre-generated tokens
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#load-balancer" class="md-nav__link">
-    Load Balancer
-  </a>
-  
-    <nav class="md-nav" aria-label="Load Balancer">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-configuration-haproxy" class="md-nav__link">
-    Example configuration: HAProxy
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#k0s-configuration" class="md-nav__link">
-    k0s configuration
-  </a>
-  
-    <nav class="md-nav" aria-label="k0s configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration-using-k0syaml-for-each-controller" class="md-nav__link">
-    Configuration using k0s.yaml (for each controller)
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configuration-using-k0sctlyaml-for-k0sctl" class="md-nav__link">
-    Configuration using k0sctl.yaml (for k0sctl)
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1437,83 +1345,22 @@
                 
 
 
-<h1 id="control-plane-high-availability">Control Plane High Availability<a class="headerlink" href="#control-plane-high-availability" title="Permanent link">#</a></h1>
-<p>You can create high availability for the control plane by distributing the control plane across multiple nodes and installing a load balancer on top. Etcd can be colocated with the controller nodes (default in k0s) to achieve highly available datastore at the same time.</p>
-<p><img alt="k0s high availability" src="../img/k0s_high_availability.png" /></p>
-<p><strong>Note:</strong> In this context even 2 node controlplane is considered HA even though it's not really HA from etcd point of view. The same requirement for <a href="#load-balancer">LB</a> still applies.</p>
-<h2 id="network-considerations">Network considerations<a class="headerlink" href="#network-considerations" title="Permanent link">#</a></h2>
-<p>You should plan to allocate the control plane nodes into different zones. This will avoid failures in case one zone fails.</p>
-<p>For etcd high availability it's recommended to configure 3 or 5 controller nodes. For more information, refer to the <a href="https://etcd.io/docs/latest/faq/#why-an-odd-number-of-cluster-members">etcd documentation</a>.</p>
-<h2 id="load-balancer">Load Balancer<a class="headerlink" href="#load-balancer" title="Permanent link">#</a></h2>
-<p>Control plane high availability requires a tcp load balancer, which acts as a single point of contact to access the controllers. The load balancer needs to allow and route traffic to each controller through the following ports:</p>
-<ul>
-<li>6443 (for Kubernetes API)</li>
-<li>8132 (for Konnectivity)</li>
-<li>9443 (for controller join API)</li>
-</ul>
-<p>The load balancer can be implemented in many different ways and k0s doesn't have any additional requirements. You can use for example HAProxy, NGINX or your cloud provider's load balancer.</p>
-<h3 id="example-configuration-haproxy">Example configuration: HAProxy<a class="headerlink" href="#example-configuration-haproxy" title="Permanent link">#</a></h3>
-<p>Add the following lines to the end of the haproxy.cfg:</p>
-<div class="highlight"><pre><span></span><code>frontend kubeAPI
-    bind :6443
-    mode tcp
-    default_backend kubeAPI_backend
-frontend konnectivity
-    bind :8132
-    mode tcp
-    default_backend konnectivity_backend
-frontend controllerJoinAPI
-    bind :9443
-    mode tcp
-    default_backend controllerJoinAPI_backend
-
-backend kubeAPI_backend
-    mode tcp
-    server k0s-controller1 &lt;ip-address1&gt;:6443 check check-ssl verify none
-    server k0s-controller2 &lt;ip-address2&gt;:6443 check check-ssl verify none
-    server k0s-controller3 &lt;ip-address3&gt;:6443 check check-ssl verify none
-backend konnectivity_backend
-    mode tcp
-    server k0s-controller1 &lt;ip-address1&gt;:8132 check check-ssl verify none
-    server k0s-controller2 &lt;ip-address2&gt;:8132 check check-ssl verify none
-    server k0s-controller3 &lt;ip-address3&gt;:8132 check check-ssl verify none
-backend controllerJoinAPI_backend
-    mode tcp
-    server k0s-controller1 &lt;ip-address1&gt;:9443 check check-ssl verify none
-    server k0s-controller2 &lt;ip-address2&gt;:9443 check check-ssl verify none
-    server k0s-controller3 &lt;ip-address3&gt;:9443 check check-ssl verify none
-
-listen stats
-   bind *:9000
-   mode http
-   stats enable
-   stats uri /
+<h1 id="install-using-custom-ca-certificate">Install using custom CA certificate<a class="headerlink" href="#install-using-custom-ca-certificate" title="Permanent link">#</a></h1>
+<p>k0s generates all needed certificates automatically in the <code>&lt;data-dir&gt;/pki</code> directory (<code>/var/lib/k0s/pki</code>, by default).  </p>
+<p>But sometimes there is a need to have the CA certificate in advance.
+To make it work, just put <code>ca.key</code> and <code>ca.crt</code> files to the <code>&lt;data-dir&gt;/pki</code>:</p>
+<div class="highlight"><pre><span></span><code>mkdir -p /var/lib/k0s/pki
+<span class="nb">cd</span> /var/lib/k0s/pki
+openssl genrsa -out ca.key <span class="m">2048</span>
+openssl req -x509 -new -nodes -key ca.key -sha256 -days <span class="m">365</span> -out ca.crt -subj <span class="s2">&quot;/CN=Custom CA&quot;</span>
 </code></pre></div>
-<p>The last block "listen stats" is optional, but can be helpful. It enables HAProxy statistics with a separate dashboard to monitor for example the health of each backend server. You can access it using a web browser:</p>
-<div class="highlight"><pre><span></span><code>http://&lt;ip-addr&gt;:9000
+<p>Then you can <a href="../install/">install k0s as usual</a>.</p>
+<h2 id="pre-generated-tokens">Pre-generated tokens<a class="headerlink" href="#pre-generated-tokens" title="Permanent link">#</a></h2>
+<p>It's possible to get join in advance without having a running cluster.</p>
+<div class="highlight"><pre><span></span><code>k0s token pre-shared --role worker --cert /var/lib/k0s/pki/ca.crt --url https://&lt;controller-ip&gt;:6443/
 </code></pre></div>
-<p>Restart HAProxy to apply the configuration changes.</p>
-<h2 id="k0s-configuration">k0s configuration<a class="headerlink" href="#k0s-configuration" title="Permanent link">#</a></h2>
-<p>The load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
-<h3 id="configuration-using-k0syaml-for-each-controller">Configuration using k0s.yaml (for each controller)<a class="headerlink" href="#configuration-using-k0syaml-for-each-controller" title="Permanent link">#</a></h3>
-<p>Note to update your load balancer's public ip address into two places.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span><span class="w"></span>
-<span class="w">    </span><span class="nt">sans</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span><span class="w"></span>
-</code></pre></div>
-<h3 id="configuration-using-k0sctlyaml-for-k0sctl">Configuration using k0sctl.yaml (for k0sctl)<a class="headerlink" href="#configuration-using-k0sctlyaml-for-k0sctl" title="Permanent link">#</a></h3>
-<p>Add the following lines to the end of the k0sctl.yaml. Note to update your load balancer's public ip address into two places.</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">k0s</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">config</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">api</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">externalAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">sans</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;load balancer public ip address&gt;</span><span class="w"></span>
-</code></pre></div>
-<p>For greater detail about k0s configuration, refer to the <a href="../configuration/">Full configuration file reference</a>.</p>
+<p>The command above generates a join token and a Secret. A Secret should be deployed to the cluster to authorize the token.
+For example, you can put the Secret under the <a href="../manifests/">manifest</a> directory and it will be deployed automatically.</p>
 
 
 
@@ -1532,7 +1379,7 @@ listen stats
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../dual-stack/" class="md-footer__link md-footer__link--prev" aria-label="Previous: IPv4/IPv6 Dual-Stack" rel="prev">
+        <a href="../airgap-install/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Airgap Install" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -1541,20 +1388,20 @@ listen stats
               <span class="md-footer__direction">
                 Previous
               </span>
-              IPv4/IPv6 Dual-Stack
+              Airgap Install
             </div>
           </div>
         </a>
       
       
         
-        <a href="../shell-completion/" class="md-footer__link md-footer__link--next" aria-label="Next: Shell Completion" rel="next">
+        <a href="../upgrade/" class="md-footer__link md-footer__link--next" aria-label="Next: Upgrade" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Shell Completion
+              Upgrade
             </div>
           </div>
           <div class="md-footer__button md-icon">
