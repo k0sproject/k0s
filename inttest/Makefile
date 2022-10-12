@@ -81,6 +81,9 @@ check-ap-ha3x3: TIMEOUT=6m
 
 check-kubeletcertrotate: TIMEOUT=15m
 
+check-dualstack-dynamicconfig: K0S_ENABLE_DYNAMIC_CONFIG=true
+check-dualstack-dynamicconfig: check-dualstack
+
 check-ap-updater: .update-server.stamp
 
 .PHONY: $(smoketests)

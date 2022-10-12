@@ -25,6 +25,7 @@ package dualstack
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/stretchr/testify/suite"
@@ -78,7 +79,11 @@ func (s *DualstackSuite) cmdlineForExecutable(node, binary string) []string {
 func (s *DualstackSuite) SetupSuite() {
 	s.FootlooseSuite.SetupSuite()
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
+	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
+	}
+	s.Require().NoError(s.InitController(0, controllerArgs...))
 	s.Require().NoError(s.RunWorkers())
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)

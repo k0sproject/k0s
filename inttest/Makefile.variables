@@ -46,3 +46,4 @@ smoketests := \
 	check-customdomain \
 	check-capitalhostnames \
 	check-customca \
+	check-dualstack-dynamicconfig \
