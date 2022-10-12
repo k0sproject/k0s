@@ -487,7 +487,7 @@ jobs:
         working-directory: ./inttest
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.6.2 # Allows us to upload a file with wildcard patterns
+        uses: shogo82148/actions-upload-release-asset@v1.6.3 # Allows us to upload a file with wildcard patterns
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
