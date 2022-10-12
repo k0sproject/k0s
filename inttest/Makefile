@@ -77,8 +77,8 @@ check-ap-ha3x3: TIMEOUT=6m
 
 check-kubeletcertrotate: TIMEOUT=15m
 
-check-dualstack-dynamicconfig: K0S_ENABLE_DYNAMIC_CONFIG=true
-check-dualstack-dynamicconfig: check-dualstack
+check-dualstack-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
+check-dualstack-dynamicconfig: TEST_PACKAGE=dualstack
 
 check-ap-updater: .update-server.stamp
 
@@ -88,7 +88,11 @@ include Makefile.variables
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-amd64.tar)
 $(smoketests): .footloose-alpine.stamp
-	K0S_PATH='$(K0S_PATH)' K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(subst check-,,$@)
+$(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
+$(smoketests):
+	K0S_PATH='$(K0S_PATH)' \
+	K0S_IMAGES_BUNDLE='$(K0S_IMAGES_BUNDLE)' \
+	go test -count=1 -v -timeout $(TIMEOUT) github.com/k0sproject/k0s/inttest/$(TEST_PACKAGE)
 .PHONY: clean
 clean:
 	rm -rf bin sonobuoy/*_sonobuoy_*.tar.gz .*.stamp

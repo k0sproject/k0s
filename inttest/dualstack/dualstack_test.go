@@ -101,6 +101,7 @@ func (s *DualstackSuite) SetupSuite() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
 	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
+		s.T().Log("Enabling dynamic config for controller")
 		controllerArgs = append(controllerArgs, "--enable-dynamic-config")
 	}
 	s.Require().NoError(s.InitController(0, controllerArgs...))
