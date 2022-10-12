@@ -58,14 +58,17 @@ $(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
-define build_docker_container =
-	docker create --entrypoint=/dev/null $(shell cat -- $<) > $@.tmp
-	mv $@.tmp $@
-endef
-.container.%: .docker-image.%.stamp ; $(build_docker_container)
-.container.%.windows: .docker-image.%.windows.stamp ; $(build_docker_container)
+build_docker_container = \
+	docker create --entrypoint=/dev/null $(shell cat -- $<) > $@.tmp \
+	&& mv $@.tmp $@
 
-define build_docker_image =
+.container.%: .docker-image.%.stamp
+	$(build_docker_container)
+
+.container.%.windows: .docker-image.%.windows.stamp
+	$(build_docker_container)
+
+build_docker_image = \
 	docker build -t k0sbuild$(basename $@):latest \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
 	  --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
@@ -77,9 +80,12 @@ define build_docker_image =
 	  --build-arg BUILD_GO_FLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_flags) \
 	  --build-arg BUILD_GO_LDFLAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags) \
 	  --build-arg BUILD_GO_LDFLAGS_EXTRA=$($(patsubst %/Dockerfile,%,$<)_build_go_ldflags_extra) \
-	  -- $(dir $<)
-	docker images -q k0sbuild$(basename $@):latest > $@.tmp
-	mv $@.tmp $@
-endef
-.docker-image.%.stamp: %/Dockerfile Makefile.variables ; $(build_docker_image)
-.docker-image.%.windows.stamp: %/Dockerfile Makefile.variables ; $(build_docker_image)
+	  -- $(dir $<) \
+	&& docker images -q k0sbuild$(basename $@):latest > $@.tmp \
+	&& mv $@.tmp $@
+
+.docker-image.%.stamp: %/Dockerfile Makefile.variables
+	$(build_docker_image)
+
+.docker-image.%.windows.stamp: %/Dockerfile Makefile.variables
+	$(build_docker_image)
