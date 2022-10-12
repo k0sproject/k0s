@@ -581,13 +581,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
-    containerd needs apparmor_parser
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
     Other dependencies in previous versions of k0s
   </a>
@@ -1400,13 +1393,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#containerd-needs-apparmor_parser" class="md-nav__link">
-    containerd needs apparmor_parser
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
     Other dependencies in previous versions of k0s
   </a>
@@ -1583,9 +1569,6 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.</li>
 </ul>
-<h3 id="containerd-needs-apparmor_parser">containerd needs <code>apparmor_parser</code><a class="headerlink" href="#containerd-needs-apparmor_parser" title="Permanent link">#</a></h3>
-<p>If containerd <a href="https://github.com/containerd/containerd/blob/v1.5.10/pkg/apparmor/apparmor_linux.go#L37-L48">detects</a> that the system is configured to use <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>
-it will require a tool called <code>apparmor_parser</code> to be installed on the system.</p>
 <h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
 <ul>
 <li>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
