@@ -17,6 +17,11 @@ variable "instance_type" {
   default = "c4.xlarge"
 }
 
+variable "instance_arch" {
+  type    = string
+  default = "amd64"
+}
+
 variable "k0s_version" {
   type        = string
   description = <<EOF

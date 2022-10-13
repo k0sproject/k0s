@@ -416,12 +416,23 @@ jobs:
     needs:
       - release
       - x64
+      - arm64
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+        include:
+          - arch: amd64
+            instance-type: c4.xlarge
+          - arch: arm64
+            instance-type: c7g.xlarge
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-1
       TF_VERSION: 1.2.2
       TF_VAR_k0s_binary_path: ${{ github.workspace }}/k0s/k0s
+      TF_VAR_instance_arch: ${{ matrix.arch }}
+      TF_VAR_instance_type: ${{ matrix.instance-type }}
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Conformance Testing"
@@ -453,7 +464,7 @@ jobs:
       - name: Fetch k0s Artifact
         uses: actions/download-artifact@v3
         with:
-          name: k0s-amd64
+          name: k0s-${{ matrix.arch }}
           path: ${{ github.workspace }}/k0s
 
       - name: Launch Test Environment
