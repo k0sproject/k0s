@@ -2,13 +2,9 @@
 run:
   timeout: 8m
 
-  skip-dirs-use-default: false
-  skip-dirs:
-    - pkg/helm
-    - static
+  build-tags:
     - hack
-    - embedded-bins
-    - pkg/apis/k0s.k0sproject.io/clientset
+  skip-dirs-use-default: false
   skip-files:
     - "zz_*"
   tests: true
@@ -22,17 +18,17 @@ linters:
     - goheader
 
 linters-settings:
-  gofmt:
-    # simplify code: gofmt with `-s` option, true by default
-    simplify: false
   golint:
     min-confidence: 0
   goheader:
     template-path: .go-header.txt
+
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-rules:
+    # https://github.com/denis-tingaikin/go-header/issues/18
+    # This means that the header checks are ineffective for all files with build tags.
     - source: "^//go:build"
       linters:
         - goheader
