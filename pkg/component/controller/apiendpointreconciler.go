@@ -138,18 +138,16 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 	}
 
 	if len(ep.Subsets) == 0 || needsUpdate(ipStrings, ep) {
-		ep.Subsets = []corev1.EndpointSubset{
-			corev1.EndpointSubset{
-				Addresses: stringsToEndpointAddresses(ipStrings),
-				Ports: []corev1.EndpointPort{
-					corev1.EndpointPort{
-						Name:     "https",
-						Protocol: "TCP",
-						Port:     int32(a.clusterConfig.Spec.API.Port),
-					},
+		ep.Subsets = []corev1.EndpointSubset{{
+			Addresses: stringsToEndpointAddresses(ipStrings),
+			Ports: []corev1.EndpointPort{
+				{
+					Name:     "https",
+					Protocol: "TCP",
+					Port:     int32(a.clusterConfig.Spec.API.Port),
 				},
 			},
-		}
+		}}
 
 		_, err := epClient.Update(ctx, ep, v1.UpdateOptions{})
 		if err != nil {
@@ -169,18 +167,16 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 		ObjectMeta: v1.ObjectMeta{
 			Name: "kubernetes",
 		},
-		Subsets: []corev1.EndpointSubset{
-			corev1.EndpointSubset{
-				Addresses: stringsToEndpointAddresses(addresses),
-				Ports: []corev1.EndpointPort{
-					corev1.EndpointPort{
-						Name:     "https",
-						Protocol: "TCP",
-						Port:     int32(a.clusterConfig.Spec.API.Port),
-					},
+		Subsets: []corev1.EndpointSubset{{
+			Addresses: stringsToEndpointAddresses(addresses),
+			Ports: []corev1.EndpointPort{
+				{
+					Name:     "https",
+					Protocol: "TCP",
+					Port:     int32(a.clusterConfig.Spec.API.Port),
 				},
 			},
-		},
+		}},
 	}
 
 	c, err := a.kubeClientFactory.GetClient()
