@@ -51,3 +51,36 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 | TCP       | 10250     | kubelet                   | Master, Worker => Host `*`  | Authenticated kubelet API for the master node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
 | TCP       | 9443      | k0s-api                   | controller <-> controller   | k0s controller join API, TLS with token auth
 | TCP       | 8132      | konnectivity              | worker <-> controller       | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+
+## iptables
+
+`iptables` can work in two distinct modes, `legacy` and `nftables`. k0s autodetects the mode and prefers `nftables`. To check which mode k0s is configured with check `ls -lah /var/lib/k0s/bin/`. The `iptables` link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
+**kube-proxy**: `nsenter -t $(pidof kube-proxy) -m iptables -V`
+**kube-router**: `nsenter -t $(pidof kube-router) -m /sbin/iptables -V`
+**calico**: `nsenter -t $(pidof -s calico-node) -m iptables -V`
+
+There are [known](https://bugzilla.netfilter.org/show_bug.cgi?id=1632) version incompatibility issues in iptables versions. k0s ships (in `/var/lib/k0s/bin`) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different that k0s (and other k8s components) ships with it may cause networking issues. This is based on the fact that iptables being user-space tooling it does not provide any strong version compatibility guarantees.
+
+## Firewalld & k0s
+
+If you are using [`firewalld`](https://firewalld.org/) on your hosts you need to ensure it is configured to use the same `FirewallBackend` as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.
+
+Here's an example configuration for a tested working networking setup:
+
+```sh
+[root@rhel-test ~]# firewall-cmd --list-all
+public (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: eth0
+  sources: 10.244.0.0/16 10.96.0.0/12
+  services: cockpit dhcpv6-client ssh
+  ports: 80/tcp 6443/tcp 8132/tcp 10250/tcp 179/tcp 179/udp
+  protocols: 
+  forward: no
+  masquerade: yes
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules:
+```
