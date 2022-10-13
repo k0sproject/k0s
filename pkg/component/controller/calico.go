@@ -73,6 +73,7 @@ type calicoConfig struct {
 	Overlay                    string
 	IPAutodetectionMethod      string
 	IPV6AutodetectionMethod    string
+	IPTablesBackend            string
 	PullPolicy                 string
 }
 
@@ -199,6 +200,7 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		Overlay:                    clusterConfig.Spec.Network.Calico.Overlay,
 		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
 		IPV6AutodetectionMethod:    ipv6AutoDetectionMethod,
+		IPTablesBackend:            clusterConfig.Spec.Network.Calico.IPTablesBackend,
 		PullPolicy:                 clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 

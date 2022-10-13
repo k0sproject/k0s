@@ -150,7 +150,7 @@ spec:
               value: "autodetect"
             # Auto detect the iptables backend
             - name: FELIX_IPTABLESBACKEND
-              value: "auto"
+              value: "{{ .IPTablesBackend }}"
             {{ if ne .IPAutodetectionMethod "" }}
             - name: IP_AUTODETECTION_METHOD
               value: {{ .IPAutodetectionMethod }}

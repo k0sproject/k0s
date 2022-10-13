@@ -49,6 +49,9 @@ type Calico struct {
 
 	// Windows Nodes (default: false)
 	WithWindowsNodes bool `json:"withWindowsNodes"`
+
+	// iptables backend (default: Auto)
+	IPTablesBackend string `json:"iptablesBackend"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -64,6 +67,7 @@ func DefaultCalico() *Calico {
 		Overlay:                 "Always",
 		IPAutodetectionMethod:   "",
 		IPv6AutodetectionMethod: "",
+		IPTablesBackend:         "Auto",
 	}
 }
 
@@ -79,6 +83,7 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.Overlay = "Always"
 	c.IPAutodetectionMethod = ""
 	c.IPv6AutodetectionMethod = ""
+	c.IPTablesBackend = "Auto"
 
 	type calico Calico
 	jc := (*calico)(c)

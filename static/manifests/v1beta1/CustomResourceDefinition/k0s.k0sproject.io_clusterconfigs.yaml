@@ -291,6 +291,9 @@ spec:
                       ipV6AutodetectionMethod:
                         description: Host's IPv6 Auto-detection method for Calico
                         type: string
+                      iptablesBackend:
+                        description: 'iptables backend (default: Auto)'
+                        type: string
                       mode:
                         description: vxlan (default) or ipip
                         type: string
