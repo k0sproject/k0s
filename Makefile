@@ -70,7 +70,7 @@ endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
 GOLANG_IMAGE ?= golang:$(go_version)-alpine3.16
-K0S_GO_BUILD_CACHE_VOLUME_PATH=$(shell realpath $(K0S_GO_BUILD_CACHE))
+K0S_GO_BUILD_CACHE_VOLUME_PATH=$(realpath $(K0S_GO_BUILD_CACHE))
 GO_ENV ?= docker run --rm \
 	-v '$(K0S_GO_BUILD_CACHE_VOLUME_PATH)':/run/k0s-build \
 	-v '$(CURDIR)':/go/src/github.com/k0sproject/k0s \
