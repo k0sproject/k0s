@@ -36,3 +36,10 @@ issues:
     - source: "^//go:build"
       linters:
         - goheader
+    # Ignore deprecations: They shouldn't break the CI. If this were the case,
+    # it would be pointless to have them. There's no way in reporting them as
+    # warnings without having a non-zero exit code.
+    # https://github.com/golangci/golangci-lint/pull/3184#issuecomment-1235438429
+    - linters:
+        - staticcheck
+      text: "^SA1019:"
