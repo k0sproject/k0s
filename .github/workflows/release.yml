@@ -25,7 +25,7 @@ jobs:
       - name: Branch name
         id: branch_name
         run: |
-          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
+          echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -38,11 +38,11 @@ jobs:
           prerelease: ${{ contains(github.ref, '-') }} # v0.1.2-beta1, 1.2.3-rc1
       - name: Prepare image tags
         id: image_tag
+        env:
+          TAGS: ${{ steps.branch_name.outputs.TAG_NAME }}
         # Basically just replace the '+' with '-' as '+' is not allowed in tags
         run: |
-          TAGS=${{ steps.branch_name.outputs.TAG_NAME }}
-          TAGS=${TAGS//+/-}
-          echo ::set-output name=IMAGE_TAGS::${TAGS}
+          echo IMAGE_TAGS="${TAGS//+/-}" >> $GITHUB_OUTPUT
   x64:
     needs: release
     runs-on: [self-hosted, linux, x64]
