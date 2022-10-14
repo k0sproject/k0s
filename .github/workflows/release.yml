@@ -22,7 +22,7 @@ jobs:
       - name: Branch name
         id: branch_name
         run: |
-          echo ::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}
+          echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -101,11 +101,11 @@ jobs:
 
       - name: Prepare tags
         id: prep
+        env:
+          TAGS: ${{ needs.release.outputs.tag_name }}
         # Basically just replace the '+' with '-' as '+' is not allowed in tags
         run: |
-          TAGS=${{ needs.release.outputs.tag_name }}
-          TAGS=${TAGS//+/-}
-          echo ::set-output name=tags::${TAGS}
+          echo IMAGE_TAGS="${TAGS//+/-}" >> $GITHUB_OUTPUT
 
       - name: Build image and push to GitHub image registry
         uses: docker/build-push-action@v1

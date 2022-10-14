@@ -110,7 +110,7 @@ jobs:
         # * https://github.com/actions/upload-artifact/issues/199#issuecomment-1190171851
         run: |
           make airgap-images.txt
-          echo ::set-output name=linux-hash::${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          echo 'linux-hash=${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}' >> $GITHUB_OUTPUT
 
       - name: Cache airgap image bundle
         id: cache-airgap-image-bundle
