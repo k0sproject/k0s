@@ -71,7 +71,7 @@ endif
 
 go_clientgen := $(shell which client-gen)
 ifeq ($(go_clientgen),)
-go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v0.22.2 && cd ../.. && "${GOPATH}/bin/client-gen"
+go_clientgen := cd hack/ci-deps && go install k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version)) && cd ../.. && "${GOPATH}/bin/client-gen"
 endif
 
 go_controllergen := $(shell which controller-gen)
