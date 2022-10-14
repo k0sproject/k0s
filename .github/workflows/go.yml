@@ -101,7 +101,7 @@ jobs:
         id: list-smoke-tests
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(. != "") ] | "::set-output name=${{ matrix.target }}-matrix::" + tojson'
+              'split(" ") | [ .[] | select(. != "") ] | "${{ matrix.target }}-matrix=" + tojson' >> $GITHUB_OUTPUT
 
       - name: Create airgap image list
         id: create-airgap-image-list
@@ -117,7 +117,7 @@ jobs:
         # * https://github.com/actions/upload-artifact/issues/199#issuecomment-1190171851
         run: |
           make airgap-images.txt
-          echo ::set-output name=${{ matrix.target }}-hash::${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+          echo '${{ matrix.target }}-hash=${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}' >> $GITHUB_OUTPUT
 
       - name: Cache airgap image bundle
         id: cache-airgap-image-bundle
@@ -257,7 +257,7 @@ jobs:
       - id: set-matrix
         run: |
           matrix=$(./hack/tools/gen-matrix.sh 1.24.3 1.24.4)
-          echo "::set-output name=matrix::$matrix"
+          echo matrix="$matrix" >> $GITHUB_OUTPUT
 
   autopilot-smoketest:
     name: Autopilot smoke test
