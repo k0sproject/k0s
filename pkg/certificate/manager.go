@@ -17,11 +17,13 @@ limitations under the License.
 package certificate
 
 import (
+	"bufio"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -83,12 +85,12 @@ func (m *Manager) EnsureCA(name, cn string) error {
 		return err
 	}
 
-	err = os.WriteFile(keyFile, key, constant.CertSecureMode)
+	err = file.WriteContentAtomically(keyFile, key, constant.CertSecureMode)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(certFile, cert, constant.CertMode)
+	err = file.WriteContentAtomically(certFile, cert, constant.CertMode)
 	if err != nil {
 		return err
 	}
@@ -148,11 +150,11 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 			Key:  string(key),
 			Cert: string(cert),
 		}
-		err = os.WriteFile(keyFile, key, constant.CertSecureMode)
+		err = file.WriteContentAtomically(keyFile, key, constant.CertSecureMode)
 		if err != nil {
 			return Certificate{}, err
 		}
-		err = os.WriteFile(certFile, cert, constant.CertMode)
+		err = file.WriteContentAtomically(certFile, cert, constant.CertMode)
 		if err != nil {
 			return Certificate{}, err
 		}
@@ -243,48 +245,39 @@ func (m *Manager) CreateKeyPair(name string, k0sVars constant.CfgVars, owner str
 		return err
 	}
 
-	var privateKey = &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	}
+	err = file.WriteAtomically(keyFile, constant.CertSecureMode, func(unbuffered io.Writer) error {
+		privateKey := pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(key),
+		}
 
-	outFile, err := os.OpenFile(keyFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertSecureMode)
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
+		w := bufio.NewWriter(unbuffered)
+		if err := pem.Encode(w, &privateKey); err != nil {
+			return err
+		}
+		return w.Flush()
+	})
 
-	err = file.Chown(keyFile, owner, constant.CertSecureMode)
-	if err != nil {
-		return err
-	}
-
-	err = pem.Encode(outFile, privateKey)
 	if err != nil {
 		return err
 	}
 
-	// note to the next reader: key.Public() != key.PublicKey
-	pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())
-	if err != nil {
-		return err
-	}
+	return file.WriteAtomically(pubFile, 0644, func(unbuffered io.Writer) error {
+		// note to the next reader: key.Public() != key.PublicKey
+		pubBytes, err := x509.MarshalPKIXPublicKey(key.Public())
+		if err != nil {
+			return err
+		}
 
-	var pemkey = &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubBytes,
-	}
+		pemKey := pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: pubBytes,
+		}
 
-	pemfile, err := os.Create(pubFile)
-	if err != nil {
-		return err
-	}
-	defer pemfile.Close()
-
-	err = pem.Encode(pemfile, pemkey)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		w := bufio.NewWriter(unbuffered)
+		if err := pem.Encode(w, &pemKey); err != nil {
+			return err
+		}
+		return w.Flush()
+	})
 }

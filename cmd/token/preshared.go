@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/testing"
 	"sigs.k8s.io/yaml"
 
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
 )
@@ -118,7 +119,7 @@ func createSecret(role string, validity time.Duration, outDir string) (string, e
 			return "", fmt.Errorf("error marshailling secret: %w", err)
 		}
 
-		err = os.WriteFile(filepath.Join(outDir, secret.Name+".yaml"), b, 0640)
+		err = file.WriteContentAtomically(filepath.Join(outDir, secret.Name+".yaml"), b, 0640)
 		if err != nil {
 			return "", fmt.Errorf("error writing secret: %w", err)
 		}
@@ -151,7 +152,7 @@ func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
-	err = os.WriteFile(filepath.Join(outDir, "token_"+tokenString), []byte(encodedToken), 0640)
+	err = file.WriteContentAtomically(filepath.Join(outDir, "token_"+tokenString), []byte(encodedToken), 0640)
 	if err != nil {
 		return fmt.Errorf("error writing kubeconfig: %w", err)
 	}
