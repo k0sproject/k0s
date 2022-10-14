@@ -53,7 +53,6 @@ require (
 	golang.org/x/sys v0.0.0-20220908164124-27713097b956
 	golang.org/x/tools v0.1.12
 	google.golang.org/grpc v1.50.0
-	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.10.1
 )
 
@@ -272,6 +271,7 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiserver v0.25.2 // indirect
 	k8s.io/component-helpers v0.25.2 // indirect

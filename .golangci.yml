@@ -13,11 +13,15 @@ run:
 
 linters:
   enable:
-    - revive
-    - gofmt
-    - goheader
+    - depguard # Checks if package imports are in a list of acceptable packages
+    - gofmt    # Checks whether code was gofmt-ed
+    - goheader # Checks is file headers matche a given pattern
+    - revive   # Stricter drop-in replacement for golint
 
 linters-settings:
+  depguard:
+    packages:
+      - gopkg.in/yaml*
   golint:
     min-confidence: 0
   goheader:

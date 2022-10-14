@@ -16,10 +16,11 @@ package updater
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 const defaultChannel = "stable"
@@ -80,8 +81,12 @@ func (c *client) GetUpdate(channel, clusterID, lastUpdateStatus, currentVersion 
 	}
 	var update Update
 
-	decoder := yaml.NewDecoder(resp.Body)
-	err = decoder.Decode(&update)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(body, &update)
 	if err != nil {
 		return nil, err
 	}
