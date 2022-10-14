@@ -35,6 +35,18 @@ variable "k0s_version" {
   default     = ""
 }
 
+variable "k0s_airgap_bundle" {
+  description = "The k0s airgap bundle containing all required images"
+  type        = string
+  default     = ""
+}
+
+variable "k0s_airgap_bundle_config" {
+  description = "The k0s airgap YAML manifest defining the required images"
+  type        = string
+  default     = ""
+}
+
 variable "k0s_update_binary" {
   description = "The name of the binary in '/tool/data' that will be available for update via S3"
   type        = string

@@ -23,7 +23,7 @@ export TOOL_DATADIR=/mycluster/hadev1x3
 ./tool.sh aws ha create \
     --cluster-name hadev1x3 \
     --region ca-central-1 \
-    --k0s-version v1.24.4+k0s.0 \
+    --k0s-version v1.25.2+k0s.0 \
     --controllers 1 \
     --workers 3
 ```
@@ -48,6 +48,35 @@ cp /path/to/my/k0s ${TOOL_DATADIR}
     --k0s-binary k0s \
     --controllers 1 \
     --workers 3
+```
+
+### Creating an HA development `k0s` cluster on AWS (1x3) using an Airgap image bundle
+
+Similar to the non-airgap bundle instructions, this adds arguments for specifying an airgap bundle
+along with a YAML image manifest.
+
+Prerequisites:
+
+* Ensure that the files used for the `k0s` binary and airgap bundle exist in your `TOOL_DATADIR`.
+* A YAML manifest of the images is required.
+  * This can be created using a `spec.images` object
+    * https://docs.k0sproject.io/head/configuration/#specimages
+  * A minimal YAML can consist of simply `default_pull_policy: Never`
+* NOTE: The values for `--k0s-airgap-bundle` and `--k0s-airgap-bundle-config` reference the names of files in `TOOL_DATADIR`,
+and not full paths.
+
+```bash
+# This directory is where the terraform state and private key are saved.
+export TOOL_DATADIR=/mycluster/hadev1x3
+
+./tool.sh aws ha create \
+    --cluster-name hadev1x3 \
+    --region ca-central-1 \
+    --k0s-version v1.25.2+k0s.0 \
+    --controllers 1 \
+    --workers 3 \
+    --k0s-airgap-bundle k0s-airgap-bundle-v1.25.2+k0s.0-amd64 \
+    --k0s-airgap-bundle-config images.yaml
 ```
 
 ### Creating an array of HA `k0s` clusters in an isolated VPC
@@ -87,7 +116,7 @@ export TOOL_DATADIR=/inttests/inttest0
     --region ca-central-1 \
     --vpc-id <vpc_id from step above> \
     --subnet-idx 0 \
-    --k0s-version v1.24.4+k0s.0 \
+    --k0s-version v1.25.2+k0s.0 \
     --controllers 3 \
     --workers 3
 ```
@@ -106,7 +135,7 @@ export TOOL_DATADIR=/inttests/inttestN
     --region ca-central-1 \
     --vpc-id <vpc_id from step above> \
     --subnet-idx N \
-    --k0s-version v1.24.4+k0s.0 \
+    --k0s-version v1.25.2+k0s.0 \
     --controllers 3 \
     --workers 3
 ```
