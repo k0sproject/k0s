@@ -20,4 +20,5 @@ limitations under the License.
 package worker
 
 // KernelSetup comment
-func KernelSetup() {}
+func KernelSetup()             {}
+func KernelMajorVersion() byte { return 0 }
