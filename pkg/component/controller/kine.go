@@ -25,6 +25,8 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/etcd"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/sirupsen/logrus"
 
@@ -37,14 +39,17 @@ import (
 
 // Kine implement the component interface to run kine
 type Kine struct {
-	Config     *v1beta1.KineConfig
-	gid        int
-	K0sVars    constant.CfgVars
-	supervisor supervisor.Supervisor
-	uid        int
+	Config       *v1beta1.KineConfig
+	gid          int
+	K0sVars      constant.CfgVars
+	supervisor   supervisor.Supervisor
+	uid          int
+	bypassClient *etcd.Client
+	ctx          context.Context
 }
 
 var _ component.Component = (*Kine)(nil)
+var _ component.Healthz = (*Kine)(nil)
 
 // Init extracts the needed binaries
 func (k *Kine) Init(_ context.Context) error {
@@ -82,14 +87,21 @@ func (k *Kine) Init(_ context.Context) error {
 			logrus.Warningf("datasource file %s does not exist", dsURL.Path)
 		}
 	}
+
+	k.bypassClient, err = etcd.NewClientWithConfig(clientv3.Config{
+		Endpoints: []string{fmt.Sprintf("unix://%s", k.K0sVars.KineSocketPath)},
+	})
+	if err != nil {
+		return fmt.Errorf("can't create bypass etcd client: %w", err)
+	}
 	return assets.Stage(k.K0sVars.BinDir, "kine", constant.BinDirMode)
 }
 
 // Run runs kine
-func (k *Kine) Start(_ context.Context) error {
+func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
-
+	k.ctx = ctx
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
 		BinPath: assets.BinPath("kine", k.K0sVars.BinDir),
@@ -109,4 +121,26 @@ func (k *Kine) Start(_ context.Context) error {
 // Stop stops kine
 func (k *Kine) Stop() error {
 	return k.supervisor.Stop()
+}
+
+const hcKey = "/k0s-health-check"
+const hcValue = "value"
+
+func (k *Kine) Healthy() error {
+	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64)
+	if err != nil {
+		return fmt.Errorf("kine-etcd-health: %w", err)
+	}
+	if !ok {
+		logrus.Warningf("kine-etcd-health: health-check value was not written")
+	}
+
+	v, err := k.bypassClient.Read(k.ctx, hcKey)
+	if err != nil {
+		return fmt.Errorf("kine-etcd-health read: %w", err)
+	}
+	if realValue := string(v.Kvs[len(v.Kvs)-1].Value); realValue != hcValue {
+		return fmt.Errorf("kine-etcd-health read: value is invalid, got %s, expect %s", realValue, hcValue)
+	}
+	return nil
 }
