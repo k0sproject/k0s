@@ -88,8 +88,12 @@ func (k *Kubelet) Init(_ context.Context) error {
 			var err error
 			iptablesMode, err = iptablesutils.DetectIPTablesMode(k.K0sVars.BinDir)
 			if err != nil {
-				logrus.Errorf("error detecting iptables mode: %v, using iptables-nft by default", err)
-				iptablesMode = "nft"
+				if KernelMajorVersion() < 5 {
+					iptablesMode = "legacy"
+				} else {
+					iptablesMode = "nft"
+				}
+				logrus.Infof("error detecting iptables mode: %v, using iptables-%s by default", err, iptablesMode)
 			}
 		}
 		logrus.Infof("using iptables-%s", iptablesMode)
