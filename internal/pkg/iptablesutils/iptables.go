@@ -61,8 +61,20 @@ func DetectIPTablesMode(k0sBinPath string) (string, error) {
 		logrus.Info("kube-related iptables entries not found, go with iptables-legacy")
 		return ModeLegacy, nil
 	}
-	logrus.Info("kube-related iptables entries not found, go with iptables-nft")
-	return ModeNFT, nil
+
+	iptablesPath, err := exec.LookPath("iptables")
+	if err != nil {
+		return "", err
+	}
+	out, err := exec.Command(iptablesPath, "--version").CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	outStr := string(out)
+	if strings.Contains(outStr, "nf_tables") {
+		return ModeNFT, nil
+	}
+	return ModeLegacy, nil
 }
 
 func iptablesEntriesCount(k0sBinPath string, xtablesCmdName string, entries []string) (entriesFound int, total int, err error) {
