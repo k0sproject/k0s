@@ -83,3 +83,12 @@ func KernelSetup() {
 	enableSysCtl("net/bridge/bridge-nf-call-iptables")
 	enableSysCtl("net/bridge/bridge-nf-call-ip6tables")
 }
+
+// KernelMajorVersion returns the major version number of the running kernel
+func KernelMajorVersion() byte {
+	data, err := os.ReadFile("/proc/sys/kernel/osrelease")
+	if err != nil {
+		return 0
+	}
+	return data[0] - '0'
+}
