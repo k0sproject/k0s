@@ -86,7 +86,7 @@ func (k *Kubelet) Init(_ context.Context) error {
 		iptablesMode := k.IPTablesMode
 		if iptablesMode == "" || iptablesMode == "auto" {
 			var err error
-			iptablesMode, err = iptablesutils.DetectIPTablesMode(k.K0sVars.BinDir)
+			iptablesMode, err = iptablesutils.DetectHostIPTablesMode(k.K0sVars.BinDir)
 			if err != nil {
 				if KernelMajorVersion() < 5 {
 					iptablesMode = "legacy"
