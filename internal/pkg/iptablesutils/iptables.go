@@ -32,10 +32,10 @@ const (
 	ModeLegacy = "legacy"
 )
 
-// DetectIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
+// DetectHostIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
 // Follows the same logic as kube-proxy/kube-route.
 // See: https://github.com/kubernetes-sigs/iptables-wrappers/blob/master/iptables-wrapper-installer.sh
-func DetectIPTablesMode(k0sBinPath string) (string, error) {
+func DetectHostIPTablesMode(k0sBinPath string) (string, error) {
 	logrus.Info("Trying to detect iptables mode")
 	logrus.Info("Checking iptables-nft for kube-related entries")
 	nftEntriesCount, nftTotalCount, err := iptablesEntriesCount(k0sBinPath, "xtables-nft-multi", []string{"KUBE-IPTABLES-HINT", "KUBE-KUBELET-CANARY"})
