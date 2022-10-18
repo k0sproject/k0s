@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
@@ -152,15 +153,18 @@ func (c *Client) Health(ctx context.Context) error {
 
 }
 
-// Write tries to write value with a given key and returns indicator if write operation succeed
-func (c *Client) Write(ctx context.Context, key string, value string, ttl int64) (bool, error) {
+// Write tries to write a new value with a given key and returns indicator if write operation succeed.
+func (c *Client) Write(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
 
-	leaseResp, err := c.client.Lease.Grant(ctx, ttl)
+	leaseResp, err := c.client.Lease.Grant(ctx, int64(ttl.Seconds()))
 
 	if err != nil {
 		return false, fmt.Errorf("can't get TTL lease: %w", err)
 	}
 
+	// always use notFound guard because otherwise
+	// library builds PUT request which is not implemented
+	// in the kine
 	txnResp, err := c.client.KV.Txn(ctx).If(
 		notFound(key),
 	).Then(

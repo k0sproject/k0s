@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -127,7 +128,7 @@ const hcKey = "/k0s-health-check"
 const hcValue = "value"
 
 func (k *Kine) Healthy() error {
-	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64)
+	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64*time.Second)
 	if err != nil {
 		return fmt.Errorf("kine-etcd-health: %w", err)
 	}
