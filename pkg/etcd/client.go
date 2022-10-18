@@ -20,6 +20,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"time"
+
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -56,8 +58,16 @@ func NewClient(certDir, etcdCertDir string, etcdConf *v1beta1.EtcdConfig) (*Clie
 		Endpoints: etcdConf.GetEndpoints(),
 		TLS:       tlsConfig,
 	}
-	cli, _ := clientv3.New(cfg)
+	return NewClientWithConfig(cfg)
+}
 
+func NewClientWithConfig(cfg clientv3.Config) (*Client, error) {
+	client := &Client{}
+
+	cli, err := clientv3.New(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("can't build etcd client: %w", err)
+	}
 	client.client = cli
 	client.Config = &cfg
 	return client, nil
@@ -141,4 +151,41 @@ func (c *Client) Health(ctx context.Context) error {
 
 	return err
 
+}
+
+// Write tries to write a new value with a given key and returns indicator if write operation succeed.
+func (c *Client) Write(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+
+	leaseResp, err := c.client.Lease.Grant(ctx, int64(ttl.Seconds()))
+
+	if err != nil {
+		return false, fmt.Errorf("can't get TTL lease: %w", err)
+	}
+
+	// always use notFound guard because otherwise
+	// library builds PUT request which is not implemented
+	// in the kine
+	txnResp, err := c.client.KV.Txn(ctx).If(
+		notFound(key),
+	).Then(
+		clientv3.OpPut(key, value,
+			clientv3.WithLease(leaseResp.ID),
+		),
+	).Commit()
+	if err != nil {
+		return false, fmt.Errorf("can't write to etcd: %w", err)
+	}
+	return txnResp.Succeeded, nil
+}
+
+func (c *Client) Read(ctx context.Context, key string) (*clientv3.GetResponse, error) {
+	resp, err := c.client.KV.Get(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("can't read from etcd: %w", err)
+	}
+	return resp, nil
+}
+
+func notFound(key string) clientv3.Cmp {
+	return clientv3.Compare(clientv3.ModRevision(key), "=", 0)
 }
