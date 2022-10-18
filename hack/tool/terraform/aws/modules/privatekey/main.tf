@@ -11,5 +11,5 @@ resource "aws_key_pair" "this" {
 resource "local_file" "this" {
   file_permission = 600
   filename        = var.outfile
-  content         = tls_private_key.this.private_key_pem
+  content         = tls_private_key.this.private_key_openssh
 }

@@ -44,6 +44,7 @@ type options struct {
 	K0sAirgapBundle       string
 	K0sAirgapBundleConfig string
 	K0sUpdateBinary       string
+	K0sUpdateVersion      string
 	K0sUpdateAirgapBundle string
 }
 
@@ -74,6 +75,7 @@ func newOptionsFlagSet(f *options) *pflag.FlagSet {
 	fs.StringVar(&f.K0sVersion, "k0s-version", "", "The version of k0s to install")
 	fs.StringVar(&f.K0sAirgapBundle, "k0s-airgap-bundle", "", "The k0s airgap bundle to install with k0s")
 	fs.StringVar(&f.K0sAirgapBundleConfig, "k0s-airgap-bundle-config", "", fmt.Sprintf("A YAML definition in '%s' of all the airgap images + versions", constant.DataDir))
+	fs.StringVar(&f.K0sUpdateVersion, "k0s-update-version", "", "The version of k0s that should be used for a cluster update")
 	fs.StringVar(&f.K0sUpdateBinary, "k0s-update-binary", "", fmt.Sprintf("The k0s binary in '%s' that will be available for software update", constant.DataDir))
 	fs.StringVar(&f.K0sUpdateAirgapBundle, "k0s-update-airgap-bundle", "", fmt.Sprintf("The k0s airgap bundle in '%s' that will be available for software update", constant.DataDir))
 
@@ -109,7 +111,7 @@ func newCommandCreate() *cobra.Command {
 			foundK0sVersion := opts.K0sVersion
 			var err error
 
-			config := provision.ProvisionConfig{
+			provisionConfig := provision.ProvisionConfig{
 				Init: func(ctx context.Context) error {
 					if err := provider.Init(ctx); err != nil {
 						return err
@@ -130,14 +132,15 @@ func newCommandCreate() *cobra.Command {
 					return nil
 				},
 				Create: func(ctx context.Context) error {
-					return provider.ClusterHAVpcCreate(ctx, opts.VpcId, opts.SubnetIdx, opts.ClusterName, opts.K0sBinary, opts.K0sUpdateBinary, foundK0sVersion, opts.K0sAirgapBundle, opts.K0sAirgapBundleConfig, opts.K0sUpdateAirgapBundle, opts.Controllers, opts.Workers, opts.Region)
+					// TODO: struct this, getting out of control
+					return provider.ClusterHAVpcCreate(ctx, opts.VpcId, opts.SubnetIdx, opts.ClusterName, opts.K0sBinary, opts.K0sUpdateBinary, foundK0sVersion, opts.K0sUpdateVersion, opts.K0sAirgapBundle, opts.K0sAirgapBundleConfig, opts.K0sUpdateAirgapBundle, opts.Controllers, opts.Workers, opts.Region)
 				},
 				KubeConfig: func(ctx context.Context) (string, error) {
 					return provider.ClusterHAVpcKubeConfig(ctx)
 				},
 			}
 
-			return provision.Provision(context.Background(), config)
+			return provision.Provision(context.Background(), provisionConfig)
 		},
 	)
 }
@@ -161,7 +164,8 @@ func newCommandDestroy() *cobra.Command {
 					return nil
 				},
 				Destroy: func(ctx context.Context) error {
-					return provider.ClusterHAVpcDestroy(ctx, opts.VpcId, opts.SubnetIdx, opts.ClusterName, opts.K0sBinary, opts.K0sUpdateBinary, opts.K0sVersion, opts.K0sAirgapBundle, opts.K0sAirgapBundleConfig, opts.K0sUpdateAirgapBundle, opts.Controllers, opts.Workers, opts.Region)
+					// TODO: struct this, getting out of control
+					return provider.ClusterHAVpcDestroy(ctx, opts.VpcId, opts.SubnetIdx, opts.ClusterName, opts.K0sBinary, opts.K0sUpdateBinary, opts.K0sVersion, opts.K0sUpdateVersion, opts.K0sAirgapBundle, opts.K0sAirgapBundleConfig, opts.K0sUpdateAirgapBundle, opts.Controllers, opts.Workers, opts.Region)
 				},
 			}
 
