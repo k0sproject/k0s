@@ -55,7 +55,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see calico pods ready")
-	s.NoError(common.WaitForCalicoReady(kc), "calico did not start")
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node"), "calico did not start")
 }
 
 func TestCalicoSuite(t *testing.T) {

@@ -44,7 +44,7 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	err = common.WaitForDeployment(kc, "nginx")
+	err = common.WaitForDeployment(s.Context(), kc, "nginx")
 	s.NoError(err)
 
 	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{

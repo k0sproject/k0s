@@ -154,12 +154,8 @@ spec:
 
 	// The plan should fail with "InconsistentTargets" due to autopilot detecting that `controller2`
 	// despite existing as a `ControlNode`, does not resolve.
-	plan, err := apcomm.WaitForPlanByName(context.TODO(), client, apconst.AutopilotName, 10*time.Minute, func(obj interface{}) bool {
-		if plan, ok := obj.(*apv1beta2.Plan); ok {
-			return plan.Status.State == appc.PlanInconsistentTargets
-		}
-
-		return false
+	plan, err := apcomm.WaitForPlanByName(context.TODO(), client, apconst.AutopilotName, 10*time.Minute, func(plan *apv1beta2.Plan) bool {
+		return plan.Status.State == appc.PlanInconsistentTargets
 	})
 
 	s.NoError(err)
