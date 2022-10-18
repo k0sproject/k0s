@@ -17,9 +17,11 @@ limitations under the License.
 package calico
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
@@ -42,6 +44,16 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
+	calicoDaemonset, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", v1.GetOptions{})
+	s.Require().NoError(err)
+	var calicoCustomEnvVarsFound int
+	for _, v := range calicoDaemonset.Spec.Template.Spec.Containers[0].Env {
+		if v.Name == "TEST_BOOL_VAR" || v.Name == "TEST_INT_VAR" || v.Name == "TEST_STRING_VAR" {
+			calicoCustomEnvVarsFound++
+		}
+	}
+	s.Equal(3, calicoCustomEnvVarsFound, "expecting to see custom calico env vars")
+
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see calico pods ready")
@@ -63,4 +75,8 @@ spec:
   network:
     provider: calico
     calico:
+      envVars:
+        TEST_BOOL_VAR: "true"
+        TEST_INT_VAR: "42"
+        TEST_STRING_VAR: test
 `

@@ -23,6 +23,9 @@ type Calico struct {
 	// Enable wireguard-based encryption (default: false)
 	EnableWireguard bool `json:"wireguard"`
 
+	// Environment variables to configure Calico node (see https://docs.projectcalico.org/reference/node/configuration)
+	EnvVars map[string]string `json:"envVars,omitempty"`
+
 	// The host path for Calicos flex-volume-driver(default: /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)
 	FlexVolumeDriverPath string `json:"flexVolumeDriverPath"`
 
