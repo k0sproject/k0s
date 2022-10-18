@@ -100,6 +100,7 @@ plugins:
         - k0s
         - k0s.exe
         - Makefile*
+        - requirements_pip.txt
         - requirements.txt
 
 markdown_extensions:
