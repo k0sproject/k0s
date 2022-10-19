@@ -49,6 +49,8 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
+	// A function to clean some leftovers before starting or restarting the supervised process
+	CleanBeforeFn func() error
 
 	cmd            *exec.Cmd
 	done           chan bool
@@ -135,18 +137,27 @@ func (s *Supervisor) Supervise() error {
 		restarts := 0
 		for {
 			s.mutex.Lock()
-			s.cmd = exec.Command(s.BinPath, s.Args...)
-			s.cmd.Dir = s.DataDir
-			s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
 
-			// detach from the process group so children don't
-			// get signals sent directly to parent.
-			s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
+			var err error
+			if s.CleanBeforeFn != nil {
+				err = s.CleanBeforeFn()
+			}
+			if err != nil {
+				s.log.Warnf("Failed to clean before running the process %s: %s", s.BinPath, err)
+			} else {
+				s.cmd = exec.Command(s.BinPath, s.Args...)
+				s.cmd.Dir = s.DataDir
+				s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
 
-			s.cmd.Stdout = s.log.Writer()
-			s.cmd.Stderr = s.log.Writer()
+				// detach from the process group so children don't
+				// get signals sent directly to parent.
+				s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
-			err := s.cmd.Start()
+				s.cmd.Stdout = s.log.Writer()
+				s.cmd.Stderr = s.log.Writer()
+
+				err = s.cmd.Start()
+			}
 			s.mutex.Unlock()
 			if err != nil {
 				s.log.Warnf("Failed to start: %s", err)
