@@ -19,14 +19,14 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	aptu "github.com/k0sproject/k0s/internal/autopilot/testutil"
+	"github.com/k0sproject/k0s/internal/testutil"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sync/errgroup"
 )
 
 type fakeLeaseWatcher struct {
@@ -59,7 +59,7 @@ func TestModeSwitch(t *testing.T) {
 	logger := logrus.New().WithField("app", "autopilot-test")
 	clientFactory := aptu.NewFakeClientFactory()
 
-	rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, clientFactory)
+	rootControllerInterface, err := NewRootController(aproot.RootConfig{}, logger, false, testutil.NewFakeClientFactory(), clientFactory)
 	assert.NoError(t, err)
 
 	rootController, ok := rootControllerInterface.(*rootController)

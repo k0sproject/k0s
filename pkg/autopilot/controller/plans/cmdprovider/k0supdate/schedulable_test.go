@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/k0sproject/k0s/internal/testutil"
 	aptcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
@@ -202,6 +203,7 @@ func TestSchedulable(t *testing.T) {
 					"controller": apdel.ControlNodeControllerDelegate(),
 					"worker":     apdel.NodeControllerDelegate(),
 				},
+				testutil.NewFakeClientFactory(),
 				[]string{},
 			)
 
