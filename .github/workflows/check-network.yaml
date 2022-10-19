@@ -96,7 +96,7 @@ jobs:
         id: k0s_build
         run: |
           make build
-          KUBERNETES_VERSION=$(make print-kubernetes_version)
+          KUBERNETES_VERSION="$(./vars.sh kubernetes_version)"
           echo KUBERNETES_VERSION="$KUBERNETES_VERSION" >> $GITHUB_OUTPUT
         working-directory: ./
 
