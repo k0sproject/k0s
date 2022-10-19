@@ -48,6 +48,8 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
+	// A function to clean some leftovers before starting or restarting the supervised process
+	CleanBeforeFn func() error
 
 	cmd            *exec.Cmd
 	done           chan bool
@@ -134,6 +136,13 @@ func (s *Supervisor) Supervise() error {
 		restarts := 0
 		for {
 			s.mutex.Lock()
+
+			if s.CleanBeforeFn != nil {
+				err := s.CleanBeforeFn()
+				if err != nil {
+					s.log.Warnf("Failed to clean before running the process %s: %s", s.BinPath, err)
+				}
+			}
 			s.cmd = exec.Command(s.BinPath, s.Args...)
 			s.cmd.Dir = s.DataDir
 			s.cmd.Env = getEnv(s.DataDir, s.Name, s.KeepEnvPrefix)
