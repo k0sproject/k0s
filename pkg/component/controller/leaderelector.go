@@ -56,7 +56,7 @@ func NewLeasePoolLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface
 	return &LeasePoolLeaderElector{
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
-		log:               logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
+		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
 		leaderStatus:      d,
 	}
 }
