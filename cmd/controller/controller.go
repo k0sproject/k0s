@@ -195,12 +195,16 @@ func (c *command) start(ctx context.Context) error {
 	// common factory to get the admin kube client that's needed in many components
 	adminClientFactory := kubernetes.NewAdminClientFactory(c.K0sVars)
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
+	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
+		(c.NodeConfig.Spec.API.ExternalAddress != "" || c.NodeConfig.Spec.API.TunneledNetworkingMode)
+
 	c.NodeComponents.Add(ctx, &controller.APIServer{
-		ClusterConfig:      c.NodeConfig,
-		K0sVars:            c.K0sVars,
-		LogLevel:           c.Logging["kube-apiserver"],
-		Storage:            storageBackend,
-		EnableKonnectivity: enableKonnectivity,
+		ClusterConfig:             c.NodeConfig,
+		K0sVars:                   c.K0sVars,
+		LogLevel:                  c.Logging["kube-apiserver"],
+		Storage:                   storageBackend,
+		EnableKonnectivity:        enableKonnectivity,
+		DisableEndpointReconciler: disableEndpointReconciler,
 	})
 
 	if !c.SingleNode {
@@ -370,7 +374,7 @@ func (c *command) start(ctx context.Context) error {
 		))
 	}
 
-	if c.NodeConfig.Spec.API.ExternalAddress != "" && !c.NodeConfig.Spec.API.TunneledNetworkingMode {
+	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && c.NodeConfig.Spec.API.ExternalAddress != "" && !c.NodeConfig.Spec.API.TunneledNetworkingMode {
 		c.ClusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			leaderElector,
 			adminClientFactory,
