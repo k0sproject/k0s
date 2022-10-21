@@ -35,7 +35,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./main
-        run: pip install --require-hashes -r docs/requirements.txt
+        run: |
+          pip install --disable-pip-version-check --require-hashes -r docs/requirements_pip.txt
+          pip --version
+          pip install --disable-pip-version-check --require-hashes -r docs/requirements.txt
 
       - name: Checkout k0s ${{ github.event.inputs.version }}
         uses: actions/checkout@v3
