@@ -117,7 +117,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 		// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
-		require.NoError(common.WaitForDaemonSetWithContext(s.Context(), kc, "kube-proxy"))
+		require.NoError(common.WaitForDaemonSet(s.Context(), kc, "kube-proxy"))
 		require.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc))
 		require.NoError(common.WaitForDeploymentWithContext(s.Context(), kc, "coredns"))
 

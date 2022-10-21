@@ -62,7 +62,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 
 	// Test that we get logs, it's a signal that konnectivity tunnels work
 	s.T().Log("waiting to get logs from pods")
-	s.Require().NoError(common.WaitForPodLogs(kc, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
 
 	// Verify API that we get proper controller counter lease
 	_, err = kc.CoordinationV1().Leases("kube-node-lease").Get(s.Context(), "k0s-ctrl-k0s-controller", v1.GetOptions{})

@@ -41,7 +41,7 @@ func (s *MetricsSuite) TestK0sGetsUp() {
 	cfg, err := s.GetKubeConfig(s.ControllerNode(0))
 	s.NoError(err)
 	s.T().Log("waiting to see metrics ready")
-	s.Require().NoError(common.WaitForMetricsReady(cfg))
+	s.Require().NoError(common.WaitForMetricsReady(s.Context(), cfg))
 }
 
 func TestMetricsSuite(t *testing.T) {

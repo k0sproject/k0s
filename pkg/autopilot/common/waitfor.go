@@ -20,68 +20,53 @@ import (
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type WaitForCondition func(obj interface{}) bool
 
 // WaitForPlanByName waits for the existence of a Plan having a specific name.
 // On timeout, an error is returned.
-func WaitForPlanByName(ctx context.Context, client apclient.Interface, name string, timeout time.Duration, conds ...WaitForCondition) (*apv1beta2.Plan, error) {
-	obj, err := WaitForByName(
-		ctx,
-		func(name string) (interface{}, error) {
-			return client.AutopilotV1beta2().Plans().Get(ctx, name, v1.GetOptions{})
-		},
-		name,
-		timeout,
-		conds...,
-	)
-
-	return obj.(*apv1beta2.Plan), err
+func WaitForPlanByName(ctx context.Context, client apclient.Interface, name string, timeout time.Duration, conds ...func(obj *apv1beta2.Plan) bool) (*apv1beta2.Plan, error) {
+	return WaitForByName[*apv1beta2.PlanList](ctx, client.AutopilotV1beta2().Plans(), name, timeout, conds...)
 }
+
+// Some shortcuts for very long type names.
+type (
+	CRD     = extensionsv1.CustomResourceDefinition
+	CRDList = extensionsv1.CustomResourceDefinitionList
+)
 
 // WaitForCRDByName waits for the existence of a CRD having a specific name.
 // On timeout, an error is returned.
-func WaitForCRDByName(ctx context.Context, client extclient.ApiextensionsV1Interface, name string, timeout time.Duration, conds ...WaitForCondition) (*extensionsv1.CustomResourceDefinition, error) {
-	obj, err := WaitForByName(
-		ctx,
-		func(name string) (interface{}, error) {
-			return client.CustomResourceDefinitions().Get(ctx, name, v1.GetOptions{})
-		},
-		name,
-		timeout,
-		conds...,
-	)
-
-	return obj.(*extensionsv1.CustomResourceDefinition), err
+func WaitForCRDByName(ctx context.Context, client extensionsclient.ApiextensionsV1Interface, name string, timeout time.Duration, conds ...func(*CRD) bool) (*CRD, error) {
+	return WaitForByName[*CRDList](ctx, client.CustomResourceDefinitions(), name, timeout, conds...)
 }
-
-type Getter func(name string) (interface{}, error)
 
 // WaitForName provides a generic way to wait for something with a given name, allowing
 // user-specified conditionals.
-func WaitForByName(ctx context.Context, getter Getter, name string, timeout time.Duration, conds ...WaitForCondition) (interface{}, error) {
-	var obj interface{}
-	return obj, wait.PollImmediate(500*time.Millisecond, timeout, func() (done bool, err error) {
-		obj, err = getter(name)
-		if err != nil {
-			return false, nil
-		}
+func WaitForByName[L metav1.ListInterface, I any](ctx context.Context, client watch.Provider[L], name string, timeout time.Duration, conds ...func(*I) bool) (*I, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
-		if len(conds) > 0 {
+	var match *I
+	err := watch.FromClient[L, I](client).
+		WithObjectName(name).
+		Until(ctx, func(item *I) (bool, error) {
 			// If any of the conditions fail, indicate that the poll should continue
 			for _, cond := range conds {
-				if !cond(obj) {
+				if !cond(item) {
 					return false, nil
 				}
 			}
-		}
 
-		return true, nil
-	})
+			match = item
+			return true, nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	return match, nil
 }
