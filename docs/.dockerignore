@@ -1,3 +1,4 @@
 .*
 *
+!requirements_pip.txt
 !requirements.txt

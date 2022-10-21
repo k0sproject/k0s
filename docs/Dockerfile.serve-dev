@@ -6,14 +6,16 @@ FROM python:${PYTHON_IMAGE_VERSION} as builder
 ENV PYTHONUNBUFFERED 1
 RUN \
   apk add --no-cache python3 \
-  && python3 -m venv --upgrade-deps /mkdocs/venv
+  && python3 -m venv /mkdocs/venv
 
 # Copy requirements.txt
-COPY ./requirements.txt /mkdocs/requirements.txt
+COPY ./requirements_pip.txt ./requirements.txt /mkdocs/
 
 # Install python dependencies
 ENV VIRTUAL_ENV=/deps/venv PATH=/mkdocs/venv/bin:$PATH
-RUN pip install --require-hashes -r /mkdocs/requirements.txt
+RUN pip install --disable-pip-version-check --require-hashes -r /mkdocs/requirements_pip.txt \
+  && pip --version \
+  && pip install --disable-pip-version-check --require-hashes -r /mkdocs/requirements.txt
 
 WORKDIR /k0s
 
