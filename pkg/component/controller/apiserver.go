@@ -40,14 +40,15 @@ import (
 
 // APIServer implement the component interface to run kube api
 type APIServer struct {
-	ClusterConfig      *v1beta1.ClusterConfig
-	K0sVars            constant.CfgVars
-	LogLevel           string
-	Storage            component.Component
-	EnableKonnectivity bool
-	gid                int
-	supervisor         supervisor.Supervisor
-	uid                int
+	ClusterConfig             *v1beta1.ClusterConfig
+	K0sVars                   constant.CfgVars
+	LogLevel                  string
+	Storage                   component.Component
+	EnableKonnectivity        bool
+	DisableEndpointReconciler bool
+	gid                       int
+	supervisor                supervisor.Supervisor
+	uid                       int
 }
 
 var apiDefaultArgs = map[string]string{
@@ -145,7 +146,7 @@ func (a *APIServer) Run(_ context.Context) error {
 			args[name] = value
 		}
 	}
-	if a.ClusterConfig.Spec.API.ExternalAddress != "" || a.ClusterConfig.Spec.API.TunneledNetworkingMode {
+	if a.DisableEndpointReconciler {
 		args["endpoint-reconciler-type"] = "none"
 	}
 
