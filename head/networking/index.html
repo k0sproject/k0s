@@ -710,6 +710,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#iptables" class="md-nav__link">
+    iptables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firewalld-k0s" class="md-nav__link">
+    Firewalld &amp; k0s
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1425,6 +1439,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#iptables" class="md-nav__link">
+    iptables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firewalld-k0s" class="md-nav__link">
+    Firewalld &amp; k0s
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1533,6 +1561,31 @@
 </tr>
 </tbody>
 </table>
+<h2 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h2>
+<p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s autodetects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The <code>iptables</code> link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
+<strong>kube-proxy</strong>: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code>
+<strong>kube-router</strong>: <code>nsenter -t $(pidof kube-router) -m /sbin/iptables -V</code>
+<strong>calico</strong>: <code>nsenter -t $(pidof -s calico-node) -m iptables -V</code></p>
+<p>There are <a href="https://bugzilla.netfilter.org/show_bug.cgi?id=1632">known</a> version incompatibility issues in iptables versions. k0s ships (in <code>/var/lib/k0s/bin</code>) a version of iptables that is tested to interoperate with all other Kubernetes components it ships with. However if you have other tooling (firewalls etc.) on your hosts that uses iptables and the host iptables version is different that k0s (and other k8s components) ships with it may cause networking issues. This is based on the fact that iptables being user-space tooling it does not provide any strong version compatibility guarantees.</p>
+<h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
+<p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
+<p>Here's an example configuration for a tested working networking setup:</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>root@rhel-test ~<span class="o">]</span><span class="c1"># firewall-cmd --list-all</span>
+public <span class="o">(</span>active<span class="o">)</span>
+  target: default
+  icmp-block-inversion: no
+  interfaces: eth0
+  sources: <span class="m">10</span>.244.0.0/16 <span class="m">10</span>.96.0.0/12
+  services: cockpit dhcpv6-client ssh
+  ports: <span class="m">80</span>/tcp <span class="m">6443</span>/tcp <span class="m">8132</span>/tcp <span class="m">10250</span>/tcp <span class="m">179</span>/tcp <span class="m">179</span>/udp
+  protocols: 
+  forward: no
+  masquerade: yes
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules:
+</code></pre></div>
 
 
 
