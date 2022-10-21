@@ -176,6 +176,7 @@ func AvailableComponents() []string {
 		constant.MetricsServerComponentName,
 		constant.KubeletConfigComponentName,
 		constant.SystemRbacComponentName,
+		constant.APIEndpointReconcilerComponentName,
 	}
 }
 

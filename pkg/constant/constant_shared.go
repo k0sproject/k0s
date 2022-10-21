@@ -98,6 +98,7 @@ const (
 
 	// Controller component names
 	APIConfigComponentName             = "api-config"
+	APIEndpointReconcilerComponentName = "endpoint-reconciler"
 	ControlAPIComponentName            = "control-api"
 	CoreDNSComponentname               = "coredns"
 	CsrApproverComponentName           = "csr-approver"
