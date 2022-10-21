@@ -75,12 +75,8 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanByName(context.TODO(), client, apconst.AutopilotName, 5*time.Minute, func(obj interface{}) bool {
-		if plan, ok := obj.(*apv1beta2.Plan); ok {
-			return plan.Status.State == appc.PlanWarning
-		}
-
-		return false
+	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, 5*time.Minute, func(plan *apv1beta2.Plan) bool {
+		return plan.Status.State == appc.PlanWarning
 	})
 
 	s.NoError(err)
