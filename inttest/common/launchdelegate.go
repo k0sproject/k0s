@@ -19,8 +19,12 @@ package common
 import (
 	"context"
 	"fmt"
+	"io"
 	"runtime"
 	"strings"
+	"sync"
+
+	"go.uber.org/multierr"
 )
 
 type LaunchMode string
@@ -36,6 +40,7 @@ type launchDelegate interface {
 	InitController(ctx context.Context, conn *SSHConnection, k0sArgs ...string) error
 	StopController(ctx context.Context, conn *SSHConnection) error
 	InitWorker(ctx context.Context, conn *SSHConnection, token string, k0sArgs ...string) error
+	ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, err io.Writer) error
 }
 
 // standaloneLaunchDelegate is a launchDelegate that starts controllers and
@@ -88,6 +93,10 @@ func (s *standaloneLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConn
 	}
 
 	return nil
+}
+
+func (s *standaloneLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, _ io.Writer) error {
+	return conn.Exec(ctx, "cat /tmp/k0s-*.log", SSHStreams{Out: out})
 }
 
 // OpenRCLaunchDelegate is a launchDelegate that starts controllers and workers
@@ -149,6 +158,27 @@ func (o *openRCLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConnecti
 	}
 
 	return nil
+}
+
+func (*openRCLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, err io.Writer) error {
+	var wg sync.WaitGroup
+	var outErr, errErr error
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		outErr = conn.Exec(ctx, "cat /var/log/k0s.log", SSHStreams{Out: out})
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		errErr = conn.Exec(ctx, "cat /var/log/k0s.err", SSHStreams{Out: err})
+	}()
+
+	wg.Wait()
+
+	return multierr.Append(outErr, errErr)
 }
 
 // installK0sServiceOpenRC will install an OpenRC k0s-type service (controller/worker)

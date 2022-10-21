@@ -17,7 +17,6 @@ limitations under the License.
 package common
 
 import (
-	"archive/zip"
 	"bufio"
 	"bytes"
 	"context"
@@ -25,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -32,6 +32,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,6 +61,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/weaveworks/footloose/pkg/cluster"
 	"github.com/weaveworks/footloose/pkg/config"
+	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -111,6 +113,8 @@ type FootlooseSuite struct {
 	clusterConfig  config.Config
 	cluster        *cluster.Cluster
 	launchDelegate launchDelegate
+
+	dataDirOpt string // Data directory option of first controller, required to fetch the cluster state
 }
 
 type suiteCtx struct {
@@ -306,90 +310,148 @@ func (s *FootlooseSuite) TearDownSuite() {
 // Intended to be called after the suite's context has been canceled.
 func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 	ctx := s.Context()
+	var wg sync.WaitGroup
+
+	tmpDir := os.TempDir()
+
+	if t.Failed() && s.ControllerCount > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.dumpClusterState(t, ctx, filepath.Join(tmpDir, "cluster-state.tar"))
+		}()
+	}
 
 	machines, err := s.InspectMachines(nil)
 	if err != nil {
-		t.Log("failed to inspect machines")
-	}
-	if t.Failed() && s.ControllerCount > 0 {
-		ssh, err := s.SSH(s.ControllerNode(0))
-		if err != nil {
-			t.Logf("failed to ssh to node %s to get logs", s.ControllerNode(0))
-		}
-		_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("%s kc cluster-info dump -A --output-directory /tmp/cluster-state", s.K0sFullPath))
-		if err != nil {
-			t.Logf("failed to dump cluster state on machine %s: %s", s.ControllerNode(0), err)
-		}
-		fileList, err := ssh.ExecWithOutput(ctx, `find /tmp/cluster-state -name "*" -type f`)
-		if err != nil {
-			t.Logf("failed to list cluster state files on machine %s: %s", s.ControllerNode(0), err)
-		}
-
-		zipArchive, _ := os.Create("/tmp/cluster-state.zip")
-		defer func() {
-			_ = zipArchive.Close()
-		}()
-		writer := zip.NewWriter(zipArchive)
-
-		scanner := bufio.NewScanner(strings.NewReader(fileList))
-		for scanner.Scan() {
-			filePath := scanner.Text()
-			log, err := ssh.ExecWithOutput(ctx, fmt.Sprintf("cat %s", filePath))
-			if err != nil {
-				t.Logf("failed to cat file %s on machine %s: %s", filePath, s.ControllerNode(0), err)
-			} else {
-				w, err := writer.Create(strings.TrimPrefix(filePath, "/tmp/cluster-state"))
-				if err != nil {
-					t.Logf("failed to create file %s in the archive: %s", filePath, err)
-				}
-				if _, err = w.Write([]byte(log)); err != nil {
-					t.Logf("failed to write file %s to the archive: %s", filePath, err)
-				}
-			}
-		}
-		_ = writer.Close()
-		ssh.Disconnect()
+		t.Logf("Failed to inspect machines: %s", err.Error())
+		machines = nil
 	}
 
 	for _, m := range machines {
-		if strings.HasPrefix(m.Hostname(), "lb") {
+		node := m.Hostname()
+		if strings.HasPrefix(node, "lb") {
 			continue
 		}
-		ssh, err := s.SSH(m.Hostname())
-		if err != nil {
-			t.Logf("failed to ssh to node %s to get logs", m.Hostname())
-			continue
-		}
-		logPathInContainer := ""
-		switch s.LaunchMode {
-		case LaunchModeOpenRC:
-			logPathInContainer = "/var/log/k0s.log"
-		case LaunchModeStandalone:
-			logPathInContainer = "/tmp/k0s-*.log"
-		default:
-			t.Logf(`unknown launchmode %s, dunno how to collect logs ¯\_(ツ)_/¯`, s.LaunchMode)
-		}
 
-		log, err := ssh.ExecWithOutput(ctx, fmt.Sprintf("cat %s", logPathInContainer))
-		if err != nil {
-			t.Logf("failed to cat logs on machine %s: %s", m.Hostname(), err)
-		}
-		logPath := path.Join("/tmp", fmt.Sprintf("%s.log", m.Hostname()))
-		if err := os.WriteFile(logPath, []byte(log), 0700); err != nil {
-			t.Logf("failed to save logs from machine %s: %s", m.Hostname(), err)
-		}
-
-		t.Logf("wrote log of node %s to %s", m.Hostname(), logPath)
-		ssh.Disconnect()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.dumpNodeLogs(t, ctx, node, tmpDir)
+		}()
 	}
+
+	wg.Wait()
 
 	if keepEnvironment(t) {
 		t.Logf("footloose cluster left intact for debugging; needs to be manually cleaned up with: footloose delete --config %s", path.Join(s.clusterDir, "footloose.yaml"))
-	} else {
-		if err := s.cluster.Delete(); err != nil {
-			t.Logf("failed to delete footloose cluster: %v", err)
+		return
+	}
+
+	if err := s.cluster.Delete(); err != nil {
+		t.Logf("Failed to delete footloose cluster: %s", err.Error())
+	}
+
+	cleanupClusterDir(t, s.clusterDir)
+}
+
+func (s *FootlooseSuite) dumpClusterState(t *testing.T, ctx context.Context, filePath string) {
+	node := s.ControllerNode(0)
+
+	ssh, err := s.SSH(node)
+	if err != nil {
+		t.Logf("Failed to ssh into node %s to dump cluster state: %s", node, err.Error())
+		return
+	}
+	defer ssh.Disconnect()
+
+	var cmdBuf strings.Builder
+	cmdBuf.WriteString(s.K0sFullPath)
+	if s.dataDirOpt != "" {
+		cmdBuf.WriteRune(' ')
+		cmdBuf.WriteString(s.dataDirOpt)
+	}
+	cmdBuf.WriteString(` kc cluster-info dump -A --output-directory="${TMPDIR-/tmp}"/cluster-state`)
+	cmd := cmdBuf.String()
+
+	if err := ssh.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		t.Logf("Failed to dump cluster state on node %s: %s", node, err.Error())
+		return
+	}
+
+	err = file.WriteAtomically(filePath, 0644, func(unbuffered io.Writer) error {
+		w := bufio.NewWriter(unbuffered)
+		err := ssh.Exec(ctx, `tar c -C "${TMPDIR-/tmp}" cluster-state`, SSHStreams{Out: w})
+		if err != nil {
+			return err
 		}
-		cleanupClusterDir(t, s.clusterDir)
+		return w.Flush()
+	})
+	if err != nil {
+		t.Logf("Failed to dump cluster state into %s: %s", filePath, err.Error())
+		return
+	}
+
+	t.Logf("Dumped cluster state into %s", filePath)
+}
+
+func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, dir string) {
+	ssh, err := s.SSH(node)
+	if err != nil {
+		t.Logf("Failed to ssh into node %s to get logs: %s", node, err.Error())
+		return
+	}
+	defer ssh.Disconnect()
+
+	outPath := filepath.Join(dir, fmt.Sprintf("%s.out.log", node))
+	errPath := filepath.Join(dir, fmt.Sprintf("%s.err.log", node))
+
+	err = func() (err error) {
+		type log struct {
+			path   string
+			writer io.Writer
+		}
+
+		outLog, errLog := log{path: outPath}, log{path: errPath}
+		for _, log := range []*log{&outLog, &errLog} {
+			file, err := os.Create(log.path)
+			if err != nil {
+				t.Logf("Failed to create log file: %s", err.Error())
+				continue
+			}
+
+			defer multierr.AppendInvoke(&err, multierr.Close(file))
+			buf := bufio.NewWriter(file)
+			defer func() {
+				if err == nil {
+					err = buf.Flush()
+				}
+			}()
+			log.writer = buf
+		}
+
+		return s.launchDelegate.ReadK0sLogs(ctx, ssh, outLog.writer, errLog.writer)
+	}()
+	if err != nil {
+		t.Logf("Failed to save k0s logs from node %s: %s", node, err.Error())
+	}
+
+	nonEmptyPaths := make([]string, 0, 2)
+	for _, path := range []string{outPath, errPath} {
+		stat, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+		if stat.Size() == 0 {
+			_ = os.Remove(path)
+			continue
+		}
+
+		nonEmptyPaths = append(nonEmptyPaths, path)
+	}
+
+	if len(nonEmptyPaths) > 0 {
+		t.Logf("Saved k0s logs of node %s to %s", node, strings.Join(nonEmptyPaths, " and "))
 	}
 }
 
@@ -547,7 +609,12 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 		return err
 	}
 
-	return s.WaitForKubeAPI(controllerNode, getDataDirOpt(k0sArgs))
+	dataDirOpt := getDataDirOpt(k0sArgs)
+	if idx == 0 {
+		s.dataDirOpt = dataDirOpt
+	}
+
+	return s.WaitForKubeAPI(controllerNode, dataDirOpt)
 }
 
 // GetJoinToken generates join token for the asked role

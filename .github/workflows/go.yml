@@ -236,7 +236,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: smoketest-${{ matrix.smoke-suite }}-cluster-state
-          path: /tmp/cluster-state.zip
+          path: /tmp/cluster-state.tar
 
   autopilot-smoketest-matrix:
     name: Release matrix
@@ -318,7 +318,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-cluster-state
-          path: /tmp/cluster-state.zip
+          path: /tmp/cluster-state.tar
 
   smoketest-arm:
     name: Smoke test on armv7/arm64
@@ -457,7 +457,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: smoketest-${{ matrix.arch }}-smoke-cluster-state
-          path: /tmp/cluster-state.zip
+          path: /tmp/cluster-state.tar
 
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752
       # Golang mod cache tends to set directories to read-only, which breaks any
