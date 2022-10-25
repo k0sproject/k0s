@@ -9,8 +9,6 @@ ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 ADD docker-entrypoint.sh /entrypoint.sh
 ADD ./k0s-${TARGETARCH}/k0s /usr/local/bin/k0s
 
-RUN chmod +x /usr/local/bin/k0s
-
 ENTRYPOINT ["/sbin/tini", "--", "/bin/sh", "/entrypoint.sh" ]
 
 CMD ["k0s", "controller", "--enable-worker"]
