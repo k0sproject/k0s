@@ -17,13 +17,11 @@ limitations under the License.
 package calico
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CalicoSuite struct {
@@ -44,15 +42,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
-		Limit: 100,
-	})
-	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node"), "calico did not start")

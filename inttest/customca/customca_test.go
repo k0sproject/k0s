@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CustomCASuite struct {
@@ -64,15 +63,7 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
-		Limit: 100,
-	})
-	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+	s.AssertSomeKubeSystemPods(kc)
 
 	newCert, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("cat /var/lib/k0s/pki/ca.crt"))
 	s.NoError(err)

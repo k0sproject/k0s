@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CliSuite struct {
@@ -106,15 +105,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 		assert.NoError(err)
 
-		pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
-			Limit: 100,
-		})
-		assert.NoError(err)
-
-		podCount := len(pods.Items)
-
-		s.T().Logf("found %d pods in kube-system", podCount)
-		s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+		s.AssertSomeKubeSystemPods(kc)
 
 		// Wait till we see all pods running, otherwise we get into weird timing issues and high probability of leaked containerd shim processes
 		require.NoError(common.WaitForDaemonSet(s.Context(), kc, "kube-proxy"))

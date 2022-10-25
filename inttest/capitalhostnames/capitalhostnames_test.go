@@ -47,15 +47,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("k0s-worker", kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
-		Limit: 100,
-	})
-	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
