@@ -53,14 +53,8 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.NoError(err)
 	as.waitForTestRelease(addonName, "0.4.0", 1)
 	as.waitForTestRelease(ociAddonName, "0.6.0", 1)
-	pods, err := kc.CoreV1().Pods("kube-system").List(as.Context(), v1.ListOptions{
-		Limit: 100,
-	})
-	as.NoError(err)
 
-	podCount := len(pods.Items)
-	as.T().Logf("found %d pods in kube-system", podCount)
-	as.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+	as.AssertSomeKubeSystemPods(kc)
 
 	values := map[string]interface{}{
 		"replicaCount": 2,

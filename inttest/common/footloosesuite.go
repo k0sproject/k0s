@@ -49,6 +49,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -1383,4 +1384,15 @@ func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
 	ipAddress, err := ssh.ExecWithOutput(s.Context(), "hostname -i")
 	s.Require().NoError(err)
 	return ipAddress
+}
+
+func (s *FootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
+	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
+		Limit: 100,
+	}); s.NoError(err) {
+		s.T().Logf("Found %d pods in kube-system", len(pods.Items))
+		return s.NotEmpty(pods.Items, "Expected to see some pods in kube-system namespace")
+	}
+
+	return false
 }

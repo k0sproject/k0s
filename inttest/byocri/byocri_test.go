@@ -17,7 +17,6 @@ limitations under the License.
 package byocri
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/weaveworks/footloose/pkg/config"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type BYOCRISuite struct {
@@ -44,15 +42,7 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
-		Limit: 100,
-	})
-	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
+	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
 	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")

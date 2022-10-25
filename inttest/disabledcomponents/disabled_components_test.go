@@ -17,7 +17,6 @@ limitations under the License.
 package disabledcomponents
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -38,15 +37,11 @@ func (s *DisabledComponentsSuite) TestK0sGetsUp() {
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
+	if pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
 		Limit: 100,
-	})
-	s.NoError(err)
-
-	podCount := len(pods.Items)
-
-	s.T().Logf("found %d pods in kube-system", podCount)
-	s.Equal(podCount, 0, "expecting to see few pods in kube-system namespace")
+	}); s.NoError(err) {
+		s.Empty(pods.Items, "Expected to see no pods in kube-system namespace")
+	}
 
 	ssh, err := s.SSH(s.ControllerNode(0))
 	s.NoError(err)
