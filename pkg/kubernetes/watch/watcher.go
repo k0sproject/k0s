@@ -198,6 +198,23 @@ func (w *Watcher[T]) run(ctx context.Context, listCallback func([]T) (bool, erro
 			return err
 		}
 		if ok, err := listCallback(items); err != nil {
+			// Check if the err is a "proper" API server error
+			if status, ok := err.(apierrors.APIStatus); ok || errors.As(err, &status) {
+				status := status.Status()
+				// If this is a server error and the server specified some
+				// retry-after hint, don't suppress any retries. This matches
+				// e.g. the API server's "not found handler" which has a message
+				// of "the request has been made before all known HTTP paths
+				// have been installed, please try again".
+				if status.Code >= 500 && status.Code <= 599 {
+					details := status.Details
+					if details != nil {
+						if details.RetryAfterSeconds > 0 {
+							return err
+						}
+					}
+				}
+			}
 			return noRetry{err}
 		} else if ok {
 			return nil
