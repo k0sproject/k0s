@@ -71,7 +71,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
 	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))

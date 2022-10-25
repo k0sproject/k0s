@@ -45,7 +45,7 @@ func (s *BYOCRISuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 }
 
 func (s *BYOCRISuite) runDockerWorker() error {

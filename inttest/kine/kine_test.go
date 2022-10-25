@@ -48,7 +48,7 @@ func (s *KineSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "CNI did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 
 	s.T().Run("verify", func(t *testing.T) {
 		ssh, err := s.SSH(s.ControllerNode(0))

@@ -46,7 +46,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "CNI did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 
 	s.T().Run("check custom domain existence in pod", func(t *testing.T) {
 		// All done via SSH as it's much simpler :)

@@ -85,7 +85,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.Require().NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.Require().NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	s.Require().NoError(s.backupFunc())
 

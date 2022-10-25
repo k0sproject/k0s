@@ -49,7 +49,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	s.NoError(err)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	s.T().Log("waiting to see hairpin pod ready")
 	err = common.WaitForPod(s.Context(), kc, "hairpin-pod", "default")

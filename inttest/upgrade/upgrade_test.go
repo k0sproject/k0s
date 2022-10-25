@@ -116,7 +116,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	// Prev version gets up, let's upgrade everything
 	// Upgrade is just swapping the bin and restarting
