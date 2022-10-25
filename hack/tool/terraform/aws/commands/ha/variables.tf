@@ -58,3 +58,9 @@ variable "k0s_update_airgap_bundle" {
   type        = string
   default     = ""
 }
+
+variable "k0s_update_version" {
+  description = "The version of k0s that should be used for a cluster update"
+  type        = string
+  default     = ""
+}
