@@ -58,7 +58,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReadyWithContext(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	// Test that we get logs, it's a signal that konnectivity tunnels work
 	s.T().Log("waiting to get logs from pods")

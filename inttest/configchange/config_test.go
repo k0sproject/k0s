@@ -63,7 +63,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	// Cluster is up-and-running, we can now start testing the config changes
 

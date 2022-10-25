@@ -53,7 +53,7 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 }
 

@@ -130,7 +130,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 	ds.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	ds.T().Log("waiting to see CNI pods ready")
-	ds.Require().NoError(common.WaitForKubeRouterReady(kc), "calico did not start")
+	ds.Require().NoError(common.WaitForKubeRouterReady(ds.Context(), kc), "calico did not start")
 	ds.T().Log("waiting to see konnectivity-agent pods ready")
 	ds.Require().NoError(common.WaitForDaemonSet(ds.Context(), kc, "konnectivity-agent"), "konnectivity-agent did not start")
 

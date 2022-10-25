@@ -45,20 +45,9 @@ func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, condition)
 }
 
-func fallbackContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.TODO(), 5*time.Minute)
-}
-
-// WaitForKubeRouterReady waits to see all kube-router pods healthy.
-func WaitForKubeRouterReady(kc *kubernetes.Clientset) error {
-	ctx, cancel := fallbackContext()
-	defer cancel()
-	return WaitForKubeRouterReadyWithContext(ctx, kc)
-}
-
 // WaitForKubeRouterReady waits to see all kube-router pods healthy as long as
 // the context isn't canceled.
-func WaitForKubeRouterReadyWithContext(ctx context.Context, kc *kubernetes.Clientset) error {
+func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error {
 	return WaitForDaemonSet(ctx, kc, "kube-router")
 }
 

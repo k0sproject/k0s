@@ -64,7 +64,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
 	s.T().Log("waiting to see CNI pods ready")
-	s.NoError(common.WaitForKubeRouterReady(kc), "CNI did not start")
+	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 }
 
 func TestMultiControllerSuite(t *testing.T) {
