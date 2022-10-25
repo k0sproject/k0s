@@ -18,7 +18,6 @@ package worker
 
 import (
 	"fmt"
-	"os"
 	"path"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -50,12 +49,12 @@ func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) 
 		if err := dir.Init(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 			return fmt.Errorf("failed to initialize directory '%s': %w", k0sVars.CertRootDir, err)
 		}
-		err = os.WriteFile(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
+		err = file.WriteContentAtomically(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
 			return fmt.Errorf("failed to write ca client cert: %w", err)
 		}
 	}
-	err = os.WriteFile(k0sVars.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
+	err = file.WriteContentAtomically(k0sVars.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
 	if err != nil {
 		return fmt.Errorf("failed writing kubelet bootstrap auth config: %w", err)
 	}

@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
@@ -228,7 +229,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 			logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
 			return err
 		}
-		err = os.WriteFile(kubeletConfigPath, []byte(kubeletconfig), 0644)
+		err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write kubelet config: %w", err)
 		}

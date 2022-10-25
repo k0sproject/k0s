@@ -19,14 +19,13 @@ package worker
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
-	dirutil "github.com/k0sproject/k0s/internal/pkg/dir"
-	fileutil "github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -92,14 +91,14 @@ func (c *ContainerD) Start(_ context.Context) error {
 
 func (c *ContainerD) setupConfig() error {
 	// If the config file exists, use it as-is
-	if fileutil.Exists(confPath) {
+	if file.Exists(confPath) {
 		return nil
 	}
 
-	if err := dirutil.Init(filepath.Dir(confPath), 0755); err != nil {
+	if err := dir.Init(filepath.Dir(confPath), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(confPath, []byte(confTmpl), 0644)
+	return file.WriteContentAtomically(confPath, []byte(confTmpl), 0644)
 }
 
 // Stop stops containerD

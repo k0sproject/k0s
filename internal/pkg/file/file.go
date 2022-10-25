@@ -55,8 +55,14 @@ func Chown(file, owner string, permissions os.FileMode) error {
 }
 
 // Copy copies file from src to dst
-func Copy(src, dst string) error {
-	sourceFileStat, err := os.Stat(src)
+func Copy(src, dst string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer multierr.AppendInvoke(&err, multierr.Close(in))
+
+	sourceFileStat, err := in.Stat()
 	if err != nil {
 		return err
 	}
@@ -65,16 +71,10 @@ func Copy(src, dst string) error {
 		return fmt.Errorf("%s is not a regular file", src)
 	}
 
-	input, err := os.ReadFile(src)
-	if err != nil {
-		return fmt.Errorf("error reading source file (%v): %v", src, err)
-	}
-
-	err = os.WriteFile(dst, input, sourceFileStat.Mode())
-	if err != nil {
-		return fmt.Errorf("error writing destination file (%v): %v", dst, err)
-	}
-	return nil
+	return WriteAtomically(dst, sourceFileStat.Mode(), func(out io.Writer) error {
+		_, err = io.Copy(out, in)
+		return err
+	})
 }
 
 // WriteAtomically will atomically create or replace a file. The contents of the

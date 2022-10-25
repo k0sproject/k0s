@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -35,6 +34,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
@@ -177,7 +177,7 @@ func (k *KubeletConfig) save(data []byte) error {
 	}
 
 	filePath := filepath.Join(kubeletDir, "kubelet-config.yaml")
-	if err := os.WriteFile(filePath, data, constant.CertMode); err != nil {
+	if err := file.WriteContentAtomically(filePath, data, constant.CertMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
 	return nil

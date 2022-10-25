@@ -18,44 +18,22 @@ package controller
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
-	"text/template"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/constant"
-)
 
-var kubeconfigTemplate = template.Must(template.New("kubeconfig").Parse(`
-apiVersion: v1
-clusters:
-- cluster:
-    server: {{.URL}}
-    certificate-authority-data: {{.CACert}}
-  name: local
-contexts:
-- context:
-    cluster: local
-    namespace: default
-    user: user
-  name: Default
-current-context: Default
-kind: Config
-preferences: {}
-users:
-- name: user
-  user:
-    client-certificate-data: {{.ClientCert}}
-    client-key-data: {{.ClientKey}}
-`))
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
+)
 
 // Certificates is the Component implementation to manage all k0s certs
 type Certificates struct {
@@ -264,27 +242,35 @@ func detectLocalIPs() ([]string, error) {
 
 func kubeConfig(dest, url, caCert, clientCert, clientKey, owner string) error {
 	// We always overwrite the kubeconfigs as the certs might be regenerated at startup
-	data := struct {
-		URL        string
-		CACert     string
-		ClientCert string
-		ClientKey  string
-	}{
-		URL:        url,
-		CACert:     base64.StdEncoding.EncodeToString([]byte(caCert)),
-		ClientCert: base64.StdEncoding.EncodeToString([]byte(clientCert)),
-		ClientKey:  base64.StdEncoding.EncodeToString([]byte(clientKey)),
-	}
+	const (
+		clusterName = "local"
+		contextName = "Default"
+		userName    = "user"
+	)
 
-	output, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, constant.CertSecureMode)
+	kubeconfig, err := clientcmd.Write(clientcmdapi.Config{
+		Clusters: map[string]*clientcmdapi.Cluster{clusterName: {
+			Server:                   url,
+			CertificateAuthorityData: []byte(caCert),
+		}},
+		Contexts: map[string]*clientcmdapi.Context{contextName: {
+			Cluster:  clusterName,
+			AuthInfo: userName,
+		}},
+		CurrentContext: contextName,
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{userName: {
+			ClientCertificateData: []byte(clientCert),
+			ClientKeyData:         []byte(clientKey),
+		}},
+	})
 	if err != nil {
 		return err
 	}
-	defer output.Close()
 
-	if err = kubeconfigTemplate.Execute(output, &data); err != nil {
+	err = file.WriteContentAtomically(dest, kubeconfig, constant.CertSecureMode)
+	if err != nil {
 		return err
 	}
 
-	return file.Chown(output.Name(), owner, constant.CertSecureMode)
+	return file.Chown(dest, owner, constant.CertSecureMode)
 }

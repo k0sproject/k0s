@@ -219,9 +219,10 @@ func GetCmdOpts() CLIOptions {
 
 	// When CfgFile is set, verify the file can be opened
 	if CfgFile != "" {
-		_, err := os.Open(CfgFile)
-		if err != nil {
-			logrus.Fatalf("failed to load config file (%s): %v", CfgFile, err)
+		if fd, err := os.Open(CfgFile); err != nil {
+			logrus.WithError(err).Fatalf("Cannot access config file (%s)", CfgFile)
+		} else {
+			_ = fd.Close()
 		}
 	}
 

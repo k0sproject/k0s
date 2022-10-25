@@ -585,7 +585,7 @@ func writeCerts(caData v1beta1.CaResponse, certRootDir string) error {
 		{path: filepath.Join(certRootDir, "sa.key"), data: caData.SAKey, mode: constant.CertSecureMode},
 		{path: filepath.Join(certRootDir, "sa.pub"), data: caData.SAPub, mode: constant.CertMode},
 	} {
-		err := os.WriteFile(f.path, f.data, f.mode)
+		err := file.WriteContentAtomically(f.path, f.data, f.mode)
 		if err != nil {
 			return fmt.Errorf("failed to write %s: %w", f.path, err)
 		}

@@ -112,12 +112,12 @@ func (e *Etcd) syncEtcdConfig(peerURL, etcdCaCert, etcdCaCertKey string) ([]stri
 	if file.Exists(etcdCaCert) && file.Exists(etcdCaCertKey) {
 		logrus.Warnf("etcd ca certs already exists, not gonna overwrite. If you wish to re-sync them, delete the existing ones.")
 	} else {
-		err = os.WriteFile(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
+		err = file.WriteContentAtomically(etcdCaCertKey, etcdResponse.CA.Key, constant.CertSecureMode)
 		if err != nil {
 			return nil, err
 		}
 
-		err = os.WriteFile(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
+		err = file.WriteContentAtomically(etcdCaCert, etcdResponse.CA.Cert, constant.CertSecureMode)
 		if err != nil {
 			return nil, err
 		}

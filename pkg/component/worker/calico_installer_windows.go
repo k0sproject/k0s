@@ -11,12 +11,15 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/Microsoft/hcsshim"
-	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/token"
-	"github.com/sirupsen/logrus"
+
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/Microsoft/hcsshim"
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
 )
 
 type CalicoInstaller struct {
@@ -39,7 +42,7 @@ func (c CalicoInstaller) Init(_ context.Context) error {
 		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
 	}
 
-	if err := os.WriteFile(path, []byte(installCalicoPowershell), 777); err != nil {
+	if err := file.WriteContentAtomically(path, []byte(installCalicoPowershell), 777); err != nil {
 		return fmt.Errorf("can't unpack calico installer: %v", err)
 	}
 
@@ -90,7 +93,7 @@ func (c CalicoInstaller) SaveKubeConfig(path string) error {
 	if err != nil {
 		return fmt.Errorf("can't read response body: %v", err)
 	}
-	if err := os.WriteFile(path, b, 0700); err != nil {
+	if err := file.WriteContentAtomically(path, b, 0700); err != nil {
 		return fmt.Errorf("can't save kubeconfig for calico: %v", err)
 	}
 	posh := NewPowershell()
