@@ -396,6 +396,9 @@ jobs:
           name: k0s-amd64
           path: ./k0s-arm
 
+      - name: Make binaries executable
+        run: chmod +x ./k0s-*/k0s
+
       - name: Build image and push to Docker Hub and GitHub image registry
         uses: docker/build-push-action@v3
         with:
