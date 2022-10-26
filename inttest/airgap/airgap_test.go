@@ -17,7 +17,6 @@ limitations under the License.
 package airgap
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -68,7 +67,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
 	// at that moment we can assume that all pods has at least started
-	events, err := kc.CoreV1().Events("kube-system").List(context.TODO(), v1.ListOptions{
+	events, err := kc.CoreV1().Events("kube-system").List(s.Context(), v1.ListOptions{
 		Limit: 100,
 	})
 	s.NoError(err)

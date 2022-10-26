@@ -17,7 +17,6 @@ limitations under the License.
 package defaultstorage
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -49,7 +48,7 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 
 	s.AssertSomeKubeSystemPods(kc)
 
-	pv, err := kc.CoreV1().PersistentVolumes().List(context.TODO(), v1.ListOptions{})
+	pv, err := kc.CoreV1().PersistentVolumes().List(s.Context(), v1.ListOptions{})
 	s.NoError(err)
 	s.Greater(len(pv.Items), 0, "At least one persistent volume must be created for the deployment with claims")
 }

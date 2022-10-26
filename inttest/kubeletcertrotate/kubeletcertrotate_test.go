@@ -15,7 +15,6 @@
 package kubeletcertrotate
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -64,9 +63,9 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	extClient, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, perr := apcomm.WaitForCRDByName(context.TODO(), extClient, "plans.autopilot.k0sproject.io", 2*time.Minute)
+	_, perr := apcomm.WaitForCRDByName(s.Context(), extClient, "plans.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(context.TODO(), extClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
+	_, cerr := apcomm.WaitForCRDByName(s.Context(), extClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
 
 	// Create a worker join token

@@ -17,7 +17,6 @@ limitations under the License.
 package noderole
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -41,7 +40,7 @@ func (s *NodeRoleSingleSuite) TestK0sSingleNode() {
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
-	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
+	n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(0), v1.GetOptions{})
 	s.NoError(err)
 	s.NotContains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 }

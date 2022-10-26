@@ -17,7 +17,6 @@ limitations under the License.
 package noderole
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -52,18 +51,18 @@ func (s *NodeRoleSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
-	n, err := kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(0), v1.GetOptions{})
+	n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(0), v1.GetOptions{})
 	s.NoError(err)
 	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(1), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
-	n, err = kc.CoreV1().Nodes().Get(context.TODO(), s.ControllerNode(1), v1.GetOptions{})
+	n, err = kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(1), v1.GetOptions{})
 	s.NoError(err)
 	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 
-	n, err = kc.CoreV1().Nodes().Get(context.TODO(), s.WorkerNode(0), v1.GetOptions{})
+	n, err = kc.CoreV1().Nodes().Get(s.Context(), s.WorkerNode(0), v1.GetOptions{})
 	s.NoError(err)
 	s.NotContains(n.Labels, map[string]string{"node-role.kubernetes.io/master": "NoSchedule"})
 }

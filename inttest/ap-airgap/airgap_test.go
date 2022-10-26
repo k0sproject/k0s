@@ -15,7 +15,6 @@
 package airgap
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -58,9 +57,9 @@ func (s *airgapSuite) SetupTest() {
 	cClient, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, perr := apcomm.WaitForCRDByName(context.TODO(), cClient, "plans.autopilot.k0sproject.io", 2*time.Minute)
+	_, perr := apcomm.WaitForCRDByName(s.Context(), cClient, "plans.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(context.TODO(), cClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
+	_, cerr := apcomm.WaitForCRDByName(s.Context(), cClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
 
 	// Create a worker join token
