@@ -34,8 +34,8 @@ type PlanBuilder func(output tsutil.TerraformOutputMap) (*apv1beta2.Plan, error)
 
 // PlanApplyOperation is an Operation that will read output values from terraform,
 // build a user-provided Plan, and apply it via kubectl.
-func PlanApplyOperation(ctx context.Context, builder PlanBuilder) ts.ClusterOperation {
-	return func(data ts.ClusterData) error {
+func PlanApplyOperation(builder PlanBuilder) ts.ClusterOperation {
+	return func(ctx context.Context, data ts.ClusterData) error {
 		// The the terraform binary, error if missing
 		tfpath, err := exec.LookPath("terraform")
 		if err != nil {

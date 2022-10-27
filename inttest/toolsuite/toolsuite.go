@@ -15,6 +15,7 @@
 package toolsuite
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -36,7 +37,7 @@ const (
 	defaultToolImage = "tool:latest"
 )
 
-type ClusterOperation func(data ClusterData) error
+type ClusterOperation func(ctx context.Context, data ClusterData) error
 
 type ClusterData struct {
 	DataDir        string
@@ -69,6 +70,10 @@ type ToolSuite struct {
 	suite.Suite
 	Config    Config
 	Operation ClusterOperation
+}
+
+func (s *ToolSuite) Context() context.Context {
+	return context.TODO()
 }
 
 func (s *ToolSuite) KubeConfigFile() string {
@@ -173,7 +178,7 @@ func (s *ToolSuite) TestEntrypoint() {
 		PrivateKeyFile: path.Join(s.Config.DataDir, "private.pem"),
 	}
 
-	err := s.Operation(clusterData)
+	err := s.Operation(s.Context(), clusterData)
 	assert.NoError(s.T(), err, "Failed in toolsuite handler: %v", err)
 }
 
