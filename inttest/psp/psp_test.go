@@ -17,7 +17,6 @@ limitations under the License.
 package psp
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -65,7 +64,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		},
 	}
 
-	_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), nonPrivelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), nonPrivelegedPodReq, v1.CreateOptions{})
 	s.NoError(err)
 
 	privelegedPodReq := &corev1.Pod{
@@ -84,7 +83,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		},
 	}
 
-	_, err = ukc.CoreV1().Pods("default").Create(context.TODO(), privelegedPodReq, v1.CreateOptions{})
+	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), privelegedPodReq, v1.CreateOptions{})
 	s.NoError(err)
 }
 

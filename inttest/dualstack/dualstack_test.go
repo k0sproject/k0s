@@ -24,7 +24,6 @@ package dualstack
 // have proper values for spec.PodCIDRs
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -44,7 +43,7 @@ type DualstackSuite struct {
 }
 
 func (s *DualstackSuite) TestDualStackNodesHavePodCIDRs() {
-	nl, err := s.client.CoreV1().Nodes().List(context.Background(), v1meta.ListOptions{})
+	nl, err := s.client.CoreV1().Nodes().List(s.Context(), v1meta.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nl.Items {
 		s.Require().Len(n.Spec.PodCIDRs, 2, "Each node must have ipv4 and ipv6 pod cidr")

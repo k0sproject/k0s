@@ -18,7 +18,6 @@ package basic
 
 import (
 	"bytes"
-	"context"
 	"html/template"
 	"testing"
 
@@ -129,7 +128,7 @@ type snapshot struct {
 func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 	// Take some UIDs to be able to verify state has restored properly
 	namespaces := make(map[types.UID]string)
-	nsList, err := kc.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
+	nsList, err := kc.CoreV1().Namespaces().List(s.Context(), v1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nsList.Items {
 		namespaces[n.ObjectMeta.UID] = n.Name
@@ -137,13 +136,13 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 
 	services := make(map[types.UID]string)
 	{
-		svc, err := kc.CoreV1().Services("default").Get(context.TODO(), "kubernetes", v1.GetOptions{})
+		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
 		s.Require().NoError(err)
 		services[svc.ObjectMeta.UID] = svc.Name
 	}
 
 	nodes := make(map[types.UID]string)
-	nodeList, err := kc.CoreV1().Nodes().List(context.TODO(), v1.ListOptions{})
+	nodeList, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
 	s.Require().NoError(err)
 	for _, n := range nodeList.Items {
 		nodes[n.ObjectMeta.UID] = n.Name

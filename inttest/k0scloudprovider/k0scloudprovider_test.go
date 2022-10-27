@@ -60,9 +60,9 @@ type nodeAddValueFunc func(node string, kc *kubernetes.Clientset, key string, va
 // nodeAddValueHelper provides all of the callback functions needed to test
 // the addition of addresses into the provider (pre, add, post)
 type nodeAddValueHelper struct {
-	addressFoundPre  func(kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
+	addressFoundPre  func(ctx context.Context, kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
 	addressAdd       nodeAddValueFunc
-	addressFoundPost func(kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
+	addressFoundPost func(ctx context.Context, kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error)
 }
 
 // defaultNodeAddValueHelper creates a nodeAddValueHelper using the provided
@@ -80,7 +80,7 @@ func defaultNodeAddValueHelper(adder nodeAddValueFunc) nodeAddValueHelper {
 func (s *K0sCloudProviderSuite) testAddAddress(kc *kubernetes.Clientset, node string, addr string, helper nodeAddValueHelper) {
 	s.T().Logf("Testing add address - node=%s, addr=%s", node, addr)
 
-	addrFound, err := helper.addressFoundPre(kc, node, addr, v1.NodeExternalIP)
+	addrFound, err := helper.addressFoundPre(s.Context(), kc, node, addr, v1.NodeExternalIP)
 	s.Require().NoError(err)
 	s.Require().False(addrFound, "ExternalIP=%s already exists on node=%s", addr, node)
 
@@ -97,15 +97,15 @@ func (s *K0sCloudProviderSuite) testAddAddress(kc *kubernetes.Clientset, node st
 
 	// Need to ensure that a matching 'ExternalIP' address has been added, indicating that
 	// k0s-cloud-provider properly processed the annotation.
-	foundPostUpdate, err := helper.addressFoundPost(kc, node, addr, v1.NodeExternalIP)
+	foundPostUpdate, err := helper.addressFoundPost(s.Context(), kc, node, addr, v1.NodeExternalIP)
 	s.Require().NoError(err)
 	s.Require().True(foundPostUpdate, "unable to find ExternalIP=%s on node=%s", addr, node)
 }
 
 // nodeHasAddressWithType is a helper for fetching all of the addresses associated to
 // the provided node, and asserting that an IP matches by address + type.
-func nodeHasAddressWithType(kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error) {
-	n, err := kc.CoreV1().Nodes().Get(context.TODO(), node, metav1.GetOptions{})
+func nodeHasAddressWithType(ctx context.Context, kc *kubernetes.Clientset, node string, addr string, addrType v1.NodeAddressType) (bool, error) {
+	n, err := kc.CoreV1().Nodes().Get(ctx, node, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}

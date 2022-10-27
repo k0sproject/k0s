@@ -17,7 +17,6 @@ limitations under the License.
 package configchange
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -72,18 +71,18 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	cfgClient, err := s.getConfigClient()
 	s.Require().NoError(err)
 
-	eventWatch, err := kc.CoreV1().Events("kube-system").Watch(context.Background(), metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
+	eventWatch, err := kc.CoreV1().Events("kube-system").Watch(s.Context(), metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
 	s.NoError(err)
 	defer eventWatch.Stop()
 
 	s.T().Run("changing cni should fail", func(t *testing.T) {
-		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network.Provider = constant.CNIProviderCalico
 		newConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 		newConfig.Spec.Network.KubeRouter = nil
-		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 
 		// Check that we see proper event for failed reconcile
@@ -96,12 +95,12 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	})
 
 	s.T().Run("setting bad ip address should fail", func(t *testing.T) {
-		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network = v1beta1.DefaultNetwork()
 		newConfig.Spec.Network.PodCIDR = "invalid ip address"
-		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 
 		// Check that we see proper event for failed reconcile
@@ -114,7 +113,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	})
 
 	s.T().Run("changing kuberouter MTU should work", func(t *testing.T) {
-		originalConfig, err := cfgClient.Get(context.Background(), "k0s", metav1.GetOptions{})
+		originalConfig, err := cfgClient.Get(s.Context(), "k0s", metav1.GetOptions{})
 		s.NoError(err)
 		newConfig := originalConfig.DeepCopy()
 		newConfig.Spec.Network = v1beta1.DefaultNetwork()
@@ -122,12 +121,12 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		newConfig.Spec.Network.KubeRouter.MTU = 1300
 
 		// Get the resource version for current kuberouter configmap
-		cml, err := kc.CoreV1().ConfigMaps("kube-system").List(context.Background(), metav1.ListOptions{
+		cml, err := kc.CoreV1().ConfigMaps("kube-system").List(s.Context(), metav1.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("metadata.name", "kube-router-cfg").String(),
 		})
 		s.NoError(err)
 
-		_, err = cfgClient.Update(context.Background(), newConfig, metav1.UpdateOptions{})
+		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
 		s.NoError(err)
 		event, err := s.waitForReconcileEvent(eventWatch)
 		s.NoError(err)
@@ -137,7 +136,7 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		// Verify MTU setting have been propagated properly
 		// It takes a while to actually apply the changes through stack applier
 		// Start the watch only from last version so we only get changed cm(s) and not the original one
-		w, err := kc.CoreV1().ConfigMaps("kube-system").Watch(context.Background(), metav1.ListOptions{
+		w, err := kc.CoreV1().ConfigMaps("kube-system").Watch(s.Context(), metav1.ListOptions{
 			FieldSelector:   fields.OneTermEqualSelector("metadata.name", "kube-router-cfg").String(),
 			ResourceVersion: cml.ResourceVersion,
 		})
@@ -168,7 +167,7 @@ func (s *ConfigSuite) waitForReconcileEvent(eventWatch watch.Interface) (*corev1
 }
 
 func (s *ConfigSuite) clearConfigEvents(kc *kubernetes.Clientset) error {
-	return kc.CoreV1().Events("kube-system").DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
+	return kc.CoreV1().Events("kube-system").DeleteCollection(s.Context(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "involvedObject.name=k0s"})
 }
 
 // Get the ClusterConfig client from the controller node's kubeconfig.

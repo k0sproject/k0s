@@ -17,7 +17,6 @@ limitations under the License.
 package tunneledkas
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -54,16 +53,16 @@ func (s *Suite) TestK0sTunneledKasMode() {
 	s.NoError(err)
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
-	eps, err := kc.CoreV1().Endpoints("default").Get(context.Background(), "kubernetes", v1.GetOptions{})
+	eps, err := kc.CoreV1().Endpoints("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
 	s.NoError(err)
 
-	nodes, err := kc.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+	nodes, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
 	s.NoError(err)
 
 	s.Assert().Equal(1, len(eps.Subsets))
 	s.Assert().Equal(len(nodes.Items), len(eps.Subsets[0].Addresses))
 
-	svc, err := kc.CoreV1().Services("default").Get(context.Background(), "kubernetes", v1.GetOptions{})
+	svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
 	s.NoError(err)
 	s.Equal("Local", string(*svc.Spec.InternalTrafficPolicy))
 
@@ -79,7 +78,7 @@ func (s *Suite) TestK0sTunneledKasMode() {
 		kubeConfig.Host = fmt.Sprintf("https://%s:6443", addr.IP)
 		nodeLocalClient, err := kubernetes.NewForConfig(kubeConfig)
 		s.Require().NoError(err)
-		_, err = nodeLocalClient.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+		_, err = nodeLocalClient.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
 		s.Require().NoError(err)
 	}
 }

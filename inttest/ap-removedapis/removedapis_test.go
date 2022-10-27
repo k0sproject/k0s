@@ -15,7 +15,6 @@
 package removedapis
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -48,14 +47,14 @@ func (s *plansRemovedAPIsSuite) SetupTest() {
 	client, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, err = apcomm.WaitForCRDByName(context.TODO(), client, "k0s-tests.k0s.k0sproject.io", 2*time.Minute)
+	_, err = apcomm.WaitForCRDByName(s.Context(), client, "k0s-tests.k0s.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(err)
 
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/test.yaml", testManifest)
 
-	_, perr := apcomm.WaitForCRDByName(context.TODO(), client, "plans.autopilot.k0sproject.io", 2*time.Minute)
+	_, perr := apcomm.WaitForCRDByName(s.Context(), client, "plans.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(context.TODO(), client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
+	_, cerr := apcomm.WaitForCRDByName(s.Context(), client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
 }
 

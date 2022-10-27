@@ -15,7 +15,6 @@
 package single
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -49,9 +48,9 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	client, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, perr := apcomm.WaitForCRDByName(context.TODO(), client, "plans.autopilot.k0sproject.io", 2*time.Minute)
+	_, perr := apcomm.WaitForCRDByName(s.Context(), client, "plans.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(context.TODO(), client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
+	_, cerr := apcomm.WaitForCRDByName(s.Context(), client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
 	s.Require().NoError(cerr)
 }
 
