@@ -8,7 +8,6 @@ fi
 export IMAGE=${IMAGE:-tool}
 
 docker run \
-    -it \
     --rm \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SESSION_TOKEN \

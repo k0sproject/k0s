@@ -1,0 +1,256 @@
+name: Autopilot - Branch Versions to Latest
+
+on:
+  workflow_dispatch:
+    inputs:
+      v124latest:
+        description: "The latest version of v1.24"
+        default: "v1.24.6+k0s.0"
+        required: true
+
+      v125latest:
+        description: "The latest version of v1.25"
+        default: "v1.25.2+k0s.0"
+        required: true
+
+      controllers:
+        description: "The number of controller nodes to use in each k0s cluster"
+        default: "3"
+        required: true
+
+      workers:
+        description: "The number of worker nodes to use in each k0s cluster"
+        default: "3"
+        required: true
+
+      region:
+        description: "The AWS region to build k0s infrastructure + clusters in"
+        default: "ca-central-1"
+        required: true
+
+env:
+  TERRAFORM_VERSION: 1.3.3
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+  TOOLSUITE_CIDR: 10.1.0.0/16
+  TOOL_DATADIR: tooldata
+
+jobs:
+  # build-tool is only responsible for building the 'tool' and making it available
+  # to other jobs via a unique GHA cache.
+  build-tool:
+    name: Build Tool
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Build Tool
+      run: |
+        cd hack/tool
+        make
+
+    - name: Save Build Tool Image
+      run: |
+        docker save tool:latest | gzip > tool-latest.tar.gz
+
+    - name: Cache Tool Image
+      uses: actions/cache@v3
+      with:
+        key: tool-${{ github.sha }}-${{ github.run_id }}
+        path: tool-latest.tar.gz
+
+  # setup provisions the VPC infrastructure and caches terraform state, along with preserving the
+  # generated VPC id.
+  setup:
+    name: Setup Infrastructure
+    runs-on: ubuntu-latest
+    needs: [ build-tool ]
+
+    outputs:
+      vpcid: ${{ steps.vpcid.outputs.vpcid }}
+
+    steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Cache Tool Image (restore)
+      uses: actions/cache@v3
+      with:
+        key: tool-${{ github.sha }}-${{ github.run_id }}
+        path: tool-latest.tar.gz
+
+    - name: Import Tool
+      run: |
+        docker load --input tool-latest.tar.gz
+        rm tool-latest.tar.gz
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Create VPC
+      run: |
+        export TOOL_DATADIR=$(realpath ${TOOL_DATADIR})
+        mkdir -p ${TOOL_DATADIR}
+        cd hack/tool
+        ./tool.sh aws vpcinfra create \
+          --name k0sts-infra \
+          --region ${{ github.event.inputs.region }} \
+          --cidr ${{ env.TOOLSUITE_CIDR }}
+
+    - name: Save VPC ID
+      id: vpcid
+      run: |
+        cd ${TOOL_DATADIR}
+        echo "vpcid=$(terraform output -raw vpc_id)" >> $GITHUB_OUTPUT
+
+    - name: Cache Infrastructure Terraform
+      uses: actions/cache@v3
+      with:
+        key: terraform-${{ github.sha }}-${{ github.run_id }}
+        path: ${{ env.TOOL_DATADIR }}/terraform.tfstate
+
+  # test runs through a matrix of from/to k0s version upgrades. This leverages the 'tool'
+  # to create k0s clusters using k0sctl, and automatically generates autopilot Plans to
+  # perform updates to all nodes.
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [ setup ]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # The 'testdata' matrix focuses on grouping updates of individual historic branch releases
+        # to the latest released version on a branch.
+        testdata: [
+          # v1.24 versions
+          {
+            name: "v1242-0",
+            fromver: "v1.24.2+k0s.0",
+            tover: "${{ github.event.inputs.v124latest }}",
+            subnet: 0,
+          },
+          {
+            name: "v1243-0",
+            fromver: "v1.24.3+k0s.0",
+            tover: "${{ github.event.inputs.v124latest }}",
+            subnet: 1,
+          },
+          {
+            name: "v1244-0",
+            fromver: "v1.24.4+k0s.0",
+            tover: "${{ github.event.inputs.v124latest }}",
+            subnet: 2,
+          },
+
+          # latest branch versions to latest
+          {
+            name: "v124to125",
+            fromver: "${{ github.event.inputs.v124latest }}",
+            tover: "${{ github.event.inputs.v125latest }}",
+            subnet: 20,
+          },
+        ]
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Prepare build environment
+      run: .github/workflows/prepare-build-env.sh
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_wrapper: false
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Cache Tool Image (restore)
+      uses: actions/cache@v3
+      with:
+        key: tool-${{ github.sha }}-${{ github.run_id }}
+        path: tool-latest.tar.gz
+
+    - name: Import Tool
+      run: |
+        docker load --input tool-latest.tar.gz
+        rm tool-latest.tar.gz
+
+    - name: Run tool
+      run: |
+        mkdir data
+        go test -v -timeout 60m -run TestVersionUpdateSuite ./inttest/toolsuite/tests \
+          --testname k0sts-${{ matrix.testdata.name }} \
+          --operation-timeout 30m \
+          --data-dir $(pwd)/data \
+          --provider aws \
+          --command havpc -- \
+            --cluster-name k0sts-${{ matrix.testdata.name }} \
+            --controllers ${{ github.event.inputs.controllers }} \
+            --k0s-version ${{ matrix.testdata.fromver }} \
+            --region ${{ github.event.inputs.region }} \
+            --workers ${{ github.event.inputs.workers }} \
+            --k0s-update-version ${{ matrix.testdata.tover }} \
+            --vpc-id ${{ needs.setup.outputs.vpcid }} \
+            --subnet-idx ${{ matrix.testdata.subnet }}
+
+  # teardown is always run as a cleanup for the VPC infrastructure
+  teardown:
+    name: Teardown Infrastructure
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    if: ${{ always() }}
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Cache Tool Image (restore)
+      uses: actions/cache@v3
+      with:
+        key: tool-${{ github.sha }}-${{ github.run_id }}
+        path: tool-latest.tar.gz
+
+    - name: Import Tool
+      run: |
+        docker load --input tool-latest.tar.gz
+        rm tool-latest.tar.gz
+
+    - name: Cache Infrastructure Terraform (restore)
+      uses: actions/cache@v3
+      with:
+        key: terraform-${{ github.sha }}-${{ github.run_id }}
+        path: ${{ env.TOOL_DATADIR }}/terraform.tfstate
+
+    - name: Destroy VPC
+      if: ${{ always() }}
+      run: |
+        export TOOL_DATADIR=$(realpath ${TOOL_DATADIR})
+        cd hack/tool
+        ./tool.sh aws vpcinfra destroy \
+          --name k0sts-infra \
+          --region ${{ github.event.inputs.region }} \
+          --cidr ${{ env.TOOLSUITE_CIDR }}

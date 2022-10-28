@@ -129,8 +129,8 @@ func newCommandCreate() *cobra.Command {
 					// TODO: struct this, getting out of control
 					return provider.ClusterHACreate(ctx, opts.ClusterName, opts.K0sBinary, opts.K0sUpdateBinary, foundK0sVersion, opts.K0sUpdateVersion, opts.K0sAirgapBundle, opts.K0sAirgapBundleConfig, opts.K0sUpdateAirgapBundle, opts.Controllers, opts.Workers, opts.Region)
 				},
-				KubeConfig: func(ctx context.Context) (string, error) {
-					return provider.ClusterHAKubeConfig(ctx)
+				ClusterConfig: func(ctx context.Context) (string, error) {
+					return provider.ClusterHAClusterConfig(ctx)
 				},
 			}
 

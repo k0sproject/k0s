@@ -8,7 +8,7 @@ RUN go build -o /tool
 
 FROM builder AS builder-terraform
 ARG ARCH
-ENV TERRAFORM_VERSION=1.2.9
+ENV TERRAFORM_VERSION=1.3.3
 RUN curl -Lo /terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip && unzip /terraform.zip
 
 FROM builder AS builder-aws
