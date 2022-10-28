@@ -154,8 +154,8 @@ spec:
 #### `spec.network.calico`
 
 | Element                 | Description                                                                                                                                                                                                                                                                                                                                                                                                |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`                  | `vxlan` (default), `ipip` or `bird`                                                                                                                                                                                                                                                                                                                                                                                |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `mode`                  | `vxlan` (default), `ipip` or `bird`                                                                                                                                                                                                                                                                                                                                                                        |
 | `overlay`               | Overlay mode: `Always` (default), `CrossSubnet` or `Never` (requires `mode=vxlan` to disable calico overlay-network).                                                                                                                                                                                                                                                                                      |
 | `vxlanPort`             | The UDP port for VXLAN (default: `4789`).                                                                                                                                                                                                                                                                                                                                                                  |
 | `vxlanVNI`              | The virtual network ID for VXLAN (default: `4096`).                                                                                                                                                                                                                                                                                                                                                        |
@@ -163,6 +163,48 @@ spec:
 | `wireguard`             | Enable wireguard-based encryption (default: `false`). Your host system must be wireguard ready (refer to the [Calico documentation](https://docs.projectcalico.org/security/encrypt-cluster-pod-traffic) for details).                                                                                                                                                                                     |
 | `flexVolumeDriverPath`  | The host path for Calicos flex-volume-driver(default: `/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds`). Change this path only if the default path is unwriteable (refer to [Project Calico Issue #2712](https://github.com/projectcalico/calico/issues/2712) for details). Ideally, you will pair this option with a custom ``volumePluginDir`` in the profile you use for your worker nodes. |
 | `ipAutodetectionMethod` | Use to force Calico to pick up the interface for pod network inter-node routing (default: `""`, meaning not set, so that Calico will instead use its defaults). For more information, refer to the [Calico documentation](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                           |
+| `envVars`               | Map of key-values (strings) for any calico-node [environment variable](https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods).                                                                                                                                                                                                                                              |
+
+#### `spec.network.calico.envVars`
+
+Environment variable's value must be string, e.g.:
+
+```yaml
+spec:
+  network:
+    provider: calico
+    calico:
+      envVars:
+        TEST_BOOL_VAR: "true"
+        TEST_INT_VAR: "42"
+        TEST_STRING_VAR: test
+```
+
+K0s runs Calico with some predefined vars, which can be overwritten by setting new value in `spec.network.calico.envVars`:
+
+```shell
+CALICO_IPV4POOL_CIDR: "{{ spec.network.podCIDR }}"
+CALICO_DISABLE_FILE_LOGGING: "true"
+FELIX_DEFAULTENDPOINTTOHOSTACTION: "ACCEPT"
+FELIX_LOGSEVERITYSCREEN: "info"
+FELIX_HEALTHENABLED: "true"
+FELIX_PROMETHEUSMETRICSENABLED: "true"
+```
+
+In SingleStack mode there are additional vars:
+
+```shell
+FELIX_IPV6SUPPORT: "false"
+```
+
+In DualStack mode there are additional vars:
+
+```shell
+CALICO_IPV6POOL_NAT_OUTGOING: "true"
+FELIX_IPV6SUPPORT: "true"
+IP6: "autodetect"
+CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
+```
 
 #### `spec.network.kuberouter`
 

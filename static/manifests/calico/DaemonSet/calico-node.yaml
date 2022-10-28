@@ -231,6 +231,11 @@ spec:
               value: "true"
             - name: FELIX_PROMETHEUSMETRICSENABLED
               value: "true"
+            # Setting custom environment variables. These variables could overwrite the ones specified above.
+            {{ range $name, $value := .EnvVars }}
+            - name: {{ $name }}
+              value: "{{ $value }}"
+            {{- end }}
           securityContext:
             privileged: true
           resources:

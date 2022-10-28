@@ -280,6 +280,12 @@ spec:
                   calico:
                     description: Calico defines the calico related config options
                     properties:
+                      envVars:
+                        additionalProperties:
+                          type: string
+                        description: Environment variables to configure Calico node
+                          (see https://docs.projectcalico.org/reference/node/configuration)
+                        type: object
                       flexVolumeDriverPath:
                         description: 'The host path for Calicos flex-volume-driver(default:
                           /usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds)'

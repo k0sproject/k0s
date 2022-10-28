@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -66,6 +67,7 @@ type calicoConfig struct {
 	WithWindowsNodes     bool
 	FlexVolumeDriverPath string
 	DualStack            bool
+	EnvVars              map[string]string
 
 	CalicoCNIImage             string
 	CalicoNodeImage            string
@@ -188,6 +190,7 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
 		VxlanVNI:                   clusterConfig.Spec.Network.Calico.VxlanVNI,
 		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
+		EnvVars:                    clusterConfig.Spec.Network.Calico.EnvVars,
 		FlexVolumeDriverPath:       clusterConfig.Spec.Network.Calico.FlexVolumeDriverPath,
 		DualStack:                  clusterConfig.Spec.Network.DualStack.Enabled,
 		ClusterCIDRIPv4:            clusterConfig.Spec.Network.PodCIDR,
@@ -231,7 +234,7 @@ func (c *Calico) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error 
 	if err != nil {
 		return err
 	}
-	if newConfig != c.prevConfig {
+	if !reflect.DeepEqual(newConfig, c.prevConfig) {
 		if err := c.processConfigChanges(newConfig); err != nil {
 			c.log.Warnf("failed to process config changes: %v", err)
 		}
