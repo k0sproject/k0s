@@ -15,4 +15,4 @@ limitations under the License.
 */
 
 // Package static contains auto-generated source code for static assets.
-package static // This file is intentionally left empty to delcare the "static" package.
+package static // This file is intentionally left empty to declare the "static" package.
