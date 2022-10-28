@@ -32,10 +32,10 @@ const (
 	ModeLegacy = "legacy"
 )
 
-// DetectIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
+// DetectHostIPTablesMode figure out whether iptables-legacy or iptables-nft is in use on the host.
 // Follows the same logic as kube-proxy/kube-route.
 // See: https://github.com/kubernetes-sigs/iptables-wrappers/blob/master/iptables-wrapper-installer.sh
-func DetectIPTablesMode(k0sBinPath string) (string, error) {
+func DetectHostIPTablesMode(k0sBinPath string) (string, error) {
 	logrus.Info("Trying to detect iptables mode")
 	logrus.Info("Checking iptables-nft for kube-related entries")
 	nftEntriesCount, nftTotalCount, err := iptablesEntriesCount(k0sBinPath, "xtables-nft-multi", []string{"KUBE-IPTABLES-HINT", "KUBE-KUBELET-CANARY"})
@@ -61,8 +61,20 @@ func DetectIPTablesMode(k0sBinPath string) (string, error) {
 		logrus.Info("kube-related iptables entries not found, go with iptables-legacy")
 		return ModeLegacy, nil
 	}
-	logrus.Info("kube-related iptables entries not found, go with iptables-nft")
-	return ModeNFT, nil
+
+	iptablesPath, err := exec.LookPath("iptables")
+	if err != nil {
+		return "", err
+	}
+	out, err := exec.Command(iptablesPath, "--version").CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	outStr := string(out)
+	if strings.Contains(outStr, "nf_tables") {
+		return ModeNFT, nil
+	}
+	return ModeLegacy, nil
 }
 
 func iptablesEntriesCount(k0sBinPath string, xtablesCmdName string, entries []string) (entriesFound int, total int, err error) {
