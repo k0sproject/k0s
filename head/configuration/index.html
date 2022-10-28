@@ -1797,8 +1797,40 @@ sudo k0s start
 <td><code>ipAutodetectionMethod</code></td>
 <td>Use to force Calico to pick up the interface for pod network inter-node routing (default: <code>""</code>, meaning not set, so that Calico will instead use its defaults). For more information, refer to the <a href="https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods">Calico documentation</a>.</td>
 </tr>
+<tr>
+<td><code>envVars</code></td>
+<td>Map of key-values (strings) for any calico-node <a href="https://docs.projectcalico.org/reference/node/configuration#ip-autodetection-methods">environment variable</a>.</td>
+</tr>
 </tbody>
 </table>
+<h4 id="specnetworkcalicoenvvars"><code>spec.network.calico.envVars</code><a class="headerlink" href="#specnetworkcalicoenvvars" title="Permanent link">#</a></h4>
+<p>Environment variable's value must be string, e.g.:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">calico</span><span class="w"></span>
+<span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">envVars</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">TEST_BOOL_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">TEST_INT_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;42&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">TEST_STRING_VAR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span><span class="w"></span>
+</code></pre></div>
+<p>K0s runs Calico with some predefined vars, which can be overwritten by setting new value in <code>spec.network.calico.envVars</code>:</p>
+<div class="highlight"><pre><span></span><code>CALICO_IPV4POOL_CIDR: <span class="s2">&quot;{{ spec.network.podCIDR }}&quot;</span>
+CALICO_DISABLE_FILE_LOGGING: <span class="s2">&quot;true&quot;</span>
+FELIX_DEFAULTENDPOINTTOHOSTACTION: <span class="s2">&quot;ACCEPT&quot;</span>
+FELIX_LOGSEVERITYSCREEN: <span class="s2">&quot;info&quot;</span>
+FELIX_HEALTHENABLED: <span class="s2">&quot;true&quot;</span>
+FELIX_PROMETHEUSMETRICSENABLED: <span class="s2">&quot;true&quot;</span>
+</code></pre></div>
+<p>In SingleStack mode there are additional vars:</p>
+<div class="highlight"><pre><span></span><code>FELIX_IPV6SUPPORT: <span class="s2">&quot;false&quot;</span>
+</code></pre></div>
+<p>In DualStack mode there are additional vars:</p>
+<div class="highlight"><pre><span></span><code>CALICO_IPV6POOL_NAT_OUTGOING: <span class="s2">&quot;true&quot;</span>
+FELIX_IPV6SUPPORT: <span class="s2">&quot;true&quot;</span>
+IP6: <span class="s2">&quot;autodetect&quot;</span>
+CALICO_IPV6POOL_CIDR: <span class="s2">&quot;{{ spec.network.dualStack.IPv6podCIDR }}&quot;</span>
+</code></pre></div>
 <h4 id="specnetworkkuberouter"><code>spec.network.kuberouter</code><a class="headerlink" href="#specnetworkkuberouter" title="Permanent link">#</a></h4>
 <table>
 <thead>
