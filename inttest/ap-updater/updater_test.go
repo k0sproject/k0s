@@ -99,7 +99,7 @@ spec:
 	s.Require().NoError(err)
 
 	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
@@ -107,7 +107,7 @@ spec:
 		return plan.Status.State == appc.PlanCompleted
 	})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 }
 

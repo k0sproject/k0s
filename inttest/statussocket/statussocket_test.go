@@ -34,7 +34,7 @@ func (s *StatusSocketSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--single"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)

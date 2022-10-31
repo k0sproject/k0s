@@ -35,13 +35,13 @@ func (s *NodeRoleSingleSuite) TestK0sSingleNode() {
 	s.Require().NoError(err)
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
 	n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(0), v1.GetOptions{})
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotContains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
 }
 

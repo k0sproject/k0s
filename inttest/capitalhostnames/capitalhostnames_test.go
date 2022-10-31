@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0))
 
 	token, err := s.GetJoinToken("worker")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NoError(s.RunWorkersWithToken(token))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -62,7 +62,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 
 	// Verify the autopilot controller node is created
 	apClient, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(apClient)
 	_, err = apClient.AutopilotV1beta2().ControlNodes().Get(s.Context(), "k0s-controller", v1.GetOptions{})
 	s.NoError(err)

@@ -79,7 +79,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 	token, err := s.GetJoinToken("worker")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	for i := 0; i < s.WorkerCount; i++ {
 		node := s.WorkerNode(i)
@@ -105,7 +105,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	s.Require().NoError(g.Wait())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)

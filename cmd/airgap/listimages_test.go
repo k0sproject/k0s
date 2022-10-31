@@ -41,7 +41,7 @@ spec:
       version: 1.0.0
 `
 	cfg, err := v1beta1.ConfigFromString(yamlData)
-	s.NoError(err)
+	s.Require().NoError(err)
 	a := cfg.Spec.Images
 
 	s.Equal("custom-repository/my-custom-konnectivity-image:v0.0.1", a.Konnectivity.URI())

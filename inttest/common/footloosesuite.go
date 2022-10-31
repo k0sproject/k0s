@@ -724,7 +724,7 @@ func (s *FootlooseSuite) StopController(name string) error {
 
 func (s *FootlooseSuite) Reset(name string) error {
 	ssh, err := s.SSH(name)
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	resetCommand := fmt.Sprintf("%s reset --debug", s.K0sFullPath)
 	_, err = ssh.ExecWithOutput(s.Context(), resetCommand)
@@ -1262,6 +1262,10 @@ func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
 	return s.getIPAddress(s.ControllerNode(idx))
 }
 
+func (s *FootlooseSuite) GetWorkerIPAddress(idx int) string {
+	return s.getIPAddress(s.WorkerNode(idx))
+}
+
 func (s *FootlooseSuite) GetLBAddress() string {
 	return s.getIPAddress(s.LBNode())
 }
@@ -1334,18 +1338,17 @@ func (s *FootlooseSuite) GetMembers(idx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
 	sshCon, err := s.SSH(s.ControllerNode(idx))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	output, err := sshCon.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list")
+	s.Require().NoError(err)
 	output = lastLine(output)
-	s.NoError(err)
 
 	members := struct {
 		Members map[string]string `json:"members"`
 	}{}
 
-	err = json.Unmarshal([]byte(output), &members)
-	s.NoError(err, err)
+	s.Require().NoError(json.Unmarshal([]byte(output), &members))
 
 	return members.Members
 }

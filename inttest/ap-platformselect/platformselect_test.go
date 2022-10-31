@@ -88,7 +88,7 @@ spec:
 	s.Require().NoError(err)
 
 	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(client)
 
 	// Its expected that if the wrong platform were to be downloaded, the update wouldn't be successful,
@@ -99,7 +99,7 @@ spec:
 		return plan.Status.State == appc.PlanCompleted
 	})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
 	s.Equal(1, len(plan.Status.Commands))

@@ -70,7 +70,7 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	s.Require().NoError(err)
 
 	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
@@ -78,7 +78,7 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 		return plan.Status.State == appc.PlanWarning
 	})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(appc.PlanWarning, plan.Status.State)
 
 	s.Equal(1, len(plan.Status.Commands))

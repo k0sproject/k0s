@@ -18,6 +18,7 @@ package customca
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -32,42 +33,41 @@ type CustomCASuite struct {
 func (s *CustomCASuite) TestK0sGetsUp() {
 	// Create an custom certificate to prove that k0s manage to work with it
 	ssh, err := s.SSH(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(s.Context(), "mkdir -p /var/lib/k0s/pki && apk add openssl")
-	s.NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), "openssl genrsa -out /var/lib/k0s/pki/ca.key 2048")
-	s.NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), "openssl req -x509 -new -nodes -key /var/lib/k0s/pki/ca.key -sha256 -days 365 -out /var/lib/k0s/pki/ca.crt -subj \"/CN=Test CA\"")
-	s.NoError(err)
-	cert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
-	s.NoError(err)
 
-	_, err = ssh.ExecWithOutput(s.Context(), "mkdir -p /var/lib/k0s/manifests/test")
-	s.NoError(err)
-	ipAddress := s.GetControllerIPAddress(0)
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s token pre-shared --cert /var/lib/k0s/pki/ca.crt --url https://%s:6443/ --out /var/lib/k0s/manifests/test", s.K0sFullPath, ipAddress))
-	s.NoError(err)
+	ssh.Exec(s.Context(), "sh -e", common.SSHStreams{
+		In: strings.NewReader(fmt.Sprintf(`
+			K0S_PATH=%q
+			IP_ADDRESS=%q
+			mkdir -p /var/lib/k0s/pki /var/lib/k0s/manifests/test
+			apk add openssl
+			openssl genrsa -out /var/lib/k0s/pki/ca.key 4096
+			openssl req -x509 -new -nodes -key /var/lib/k0s/pki/ca.key -sha256 -days 365 -out /var/lib/k0s/pki/ca.crt -subj "/CN=Test CA"
+			"$K0S_PATH" token pre-shared --cert /var/lib/k0s/pki/ca.crt --url https://"$IP_ADDRESS":6443/ --out /var/lib/k0s/manifests/test
+		`, s.K0sFullPath, s.GetControllerIPAddress(0))),
+	})
+
+	cert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
+	s.Require().NoError(err)
 	token, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/manifests/test/token_* && rm /var/lib/k0s/manifests/test/token_*")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.NoError(s.InitController(0))
 
 	s.NoError(s.RunWorkersWithToken(token))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	if err != nil {
-		s.FailNow("failed to obtain Kubernetes client", err)
-	}
+	s.Require().NoError(err, "Failed to obtain Kubernetes client")
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
 	s.AssertSomeKubeSystemPods(kc)
 
-	newCert, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("cat /var/lib/k0s/pki/ca.crt"))
-	s.NoError(err)
-	s.Require().Equal(cert, newCert)
+	newCert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
+	s.Require().NoError(err)
+	s.Equal(cert, newCert)
 }
 
 func TestCustomCASuite(t *testing.T) {
