@@ -216,10 +216,22 @@ func writeEnvoyConfig(params *envoyParams, filesParams *envoyFilesParams) error 
 		UpstreamServers:            filesParams.apiServers,
 	}
 
-	return file.WriteAtomically(filepath.Join(params.configDir, "envoy.yaml"), 0444, func(file io.Writer) error {
+	err := file.WriteAtomically(filepath.Join(params.configDir, "envoy.yaml"), 0444, func(file io.Writer) error {
 		bufferedWriter := bufio.NewWriter(file)
 		if err := envoyBootstrapConfig.Execute(bufferedWriter, templateParams); err != nil {
 			return fmt.Errorf("failed to generate bootstrap configuration: %w", err)
+		}
+		return bufferedWriter.Flush()
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return file.WriteAtomically(filepath.Join(params.configDir, "cds.yaml"), 0444, func(file io.Writer) error {
+		bufferedWriter := bufio.NewWriter(file)
+		if err := envoyClustersConfig.Execute(bufferedWriter, templateParams); err != nil {
+			return fmt.Errorf("failed to generate CDS configuration: %w", err)
 		}
 		return bufferedWriter.Flush()
 	})
@@ -293,8 +305,14 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 }
 
 var envoyBootstrapConfig = template.Must(template.New("Bootstrap").Parse(`
+node:
+  cluster: nllb-cluster
+  id: nllb-id
+dynamic_resources:
+  cds_config:
+    path: /etc/envoy/cds.yaml
 {{- $localKonnectivityPort := .KonnectivityServerBindPort -}}
-{{- $remoteKonnectivityPort := .KonnectivityServerPort -}}
+{{- $remoteKonnectivityPort := .KonnectivityServerPort }}
 static_resources:
   listeners:
   - name: apiserver
@@ -319,52 +337,58 @@ static_resources:
           stat_prefix: konnectivity
           cluster: konnectivity
   {{- end }}
-  clusters:
-  - name: apiserver
-    connect_timeout: 0.25s
-    type: STATIC
-    lb_policy: RANDOM
-    load_assignment:
-      cluster_name: apiserver
-      endpoints:
-      - lb_endpoints:
-        {{- range .UpstreamServers }}
-        - endpoint:
-            address:
-              socket_address:
-                address: {{ printf "%q" .Host }}
-                port_value: {{ .Port }}
-        {{- else }} []{{ end }}
-    health_checks:
-    # FIXME: Better use a proper HTTP based health check, but this needs certs and stuff...
-    - tcp_health_check: {}
-      timeout: 1s
-      interval: 5s
-      healthy_threshold: 3
-      unhealthy_threshold: 5
+`))
+
+var envoyClustersConfig = template.Must(template.New("cds.yaml").Parse(`
+{{- $localKonnectivityPort := .KonnectivityServerBindPort -}}
+{{- $remoteKonnectivityPort := .KonnectivityServerPort -}}
+resources:
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: apiserver
+  connect_timeout: 0.25s
+  type: STATIC
+  lb_policy: RANDOM
+  load_assignment:
+    cluster_name: apiserver
+    endpoints:
+    - lb_endpoints:
+      {{- range .UpstreamServers }}
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ printf "%q" .Host }}
+              port_value: {{ .Port }}
+      {{- else }} []{{ end }}
+  health_checks:
+  # FIXME: Better use a proper HTTP based health check, but this needs certs and stuff...
+  - tcp_health_check: {}
+    timeout: 1s
+    interval: 5s
+    healthy_threshold: 3
+    unhealthy_threshold: 5
   {{- if ne $localKonnectivityPort 0 }}
-  - name: konnectivity
-    connect_timeout: 0.25s
-    type: STATIC
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: konnectivity
-      endpoints:
-      - lb_endpoints:
-        {{- range .UpstreamServers }}
-        - endpoint:
-            address:
-              socket_address:
-                address: {{ printf "%q" .Host }}
-                port_value: {{ $remoteKonnectivityPort }}
-        {{- else }} []{{ end }}
-    health_checks:
-    # FIXME: What would be a proper health check?
-    - tcp_health_check: {}
-      timeout: 1s
-      interval: 5s
-      healthy_threshold: 3
-      unhealthy_threshold: 5
-  {{- end }}
-`,
-))
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: konnectivity
+  connect_timeout: 0.25s
+  type: STATIC
+  lb_policy: ROUND_ROBIN
+  load_assignment:
+    cluster_name: konnectivity
+    endpoints:
+    - lb_endpoints:
+      {{- range .UpstreamServers }}
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ printf "%q" .Host }}
+              port_value: {{ $remoteKonnectivityPort }}
+      {{- else }} []{{ end }}
+  health_checks:
+  # FIXME: What would be a proper health check?
+  - tcp_health_check: {}
+    timeout: 1s
+    interval: 5s
+    healthy_threshold: 3
+    unhealthy_threshold: 5
+{{- end }}
+`))
