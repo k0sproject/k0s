@@ -148,7 +148,7 @@ spec:
 	s.Require().NoError(err)
 
 	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(client)
 
 	// The plan should fail with "InconsistentTargets" due to autopilot detecting that `controller2`
@@ -157,7 +157,7 @@ spec:
 		return plan.Status.State == appc.PlanInconsistentTargets
 	})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(appc.PlanInconsistentTargets, plan.Status.State)
 }
 

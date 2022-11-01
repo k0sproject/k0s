@@ -39,14 +39,14 @@ func (s *NodeRoleNoTaintsSuite) TestK0sNoTaints() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker", "--no-taints"))
 
 	token, err := s.GetJoinToken("controller")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.PutFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithNodeRole, ipAddress))
 	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", "--enable-worker", "--no-taints", token))
 
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)

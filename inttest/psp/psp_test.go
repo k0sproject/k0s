@@ -20,12 +20,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/k0sproject/k0s/inttest/common"
+
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/pointer"
 
-	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type PSPSuite struct {
@@ -37,20 +39,17 @@ func (s *PSPSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)
 
 	s.AssertSomeKubeSystemPods(kc)
 
-	ukc, err := s.UserKubeClient(s.ControllerNode(0))
-	s.NoError(err)
-
 	s.PutFile(s.ControllerNode(0), "/tmp/role.yaml", k0sTestUserRoleBinding)
 
 	ssh, err := s.SSH(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
 	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s kubectl apply -f /tmp/role.yaml", s.K0sFullPath))
@@ -64,6 +63,9 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		},
 	}
 
+	ukc, err := s.UserKubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+
 	_, err = ukc.CoreV1().Pods("default").Create(s.Context(), nonPrivelegedPodReq, v1.CreateOptions{})
 	s.NoError(err)
 
@@ -76,7 +78,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 					Name:  "pause",
 					Image: "k8s.gcr.io/pause",
 					SecurityContext: &corev1.SecurityContext{
-						RunAsUser: int64ptr(0),
+						RunAsUser: pointer.Int64(0),
 					},
 				},
 			},
@@ -125,12 +127,4 @@ func (s *PSPSuite) UserKubeClient(node string, k0sKubeconfigArgs ...string) (*ku
 		return nil, err
 	}
 	return kubernetes.NewForConfig(cfg)
-}
-
-func boolptr(b bool) *bool {
-	return &b
-}
-
-func int64ptr(i int64) *int64 {
-	return &i
 }

@@ -40,7 +40,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
 	s.NoError(err)
@@ -53,7 +53,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see hairpin pod ready")
 	err = common.WaitForPod(s.Context(), kc, "hairpin-pod", "default")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.T().Run("check hairpin mode", func(t *testing.T) {
 		// All done via SSH as it's much simpler :)

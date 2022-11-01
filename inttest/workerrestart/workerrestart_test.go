@@ -32,7 +32,7 @@ func (s *WorkerRestartSuite) TestK0sWorkerRestart() {
 	s.NoError(s.InitController(0))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.NoError(s.RunWorkers())
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)

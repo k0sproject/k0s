@@ -121,7 +121,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 
 	s.T().Log("waiting for k0s to terminate")
 	_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s stop")
-	s.NoError(err)
+	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), "while pidof k0s containerd kubelet; do sleep 0.1s; done")
 	s.Require().NoError(err)
 

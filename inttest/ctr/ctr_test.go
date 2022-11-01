@@ -45,7 +45,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 	s.Require().NoError(err)
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
 	s.NoError(err)

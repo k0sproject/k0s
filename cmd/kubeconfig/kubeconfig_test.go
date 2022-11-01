@@ -124,7 +124,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	s.Require().NoError(os.MkdirAll(k0sVars.CertRootDir, 0755))
 
 	userCert, err := certManager.EnsureCertificate(userReq, "root")
-	s.NoError(err)
+	s.Require().NoError(err)
 	clusterAPIURL := cfg.Spec.API.APIAddressURL()
 
 	data := struct {

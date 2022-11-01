@@ -39,32 +39,32 @@ func (s *NodeRoleSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
 
 	token, err := s.GetJoinToken("controller")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.PutFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithNodeRole, ipAddress))
 	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", "--enable-worker", token))
 
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(0), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
-	n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(0), v1.GetOptions{})
-	s.NoError(err)
-	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+	if n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(0), v1.GetOptions{}); s.NoError(err) {
+		s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+	}
 
 	err = s.WaitForNodeLabel(kc, s.ControllerNode(1), "node-role.kubernetes.io/control-plane", "true")
 	s.NoError(err)
 
-	n, err = kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(1), v1.GetOptions{})
-	s.NoError(err)
-	s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+	if n, err := kc.CoreV1().Nodes().Get(s.Context(), s.ControllerNode(1), v1.GetOptions{}); s.NoError(err) {
+		s.Contains(n.Spec.Taints, corev1.Taint{Key: "node-role.kubernetes.io/master", Effect: "NoSchedule"})
+	}
 
-	n, err = kc.CoreV1().Nodes().Get(s.Context(), s.WorkerNode(0), v1.GetOptions{})
-	s.NoError(err)
-	s.NotContains(n.Labels, map[string]string{"node-role.kubernetes.io/master": "NoSchedule"})
+	if n, err := kc.CoreV1().Nodes().Get(s.Context(), s.WorkerNode(0), v1.GetOptions{}); s.NoError(err) {
+		s.NotContains(n.Labels, map[string]string{"node-role.kubernetes.io/master": "NoSchedule"})
+	}
 }
 
 func TestNodeRoleSuite(t *testing.T) {

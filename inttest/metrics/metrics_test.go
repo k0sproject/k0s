@@ -33,13 +33,13 @@ func (s *MetricsSuite) TestK0sGetsUp() {
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
 	cfg, err := s.GetKubeConfig(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.T().Log("waiting to see metrics ready")
 	s.Require().NoError(common.WaitForMetricsReady(s.Context(), cfg))
 }

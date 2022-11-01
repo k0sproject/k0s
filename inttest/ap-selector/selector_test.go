@@ -136,9 +136,9 @@ spec:
 `
 	// Add 'foo=bar' to both 'controller0' and 'worker1'
 	_, err := s.RunCommandController(0, "/usr/local/bin/k0s kubectl label controlnodes controller0 foo=bar")
-	s.NoError(err)
+	s.Require().NoError(err)
 	_, err = s.RunCommandController(0, "/usr/local/bin/k0s kubectl label nodes worker1 foo=bar")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	// Save + apply the plan
 	manifestFile := "/tmp/plan.yaml"
@@ -149,7 +149,7 @@ spec:
 	s.Require().NoError(err)
 
 	apc, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(apc)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
@@ -157,7 +157,7 @@ spec:
 		return plan.Status.State == appc.PlanCompleted
 	})
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
 	s.Equal(1, len(plan.Status.Commands))

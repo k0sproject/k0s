@@ -36,7 +36,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient("controller0", "")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
 	s.NoError(err)

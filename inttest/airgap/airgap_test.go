@@ -52,14 +52,14 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	s.NoError(s.RunWorkers(`--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args="--address=0.0.0.0 --event-burst=10 --image-gc-high-threshold=100"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	labels, err := s.GetNodeLabels(s.WorkerNode(0), kc)
-	s.NoError(err)
-	s.Equal("bar", labels["k0sproject.io/foo"])
+	if labels, err := s.GetNodeLabels(s.WorkerNode(0), kc); s.NoError(err) {
+		s.Equal("bar", labels["k0sproject.io/foo"])
+	}
 
 	s.AssertSomeKubeSystemPods(kc)
 
@@ -70,7 +70,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 	events, err := kc.CoreV1().Events("kube-system").List(s.Context(), v1.ListOptions{
 		Limit: 100,
 	})
-	s.NoError(err)
+	s.Require().NoError(err)
 	imagesUsed := 0
 	var pulledImagesMessages []string
 	for _, event := range events.Items {

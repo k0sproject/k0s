@@ -47,7 +47,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
 	as.NoError(as.RunWorkers())
 	kc, err := as.KubeClient(as.ControllerNode(0))
-	as.NoError(err)
+	as.Require().NoError(err)
 	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
 	as.NoError(err)
 	as.waitForTestRelease(addonName, "0.4.0", 1)

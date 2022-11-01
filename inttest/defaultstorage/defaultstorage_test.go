@@ -38,7 +38,7 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0), "")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
@@ -49,8 +49,8 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	pv, err := kc.CoreV1().PersistentVolumes().List(s.Context(), v1.ListOptions{})
-	s.NoError(err)
-	s.Greater(len(pv.Items), 0, "At least one persistent volume must be created for the deployment with claims")
+	s.Require().NoError(err)
+	s.NotEmpty(pv.Items, "At least one persistent volume must be created for the deployment with claims")
 }
 
 func TestDefaultStorageSuite(t *testing.T) {

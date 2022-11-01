@@ -18,6 +18,8 @@ package tunneledkas
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -42,45 +44,78 @@ func (s *Suite) TestK0sTunneledKasMode() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("worker")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NoError(s.RunWorkersWithToken(token))
 
 	// out of cluster client
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
-	eps, err := kc.CoreV1().Endpoints("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
-	s.NoError(err)
 
-	nodes, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
-	s.NoError(err)
+	s.Run("Services", func() {
+		require := s.Require()
+		s.T().Parallel()
 
-	s.Assert().Equal(1, len(eps.Subsets))
-	s.Assert().Equal(len(nodes.Items), len(eps.Subsets[0].Addresses))
+		svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
+		require.NoError(err)
+		require.Equal("Local", string(*svc.Spec.InternalTrafficPolicy))
+	})
 
-	svc, err := kc.CoreV1().Services("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
-	s.NoError(err)
-	s.Equal("Local", string(*svc.Spec.InternalTrafficPolicy))
+	s.Run("Nodes", func() {
+		require := s.Require()
+		s.T().Parallel()
 
-	kubeConfig, err := s.GetKubeConfig(s.ControllerNode(0))
-	s.NoError(err)
+		nodes, err := kc.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
+		require.NoError(err)
+		require.Len(nodes.Items, s.WorkerCount)
+	})
+
+	workerIPs := make([]string, s.WorkerCount)
+	for i := range workerIPs {
+		workerIPs[i] = s.GetWorkerIPAddress(i)
+	}
+
+	s.Run("Endpoints", func() {
+		require := s.Require()
+		s.T().Parallel()
+
+		eps, err := kc.CoreV1().Endpoints("default").Get(s.Context(), "kubernetes", v1.GetOptions{})
+		require.NoError(err)
+		require.Len(eps.Subsets, 1)
+		subsetIPs := make([]string, 0, len(eps.Subsets[0].Addresses))
+		for _, addr := range eps.Subsets[0].Addresses {
+			subsetIPs = append(subsetIPs, addr.IP)
+		}
+		require.ElementsMatch(workerIPs, subsetIPs)
+	})
 
 	// for each node try to call konnectivity-agent directly
 	// nodes IPs are not in the config.spec.api.sans
 	// so skip x509 verification here for the sake of the test
-	kubeConfig.TLSClientConfig.Insecure = true
-	kubeConfig.TLSClientConfig.CAData = nil
-	for _, addr := range eps.Subsets[0].Addresses {
-		kubeConfig.Host = fmt.Sprintf("https://%s:6443", addr.IP)
-		nodeLocalClient, err := kubernetes.NewForConfig(kubeConfig)
+	s.Run("Konnectivity", func() {
+		kubeConfig, err := s.GetKubeConfig(s.ControllerNode(0))
 		s.Require().NoError(err)
-		_, err = nodeLocalClient.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
-		s.Require().NoError(err)
-	}
+		kubeConfig.TLSClientConfig.Insecure = true
+		kubeConfig.TLSClientConfig.CAData = nil
+
+		for i, ip := range workerIPs {
+			ip, kubeConfig := ip, *kubeConfig
+			s.Run(fmt.Sprintf("worker%d", i), func() {
+				require := s.Require()
+				s.T().Parallel()
+
+				kubeConfig.Host = (&url.URL{Scheme: "https", Host: net.JoinHostPort(ip, "6443")}).String()
+				nodeLocalClient, err := kubernetes.NewForConfig(&kubeConfig)
+				require.NoError(err)
+				_, err = nodeLocalClient.CoreV1().Nodes().List(s.Context(), v1.ListOptions{})
+				require.NoError(err)
+			})
+		}
+	})
 }
 
 func TestK0sTunneledKasModeSuite(t *testing.T) {

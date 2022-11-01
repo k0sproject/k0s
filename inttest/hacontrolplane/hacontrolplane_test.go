@@ -36,11 +36,11 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
 	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	output, err := sshCon.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list 2>/dev/null")
 	s.T().Logf("k0s etcd member-list output: %s", output)
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	members := struct {
 		Members map[string]string `json:"members"`
@@ -52,7 +52,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 
 func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
 	sshCon, err := s.SSH(s.ControllerNode(executeOnControllerIdx))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	for i := 0; i < 20; i++ {
 		_, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/local/bin/k0s etcd leave --peer-address %s", peerAddress))
@@ -62,7 +62,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 		s.T().Logf("retrying k0s etcd leave...")
 		time.Sleep(500 * time.Millisecond)
 	}
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *HAControlplaneSuite) TestDeregistration() {
@@ -75,7 +75,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 	s.NoError(s.InitController(0))
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 	token, err := s.GetJoinToken("controller")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NoError(s.InitController(1, token))
 	s.NoError(s.WaitJoinAPI(s.ControllerNode(1)))
 

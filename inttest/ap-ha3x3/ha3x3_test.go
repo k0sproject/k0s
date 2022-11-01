@@ -146,25 +146,24 @@ spec:
 	s.Require().NoError(err)
 
 	ssh, err := s.SSH(s.WorkerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")
-	s.NoError(err)
+	s.Require().NoError(err)
 	iptablesVersionParts := strings.Split(out, " ")
 	iptablesModeBeforeUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]
 
 	client, err := s.AutopilotClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
 	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, 10*time.Minute, func(plan *apv1beta2.Plan) bool {
 		return plan.Status.State == appc.PlanCompleted
 	})
+	s.Require().NoError(err)
 
 	// Ensure all state/status are completed
-
-	s.NoError(err)
 	s.Equal(appc.PlanCompleted, plan.Status.State)
 
 	s.Equal(1, len(plan.Status.Commands))
@@ -181,12 +180,12 @@ spec:
 		}
 	}
 
-	version, err := s.GetK0sVersion(s.ControllerNode(0))
-	s.NoError(err)
-	s.Equal(s.K0sUpdateVersion, version)
+	if version, err := s.GetK0sVersion(s.ControllerNode(0)); s.NoError(err) {
+		s.Equal(s.K0sUpdateVersion, version)
+	}
 
 	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")
-	s.NoError(err)
+	s.Require().NoError(err)
 	iptablesVersionParts = strings.Split(out, " ")
 	iptablesModeAfterUpdate := iptablesVersionParts[len(iptablesVersionParts)-1]
 	s.Equal(iptablesModeBeforeUpdate, iptablesModeAfterUpdate)

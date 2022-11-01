@@ -37,20 +37,20 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	// Create an empty file to prove that k0s manage to rewrite a partially written file
 	ssh, err := s.SSH(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
-	s.NoError(err)
+	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
-	s.NoError(err)
+	s.Require().NoError(err)
 	_, err = ssh.ExecWithOutput(s.Context(), "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
 	s.NoError(s.InitController(0, dataDirOpt))
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args=" --address=0.0.0.0  --event-burst=10"`))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
@@ -61,9 +61,9 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	labels, err := s.GetNodeLabels(s.WorkerNode(0), kc)
-	s.NoError(err)
-	s.Equal("bar", labels["k0sproject.io/foo"])
+	if labels, err := s.GetNodeLabels(s.WorkerNode(0), kc); s.NoError(err) {
+		s.Equal("bar", labels["k0sproject.io/foo"])
+	}
 
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)

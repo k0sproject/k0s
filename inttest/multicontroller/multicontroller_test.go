@@ -37,7 +37,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
 
 	token, err := s.GetJoinToken("controller")
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.PutFile(s.ControllerNode(1), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
 	s.NoError(s.InitController(1, "--config=/tmp/k0s.yaml", token))
 
@@ -46,7 +46,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
