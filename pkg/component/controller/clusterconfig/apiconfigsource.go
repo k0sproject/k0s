@@ -18,6 +18,7 @@ package clusterconfig
 
 import (
 	"context"
+	"time"
 
 	k0sclient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -53,14 +54,25 @@ func (a *apiConfigSource) Release(ctx context.Context) {
 	log := logrus.WithField("component", "clusterconfig.apiConfigSource")
 	watch := watch.ClusterConfigs(a.configClient).
 		WithObjectName(constant.ClusterConfigObjectName).
-		WithErrorCallback(func(err error) error {
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			if retryAfter, e := watch.IsRetryable(err); e == nil {
+				log.WithError(err).Infof(
+					"Transient error while watching for updates to cluster configuration"+
+						", last observed version is %q"+
+						", starting over after %s ...",
+					lastObservedVersion, retryAfter,
+				)
+				return retryAfter, nil
+			}
+
+			retryAfter := 10 * time.Second
 			log.WithError(err).Errorf(
 				"Failed to watch for updates to cluster configuration"+
 					", last observed version is %q"+
-					", starting over after backoff ...",
-				lastObservedVersion,
+					", starting over after %s ...",
+				lastObservedVersion, retryAfter,
 			)
-			return nil
+			return retryAfter, nil
 		})
 
 	go func() {
