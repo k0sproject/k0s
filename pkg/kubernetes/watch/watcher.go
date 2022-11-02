@@ -18,34 +18,49 @@ package watch
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"reflect"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
-	watchtools "k8s.io/client-go/tools/watch"
 	"k8s.io/utils/pointer"
 )
+
+type VersionedResource interface {
+	GetResourceVersion() string
+}
 
 // Watcher offers a convenient way of watching Kubernetes resources. An
 // ephemeral alternative to Reflectors and Indexers, useful for one-shot tasks
 // when no caching is required. It performs an initial list of all the resources
 // and then starts watching them. In case the watch needs to be restarted
-// (a.k.a. resource too old), the watcher will re-list all the resources.
+// (a.k.a. resource version too old), Watcher will re-list all the resources.
+// The Watcher will restart the watch API call from time to time at the last
+// seen resource version, so that stale HTTP connections won't make the watch go
+// stale, too.
 type Watcher[T any] struct {
 	List  func(ctx context.Context, opts metav1.ListOptions) (resourceVersion string, items []T, err error)
 	Watch func(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 
 	includeDeletions bool
 	fieldSelector    string
-	errorCallback    func(error) error
+	errorCallback    ErrorCallback
 }
+
+// Condition is a func that gets called by [Watcher] for each updated item. The
+// watch will terminate successfully if it returns true, continue if it returns
+// false or terminate with the returned error.
+type Condition[T any] func(item *T) (done bool, err error)
+
+// ErrorCallback is a func that, if specified, will be called by the [Watcher]
+// whenever it encounters some error. Whenever the returned error is nil, the
+// Watcher will wait for the specified duration and retry the last call.
+// Otherwise the Watcher will return the returned error.
+type ErrorCallback = func(error) (retryDelay time.Duration, err error)
 
 // Provider represents the backend for [Watcher].
 // It is compatible with client-go's typed interfaces.
@@ -69,7 +84,7 @@ func FromClient[L metav1.ListInterface, I any](client Provider[L]) *Watcher[I] {
 
 // FromProvider creates a [Watcher] from the given [Provider] and the
 // corresponding itemsFromList function.
-func FromProvider[L interface{ GetResourceVersion() string }, I any](provider Provider[L], itemsFromList func(L) []I) *Watcher[I] {
+func FromProvider[L VersionedResource, I any](provider Provider[L], itemsFromList func(L) []I) *Watcher[I] {
 	return &Watcher[I]{
 		List: func(ctx context.Context, opts metav1.ListOptions) (string, []I, error) {
 			list, err := provider.List(ctx, opts)
@@ -81,6 +96,28 @@ func FromProvider[L interface{ GetResourceVersion() string }, I any](provider Pr
 		Watch: provider.Watch,
 	}
 }
+
+// IsRetryable checks if the given error might make sense to be retried in the
+// context of watching Kubernetes resources. Returns the retry delay and no
+// error if it's retryable, or the passed in error otherwise.
+func IsRetryable(err error) (time.Duration, error) {
+	// Only consider errors that suggest a client delay ...
+	if delaySecs, ok := apierrors.SuggestsClientDelay(err); ok {
+		// ... and whose reason indicates that retries might make sense.
+		switch apierrors.ReasonForError(err) {
+		case metav1.StatusReasonTooManyRequests,
+			metav1.StatusReasonServerTimeout,
+			metav1.StatusReasonTimeout,
+			metav1.StatusReasonServiceUnavailable:
+			return time.Duration(delaySecs) * time.Second, nil
+		}
+	}
+
+	return 0, err
+}
+
+// Ensure that [IsRetryable] is a valid error callback.
+var _ ErrorCallback = IsRetryable
 
 // IncludingDeletions will include deleted items in watches.
 func (w *Watcher[T]) IncludingDeletions() *Watcher[T] {
@@ -127,30 +164,18 @@ func (w *Watcher[T]) WithoutFieldSelector() *Watcher[T] {
 //   - The returned error is not nil: terminate watch with that error
 //
 // If the error callback is not set or nil, the default behavior is to terminate.
-func (w *Watcher[T]) WithErrorCallback(callback func(error) error) *Watcher[T] {
+func (w *Watcher[T]) WithErrorCallback(callback ErrorCallback) *Watcher[T] {
 	w.errorCallback = callback
 	return w
 }
 
 // Until runs a watch until condition returns true. It will error out in case
 // the context gets canceled or the condition returns an error.
-func (w *Watcher[T]) Until(ctx context.Context, condition func(*T) (bool, error)) error {
-	listCondition := func(items []T) (bool, error) {
-		for i := range items {
-			ok, err := condition(&items[i])
-			if err != nil {
-				return false, err
-			}
-			if ok {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	}
-
+func (w *Watcher[T]) Until(ctx context.Context, condition Condition[T]) error {
 	return retry(ctx, w.errorCallback, func(ctx context.Context) error {
-		return w.run(ctx, listCondition, condition)
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		return w.run(ctx, condition)
 	})
 }
 
@@ -183,153 +208,203 @@ func itemsFromList[L metav1.ListInterface, I any]() (func(L) []I, error) {
 	}, nil
 }
 
-type noRetry struct{ error }
+// conditionError indicates that an error originated from a [Condition]. Those
+// errors will never be presented to the error callback, but terminate the watch
+// immediately.
+type conditionError struct{ error }
 
-var errResourceTooOld = errors.New("resource too old")
+type startWatch struct {
+	resourceVersion string
+}
 
-func (w *Watcher[T]) run(ctx context.Context, listCallback func([]T) (bool, error), watchCallback func(*T) (bool, error)) error {
-	var initialResourceVersion string
-	{
-		resourceVersion, items, err := w.List(ctx, metav1.ListOptions{
-			FieldSelector:  w.fieldSelector,
-			TimeoutSeconds: pointer.Int64(30),
-		})
-		if err != nil {
-			return err
-		}
-		if ok, err := listCallback(items); err != nil {
-			// Check if the err is a "proper" API server error
-			if status, ok := err.(apierrors.APIStatus); ok || errors.As(err, &status) {
-				status := status.Status()
-				// If this is a server error and the server specified some
-				// retry-after hint, don't suppress any retries. This matches
-				// e.g. the API server's "not found handler" which has a message
-				// of "the request has been made before all known HTTP paths
-				// have been installed, please try again".
-				if status.Code >= 500 && status.Code <= 599 {
-					details := status.Details
-					if details != nil {
-						if details.RetryAfterSeconds > 0 {
-							return err
-						}
-					}
-				}
-			}
-			return noRetry{err}
-		} else if ok {
-			return nil
-		}
-
-		initialResourceVersion = resourceVersion
-	}
-
-	watcher, err := watchtools.NewRetryWatcher(initialResourceVersion, &cache.ListWatch{
-		WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
-			opts.FieldSelector = w.fieldSelector
-			opts.TimeoutSeconds = pointer.Int64(30)
-			return w.Watch(ctx, opts)
-		},
-	})
+func (w *Watcher[T]) run(ctx context.Context, condition Condition[T]) error {
+	startWatch, err := w.list(ctx, condition)
 	if err != nil {
 		return err
 	}
-	defer watcher.Stop()
 
-	for {
-		var suppressDeletions bool
-		select {
-		case event, ok := <-watcher.ResultChan():
-			if !ok {
-				return errors.New("result channel closed unexpectedly")
-			}
-
-			switch event.Type {
-			case watch.Bookmark:
-				continue // nothing to do, handled by RetryWatcher
-
-			case watch.Deleted:
-				suppressDeletions = !w.includeDeletions
-				fallthrough
-
-			case watch.Added, watch.Modified:
-				item, ok := any(event.Object).(*T)
-				if !ok {
-					var example T
-					err = error(&apierrors.UnexpectedObjectError{Object: event.Object})
-					return fmt.Errorf("got an event of type %q, expecting an object of type %T: (%T) %w", event.Type, &example, event.Object, err)
-				}
-
-				if suppressDeletions && isDeleted(item) {
-					continue
-				}
-
-				if ok, err := watchCallback(item); err != nil {
-					return noRetry{err}
-				} else if ok {
-					return nil
-				}
-
-			case watch.Error:
-				fallthrough // go to default case for error handling
-
-			default:
-				err := apierrors.FromObject(event.Object)
-				var statusErr *apierrors.StatusError
-				if errors.As(err, &statusErr) && statusErr.ErrStatus.Code == http.StatusGone {
-					return errResourceTooOld
-				}
-
-				return err
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
-func isDeleted(resource any) bool {
-	deletable, ok := resource.(interface{ GetDeletionTimestamp() *metav1.Time })
-	return ok && deletable.GetDeletionTimestamp() != nil
-}
-
-func retry(ctx context.Context, errorCallback func(error) error, runWatch func(context.Context) error) error {
-	for {
-		err := runWatch(ctx)
-		if err == nil {
-			// No error means the callbacks returned success. The watch is done.
-			return nil
-		}
-
-		if err == errResourceTooOld {
-			// Start over without delay.
-			continue
-		}
-
-		if err == ctx.Err() {
-			// The context has been canceled. Good bye.
-			return err
-		}
-
-		if err, ok := err.(noRetry); ok {
-			return err.error
-		}
-
-		// Ask the callback about any other errors.
-		if errorCallback != nil {
-			err = errorCallback(err)
-		}
-
+	for startWatch != nil {
+		startWatch, err = w.watch(ctx, startWatch.resourceVersion, condition)
 		if err != nil {
 			return err
 		}
+	}
 
-		// Retry in 10 secs.
-		select {
-		case <-time.After(10 * time.Second):
-			continue
-		case <-ctx.Done():
-			return ctx.Err()
+	return nil
+}
+
+func (w *Watcher[T]) list(ctx context.Context, condition Condition[T]) (*startWatch, error) {
+	const maxListDurationSecs = 30
+	ctx, cancel := context.WithTimeout(ctx, (maxListDurationSecs+10)*time.Second)
+	defer cancel()
+	resourceVersion, items, err := w.List(ctx, metav1.ListOptions{
+		FieldSelector:  w.fieldSelector,
+		TimeoutSeconds: pointer.Int64(maxListDurationSecs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range items {
+		done, err := condition(&items[i])
+		if err != nil {
+			return nil, conditionError{err}
 		}
+		if done {
+			return nil, nil // terminate successfully
+		}
+	}
+
+	if !isResourceVersionValid(resourceVersion) {
+		return nil, fmt.Errorf("list returned invalid resource version: %q", resourceVersion)
+	}
+
+	return &startWatch{resourceVersion}, nil
+}
+
+func (w *Watcher[T]) watch(ctx context.Context, resourceVersion string, condition Condition[T]) (*startWatch, error) {
+	const maxWatchDurationSecs = 120
+	watcher, err := w.Watch(ctx, metav1.ListOptions{
+		ResourceVersion:     resourceVersion,
+		AllowWatchBookmarks: true,
+		FieldSelector:       w.fieldSelector,
+		TimeoutSeconds:      pointer.Int64(maxWatchDurationSecs),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer watcher.Stop()
+
+	watchTimeout := time.NewTimer((maxWatchDurationSecs + 10) * time.Second)
+	defer watchTimeout.Stop()
+
+	startWatch := &startWatch{resourceVersion}
+	for startWatch != nil {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+
+		case <-watchTimeout.C:
+			return nil, apierrors.NewTimeoutError("server unexpectedly didn't close the watch", 1)
+
+		case event, ok := <-watcher.ResultChan():
+			if !ok {
+				// The server closed the watch remotely.
+				// This usually happens after maxWatchDurationSecs have passed.
+				return startWatch, nil
+			}
+
+			startWatch, err = w.processWatchEvent(&event, condition)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return nil, nil // terminate successfully
+}
+
+func (w *Watcher[T]) processWatchEvent(event *watch.Event, condition Condition[T]) (*startWatch, error) {
+	switch event.Type {
+	case watch.Added, watch.Modified, watch.Deleted:
+		if w.includeDeletions || event.Type != watch.Deleted {
+			item, ok := any(event.Object).(*T)
+			if !ok {
+				var example T
+				var err error = &apierrors.UnexpectedObjectError{Object: event.Object}
+				return nil, fmt.Errorf("got an event of type %q, expecting an object of type %T: (%T) %w", event.Type, &example, event.Object, err)
+			}
+
+			if done, err := condition(item); err != nil {
+				return nil, conditionError{err}
+			} else if done {
+				return nil, nil // terminate successfully
+			}
+		}
+
+		fallthrough // update resource version
+
+	case watch.Bookmark:
+		nextResourceVersion, err := getResourceVersion(event.Object)
+		if err != nil {
+			return nil, err
+		}
+		return &startWatch{nextResourceVersion}, nil
+
+	case watch.Error:
+		return nil, fmt.Errorf("watch error: %w", apierrors.FromObject(event.Object))
+
+	default:
+		return nil, fmt.Errorf("unexpected watch event (%s): %w", event.Type, apierrors.FromObject(event.Object))
+	}
+}
+
+func getResourceVersion(resource runtime.Object) (string, error) {
+	if rv, ok := resource.(VersionedResource); ok {
+		resourceVersion := rv.GetResourceVersion()
+		if !isResourceVersionValid(resourceVersion) {
+			var err error = &apierrors.UnexpectedObjectError{Object: resource}
+			return "", fmt.Errorf("invalid resource version: %w", err)
+		}
+		return resourceVersion, nil
+	}
+
+	var err error = &apierrors.UnexpectedObjectError{Object: resource}
+	return "", fmt.Errorf("failed to get resource version: %w", err)
+}
+
+func isResourceVersionValid(resourceVersion string) bool {
+	// https://github.com/kubernetes/kubernetes/issues/74022
+	switch resourceVersion {
+	case "", "0":
+		return false
+	default:
+		return true
+	}
+}
+
+func retry(ctx context.Context, errorCallback ErrorCallback, runWatch func(context.Context) error) error {
+	for {
+		err := runWatch(ctx)
+		if err == nil {
+			// No error means the user-specified condition returned success.
+			// The watch is done.
+			return nil
+		}
+
+		if err, ok := err.(conditionError); ok {
+			// The user-specified condition returned an error.
+			return err.error
+		}
+
+		if ctx.Err() != nil {
+			// The context has been closed. Good bye.
+			return err
+		}
+
+		if apierrors.IsResourceExpired(err) {
+			// Start over without delay (resource version too old)
+			continue
+		}
+
+		// Ask the error callback about any other errors.
+		if errorCallback != nil {
+			retryDelay, err := errorCallback(err)
+			if err != nil {
+				return err
+			}
+
+			// Retry after some timeout.
+			timer := time.NewTimer(retryDelay)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return ctx.Err()
+			case <-timer.C:
+				continue
+			}
+		}
+
+		return err
 	}
 }
