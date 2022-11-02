@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/k0sproject/k0s/inttest/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
@@ -25,6 +26,8 @@ import (
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 )
 
 // WaitForPlanByName waits for the existence of a Plan having a specific name.
@@ -54,6 +57,7 @@ func WaitForByName[L metav1.ListInterface, I any](ctx context.Context, client wa
 	var match *I
 	err := watch.FromClient[L, I](client).
 		WithObjectName(name).
+		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(item *I) (bool, error) {
 			// If any of the conditions fail, indicate that the poll should continue
 			for _, cond := range conds {

@@ -20,8 +20,10 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
+	"syscall"
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -37,6 +39,8 @@ import (
 	"k8s.io/client-go/rest"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	aggregatorclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Poll tries a condition func until it returns true, an error or the specified
@@ -60,6 +64,7 @@ func WaitForMetricsReady(ctx context.Context, c *rest.Config) error {
 	watchAPIServices := watch.FromClient[*apiregistrationv1.APIServiceList, apiregistrationv1.APIService]
 	return watchAPIServices(clientset.ApiregistrationV1().APIServices()).
 		WithObjectName("v1beta1.metrics.k8s.io").
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(service *apiregistrationv1.APIService) (bool, error) {
 			for _, c := range service.Status.Conditions {
 				if c.Type == apiregistrationv1.Available {
@@ -79,6 +84,7 @@ func WaitForMetricsReady(ctx context.Context, c *rest.Config) error {
 func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string) error {
 	return watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
 		WithObjectName(name).
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(ds *appsv1.DaemonSet) (bool, error) {
 			return ds.Status.NumberAvailable == ds.Status.DesiredNumberScheduled, nil
 		})
@@ -89,6 +95,7 @@ func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string
 func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name string) error {
 	return watch.Deployments(kc.AppsV1().Deployments("kube-system")).
 		WithObjectName(name).
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(deployment *appsv1.Deployment) (bool, error) {
 			for _, c := range deployment.Status.Conditions {
 				if c.Type == appsv1.DeploymentAvailable {
@@ -126,6 +133,7 @@ func waitForDeployment(kc *kubernetes.Clientset, name string) wait.ConditionWith
 func WaitForPod(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
 	return watch.Pods(kc.CoreV1().Pods(namespace)).
 		WithObjectName(name).
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(pod *corev1.Pod) (bool, error) {
 			for _, cond := range pod.Status.Conditions {
 				if cond.Type == corev1.PodReady {
@@ -170,12 +178,32 @@ func WaitForPodLogs(ctx context.Context, kc *kubernetes.Clientset, namespace str
 
 func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) error {
 	watchLeases := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease]
-	return watchLeases(kc.CoordinationV1().Leases(namespace)).WithObjectName(name).Until(
-		ctx, func(lease *coordinationv1.Lease) (bool, error) {
-			// Verify that there's a valid holder on the lease
-			return *lease.Spec.HolderIdentity != "", nil
-		},
-	)
+	return watchLeases(kc.CoordinationV1().Leases(namespace)).
+		WithObjectName(name).
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
+		Until(
+			ctx, func(lease *coordinationv1.Lease) (bool, error) {
+				// Verify that there's a valid holder on the lease
+				return *lease.Spec.HolderIdentity != "", nil
+			},
+		)
+}
+
+func RetryWatchErrors(logf func(format string, args ...any)) watch.ErrorCallback {
+	return func(err error) (time.Duration, error) {
+		if retryDelay, e := watch.IsRetryable(err); e == nil {
+			logf("Encountered transient watch error, retrying in %s: %v", retryDelay, err)
+			return retryDelay, nil
+		}
+
+		if errors.Is(err, syscall.ECONNRESET) {
+			retryDelay := 1 * time.Second
+			logf("Encountered connection reset while watching, retrying in %s: %v", retryDelay, err)
+			return retryDelay, nil
+		}
+
+		return 0, err
+	}
 }
 
 // VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
