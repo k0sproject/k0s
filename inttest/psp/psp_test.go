@@ -59,7 +59,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 		TypeMeta:   v1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 		ObjectMeta: v1.ObjectMeta{Name: "test-pod-non-privileged"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "pause", Image: "k8s.gcr.io/pause"}},
+			Containers: []corev1.Container{{Name: "pause", Image: "registry.k8s.io/pause"}},
 		},
 	}
 
@@ -76,7 +76,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 			Containers: []corev1.Container{
 				{
 					Name:  "pause",
-					Image: "k8s.gcr.io/pause",
+					Image: "registry.k8s.io/pause",
 					SecurityContext: &corev1.SecurityContext{
 						RunAsUser: pointer.Int64(0),
 					},
