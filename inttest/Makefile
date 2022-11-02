@@ -3,7 +3,7 @@ ARCH = $(shell go env GOARCH)
 OS = $(shell go env GOOS)
 K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
-SONOBUOY_VERSION ?= 0.56.7
+SONOBUOY_VERSION ?= 0.56.11
 sonobuoy_url = https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_$(OS)_$(ARCH).tar.gz
 
 curl = curl -L --silent
