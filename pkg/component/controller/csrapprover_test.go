@@ -28,6 +28,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/stretchr/testify/assert"
 	certv1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
@@ -70,7 +71,7 @@ func TestBasicCRSApprover(t *testing.T) {
 			},
 		},
 	}
-	c := NewCSRApprover(config, &DummyLeaderElector{Leader: true}, fakeFactory)
+	c := NewCSRApprover(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
 
 	assert.NoError(t, c.Init(ctx))
 	assert.NoError(t, c.approveCSR(ctx))

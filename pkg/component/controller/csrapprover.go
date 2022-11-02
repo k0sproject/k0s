@@ -35,7 +35,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
@@ -57,14 +57,14 @@ type CSRApprover struct {
 
 	ClusterConfig     *v1beta1.ClusterConfig
 	KubeClientFactory kubeutil.ClientFactoryInterface
-	leaderElector     LeaderElector
+	leaderElector     leaderelector.Interface
 	clientset         clientset.Interface
 }
 
 var _ component.Component = (*CSRApprover)(nil)
 
 // NewCSRApprover creates the CSRApprover component
-func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *CSRApprover {
+func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *CSRApprover {
 	d := atomic.Value{}
 	d.Store(true)
 	return &CSRApprover{

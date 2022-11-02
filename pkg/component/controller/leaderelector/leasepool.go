@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package leaderelector
 
 import (
 	"context"
@@ -27,14 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// LeaderElector is the common leader elector component to manage each controller leader status
-type LeaderElector interface {
-	IsLeader() bool
-	AddAcquiredLeaseCallback(fn func())
-	AddLostLeaseCallback(fn func())
-}
-
-type LeasePoolLeaderElector struct {
+type LeasePool struct {
 	log *logrus.Entry
 
 	stopCh            chan struct{}
@@ -46,14 +39,14 @@ type LeasePoolLeaderElector struct {
 	lostLeaseCallbacks     []func()
 }
 
-var _ LeaderElector = (*LeasePoolLeaderElector)(nil)
-var _ component.Component = (*LeasePoolLeaderElector)(nil)
+var _ Interface = (*LeasePool)(nil)
+var _ component.Component = (*LeasePool)(nil)
 
-// NewLeasePoolLeaderElector creates new leader elector using a Kubernetes lease pool.
-func NewLeasePoolLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePoolLeaderElector {
+// NewLeasePool creates a new leader elector using a Kubernetes lease pool.
+func NewLeasePool(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePool {
 	d := atomic.Value{}
 	d.Store(false)
-	return &LeasePoolLeaderElector{
+	return &LeasePool{
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
 		log:               logrus.WithFields(logrus.Fields{"component": "poolleaderelector"}),
@@ -61,11 +54,11 @@ func NewLeasePoolLeaderElector(kubeClientFactory kubeutil.ClientFactoryInterface
 	}
 }
 
-func (l *LeasePoolLeaderElector) Init(_ context.Context) error {
+func (l *LeasePool) Init(_ context.Context) error {
 	return nil
 }
 
-func (l *LeasePoolLeaderElector) Start(ctx context.Context) error {
+func (l *LeasePool) Start(ctx context.Context) error {
 	client, err := l.kubeClientFactory.GetClient()
 	if err != nil {
 		return fmt.Errorf("can't create kubernetes rest client for lease pool: %v", err)
@@ -107,21 +100,21 @@ func runCallbacks(callbacks []func()) {
 	}
 }
 
-func (l *LeasePoolLeaderElector) AddAcquiredLeaseCallback(fn func()) {
+func (l *LeasePool) AddAcquiredLeaseCallback(fn func()) {
 	l.acquiredLeaseCallbacks = append(l.acquiredLeaseCallbacks, fn)
 }
 
-func (l *LeasePoolLeaderElector) AddLostLeaseCallback(fn func()) {
+func (l *LeasePool) AddLostLeaseCallback(fn func()) {
 	l.lostLeaseCallbacks = append(l.lostLeaseCallbacks, fn)
 }
 
-func (l *LeasePoolLeaderElector) Stop() error {
+func (l *LeasePool) Stop() error {
 	if l.leaseCancel != nil {
 		l.leaseCancel()
 	}
 	return nil
 }
 
-func (l *LeasePoolLeaderElector) IsLeader() bool {
+func (l *LeasePool) IsLeader() bool {
 	return l.leaderStatus.Load().(bool)
 }

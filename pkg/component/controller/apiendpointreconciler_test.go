@@ -27,6 +27,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 )
 
 var expectedAddresses = []string{
@@ -48,7 +49,7 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(&DummyLeaderElector{Leader: false}, fakeFactory)
+	r := NewEndpointReconciler(&leaderelector.Dummy{Leader: false}, fakeFactory)
 	r.clusterConfig = config
 
 	ctx := context.TODO()
@@ -75,7 +76,7 @@ func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&leaderelector.Dummy{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
 	ctx := context.TODO()
@@ -112,7 +113,7 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 		},
 	}
 
-	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&leaderelector.Dummy{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
 	assert.NoError(t, r.Init(ctx))
@@ -155,7 +156,7 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 			},
 		},
 	}
-	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&leaderelector.Dummy{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
 	assert.NoError(t, r.Init(ctx))
@@ -199,7 +200,7 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 			},
 		},
 	}
-	r := NewEndpointReconciler(&DummyLeaderElector{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(&leaderelector.Dummy{Leader: true}, fakeFactory)
 	r.clusterConfig = config
 
 	assert.NoError(t, r.Init(ctx))

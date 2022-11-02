@@ -24,7 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component"
-	"github.com/k0sproject/k0s/pkg/component/controller"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -44,7 +44,7 @@ type Manager struct {
 	log           *logrus.Entry
 	stacks        map[string]stack
 
-	LeaderElector controller.LeaderElector
+	LeaderElector leaderelector.Interface
 }
 
 var _ component.Component = (*Manager)(nil)

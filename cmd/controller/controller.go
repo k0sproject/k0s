@@ -38,6 +38,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -215,15 +216,15 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	var leaderElector interface {
-		controller.LeaderElector
+		leaderelector.Interface
 		component.Component
 	}
 
 	// One leader elector per controller
 	if !c.SingleNode {
-		leaderElector = controller.NewLeasePoolLeaderElector(adminClientFactory)
+		leaderElector = leaderelector.NewLeasePool(adminClientFactory)
 	} else {
-		leaderElector = &controller.DummyLeaderElector{Leader: true}
+		leaderElector = &leaderelector.Dummy{Leader: true}
 	}
 	c.NodeComponents.Add(ctx, leaderElector)
 

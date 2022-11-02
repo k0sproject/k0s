@@ -23,14 +23,16 @@ import (
 	"sort"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
@@ -43,13 +45,13 @@ type APIEndpointReconciler struct {
 
 	logger *logrus.Entry
 
-	leaderElector     LeaderElector
+	leaderElector     leaderelector.Interface
 	stopCh            chan struct{}
-	kubeClientFactory k8sutil.ClientFactoryInterface
+	kubeClientFactory kubeutil.ClientFactoryInterface
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *APIEndpointReconciler {
+func NewEndpointReconciler(leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *APIEndpointReconciler {
 	return &APIEndpointReconciler{
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
@@ -127,7 +129,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 
 	epClient := c.CoreV1().Endpoints("default")
 
-	ep, err := epClient.Get(ctx, "kubernetes", v1.GetOptions{})
+	ep, err := epClient.Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err := a.createEndpoint(ctx, ipStrings)
@@ -149,7 +151,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 			},
 		}}
 
-		_, err := epClient.Update(ctx, ep, v1.UpdateOptions{})
+		_, err := epClient.Update(ctx, ep, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -160,11 +162,11 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 
 func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []string) error {
 	ep := &corev1.Endpoints{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 		},
 		Subsets: []corev1.EndpointSubset{{
@@ -184,7 +186,7 @@ func (a *APIEndpointReconciler) createEndpoint(ctx context.Context, addresses []
 		return err
 	}
 
-	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, v1.CreateOptions{})
+	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
