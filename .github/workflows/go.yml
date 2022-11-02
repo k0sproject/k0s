@@ -322,6 +322,7 @@ jobs:
 
   smoketest-arm:
     name: Smoke test on armv7/arm64
+    if: github.repository == 'k0sproject/k0s'
     strategy:
       matrix:
         arch:

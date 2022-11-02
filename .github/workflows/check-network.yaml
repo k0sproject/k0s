@@ -19,6 +19,7 @@ jobs:
       KUBECONFIG: ${{ github.workspace }}/kubeconfig
 
     name: "K8s Network Conformance Testing"
+    if: github.repository == 'k0sproject/k0s'
     runs-on: ubuntu-latest
     outputs:
       k0s_version: ${{ steps.bin_info.outputs.K0S_VERSION }}

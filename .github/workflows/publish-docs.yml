@@ -67,11 +67,12 @@ jobs:
           mike deploy --push "$VERSION"
 
       - name: Update mike version aliases
+        if: github.repository == 'k0sproject/k0s'
         id: set_versions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAGS=$(gh release list -L 1000 -R k0sproject/k0s | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
+          TAGS=$(gh release list -L 1000 -R "$GITHUB_REPOSITORY" | grep "+k0s." | grep -v Draft | cut -f 1 | k0s_sort)
           LATEST=$(echo "${TAGS}" | tail -1)
           STABLE=$(echo "${TAGS}" | grep -v -- "-" | tail -1)
           mike alias -u head main
@@ -85,6 +86,7 @@ jobs:
       # Commits if the files were changed
       # Finally pushes if there are unpushed commits
       - name: Create version files
+        if: github.repository == 'k0sproject/k0s'
         run: |
           LATEST=${{ steps.set_versions.outputs.LATEST }}
           STABLE=${{ steps.set_versions.outputs.STABLE }}
