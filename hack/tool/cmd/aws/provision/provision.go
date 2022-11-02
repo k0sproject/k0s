@@ -19,15 +19,16 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"tool/pkg/constant"
 
 	k0sctlcmd "github.com/k0sproject/k0sctl/cmd"
 )
 
 type ProvisionConfig struct {
-	Init       func(ctx context.Context) error
-	Create     func(ctx context.Context) error
-	KubeConfig func(ctx context.Context) (string, error)
+	Init          func(ctx context.Context) error
+	Create        func(ctx context.Context) error
+	ClusterConfig func(ctx context.Context) (string, error)
 }
 
 func Provision(ctx context.Context, config ProvisionConfig) error {
@@ -39,9 +40,9 @@ func Provision(ctx context.Context, config ProvisionConfig) error {
 		return fmt.Errorf("failed to create k0s cluster infrastructure: %w", err)
 	}
 
-	kubeConfig, err := config.KubeConfig(ctx)
+	clusterConfig, err := config.ClusterConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch kubeconfig: %w", err)
+		return fmt.Errorf("failed to fetch cluster config: %w", err)
 	}
 
 	// Invoke k0sctl
@@ -51,9 +52,12 @@ func Provision(ctx context.Context, config ProvisionConfig) error {
 		return fmt.Errorf("failed to create '%s': %w", constant.DataDirK0sctlConfig, err)
 	}
 
-	if _, err := f.WriteString(kubeConfig); err != nil {
+	if _, err := f.WriteString(clusterConfig); err != nil {
 		return fmt.Errorf("failed to write to '%s': %w", constant.DataDirK0sctlConfig, err)
 	}
+
+	// Post-processing of k0sctl yaml
+	bugfixK0sctlNullImages(constant.DataDirK0sctlConfig)
 
 	if err := k0sctlcmd.App.Run([]string{"k0sctl", "apply", "-c", constant.DataDirK0sctlConfig}); err != nil {
 		return fmt.Errorf("failed to create k0s cluster with k0sctl: %w", err)
@@ -88,4 +92,16 @@ func Deprovision(ctx context.Context, config DeprovisionConfig) error {
 	}
 
 	return config.Destroy(ctx)
+}
+
+func bugfixK0sctlNullImages(k0sctlConfigFile string) error {
+	cmd := exec.Command("sed", "-i", "/images.*null/d", k0sctlConfigFile)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to post-process k0sctl.yaml")
+	}
+
+	return nil
 }

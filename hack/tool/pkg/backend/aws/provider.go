@@ -95,7 +95,7 @@ func (p *Provider) VpcInfraCreate(ctx context.Context, name string, region strin
 }
 
 func (p *Provider) VpcInfraDestroy(ctx context.Context, name string, region string, cidr string) error {
-	log.Printf("Creating VPC infrastructure")
+	log.Printf("Destroying VPC infrastructure")
 
 	return terraform.Destroy(ctx, vpcInfraPath,
 		tfexec.Var(kv("region", region)),
@@ -144,8 +144,8 @@ func (p *Provider) ClusterHADestroy(ctx context.Context, clusterName string, k0s
 	)
 }
 
-func (p *Provider) ClusterHAKubeConfig(ctx context.Context) (string, error) {
-	return clusterKubeConfig(ctx, haPath)
+func (p *Provider) ClusterHAClusterConfig(ctx context.Context) (string, error) {
+	return clusterConfig(ctx, haPath)
 }
 
 // havpc create
@@ -192,12 +192,12 @@ func (p *Provider) ClusterHAVpcDestroy(ctx context.Context, vpcId string, subnet
 	)
 }
 
-func (p *Provider) ClusterHAVpcKubeConfig(ctx context.Context) (string, error) {
-	return clusterKubeConfig(ctx, haVpcPath)
+func (p *Provider) ClusterHAVpcClusterConfig(ctx context.Context) (string, error) {
+	return clusterConfig(ctx, haVpcPath)
 }
 
-func clusterKubeConfig(ctx context.Context, path string) (string, error) {
-	log.Printf("Retrieving 'kubeconfig' for cluster")
+func clusterConfig(ctx context.Context, path string) (string, error) {
+	log.Printf("Retrieving generated cluster config")
 
 	vals, err := terraform.Output(ctx, haPath)
 	if err != nil {

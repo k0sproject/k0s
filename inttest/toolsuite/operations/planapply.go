@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type PlanBuilder func(output tsutil.TerraformOutputMap) (*apv1beta2.Plan, error)
@@ -78,9 +79,21 @@ func PlanApplyOperation(builder PlanBuilder) ts.ClusterOperation {
 	}
 }
 
-// savePlan saves a marshalled Plan to the data directory.
+// savePlan saves a marshalled Plan to the data directory, without status.
 func savePlan(planFile string, plan *apv1beta2.Plan) error {
-	data, err := yaml.Marshal(plan)
+	noStatusPlan := struct {
+		metav1.TypeMeta `json:",omitempty,inline"`
+		ObjectMeta      metav1.ObjectMeta     `json:"metadata,omitempty"`
+		Spec            apv1beta2.PlanSpec    `json:"spec"`
+		Status          *apv1beta2.PlanStatus `json:"status,omitempty"`
+	}{
+		plan.TypeMeta,
+		plan.ObjectMeta,
+		plan.Spec,
+		nil,
+	}
+
+	data, err := yaml.Marshal(&noStatusPlan)
 	if err != nil {
 		return fmt.Errorf("failed to marshal plan for save: %w", err)
 	}
