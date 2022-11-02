@@ -155,6 +155,16 @@ jobs:
             subnet: 2,
           },
 
+          # In the default case this will be an update to the same version,
+          # however this allows for testing latest branch version releases
+          # to RC builds (or whatever defined in GHA input)
+          {
+            name: "v1246-0",
+            fromver: "v1.24.6+k0s.0",
+            tover: "${{ github.event.inputs.v124latest }}",
+            subnet: 3,
+          },
+
           # latest branch versions to latest
           {
             name: "v124to125",
