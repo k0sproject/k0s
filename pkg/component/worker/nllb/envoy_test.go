@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
+	"go.uber.org/multierr"
 
 	"k8s.io/client-go/util/jsonpath"
 
@@ -33,7 +34,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func TestWriteEnvoyConfig(t *testing.T) {
+func TestWriteEnvoyConfigFiles(t *testing.T) {
 	for _, test := range []struct {
 		name     string
 		expected int
@@ -56,18 +57,44 @@ func TestWriteEnvoyConfig(t *testing.T) {
 				filesParams.apiServers = append(filesParams.apiServers, *server)
 			}
 
-			require.NoError(t, writeEnvoyConfig(&params, &filesParams))
+			require.NoError(t, writeEnvoyConfigFiles(&params, &filesParams))
 
-			content, err := os.ReadFile(filepath.Join(dir, "envoy.yaml"))
-			require.NoError(t, err)
-			var parsed map[string]any
-			require.NoError(t, yaml.Unmarshal(content, &parsed), "invalid YAML in envoy.yaml")
-
-			if ip, err := evalJSONPath[string](parsed,
-				".static_resources.listeners[0].address.socket_address.address",
-			); assert.NoError(t, err) {
-				assert.Equal(t, "::1", ip)
+			parse := func(t *testing.T, file string) (parsed map[string]any) {
+				content, err := os.ReadFile(filepath.Join(dir, file))
+				require.NoError(t, err)
+				require.NoError(t, yaml.Unmarshal(content, &parsed), "invalid YAML in %s", file)
+				return
 			}
+
+			t.Run("envoy.yaml", func(t *testing.T) {
+				ip, err := evalJSONPath[string](parse(t, "envoy.yaml"),
+					".static_resources.listeners[0].address.socket_address.address",
+				)
+				require.NoError(t, err)
+				assert.Equal(t, "::1", ip)
+			})
+
+			t.Run("cds.yaml", func(t *testing.T) {
+				eps, err := evalJSONPath[[]any](parse(t, "cds.yaml"),
+					".resources[0].load_assignment.endpoints[0].lb_endpoints",
+				)
+				require.NoError(t, err)
+
+				addrs := []string{}
+				for i, ep := range eps {
+					host, herr := evalJSONPath[string](ep, ".endpoint.address.socket_address.address")
+					port, perr := evalJSONPath[float64](ep, ".endpoint.address.socket_address.port_value")
+					if assert.NoError(t, multierr.Append(herr, perr), "For endpoint %d", i) {
+						iport := int64(port)
+						if assert.Equal(t, float64(iport), port, "Port is not an integer for endpoint %d", i) {
+							addrs = append(addrs, fmt.Sprintf("%s:%d", host, iport))
+						}
+					}
+				}
+				if !t.Failed() {
+					assert.Equal(t, test.servers, addrs)
+				}
+			})
 		})
 	}
 }

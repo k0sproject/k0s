@@ -41,6 +41,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
 // envoyProxy is a load balancer [backend] that's managing a static Envoy pod to
@@ -96,6 +97,11 @@ type envoyConfig struct {
 	envoyPodParams
 	envoyFilesParams
 }
+
+const (
+	envoyBootstrapFile = "envoy.yaml"
+	envoyCDSFile       = "cds.yaml"
+)
 
 func (e *envoyProxy) init(ctx context.Context) error {
 	if err := dir.Init(e.dir, 0755); err != nil {
@@ -155,7 +161,7 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		e.config.envoyFilesParams.konnectivityServerBindPort = uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
 	}
 
-	err = writeEnvoyConfig(&e.config.envoyParams, &e.config.envoyFilesParams)
+	err = writeEnvoyConfigFiles(&e.config.envoyParams, &e.config.envoyFilesParams)
 	if err != nil {
 		return err
 	}
@@ -180,7 +186,7 @@ func (e *envoyProxy) updateAPIServers(apiServers []k0snet.HostPort) error {
 		return errors.New("not yet started")
 	}
 	e.config.envoyFilesParams.apiServers = apiServers
-	return writeEnvoyConfig(&e.config.envoyParams, &e.config.envoyFilesParams)
+	return writeEnvoyConfigFiles(&e.config.envoyParams, &e.config.envoyFilesParams)
 }
 
 func (e *envoyProxy) stop() {
@@ -193,16 +199,21 @@ func (e *envoyProxy) stop() {
 		return
 	}
 
-	path := filepath.Join(e.config.configDir, "envoy.yaml")
-	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-		e.log.WithError(err).Warn("Failed to remove Envoy bootstrap config from disk")
+	for _, file := range []struct{ desc, name string }{
+		{"Envoy bootstrap config", envoyBootstrapFile},
+		{"Envoy CDS config", envoyCDSFile},
+	} {
+		path := filepath.Join(e.config.configDir, file.name)
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			e.log.WithError(err).Warnf("Failed to remove %s from disk", file.desc)
+		}
 	}
 
 	e.config = nil
 }
 
-func writeEnvoyConfig(params *envoyParams, filesParams *envoyFilesParams) error {
-	templateParams := struct {
+func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) error {
+	data := struct {
 		BindIP                     net.IP
 		APIServerBindPort          uint16
 		KonnectivityServerBindPort uint16
@@ -216,25 +227,24 @@ func writeEnvoyConfig(params *envoyParams, filesParams *envoyFilesParams) error 
 		UpstreamServers:            filesParams.apiServers,
 	}
 
-	err := file.WriteAtomically(filepath.Join(params.configDir, "envoy.yaml"), 0444, func(file io.Writer) error {
-		bufferedWriter := bufio.NewWriter(file)
-		if err := envoyBootstrapConfig.Execute(bufferedWriter, templateParams); err != nil {
-			return fmt.Errorf("failed to generate bootstrap configuration: %w", err)
+	var errs error
+	for fileName, template := range map[string]*template.Template{
+		envoyBootstrapFile: envoyBootstrapConfig,
+		envoyCDSFile:       envoyClustersConfig,
+	} {
+		err := file.WriteAtomically(filepath.Join(params.configDir, fileName), 0444, func(file io.Writer) error {
+			bufferedWriter := bufio.NewWriter(file)
+			if err := template.Execute(bufferedWriter, data); err != nil {
+				return fmt.Errorf("failed to render template: %w", err)
+			}
+			return bufferedWriter.Flush()
+		})
+		if err != nil {
+			errs = multierr.Append(errs, fmt.Errorf("failed to write %s: %w", fileName, err))
 		}
-		return bufferedWriter.Flush()
-	})
-
-	if err != nil {
-		return err
 	}
 
-	return file.WriteAtomically(filepath.Join(params.configDir, "cds.yaml"), 0444, func(file io.Writer) error {
-		bufferedWriter := bufio.NewWriter(file)
-		if err := envoyClustersConfig.Execute(bufferedWriter, templateParams); err != nil {
-			return fmt.Errorf("failed to generate CDS configuration: %w", err)
-		}
-		return bufferedWriter.Flush()
-	})
+	return errs
 }
 
 func (e *envoyProxy) provision() error {
@@ -308,11 +318,13 @@ var envoyBootstrapConfig = template.Must(template.New("Bootstrap").Parse(`
 node:
   cluster: nllb-cluster
   id: nllb-id
+
 dynamic_resources:
   cds_config:
     path: /etc/envoy/cds.yaml
-{{- $localKonnectivityPort := .KonnectivityServerBindPort -}}
-{{- $remoteKonnectivityPort := .KonnectivityServerPort }}
+
+{{ $localKonnectivityPort := .KonnectivityServerBindPort -}}
+{{- $remoteKonnectivityPort := .KonnectivityServerPort -}}
 static_resources:
   listeners:
   - name: apiserver
@@ -339,7 +351,7 @@ static_resources:
   {{- end }}
 `))
 
-var envoyClustersConfig = template.Must(template.New("cds.yaml").Parse(`
+var envoyClustersConfig = template.Must(template.New("Clusters").Parse(`
 {{- $localKonnectivityPort := .KonnectivityServerBindPort -}}
 {{- $remoteKonnectivityPort := .KonnectivityServerPort -}}
 resources:
