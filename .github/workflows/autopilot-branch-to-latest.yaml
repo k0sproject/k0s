@@ -5,12 +5,12 @@ on:
     inputs:
       v124latest:
         description: "The latest version of v1.24"
-        default: "v1.24.6+k0s.0"
+        default: "v1.24.7+k0s.0"
         required: true
 
       v125latest:
         description: "The latest version of v1.25"
-        default: "v1.25.2+k0s.0"
+        default: "v1.25.3+k0s.0"
         required: true
 
       controllers:
@@ -154,15 +154,21 @@ jobs:
             tover: "${{ github.event.inputs.v124latest }}",
             subnet: 2,
           },
-
-          # In the default case this will be an update to the same version,
-          # however this allows for testing latest branch version releases
-          # to RC builds (or whatever defined in GHA input)
           {
             name: "v1246-0",
             fromver: "v1.24.6+k0s.0",
             tover: "${{ github.event.inputs.v124latest }}",
             subnet: 3,
+          },
+
+          # In the default case this will be an update to the same version,
+          # however this allows for testing latest branch version releases
+          # to RC builds (or whatever defined in GHA input)
+          {
+            name: "v1247-0",
+            fromver: "v1.24.7+k0s.0",
+            tover: "${{ github.event.inputs.v124latest }}",
+            subnet: 4,
           },
 
           # latest branch versions to latest
