@@ -196,9 +196,15 @@ func RetryWatchErrors(logf func(format string, args ...any)) watch.ErrorCallback
 			return retryDelay, nil
 		}
 
-		if errors.Is(err, syscall.ECONNRESET) {
-			retryDelay := 1 * time.Second
+		retryDelay := 1 * time.Second
+
+		switch {
+		case errors.Is(err, syscall.ECONNRESET):
 			logf("Encountered connection reset while watching, retrying in %s: %v", retryDelay, err)
+			return retryDelay, nil
+
+		case errors.Is(err, syscall.ECONNREFUSED):
+			logf("Encountered connection refused while watching, retrying in %s: %v", retryDelay, err)
 			return retryDelay, nil
 		}
 
