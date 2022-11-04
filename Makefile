@@ -153,12 +153,13 @@ pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.
 	  --output-package=github.com/k0sproject/k0s/pkg/apis/$(gen_output_dir)/
 	touch -- '$@'
 
-codegen_targets += static/gen_manifests.go
-static/gen_manifests.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
-static/gen_manifests.go: $(shell find static/manifests -type f)
+codegen_targets += static/zz_generated_assets.go
+static_asset_dirs := static/manifests static/misc
+static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
+static/zz_generated_assets.go: $(shell find $(static_asset_dirs) -type f)
 	-rm -f -- '$@'
 	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
-	$(GO_ENV) go-bindata -o static/gen_manifests.go -pkg static -prefix static static/...
+	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs)) || rm -f -- '$@'
 
 codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
@@ -206,7 +207,7 @@ codegen: $(codegen_targets)
 
 # bindata contains the parts of codegen which aren't version controlled.
 .PHONY: bindata
-bindata: static/gen_manifests.go pkg/assets/zz_generated_offsets_$(TARGET_OS).go
+bindata: static/zz_generated_assets.go pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
 .PHONY: lint
 lint: GOLANGCI_LINT_FLAGS ?=
@@ -270,7 +271,7 @@ clean-airgap-image-bundles:
 
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
-	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/gen_manifests.go
+	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/zz_generated_assets.go
 	-rm -rf $(K0S_GO_BUILD_CACHE) 
 	-find pkg/apis -type f \( -name .client-gen.stamp -or -name .controller-gen.stamp \) -delete
 	-$(MAKE) -C docs clean

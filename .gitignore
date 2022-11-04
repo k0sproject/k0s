@@ -17,7 +17,7 @@
 aws_private.pem
 out.json
 .vscode
-static/gen_manifests.go
+static/zz_generated_assets.go
 .k0sbuild.docker-image.*
 docs/cli
 site
