@@ -365,6 +365,7 @@ func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
 				KubeRouter: c.Spec.Network.KubeRouter,
 				PodCIDR:    c.Spec.Network.PodCIDR,
 				Provider:   c.Spec.Network.Provider,
+				DualStack:  c.Spec.Network.DualStack,
 			},
 			WorkerProfiles: c.Spec.WorkerProfiles,
 			Telemetry:      c.Spec.Telemetry,
