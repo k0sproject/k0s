@@ -90,6 +90,8 @@ spec:
         platforms:
           linux-amd64:
             url: http://localhost/dist/bundle.tar
+          linux-arm64:
+            url: http://localhost/dist/bundle.tar
         workers:
           discovery:
             static:
@@ -100,6 +102,8 @@ spec:
         forceupdate: true
         platforms:
           linux-amd64:
+            url: http://localhost/dist/k0s
+          linux-arm64:
             url: http://localhost/dist/k0s
         targets:
           controllers:
