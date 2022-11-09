@@ -69,6 +69,7 @@ spec:
     kubeProxy:
       disabled: false
       mode: iptables
+      metricsBindAddress: 0.0.0.0:10249
   telemetry:
     enabled: true
   controllerManager:
