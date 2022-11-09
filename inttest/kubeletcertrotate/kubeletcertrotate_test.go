@@ -88,7 +88,7 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	workerSSH, err := s.SSH(s.WorkerNode(0))
 	s.Require().NoError(err)
 	s.T().Log("waiting to see kubelet rotating the client cert before triggering Plan creation")
-	workerSSH.ExecWithOutput(s.Context(), "inotifywait --no-dereference /var/lib/k0s/kubelet/pki/kubelet-client-current.pem")
+	s.Require().NoError(workerSSH.Exec(s.Context(), "inotifywait --no-dereference /var/lib/k0s/kubelet/pki/kubelet-client-current.pem", common.SSHStreams{}))
 	output, err := workerSSH.ExecWithOutput(s.Context(), "k0s status -ojson")
 	s.Require().NoError(err)
 	status := statusJSON{}

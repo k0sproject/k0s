@@ -36,7 +36,7 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	ssh.Exec(s.Context(), "sh -e", common.SSHStreams{
+	s.Require().NoError(ssh.Exec(s.Context(), "sh -e", common.SSHStreams{
 		In: strings.NewReader(fmt.Sprintf(`
 			K0S_PATH=%q
 			IP_ADDRESS=%q
@@ -46,7 +46,7 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 			openssl req -x509 -new -nodes -key /var/lib/k0s/pki/ca.key -sha256 -days 365 -out /var/lib/k0s/pki/ca.crt -subj "/CN=Test CA"
 			"$K0S_PATH" token pre-shared --cert /var/lib/k0s/pki/ca.crt --url https://"$IP_ADDRESS":6443/ --out /var/lib/k0s/manifests/test
 		`, s.K0sFullPath, s.GetControllerIPAddress(0))),
-	})
+	}))
 
 	cert, err := ssh.ExecWithOutput(s.Context(), "cat /var/lib/k0s/pki/ca.crt")
 	s.Require().NoError(err)

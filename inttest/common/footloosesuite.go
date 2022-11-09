@@ -319,7 +319,7 @@ func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s.dumpClusterState(t, ctx, filepath.Join(tmpDir, "cluster-state.tar"))
+			s.dumpClusterState(ctx, t, filepath.Join(tmpDir, "cluster-state.tar"))
 		}()
 	}
 
@@ -338,7 +338,7 @@ func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s.dumpNodeLogs(t, ctx, node, tmpDir)
+			s.dumpNodeLogs(ctx, t, node, tmpDir)
 		}()
 	}
 
@@ -356,7 +356,7 @@ func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 	cleanupClusterDir(t, s.clusterDir)
 }
 
-func (s *FootlooseSuite) dumpClusterState(t *testing.T, ctx context.Context, filePath string) {
+func (s *FootlooseSuite) dumpClusterState(ctx context.Context, t *testing.T, filePath string) {
 	node := s.ControllerNode(0)
 
 	ssh, err := s.SSH(node)
@@ -396,7 +396,7 @@ func (s *FootlooseSuite) dumpClusterState(t *testing.T, ctx context.Context, fil
 	t.Logf("Dumped cluster state into %s", filePath)
 }
 
-func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, dir string) {
+func (s *FootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, dir string) {
 	ssh, err := s.SSH(node)
 	if err != nil {
 		t.Logf("Failed to ssh into node %s to get logs: %s", node, err.Error())
