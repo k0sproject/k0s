@@ -55,8 +55,8 @@ resource "aws_security_group_rule" "egress_allow_all_external" {
   security_group_id = aws_security_group.this.id
   type              = "egress"
   from_port         = 0
-  to_port           = 63335
-  protocol          = "tcp"
+  to_port           = 65335
+  protocol          = "all"
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
