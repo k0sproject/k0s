@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/inttest/common"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type MultiControllerSuite struct {

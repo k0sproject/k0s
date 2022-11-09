@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/avast/retry-go"
-	"github.com/bombsimon/logrusr/v2"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -31,11 +29,15 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
-	"helm.sh/helm/v3/pkg/release"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/avast/retry-go"
+	"github.com/bombsimon/logrusr/v2"
+	"github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"

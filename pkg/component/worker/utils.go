@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"path"
 
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {

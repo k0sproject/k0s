@@ -21,8 +21,10 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-	"github.com/sirupsen/logrus"
+
 	clientset "k8s.io/client-go/kubernetes"
+
+	"github.com/sirupsen/logrus"
 )
 
 type LeaseEventStatus string

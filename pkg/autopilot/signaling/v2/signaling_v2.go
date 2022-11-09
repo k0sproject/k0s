@@ -20,8 +20,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/k0sproject/k0s/pkg/autopilot/signaling"
+
+	"github.com/go-playground/validator/v10"
 )
 
 const (

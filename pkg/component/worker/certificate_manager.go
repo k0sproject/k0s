@@ -25,11 +25,12 @@ import (
 	"os"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/certificate"
 	k8skubeletcert "k8s.io/kubernetes/pkg/kubelet/certificate"
+
+	"github.com/sirupsen/logrus"
 )
 
 var _ certificate.Manager = (*CertificateManager)(nil)

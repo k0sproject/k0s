@@ -24,12 +24,12 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/sirupsen/logrus"
 )
 
 func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {

@@ -20,8 +20,9 @@ import (
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
-	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/assert"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"
 )
 

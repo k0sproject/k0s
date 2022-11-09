@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 )
 

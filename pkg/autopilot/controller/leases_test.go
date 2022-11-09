@@ -23,6 +23,7 @@ import (
 	"github.com/k0sproject/k0s/internal/autopilot/testutil"
 	"github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

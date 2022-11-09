@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
-
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"

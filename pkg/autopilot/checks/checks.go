@@ -17,14 +17,15 @@ package checks
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
-	"golang.org/x/mod/semver"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/cli-runtime/pkg/resource"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/static"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/cli-runtime/pkg/resource"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/mod/semver"
+	"sigs.k8s.io/yaml"
 )
 
 func CanUpdate(clientFactory kubernetes.ClientFactoryInterface, newVersion string) error {

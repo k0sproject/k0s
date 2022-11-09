@@ -25,13 +25,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.etcd.io/etcd/client/v3/snapshot"
-	"go.uber.org/zap"
-
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/etcd"
 
+	"go.etcd.io/etcd/client/v3/snapshot"
 	utilsnapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
+	"go.uber.org/zap"
 )
 
 const etcdBackup = "etcd-snapshot.db"

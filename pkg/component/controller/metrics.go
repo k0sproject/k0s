@@ -26,13 +26,14 @@ import (
 	"path"
 	"time"
 
-	"k8s.io/client-go/rest"
-
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
+
+	"k8s.io/client-go/rest"
+
 	"github.com/sirupsen/logrus"
 )
 

@@ -23,8 +23,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apiwatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/utils/pointer"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWatcher(t *testing.T) {

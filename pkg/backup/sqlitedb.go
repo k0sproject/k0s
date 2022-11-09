@@ -25,12 +25,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rqlite/rqlite/db"
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/rqlite/rqlite/db"
+	"github.com/sirupsen/logrus"
 )
 
 const kineBackup = "kine-state-backup.db"

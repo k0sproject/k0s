@@ -25,15 +25,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
-
 	"github.com/k0sproject/k0s/static"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation

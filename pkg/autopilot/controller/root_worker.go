@@ -17,8 +17,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"time"
 
 	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
@@ -28,10 +26,12 @@ import (
 	apsig "github.com/k0sproject/k0s/pkg/autopilot/controller/signal"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cr "sigs.k8s.io/controller-runtime"
-	crman "sigs.k8s.io/controller-runtime/pkg/manager"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/sirupsen/logrus"
+	cr "sigs.k8s.io/controller-runtime"
+	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 type rootWorker struct {

@@ -20,12 +20,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/inttest/common"
+
 	capi "k8s.io/api/certificates/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type BasicSuite struct {

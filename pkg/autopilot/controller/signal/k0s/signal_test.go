@@ -26,12 +26,13 @@ import (
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	crev "sigs.k8s.io/controller-runtime/pkg/event"

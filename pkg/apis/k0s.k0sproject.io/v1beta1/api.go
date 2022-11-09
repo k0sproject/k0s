@@ -20,9 +20,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
+
+	"github.com/asaskevich/govalidator"
 )
 
 var _ Validateable = (*APISpec)(nil)

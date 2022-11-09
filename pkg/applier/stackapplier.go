@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
+	"github.com/avast/retry-go"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )

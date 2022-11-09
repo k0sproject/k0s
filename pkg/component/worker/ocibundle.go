@@ -23,12 +23,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/avast/retry-go"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/avast/retry-go"
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/platforms"
 	"github.com/sirupsen/logrus"
 )
 

@@ -19,8 +19,10 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/sirupsen/logrus"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
 

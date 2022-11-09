@@ -28,9 +28,10 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 
+	"k8s.io/mount-utils"
+
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
-	"k8s.io/mount-utils"
 )
 
 type containers struct {

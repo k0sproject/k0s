@@ -27,10 +27,10 @@ import (
 	tsutil "github.com/k0sproject/k0s/inttest/toolsuite/util"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 
-	"sigs.k8s.io/yaml"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type PlanBuilder func(output tsutil.TerraformOutputMap) (*apv1beta2.Plan, error)

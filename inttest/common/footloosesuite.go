@@ -45,9 +45,9 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
-	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	corev1 "k8s.io/api/core/v1"
+	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,7 +55,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/yaml"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/stretchr/testify/assert"
@@ -64,6 +63,7 @@ import (
 	"github.com/weaveworks/footloose/pkg/config"
 	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
+	"sigs.k8s.io/yaml"
 )
 
 const (

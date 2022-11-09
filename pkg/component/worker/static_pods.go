@@ -30,13 +30,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/avast/retry-go"
-	"github.com/gorilla/mux"
 	"github.com/k0sproject/k0s/pkg/component"
-	"github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/avast/retry-go"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
 

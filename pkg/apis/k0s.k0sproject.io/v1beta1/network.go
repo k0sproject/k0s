@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/asaskevich/govalidator"
 	utilnet "k8s.io/utils/net"
+
+	"github.com/asaskevich/govalidator"
 )
 
 var _ Validateable = (*Network)(nil)

@@ -24,6 +24,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )

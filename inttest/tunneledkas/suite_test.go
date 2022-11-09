@@ -22,11 +22,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/k0sproject/k0s/inttest/common"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/stretchr/testify/suite"
 )
 
 type Suite struct {

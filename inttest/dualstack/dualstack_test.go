@@ -27,14 +27,14 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/stretchr/testify/suite"
-	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
+
+	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type DualstackSuite struct {

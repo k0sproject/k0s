@@ -20,10 +20,11 @@ import (
 	"context"
 	"fmt"
 
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 var _ ContainerRuntime = (*CRIRuntime)(nil)

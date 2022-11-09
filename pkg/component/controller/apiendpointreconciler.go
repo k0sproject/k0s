@@ -23,14 +23,15 @@ import (
 	"sort"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/sirupsen/logrus"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation

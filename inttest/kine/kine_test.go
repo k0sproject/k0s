@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
 )
 
 type KineSuite struct {

@@ -25,12 +25,13 @@ import (
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimruntime "k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimruntime "k8s.io/apimachinery/pkg/runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )

@@ -19,18 +19,19 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/robfig/cron"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	crcli "sigs.k8s.io/controller-runtime/pkg/client"
-
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const defaultCronSchedule = "@hourly"

@@ -21,14 +21,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/internal/pkg/random"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/internal/pkg/random"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/sirupsen/logrus"
 )
 
 type Token struct {

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/cmd"
+
 	"github.com/sirupsen/logrus"
 )
 

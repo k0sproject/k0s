@@ -18,6 +18,7 @@ package sysinfo
 
 import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
+
 	"github.com/stretchr/testify/mock"
 )
 

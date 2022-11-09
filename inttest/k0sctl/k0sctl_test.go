@@ -29,10 +29,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/stretchr/testify/suite"
 	"sigs.k8s.io/yaml"
-
-	"github.com/k0sproject/k0s/inttest/common"
 )
 
 const k0sctlVersion = "v0.13.0"

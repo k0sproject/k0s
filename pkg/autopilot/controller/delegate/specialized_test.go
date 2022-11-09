@@ -15,12 +15,13 @@
 package delegate
 
 import (
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestNodeReady ensures that the delegate can identify when a worker node is

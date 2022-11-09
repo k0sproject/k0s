@@ -23,8 +23,9 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/cavaliergopher/grab/v3"
 	ts "github.com/k0sproject/k0s/inttest/toolsuite"
+
+	"github.com/cavaliergopher/grab/v3"
 )
 
 const (

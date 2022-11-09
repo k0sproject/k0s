@@ -17,12 +17,12 @@ package k0s
 import (
 	"context"
 	"fmt"
+
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
-
 	k0sinstall "github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"

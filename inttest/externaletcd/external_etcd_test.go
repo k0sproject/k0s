@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/inttest/common"
+
+	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -25,9 +25,10 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	"k8s.io/kubectl/pkg/util/term"
+
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
-	"k8s.io/kubectl/pkg/util/term"
 )
 
 func NewSysinfoCmd() *cobra.Command {

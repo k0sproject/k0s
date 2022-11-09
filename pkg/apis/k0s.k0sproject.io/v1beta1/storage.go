@@ -22,12 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/k0sproject/k0s/internal/pkg/iface"
+	"github.com/k0sproject/k0s/pkg/constant"
+
 	"k8s.io/utils/strings/slices"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/k0sproject/k0s/internal/pkg/iface"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // supported storage types

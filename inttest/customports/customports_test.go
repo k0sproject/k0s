@@ -23,8 +23,10 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/stretchr/testify/suite"
+
 	k8s "k8s.io/client-go/kubernetes"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type Suite struct {

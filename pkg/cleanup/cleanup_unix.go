@@ -21,9 +21,9 @@ import (
 	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/component/worker"
-
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
+
 	"github.com/sirupsen/logrus"
 )
 

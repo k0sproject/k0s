@@ -24,9 +24,11 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
+
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/api/core/v1"
 )
 
 func EmptyAddressCollector(node *v1.Node) []v1.NodeAddress {

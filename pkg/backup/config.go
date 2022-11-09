@@ -26,6 +26,7 @@ import (
 	"path"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
+
 	"github.com/sirupsen/logrus"
 )
 

@@ -24,6 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
+
 	"github.com/sirupsen/logrus"
 )
 

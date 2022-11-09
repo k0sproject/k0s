@@ -26,15 +26,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/estesp/manifest-tool/v2/pkg/registry"
 	"github.com/estesp/manifest-tool/v2/pkg/store"
 	"github.com/estesp/manifest-tool/v2/pkg/types"
 	"github.com/estesp/manifest-tool/v2/pkg/util"
-
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

@@ -21,6 +21,7 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
 	"k8s.io/apimachinery/pkg/types"
+
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

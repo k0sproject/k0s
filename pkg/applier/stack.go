@@ -24,9 +24,6 @@ import (
 	"sync"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +33,10 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 )
 
 const (

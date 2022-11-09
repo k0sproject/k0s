@@ -24,8 +24,9 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/sirupsen/logrus"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

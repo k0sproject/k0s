@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/inttest/common"
 	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -32,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/stretchr/testify/suite"
 )
 

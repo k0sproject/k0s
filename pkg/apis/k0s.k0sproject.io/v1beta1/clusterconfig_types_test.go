@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
+
 	"github.com/stretchr/testify/assert"
 )
 

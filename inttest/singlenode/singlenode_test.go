@@ -18,17 +18,16 @@ package singlenode
 
 import (
 	"fmt"
-
 	"testing"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const k0sPartialConfig = `

@@ -21,8 +21,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type directories struct {

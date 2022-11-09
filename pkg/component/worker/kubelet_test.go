@@ -17,8 +17,9 @@ limitations under the License.
 package worker
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	"testing"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/stretchr/testify/require"
 )

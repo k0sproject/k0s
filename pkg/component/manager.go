@@ -26,6 +26,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/performance"
+
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )

@@ -22,14 +22,13 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/pkg/component"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"github.com/sirupsen/logrus"
 )
 
 // KubeProxy is the component implementation to manage kube-proxy

@@ -14,6 +14,7 @@ run:
 linters:
   enable:
     - depguard # Checks if package imports are in a list of acceptable packages
+    - gci      # Checks import order
     - gofmt    # Checks whether code was gofmt-ed
     - goheader # Checks is file headers matche a given pattern
     - revive   # Stricter drop-in replacement for golint
@@ -22,6 +23,14 @@ linters-settings:
   depguard:
     packages:
       - gopkg.in/yaml*
+  gci:
+    custom-order: true
+    sections:
+      - standard
+      - prefix(tool)
+      - prefix(github.com/k0sproject/k0s)
+      - prefix(k8s.io)
+      - default
   golint:
     min-confidence: 0
   goheader:

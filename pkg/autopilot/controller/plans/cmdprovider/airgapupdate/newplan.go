@@ -16,6 +16,7 @@ package airgapupdate
 
 import (
 	"context"
+
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	"github.com/k0sproject/k0s/pkg/autopilot/checks"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"

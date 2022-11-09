@@ -17,9 +17,9 @@ limitations under the License.
 package install
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/spf13/cobra"
 )
 
 func installWorkerCmd(installFlags *installFlags) *cobra.Command {

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
 	"github.com/avast/retry-go"
 	"github.com/stretchr/testify/suite"
 	"github.com/weaveworks/footloose/pkg/config"
-
-	"github.com/k0sproject/k0s/inttest/common"
 )
 
 type BYOCRISuite struct {

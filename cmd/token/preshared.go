@@ -24,15 +24,16 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	fakeclientset "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/testing"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	v1 "k8s.io/api/core/v1"
+	fakeclientset "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/testing"
+
+	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 )
 
 func preSharedCmd() *cobra.Command {

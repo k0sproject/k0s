@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
 	"tool/pkg/constant"
 
 	k0sctlcmd "github.com/k0sproject/k0sctl/cmd"

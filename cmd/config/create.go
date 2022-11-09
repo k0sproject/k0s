@@ -19,11 +19,11 @@ package config
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
-
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 )
 
 func NewCreateCmd() *cobra.Command {

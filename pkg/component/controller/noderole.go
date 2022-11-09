@@ -22,15 +22,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/jsonpointer"
-	"github.com/sirupsen/logrus"
+	"github.com/k0sproject/k0s/pkg/constant"
+	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/k0sproject/k0s/pkg/constant"
-	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/go-openapi/jsonpointer"
+	"github.com/sirupsen/logrus"
 )
 
 // NodeRole implements the component interface to manage node role labels for worker nodes

@@ -24,9 +24,9 @@ import (
 	"os"
 	"syscall"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
+
+	"golang.org/x/sys/unix"
 )
 
 func (l *LinuxProbes) RequireProcFS() {

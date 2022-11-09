@@ -17,9 +17,9 @@ limitations under the License.
 package airgap
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/k0sproject/k0s/pkg/config"
+
+	"github.com/spf13/cobra"
 )
 
 func NewAirgapCmd() *cobra.Command {

@@ -25,12 +25,12 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	"k8s.io/client-go/rest"
 	k8sprobe "k8s.io/kubernetes/pkg/probe"
 	k8shttpprobe "k8s.io/kubernetes/pkg/probe/http"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 const readyzURLFormat = "https://%s:6443/readyz?verbose"

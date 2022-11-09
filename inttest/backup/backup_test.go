@@ -21,13 +21,13 @@ import (
 	"html/template"
 	"testing"
 
+	"github.com/k0sproject/k0s/inttest/common"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const configWithExternaladdress = `

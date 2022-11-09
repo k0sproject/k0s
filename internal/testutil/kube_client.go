@@ -18,7 +18,8 @@ package testutil
 
 import (
 	"fmt"
-	"k8s.io/client-go/rest"
+
+	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,10 +30,9 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
 	restfake "k8s.io/client-go/rest/fake"
 	kubetesting "k8s.io/client-go/testing"
-
-	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 )
 
 // NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface

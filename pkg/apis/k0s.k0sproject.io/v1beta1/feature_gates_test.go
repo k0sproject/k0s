@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
+
 	"github.com/stretchr/testify/require"
 )
 

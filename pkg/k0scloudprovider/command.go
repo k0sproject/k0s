@@ -20,13 +20,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
 	"k8s.io/cloud-provider/app/config"
 	"k8s.io/cloud-provider/options"
 	cliflag "k8s.io/component-base/cli/flag"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Command func(stopCh <-chan struct{})

@@ -21,12 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/k0sproject/k0s/inttest/common"
+
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type MetricScraperSuite struct {
