@@ -50,7 +50,7 @@ func (s *quorumSuite) SetupSuite() {
 // TearDownSuite tears down the network created after footloose has finished.
 func (s *quorumSuite) TearDownSuite() {
 	s.FootlooseSuite.TearDownSuite()
-	s.Require().NoError(s.DestroyNetwork(network))
+	s.Require().NoError(s.MaybeDestroyNetwork(network))
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent

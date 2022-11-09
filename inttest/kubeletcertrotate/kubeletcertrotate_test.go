@@ -46,7 +46,7 @@ func (s *kubeletCertRotateSuite) SetupSuite() {
 // TearDownSuite tears down the network created after footloose has finished.
 func (s *kubeletCertRotateSuite) TearDownSuite() {
 	s.FootlooseSuite.TearDownSuite()
-	s.Require().NoError(s.DestroyNetwork(network))
+	s.Require().NoError(s.MaybeDestroyNetwork(network))
 }
 
 type statusJSON struct {
