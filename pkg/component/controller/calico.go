@@ -26,7 +26,7 @@ import (
 	"sync"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/k0sproject/k0s/static"
@@ -37,8 +37,8 @@ import (
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.Component = (*Calico)(nil)
-var _ component.Reconciler = (*Calico)(nil)
+var _ manager.Component = (*Calico)(nil)
+var _ manager.Reconciler = (*Calico)(nil)
 
 var calicoCRDOnce sync.Once
 

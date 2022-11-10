@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -32,12 +31,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.Component = (*APIEndpointReconciler)(nil)
-var _ component.Reconciler = (*APIEndpointReconciler)(nil)
+var _ manager.Component = (*APIEndpointReconciler)(nil)
+var _ manager.Reconciler = (*APIEndpointReconciler)(nil)
 
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {

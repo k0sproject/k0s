@@ -43,7 +43,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/iptablesutils"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -65,7 +65,7 @@ type Kubelet struct {
 	IPTablesMode        string
 }
 
-var _ component.Component = (*Kubelet)(nil)
+var _ manager.Component = (*Kubelet)(nil)
 
 type kubeletConfig struct {
 	ClientCAFile       string

@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -49,8 +49,8 @@ type Kine struct {
 	ctx          context.Context
 }
 
-var _ component.Component = (*Kine)(nil)
-var _ component.Healthz = (*Kine)(nil)
+var _ manager.Component = (*Kine)(nil)
+var _ manager.Ready = (*Kine)(nil)
 
 // Init extracts the needed binaries
 func (k *Kine) Init(_ context.Context) error {
@@ -127,7 +127,7 @@ func (k *Kine) Stop() error {
 const hcKey = "/k0s-health-check"
 const hcValue = "value"
 
-func (k *Kine) Healthy() error {
+func (k *Kine) Ready() error {
 	ok, err := k.bypassClient.Write(k.ctx, hcKey, hcValue, 64*time.Second)
 	if err != nil {
 		return fmt.Errorf("kine-etcd-health: %w", err)

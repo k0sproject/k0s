@@ -24,7 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -33,7 +33,7 @@ type SystemRBAC struct {
 	manifestDir string
 }
 
-var _ component.Component = (*SystemRBAC)(nil)
+var _ manager.Component = (*SystemRBAC)(nil)
 
 // NewSystemRBAC creates new system level RBAC reconciler
 func NewSystemRBAC(manifestDir string) *SystemRBAC {

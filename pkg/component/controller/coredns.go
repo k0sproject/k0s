@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -248,8 +248,8 @@ spec:
 
 const HostsPerExtraReplica = 10.0
 
-var _ component.Component = (*CoreDNS)(nil)
-var _ component.Reconciler = (*CoreDNS)(nil)
+var _ manager.Component = (*CoreDNS)(nil)
+var _ manager.Reconciler = (*CoreDNS)(nil)
 
 // CoreDNS is the component implementation to manage CoreDNS
 type CoreDNS struct {

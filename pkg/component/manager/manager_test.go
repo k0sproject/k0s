@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package component
+package manager
 
 import (
 	"context"
@@ -51,13 +51,13 @@ func (f *Fake) Stop() error {
 	f.StopCalled = true
 	return f.StopErr
 }
-func (f *Fake) Healthy() error {
+func (f *Fake) Ready() error {
 	f.HealthyCalled = true
 	return f.HealthyErr
 }
 
 func TestManagerSuccess(t *testing.T) {
-	m := NewManager()
+	m := New()
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -83,7 +83,7 @@ func TestManagerSuccess(t *testing.T) {
 }
 
 func TestManagerInitFail(t *testing.T) {
-	m := NewManager()
+	m := New()
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -103,7 +103,7 @@ func TestManagerInitFail(t *testing.T) {
 }
 
 func TestManagerRunFail(t *testing.T) {
-	m := NewManager()
+	m := New()
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -134,9 +134,9 @@ func TestManagerRunFail(t *testing.T) {
 }
 
 func TestManagerHealthyFail(t *testing.T) {
-	m := NewManager()
+	m := New()
 	require.NotNil(t, m)
-	m.HealthyTimeout = 1 * time.Millisecond
+	m.ReadyWaitDuration = 1 * time.Millisecond
 
 	ctx := context.Background()
 

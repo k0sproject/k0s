@@ -35,10 +35,10 @@ import (
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -125,8 +125,8 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context) error {
-	c.NodeComponents = component.NewManager()
-	c.ClusterComponents = component.NewManager()
+	c.NodeComponents = manager.New()
+	c.ClusterComponents = manager.New()
 
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
@@ -171,7 +171,7 @@ func (c *command) start(ctx context.Context) error {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
-	var storageBackend component.Component
+	var storageBackend manager.Component
 
 	switch c.NodeConfig.Spec.Storage.Type {
 	case v1beta1.KineStorageType:
@@ -217,7 +217,7 @@ func (c *command) start(ctx context.Context) error {
 
 	var leaderElector interface {
 		leaderelector.Interface
-		component.Component
+		manager.Component
 	}
 
 	// One leader elector per controller

@@ -27,6 +27,7 @@ import (
 	"reflect"
 
 	"github.com/imdario/mergo"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,13 +38,12 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Dummy checks so we catch easily if we miss some interface implementation
-var _ component.Reconciler = (*KubeletConfig)(nil)
-var _ component.Component = (*KubeletConfig)(nil)
+var _ manager.Reconciler = (*KubeletConfig)(nil)
+var _ manager.Component = (*KubeletConfig)(nil)
 
 // KubeletConfig is the reconciler for generic kubelet configs
 type KubeletConfig struct {

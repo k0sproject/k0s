@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package component
+package manager
 
 import (
 	"container/list"
@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -32,19 +33,20 @@ import (
 
 // Manager manages components
 type Manager struct {
-	Components     []Component
-	HealthyTimeout time.Duration
+	Components        []Component
+	prober            *prober.Prober
+	ReadyWaitDuration time.Duration
 
 	started              *list.List
 	lastReconciledConfig *v1beta1.ClusterConfig
 }
 
-// NewManager creates a manager
-func NewManager() *Manager {
+// New creates a manager
+func New() *Manager {
 	return &Manager{
-		Components:     []Component{},
-		HealthyTimeout: 2 * time.Minute,
-		started:        list.New(),
+		Components:        []Component{},
+		ReadyWaitDuration: 2 * time.Minute,
+		started:           list.New(),
 	}
 }
 
@@ -88,10 +90,11 @@ func (m *Manager) Start(ctx context.Context) error {
 		}
 		m.started.PushFront(comp)
 		perfTimer.Checkpoint(fmt.Sprintf("running-%s-done", compName))
-		if err := waitForHealthy(ctx, comp, compName, m.HealthyTimeout); err != nil {
+		if err := waitForReady(ctx, comp, compName, m.ReadyWaitDuration); err != nil {
 			_ = m.Stop()
 			return err
 		}
+		m.prober.Register(compName, comp)
 	}
 	perfTimer.Output()
 	return nil
@@ -155,9 +158,9 @@ func (m *Manager) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) err
 	return ret
 }
 
-func (m *Manager) reconcileComponent(ctx context.Context, component Component, cfg *v1beta1.ClusterConfig) error {
-	clusterComponent, ok := component.(Reconciler)
-	compName := reflect.TypeOf(component).String()
+func (m *Manager) reconcileComponent(ctx context.Context, comp Component, cfg *v1beta1.ClusterConfig) error {
+	clusterComponent, ok := comp.(Reconciler)
+	compName := reflect.TypeOf(comp).String()
 	if !ok {
 		logrus.Debugf("%s does not implement the ReconcileComponent interface --> not reconciling it", compName)
 		return nil
@@ -170,14 +173,14 @@ func (m *Manager) reconcileComponent(ctx context.Context, component Component, c
 	return nil
 }
 
-func isReconcileComponent(component Component) bool {
-	_, ok := component.(Reconciler)
+func isReconcileComponent(comp Component) bool {
+	_, ok := comp.(Reconciler)
 	return ok
 }
 
-// waitForHealthy waits until the component is healthy and returns true upon success. If a timeout occurs, it returns false
-func waitForHealthy(ctx context.Context, comp Component, name string, timeout time.Duration) error {
-	healthz, ok := comp.(Healthz)
+// waitForReady waits until the component is ready and returns true upon success. If a timeout occurs, it returns false
+func waitForReady(ctx context.Context, comp Component, name string, timeout time.Duration) error {
+	compWithReady, ok := comp.(Ready)
 	if !ok {
 		return nil
 	}
@@ -189,10 +192,11 @@ func waitForHealthy(ctx context.Context, comp Component, name string, timeout ti
 
 	// loop forever, until the context is canceled or until etcd is healthy
 	ticker := time.NewTicker(100 * time.Millisecond)
+	l := logrus.WithField("component", name)
 	for {
-		logrus.Debugf("checking %s for health", name)
-		if err := healthz.Healthy(); err != nil {
-			logrus.Debugf("health-check: %s not yet healthy: %v", name, err)
+		l.Debugf("waiting for component readiness")
+		if err := compWithReady.Ready(); err != nil {
+			l.WithError(err).Debugf("component not ready yet")
 		} else {
 			return nil
 		}

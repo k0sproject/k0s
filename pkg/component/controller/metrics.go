@@ -30,7 +30,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
@@ -55,8 +55,8 @@ type Metrics struct {
 	jobs          []*job
 }
 
-var _ component.Component = (*Metrics)(nil)
-var _ component.Reconciler = (*Metrics)(nil)
+var _ manager.Component = (*Metrics)(nil)
+var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
 func NewMetrics(k0sVars constant.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface) (*Metrics, error) {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package component
+package manager
 
 import (
 	"context"
@@ -52,12 +52,9 @@ type Component interface {
 	Stop() error
 }
 
-// Healthz represents a component that can be checked for its health.
-type Healthz interface {
-	// Healthy performs a health check and indicates that the component is
-	// running and functional. Whenever this is not the case, a non-nil error is
-	// returned.
-	Healthy() error
+type Ready interface {
+	// Ready performs a ready check and indicates that a component is ready to run.
+	Ready() error
 }
 
 // Reconciler defines the component interface that is reconciled based

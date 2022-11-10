@@ -20,11 +20,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/static"
 )
 
-var _ component.Component = (*CRD)(nil)
+var _ manager.Component = (*CRD)(nil)
 
 // CRD unpacks bundled CRD definitions to the filesystem
 type CRD struct {

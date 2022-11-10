@@ -25,9 +25,9 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -38,7 +38,7 @@ const (
 	defaultPollTimeout  = 5 * time.Minute
 )
 
-var _ component.Component = (*Autopilot)(nil)
+var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
 	K0sVars     constant.CfgVars

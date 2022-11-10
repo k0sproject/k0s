@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 	"github.com/sirupsen/logrus"
@@ -40,7 +40,7 @@ type LeasePool struct {
 }
 
 var _ Interface = (*LeasePool)(nil)
-var _ component.Component = (*LeasePool)(nil)
+var _ manager.Component = (*LeasePool)(nil)
 
 // NewLeasePool creates a new leader elector using a Kubernetes lease pool.
 func NewLeasePool(kubeClientFactory kubeutil.ClientFactoryInterface) *LeasePool {

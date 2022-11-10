@@ -34,7 +34,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -44,7 +44,7 @@ type APIServer struct {
 	ClusterConfig             *v1beta1.ClusterConfig
 	K0sVars                   constant.CfgVars
 	LogLevel                  string
-	Storage                   component.Component
+	Storage                   manager.Component
 	EnableKonnectivity        bool
 	DisableEndpointReconciler bool
 	gid                       int
@@ -52,8 +52,8 @@ type APIServer struct {
 	uid                       int
 }
 
-var _ component.Component = (*APIServer)(nil)
-var _ component.Healthz = (*APIServer)(nil)
+var _ manager.Component = (*APIServer)(nil)
+var _ manager.Ready = (*APIServer)(nil)
 
 var apiDefaultArgs = map[string]string{
 	"allow-privileged":                   "true",
@@ -197,7 +197,7 @@ func (a *APIServer) Stop() error {
 }
 
 // Health-check interface
-func (a *APIServer) Healthy() error {
+func (a *APIServer) Ready() error {
 	// Load client cert so the api can authenitcate the request.
 	certFile := path.Join(a.K0sVars.CertRootDir, "admin.crt")
 	keyFile := path.Join(a.K0sVars.CertRootDir, "admin.key")

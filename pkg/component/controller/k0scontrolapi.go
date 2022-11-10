@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -33,7 +33,7 @@ type K0SControlAPI struct {
 	supervisor supervisor.Supervisor
 }
 
-var _ component.Component = (*K0SControlAPI)(nil)
+var _ manager.Component = (*K0SControlAPI)(nil)
 
 // Init does currently nothing
 func (m *K0SControlAPI) Init(_ context.Context) error {

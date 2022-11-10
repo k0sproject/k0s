@@ -27,7 +27,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/autopilot/client"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
@@ -47,7 +47,7 @@ type Status struct {
 	CertManager       *worker.CertificateManager
 }
 
-var _ component.Component = (*Status)(nil)
+var _ manager.Component = (*Status)(nil)
 
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {

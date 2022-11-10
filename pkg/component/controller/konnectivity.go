@@ -34,7 +34,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -62,8 +62,8 @@ type Konnectivity struct {
 	agentManifestLock   sync.Mutex
 }
 
-var _ component.Component = (*Konnectivity)(nil)
-var _ component.Reconciler = (*Konnectivity)(nil)
+var _ manager.Component = (*Konnectivity)(nil)
+var _ manager.Reconciler = (*Konnectivity)(nil)
 
 // Init ...
 func (k *Konnectivity) Init(_ context.Context) error {

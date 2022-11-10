@@ -27,7 +27,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -111,7 +111,7 @@ func (c *Command) Start(ctx context.Context) error {
 		return err
 	}
 
-	componentManager := component.NewManager()
+	componentManager := manager.New()
 	if runtime.GOOS == "windows" && c.CriSocket == "" {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}

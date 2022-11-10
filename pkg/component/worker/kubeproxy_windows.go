@@ -34,7 +34,7 @@ type KubeProxy struct {
 	supervisor supervisor.Supervisor
 }
 
-var _ component.Component = (*KubeProxy)(nil)
+var _ manager.Component = (*KubeProxy)(nil)
 
 // Init
 func (k KubeProxy) Init(_ context.Context) error {

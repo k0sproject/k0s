@@ -27,8 +27,8 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -40,7 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	ctrlManager "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -54,8 +54,8 @@ type ExtensionsController struct {
 	leaderElector leaderelector.Interface
 }
 
-var _ component.Component = (*ExtensionsController)(nil)
-var _ component.Reconciler = (*ExtensionsController)(nil)
+var _ manager.Component = (*ExtensionsController)(nil)
+var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
 func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
@@ -317,7 +317,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 
-	mgr, err := manager.New(config, manager.Options{
+	mgr, err := ctrlManager.New(config, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
 	})

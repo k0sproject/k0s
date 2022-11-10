@@ -31,7 +31,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -58,8 +58,8 @@ var cmDefaultArgs = stringmap.StringMap{
 	"use-service-account-credentials": "true",
 }
 
-var _ component.Component = (*Manager)(nil)
-var _ component.Reconciler = (*Manager)(nil)
+var _ manager.Component = (*Manager)(nil)
+var _ manager.Reconciler = (*Manager)(nil)
 
 // Init extracts the needed binaries
 func (a *Manager) Init(_ context.Context) error {

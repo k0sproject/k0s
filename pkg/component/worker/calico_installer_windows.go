@@ -29,7 +29,7 @@ type CalicoInstaller struct {
 	ClusterDNS string
 }
 
-var _ component.Component = (*CalicoInstaller)(nil)
+var _ manager.Component = (*CalicoInstaller)(nil)
 
 func (c CalicoInstaller) Init(_ context.Context) error {
 	path := "C:\\bootstrap.ps1"
