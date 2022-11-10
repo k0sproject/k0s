@@ -1439,11 +1439,11 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <li>
 <p>Linting</p>
 <p>We use <a href="https://golangci-lint.run/"><code>golangci-lint</code></a> for style verification.
-  In the repository's root directory, simply run:</p>
+ In the repository's root directory, simply run:</p>
 <div class="highlight"><pre><span></span><code>make lint
 </code></pre></div>
 <p>There's no need to install <code>golangci-lint</code> manually. The build system will
-  take care of that.</p>
+ take care of that.</p>
 </li>
 <li>
 <p>Go fmt</p>
@@ -1458,16 +1458,20 @@ However, a PR will not be reviewed before all tests are green, so to save time a
 <li>
 <p>Pre-submit Flight Checks</p>
 <p>In the repository root directory, make sure that:</p>
-<p>* <code>make build &amp;&amp; git diff --exit-code</code> runs successfully.<br />
-    Verifies that the build is working and that the generated source code
-    matches the one that's checked into source control.
-  * <code>make check-unit</code> runs successfully.
-    Verifies that all the unit tests pass.
-  * <code>make check-basic</code> runs successfully.<br />
-    Verifies basic cluster functionality using one controller and two workers.
-  * <code>make check-hacontrolplane</code> runs successfully.<br />
-    Verifies that joining of controllers works.</p>
-<p>Please note that this last test is prone to "flakiness", so it might fail on occasion. If it fails constantly, take a deeper look at your code to find the source of the problem.</p>
+<ul>
+<li><code>make build &amp;&amp; git diff --exit-code</code> runs successfully.<br />
+   Verifies that the build is working and that the generated source code
+   matches the one that's checked into source control.</li>
+<li><code>make check-unit</code> runs successfully.<br />
+   Verifies that all the unit tests pass.</li>
+<li><code>make check-basic</code> runs successfully.<br />
+   Verifies basic cluster functionality using one controller and two workers.</li>
+<li><code>make check-hacontrolplane</code> runs successfully.<br />
+   Verifies that joining of controllers works.</li>
+</ul>
+<p>Please note that this last test is prone to "flakiness", so it might fail on
+ occasion. If it fails constantly, take a deeper look at your code to find the
+ source of the problem.</p>
 <p>If you find that all tests passed, you may open a pull request upstream.</p>
 </li>
 </ol>
