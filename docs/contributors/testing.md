@@ -9,21 +9,21 @@ Please run the following style and formatting commands and fix/check-in any chan
 
 1. Linting
 
-    We use [`golangci-lint`](https://golangci-lint.run/) for style verification.
-    In the repository's root directory, simply run:
+   We use [`golangci-lint`](https://golangci-lint.run/) for style verification.
+   In the repository's root directory, simply run:
 
-    ```shell
-    make lint
-    ```
+   ```shell
+   make lint
+   ```
 
-    There's no need to install `golangci-lint` manually. The build system will
-    take care of that.
+   There's no need to install `golangci-lint` manually. The build system will
+   take care of that.
 
 2. Go fmt
 
-    ```shell
-    go fmt ./...
-    ```
+   ```shell
+   go fmt ./...
+   ```
 
 3. Checking the documentation
 
@@ -32,21 +32,23 @@ Please run the following style and formatting commands and fix/check-in any chan
 
 4. Pre-submit Flight Checks
 
-    In the repository root directory, make sure that:
+   In the repository root directory, make sure that:
 
-    * `make build && git diff --exit-code` runs successfully.  
-      Verifies that the build is working and that the generated source code
-      matches the one that's checked into source control.
-    * `make check-unit` runs successfully.
-      Verifies that all the unit tests pass.
-    * `make check-basic` runs successfully.  
-      Verifies basic cluster functionality using one controller and two workers.
-    * `make check-hacontrolplane` runs successfully.  
-      Verifies that joining of controllers works.
+   * `make build && git diff --exit-code` runs successfully.  
+     Verifies that the build is working and that the generated source code
+     matches the one that's checked into source control.
+   * `make check-unit` runs successfully.  
+     Verifies that all the unit tests pass.
+   * `make check-basic` runs successfully.  
+     Verifies basic cluster functionality using one controller and two workers.
+   * `make check-hacontrolplane` runs successfully.  
+     Verifies that joining of controllers works.
 
-    Please note that this last test is prone to "flakiness", so it might fail on occasion. If it fails constantly, take a deeper look at your code to find the source of the problem.
+   Please note that this last test is prone to "flakiness", so it might fail on
+   occasion. If it fails constantly, take a deeper look at your code to find the
+   source of the problem.
 
-    If you find that all tests passed, you may open a pull request upstream.
+   If you find that all tests passed, you may open a pull request upstream.
 
 ## Opening A Pull Request
 
