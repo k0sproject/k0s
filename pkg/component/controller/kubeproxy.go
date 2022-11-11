@@ -110,6 +110,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
+		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
 	}
 
 	return cfg, nil
@@ -122,6 +123,7 @@ type proxyConfig struct {
 	Image                string
 	PullPolicy           string
 	Mode                 string
+	MetricsBindAddress   string
 }
 
 const proxyTemplate = `
@@ -243,7 +245,7 @@ data:
       tcpTimeout: 0s
       udpTimeout: 0s
     kind: KubeProxyConfiguration
-    metricsBindAddress: "0.0.0.0:10249"
+    metricsBindAddress: {{ .MetricsBindAddress }}
     nodePortAddresses: null
     oomScoreAdj: null
     portRange: ""

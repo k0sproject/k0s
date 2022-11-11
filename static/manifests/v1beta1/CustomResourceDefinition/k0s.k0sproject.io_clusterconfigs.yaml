@@ -339,6 +339,8 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      metricsBindAddress:
+                        type: string
                       mode:
                         type: string
                     type: object

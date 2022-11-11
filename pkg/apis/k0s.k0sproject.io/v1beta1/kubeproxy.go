@@ -30,15 +30,17 @@ const (
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
-	Disabled bool   `json:"disabled,omitempty"`
-	Mode     string `json:"mode,omitempty"`
+	Disabled           bool   `json:"disabled,omitempty"`
+	Mode               string `json:"mode,omitempty"`
+	MetricsBindAddress string `json:"metricsBindAddress,omitempty"`
 }
 
 // DefaultKubeProxy creates the default config for kube-proxy
 func DefaultKubeProxy() *KubeProxy {
 	return &KubeProxy{
-		Disabled: false,
-		Mode:     "iptables",
+		Disabled:           false,
+		Mode:               "iptables",
+		MetricsBindAddress: "0.0.0.0:10249",
 	}
 }
 
