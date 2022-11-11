@@ -98,13 +98,13 @@ spec:
     calico:
       cni:
         image: docker.io/calico/cni
-        version: v3.24.4
+        version: v3.24.5
       node:
         image: docker.io/calico/node
-        version: v3.24.4
+        version: v3.24.5
       kubecontrollers:
         image: docker.io/calico/kube-controllers
-        version: v3.24.4
+        version: v3.24.5
     kuberouter:
       cni:
         image: docker.io/cloudnativelabs/kube-router
