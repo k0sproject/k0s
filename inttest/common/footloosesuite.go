@@ -299,6 +299,16 @@ func (s *FootlooseSuite) ExternalEtcdNode() string {
 	return fmt.Sprintf(etcdNodeNameFormat, 0)
 }
 
+// StartMachines starts specific machines(s) in cluster
+func (s *FootlooseSuite) Start(machineNames []string) error {
+	return s.cluster.Start(machineNames)
+}
+
+// Stop stops the machines in cluster.
+func (s *FootlooseSuite) Stop(machineNames []string) error {
+	return s.cluster.Stop(machineNames)
+}
+
 // TearDownSuite is called by testify at the very end of the suite's run.
 // It cancels the suite's context in order to free the suite's resources.
 func (s *FootlooseSuite) TearDownSuite() {

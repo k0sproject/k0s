@@ -15,6 +15,7 @@ smoketests := \
 	check-byocri \
 	check-calico \
 	check-cli \
+	check-clusterreboot \
 	check-cnichange \
 	check-configchange \
 	check-ctr \
