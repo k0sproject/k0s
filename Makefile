@@ -278,12 +278,6 @@ clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C inttest clean
 
-.PHONY: manifests
-manifests: .helmCRD .cfgCRD
-
-.PHONY: .helmCRD
-
-
 .PHONY: docs
 docs:
 	$(MAKE) -C docs
