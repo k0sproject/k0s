@@ -133,7 +133,6 @@ type CfgVars struct {
 	KineSocketPath             string // The unix socket path for kine
 	KonnectivitySocketDir      string // location of konnectivity's socket path
 	KubeletAuthConfigPath      string // KubeletAuthConfigPath defines the default kubelet auth config path
-	KubeletBootstrapConfigPath string // KubeletBootstrapConfigPath defines the default path for kubelet bootstrap auth config
 	KubeletVolumePluginDir     string // location for kubelet plugins volume executables
 	ManifestsDir               string // location for all stack manifests
 	RunDir                     string // location of supervised pid files and sockets
@@ -186,7 +185,6 @@ func GetConfig(dataDir string) CfgVars {
 		KineSocketPath:             formatPath(runDir, KineSocket),
 		KonnectivitySocketDir:      formatPath(runDir, "konnectivity-server"),
 		KubeletAuthConfigPath:      formatPath(dataDir, "kubelet.conf"),
-		KubeletBootstrapConfigPath: formatPath(dataDir, "kubelet-bootstrap.conf"),
 		KubeletVolumePluginDir:     KubeletVolumePluginDir,
 		ManifestsDir:               formatPath(dataDir, "manifests"),
 		RunDir:                     runDir,
