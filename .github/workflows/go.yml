@@ -324,6 +324,7 @@ jobs:
     name: Smoke test on armv7/arm64
     if: github.repository == 'k0sproject/k0s'
     strategy:
+      fail-fast: false
       matrix:
         arch:
           - arm # this is armv7
