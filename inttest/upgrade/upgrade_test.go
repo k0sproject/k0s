@@ -173,6 +173,7 @@ func TestUpgradeSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
+			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	}
 	suite.Run(t, &s)
