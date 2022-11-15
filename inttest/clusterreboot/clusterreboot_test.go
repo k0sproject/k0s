@@ -14,21 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package workerrestart
+package clusterreboot
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
-type WorkerRestartSuite struct {
+type ClusterRebootSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *WorkerRestartSuite) TestK0sWorkerRestart() {
+func (s *ClusterRebootSuite) TestK0sClusterReboot() {
+	s.T().Log("Starting k0s")
 	s.NoError(s.InitController(0))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -38,17 +40,16 @@ func (s *WorkerRestartSuite) TestK0sWorkerRestart() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
-	// kill the worker
-	ssh, err := s.SSH(s.WorkerNode(0))
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	s.T().Log("killing k0s")
-	_, err = ssh.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
-	s.Require().NoError(err)
+	// reboot the cluster:
+	s.T().Log("Rebooting cluster")
+	s.rebootCluster()
 
-	// restart worker and make sure it comes up
-	s.T().Logf("Restart worker")
-	s.NoError(s.RunWorkers())
+	// Verify things work after the reboot
+	kc, err = s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
+
+	// restart k0s worker and make sure it comes up
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
@@ -58,11 +59,23 @@ func (s *WorkerRestartSuite) TestK0sWorkerRestart() {
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 }
 
-func TestWorkerRestartSuite(t *testing.T) {
-	s := WorkerRestartSuite{
+// rebootCluster reboots the cluster using footloose interfaces because
+// running reboot on a container won't bring it up automatically:
+// https://github.com/weaveworks/footloose/issues/254
+func (s *ClusterRebootSuite) rebootCluster() {
+	s.Require().NoError(s.Stop([]string{}))
+	s.Require().NoError(s.Start([]string{}))
+
+	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 1*time.Minute, 1*time.Second))
+	s.Require().NoError(s.WaitForSSH(s.WorkerNode(0), 1*time.Minute, 1*time.Second))
+}
+
+func TestClusterRebootSuite(t *testing.T) {
+	s := ClusterRebootSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
+			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	}
 	suite.Run(t, &s)

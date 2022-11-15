@@ -15,6 +15,7 @@ smoketests := \
 	check-byocri \
 	check-calico \
 	check-cli \
+	check-clusterreboot \
 	check-cnichange \
 	check-configchange \
 	check-ctr \
@@ -39,7 +40,6 @@ smoketests := \
 	check-statussocket \
 	check-tunneledkas \
 	check-upgrade \
-	check-workerrestart \
 	check-kubectl \
 	check-k0sctl \
 	check-metricscraper \
