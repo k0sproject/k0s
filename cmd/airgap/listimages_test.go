@@ -46,7 +46,7 @@ spec:
 	s.Equal("custom-repository/my-custom-konnectivity-image:v0.0.1", a.Konnectivity.URI())
 	s.Equal("1.0.0", a.CoreDNS.Version)
 	s.Equal("custom.io/coredns/coredns", a.CoreDNS.Image)
-	s.Equal("k8s.gcr.io/metrics-server/metrics-server", a.MetricsServer.Image)
+	s.Equal("registry.k8s.io/metrics-server/metrics-server", a.MetricsServer.Image)
 }
 
 func TestCLITestSuite(t *testing.T) {
