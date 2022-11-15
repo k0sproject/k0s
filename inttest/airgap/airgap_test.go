@@ -36,7 +36,7 @@ spec:
 const etcHosts = `
 127.0.0.8 docker.io
 127.0.0.8 gcr.io
-127.0.0.8 k8s.gcr.io
+127.0.0.8 registry.k8s.io
 127.0.0.8 us.gcr.io
 127.0.0.8 quay.io
 `

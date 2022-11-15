@@ -499,9 +499,9 @@ ubuntu@ubuntu:~$ KUBECONFIG=/path/to/kubeconfig kubectl get nodes,deployments,po
 NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 node/ubuntu   Ready    <none>   5m1s   v1.25.4+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.9
 
-NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                            SELECTOR
-kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          k8s.gcr.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns
-kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   k8s.gcr.io/metrics-server/metrics-server:v0.5.2   k8s-app=metrics-server
+NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR
+kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns
+kube-system   deployment.apps/metrics-server   1/1     1            1           33m   metrics-server   registry.k8s.io/metrics-server/metrics-server:v0.5.2   k8s-app=metrics-server
 
 NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES
 kube-system   pod/coredns-88b745646-pkk5w           1/1     Running   0          33m    10.244.0.5     ubuntu   <none>           <none>
