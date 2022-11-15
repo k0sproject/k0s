@@ -18,10 +18,13 @@ package calico
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
@@ -37,6 +40,8 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 
 	kc, err := s.KubeClient("controller0", "")
 	s.Require().NoError(err)
+	restConfig, err := s.GetKubeConfig("controller0", "")
+	s.NoError(err)
 
 	err = s.WaitForNodeReady("worker0", kc)
 	s.NoError(err)
@@ -44,7 +49,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	calicoDaemonset, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", v1.GetOptions{})
+	calicoDaemonset, err := kc.AppsV1().DaemonSets("kube-system").Get(context.TODO(), "calico-node", metav1.GetOptions{})
 	s.Require().NoError(err)
 	var calicoCustomEnvVarsFound int
 	for _, v := range calicoDaemonset.Spec.Template.Spec.Containers[0].Env {
@@ -58,6 +63,44 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 
 	s.T().Log("waiting to see calico pods ready")
 	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "calico-node"), "calico did not start")
+	s.NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+
+	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": "worker0",
+			},
+		},
+	}, metav1.CreateOptions{})
+	s.Require().NoError(err)
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"), "nginx pod did not start")
+
+	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
+	s.Require().NoError(err)
+
+	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "alpine"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:    "alpine",
+				Image:   "alpine:3.16",
+				Command: []string{"sleep", "infinity"},
+			}},
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": "worker1",
+			},
+		},
+	}, metav1.CreateOptions{})
+	s.Require().NoError(err)
+	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
+
+	out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
+	s.Require().NoError(err, out)
+	s.Require().True(strings.Contains(out, "Welcome to nginx"))
 }
 
 func TestCalicoSuite(t *testing.T) {
