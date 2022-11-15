@@ -86,6 +86,13 @@ check-dualstack-dynamicconfig: TEST_PACKAGE=dualstack
 
 check-ap-updater: .update-server.stamp
 
+check-network-conformance-kuberouter: TIMEOUT=15m
+check-network-conformance-kuberouter: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter
+check-network-conformance-kuberouter: TEST_PACKAGE=network-conformance
+check-network-conformance-calico: TIMEOUT=15m
+check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
+check-network-conformance-calico: TEST_PACKAGE=network-conformance
+
 .PHONY: $(smoketests)
 include Makefile.variables
 

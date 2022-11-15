@@ -47,3 +47,5 @@ smoketests := \
 	check-capitalhostnames \
 	check-customca \
 	check-dualstack-dynamicconfig \
+	check-network-conformance-kuberouter \
+	check-network-conformance-calico \
