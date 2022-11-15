@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
@@ -98,9 +100,15 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
 
-	out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
-	s.Require().NoError(err, out)
-	s.Require().True(strings.Contains(out, "Welcome to nginx"))
+	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
+		if err != nil {
+			return false, err
+		}
+		s.T().Log("server response", out)
+		return strings.Contains(out, "Welcome to nginx"), nil
+	})
+	s.Require().NoError(err)
 }
 
 func TestCalicoSuite(t *testing.T) {

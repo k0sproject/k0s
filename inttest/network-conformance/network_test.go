@@ -60,8 +60,15 @@ func (s *networkSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady("worker1", kc)
 	s.NoError(err)
 
-	s.T().Log("waiting to see kube-proxy pods ready")
-	s.NoError(common.WaitForDaemonSet(s.Context(), kc, "kube-proxy"), "kube-proxy did not start")
+	var daemonSetName string
+	switch cni {
+	case "calico":
+		daemonSetName = "calico-node"
+	case "kuberouter":
+		daemonSetName = "kube-router"
+	}
+	s.T().Log("waiting to see CNI pods ready")
+	s.NoError(common.WaitForDaemonSet(s.Context(), kc, daemonSetName), fmt.Sprintf("%s did not start", daemonSetName))
 
 	restConfig, err := s.GetKubeConfig("controller0")
 	s.Require().NoError(err)
