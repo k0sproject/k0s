@@ -26,17 +26,23 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-const confTmpl = `
-# This is a placeholder configuration for k0s managed containerD.
-# If you wish to customize the config replace this file with your custom configuration.
-# For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+const confTmpl = `# This is a placeholder configuration for k0s managed containerd.
+# If you wish to customize the configuration, replace this file with your own configuration.
+# For reference, see https://github.com/containerd/containerd/blob/v1.6.9/docs/man/containerd-config.toml.5.md.
+
 version = 2
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = {{ .PauseImage | quote }}
 `
 const confPath = "/etc/k0s/containerd.toml"
 
@@ -98,7 +104,20 @@ func (c *ContainerD) setupConfig() error {
 	if err := dir.Init(filepath.Dir(confPath), 0755); err != nil {
 		return err
 	}
-	return file.WriteContentAtomically(confPath, []byte(confTmpl), 0644)
+
+	return (&templatewriter.TemplateWriter{
+		Name:     "containerd.toml",
+		Template: confTmpl,
+		Path:     confPath,
+		Data: struct {
+			PauseImage string
+		}{
+			PauseImage: v1beta1.ImageSpec{
+				Image:   constant.KubePauseContainerImage,
+				Version: constant.KubePauseContainerImageVersion,
+			}.URI(),
+		},
+	}).Write()
 }
 
 // Stop stops containerD
