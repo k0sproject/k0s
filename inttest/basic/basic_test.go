@@ -17,15 +17,20 @@ limitations under the License.
 package basic
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/inttest/common"
-	capi "k8s.io/api/certificates/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
+
+	certificatesv1 "k8s.io/api/certificates/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/BurntSushi/toml"
+	"github.com/stretchr/testify/suite"
 )
 
 type BasicSuite struct {
@@ -90,6 +95,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
 		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, node))
 	}
+
+	s.verifyContainerdDefaultConfig()
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
@@ -131,7 +138,7 @@ func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
 }
 
 func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
-	opts := v1.ListOptions{
+	opts := metav1.ListOptions{
 		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
 	}
 	csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(s.Context(), opts)
@@ -149,13 +156,44 @@ func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
 	return fmt.Errorf("no CSRs have been approved")
 }
 
-func isCSRApproved(csr capi.CertificateSigningRequest) bool {
+func isCSRApproved(csr certificatesv1.CertificateSigningRequest) bool {
 	for _, condition := range csr.Status.Conditions {
-		if condition.Type == capi.CertificateApproved && condition.Reason == "Autoapproved by K0s CSRApprover" {
+		if condition.Type == certificatesv1.CertificateApproved && condition.Reason == "Autoapproved by K0s CSRApprover" {
 			return true
 		}
 	}
 	return false
+}
+
+func (s *BasicSuite) verifyContainerdDefaultConfig() {
+	var defaultConfig bytes.Buffer
+	ssh, err := s.SSH(s.WorkerNode(0))
+	if !s.NoError(err) {
+		return
+	}
+	defer ssh.Disconnect()
+
+	if !s.NoError(ssh.Exec(s.Context(), "/var/lib/k0s/bin/containerd config default", common.SSHStreams{Out: &defaultConfig})) {
+		return
+	}
+
+	var parsedConfig struct {
+		Plugins struct {
+			CRI struct {
+				SandboxImage string `toml:"sandbox_image"`
+			} `toml:"io.containerd.grpc.v1.cri"`
+		} `toml:"plugins"`
+	}
+
+	_, err = toml.Decode(defaultConfig.String(), &parsedConfig)
+	if !s.NoError(err) {
+		return
+	}
+
+	s.Equal(v1beta1.ImageSpec{
+		Image:   constant.KubePauseContainerImage,
+		Version: constant.KubePauseContainerImageVersion,
+	}.URI(), parsedConfig.Plugins.CRI.SandboxImage)
 }
 
 func TestBasicSuite(t *testing.T) {
