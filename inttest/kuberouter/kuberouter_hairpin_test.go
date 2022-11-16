@@ -100,8 +100,6 @@ const k0sConfigWithHairpinning = `
 spec:
   network:
     provider: kuberouter
-    kuberouter:
-      hairpinMode: true
 `
 
 const podManifest = `

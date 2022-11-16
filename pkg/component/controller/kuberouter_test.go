@@ -44,7 +44,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.MTU = 1450
 	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
-	cfg.Spec.Network.KubeRouter.HairpinMode = true
+	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
 
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
@@ -61,7 +61,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	require.NotNil(t, ds)
 	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-ips=1.2.3.4,4.3.2.1")
 	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--peer-router-asns=12345,67890")
-	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
+	require.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
 
 	cm, err := findConfig(resources)
 	require.NoError(t, err)
@@ -72,6 +72,44 @@ func TestKubeRouterConfig(t *testing.T) {
 	require.Equal(t, false, p.Dig("auto-mtu"))
 	require.Equal(t, float64(1450), p.Dig("mtu"))
 	require.Equal(t, true, p.Dig("hairpinMode"))
+}
+
+type hairpinTest struct {
+	krc    *v1beta1.KubeRouter
+	result kubeRouterConfig
+}
+
+func TestGetHairpinConfig(t *testing.T) {
+	hairpinTests := []hairpinTest{
+		{
+			krc:    &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinUndefined, HairpinMode: true},
+			result: kubeRouterConfig{CNIHairpin: true, GlobalHairpin: true},
+		},
+		{
+			krc:    &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinUndefined, HairpinMode: false},
+			result: kubeRouterConfig{CNIHairpin: false, GlobalHairpin: false},
+		},
+		{
+			krc:    &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinAllowed, HairpinMode: true},
+			result: kubeRouterConfig{CNIHairpin: true, GlobalHairpin: false},
+		},
+		{
+			krc:    &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinDisabled, HairpinMode: true},
+			result: kubeRouterConfig{CNIHairpin: false, GlobalHairpin: false},
+		},
+		{
+			krc:    &v1beta1.KubeRouter{Hairpin: v1beta1.HairpinEnabled, HairpinMode: false},
+			result: kubeRouterConfig{CNIHairpin: true, GlobalHairpin: true},
+		},
+	}
+
+	for _, test := range hairpinTests {
+		cfg := &kubeRouterConfig{}
+		getHairpinConfig(cfg, test.krc)
+		if cfg.CNIHairpin != test.result.CNIHairpin || cfg.GlobalHairpin != test.result.GlobalHairpin {
+			t.Fatalf("Hairpin configuration (%#v) does not match exepected output (%#v) ", cfg, test.result)
+		}
+	}
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
@@ -94,7 +132,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, ds)
 
-	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=false")
+	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--hairpin-mode=true")
 
 	cm, err := findConfig(resources)
 	require.NoError(t, err)
@@ -104,7 +142,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, true, p.Dig("auto-mtu"))
 	require.Nil(t, p.Dig("mtu"))
-	require.Equal(t, false, p.Dig("hairpinMode"))
+	require.Equal(t, true, p.Dig("hairpinMode"))
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {

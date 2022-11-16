@@ -24,13 +24,28 @@ type KubeRouter struct {
 	MTU int `json:"mtu"`
 	// Kube-router metrics server port. Set to 0 to disable metrics  (default: 8080)
 	MetricsPort int `json:"metricsPort"`
-	// Activate Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
-	HairpinMode bool `json:"hairpinMode"`
+	// Admits three values: "Enabled" enables it globally, "Allowed" allows but services must be annotated explicitly and "Disabled"
+	// Defaults to "Enabled"
+	// +kubebuilder:default=Enabled
+	Hairpin Hairpin `json:"hairpin"`
+	// DEPRECATED: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
+	HairpinMode bool `json:"hairpinMode,omitempty"`
 	// Comma-separated list of global peer addresses
 	PeerRouterASNs string `json:"peerRouterASNs"`
 	// Comma-separated list of global peer ASNs
 	PeerRouterIPs string `json:"peerRouterIPs"`
 }
+
+// +kubebuilder:validation:Enum=Enabled;Allowed;Disabled
+type Hairpin string
+
+const (
+	HairpinEnabled  Hairpin = "Enabled"
+	HairpinAllowed  Hairpin = "Allowed"
+	HairpinDisabled Hairpin = "Disabled"
+	// Necessary for backwards compatibility with HairpinMode
+	HairpinUndefined Hairpin = ""
+)
 
 // DefaultKubeRouter returns the default config for kube-router
 func DefaultKubeRouter() *KubeRouter {
@@ -38,5 +53,6 @@ func DefaultKubeRouter() *KubeRouter {
 		MTU:         0,
 		AutoMTU:     true,
 		MetricsPort: 8080,
+		Hairpin:     HairpinEnabled,
 	}
 }
