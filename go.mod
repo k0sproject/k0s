@@ -12,7 +12,7 @@ require (
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cloudflare/cfssl v1.6.3
-	github.com/containerd/containerd v1.6.9
+	github.com/containerd/containerd v1.6.10
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
