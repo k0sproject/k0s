@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/multierr"
 )
 
 func TestDetectHostIPTablesMode(t *testing.T) {
@@ -165,7 +166,13 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		writeXtables(t, binDir, "legacy", "exit 77", "exit 66")
 
 		_, err := iptablesutils.DetectHostIPTablesMode(binDir)
-		assert.ErrorIs(t, err, exec.ErrNotFound)
+		errs := multierr.Errors(err)
+		require.Len(t, errs, 3)
+		assert.ErrorIs(t, errs[0], exec.ErrNotFound)
+		assert.ErrorContains(t, errs[1], "99")
+		assert.ErrorContains(t, errs[1], "88")
+		assert.ErrorContains(t, errs[2], "77")
+		assert.ErrorContains(t, errs[2], "66")
 	})
 
 	binDir := t.TempDir()
