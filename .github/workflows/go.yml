@@ -239,10 +239,10 @@ jobs:
           path: /tmp/cluster-state.tar
 
       - name: Collect sonobuoy results
-        if: contains(matrix.smoke-suite, 'conformance')
+        if: failure() && contains(matrix.smoke-suite, 'conformance')
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.smoke-suite }}-sonobouy-results
+          name: ${{ matrix.smoke-suite }}-sonobuoy-results
           path: /tmp/*_sonobuoy_*.tar.gz
 
   autopilot-smoketest-matrix:
