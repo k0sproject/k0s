@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
@@ -103,15 +102,8 @@ func NewWorkerCmd() *cobra.Command {
 
 // Start starts the worker components based on the given [config.CLIOptions].
 func (c *Command) Start(ctx context.Context) error {
-	if c.TokenArg == "" && !file.Exists(c.K0sVars.KubeletAuthConfigPath) {
-		return fmt.Errorf("normal kubelet kubeconfig does not exist and no join-token given. dunno how to make kubelet auth to api")
-	}
-
-	// Dump join token into kubelet-bootstrap kubeconfig if it does not already exist
-	if c.TokenArg != "" && !file.Exists(c.K0sVars.KubeletBootstrapConfigPath) {
-		if err := worker.HandleKubeletBootstrapToken(c.TokenArg, c.K0sVars); err != nil {
-			return err
-		}
+	if err := worker.BootstrapKubeletKubeconfig(ctx, c.K0sVars, &c.WorkerOptions); err != nil {
+		return err
 	}
 
 	kubeletConfigClient, err := worker.LoadKubeletConfigClient(c.K0sVars)

@@ -26,6 +26,7 @@ smoketests := \
 	check-externaletcd \
 	check-extraargs \
 	check-hacontrolplane \
+	check-hostnameoverride \
 	check-k0scloudprovider \
 	check-kine \
 	check-kuberouter \

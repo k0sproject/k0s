@@ -17,31 +17,76 @@ limitations under the License.
 package worker
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"path"
-
-	"k8s.io/client-go/tools/clientcmd"
+	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/flags"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/token"
+
+	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/kubernetes/pkg/kubelet/certificate/bootstrap"
+	nodeutil "k8s.io/kubernetes/pkg/util/node"
+
+	"github.com/avast/retry-go"
+	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
-func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) error {
-	kubeconfig, err := token.DecodeJoinToken(encodedToken)
-	if err != nil {
-		return fmt.Errorf("failed to decode token: %w", err)
-	}
+func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, workerOpts *config.WorkerOptions) error {
+	var bootstrapKubeconfigPath string
+	var bootstrapKubeconfig *clientcmdapi.Config
 
-	// Load the bootstrap kubeconfig to validate it
-	clientCfg, err := clientcmd.Load(kubeconfig)
-	if err != nil {
-		return fmt.Errorf("failed to parse kubelet bootstrap auth from token: %w", err)
-	}
+	if workerOpts.TokenArg == "" {
+		if file.Exists(k0sVars.KubeletAuthConfigPath) {
+			// Regular kubelet kubeconfig file exists, nothing to do.
+			return nil
+		}
 
-	if tokenType := token.GetTokenType(clientCfg); tokenType != "kubelet-bootstrap" {
-		return fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
+		// Fallback to bootstrap kubeconfig file, if it exists.
+		bootstrapKubeconfigPath = filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
+		if !file.Exists(bootstrapKubeconfigPath) {
+			return fmt.Errorf("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
+		}
+
+		var err error
+		bootstrapKubeconfig, err = clientcmd.LoadFromFile(bootstrapKubeconfigPath)
+		if err != nil {
+			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from file: %w", err)
+		}
+	} else {
+		kubeconfig, err := token.DecodeJoinToken(workerOpts.TokenArg)
+		if err != nil {
+			return fmt.Errorf("failed to decode join token: %w", err)
+		}
+
+		// Load the bootstrap kubeconfig to validate it
+		bootstrapKubeconfig, err = clientcmd.Load(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from join token: %w", err)
+		}
+
+		bootstrapKubeconfigPath, err = writeKubeletBootstrapKubeconfig(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("failed to write kubelet bootstrap kubeconfig: %w", err)
+		}
+		defer func() {
+			if err := os.Remove(bootstrapKubeconfigPath); err != nil && !os.IsNotExist(err) {
+				logrus.WithError(err).Error("Failed to remove kubelet bootstrap kubeconfig file")
+			}
+		}()
+
+		logrus.Debug("Wrote kubelet bootstrap kubeconfig file: ", bootstrapKubeconfigPath)
 	}
 
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
@@ -49,30 +94,93 @@ func HandleKubeletBootstrapToken(encodedToken string, k0sVars constant.CfgVars) 
 		if err := dir.Init(k0sVars.CertRootDir, constant.CertRootDirMode); err != nil {
 			return fmt.Errorf("failed to initialize directory '%s': %w", k0sVars.CertRootDir, err)
 		}
-		err = file.WriteContentAtomically(kubeletCAPath, clientCfg.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
+		err := file.WriteContentAtomically(kubeletCAPath, bootstrapKubeconfig.Clusters["k0s"].CertificateAuthorityData, constant.CertMode)
 		if err != nil {
 			return fmt.Errorf("failed to write ca client cert: %w", err)
 		}
 	}
-	err = file.WriteContentAtomically(k0sVars.KubeletBootstrapConfigPath, kubeconfig, constant.CertSecureMode)
-	if err != nil {
-		return fmt.Errorf("failed writing kubelet bootstrap auth config: %w", err)
+
+	if tokenType := token.GetTokenType(bootstrapKubeconfig); tokenType != "kubelet-bootstrap" {
+		return fmt.Errorf("wrong token type %s, expected type: kubelet-bootstrap", tokenType)
 	}
 
+	certDir := filepath.Join(k0sVars.DataDir, "kubelet", "pki")
+	if err := dir.Init(certDir, constant.DataDirMode); err != nil {
+		return fmt.Errorf("failed to initialize kubelet certificate directory: %w", err)
+	}
+
+	// The node name used during bootstrapping needs to match the node name
+	// selected by kubelet. Otherwise, kubelet will have problems interacting
+	// with a Node object that doesn't match the name in the certificates.
+	// https://kubernetes.io/docs/reference/access-authn-authz/node/
+
+	// Kubelet still has some deprecated support for cloud providers, which may
+	// completely bypass the "standard" node name detection as it's done here.
+	// K0s only supports external cloud providers, which seems to be a dead code
+	// path anyways in kubelet. So it's safe to assume that the following code
+	// exactly matches the behavior of kubelet.
+
+	nodeName, err := nodeutil.GetHostname(flags.Split(workerOpts.KubeletExtraArgs)["--hostname-override"])
+	if err != nil {
+		return fmt.Errorf("failed to determine node name: %w", err)
+	}
+
+	logrus.Infof("Bootstrapping kubelet client configuration using %s as node name", nodeName)
+
+	if err := retry.Do(
+		func() error {
+			return bootstrap.LoadClientCert(
+				ctx,
+				k0sVars.KubeletAuthConfigPath,
+				bootstrapKubeconfigPath,
+				certDir,
+				apitypes.NodeName(nodeName),
+			)
+		},
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.Delay(1*time.Second),
+		retry.OnRetry(func(attempt uint, err error) {
+			logrus.WithError(err).Debugf("Failed to bootstrap kubelet client configuration in attempt #%d, retrying after backoff", attempt+1)
+		}),
+	); err != nil {
+		return fmt.Errorf("failed to bootstrap kubelet client configuration: %w", err)
+	}
+
+	logrus.Debug("Successfully bootstrapped kubelet client configuration")
 	return nil
 }
 
 func LoadKubeletConfigClient(k0svars constant.CfgVars) (*KubeletConfigClient, error) {
 	var kubeletConfigClient *KubeletConfigClient
-	// Prefer to load client config from kubelet auth, fallback to bootstrap token auth
-	clientConfigPath := k0svars.KubeletBootstrapConfigPath
-	if file.Exists(k0svars.KubeletAuthConfigPath) {
-		clientConfigPath = k0svars.KubeletAuthConfigPath
-	}
-
-	kubeletConfigClient, err := NewKubeletConfigClient(clientConfigPath)
+	kubeletConfigClient, err := NewKubeletConfigClient(k0svars.KubeletAuthConfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start kubelet config client: %v", err)
+		return nil, fmt.Errorf("failed to create kubelet config client: %w", err)
 	}
 	return kubeletConfigClient, nil
+}
+
+func writeKubeletBootstrapKubeconfig(kubeconfig []byte) (string, error) {
+	dir := os.Getenv("XDG_RUNTIME_DIR")
+	if dir == "" && runtime.GOOS != "windows" {
+		dir = "/run"
+	}
+
+	bootstrapFile, err := os.CreateTemp(dir, "k0s-*-kubelet-bootstrap-kubeconfig")
+	if err != nil {
+		return "", err
+	}
+
+	_, err = bootstrapFile.Write(kubeconfig)
+	err = multierr.Append(err, bootstrapFile.Close())
+
+	if err != nil {
+		if rmErr := os.Remove(bootstrapFile.Name()); rmErr != nil && !os.IsNotExist(rmErr) {
+			err = multierr.Append(err, rmErr)
+		}
+
+		return "", err
+	}
+
+	return bootstrapFile.Name(), nil
 }

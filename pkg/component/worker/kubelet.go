@@ -150,13 +150,12 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	resolvConfPath := resolvconf.Path()
 
 	args := stringmap.StringMap{
-		"--root-dir":             k.dataDir,
-		"--config":               kubeletConfigPath,
-		"--bootstrap-kubeconfig": k.K0sVars.KubeletBootstrapConfigPath,
-		"--kubeconfig":           k.K0sVars.KubeletAuthConfigPath,
-		"--v":                    k.LogLevel,
-		"--runtime-cgroups":      "/system.slice/containerd.service",
-		"--cert-dir":             filepath.Join(k.dataDir, "pki"),
+		"--root-dir":        k.dataDir,
+		"--config":          kubeletConfigPath,
+		"--kubeconfig":      k.K0sVars.KubeletAuthConfigPath,
+		"--v":               k.LogLevel,
+		"--runtime-cgroups": "/system.slice/containerd.service",
+		"--cert-dir":        filepath.Join(k.dataDir, "pki"),
 	}
 
 	if len(k.Labels) > 0 {
