@@ -242,7 +242,7 @@ jobs:
         if: failure() && contains(matrix.smoke-suite, 'conformance')
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.smoke-suite }}-sonobuoy-results
+          name: smoketest-${{ matrix.smoke-suite }}-sonobuoy-results
           path: /tmp/*_sonobuoy_*.tar.gz
 
   autopilot-smoketest-matrix:

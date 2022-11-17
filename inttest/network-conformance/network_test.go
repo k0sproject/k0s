@@ -87,8 +87,14 @@ func (s *networkSuite) TestK0sGetsUp() {
 			DynamicPlugins: []string{"e2e"},
 			PluginEnvOverrides: map[string]map[string]string{
 				"e2e": {
-					"E2E_FOCUS":         "\\[sig-network\\].*\\[Conformance\\]",
-					"E2E_SKIP":          "\\[Serial\\]",
+					"E2E_FOCUS": "\\[sig-network\\].*\\[Conformance\\]",
+					//
+					// Skipping flaky tests:
+					// - [It] [sig-network] Services should be able to switch session affinity for service with type clusterIP [LinuxOnly] [Conformance]
+					// - [It] [sig-network] Services should have session affinity work for service with type clusterIP [LinuxOnly] [Conformance]
+					// - [It] [sig-network] Services should have session affinity timeout work for service with type clusterIP [LinuxOnly] [Conformance]
+					//
+					"E2E_SKIP":          "\\[Serial\\]|(Services\\ should.*session\\ affinity\\ .*for\\ service\\ with\\ type\\ clusterIP)",
 					"E2E_PARALLEL":      "y",
 					"E2E_USE_GO_RUNNER": "true",
 				},
