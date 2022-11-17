@@ -18,6 +18,7 @@ package network
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -28,6 +29,7 @@ import (
 	sc "github.com/vmware-tanzu/sonobuoy/pkg/client"
 	"github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
 	"golang.org/x/mod/semver"
+	"golang.org/x/sync/errgroup"
 )
 
 const defaultCNI = "kuberouter"
@@ -100,10 +102,35 @@ func (s *networkSuite) TestK0sGetsUp() {
 	status, err := client.GetStatus(&sc.StatusConfig{Namespace: "sonobuoy"})
 	s.Require().NoError(err)
 
+	s.T().Log("retrieving results")
+	r, ec, err := client.RetrieveResults(&sc.RetrieveConfig{
+		Namespace: "sonobuoy",
+		Path:      "/tmp/sonobuoy",
+	})
+	s.Require().NoError(err)
+	s.Require().NoError(retrieveResults(r, ec))
+
 	s.T().Log("sonobuoy test status: ", status)
 	s.Require().Equal("complete", status.Status)
 	s.Require().Len(status.Plugins, 1)
 	s.Require().Equal("passed", status.Plugins[0].ResultStatus)
+}
+
+func retrieveResults(r io.Reader, ec <-chan error) error {
+	eg := &errgroup.Group{}
+	eg.Go(func() error { return <-ec })
+	eg.Go(func() error {
+		filesCreated, err := sc.UntarAll(r, os.TempDir(), "")
+		if err != nil {
+			return err
+		}
+		for _, name := range filesCreated {
+			fmt.Println(name)
+		}
+		return nil
+	})
+
+	return eg.Wait()
 }
 
 func TestNetworkSuite(t *testing.T) {

@@ -238,6 +238,13 @@ jobs:
           name: smoketest-${{ matrix.smoke-suite }}-cluster-state
           path: /tmp/cluster-state.tar
 
+      - name: Collect sonobuoy results
+        if: contains(matrix.smoke-suite, 'conformance')
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.smoke-suite }}-sonobouy-results
+          path: /tmp/*_sonobuoy_*.tar.gz
+
   autopilot-smoketest-matrix:
     name: Release matrix
     runs-on: ubuntu-latest
