@@ -34,6 +34,13 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(1, "--single"))
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(1)))
 
+	kcC0, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(0), kcC0))
+	kcC1, err := s.KubeClient(s.ControllerNode(1))
+	s.Require().NoError(err)
+	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(1), kcC1))
+
 	sshC0, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer sshC0.Disconnect()
@@ -98,7 +105,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 	})
 }
 
-func TestNodeRoleSuite(t *testing.T) {
+func TestEmbeddedBinariesSuite(t *testing.T) {
 	s := EmbeddedBinariesSuite{
 		common.FootlooseSuite{
 			ControllerCount: 2,
