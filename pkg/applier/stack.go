@@ -38,17 +38,6 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-const (
-	// NameLabel stack label
-	NameLabel = "k0s.k0sproject.io/stack"
-
-	// ChecksumAnnotation defines the annotation key to used for stack checksums
-	ChecksumAnnotation = "k0s.k0sproject.io/stack-checksum"
-
-	// LastConfigAnnotation defines the annotation to be used for last applied configs
-	LastConfigAnnotation = "k0s.k0sproject.io/last-applied-configuration"
-)
-
 // Stack is a k8s resource bundle
 type Stack struct {
 	Name          string
