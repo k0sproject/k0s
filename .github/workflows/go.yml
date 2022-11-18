@@ -178,7 +178,10 @@ jobs:
   smoketest:
     name: Smoke test
     needs: build
-    runs-on: ubuntu-latest
+    runs-on:
+    - self-hosted
+    - linux
+    - custom-runner
     strategy:
       fail-fast: false
       matrix:
