@@ -97,6 +97,7 @@ func (m *Manager) Start(ctx context.Context) error {
 		m.prober.Register(compName, comp)
 	}
 	perfTimer.Output()
+	go m.prober.Run(ctx)
 	return nil
 }
 
