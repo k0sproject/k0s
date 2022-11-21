@@ -48,6 +48,7 @@ type ProbeStatus struct {
 	Success bool
 }
 
+// GetStatus returns the status of the k0s process using the status socket
 func GetStatusInfo(socketPath string) (status *K0sStatus, err error) {
 	status = &K0sStatus{}
 
@@ -59,7 +60,7 @@ func GetStatusInfo(socketPath string) (status *K0sStatus, err error) {
 		},
 	}
 
-	response, err := httpc.Get("http://localhost")
+	response, err := httpc.Get("http://localhost/status")
 	if err != nil {
 		return nil, err
 	}

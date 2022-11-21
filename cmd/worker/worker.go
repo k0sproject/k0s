@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -110,8 +111,9 @@ func (c *Command) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	componentManager := manager.New()
+	pr := prober.New()
+	go pr.Run(ctx)
+	componentManager := manager.New(pr)
 	if runtime.GOOS == "windows" && c.CriSocket == "" {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}

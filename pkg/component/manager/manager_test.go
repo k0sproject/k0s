@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,7 +58,7 @@ func (f *Fake) Ready() error {
 }
 
 func TestManagerSuccess(t *testing.T) {
-	m := New()
+	m := New(prober.NopProber{})
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -83,7 +84,7 @@ func TestManagerSuccess(t *testing.T) {
 }
 
 func TestManagerInitFail(t *testing.T) {
-	m := New()
+	m := New(prober.NopProber{})
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -103,7 +104,7 @@ func TestManagerInitFail(t *testing.T) {
 }
 
 func TestManagerRunFail(t *testing.T) {
-	m := New()
+	m := New(prober.NopProber{})
 	require.NotNil(t, m)
 
 	ctx := context.Background()
@@ -134,7 +135,7 @@ func TestManagerRunFail(t *testing.T) {
 }
 
 func TestManagerHealthyFail(t *testing.T) {
-	m := New()
+	m := New(prober.NopProber{})
 	require.NotNil(t, m)
 	m.ReadyWaitDuration = 1 * time.Millisecond
 

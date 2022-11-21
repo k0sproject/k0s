@@ -39,6 +39,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -125,8 +126,10 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context) error {
-	c.NodeComponents = manager.New()
-	c.ClusterComponents = manager.New()
+	pr := prober.New()
+	go pr.Run(ctx)
+	c.NodeComponents = manager.New(pr)
+	c.ClusterComponents = manager.New(pr)
 
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
@@ -258,6 +261,7 @@ func (c *command) start(ctx context.Context) error {
 		)
 	}
 	c.NodeComponents.Add(ctx, &status.Status{
+		Prober: pr,
 		StatusInformation: install.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
@@ -449,6 +453,7 @@ func (c *command) start(ctx context.Context) error {
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 			NodeConfig:        c.NodeConfig,
+			EventEmitter:      prober.NewEventEmitter(),
 		})
 	}
 

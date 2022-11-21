@@ -17,12 +17,16 @@ limitations under the License.
 package status
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"path/filepath"
 	"runtime"
 
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/install"
 
@@ -58,8 +62,63 @@ func NewStatusCmd() *cobra.Command {
 	cmd.SilenceUsage = true
 	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
 	cmd.PersistentFlags().StringVar(&config.StatusSocket, "status-socket", filepath.Join(config.K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
-
+	cmd.AddCommand(NewStatusSubCmdComponents())
 	return cmd
+}
+
+func NewStatusSubCmdComponents() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "components",
+		Short:   "Get k0s instance component status information",
+		Example: `The command will return information about k0s components.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+			if runtime.GOOS == "windows" {
+				return fmt.Errorf("currently not supported on windows")
+			}
+			state := prober.State{}
+			if err := GetOverSocker(config.StatusSocket, "components", &state); err != nil {
+				return err
+			}
+			d, err := yaml.Marshal(state)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(d))
+			_ = d
+			return nil
+		},
+	}
+	return cmd
+
+}
+
+// TODO: move it somewhere else, now here just for quick manual testing
+func GetOverSocker(socketPath string, path string, tgt interface{}) error {
+
+	httpc := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+	}
+
+	response, err := httpc.Get("http://localhost/" + path)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	responseData, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(responseData, tgt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func printStatus(w io.Writer, status *install.K0sStatus, output string) {

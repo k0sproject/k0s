@@ -25,16 +25,19 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
+type proberRegistrator interface {
+	Register(name string, component any)
+}
+
 // Manager manages components
 type Manager struct {
 	Components        []Component
-	prober            *prober.Prober
+	prober            proberRegistrator
 	ReadyWaitDuration time.Duration
 
 	started              *list.List
@@ -42,11 +45,12 @@ type Manager struct {
 }
 
 // New creates a manager
-func New() *Manager {
+func New(prober proberRegistrator) *Manager {
 	return &Manager{
 		Components:        []Component{},
 		ReadyWaitDuration: 2 * time.Minute,
 		started:           list.New(),
+		prober:            prober,
 	}
 }
 
@@ -97,7 +101,6 @@ func (m *Manager) Start(ctx context.Context) error {
 		m.prober.Register(compName, comp)
 	}
 	perfTimer.Output()
-	go m.prober.Run(ctx)
 	return nil
 }
 

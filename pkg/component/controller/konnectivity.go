@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -60,6 +61,7 @@ type Konnectivity struct {
 	leaseCounterRunning bool
 	previousConfig      konnectivityAgentConfig
 	agentManifestLock   sync.Mutex
+	*prober.EventEmitter
 }
 
 var _ manager.Component = (*Konnectivity)(nil)
@@ -70,21 +72,29 @@ func (k *Konnectivity) Init(_ context.Context) error {
 	var err error
 	k.uid, err = users.GetUID(constant.KonnectivityServerUser)
 	if err != nil {
+		k.EmitWithPayload("error getting UID for", err)
 		logrus.Warning(fmt.Errorf("running konnectivity as root: %w", err))
 	}
 	err = dir.Init(k.K0sVars.KonnectivitySocketDir, 0755)
 	if err != nil {
+		k.EmitWithPayload("failed to initialize socket directory", err)
 		return fmt.Errorf("failed to initialize directory %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
 
 	err = os.Chown(k.K0sVars.KonnectivitySocketDir, k.uid, -1)
 	if err != nil && os.Geteuid() == 0 {
+		k.EmitWithPayload("failed to chown socket directory", err)
 		return fmt.Errorf("failed to chown %s: %v", k.K0sVars.KonnectivitySocketDir, err)
 	}
 
 	k.log = logrus.WithFields(logrus.Fields{"component": "konnectivity"})
+	if err := assets.Stage(k.K0sVars.BinDir, "konnectivity-server", constant.BinDirMode); err != nil {
+		k.EmitWithPayload("failed to stage konnectivity-server", err)
+		return fmt.Errorf("failed to stage konnectivity-server binary %v", err)
 
-	return assets.Stage(k.K0sVars.BinDir, "konnectivity-server", constant.BinDirMode)
+	}
+	defer k.Emit("succesfully initialized konnectivity component")
+	return nil
 }
 
 // Run ..
@@ -144,9 +154,14 @@ func (k *Konnectivity) runServer(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			k.Emit("stopped konnectivity server")
 			logrus.Info("stopping konnectivity server reconfig loop")
 			return
 		case count := <-k.serverCountChan:
+			if k.clusterConfig == nil {
+				k.Emit("skipping konnectivity server start, cluster config not yet available")
+				continue
+			}
 			// restart only if the count actually changes and we've got the global config
 			if count != k.serverCount && k.clusterConfig != nil {
 				args := k.defaultArgs()
@@ -156,6 +171,8 @@ func (k *Konnectivity) runServer(ctx context.Context) {
 				}
 				// Stop supervisor
 				if k.supervisor != nil {
+					k.EmitWithPayload("restarting konnectivity server due to server count change",
+						map[string]interface{}{"serverCount": count})
 					if err := k.supervisor.Stop(); err != nil {
 						logrus.Errorf("failed to stop supervisor: %s", err)
 						// TODO Should we just return? That means other part will continue to run but the server is never properly restarted
@@ -172,6 +189,7 @@ func (k *Konnectivity) runServer(ctx context.Context) {
 				}
 				err := k.supervisor.Supervise()
 				if err != nil {
+					k.EmitWithPayload("failed to run konnectivity server", err)
 					logrus.Errorf("failed to start konnectivity supervisor: %s", err)
 					k.supervisor = nil // not to make the next loop to try to stop it first
 					continue
@@ -179,8 +197,10 @@ func (k *Konnectivity) runServer(ctx context.Context) {
 				k.serverCount = count
 
 				if err := k.writeKonnectivityAgent(); err != nil {
+					k.EmitWithPayload("failed to write konnectivity agent config", err)
 					logrus.Errorf("failed to update konnectivity-agent template: %s", err)
 				}
+				k.EmitWithPayload("started konnectivity server", map[string]interface{}{"serverCount": count})
 			}
 		}
 	}
@@ -197,6 +217,14 @@ func (k *Konnectivity) Stop() error {
 	}
 	logrus.Debug("about to stop konnectivity supervisor")
 	return k.supervisor.Stop()
+}
+
+func (k *Konnectivity) Healthy() error {
+	if k.clusterConfig == nil {
+		return fmt.Errorf("cluster config not yet available")
+	}
+
+	return nil
 }
 
 type konnectivityAgentConfig struct {
@@ -240,9 +268,11 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 	}
 	err = tw.Write()
 	if err != nil {
+		k.EmitWithPayload("failed to write konnectivity agent manifest", err)
 		return fmt.Errorf("failed to write konnectivity agent manifest: %v", err)
 	}
 	k.previousConfig = cfg
+	k.Emit("wrote konnectivity agent new manifest")
 	return nil
 }
 
