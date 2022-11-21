@@ -33,6 +33,7 @@ smoketests := \
 	check-kubeletcertrotate \
 	check-metrics \
 	check-multicontroller \
+	check-nllb \
 	check-noderole \
 	check-noderole-no-taints \
 	check-noderole-single \

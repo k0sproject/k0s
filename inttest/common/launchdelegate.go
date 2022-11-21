@@ -38,8 +38,11 @@ const (
 // [FootlooseSuite] so that alternate behavior can be performed.
 type launchDelegate interface {
 	InitController(ctx context.Context, conn *SSHConnection, k0sArgs ...string) error
+	StartController(ctx context.Context, conn *SSHConnection) error
 	StopController(ctx context.Context, conn *SSHConnection) error
 	InitWorker(ctx context.Context, conn *SSHConnection, token string, k0sArgs ...string) error
+	StartWorker(ctx context.Context, conn *SSHConnection) error
+	StopWorker(ctx context.Context, conn *SSHConnection) error
 	ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, err io.Writer) error
 }
 
@@ -55,29 +58,37 @@ var _ launchDelegate = (*standaloneLaunchDelegate)(nil)
 // InitController initializes a controller in "standalone" mode, meaning that
 // the k0s executable is launched directly (vs. started via a service manager).
 func (s *standaloneLaunchDelegate) InitController(ctx context.Context, conn *SSHConnection, k0sArgs ...string) error {
-	umaskCmd := ""
+	var script strings.Builder
+	fmt.Fprintln(&script, "#!/usr/bin/env bash")
+	fmt.Fprintln(&script, "set -eu")
 	if s.controllerUmask != 0 {
-		umaskCmd = fmt.Sprintf("umask %d;", s.controllerUmask)
+		fmt.Fprintf(&script, "umask %d\n", s.controllerUmask)
+	}
+	fmt.Fprintf(&script, "export ETCD_UNSUPPORTED_ARCH='%s'\n", runtime.GOARCH)
+	fmt.Fprintf(&script, "%s controller --debug %s </dev/null >>/tmp/k0s-controller.log 2>&1 &\n", s.k0sFullPath, strings.Join(k0sArgs, " "))
+	fmt.Fprintln(&script, "disown %1")
+
+	if err := conn.Exec(ctx, "cat >/tmp/start-k0s && chmod +x /tmp/start-k0s", SSHStreams{
+		In: strings.NewReader(script.String()),
+	}); err != nil {
+		return fmt.Errorf("failed to write start script: %w", err)
 	}
 
-	// Allow any arch for etcd in smokes
-	cmd := fmt.Sprintf("%s ETCD_UNSUPPORTED_ARCH=%s nohup %s controller --debug %s >/tmp/k0s-controller.log 2>&1 &", umaskCmd, runtime.GOARCH, s.k0sFullPath, strings.Join(k0sArgs, " "))
+	return s.StartController(ctx, conn)
+}
 
-	if _, err := conn.ExecWithOutput(ctx, cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+// StartController starts a k0s controller that was initialized in "standalone" mode.
+func (s *standaloneLaunchDelegate) StartController(ctx context.Context, conn *SSHConnection) error {
+	const cmd = "/tmp/start-k0s"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
-
 	return nil
 }
 
 // StopController stops a k0s controller that was started in "standalone" mode.
 func (s *standaloneLaunchDelegate) StopController(ctx context.Context, conn *SSHConnection) error {
-	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.k0sFullPath, s.k0sFullPath)
-	if _, err := conn.ExecWithOutput(ctx, stopCommand); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", stopCommand, err)
-	}
-
-	return nil
+	return s.killK0s(ctx, conn)
 }
 
 // InitWorker initializes a worker in "standalone" mode, meaning that the k0s
@@ -87,16 +98,49 @@ func (s *standaloneLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConn
 		return fmt.Errorf("got empty token for worker join")
 	}
 
-	cmd := fmt.Sprintf(`nohup %s worker --debug %s "%s" >/tmp/k0s-worker.log 2>&1 &`, s.k0sFullPath, strings.Join(k0sArgs, " "), token)
-	if _, err := conn.ExecWithOutput(ctx, cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	var script strings.Builder
+	fmt.Fprintln(&script, "#!/usr/bin/env bash")
+	fmt.Fprintln(&script, "set -eu")
+	fmt.Fprintf(&script, "%s worker --debug %s \"$@\" </dev/null >>/tmp/k0s-worker.log 2>&1 &\n", s.k0sFullPath, strings.Join(k0sArgs, " "))
+	fmt.Fprintln(&script, "disown %1")
+
+	if err := conn.Exec(ctx, "cat >/tmp/start-k0s-worker && chmod +x /tmp/start-k0s-worker", SSHStreams{
+		In: strings.NewReader(script.String()),
+	}); err != nil {
+		return fmt.Errorf("failed to write start script: %w", err)
 	}
 
+	if err := conn.Exec(ctx, "/tmp/start-k0s-worker "+token, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", "/tmp/start-k0s-worker <token>", err)
+	}
 	return nil
+}
+
+// StartWorker starts a k0s worker that was initialized in "standalone" mode.
+func (s *standaloneLaunchDelegate) StartWorker(ctx context.Context, conn *SSHConnection) error {
+	const cmd = "/tmp/start-k0s-worker"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
+	}
+	return nil
+}
+
+// StopWorker stops a k0s worker that was started in "standalone" mode.
+func (s *standaloneLaunchDelegate) StopWorker(ctx context.Context, conn *SSHConnection) error {
+	return s.killK0s(ctx, conn)
 }
 
 func (s *standaloneLaunchDelegate) ReadK0sLogs(ctx context.Context, conn *SSHConnection, out, _ io.Writer) error {
 	return conn.Exec(ctx, "cat /tmp/k0s-*.log", SSHStreams{Out: out})
+}
+
+func (s *standaloneLaunchDelegate) killK0s(ctx context.Context, conn *SSHConnection) error {
+	stopCommand := fmt.Sprintf("kill $(pidof %s | tr \" \" \"\\n\" | sort -n | head -n1) && while pidof %s; do sleep 0.1s; done", s.k0sFullPath, s.k0sFullPath)
+	if err := conn.Exec(ctx, stopCommand, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", stopCommand, err)
+	}
+
+	return nil
 }
 
 // OpenRCLaunchDelegate is a launchDelegate that starts controllers and workers
@@ -121,20 +165,28 @@ func (o *openRCLaunchDelegate) InitController(ctx context.Context, conn *SSHConn
 	}
 
 	cmd := "/etc/init.d/k0scontroller start"
-	if _, err := conn.ExecWithOutput(ctx, cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 
+	return o.StartController(ctx, conn)
+}
+
+// StartController starts a k0s controller that was started using OpenRC.
+func (o *openRCLaunchDelegate) StartController(ctx context.Context, conn *SSHConnection) error {
+	const cmd = "/etc/init.d/k0scontroller start"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
+	}
 	return nil
 }
 
 // StopController stops a k0s controller that was started using OpenRC.
 func (*openRCLaunchDelegate) StopController(ctx context.Context, conn *SSHConnection) error {
 	startCmd := "/etc/init.d/k0scontroller stop"
-	if _, err := conn.ExecWithOutput(ctx, startCmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", startCmd, err)
+	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
 	}
-
 	return nil
 }
 
@@ -153,10 +205,28 @@ func (o *openRCLaunchDelegate) InitWorker(ctx context.Context, conn *SSHConnecti
 	}
 
 	cmd := "/etc/init.d/k0sworker start"
-	if _, err := conn.ExecWithOutput(ctx, cmd); err != nil {
-		return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
 	}
 
+	return nil
+}
+
+// StartWorker starts a k0s worker that was started using OpenRC.
+func (o *openRCLaunchDelegate) StartWorker(ctx context.Context, conn *SSHConnection) error {
+	const cmd = "/etc/init.d/k0sworker start"
+	if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", cmd, err)
+	}
+	return nil
+}
+
+// StopWorker stops a k0s worker that was started using OpenRC.
+func (*openRCLaunchDelegate) StopWorker(ctx context.Context, conn *SSHConnection) error {
+	startCmd := "/etc/init.d/k0sworker stop"
+	if err := conn.Exec(ctx, startCmd, SSHStreams{}); err != nil {
+		return fmt.Errorf("unable to execute %q: %w", startCmd, err)
+	}
 	return nil
 }
 
@@ -187,8 +257,8 @@ func (o *openRCLaunchDelegate) installK0sService(ctx context.Context, conn *SSHC
 	existsCommand := fmt.Sprintf("/usr/bin/file /etc/init.d/k0s%s", k0sType)
 	if _, err := conn.ExecWithOutput(ctx, existsCommand); err != nil {
 		cmd := fmt.Sprintf("%s install %s", o.k0sFullPath, k0sType)
-		if _, err := conn.ExecWithOutput(ctx, cmd); err != nil {
-			return fmt.Errorf("unable to execute '%s': %w", cmd, err)
+		if err := conn.Exec(ctx, cmd, SSHStreams{}); err != nil {
+			return fmt.Errorf("unable to execute %q: %w", cmd, err)
 		}
 	}
 
