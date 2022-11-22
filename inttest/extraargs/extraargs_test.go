@@ -17,6 +17,7 @@ limitations under the License.
 package extraargs
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -45,6 +46,25 @@ func (s *ExtraArgsSuite) TestK0sGetsUp() {
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 
+	ssh, err := s.SSH(s.ControllerNode(0))
+	defer ssh.Disconnect()
+	s.NoError(err)
+
+	s.checkFlag(ssh, "/var/lib/k0s/bin/kube-apiserver", "--disable-admission-plugins=PodSecurity")
+	s.checkFlag(ssh, "/var/lib/k0s/bin/etcd", "--logger=zap")
+
+}
+func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string, flag string) {
+	s.T().Logf("Checking flag %s in process %s", flag, processName)
+	pid, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("/usr/bin/pgrep %s", processName))
+	s.NoError(err)
+
+	flagCount, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("/bin/grep -c -- %s /proc/%s/cmdline", flag, pid))
+	s.NoError(err)
+	if flagCount != "1" {
+		s.T().Fatalf("%s flag %s not found", processName, flag)
+	}
+
 }
 
 func TestExtraArgsSuite(t *testing.T) {
@@ -64,4 +84,8 @@ spec:
     extraArgs:
       disable-admission-plugins: PodSecurity
       enable-admission-plugins: NamespaceLifecycle,LimitRanger,ServiceAccount,TaintNodesByCondition,Priority,DefaultTolerationSeconds,DefaultStorageClass,StorageObjectInUseProtection,PersistentVolumeClaimResize,RuntimeClass,CertificateApproval,CertificateSigning,CertificateSubjectRestriction,DefaultIngressClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
+  storage:
+    etcd:
+      extraArgs:
+        logger: zap
 `

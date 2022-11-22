@@ -195,6 +195,14 @@ func (e *Etcd) Start(ctx context.Context) error {
 		args["--auth-token"] = auth
 	}
 
+	for name, value := range e.Config.ExtraArgs {
+		argName := fmt.Sprintf("--%s", name)
+		if _, ok := args[argName]; ok {
+			logrus.Warnf("overriding etcd flag with user provided value: %s", argName)
+		}
+		args[argName] = value
+	}
+
 	logrus.Debugf("starting etcd with args: %v", args)
 
 	e.supervisor = supervisor.Supervisor{
