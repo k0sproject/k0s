@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -50,14 +51,14 @@ type ExtensionsController struct {
 	L             *logrus.Entry
 	helm          *helm.Commands
 	kubeConfig    string
-	leaderElector LeaderElector
+	leaderElector leaderelector.Interface
 }
 
 var _ component.Component = (*ExtensionsController)(nil)
 var _ component.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector LeaderElector) *ExtensionsController {
+func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
 		saver:         s,
 		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
@@ -152,7 +153,7 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 type ChartReconciler struct {
 	client.Client
 	helm          *helm.Commands
-	leaderElector LeaderElector
+	leaderElector leaderelector.Interface
 	L             *logrus.Entry
 }
 

@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	v1core "k8s.io/api/core/v1"
@@ -35,7 +36,7 @@ type TunneledEndpointReconciler struct {
 
 	logger *logrus.Entry
 
-	leaderElector     LeaderElector
+	leaderElector     leaderelector.Interface
 	kubeClientFactory k8sutil.ClientFactoryInterface
 }
 
@@ -225,7 +226,7 @@ func (ter TunneledEndpointReconciler) makeDefaultServiceInternalOnly(ctx context
 	return nil
 }
 
-func NewTunneledEndpointReconciler(leaderElector LeaderElector, kubeClientFactory k8sutil.ClientFactoryInterface) *TunneledEndpointReconciler {
+func NewTunneledEndpointReconciler(leaderElector leaderelector.Interface, kubeClientFactory k8sutil.ClientFactoryInterface) *TunneledEndpointReconciler {
 	return &TunneledEndpointReconciler{
 		leaderElector:     leaderElector,
 		kubeClientFactory: kubeClientFactory,

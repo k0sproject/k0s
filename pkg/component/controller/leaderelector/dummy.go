@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package leaderelector
 
 import (
 	"context"
@@ -22,25 +22,25 @@ import (
 	"github.com/k0sproject/k0s/pkg/component"
 )
 
-type DummyLeaderElector struct {
+type Dummy struct {
 	Leader    bool
 	callbacks []func()
 }
 
-var _ LeaderElector = (*DummyLeaderElector)(nil)
-var _ component.Component = (*DummyLeaderElector)(nil)
+var _ Interface = (*Dummy)(nil)
+var _ component.Component = (*Dummy)(nil)
 
-func (l *DummyLeaderElector) Init(_ context.Context) error { return nil }
-func (l *DummyLeaderElector) Stop() error                  { return nil }
-func (l *DummyLeaderElector) IsLeader() bool               { return l.Leader }
+func (l *Dummy) Init(_ context.Context) error { return nil }
+func (l *Dummy) Stop() error                  { return nil }
+func (l *Dummy) IsLeader() bool               { return l.Leader }
 
-func (l *DummyLeaderElector) AddAcquiredLeaseCallback(fn func()) {
+func (l *Dummy) AddAcquiredLeaseCallback(fn func()) {
 	l.callbacks = append(l.callbacks, fn)
 }
 
-func (l *DummyLeaderElector) AddLostLeaseCallback(func()) {}
+func (l *Dummy) AddLostLeaseCallback(func()) {}
 
-func (l *DummyLeaderElector) Start(_ context.Context) error {
+func (l *Dummy) Start(_ context.Context) error {
 	if !l.Leader {
 		return nil
 	}
