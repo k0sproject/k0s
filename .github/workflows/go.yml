@@ -178,10 +178,7 @@ jobs:
   smoketest:
     name: Smoke test
     needs: build
-    runs-on:
-    - self-hosted
-    - linux
-    - custom-runner
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -337,12 +334,13 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          - arm # this is armv7
+#          - arm # this is armv7
           - arm64
     runs-on:
       - self-hosted
       - linux
       - ${{ matrix.arch }}
+      - custom-runner
 
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
