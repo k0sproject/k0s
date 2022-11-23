@@ -48,7 +48,7 @@ spec:
     sans:
       - 192.168.68.104
     tunneledNetworkingMode: false
-    extraArgs: []
+    extraArgs: {}
   storage:
     type: etcd
     etcd:
@@ -74,9 +74,9 @@ spec:
   telemetry:
     enabled: true
   controllerManager:
-    extraArgs: []
+    extraArgs: {}
   scheduler:
-    extraArgs: []
+    extraArgs: {}
   installConfig:
     users:
       etcdUser: etcd
