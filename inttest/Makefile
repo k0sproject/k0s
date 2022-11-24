@@ -37,8 +37,8 @@ bin/sonobuoy: | bin
 	  footloose-alpine
 	touch $@
 
-.update-server.stamp: update-server/Dockerfile update-server/html/stable/index.yaml
-	docker build -t update-server --build-arg BASE=footloose-alpine -f $< $(dir $<)
+.update-server.stamp: .footloose-alpine.stamp update-server/Dockerfile update-server/html/stable/index.yaml
+	docker build -t update-server --build-arg BASE=footloose-alpine -f update-server/Dockerfile update-server
 	touch $@
 
 check-network: bin/sonobuoy
