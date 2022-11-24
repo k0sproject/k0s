@@ -1,4 +1,5 @@
-FROM alpine:3.16
+ARG ALPINE_VERSION
+FROM docker.io/library/alpine:$ALPINE_VERSION
 
 RUN apk add containerd
 COPY bundler.sh /

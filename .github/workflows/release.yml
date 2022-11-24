@@ -405,6 +405,11 @@ jobs:
       - name: Make binaries executable
         run: chmod +x ./k0s-*/k0s
 
+      - name: Fetch Alpine version to use
+        run: |
+          alpinePatchVersion="$(./vars.sh alpine_patch_version)"
+          echo "ALPINE_PATCH_VERSION=$alpinePatchVersion" >>"$GITHUB_ENV"
+
       - name: Build image and push to Docker Hub and GitHub image registry
         uses: docker/build-push-action@v3
         with:
@@ -413,6 +418,8 @@ jobs:
           tags: |
             ghcr.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
             docker.io/k0sproject/k0s:${{ needs.release.outputs.image_tag }}
+          build-args: |
+            ALPINE_VERSION=${{ env.ALPINE_PATCH_VERSION }}
           push: true
 
   conformance-test:

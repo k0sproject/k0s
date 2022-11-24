@@ -29,6 +29,7 @@ bin/sonobuoy: | bin
 
 .footloose-alpine.stamp: footloose-alpine/Dockerfile $(shell find footloose-alpine/root -type f)
 	docker build \
+	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	  --build-arg ETCD_ARCH=$(etcd_arch) \
 	  --build-arg ETCD_VERSION=$(etcd_version) \
 	  --build-arg KUBE_VERSION=$(kubernetes_version) \
