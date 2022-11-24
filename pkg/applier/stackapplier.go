@@ -127,7 +127,7 @@ func (s *StackApplier) apply(ctx context.Context) {
 	err := retry.Do(
 		func() error { return s.doApply(ctx) },
 		retry.OnRetry(func(attempt uint, err error) {
-			s.log.WithError(err).Warnf("Retrying after backoff, attempt #%d", attempt)
+			s.log.WithError(err).Warnf("Failed to apply manifests in attempt #%d, retrying after backoff", attempt+1)
 		}),
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
