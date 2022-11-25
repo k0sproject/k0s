@@ -100,7 +100,9 @@ func (s *Status) Stop() error {
 	if err := s.httpserver.Shutdown(ctx); err != nil && err != context.Canceled {
 		return err
 	}
-	return os.Remove(s.Socket)
+	// Unix socket doesn't need to be explicitly removed because it's hadled
+	// by httpserver.Shutdown
+	return nil
 }
 
 type statusHandler struct {
