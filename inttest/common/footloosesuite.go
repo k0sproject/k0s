@@ -1299,16 +1299,34 @@ func (s *FootlooseSuite) getIPAddress(nodeName string) string {
 // CreateNetwork creates a docker network with the provided name, destroying
 // any network that has the same name first.
 func (s *FootlooseSuite) CreateNetwork(name string) error {
-	_ = s.DestroyNetwork(name)
+	// Don't create the network if it already exists as it might be in use from previous tests
+	// ran with K0S_KEEP_AFTER_TEST variable set.
+	if s.NetworkExists(name) {
+		return nil
+	}
 
 	cmd := exec.Command("docker", "network", "create", name)
 	return cmd.Run()
 }
 
-// DestroyNetwork removes a docker network with the provided name.
-func (s *FootlooseSuite) DestroyNetwork(name string) error {
+// MaybeDestroyNetwork removes a docker network with the provided name.
+// The network might not get removed if there's still containers attached to it.
+// This is the case for example when running the tests with K0S_KEEP_AFTER_TEST=always.
+func (s *FootlooseSuite) MaybeDestroyNetwork(name string) error {
+	// If we're supposed to leave the footloose containers running, don't try to destroy the network
+	if keepEnvironment(s.T()) {
+		return nil
+	}
 	cmd := exec.Command("docker", "network", "rm", name)
 	return cmd.Run()
+}
+
+// NetworkExists returns true if a docker network with the provided name exists.
+func (s *FootlooseSuite) NetworkExists(name string) bool {
+	cmd := exec.Command("docker", "network", "inspect", name)
+	err := cmd.Run()
+
+	return err == nil
 }
 
 // RunCommandController runs a command via SSH on a specified controller node
