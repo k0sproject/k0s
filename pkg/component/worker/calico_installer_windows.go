@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"k8s.io/client-go/tools/clientcmd"

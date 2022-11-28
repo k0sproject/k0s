@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
