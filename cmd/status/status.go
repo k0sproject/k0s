@@ -23,12 +23,12 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 
-	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
@@ -46,7 +46,7 @@ func NewStatusCmd() *cobra.Command {
 				return fmt.Errorf("currently not supported on windows")
 			}
 
-			statusInfo, err := install.GetStatusInfo(config.StatusSocket)
+			statusInfo, err := status.GetStatusInfo(config.StatusSocket)
 			if err != nil {
 				return err
 			}
@@ -67,6 +67,7 @@ func NewStatusCmd() *cobra.Command {
 }
 
 func NewStatusSubCmdComponents() *cobra.Command {
+	var maxCount int
 	cmd := &cobra.Command{
 		Use:     "components",
 		Short:   "Get k0s instance component status information",
@@ -76,8 +77,9 @@ func NewStatusSubCmdComponents() *cobra.Command {
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-			state := prober.State{}
-			if err := GetOverSocker(config.StatusSocket, "components", &state); err != nil {
+			fmt.Fprintln(os.Stderr, "!!! per component status is not yet finally ready, information here might be not full yet")
+			state, err := status.GetComponentStatus(config.StatusSocket, maxCount)
+			if err != nil {
 				return err
 			}
 			d, err := yaml.Marshal(state)
@@ -85,16 +87,16 @@ func NewStatusSubCmdComponents() *cobra.Command {
 				return err
 			}
 			fmt.Println(string(d))
-			_ = d
 			return nil
 		},
 	}
+	cmd.Flags().IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
 	return cmd
 
 }
 
 // TODO: move it somewhere else, now here just for quick manual testing
-func GetOverSocker(socketPath string, path string, tgt interface{}) error {
+func GetOverSocket(socketPath string, path string, tgt interface{}) error {
 
 	httpc := http.Client{
 		Transport: &http.Transport{
@@ -121,7 +123,7 @@ func GetOverSocker(socketPath string, path string, tgt interface{}) error {
 	return nil
 }
 
-func printStatus(w io.Writer, status *install.K0sStatus, output string) {
+func printStatus(w io.Writer, status *status.K0sStatus, output string) {
 	switch output {
 	case "json":
 		jsn, _ := json.MarshalIndent(status, "", "   ")

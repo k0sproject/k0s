@@ -55,7 +55,7 @@ type Prober struct {
 // New creates a new prober
 func New() *Prober {
 	return &Prober{
-		l:                    logrus.WithFields(logrus.Fields{"component": "!!!!!!!!prober"}),
+		l:                    logrus.WithFields(logrus.Fields{"component": "prober"}),
 		interval:             10 * time.Second,
 		withHealthComponents: make(map[string]Healthz),
 		withEventComponents:  make(map[string]Eventer),
@@ -69,7 +69,7 @@ func New() *Prober {
 }
 
 // State gives read-only copy of current state
-func (p *Prober) State() State {
+func (p *Prober) State(maxCount int) State {
 	p.RLock()
 	defer p.RUnlock()
 	state := State{
@@ -84,6 +84,13 @@ func (p *Prober) State() State {
 			}
 			state.HealthProbes[name] = append(state.HealthProbes[name], v.(ProbeResult))
 		})
+		if maxCount >= p.probesTrackLength {
+			maxCount = p.probesTrackLength
+		}
+		if maxCount > len(state.HealthProbes[name]) {
+			maxCount = len(state.HealthProbes[name])
+		}
+		state.HealthProbes[name] = state.HealthProbes[name][0:maxCount]
 	}
 	for name, r := range p.eventState {
 		state.Events[name] = make([]Event, 0, p.eventsTrackLength*len(p.withEventComponents))
@@ -93,6 +100,15 @@ func (p *Prober) State() State {
 			}
 			state.Events[name] = append(state.Events[name], v.(Event))
 		})
+		if maxCount >= p.eventsTrackLength {
+			maxCount = p.eventsTrackLength
+		}
+		if maxCount > len(state.Events[name]) {
+			maxCount = len(state.Events[name])
+		}
+
+		state.Events[name] = state.Events[name][0:maxCount]
+
 	}
 
 	return state
@@ -158,7 +174,7 @@ func (p *Prober) spawnEventCollector(name string, component Eventer) {
 			case <-p.closeCh:
 				return
 			case event := <-component.Events():
-				p.l.Errorf("Got event from %s: %v", name, event)
+				p.l.Infof("Got event from %s: %v", name, event)
 				p.Lock()
 				p.eventState[name].Value = event
 				p.eventState[name] = p.eventState[name].Next()

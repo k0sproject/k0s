@@ -44,7 +44,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -262,7 +261,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 	c.NodeComponents.Add(ctx, &status.Status{
 		Prober: pr,
-		StatusInformation: install.K0sStatus{
+		StatusInformation: status.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
 			Args:          os.Args,

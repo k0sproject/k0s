@@ -8,6 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// default maxEvents to display, has nothing to do with actual ring size
+const maxEvents = 100
+
 func TestEvents(t *testing.T) {
 	t.Run("prober_collects_emitted_events", func(t *testing.T) {
 		prober := testProber(5)
@@ -33,7 +36,7 @@ func TestEvents(t *testing.T) {
 		component.sendEvents(eventsSent...)
 		prober.Register("component_with_events", component)
 		prober.Run(context.Background())
-		state := prober.State()
+		state := prober.State(maxEvents)
 		assert.Len(t, prober.withEventComponents, 1)
 		assert.Len(t, state.Events, 1, "should have 1 component with events")
 		assert.Len(t, state.Events["component_with_events"], 3, "should have 3 events in the state due to ring buffer size")
@@ -53,7 +56,7 @@ func TestEvents(t *testing.T) {
 		prober := testProber(10)
 		prober.Register("component_with_events", comp)
 		prober.Run(context.Background())
-		state := prober.State()
+		state := prober.State(maxEvents)
 		assert.Len(t, state.Events, 1)
 		assert.Len(t, state.Events["component_with_events"], 3)
 	})
@@ -90,7 +93,7 @@ func TestEvents(t *testing.T) {
 			},
 		)
 		time.Sleep(time.Second)
-		st := prober.State()
+		st := prober.State(maxEvents)
 		assert.Len(t, st.Events, 1)
 		assert.Len(t, st.Events["component_with_events"], 3)
 		cancel()

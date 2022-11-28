@@ -30,7 +30,7 @@ import (
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
-	k0sinstall "github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/component/status"
 )
 
 const defaultCronSchedule = "@hourly"
@@ -64,7 +64,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 		schedule = defaultCronSchedule
 	}
 
-	status, err := k0sinstall.GetStatusInfo(k0s.DefaultK0sStatusSocketPath)
+	status, err := status.GetStatusInfo(k0s.DefaultK0sStatusSocketPath)
 	if err != nil {
 		return nil, err
 	}

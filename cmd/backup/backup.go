@@ -27,8 +27,8 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/backup"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -73,7 +73,7 @@ func (c *command) backup(savePath string, out io.Writer) error {
 		return fmt.Errorf("cannot find data-dir (%v). check your environment and/or command input and try again", c.K0sVars.DataDir)
 	}
 
-	status, err := install.GetStatusInfo(config.StatusSocket)
+	status, err := status.GetStatusInfo(config.StatusSocket)
 	if err != nil {
 		return fmt.Errorf("unable to detect cluster status %s", err)
 	}

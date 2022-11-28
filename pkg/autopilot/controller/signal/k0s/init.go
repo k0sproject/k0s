@@ -17,13 +17,13 @@ package k0s
 import (
 	"context"
 	"fmt"
+
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
-
-	k0sinstall "github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/component/status"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -85,7 +85,7 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 // getK0sVersion returns the version k0s installed, as identified by the
 // provided status socket path.
 func getK0sVersion(statusSocketPath string) (string, error) {
-	status, err := k0sinstall.GetStatusInfo(statusSocketPath)
+	status, err := status.GetStatusInfo(statusSocketPath)
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func getK0sVersion(statusSocketPath string) (string, error) {
 
 // getK0sPid returns the PID of a running k0s based on its status socket.
 func getK0sPid(statusSocketPath string) (int, error) {
-	status, err := k0sinstall.GetStatusInfo(statusSocketPath)
+	status, err := status.GetStatusInfo(statusSocketPath)
 	if err != nil {
 		return -1, err
 	}

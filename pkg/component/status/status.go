@@ -23,14 +23,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/component/worker"
-	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -39,19 +38,25 @@ import (
 )
 
 type Stater interface {
-	State() prober.State
+	State(maxCount int) prober.State
 }
 type Status struct {
-	StatusInformation install.K0sStatus
+	StatusInformation K0sStatus
 	Prober            Stater
 	Socket            string
 	L                 *logrus.Entry
 	httpserver        http.Server
 	listener          net.Listener
-	CertManager       *worker.CertificateManager
+	CertManager       certManager
+}
+
+type certManager interface {
+	GetRestConfig() (*rest.Config, error)
 }
 
 var _ manager.Component = (*Status)(nil)
+
+const defaultMaxEvents = 5
 
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {
@@ -59,8 +64,12 @@ func (s *Status) Init(_ context.Context) error {
 	mux := http.NewServeMux()
 	mux.Handle("/status", &statusHandler{Status: s})
 	mux.HandleFunc("/components", func(w http.ResponseWriter, r *http.Request) {
+		maxCount, err := strconv.ParseInt(r.URL.Query().Get("maxCount"), 10, 32)
+		if err != nil {
+			maxCount = defaultMaxEvents
+		}
 		w.Header().Set("Content-Type", "application/json")
-		if json.NewEncoder(w).Encode(s.Prober.State()) != nil {
+		if json.NewEncoder(w).Encode(s.Prober.State(int(maxCount))) != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
@@ -134,7 +143,7 @@ const (
 	defaultPollTimeout  = 5 * time.Minute
 )
 
-func (sh *statusHandler) getCurrentStatus(ctx context.Context) install.K0sStatus {
+func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	status := sh.Status.StatusInformation
 	if !status.Workloads {
 		return status

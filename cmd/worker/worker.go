@@ -32,7 +32,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -167,7 +166,7 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 
 		componentManager.Add(ctx, &status.Status{
-			StatusInformation: install.K0sStatus{
+			StatusInformation: status.K0sStatus{
 				Pid:           os.Getpid(),
 				Role:          "worker",
 				Args:          os.Args,
