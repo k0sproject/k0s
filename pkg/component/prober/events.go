@@ -30,7 +30,6 @@ type Event struct {
 	At      time.Time   `json:"at"`
 	Message string      `json:"message"`
 	Payload interface{} `json:"payload,omitempty"`
-	ack     chan struct{}
 }
 
 // EventEmitter is a helper object to emit events with fire and forget semantics

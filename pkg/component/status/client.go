@@ -52,7 +52,7 @@ type ProbeStatus struct {
 // GetStatus returns the status of the k0s process using the status socket
 func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 	status := &K0sStatus{}
-	if err := doHttpRequestThroughUnixSocket(socketPath, "status", status); err != nil {
+	if err := doHTTPRequestViaUnixSocket(socketPath, "status", status); err != nil {
 		return nil, err
 	}
 	return status, nil
@@ -61,7 +61,7 @@ func GetStatusInfo(socketPath string) (*K0sStatus, error) {
 // GetComponentStatus returns the per-component events and health-checks
 func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) {
 	status := &prober.State{}
-	if err := doHttpRequestThroughUnixSocket(socketPath,
+	if err := doHTTPRequestViaUnixSocket(socketPath,
 		fmt.Sprintf("components?maxCount=%d", maxCount),
 		status); err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 	return status, nil
 }
 
-func doHttpRequestThroughUnixSocket(socketPath string, path string, tgt interface{}) error {
+func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt interface{}) error {
 	httpc := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
