@@ -1598,11 +1598,12 @@ sudo k0s start
 <span class="w">    </span><span class="nt">sans</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span><span class="w"></span>
 <span class="w">    </span><span class="nt">tunneledNetworkingMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
-<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">  </span><span class="nt">storage</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span><span class="w"></span>
 <span class="w">    </span><span class="nt">etcd</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">peerAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.68.104</span><span class="w"></span>
+<span class="w">      </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span><span class="w"></span>
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span><span class="w"></span>
@@ -1623,9 +1624,9 @@ sudo k0s start
 <span class="w">  </span><span class="nt">telemetry</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 <span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">  </span><span class="nt">scheduler</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 <span class="w">  </span><span class="nt">installConfig</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">users</span><span class="p">:</span><span class="w"></span>
 <span class="w">      </span><span class="nt">etcdUser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span><span class="w"></span>
@@ -1725,6 +1726,10 @@ sudo k0s start
 <tr>
 <td><code>etcd.peerAddress</code></td>
 <td>Node address used for etcd cluster peering.</td>
+</tr>
+<tr>
+<td><code>etcd.extraArgs</code></td>
+<td>Map of key-values (strings) for any extra arguments to pass down to etcd process.</td>
 </tr>
 <tr>
 <td><code>kine.dataSource</code></td>
