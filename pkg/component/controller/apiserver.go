@@ -134,7 +134,7 @@ func (a *APIServer) Start(_ context.Context) error {
 	args["api-audiences"] = strings.Join(apiAudiences, ",")
 
 	for name, value := range a.ClusterConfig.Spec.API.ExtraArgs {
-		if args[name] != "" {
+		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding apiserver flag with user provided value: %s", name)
 		}
 		args[name] = value

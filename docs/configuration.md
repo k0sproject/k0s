@@ -48,11 +48,12 @@ spec:
     sans:
       - 192.168.68.104
     tunneledNetworkingMode: false
-    extraArgs: []
+    extraArgs: {}
   storage:
     type: etcd
     etcd:
       peerAddress: 192.168.68.104
+      extraArgs: {}
   network:
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
@@ -73,9 +74,9 @@ spec:
   telemetry:
     enabled: true
   controllerManager:
-    extraArgs: []
+    extraArgs: {}
   scheduler:
-    extraArgs: []
+    extraArgs: {}
   installConfig:
     users:
       etcdUser: etcd
@@ -141,6 +142,7 @@ spec:
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`             | Type of the data store (valid values:`etcd` or `kine`). **Note**: Type `etcd` will cause k0s to create and manage an elastic etcd cluster within the controller nodes. |
 | `etcd.peerAddress` | Node address used for etcd cluster peering.                                                                                                                            |
+| `etcd.extraArgs`   | Map of key-values (strings) for any extra arguments to pass down to etcd process.                                                                                      |
 | `kine.dataSource`  | [kine](https://github.com/k3s-io/kine) datasource URL.                                                                                                                 |
 
 ### `spec.network`

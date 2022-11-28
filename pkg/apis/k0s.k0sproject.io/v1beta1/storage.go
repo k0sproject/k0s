@@ -119,6 +119,9 @@ type EtcdConfig struct {
 
 	// Node address used for etcd cluster peering
 	PeerAddress string `json:"peerAddress"`
+
+	// Map of key-values (strings) for any extra arguments you want to pass down to the etcd process
+	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
 // ExternalCluster defines external etcd cluster related config options
@@ -149,6 +152,7 @@ func DefaultEtcdConfig() *EtcdConfig {
 	return &EtcdConfig{
 		ExternalCluster: nil,
 		PeerAddress:     addr,
+		ExtraArgs:       make(map[string]string),
 	}
 }
 

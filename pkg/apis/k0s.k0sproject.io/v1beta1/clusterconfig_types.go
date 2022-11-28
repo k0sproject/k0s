@@ -325,6 +325,7 @@ func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *Cluste
 		etcdConfig = &EtcdConfig{
 			ExternalCluster: storageSpec.Etcd.ExternalCluster,
 			PeerAddress:     storageSpec.Etcd.PeerAddress,
+			ExtraArgs:       storageSpec.Etcd.ExtraArgs,
 		}
 		c.Spec.Storage.Etcd = etcdConfig
 	}

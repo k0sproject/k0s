@@ -85,7 +85,7 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 		"v":                         a.LogLevel,
 	}
 	for name, value := range clusterConfig.Spec.Scheduler.ExtraArgs {
-		if args[name] != "" {
+		if _, ok := args[name]; ok {
 			logrus.Warnf("overriding kube-scheduler flag with user provided value: %s", name)
 		}
 		args[name] = value
