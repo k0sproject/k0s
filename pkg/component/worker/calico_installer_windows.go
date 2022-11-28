@@ -18,6 +18,7 @@ import (
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 )
 
