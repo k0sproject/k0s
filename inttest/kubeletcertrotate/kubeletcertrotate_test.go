@@ -24,7 +24,7 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/component/status"
 
 	"github.com/k0sproject/k0s/inttest/common"
 
@@ -50,7 +50,7 @@ func (s *kubeletCertRotateSuite) TearDownSuite() {
 }
 
 type statusJSON struct {
-	WorkerToAPIConnectionStatus install.ProbeStatus
+	WorkerToAPIConnectionStatus status.ProbeStatus
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
