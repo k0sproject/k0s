@@ -15,13 +15,13 @@ extensions:
   helm:
     repositories:
     - name: traefik
-      url: https://helm.traefik.io/traefik
+      url: https://traefik.github.io/charts
     - name: bitnami
       url: https://charts.bitnami.com/bitnami
     charts:
     - name: traefik
       chartname: traefik/traefik
-      version: "10.3.2"
+      version: "20.5.3"
       namespace: default
     - name: metallb
       chartname: bitnami/metallb
