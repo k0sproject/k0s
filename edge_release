@@ -1,0 +1,10 @@
+version: "v1.25.4+k0s.0"
+downloadURLs:
+  k0s:
+    k0s-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-v1.25.4+k0s.0-amd64"
+    k0s-arm: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-v1.25.4+k0s.0-arm"
+    k0s-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-v1.25.4+k0s.0-arm64"
+  airgap:
+    k0s-airgap-bundle-amd64: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-airgap-bundle-v1.25.4+k0s.0-amd64"
+    k0s-airgap-bundle-arm: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-airgap-bundle-v1.25.4+k0s.0-arm"
+    k0s-airgap-bundle-arm64: "https://github.com/k0sproject/k0s/releases/download/v1.25.4+k0s.0/k0s-airgap-bundle-v1.25.4+k0s.0-arm64"
