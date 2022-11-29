@@ -90,12 +90,13 @@ jobs:
         run: |
           LATEST=${{ steps.set_versions.outputs.LATEST }}
           STABLE=${{ steps.set_versions.outputs.STABLE }}
+          cp .github/workflows/channel.yaml.tpl /tmp/tpl
           git checkout gh-pages
           echo "${STABLE}" > stable.txt
           git add stable.txt && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set stable to ${STABLE}"
           echo "${LATEST}" > latest.txt
-          cat channel.yaml.tpl  | sed "s/{{ .Version }}/${LATEST}/g" > latest
+          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" > latest
           git add latest.txt latest && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set latest to ${LATEST}"
           git push origin gh-pages
