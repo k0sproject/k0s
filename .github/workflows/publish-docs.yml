@@ -96,7 +96,7 @@ jobs:
           git add stable.txt && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set stable to ${STABLE}"
           echo "${LATEST}" > latest.txt
-          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" > latest
-          git add latest.txt latest && git update-index --refresh
+          cat /tmp/tpl | sed "s/{{ .Version }}/${LATEST}/g" > edge_release
+          git add latest.txt edge_release && git update-index --refresh
           git diff-index --quiet HEAD -- || git commit -m "Set latest to ${LATEST}"
           git push origin gh-pages
