@@ -27,7 +27,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -49,7 +49,7 @@ type ContainerD struct {
 	OCIBundlePath string
 }
 
-var _ component.Component = (*ContainerD)(nil)
+var _ manager.Component = (*ContainerD)(nil)
 
 // Init extracts the needed binaries
 func (c *ContainerD) Init(ctx context.Context) error {

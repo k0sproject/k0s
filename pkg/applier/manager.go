@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -47,7 +47,7 @@ type Manager struct {
 	LeaderElector leaderelector.Interface
 }
 
-var _ component.Component = (*Manager)(nil)
+var _ manager.Component = (*Manager)(nil)
 
 type stack = struct {
 	context.CancelFunc

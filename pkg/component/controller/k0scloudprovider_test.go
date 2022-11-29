@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -62,7 +62,7 @@ func DummyCommandBuilder(wg *sync.WaitGroup, cancelled *bool) CommandBuilder {
 
 type K0sCloudProviderSuite struct {
 	suite.Suite
-	ccp       component.Component
+	ccp       manager.Component
 	cancelled bool
 	wg        sync.WaitGroup
 }

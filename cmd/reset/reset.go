@@ -22,8 +22,8 @@ import (
 	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/cleanup"
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -59,7 +59,7 @@ func (c *command) reset() error {
 		logrus.Fatal("this command must be run as root!")
 	}
 
-	k0sStatus, _ := install.GetStatusInfo(config.StatusSocket)
+	k0sStatus, _ := status.GetStatusInfo(config.StatusSocket)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
 		logrus.Fatal("k0s seems to be running! please stop k0s before reset.")
 	}

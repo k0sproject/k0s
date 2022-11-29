@@ -23,7 +23,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/sirupsen/logrus"
@@ -39,8 +39,8 @@ type KubeRouter struct {
 	previousConfig kubeRouterConfig
 }
 
-var _ component.Component = (*KubeRouter)(nil)
-var _ component.Reconciler = (*KubeRouter)(nil)
+var _ manager.Component = (*KubeRouter)(nil)
+var _ manager.Reconciler = (*KubeRouter)(nil)
 
 type kubeRouterConfig struct {
 	MTU               int

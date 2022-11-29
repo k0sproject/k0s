@@ -61,6 +61,7 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			if config.Debug {
+				// TODO: check if it actually works and is not overwritten by something else
 				logrus.SetLevel(logrus.DebugLevel)
 				go func() {
 					log := logrus.WithField("debug_server", config.DebugListenOn)

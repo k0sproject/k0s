@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,7 +29,7 @@ type CalicoInstaller struct {
 	ClusterDNS string
 }
 
-var _ component.Component = (*CalicoInstaller)(nil)
+var _ manager.Component = (*CalicoInstaller)(nil)
 
 func (c CalicoInstaller) Init(_ context.Context) error {
 	path := "C:\\bootstrap.ps1"

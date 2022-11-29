@@ -22,7 +22,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
 	"github.com/sirupsen/logrus"
 
@@ -43,8 +43,8 @@ type KubeProxy struct {
 	previousConfig proxyConfig
 }
 
-var _ component.Component = (*KubeProxy)(nil)
-var _ component.Reconciler = (*KubeProxy)(nil)
+var _ manager.Component = (*KubeProxy)(nil)
+var _ manager.Reconciler = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
 func NewKubeProxy(k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {

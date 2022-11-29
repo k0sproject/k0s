@@ -195,7 +195,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_without_init", func(t *testing.T) {
-		err := underTest.Healthy()
+		err := underTest.Ready()
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet running", err.Error())
 	})
@@ -224,7 +224,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_before_run", func(t *testing.T) {
-		err := underTest.Healthy()
+		err := underTest.Ready()
 		require.Error(t, err)
 		require.Equal(t, "static_pods component is not yet running", err.Error())
 	})
@@ -263,7 +263,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_works", func(t *testing.T) {
-		err := underTest.Healthy()
+		err := underTest.Ready()
 		assert.NoError(t, err)
 		lastLog := logs.LastEntry()
 		require.Equal(t, "Answering health check", lastLog.Message)
@@ -309,7 +309,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_after_stopped", func(t *testing.T) {
-		err := underTest.Healthy()
+		err := underTest.Ready()
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "connection refused")
 	})

@@ -19,7 +19,7 @@ package leaderelector
 import (
 	"context"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 )
 
 type Dummy struct {
@@ -28,7 +28,7 @@ type Dummy struct {
 }
 
 var _ Interface = (*Dummy)(nil)
-var _ component.Component = (*Dummy)(nil)
+var _ manager.Component = (*Dummy)(nil)
 
 func (l *Dummy) Init(_ context.Context) error { return nil }
 func (l *Dummy) Stop() error                  { return nil }

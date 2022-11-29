@@ -23,13 +23,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/autopilot/client"
-	"github.com/k0sproject/k0s/pkg/component"
-	"github.com/k0sproject/k0s/pkg/component/worker"
-	"github.com/k0sproject/k0s/pkg/install"
+	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -37,27 +37,45 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+type Stater interface {
+	State(maxCount int) prober.State
+}
 type Status struct {
-	StatusInformation install.K0sStatus
+	StatusInformation K0sStatus
+	Prober            Stater
 	Socket            string
 	L                 *logrus.Entry
 	httpserver        http.Server
 	listener          net.Listener
-	handler           *statusHandler
-	CertManager       *worker.CertificateManager
+	CertManager       certManager
 }
 
-var _ component.Component = (*Status)(nil)
+type certManager interface {
+	GetRestConfig() (*rest.Config, error)
+}
+
+var _ manager.Component = (*Status)(nil)
+
+const defaultMaxEvents = 5
 
 // Init initializes component
 func (s *Status) Init(_ context.Context) error {
 	s.L = logrus.WithFields(logrus.Fields{"component": "status"})
-	s.handler = &statusHandler{
-		Status: s,
-	}
+	mux := http.NewServeMux()
+	mux.Handle("/status", &statusHandler{Status: s})
+	mux.HandleFunc("/components", func(w http.ResponseWriter, r *http.Request) {
+		maxCount, err := strconv.ParseInt(r.URL.Query().Get("maxCount"), 10, 32)
+		if err != nil {
+			maxCount = defaultMaxEvents
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if json.NewEncoder(w).Encode(s.Prober.State(int(maxCount))) != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	})
 	var err error
 	s.httpserver = http.Server{
-		Handler: s.handler,
+		Handler: mux,
 	}
 	err = dir.Init(s.StatusInformation.K0sVars.RunDir, 0755)
 	if err != nil {
@@ -113,6 +131,7 @@ type statusHandler struct {
 // ServerHTTP implementation of handler interface
 func (sh *statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	statusInfo := sh.getCurrentStatus(r.Context())
+
 	w.Header().Set("Content-Type", "application/json")
 	if json.NewEncoder(w).Encode(statusInfo) != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -124,7 +143,7 @@ const (
 	defaultPollTimeout  = 5 * time.Minute
 )
 
-func (sh *statusHandler) getCurrentStatus(ctx context.Context) install.K0sStatus {
+func (sh *statusHandler) getCurrentStatus(ctx context.Context) K0sStatus {
 	status := sh.Status.StatusInformation
 	if !status.Workloads {
 		return status

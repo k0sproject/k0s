@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
 	"github.com/sirupsen/logrus"
 
@@ -41,7 +41,7 @@ type K0sControllersLeaseCounter struct {
 	leaseCancel context.CancelFunc
 }
 
-var _ component.Component = (*K0sControllersLeaseCounter)(nil)
+var _ manager.Component = (*K0sControllersLeaseCounter)(nil)
 
 // Init initializes the component needs
 func (l *K0sControllersLeaseCounter) Init(_ context.Context) error {

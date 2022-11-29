@@ -20,7 +20,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 )
 
@@ -30,7 +30,7 @@ type K0sCloudProvider struct {
 	commandBuilder CommandBuilder
 }
 
-var _ component.Component = (*K0sCloudProvider)(nil)
+var _ manager.Component = (*K0sCloudProvider)(nil)
 
 // CommandBuilder allows for defining arbitrary functions that can
 // create `Command` instances.

@@ -27,11 +27,11 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/build"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -110,8 +110,9 @@ func (c *Command) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	componentManager := component.NewManager()
+	pr := prober.New()
+	go pr.Run(ctx)
+	componentManager := manager.New(pr)
 	if runtime.GOOS == "windows" && c.CriSocket == "" {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}
@@ -165,7 +166,7 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 
 		componentManager.Add(ctx, &status.Status{
-			StatusInformation: install.K0sStatus{
+			StatusInformation: status.K0sStatus{
 				Pid:           os.Getpid(),
 				Role:          "worker",
 				Args:          os.Args,

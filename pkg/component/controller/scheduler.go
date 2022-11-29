@@ -27,7 +27,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -43,8 +43,8 @@ type Scheduler struct {
 	previousConfig stringmap.StringMap
 }
 
-var _ component.Component = (*Scheduler)(nil)
-var _ component.Reconciler = (*Scheduler)(nil)
+var _ manager.Component = (*Scheduler)(nil)
+var _ manager.Reconciler = (*Scheduler)(nil)
 
 // Init extracts the needed binaries
 func (a *Scheduler) Init(_ context.Context) error {

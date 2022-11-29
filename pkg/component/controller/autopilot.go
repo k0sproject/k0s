@@ -23,14 +23,14 @@ import (
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
 
-var _ component.Component = (*Autopilot)(nil)
+var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
 	K0sVars            constant.CfgVars

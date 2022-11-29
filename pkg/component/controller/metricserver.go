@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -257,8 +257,8 @@ type metricsConfig struct {
 	MEMRequest string
 }
 
-var _ component.Component = (*MetricServer)(nil)
-var _ component.Reconciler = (*MetricServer)(nil)
+var _ manager.Component = (*MetricServer)(nil)
+var _ manager.Reconciler = (*MetricServer)(nil)
 
 // NewMetricServer creates new MetricServer reconciler
 func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {

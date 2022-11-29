@@ -26,7 +26,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	cloudprovider "k8s.io/cloud-provider"
@@ -71,11 +71,11 @@ type ControllerOptions struct {
 	NoTaints          bool
 	DisableComponents []string
 
-	ClusterComponents               *component.Manager
+	ClusterComponents               *manager.Manager
 	EnableK0sCloudProvider          bool
 	K0sCloudProviderPort            int
 	K0sCloudProviderUpdateFrequency time.Duration
-	NodeComponents                  *component.Manager
+	NodeComponents                  *manager.Manager
 	EnableDynamicConfig             bool
 	EnableMetricsScraper            bool
 	KubeControllerManagerExtraArgs  string

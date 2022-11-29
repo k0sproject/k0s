@@ -14,4 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package install
+package prober
+
+import "context"
+
+// NopProber is a no-op prober
+type NopProber struct{}
+
+func (p NopProber) Run(context.Context)  {}
+func (p NopProber) Register(string, any) {}

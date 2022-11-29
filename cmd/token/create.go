@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -68,7 +68,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				statusInfo, err := install.GetStatusInfo(config.StatusSocket)
+				statusInfo, err := status.GetStatusInfo(config.StatusSocket)
 				if err != nil {
 					return fmt.Errorf("failed to get k0s status: %w", err)
 				}
@@ -100,7 +100,7 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 	return cmd
 }
 
-func ensureTokenCreationAcceptable(createTokenRole string, statusInfo *install.K0sStatus) error {
+func ensureTokenCreationAcceptable(createTokenRole string, statusInfo *status.K0sStatus) error {
 	if statusInfo.SingleNode {
 		return errors.New("refusing to create token: cannot join into a single node cluster")
 	}

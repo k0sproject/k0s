@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -44,8 +44,8 @@ type Component struct {
 	stopCh chan struct{}
 }
 
-var _ component.Component = (*Component)(nil)
-var _ component.Reconciler = (*Component)(nil)
+var _ manager.Component = (*Component)(nil)
+var _ manager.Reconciler = (*Component)(nil)
 
 var interval = time.Minute * 10
 

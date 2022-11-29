@@ -35,15 +35,15 @@ import (
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/k0sproject/k0s/pkg/component"
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	"github.com/k0sproject/k0s/pkg/install"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -125,8 +125,10 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context) error {
-	c.NodeComponents = component.NewManager()
-	c.ClusterComponents = component.NewManager()
+	pr := prober.New()
+	go pr.Run(ctx)
+	c.NodeComponents = manager.New(pr)
+	c.ClusterComponents = manager.New(pr)
 
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
@@ -171,7 +173,7 @@ func (c *command) start(ctx context.Context) error {
 		return err
 	}
 	logrus.Infof("DNS address: %s", dnsAddress)
-	var storageBackend component.Component
+	var storageBackend manager.Component
 
 	switch c.NodeConfig.Spec.Storage.Type {
 	case v1beta1.KineStorageType:
@@ -217,7 +219,7 @@ func (c *command) start(ctx context.Context) error {
 
 	var leaderElector interface {
 		leaderelector.Interface
-		component.Component
+		manager.Component
 	}
 
 	// One leader elector per controller
@@ -258,7 +260,8 @@ func (c *command) start(ctx context.Context) error {
 		)
 	}
 	c.NodeComponents.Add(ctx, &status.Status{
-		StatusInformation: install.K0sStatus{
+		Prober: pr,
+		StatusInformation: status.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
 			Args:          os.Args,
@@ -449,6 +452,7 @@ func (c *command) start(ctx context.Context) error {
 			K0sVars:           c.K0sVars,
 			KubeClientFactory: adminClientFactory,
 			NodeConfig:        c.NodeConfig,
+			EventEmitter:      prober.NewEventEmitter(),
 		})
 	}
 

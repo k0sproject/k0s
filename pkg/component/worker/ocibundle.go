@@ -27,7 +27,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -38,7 +38,7 @@ type OCIBundleReconciler struct {
 	log     *logrus.Entry
 }
 
-var _ component.Component = (*OCIBundleReconciler)(nil)
+var _ manager.Component = (*OCIBundleReconciler)(nil)
 
 // NewOCIBundleReconciler builds new reconciler
 func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {

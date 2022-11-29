@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/assets"
-	"github.com/k0sproject/k0s/pkg/component"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -34,7 +34,7 @@ type KubeProxy struct {
 	supervisor supervisor.Supervisor
 }
 
-var _ component.Component = (*KubeProxy)(nil)
+var _ manager.Component = (*KubeProxy)(nil)
 
 // Init
 func (k KubeProxy) Init(_ context.Context) error {
