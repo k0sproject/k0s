@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"html/template"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -64,7 +65,7 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.PutFile("controller0", "/tmp/k0s.yaml", config)
 	s.PutFile("controller1", "/tmp/k0s.yaml", config)
 
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-worker"))
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -95,15 +96,17 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.StopController(s.ControllerNode(0)))
 	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
 
-	s.Require().NoError(s.Reset(s.ControllerNode(0)))
-	s.Require().NoError(s.Reset(s.ControllerNode(1)))
+	// Reset will return an error because after starting the controller with --enable-worker
+	// k0s reset will try to delete /var/lib/k0s, which is not possible because it's a volume in docker.
+	_ = s.Reset(s.ControllerNode(0))
+	_ = s.Reset(s.ControllerNode(1))
 
 	s.Require().NoError(s.restoreFunc())
-	s.Require().NoError(s.InitController(0))
+	s.Require().NoError(s.InitController(0, "--enable-worker"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
 	// Join the second controller as normally
-	s.Require().NoError(s.InitController(1, token))
+	s.Require().NoError(s.InitController(1, "--enable-worker", token))
 
 	s.Require().NoError(err)
 
@@ -117,6 +120,8 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	// Matching object UIDs after restore guarantees we got the full state restored
 	s.Require().Equal(snapshot, snapshotAfterBackup)
+
+	s.Require().NoError(s.VerifyFileSystemRestore())
 }
 
 type snapshot struct {
@@ -153,6 +158,25 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 		services:   services,
 		nodes:      nodes,
 	}
+}
+
+func (s *BackupSuite) VerifyFileSystemRestore() error {
+	ssh, err := s.SSH(s.ControllerNode(0))
+	if err != nil {
+		return err
+	}
+	defer ssh.Disconnect()
+
+	// Checking for containerd should be enough given https://github.com/k0sproject/k0s/issues/2420
+	// containerd may take a bit to start so we want to retry a few times
+	checkPID := func() bool {
+		_, err = ssh.ExecWithOutput(s.Context(), "/bin/pidof /var/lib/k0s/bin/containerd")
+		return err == nil
+	}
+
+	s.Eventuallyf(checkPID, 180*time.Second, 10*time.Second,
+		"fetching pidof containerd failed after 3 minutes with error: %v", err)
+	return nil
 }
 
 func (s *BackupSuite) takeBackup() error {
