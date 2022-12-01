@@ -1,0 +1,77 @@
+parameters:
+  # Controller parameters
+  image_controller: fedora37
+  memory_controller: 2048
+  numcpus_controller: 2
+  controllers: 2
+  # Worker paramers
+  image_worker: fedora37
+  memory_worker: 1024
+  numcpus_worker: 1
+  workers: 1
+  # 
+  install: true
+  domain: k0s.lab
+  k0spath: /home/jdesousa/go/src/github.com/k0sproject/k0s/k0s
+  k0sctlpath: /home/jdesousa/go/src/github.com/k0sproject/k0sctl/k0sctl
+  k0sscpsource: jdesousa@192.168.122.1
+
+{% for worker in range(0, workers) %}
+worker-{{ worker }}:
+  image: {{ image_worker }}
+  memory: {{ memory_worker }}
+  numcpus: {{ numcpus_worker }}
+  reservedns: true
+  domain: {{ domain }}
+{% endfor %}
+
+{% for controller in range(0, controllers) %}
+controller-{{ controller }}:
+  image: {{ image_controller }}
+  memory: {{ memory_controller }}
+  numcpus: {{ numcpus_controller }}
+  reservedns: true
+  domain: {{ domain }}
+# Only do the installation bit on controller-0
+{% if controller == 0 %}
+  privatekey: true
+  files:
+    - path: /opt/fetchk0s.sh
+      mode: "700"
+      content: | 
+        scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ k0sscpsource }}:{{ k0spath }} /opt
+        scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ k0sscpsource }}:{{ k0sctlpath }} /opt
+    - path: /root/k0s.yaml
+      content: |
+        apiVersion: k0sctl.k0sproject.io/v1beta1
+        kind: Cluster
+        metadata:
+          name: k0s-cluster
+        spec:
+          hosts:
+{% for i in range(0, controllers) %}
+          - role: controller
+            ssh:
+              address: controller-{{ i }}.{{ domain }}
+              user: root
+              keyPath: ~/.ssh/id_rsa
+            k0sBinaryPath: /opt/k0s
+            uploadBinary: true
+{% endfor %}
+{% for i in range(0, workers) %}
+          - role: worker
+            ssh:
+              address: worker-{{ i }}.{{ domain }}
+              user: root
+              keyPath: ~/.ssh/id_rsa
+            k0sBinaryPath: /opt/k0s
+            uploadBinary: true
+{% endfor %}
+          # To be filled in runtime
+          k0s: 
+{% if install %}
+  cmds:
+    - /opt/fetchk0s.sh
+{% endif %}
+{% endif %} # endif controller-0
+{% endfor %}

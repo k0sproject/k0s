@@ -1,0 +1,26 @@
+parameters:
+  image: ubuntu2204
+  memory: 4096
+  numcpus: 2
+  install: true
+  k0spath: /home/jdesousa/go/src/github.com/k0sproject/k0s/k0s
+  k0sctlpath: /home/jdesousa/go/src/github.com/k0sproject/k0sctl/k0sctl
+  k0sscpsource: jdesousa@192.168.122.1
+
+allinone:
+  image: {{ image }}
+  memory: {{ memory }}
+  numcpus: {{ numcpus }}
+  privatekey: true
+  files:
+    - path: /opt/fetchk0s.sh
+      content: | 
+        scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ k0sscpsource }}:{{ k0spath }} /opt
+        scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {{ k0sscpsource }}:{{ k0sctlpath }} /opt
+    - path: /opt/aio.sh
+      origin: aio.sh
+      mode: "700"
+{% if install %}
+  cmds:
+    - /opt/aio.sh
+{% endif %}
