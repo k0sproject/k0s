@@ -1,3 +1,4 @@
+include ../embedded-bins/Makefile.variables
 include Makefile.variables
 
 ifeq ($(OS),Windows_NT)
@@ -75,7 +76,7 @@ cli:
 
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables
 	docker build \
-	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine3.16 \
+	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine$(alpine_version) \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'
 

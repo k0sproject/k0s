@@ -19,10 +19,13 @@ package calico
 import (
 	"context"
 	"fmt"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -89,7 +92,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:    "alpine",
-				Image:   "alpine:3.16",
+				Image:   "docker.io/library/alpine:" + getAlpineVersion(s.T()),
 				Command: []string{"sleep", "infinity"},
 			}},
 			NodeSelector: map[string]string{
@@ -109,6 +112,16 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		return strings.Contains(out, "Welcome to nginx"), nil
 	})
 	s.Require().NoError(err)
+}
+
+func getAlpineVersion(t *testing.T) string {
+	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "alpine_version")
+	cmd.Dir = filepath.Join("..", "..")
+	out, err := cmd.Output()
+	require.NoError(t, err)
+	version, _, _ := strings.Cut(string(out), "\n")
+	require.NotEmpty(t, version, "Failed to get Alpine version")
+	return version
 }
 
 func TestCalicoSuite(t *testing.T) {

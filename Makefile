@@ -69,7 +69,7 @@ LD_FLAGS += -X github.com/containerd/containerd/version.Revision=$(shell ./embed
 endif
 LD_FLAGS += $(BUILD_GO_LDFLAGS_EXTRA)
 
-GOLANG_IMAGE ?= golang:$(go_version)-alpine3.16
+GOLANG_IMAGE ?= $(golang_buildimage)
 K0S_GO_BUILD_CACHE_VOLUME_PATH=$(realpath $(K0S_GO_BUILD_CACHE))
 GO_ENV ?= docker run --rm \
 	-v '$(K0S_GO_BUILD_CACHE_VOLUME_PATH)':/run/k0s-build \
@@ -235,7 +235,10 @@ airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.t
 	  }
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/*
-	docker build -t k0sbuild.image-bundler hack/image-bundler
+	docker build \
+	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
+	  -t k0sbuild.image-bundler \
+	  hack/image-bundler
 	touch -- '$@'
 
 .PHONY: $(smoketests)
