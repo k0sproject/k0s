@@ -85,12 +85,8 @@ func NewControllerCmd() *cobra.Command {
 			if len(c.TokenArg) > 0 && len(c.TokenFile) > 0 {
 				return fmt.Errorf("you can only pass one token argument either as a CLI argument 'k0s controller [join-token]' or as a flag 'k0s controller --token-file [path]'")
 			}
-			if len(c.DisableComponents) > 0 {
-				for _, cmp := range c.DisableComponents {
-					if !slices.Contains(config.AvailableComponents(), cmp) {
-						return fmt.Errorf("unknown component %s", cmp)
-					}
-				}
+			if err := c.ControllerOptions.Normalize(); err != nil {
+				return err
 			}
 			if len(c.TokenFile) > 0 {
 				bytes, err := os.ReadFile(c.TokenFile)

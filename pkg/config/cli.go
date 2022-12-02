@@ -34,6 +34,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/exp/slices"
 )
 
 var (
@@ -98,6 +99,23 @@ type WorkerOptions struct {
 	IPTablesMode     string
 }
 
+func (o *ControllerOptions) Normalize() error {
+	// Normalize component names
+	var disabledComponents []string
+	for _, disabledComponent := range o.DisableComponents {
+		if !slices.Contains(availableComponents, disabledComponent) {
+			return fmt.Errorf("unknown component %s", disabledComponent)
+		}
+
+		if !slices.Contains(disabledComponents, disabledComponent) {
+			disabledComponents = append(disabledComponents, disabledComponent)
+		}
+	}
+	o.DisableComponents = disabledComponents
+
+	return nil
+}
+
 func DefaultLogLevels() map[string]string {
 	return map[string]string{
 		"etcd":                    "info",
@@ -160,22 +178,23 @@ func GetWorkerFlags() *pflag.FlagSet {
 	return flagset
 }
 
-func AvailableComponents() []string {
-	return []string{
-		constant.KonnectivityServerComponentName,
-		constant.KubeSchedulerComponentName,
-		constant.KubeControllerManagerComponentName,
-		constant.ControlAPIComponentName,
-		constant.CsrApproverComponentName,
-		constant.KubeProxyComponentName,
-		constant.CoreDNSComponentname,
-		constant.NetworkProviderComponentName,
-		constant.HelmComponentName,
-		constant.MetricsServerComponentName,
-		constant.KubeletConfigComponentName,
-		constant.SystemRbacComponentName,
-		constant.APIEndpointReconcilerComponentName,
-	}
+var availableComponents = []string{
+	constant.APIConfigComponentName,
+	constant.AutopilotComponentName,
+	constant.ControlAPIComponentName,
+	constant.CoreDNSComponentname,
+	constant.CsrApproverComponentName,
+	constant.APIEndpointReconcilerComponentName,
+	constant.HelmComponentName,
+	constant.KonnectivityServerComponentName,
+	constant.KubeControllerManagerComponentName,
+	constant.KubeProxyComponentName,
+	constant.KubeSchedulerComponentName,
+	constant.KubeletConfigComponentName,
+	constant.MetricsServerComponentName,
+	constant.NetworkProviderComponentName,
+	constant.NodeRoleComponentName,
+	constant.SystemRbacComponentName,
 }
 
 func GetControllerFlags() *pflag.FlagSet {
@@ -183,7 +202,7 @@ func GetControllerFlags() *pflag.FlagSet {
 
 	flagset.StringVar(&workerOpts.WorkerProfile, "profile", "default", "worker profile to use on the node")
 	flagset.BoolVar(&controllerOpts.EnableWorker, "enable-worker", false, "enable worker (default false)")
-	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(AvailableComponents()[:], ",")+")")
+	flagset.StringSliceVar(&controllerOpts.DisableComponents, "disable-components", []string{}, "disable components (valid items: "+strings.Join(availableComponents, ",")+")")
 	flagset.StringVar(&workerOpts.TokenFile, "token-file", "", "Path to the file containing join-token.")
 	flagset.StringToStringVarP(&workerOpts.CmdLogLevels, "logging", "l", DefaultLogLevels(), "Logging Levels for the different components")
 	flagset.BoolVar(&controllerOpts.SingleNode, "single", false, "enable single node (implies --enable-worker, default false)")
