@@ -2057,7 +2057,7 @@ The default value <code>external</code> makes no storage deployed.</p>
 </code></pre></div>
 <h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
 <p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
-<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: konnectivity-server,kube-scheduler,kube-controller-manager,control-api,csr-approver,kube-proxy,coredns,network-provider,helm,metrics-server,kubelet-config,system-rbac<span class="o">)</span>
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: api-config,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,kubelet-config,metrics-server,network-provider,node-role,system-rbac<span class="o">)</span>
 </code></pre></div>
 <p>If you use k0sctl just add the flag when installing the cluster for the first controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
