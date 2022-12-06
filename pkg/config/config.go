@@ -27,15 +27,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// general interface for config related methods
-type Loader interface {
-	BootstrapConfig() (*v1beta1.ClusterConfig, error)
-	ClusterConfig() (*v1beta1.ClusterConfig, error)
-	IsAPIConfig() bool
-	IsDefaultConfig() bool
-	Load() (*v1beta1.ClusterConfig, error)
-}
-
 type K0sConfigGetter struct {
 	k0sConfigGetter Getter
 }
@@ -57,8 +48,6 @@ func (g *K0sConfigGetter) Load() (*v1beta1.ClusterConfig, error) {
 }
 
 type Getter func() (*v1beta1.ClusterConfig, error)
-
-var _ Loader = (*ClientConfigLoadingRules)(nil)
 
 type ClientConfigLoadingRules struct {
 	// APIClient is an optional field for passing a kubernetes API client, to fetch the API config

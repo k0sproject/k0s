@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
@@ -264,6 +265,8 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 		jc.Spec.Konnectivity = DefaultKonnectivitySpec()
 	}
 
+	jc.Spec.overrideImageRepositories()
+
 	return nil
 }
 
@@ -276,7 +279,7 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 		storage = defaultStorage[0]
 	}
 
-	return &ClusterSpec{
+	spec := &ClusterSpec{
 		Extensions:        DefaultExtensions(),
 		Storage:           storage,
 		Network:           DefaultNetwork(),
@@ -288,6 +291,10 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 		Telemetry:         DefaultClusterTelemetry(),
 		Konnectivity:      DefaultKonnectivitySpec(),
 	}
+
+	spec.overrideImageRepositories()
+
+	return spec
 }
 
 // Validateable interface to ensure that all config components implement Validate function
@@ -318,7 +325,51 @@ func (s *ClusterSpec) Validate() (errs []error) {
 		}
 	}
 
+	for _, err := range s.Images.Validate(field.NewPath("images")) {
+		errs = append(errs, err)
+	}
+
+	for _, err := range s.ValidateNodeLocalLoadBalancing() {
+		errs = append(errs, err)
+	}
+
 	return
+}
+
+func (s *ClusterSpec) ValidateNodeLocalLoadBalancing() (errs field.ErrorList) {
+	if s.Network == nil || !s.Network.NodeLocalLoadBalancing.IsEnabled() {
+		return
+	}
+
+	if s.API == nil {
+		return
+	}
+
+	path := field.NewPath("network", "nodeLocalLoadBalancing", "enabled")
+	if s.API.TunneledNetworkingMode {
+		detail := "node-local load balancing cannot be used in tunneled networking mode"
+		errs = append(errs, field.Forbidden(path, detail))
+	}
+
+	if s.API.ExternalAddress != "" {
+		detail := "node-local load balancing cannot be used in conjunction with an external Kubernetes API server address"
+		errs = append(errs, field.Forbidden(path, detail))
+	}
+
+	return
+}
+
+func (s *ClusterSpec) overrideImageRepositories() {
+	if s != nil &&
+		s.Images != nil &&
+		s.Images.Repository != "" &&
+		s.Network != nil &&
+		s.Network.NodeLocalLoadBalancing != nil &&
+		s.Network.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		s.Network.NodeLocalLoadBalancing.EnvoyProxy.Image != nil {
+		i := s.Network.NodeLocalLoadBalancing.EnvoyProxy.Image
+		i.Image = overrideRepository(s.Images.Repository, i.Image)
+	}
 }
 
 // Validate validates cluster config
@@ -368,30 +419,21 @@ func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *Cluste
 // - APISpec
 // - StorageSpec
 // - Network.ServiceCIDR
+// - Network.ClusterDomain
 // - Install
 func (c *ClusterConfig) GetClusterWideConfig() *ClusterConfig {
-	return &ClusterConfig{
-		ObjectMeta: c.ObjectMeta,
-		TypeMeta:   c.TypeMeta,
-		Spec: &ClusterSpec{
-			ControllerManager: c.Spec.ControllerManager,
-			Scheduler:         c.Spec.Scheduler,
-			Network: &Network{
-				Calico:     c.Spec.Network.Calico,
-				KubeProxy:  c.Spec.Network.KubeProxy,
-				KubeRouter: c.Spec.Network.KubeRouter,
-				PodCIDR:    c.Spec.Network.PodCIDR,
-				Provider:   c.Spec.Network.Provider,
-				DualStack:  c.Spec.Network.DualStack,
-			},
-			WorkerProfiles: c.Spec.WorkerProfiles,
-			Telemetry:      c.Spec.Telemetry,
-			Images:         c.Spec.Images,
-			Extensions:     c.Spec.Extensions,
-			Konnectivity:   c.Spec.Konnectivity,
-		},
-		Status: c.Status,
+	c = c.DeepCopy()
+	if c != nil && c.Spec != nil {
+		c.Spec.API = nil
+		c.Spec.Storage = nil
+		if c.Spec.Network != nil {
+			c.Spec.Network.ServiceCIDR = ""
+			c.Spec.Network.ClusterDomain = ""
+		}
+		c.Spec.Install = nil
 	}
+
+	return c
 }
 
 // CRValidator is used to make sure a config CR is created with correct values

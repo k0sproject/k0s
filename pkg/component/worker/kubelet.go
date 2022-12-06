@@ -134,9 +134,12 @@ func (k *Kubelet) Init(_ context.Context) error {
 func (k *Kubelet) Start(ctx context.Context) error {
 	cmd := "kubelet"
 
-	staticPodURL, err := k.StaticPods.ManifestURL()
-	if err != nil {
-		return err
+	var staticPodURL string
+	if k.StaticPods != nil {
+		var err error
+		if staticPodURL, err = k.StaticPods.ManifestURL(); err != nil {
+			return err
+		}
 	}
 
 	kubeletConfigData := kubeletConfig{

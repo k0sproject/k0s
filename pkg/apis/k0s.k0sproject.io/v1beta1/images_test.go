@@ -32,6 +32,29 @@ func getConfigYAML(t *testing.T, c *ClusterConfig) []byte {
 	return res
 }
 
+func TestClusterImages_Customized(t *testing.T) {
+	yamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1s
+kind: ClusterConfig
+spec:
+  images:
+    konnectivity:
+      image: custom-repository/my-custom-konnectivity-image
+      version: v0.0.1
+    coredns:
+      image: custom.io/coredns/coredns
+      version: 1.0.0
+`
+	cfg, err := ConfigFromString(yamlData)
+	require.NoError(t, err)
+	a := cfg.Spec.Images
+
+	assert.Equal(t, "custom-repository/my-custom-konnectivity-image:v0.0.1", a.Konnectivity.URI())
+	assert.Equal(t, "1.0.0", a.CoreDNS.Version)
+	assert.Equal(t, "custom.io/coredns/coredns", a.CoreDNS.Image)
+	assert.Equal(t, "registry.k8s.io/metrics-server/metrics-server", a.MetricsServer.Image)
+}
+
 func TestImagesRepoOverrideInConfiguration(t *testing.T) {
 	t.Run("if_has_repository_not_empty_add_prefix_to_all_images", func(t *testing.T) {
 		t.Run("default_config", func(t *testing.T) {

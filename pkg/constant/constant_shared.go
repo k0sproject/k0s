@@ -55,11 +55,10 @@ const (
 	PidFileMode = 0644
 	// ManifestsDirMode is the expected directory permissions for ManifestsDir
 	ManifestsDirMode = 0755
-
 	// KineDBDirMode is the expected directory permissions for the Kine DB
 	KineDBDirMode = 0750
 
-	// User accounts for services
+	/* User accounts for services */
 
 	// EtcdUser defines the user to use for running etcd process
 	EtcdUser = "etcd"
@@ -71,9 +70,12 @@ const (
 	SchedulerUser = "kube-scheduler"
 	// KonnectivityServerUser deinfes the user to use for konnectivity-server
 	KonnectivityServerUser = "konnectivity-server"
+
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
 	KubernetesMajorMinorVersion = "1.26"
-	// Image Constants
+
+	/* Image Constants */
+
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.33-k0s"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
@@ -84,6 +86,8 @@ const (
 	KubeProxyImageVersion              = "v1.26.0"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.10.0"
+	EnvoyProxyImage                    = "docker.io/envoyproxy/envoy-distroless"
+	EnvoyProxyImageVersion             = "v1.24.1"
 	CalicoImage                        = "docker.io/calico/cni"
 	CalicoComponentImagesVersion       = "v3.24.5"
 	CalicoNodeImage                    = "docker.io/calico/node"
@@ -95,7 +99,8 @@ const (
 	OpenEBSRepository                  = "https://openebs.github.io/charts"
 	OpenEBSVersion                     = "3.3.0"
 
-	// Controller component names
+	/* Controller component names */
+
 	APIConfigComponentName             = "api-config"
 	APIEndpointReconcilerComponentName = "endpoint-reconciler"
 	ControlAPIComponentName            = "control-api"

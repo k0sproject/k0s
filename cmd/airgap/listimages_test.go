@@ -17,39 +17,111 @@ limitations under the License.
 package airgap
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
+	"testing/iotest"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/stretchr/testify/suite"
+	"github.com/spf13/cobra"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type CLITestSuite struct {
-	suite.Suite
-}
+func TestAirgapListImages(t *testing.T) {
+	// TODO: k0s will always try to read the runtime config file first
+	// (/run/k0s/k0s.yaml). There's currently no knob to change that (maybe use
+	// XDG_RUNTIME_DIR, XDG_STATE_HOME, XDG_DATA_HOME?). If the file is present
+	// on a host executing this test, it will interfere with it.
+	require.NoFileExists(t, "/run/k0s/k0s.yaml", "Runtime config exists and will interfere with this test.")
 
-func (s *CLITestSuite) TestCustomImageList() {
-	yamlData := `
+	defaultImage := v1beta1.DefaultEnvoyProxyImage().URI()
+
+	t.Run("All", func(t *testing.T) {
+		underTest, out, err := newAirgapListImagesCmdWithConfig(t, "{}", "--all")
+
+		require.NoError(t, underTest.Execute())
+		lines := intoLines(out)
+		if runtime.GOARCH == "arm" {
+			assert.NotContains(t, lines, defaultImage)
+		} else {
+			assert.Contains(t, lines, defaultImage)
+		}
+
+		assert.Empty(t, err.String())
+	})
+
+	t.Run("NodeLocalLoadBalancing", func(t *testing.T) {
+		const (
+			customImage = "example.com/envoy:v1337"
+			yamlData    = `
 apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 spec:
-  images:
-    konnectivity:
-      image: custom-repository/my-custom-konnectivity-image
-      version: v0.0.1
-    coredns:
-      image: custom.io/coredns/coredns
-      version: 1.0.0
-`
-	cfg, err := v1beta1.ConfigFromString(yamlData)
-	s.Require().NoError(err)
-	a := cfg.Spec.Images
+  network:
+    nodeLocalLoadBalancing:
+      enabled: %t
+      envoyProxy:
+        image:
+          image: example.com/envoy
+          version: v1337`
+		)
 
-	s.Equal("custom-repository/my-custom-konnectivity-image:v0.0.1", a.Konnectivity.URI())
-	s.Equal("1.0.0", a.CoreDNS.Version)
-	s.Equal("custom.io/coredns/coredns", a.CoreDNS.Image)
-	s.Equal("registry.k8s.io/metrics-server/metrics-server", a.MetricsServer.Image)
+		for _, test := range []struct {
+			name                    string
+			enabled                 bool
+			contained, notContained []string
+		}{
+			{"enabled", true, []string{customImage}, []string{defaultImage}},
+			{"disabled", false, nil, []string{customImage, defaultImage}},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				underTest, out, err := newAirgapListImagesCmdWithConfig(t, fmt.Sprintf(yamlData, test.enabled))
+
+				require.NoError(t, underTest.Execute())
+
+				lines := intoLines(out)
+				for _, contained := range test.contained {
+					if runtime.GOARCH == "arm" {
+						assert.NotContains(t, lines, contained)
+					} else {
+						assert.Contains(t, lines, contained)
+					}
+				}
+				for _, notContained := range test.notContained {
+					assert.NotContains(t, lines, notContained)
+				}
+				assert.Empty(t, err.String())
+			})
+		}
+	})
 }
 
-func TestCLITestSuite(t *testing.T) {
-	suite.Run(t, new(CLITestSuite))
+func newAirgapListImagesCmdWithConfig(t *testing.T, config string, args ...string) (_ *cobra.Command, out, err *bytes.Buffer) {
+	configFile := filepath.Join(t.TempDir(), "k0s.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte(config), 0644))
+
+	out, err = new(bytes.Buffer), new(bytes.Buffer)
+	cmd := NewAirgapListImagesCmd()
+	cmd.SetArgs(append([]string{"--config=" + configFile}, args...))
+	cmd.SetIn(iotest.ErrReader(errors.New("unexpected read from standard input")))
+	cmd.SetOut(out)
+	cmd.SetErr(err)
+	return cmd, out, err
+}
+
+func intoLines(in io.Reader) (lines []string) {
+	scanner := bufio.NewScanner(in)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return
 }

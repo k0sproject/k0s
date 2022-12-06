@@ -43,8 +43,8 @@ type KonnectivitySpec struct {
 // DefaultKonnectivitySpec builds default KonnectivitySpec
 func DefaultKonnectivitySpec() *KonnectivitySpec {
 	return &KonnectivitySpec{
-		AdminPort: 8133,
 		AgentPort: 8132,
+		AdminPort: 8133,
 	}
 }
 
