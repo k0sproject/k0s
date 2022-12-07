@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 )
 
 // Helm watch for Chart crd
@@ -76,9 +77,13 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	defer ec.L.Info("Extensions reconcilation finished")
 
 	helmSettings := clusterConfig.Spec.Extensions.Helm
+	var err error
 	switch clusterConfig.Spec.Extensions.Storage.Type {
 	case k0sAPI.OpenEBSLocal:
-		helmSettings = addOpenEBSHelmExtension(helmSettings)
+		helmSettings, err = addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
+		if err != nil {
+			ec.L.Errorf("can't add openebs helm extension: %v", err)
+		}
 	default:
 	}
 
@@ -89,7 +94,20 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	return nil
 }
 
-func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions) *k0sAPI.HelmExtensions {
+func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions, storageExtension *k0sAPI.StorageExtension) (*k0sAPI.HelmExtensions, error) {
+	openEBSValues := map[string]interface{}{
+		"localprovisioner": map[string]interface{}{
+			"hostpathClass": map[string]interface{}{
+				"enabled":        true,
+				"isDefaultClass": storageExtension.CreateDefaultStorageClass,
+			},
+		},
+	}
+	values, err := yamlifyValues(openEBSValues)
+	if err != nil {
+		logrus.Errorf("can't yamlify openebs values: %v", err)
+		return nil, err
+	}
 	if helmSpec == nil {
 		helmSpec = &k0sAPI.HelmExtensions{
 			Repositories: k0sAPI.RepositoriesSettings{},
@@ -105,9 +123,18 @@ func addOpenEBSHelmExtension(helmSpec *k0sAPI.HelmExtensions) *k0sAPI.HelmExtens
 		ChartName: "openebs-internal/openebs",
 		TargetNS:  "openebs",
 		Version:   constant.OpenEBSVersion,
+		Values:    values,
 		Timeout:   time.Duration(time.Minute * 30), // it takes a while to install openebs
 	})
-	return helmSpec
+	return helmSpec, nil
+}
+
+func yamlifyValues(values map[string]interface{}) (string, error) {
+	bytes, err := yaml.Marshal(values)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 // reconcileHelmExtensions creates instance of Chart CR for each chart of the config file
