@@ -33,8 +33,7 @@ type Interface interface {
 	AutopilotV1beta2() autopilotv1beta2.AutopilotV1beta2Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	autopilotV1beta2 *autopilotv1beta2.AutopilotV1beta2Client

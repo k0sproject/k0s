@@ -77,7 +77,7 @@ func (c *planStateController) Reconcile(ctx context.Context, req cr.Request) (cr
 		return cr.Result{RequeueAfter: defaultRequeueDuration}, nil
 	}
 
-	if err := c.client.Status().Update(ctx, planCopy, &crcli.UpdateOptions{}); err != nil {
+	if err := c.client.Status().Update(ctx, planCopy, &crcli.SubResourceUpdateOptions{}); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to update plan '%s' with status: %w", req.NamespacedName, err)
 	}
 
