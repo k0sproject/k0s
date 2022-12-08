@@ -111,6 +111,21 @@ func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name strin
 		})
 }
 
+func WaitForDefaultStorageClass(ctx context.Context, kc *kubernetes.Clientset) error {
+	return Poll(ctx, waitForDefaultStorageClass(kc))
+}
+
+func waitForDefaultStorageClass(kc *kubernetes.Clientset) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (done bool, err error) {
+		sc, err := kc.StorageV1().StorageClasses().Get(ctx, "openebs-hostpath", metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		return sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true", nil
+	}
+}
+
 // WaitForDeploymentWithContext waits for a deployment to become ready as long
 // as the given context isn't canceled.
 func WaitForDeploymentWithContext(ctx context.Context, kc *kubernetes.Clientset, name string) error {
