@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -27,6 +28,7 @@ import (
 
 	certificatesv1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/BurntSushi/toml"
@@ -138,22 +140,27 @@ func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
 }
 
 func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
-	opts := metav1.ListOptions{
-		FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
-	}
-	csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(s.Context(), opts)
-	if err != nil {
-		return err
-	}
 
-	for _, csr := range csrs.Items {
-		if csr.Spec.Username == fmt.Sprintf("system:node:%s", node) {
-			if isCSRApproved(csr) {
-				return nil
+	return wait.PollImmediate(1*time.Second, 30*time.Second, func() (bool, error) {
+		opts := metav1.ListOptions{
+			FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
+		}
+		csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(s.Context(), opts)
+		if err != nil {
+			return false, err
+		}
+
+		for _, csr := range csrs.Items {
+			if csr.Spec.Username == fmt.Sprintf("system:node:%s", node) {
+				if isCSRApproved(csr) {
+					return true, nil
+				}
 			}
 		}
-	}
-	return fmt.Errorf("no CSRs have been approved")
+		// No approved CSRs found, continue polling
+		return false, nil
+	})
+
 }
 
 func isCSRApproved(csr certificatesv1.CertificateSigningRequest) bool {
