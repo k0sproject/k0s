@@ -1,6 +1,8 @@
 # Quick Start Guide
 
- On completion of the Quick Start you will have a full Kubernetes cluster with a single node that includes both the controller and the worker. Such a setup is ideal for environments that do not require high-availability and multiple nodes.
+asd
+{{ extra.k8s_version }}
+On completion of the Quick Start you will have a full Kubernetes cluster with a single node that includes both the controller and the worker. Such a setup is ideal for environments that do not require high-availability and multiple nodes.
 
 ## Prerequisites
 
@@ -12,73 +14,73 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
 1. Download k0s
 
-    Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
+   Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.
 
-    ```shell
-    curl -sSLf https://get.k0s.sh | sudo sh
-    ```
+   ```shell
+   curl -sSLf https://get.k0s.sh | sudo sh
+   ```
 
 2. Install k0s as a service
 
-    The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
+   The `k0s install` sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.
 
-    Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:
+   Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:
 
-    ```shell
-    sudo k0s install controller --single
-    ```
+   ```shell
+   sudo k0s install controller --single
+   ```
 
-    The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
+   The `k0s install controller` sub-command accepts the same flags and parameters as the `k0s controller`. Refer to [manual install](k0s-multi-node.md#installation-steps) for a custom config file example.
 
-    Is's possible to set environment variables with the install command:
+   Is's possible to set environment variables with the install command:
 
-    ```shell
-    sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm
-    ```
+   ```shell
+   sudo k0s install controller -e ETCD_UNSUPPORTED_ARCH=arm
+   ```
 
-    The system service can be reinstalled with the `--force` flag:
+   The system service can be reinstalled with the `--force` flag:
 
-    ```shell
-    sudo k0s install controller --single --force
-    sudo systemctl daemon-reload
-    ```
+   ```shell
+   sudo k0s install controller --single --force
+   sudo systemctl daemon-reload
+   ```
 
 3. Start k0s as a service
 
-    To start the k0s service, run:
+   To start the k0s service, run:
 
-    ```shell
-    sudo k0s start
-    ```
+   ```shell
+   sudo k0s start
+   ```
 
-    The k0s service will start automatically after the node restart.
+   The k0s service will start automatically after the node restart.
 
-    A minute or two typically passes before the node is ready to deploy applications.
+   A minute or two typically passes before the node is ready to deploy applications.
 
 4. Check service, logs and k0s status
 
-    To get general information about your k0s instance's status, run:
+   To get general information about your k0s instance's status, run:
 
-    ```shell
-    $ sudo k0s status
-    Version: v1.25.4+k0s.0
-    Process ID: 436
-    Role: controller
-    Workloads: true
-    Init System: linux-systemd
-    ```
+   ```shell
+   $ sudo k0s status
+   Version: v1.25.4+k0s.0
+   Process ID: 436
+   Role: controller
+   Workloads: true
+   Init System: linux-systemd
+   ```
 
 5. Access your cluster using kubectl
 
-    **Note**: k0s includes the Kubernetes command-line tool *kubectl*.
+   **Note**: k0s includes the Kubernetes command-line tool _kubectl_.
 
-    Use kubectl to deploy your application or to check your node status:
+   Use kubectl to deploy your application or to check your node status:
 
-    ```shell
-    $ sudo k0s kubectl get nodes
-    NAME   STATUS   ROLES    AGE    VERSION
-    k0s    Ready    <none>   4m6s   v1.25.4+k0s
-    ```
+   ```shell
+   $ sudo k0s kubectl get nodes
+   NAME   STATUS   ROLES    AGE    VERSION
+   k0s    Ready    <none>   4m6s   v1.25.4+k0s
+   ```
 
 ## Uninstall k0s
 
@@ -86,21 +88,21 @@ The removal of k0s is a two-step process.
 
 1. Stop the service.
 
-    ```shell
-    sudo k0s stop
-    ```
+   ```shell
+   sudo k0s stop
+   ```
 
 2. Execute the `k0s reset` command.
 
-     The `k0s reset` command cleans up the installed system service, data directories, containers, mounts and network namespaces.
+   The `k0s reset` command cleans up the installed system service, data directories, containers, mounts and network namespaces.
 
-    ```shell
-    sudo k0s reset
-    ```
+   ```shell
+   sudo k0s reset
+   ```
 
 3. Reboot the system.
 
-    A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the `k0s reset` command.
+   A few small k0s fragments persist even after the reset (for example, iptables). As such, you should initiate a reboot after the running of the `k0s reset` command.
 
 ## Next Steps
 

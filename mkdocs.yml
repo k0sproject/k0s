@@ -95,6 +95,7 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
+  - macros
   - exclude:
       glob:
         - '*.etag'
@@ -122,6 +123,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra:
+  k8s_version: 1.25
   generator: false
   social:
     - icon: fontawesome/brands/github
