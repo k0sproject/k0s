@@ -114,11 +114,6 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 		return fmt.Errorf("no internal IP address found for %v", target.Name)
 	}
 
-	// url, err := url.Parse(fmt.Sprintf(readyzURLFormat, address))
-	// if err != nil {
-	// 	return fmt.Errorf("unable to parse URL for '%s': %w", address, err)
-	// }
-
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
 	url := fmt.Sprintf(readyzURLFormat, address)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
