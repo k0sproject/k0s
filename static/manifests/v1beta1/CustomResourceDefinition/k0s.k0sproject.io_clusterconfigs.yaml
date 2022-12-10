@@ -372,6 +372,10 @@ spec:
                           Mode (allow a Pod behind a Service to communicate to its
                           own ClusterIP:Port)'
                         type: boolean
+                      ipMasq:
+                        description: 'IP masquerade for traffic originating from the
+                          pod network, and destined outside of it (default: false)'
+                        type: boolean
                       metricsPort:
                         description: 'Kube-router metrics server port. Set to 0 to
                           disable metrics  (default: 8080)'
