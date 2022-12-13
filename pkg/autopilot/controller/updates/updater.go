@@ -153,12 +153,19 @@ func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 		ObjectMeta: v1.ObjectMeta{
 			Name: "autopilot",
 		},
-		Spec: u.updateConfig.Spec.PlanSpec,
+		Spec: apv1beta2.PlanSpec{},
 	}
 
 	platforms := make(apv1beta2.PlanPlatformResourceURLMap)
-	for arch, url := range nextVersion.DownloadURLs["k0s"] {
-		platforms[arch] = apv1beta2.PlanResourceURL{
+	for osArch, url := range nextVersion.DownloadURLs["k0s"] {
+		platforms[osArch] = apv1beta2.PlanResourceURL{
+			URL: url,
+			// TODO: Sha256 of file
+		}
+	}
+	airgapPlatforms := make(apv1beta2.PlanPlatformResourceURLMap)
+	for osArch, url := range nextVersion.DownloadURLs["airgap"] {
+		airgapPlatforms[osArch] = apv1beta2.PlanResourceURL{
 			URL: url,
 			// TODO: Sha256 of file
 		}
@@ -168,7 +175,7 @@ func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 	p.Spec.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
 
 	var updateCommandFound bool
-	for _, cmd := range p.Spec.Commands {
+	for _, cmd := range u.updateConfig.Spec.PlanSpec.Commands {
 		if cmd.K0sUpdate != nil || cmd.AirgapUpdate != nil {
 			updateCommandFound = true
 			break
@@ -195,6 +202,26 @@ func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 				},
 			},
 		})
+	} else {
+		for _, cmd := range u.updateConfig.Spec.PlanSpec.Commands {
+			planCmd := apv1beta2.PlanCommand{}
+			if cmd.K0sUpdate != nil {
+				planCmd.K0sUpdate = &apv1beta2.PlanCommandK0sUpdate{
+					Version:     string(nextVersion.Version),
+					ForceUpdate: cmd.K0sUpdate.ForceUpdate,
+					Platforms:   platforms,
+					Targets:     cmd.K0sUpdate.Targets,
+				}
+			}
+			if cmd.AirgapUpdate != nil {
+				planCmd.AirgapUpdate = &apv1beta2.PlanCommandAirgapUpdate{
+					Version:   string(nextVersion.Version),
+					Platforms: airgapPlatforms,
+					Workers:   cmd.AirgapUpdate.Workers,
+				}
+			}
+			p.Spec.Commands = append(p.Spec.Commands, planCmd)
+		}
 	}
 
 	return p
