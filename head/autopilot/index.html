@@ -1759,7 +1759,8 @@
 
 
 <h1 id="autopilot">Autopilot<a class="headerlink" href="#autopilot" title="Permanent link">#</a></h1>
-<p>A tool for updating your <code>k0s</code> controller and worker nodes using specialized plans.</p>
+<p>A tool for updating your <code>k0s</code> controller and worker nodes using specialized plans.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel <code>edge_release</code>  available. The channel exposes the latest  released version.</p>
 <h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
 <ul>
 <li>You create a <code>Plan</code> YAML<ul>
@@ -1780,26 +1781,17 @@
 </li>
 </ul>
 <h2 id="automatic-updates">Automatic updates<a class="headerlink" href="#automatic-updates" title="Permanent link">#</a></h2>
-<p>To enable automatic updates, create an <code>UpdaterConfig</code> object:</p>
+<p>To enable automatic updates, create an <code>UpdateConfig</code> object:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdaterConfig</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdateConfig</span><span class="w"></span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
 <span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span><span class="w"></span>
-<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span><span class="w"></span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge_release</span><span class="w"></span>
+<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://docs.k0sproject.io/</span><span class="w"></span>
 <span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span><span class="w"></span>
-<span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span><span class="w"></span>
-<span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w">                  </span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update</span><span class="w"></span>
-<span class="w">    </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
-<span class="w">      </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 </code></pre></div>
 <h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
 <p>There are a number of safeguards in place to avoid breaking a cluster.</p>
