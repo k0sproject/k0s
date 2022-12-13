@@ -1,6 +1,7 @@
 # Autopilot
 
 A tool for updating your `k0s` controller and worker nodes using specialized plans.
+There is a public update-server hosted on the same domain as the documentation site. See the example below on how to use it. There is only a single channel `edge_release`  available. The channel exposes the latest  released version.
 
 ## How it works
 
@@ -15,28 +16,19 @@ A tool for updating your `k0s` controller and worker nodes using specialized pla
 
 ## Automatic updates
 
-To enable automatic updates, create an `UpdaterConfig` object:
+To enable automatic updates, create an `UpdateConfig` object:
 
 ```yaml
 apiVersion: autopilot.k0sproject.io/v1beta2
-kind: UpdaterConfig
+kind: UpdateConfig
 metadata:
   name: example
+  namespace: default
 spec:
-  channel: stable
-  updateServer: https://updates.k0sproject.io/
+  channel: edge_release
+  updateServer: https://docs.k0sproject.io/
   upgradeStrategy:
     cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
-  # Optional. Specifies a created Plan object
-  planSpec:                  
-    command: update
-    targets:
-      controllers:
-        discovery:
-          selector: {}
-      workers:
-        discovery:
-          selector: {}
 ```
 
 ## Safeguards
