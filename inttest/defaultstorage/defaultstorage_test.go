@@ -17,7 +17,6 @@ limitations under the License.
 package defaultstorage
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -33,21 +32,27 @@ type DefaultStorageSuite struct {
 func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
-	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pvc.yaml", pvcManifest)
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/deployment.yaml", deploymentManifest)
 	s.Require().NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0), "")
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.NoError(err)
 
+	s.T().Log("waiting to see default storage class")
+	err = common.WaitForDefaultStorageClass(s.Context(), kc)
+	s.NoError(err)
+
+	// We need to create the pvc only after default storage class is set, otherwise k8s will not be able to set it on the PVC
+	s.T().Log("default SC found, creating a deployment with PVC and waiting for it to be ready")
+	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
+	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pvc.yaml", pvcManifest)
+	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/deployment.yaml", deploymentManifest)
 	err = common.WaitForDeployment(kc, "nginx")
 	s.NoError(err)
 
-	pods, err := kc.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{
+	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
 		Limit: 100,
 	})
 	s.NoError(err)
@@ -57,9 +62,9 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	s.T().Logf("found %d pods in kube-system", podCount)
 	s.Greater(podCount, 0, "expecting to see few pods in kube-system namespace")
 
-	pv, err := kc.CoreV1().PersistentVolumes().List(context.TODO(), v1.ListOptions{})
-	s.NoError(err)
-	s.Greater(len(pv.Items), 0, "At least one persistent volume must be created for the deployment with claims")
+	pv, err := kc.CoreV1().PersistentVolumes().List(s.Context(), v1.ListOptions{})
+	s.Require().NoError(err)
+	s.NotEmpty(pv.Items, "At least one persistent volume must be created for the deployment with claims")
 }
 
 func TestDefaultStorageSuite(t *testing.T) {
@@ -81,7 +86,6 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: openebs-hostpath
   resources:
     requests:
       storage: 5Gi
@@ -123,4 +127,5 @@ spec:
   extensions:
     storage:
       type: openebs_local_storage
+      create_default_storage_class: true
 `
