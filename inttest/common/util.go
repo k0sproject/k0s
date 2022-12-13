@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -112,6 +112,21 @@ func waitForDaemonSet(kc *kubernetes.Clientset, name string) wait.ConditionWithC
 // WaitForDeployment waits for a deployment to become ready.
 func WaitForDeployment(kc *kubernetes.Clientset, name string) error {
 	return fallbackPoll(waitForDeployment(kc, name))
+}
+
+func WaitForDefaultStorageClass(ctx context.Context, kc *kubernetes.Clientset) error {
+	return Poll(ctx, waitForDefaultStorageClass(kc))
+}
+
+func waitForDefaultStorageClass(kc *kubernetes.Clientset) wait.ConditionWithContextFunc {
+	return func(ctx context.Context) (done bool, err error) {
+		sc, err := kc.StorageV1().StorageClasses().Get(ctx, "openebs-hostpath", v1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		return sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true", nil
+	}
 }
 
 // WaitForDeploymentWithContext waits for a deployment to become ready as long

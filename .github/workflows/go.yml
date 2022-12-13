@@ -192,6 +192,8 @@ jobs:
           - check-cnichange
           - check-ctr
           - check-customports
+          - check-defaultstorage
+          - check-disabledcomponents
           - check-dualstack
           - check-externaletcd
           - check-hacontrolplane
