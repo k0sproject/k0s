@@ -9,6 +9,7 @@ This guide describes how to enable SELinux in Kubernetes environment provided by
 ## Requirements
 
 - SELinux is enabled on host OS of the worker nodes.
+- SELinux has the container-selinux policy installed.
 - SELinux labels are correctly set for k0s installation files of the worker nodes.
 - SELinux is enabled in container runtime such as containerd on the worker nodes.
 
@@ -19,6 +20,24 @@ SELinux is enabled on CentOS and RHEL by default. Below command output indicates
 ```shell
 $ getenforce
 Enforcing
+```
+
+### Install container-selinux
+
+It is required to have [container-selinux](https://github.com/containers/container-selinux) installed.
+In most Fedora based distributions including Fedora 37, Red Hat Enterprise Linux 7, 8 and 8, CentOS
+7 and 8 and Rocky Linux 9 this can be achieved by installing the package container-selinux.
+
+In RHEL 7 and CentOS 7 this is achieved by running:
+
+```shell
+yum install -y container-selinux
+```
+
+In the rest of the metnioned distributions run:
+
+```shell
+dnf install -y container-selinux
 ```
 
 ### Set SELinux labels for k0s installation files
