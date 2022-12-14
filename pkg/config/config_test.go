@@ -21,9 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/fake"
 	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
@@ -32,6 +30,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +41,7 @@ apiVersion: k0s.k0sproject.io/v1beta1
 kind: ClusterConfig
 spec:
   api:
-    externalAddress: file_external_address
+    externalAddress: file-external-address
   network:
     serviceCIDR: 12.12.12.12/12
     podCIDR: 13.13.13.13/13
@@ -67,7 +66,7 @@ func TestGetConfigFromFile(t *testing.T) {
 	loadingRules := ClientConfigLoadingRules{
 		RuntimeConfigPath: nonExistentPath(t),
 	}
-	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(t.TempDir()))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -84,7 +83,7 @@ func TestGetConfigFromFile(t *testing.T) {
 		got      string
 		expected string
 	}{
-		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
+		{"API_external_address", cfg.Spec.API.ExternalAddress, "file-external-address"},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "12.12.12.12/12"},
 		{"Network_KubeProxy_Mode", cfg.Spec.Network.KubeProxy.Mode, "ipvs"},
 	}
@@ -114,7 +113,7 @@ spec:
 	loadingRules := ClientConfigLoadingRules{
 		RuntimeConfigPath: nonExistentPath(t),
 	}
-	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(t.TempDir()))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -150,7 +149,7 @@ func TestConfigFromDefaults(t *testing.T) {
 	loadingRules := ClientConfigLoadingRules{
 		RuntimeConfigPath: nonExistentPath(t),
 	}
-	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(t.TempDir()))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -194,7 +193,7 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 		Nodeconfig:        true,
 	}
 
-	err := loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(t.TempDir()))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -208,7 +207,7 @@ func TestNodeConfigWithAPIConfig(t *testing.T) {
 		got      string
 		expected string
 	}{
-		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
+		{"API_external_address", cfg.Spec.API.ExternalAddress, "file-external-address"},
 		// PodCIDR is a cluster-wide setting. It shouldn't exist in Node config
 		{"Network_PodCIDR", cfg.Spec.Network.PodCIDR, ""},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "12.12.12.12/12"},
@@ -236,7 +235,8 @@ spec:
 		RuntimeConfigPath: nonExistentPath(t),
 		Nodeconfig:        true,
 	}
-	k0sVars := constant.GetConfig("")
+	tempDir := t.TempDir()
+	k0sVars := constant.GetConfig(tempDir)
 	k0sVars.DefaultStorageType = "kine"
 
 	err := loadingRules.InitRuntimeConfig(k0sVars)
@@ -253,22 +253,12 @@ spec:
 		t.Fatal("received an empty config! failing")
 	}
 
-	testCases := []struct {
-		name     string
-		got      string
-		expected string
-	}{
-		{"Storage_Type", cfg.Spec.Storage.Type, "kine"},
-		{"Kine_DataSource", cfg.Spec.Storage.Kine.DataSource, "sqlite:///var/lib/k0s/db/state.db"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s eq %s", tc.name, tc.expected), func(t *testing.T) {
-			if !strings.Contains(tc.got, tc.expected) {
-				t.Fatalf("expected to read '%s' for the %s test value. Got: %s", tc.expected, tc.name, tc.got)
-			}
-		})
-	}
+	assert.Equal(t, "kine", cfg.Spec.Storage.Type, "Storage type mismatch")
+	assert.Contains(t,
+		cfg.Spec.Storage.Kine.DataSource,
+		fmt.Sprintf("sqlite://%s/db/state.db", tempDir),
+		"Data source mismatch",
+	)
 }
 
 func TestSingleNodeConfigWithEtcd(t *testing.T) {
@@ -283,7 +273,7 @@ spec:
 		RuntimeConfigPath: nonExistentPath(t),
 		Nodeconfig:        true,
 	}
-	k0sVars := constant.GetConfig("")
+	k0sVars := constant.GetConfig(t.TempDir())
 	k0sVars.DefaultStorageType = "kine"
 
 	err := loadingRules.InitRuntimeConfig(k0sVars)
@@ -322,16 +312,13 @@ func TestAPIConfig(t *testing.T) {
 	// create the API config using a fake client
 	client := fake.NewSimpleClientset()
 
-	err := createFakeAPIConfig(client.K0sV1beta1())
-	if err != nil {
-		t.Fatalf("failed to create API config: %s", err.Error())
-	}
+	createFakeAPIConfig(t, client.K0sV1beta1())
 
 	loadingRules := ClientConfigLoadingRules{
 		RuntimeConfigPath: nonExistentPath(t),
 		APIClient:         client.K0sV1beta1(),
 	}
-	err = loadingRules.InitRuntimeConfig(constant.GetConfig(""))
+	err := loadingRules.InitRuntimeConfig(constant.GetConfig(t.TempDir()))
 	if err != nil {
 		t.Fatalf("failed to initialize k0s config: %s", err.Error())
 	}
@@ -346,7 +333,7 @@ func TestAPIConfig(t *testing.T) {
 		got      string
 		expected string
 	}{
-		{"API_external_address", cfg.Spec.API.ExternalAddress, "file_external_address"},
+		{"API_external_address", cfg.Spec.API.ExternalAddress, "file-external-address"},
 		{"Network_PodCIDR", cfg.Spec.Network.PodCIDR, "10.244.0.0/16"},
 		{"Network_ServiceCIDR", cfg.Spec.Network.ServiceCIDR, "12.12.12.12/12"},
 		{"Network_KubeProxy_Mode", cfg.Spec.Network.KubeProxy.Mode, "iptables"},
@@ -367,23 +354,16 @@ func writeConfigFile(t *testing.T, yamlData string) (filePath string) {
 	return cfgFilePath
 }
 
-func createFakeAPIConfig(client k0sv1beta1.K0sV1beta1Interface) error {
-	clusterConfigs := client.ClusterConfigs(constant.ClusterConfigNamespace)
-	ctxWithTimeout, cancelFunction := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
-	defer cancelFunction()
-
-	config, err := v1beta1.ConfigFromString(apiYaml, v1beta1.DefaultStorageSpec())
-	if err != nil {
-		return fmt.Errorf("failed to parse config yaml: %s", err.Error())
-	}
-
-	_, err = clusterConfigs.Create(ctxWithTimeout, config.GetClusterWideConfig().StripDefaults(), cOpts)
-	if err != nil {
-		return fmt.Errorf("failed to create clusterConfig in the API: %s", err.Error())
-	}
-	return nil
-}
-
 func nonExistentPath(t *testing.T) string {
 	return path.Join(t.TempDir(), "non-existent")
+}
+
+func createFakeAPIConfig(t *testing.T, client k0sv1beta1.K0sV1beta1Interface) {
+	clusterConfigs := client.ClusterConfigs(constant.ClusterConfigNamespace)
+
+	config, err := v1beta1.ConfigFromString(apiYaml, v1beta1.DefaultStorageSpec())
+	require.NoError(t, err)
+
+	_, err = clusterConfigs.Create(context.TODO(), config.GetClusterWideConfig().StripDefaults(), cOpts)
+	require.NoError(t, err)
 }

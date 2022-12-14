@@ -19,9 +19,14 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/constant"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/containerd/containerd/reference/docker"
 )
 
 // ImageSpec container image settings
@@ -30,9 +35,29 @@ type ImageSpec struct {
 	Version string `json:"version"`
 }
 
+func (s *ImageSpec) Validate(path *field.Path) (errs field.ErrorList) {
+	if s == nil {
+		return
+	}
+
+	imageLen := len(s.Image)
+	if imageLen == 0 {
+		errs = append(errs, field.Required(path.Child("image"), ""))
+	} else if imageLen != len(strings.TrimSpace(s.Image)) {
+		errs = append(errs, field.Invalid(path.Child("image"), s.Image, "must not have leading or trailing whitespace"))
+	}
+
+	versionRe := regexp.MustCompile(`^` + docker.TagRegexp.String() + `$`)
+	if !versionRe.MatchString(s.Version) {
+		errs = append(errs, field.Invalid(path.Child("version"), s.Version, "must match regular expression: "+versionRe.String()))
+	}
+
+	return
+}
+
 // URI build image uri
-func (is ImageSpec) URI() string {
-	return fmt.Sprintf("%s:%s", is.Image, is.Version)
+func (s *ImageSpec) URI() string {
+	return fmt.Sprintf("%s:%s", s.Image, s.Version)
 }
 
 // ClusterImages sets docker images for addon components

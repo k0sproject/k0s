@@ -190,10 +190,10 @@ func (s *BasicSuite) verifyContainerdDefaultConfig() {
 		return
 	}
 
-	s.Equal(v1beta1.ImageSpec{
+	s.Equal((&v1beta1.ImageSpec{
 		Image:   constant.KubePauseContainerImage,
 		Version: constant.KubePauseContainerImageVersion,
-	}.URI(), parsedConfig.Plugins.CRI.SandboxImage)
+	}).URI(), parsedConfig.Plugins.CRI.SandboxImage)
 }
 
 func TestBasicSuite(t *testing.T) {

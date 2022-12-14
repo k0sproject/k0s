@@ -214,9 +214,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.PodCIDR = "foobar"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid pod CIDR")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `Invalid value: "foobar": invalid CIDR address`)
+		}
 	})
 
 	s.T().Run("invalid_service_cidr", func(t *testing.T) {
@@ -224,9 +224,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.ServiceCIDR = "foobar"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid service CIDR")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `Invalid value: "foobar": invalid CIDR address`)
+		}
 	})
 
 	s.T().Run("invalid_cluster_domain", func(t *testing.T) {
@@ -234,9 +234,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.ClusterDomain = ".invalid-cluster-domain"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid clusterDomain .invalid-cluster-domain")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `clusterDomain: Invalid value: ".invalid-cluster-domain": invalid DNS name`)
+		}
 	})
 
 	s.T().Run("invalid_ipv6_service_cidr", func(t *testing.T) {
@@ -250,9 +250,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.DualStack.IPv6ServiceCIDR = "foobar"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid service IPv6 CIDR")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `dualStack.IPv6serviceCIDR: Invalid value: "foobar": invalid CIDR address`)
+		}
 	})
 
 	s.T().Run("invalid_ipv6_pod_cidr", func(t *testing.T) {
@@ -266,9 +266,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.KubeProxy.Mode = "ipvs"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "invalid pod IPv6 CIDR")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `Invalid value: "foobar": invalid CIDR address`)
+		}
 	})
 
 	s.T().Run("invalid_mode_for_kube_proxy", func(t *testing.T) {
@@ -276,9 +276,9 @@ func (s *NetworkSuite) TestValidation() {
 		n.KubeProxy.Mode = "foobar"
 
 		errors := n.Validate()
-		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "unsupported mode")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], "unsupported mode foobar for kubeProxy config")
+		}
 	})
 
 	s.T().Run("valid_proxy_disabled_for_dualstack", func(t *testing.T) {

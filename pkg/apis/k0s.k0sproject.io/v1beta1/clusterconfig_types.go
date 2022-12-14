@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"reflect"
 
@@ -107,17 +108,25 @@ type InstallSpec struct {
 	SystemUsers *SystemUser `json:"users,omitempty"`
 }
 
+var _ Validateable = (*InstallSpec)(nil)
+
+func (*InstallSpec) Validate() []error { return nil }
+
 // ControllerManagerSpec defines the fields for the ControllerManager
 type ControllerManagerSpec struct {
 	// Map of key-values (strings) for any extra arguments you want to pass down to the Kubernetes controller manager process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 }
 
+var _ Validateable = (*ControllerManagerSpec)(nil)
+
 func DefaultControllerManagerSpec() *ControllerManagerSpec {
 	return &ControllerManagerSpec{
 		ExtraArgs: make(map[string]string),
 	}
 }
+
+func (c *ControllerManagerSpec) Validate() []error { return nil }
 
 // SchedulerSpec defines the fields for the Scheduler
 type SchedulerSpec struct {
@@ -130,6 +139,10 @@ func DefaultSchedulerSpec() *SchedulerSpec {
 		ExtraArgs: make(map[string]string),
 	}
 }
+
+var _ Validateable = (*SchedulerSpec)(nil)
+
+func (*SchedulerSpec) Validate() []error { return nil }
 
 // +kubebuilder:object:root=true
 // +genclient
@@ -277,45 +290,48 @@ func DefaultClusterSpec(defaultStorage ...*StorageSpec) *ClusterSpec {
 	}
 }
 
-func (c *ControllerManagerSpec) Validate() []error {
-	return nil
-}
-
-var _ Validateable = (*SchedulerSpec)(nil)
-
-func (s *SchedulerSpec) Validate() []error {
-	return nil
-}
-
-var _ Validateable = (*InstallSpec)(nil)
-
-// Validate stub for Validateable interface
-func (i *InstallSpec) Validate() []error {
-	return nil
-}
-
 // Validateable interface to ensure that all config components implement Validate function
 // +k8s:deepcopy-gen=false
 type Validateable interface {
 	Validate() []error
 }
 
+func (s *ClusterSpec) Validate() (errs []error) {
+	if s == nil {
+		return
+	}
+
+	for name, field := range map[string]Validateable{
+		"api":               s.API,
+		"controllerManager": s.ControllerManager,
+		"scheduler":         s.Scheduler,
+		"storage":           s.Storage,
+		"network":           s.Network,
+		"workerProfiles":    s.WorkerProfiles,
+		"telemetry":         s.Telemetry,
+		"install":           s.Install,
+		"extensions":        s.Extensions,
+		"konnectivity":      s.Konnectivity,
+	} {
+		for _, err := range field.Validate() {
+			errs = append(errs, fmt.Errorf("%s: %w", name, err))
+		}
+	}
+
+	return
+}
+
 // Validate validates cluster config
-func (c *ClusterConfig) Validate() []error {
-	var errors []error
+func (c *ClusterConfig) Validate() (errs []error) {
+	if c == nil {
+		return nil
+	}
 
-	errors = append(errors, validateSpecs(c.Spec.API)...)
-	errors = append(errors, validateSpecs(c.Spec.ControllerManager)...)
-	errors = append(errors, validateSpecs(c.Spec.Scheduler)...)
-	errors = append(errors, validateSpecs(c.Spec.Storage)...)
-	errors = append(errors, validateSpecs(c.Spec.Network)...)
-	errors = append(errors, validateSpecs(c.Spec.WorkerProfiles)...)
-	errors = append(errors, validateSpecs(c.Spec.Telemetry)...)
-	errors = append(errors, validateSpecs(c.Spec.Install)...)
-	errors = append(errors, validateSpecs(c.Spec.Extensions)...)
-	errors = append(errors, validateSpecs(c.Spec.Konnectivity)...)
+	for _, err := range c.Spec.Validate() {
+		errs = append(errs, fmt.Errorf("spec: %w", err))
+	}
 
-	return errors
+	return errs
 }
 
 // GetBootstrappingConfig returns a ClusterConfig object stripped of Cluster-Wide Settings
@@ -385,9 +401,4 @@ func (c *ClusterConfig) CRValidator() *ClusterConfig {
 	copy.ObjectMeta.Namespace = "kube-system"
 
 	return copy
-}
-
-// validateSpecs invokes validator Validate function
-func validateSpecs(v Validateable) []error {
-	return v.Validate()
 }
