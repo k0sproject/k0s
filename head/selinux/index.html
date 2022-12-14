@@ -857,6 +857,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-container-selinux" class="md-nav__link">
+    Install container-selinux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-selinux-labels-for-k0s-installation-files" class="md-nav__link">
     Set SELinux labels for k0s installation files
   </a>
@@ -1376,6 +1383,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-container-selinux" class="md-nav__link">
+    Install container-selinux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#set-selinux-labels-for-k0s-installation-files" class="md-nav__link">
     Set SELinux labels for k0s installation files
   </a>
@@ -1423,6 +1437,7 @@
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
 <ul>
 <li>SELinux is enabled on host OS of the worker nodes.</li>
+<li>SELinux has the container-selinux policy installed.</li>
 <li>SELinux labels are correctly set for k0s installation files of the worker nodes.</li>
 <li>SELinux is enabled in container runtime such as containerd on the worker nodes.</li>
 </ul>
@@ -1430,6 +1445,16 @@
 <p>SELinux is enabled on CentOS and RHEL by default. Below command output indicates SELinux is enabled.</p>
 <div class="highlight"><pre><span></span><code>$ getenforce
 Enforcing
+</code></pre></div>
+<h3 id="install-container-selinux">Install container-selinux<a class="headerlink" href="#install-container-selinux" title="Permanent link">#</a></h3>
+<p>It is required to have <a href="https://github.com/containers/container-selinux">container-selinux</a> installed.
+In most Fedora based distributions including Fedora 37, Red Hat Enterprise Linux 7, 8 and 8, CentOS
+7 and 8 and Rocky Linux 9 this can be achieved by installing the package container-selinux.</p>
+<p>In RHEL 7 and CentOS 7 this is achieved by running:</p>
+<div class="highlight"><pre><span></span><code>yum install -y container-selinux
+</code></pre></div>
+<p>In the rest of the metnioned distributions run:</p>
+<div class="highlight"><pre><span></span><code>dnf install -y container-selinux
 </code></pre></div>
 <h3 id="set-selinux-labels-for-k0s-installation-files">Set SELinux labels for k0s installation files<a class="headerlink" href="#set-selinux-labels-for-k0s-installation-files" title="Permanent link">#</a></h3>
 <p>Run below commands on the host OS of the worker nodes.</p>
