@@ -76,9 +76,9 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 		logrus.Debugf("Path `%s` not found in the archive, skipping...", objectPathInArchive)
 		return nil
 	}
-	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, objectPathInRestored)
+	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, restoreTo)
 	if stat.IsDir() {
-		return dir.Copy(objectPathInArchive, objectPathInRestored)
+		return dir.Copy(objectPathInArchive, restoreTo)
 	}
 	return file.Copy(objectPathInArchive, objectPathInRestored)
 }
