@@ -102,6 +102,10 @@ func (s *StorageSpec) UnmarshalJSON(data []byte) error {
 
 // Validate validates storage specs correctness
 func (s *StorageSpec) Validate() []error {
+	if s == nil {
+		return nil
+	}
+
 	var errors []error
 
 	if s.Etcd != nil && s.Etcd.ExternalCluster != nil {

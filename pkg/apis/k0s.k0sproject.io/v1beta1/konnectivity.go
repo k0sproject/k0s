@@ -16,14 +16,28 @@ limitations under the License.
 
 package v1beta1
 
+import (
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+)
+
 var _ Validateable = (*KonnectivitySpec)(nil)
 
 // KonnectivitySpec defines the requested state for Konnectivity
 type KonnectivitySpec struct {
-	// agent port to listen on (default 8132)
-	AgentPort int64 `json:"agentPort,omitempty"`
 	// admin port to listen on (default 8133)
-	AdminPort int64 `json:"adminPort,omitempty"`
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +kubebuilder:default=8133
+	// +optional
+	AdminPort int32 `json:"adminPort,omitempty"`
+
+	// agent port to listen on (default 8132)
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +kubebuilder:default=8132
+	// +optional
+	AgentPort int32 `json:"agentPort,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec
@@ -34,7 +48,19 @@ func DefaultKonnectivitySpec() *KonnectivitySpec {
 	}
 }
 
-// Validate stub for Validateable interface
-func (k *KonnectivitySpec) Validate() []error {
-	return nil
+// Validate implements [Validateable].
+func (k *KonnectivitySpec) Validate() (errs []error) {
+	if k == nil {
+		return nil
+	}
+
+	for _, msg := range validation.IsValidPortNum(int(k.AdminPort)) {
+		errs = append(errs, field.Invalid(field.NewPath("adminPort"), k.AdminPort, msg))
+	}
+
+	for _, msg := range validation.IsValidPortNum(int(k.AgentPort)) {
+		errs = append(errs, field.Invalid(field.NewPath("agentPort"), k.AgentPort, msg))
+	}
+
+	return errs
 }

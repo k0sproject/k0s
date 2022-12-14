@@ -44,27 +44,29 @@ func (s *APISuite) TestValidation() {
 
 	s.T().Run("invalid_api_address", func(t *testing.T) {
 		a := APISpec{
-			Address: "somehting.that.is.not.valid//(())",
+			Address: "something.that.is.not.valid//(())",
 		}
 
 		errors := a.Validate()
 		s.NotNil(errors)
-		s.Len(errors, 2)
-		s.Contains(errors[0].Error(), "is not a valid address for sans")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `address: Invalid value: "something.that.is.not.valid//(())": invalid IP address`)
+		}
 	})
 
 	s.T().Run("invalid_sans_address", func(t *testing.T) {
 		a := APISpec{
 			Address: "1.2.3.4",
 			SANs: []string{
-				"somehting.that.is.not.valid//(())",
+				"something.that.is.not.valid//(())",
 			},
 		}
 
 		errors := a.Validate()
 		s.NotNil(errors)
-		s.Len(errors, 1)
-		s.Contains(errors[0].Error(), "is not a valid address for sans")
+		if s.Len(errors, 1) {
+			s.ErrorContains(errors[0], `sans[0]: Invalid value: "something.that.is.not.valid//(())": invalid IP address / DNS name`)
+		}
 	})
 	s.T().Run("TunneledNetworkingMode_and_default_kas_port_is_invalid", func(t *testing.T) {
 		a := DefaultAPISpec()

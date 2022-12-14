@@ -229,7 +229,7 @@ func (k *Konnectivity) Healthy() error {
 
 type konnectivityAgentConfig struct {
 	APIAddress             string
-	AgentPort              int64
+	AgentPort              int32
 	KASPort                int64
 	Image                  string
 	ServerCount            int

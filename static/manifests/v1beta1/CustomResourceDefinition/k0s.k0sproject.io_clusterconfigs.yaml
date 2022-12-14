@@ -266,12 +266,18 @@ spec:
                 description: KonnectivitySpec defines the requested state for Konnectivity
                 properties:
                   adminPort:
+                    default: 8133
                     description: admin port to listen on (default 8133)
-                    format: int64
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
                     type: integer
                   agentPort:
+                    default: 8132
                     description: agent port to listen on (default 8132)
-                    format: int64
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
                     type: integer
                 type: object
               network:

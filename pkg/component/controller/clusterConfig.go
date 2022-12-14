@@ -38,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
 // ClusterConfigReconciler reconciles a ClusterConfig object
@@ -135,18 +136,18 @@ func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 					r.log.Debug("config source closed channel")
 					return
 				}
-				errors := cfg.Validate()
-				var err error
-				if len(errors) > 0 {
-					err = fmt.Errorf("failed to validate config: %v", errors)
+				err := multierr.Combine(cfg.Validate()...)
+				if err != nil {
+					err = fmt.Errorf("failed to validate cluster configuration: %w", err)
 				} else {
 					err = r.ComponentManager.Reconcile(ctx, cfg)
 				}
 				r.reportStatus(statusCtx, cfg, err)
 				if err != nil {
-					r.log.Errorf("cluster-config reconcile failed: %s", err.Error())
+					r.log.WithError(err).Error("Failed to reconcile cluster configuration")
+				} else {
+					r.log.Debug("Successfully reconciled cluster configuration")
 				}
-				r.log.Debugf("reconciling cluster-config done")
 			case <-ctx.Done():
 				return
 			}

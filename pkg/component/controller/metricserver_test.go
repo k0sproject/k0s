@@ -23,6 +23,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +32,7 @@ import (
 var cfg = v1beta1.DefaultClusterConfig()
 
 func TestGetConfigWithZeroNodes(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
 	fakeFactory := testutil.NewFakeClientFactory()
 	ctx := context.Background()
 
@@ -43,6 +45,7 @@ func TestGetConfigWithZeroNodes(t *testing.T) {
 }
 
 func TestGetConfigWithSomeNodes(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
 	fakeFactory := testutil.NewFakeClientFactory()
 	fakeClient, _ := fakeFactory.GetClient()
 	ctx := context.Background()

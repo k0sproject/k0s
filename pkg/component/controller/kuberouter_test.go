@@ -25,6 +25,7 @@ import (
 	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
@@ -34,6 +35,7 @@ import (
 )
 
 func TestKubeRouterConfig(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -73,6 +75,7 @@ func TestKubeRouterConfig(t *testing.T) {
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
