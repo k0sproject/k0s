@@ -42,6 +42,13 @@ type plansSingleControllerSuite struct {
 func (s *plansSingleControllerSuite) SetupTest() {
 	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 
+	// Move the k0s binary to a new location, so we can check the binary location detection
+	ssh, err := s.SSH(s.ControllerNode(0))
+	s.Require().NoError(err)
+	defer ssh.Disconnect()
+	_, err = ssh.ExecWithOutput(s.Context(), "cp /dist/k0s /tmp/k0s")
+	s.Require().NoError(err)
+
 	s.Require().NoError(s.InitController(0), "--disable-components=metrics-server")
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
@@ -114,6 +121,7 @@ spec:
 func TestPlansSingleControllerSuite(t *testing.T) {
 	suite.Run(t, &plansSingleControllerSuite{
 		common.FootlooseSuite{
+			K0sFullPath:     "/tmp/k0s",
 			ControllerCount: 1,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,
