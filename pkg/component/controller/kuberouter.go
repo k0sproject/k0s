@@ -48,7 +48,8 @@ type kubeRouterConfig struct {
 	MetricsPort       int
 	CNIInstallerImage string
 	CNIImage          string
-	HairpinMode       bool
+	GlobalHairpin     bool
+	CNIHairpin        bool
 	PeerRouterIPs     string
 	PeerRouterASNs    string
 	PullPolicy        string
@@ -70,6 +71,27 @@ func (k *KubeRouter) Init(_ context.Context) error { return nil }
 // Stop no-op as nothing running
 func (k *KubeRouter) Stop() error { return nil }
 
+func getHairpinConfig(cfg *kubeRouterConfig, krc *v1beta1.KubeRouter) {
+	// Configure hairpin
+	switch krc.Hairpin {
+	case v1beta1.HairpinUndefined:
+		// If Hairpin is undefined, then we honor HairpinMode
+		if krc.HairpinMode {
+			cfg.CNIHairpin = true
+			cfg.GlobalHairpin = true
+		}
+	case v1beta1.HairpinDisabled:
+		cfg.CNIHairpin = false
+		cfg.GlobalHairpin = false
+	case v1beta1.HairpinAllowed:
+		cfg.CNIHairpin = true
+		cfg.GlobalHairpin = false
+	case v1beta1.HairpinEnabled:
+		cfg.CNIHairpin = true
+		cfg.GlobalHairpin = true
+	}
+}
+
 // Reconcile detects changes in configuration and applies them to the component
 func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
 	logrus.Debug("reconcile method called for: KubeRouter")
@@ -88,11 +110,11 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
 		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
 		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
-		HairpinMode:       clusterConfig.Spec.Network.KubeRouter.HairpinMode,
 		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
 		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
+	getHairpinConfig(&cfg, clusterConfig.Spec.Network.KubeRouter)
 
 	if cfg == k.previousConfig {
 		k.log.Info("config matches with previous, not reconciling anything")
@@ -149,7 +171,7 @@ data:
              "auto-mtu": {{ .AutoMTU }},
              "bridge":"kube-bridge",
              "isDefaultGateway":true,
-             "hairpinMode": {{ .HairpinMode }},
+             "hairpinMode": {{ .CNIHairpin }},
              "ipam":{
                 "type":"host-local"
              }
@@ -258,7 +280,7 @@ spec:
         - "--run-service-proxy=false"
         - "--bgp-graceful-restart=true"
         - "--metrics-port={{ .MetricsPort }}"
-        - "--hairpin-mode={{ .HairpinMode }}"
+        - "--hairpin-mode={{ .GlobalHairpin }}"
         {{- if .PeerRouterIPs }}
         - "--peer-router-ips={{ .PeerRouterIPs }}"
         {{- end }}

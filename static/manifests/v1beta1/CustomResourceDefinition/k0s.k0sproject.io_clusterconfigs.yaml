@@ -357,9 +357,20 @@ spec:
                       autoMTU:
                         description: 'Auto-detection of used MTU (default: true)'
                         type: boolean
+                      hairpin:
+                        default: Enabled
+                        description: 'Admits three values: "Enabled" enables it globally,
+                          "Allowed" allows but services must be annotated explicitly
+                          and "Disabled" Defaults to "Enabled"'
+                        enum:
+                        - Enabled
+                        - Allowed
+                        - Disabled
+                        type: string
                       hairpinMode:
-                        description: Activate Hairpin Mode (allow a Pod behind a Service
-                          to communicate to its own ClusterIP:Port)
+                        description: 'DEPRECATED: Use hairpin instead. Activates Hairpin
+                          Mode (allow a Pod behind a Service to communicate to its
+                          own ClusterIP:Port)'
                         type: boolean
                       metricsPort:
                         description: 'Kube-router metrics server port. Set to 0 to
