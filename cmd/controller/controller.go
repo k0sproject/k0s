@@ -38,6 +38,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/controller/workerconfig"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/component/status"
@@ -429,7 +430,12 @@ func (c *command) start(ctx context.Context) error {
 		c.ClusterComponents.Add(ctx, metrics)
 	}
 
-	if !slices.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
+	if !slices.Contains(c.DisableComponents, constant.WorkerConfigComponentName) {
+		reconciler, err := workerconfig.NewReconciler(c.K0sVars, c.NodeConfig.Spec, adminClientFactory, leaderElector)
+		if err != nil {
+			return err
+		}
+		c.ClusterComponents.Add(ctx, reconciler)
 		c.ClusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory))
 	}
 

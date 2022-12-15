@@ -183,19 +183,35 @@ func (c *ClientFactory) GetRESTConfig() *rest.Config {
 	return c.restConfig
 }
 
-// NewClient creates new k8s client based of the given kubeconfig
-// This should be only used in cases where the client is "short-running" and shouldn't/cannot use the common "cached" one.
-func NewClient(kubeconfig string) (kubernetes.Interface, error) {
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+// KubeconfigFromFile returns a [clientcmd.KubeconfigGetter] that tries to load
+// a kubeconfig from the given path.
+func KubeconfigFromFile(path string) clientcmd.KubeconfigGetter {
+	return (&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}).Load
+}
+
+// NewClientFromFile creates a new Kubernetes client based of the given
+// kubeconfig file.
+func NewClientFromFile(kubeconfig string) (kubernetes.Interface, error) {
+	return NewClient(KubeconfigFromFile(kubeconfig))
+}
+
+func ClientConfig(getter clientcmd.KubeconfigGetter) (*rest.Config, error) {
+	kubeconfig, err := getter()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
+		return nil, err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	return clientcmd.NewNonInteractiveClientConfig(*kubeconfig, "", nil, nil).ClientConfig()
+}
+
+// NewClient creates new k8s client based of the given kubeconfig getter. This
+// should be only used in cases where the client is "short-running" and
+// shouldn't/cannot use the common "cached" one.
+func NewClient(getter clientcmd.KubeconfigGetter) (kubernetes.Interface, error) {
+	config, err := ClientConfig(getter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create k8s client: %w", err)
+		return nil, err
 	}
 
-	return clientset, nil
+	return kubernetes.NewForConfig(config)
 }

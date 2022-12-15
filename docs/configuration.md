@@ -243,18 +243,23 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 ### `spec.workerProfiles`
 
-Worker profiles are used to set kubelet parameters can for a worker. Each worker profile is then used to generate a config map containing a custom `kubelet.config.k8s.io` object.
+Worker profiles are used to manage worker-specific configuration in a
+centralized manner. A ConfigMap is generated for each worker profile. Based on
+the `--profile` argument given to the `k0s worker`, the configuration in the
+corresponding ConfigMap is is picked up during startup.
 
-For a list of possible kubelet configuration keys: [go here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
+The worker profiles are defined as an array. Each element has following
+properties:
 
-The worker profiles are defined as an array of `spec.workerProfiles.workerProfile`. Each element has following properties:
+| Property | Description                                                                      |
+| -------- | -------------------------------------------------------------------------------- |
+| `name`   | String; name to use as profile selector for the worker process                   |
+| `values` | Object; [Kubelet configuration][kubelet-config] overrides, see below for details |
 
-| Property | Description                                                    |
-| -------- | -------------------------------------------------------------- |
-| `name`   | String; name to use as profile selector for the worker process |
-| `values` | Mapping object                                                 |
+#### `spec.workerProfiles[].values` (Kubelet configuration overrides)
 
-For each profile, the control plane creates a separate ConfigMap with `kubelet-config yaml`. Based on the `--profile` argument given to the `k0s worker`, the corresponding ConfigMap is used to extract the `kubelet-config.yaml` file. `values` are recursively merged with default `kubelet-config.yaml`
+The Kubelet configuration overrides of a profile override the defaults defined
+by k0s.
 
 Note that there are several fields that cannot be overridden:
 
@@ -263,6 +268,8 @@ Note that there are several fields that cannot be overridden:
 - `apiVersion`
 - `kind`
 - `staticPodURL`
+
+[kubelet-config]: https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 
 #### Examples
 
@@ -403,21 +410,30 @@ spec:
 
 ## Disabling controller components
 
-k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:
+k0s allows to completely disable some of the system components. This allows
+users to build a minimal Kubernetes control plane and use what ever components
+they need to fulfill their need for the control plane. Disabling the system
+components happens through a command line flag for the controller process:
 
 ```sh
---disable-components strings                     disable components (valid items: api-config,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,kubelet-config,metrics-server,network-provider,node-role,system-rbac)
-
+--disable-components strings                     disable components (valid items: api-config,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config)
 ```
 
-If you use k0sctl just add the flag when installing the cluster for the first controller at `spec.hosts.installFlags` in the config file like e.g.:
+**Note:** As of k0s 1.26, the kubelet-config component has been replaced by the
+worker-config component. k0s will issue a warning when the old component name is
+being used. It is scheduled for removal in k0s 1.27. Please update to the new
+component name.
+
+If you use k0sctl, just add the flag when installing the cluster for the first
+controller at `spec.hosts.installFlags` in the config file like e.g.:
 
 ```yaml
 spec:
   hosts:
   - role: controller
     installFlags:
-    - --disable-components metrics-server
+    - --disable-components=metrics-server
 ```
 
-As seen from the component list, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.
+As seen from the component list, the only always-on component is the Kubernetes
+api-server, without that k0s serves no purpose.

@@ -151,15 +151,6 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, w
 	return nil
 }
 
-func LoadKubeletConfigClient(k0svars constant.CfgVars) (*KubeletConfigClient, error) {
-	var kubeletConfigClient *KubeletConfigClient
-	kubeletConfigClient, err := NewKubeletConfigClient(k0svars.KubeletAuthConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kubelet config client: %w", err)
-	}
-	return kubeletConfigClient, nil
-}
-
 func writeKubeletBootstrapKubeconfig(kubeconfig []byte) (string, error) {
 	dir := os.Getenv("XDG_RUNTIME_DIR")
 	if dir == "" && runtime.GOOS != "windows" {

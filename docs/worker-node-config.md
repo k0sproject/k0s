@@ -46,17 +46,25 @@ controller0   [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
 worker0       <none>
 ```
 
-## Kubelet args
+## Kubelet configuration
 
-The `k0s worker` command accepts a generic flag to pass in any set of arguments for kubelet process.
+The `k0s worker` command accepts a generic flag to pass in any set of arguments
+for kubelet process.
 
-For example, running `k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"` passes in the given flags to kubelet as-is. As such, you must confirm that any flags you are passing in are properly formatted and valued as k0s will not validate those flags.
+For example, running `k0s worker --token-file=k0s.token
+--kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"` passes in the given
+flags to Kubelet as-is. As such, you must confirm that any flags you are passing
+in are properly formatted and valued as k0s will not validate those flags.
 
-## Worker Profiles
+### Worker Profiles
 
-kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom `kubelet.config.k8s.io` object.
-To see examples of k0s.yaml containing worker profiles: [go here](./configuration.md#specworkerprofiles).
-For a list of possible kubelet configuration keys: [go here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
+Kubelet configuration fields can also be set via a worker profiles. Worker
+profiles are defined in the main k0s.yaml and are used to generate ConfigMaps
+containing a custom `kubelet.config.k8s.io/v1beta1/KubeletConfiguration` object.
+To see examples of k0s.yaml containing worker profiles: [go
+here](./configuration.md#specworkerprofiles). For a list of possible Kubelet
+configuration fields: [go
+here](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/).
 
 ## IPTables Mode
 

@@ -103,6 +103,13 @@ func (o *ControllerOptions) Normalize() error {
 	// Normalize component names
 	var disabledComponents []string
 	for _, disabledComponent := range o.DisableComponents {
+		if disabledComponent == constant.KubeletConfigComponentName {
+			logrus.Warnf("Usage of deprecated component name %q, please switch to %q",
+				constant.KubeletConfigComponentName, constant.WorkerConfigComponentName,
+			)
+			disabledComponent = constant.WorkerConfigComponentName
+		}
+
 		if !slices.Contains(availableComponents, disabledComponent) {
 			return fmt.Errorf("unknown component %s", disabledComponent)
 		}
@@ -190,11 +197,11 @@ var availableComponents = []string{
 	constant.KubeControllerManagerComponentName,
 	constant.KubeProxyComponentName,
 	constant.KubeSchedulerComponentName,
-	constant.KubeletConfigComponentName,
 	constant.MetricsServerComponentName,
 	constant.NetworkProviderComponentName,
 	constant.NodeRoleComponentName,
 	constant.SystemRbacComponentName,
+	constant.WorkerConfigComponentName,
 }
 
 func GetControllerFlags() *pflag.FlagSet {

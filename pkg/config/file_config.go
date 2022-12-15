@@ -52,7 +52,13 @@ func (rules *ClientConfigLoadingRules) readRuntimeConfig() (clusterConfig *v1bet
 	if rules.RuntimeConfigPath == "" {
 		rules.RuntimeConfigPath = runtimeConfigPathDefault
 	}
-	return rules.ParseRuntimeConfig()
+
+	config, err := rules.ParseRuntimeConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config from %q: %w", rules.RuntimeConfigPath, err)
+	}
+
+	return config, err
 }
 
 // generic function that reads a config file, and returns a ClusterConfig object

@@ -44,14 +44,30 @@ func TestControllerOptions_Normalize(t *testing.T) {
 		assert.ErrorContains(t, err, "unknown component i-dont-exist")
 	})
 
-	t.Run("removesDuplicateComponents", func(t *testing.T) {
-		disabled := []string{"helm", "kube-proxy", "coredns", "kube-proxy", "autopilot"}
-		expected := []string{"helm", "kube-proxy", "coredns", "autopilot"}
-
-		underTest := ControllerOptions{DisableComponents: disabled}
+	for _, test := range []struct {
+		name               string
+		disabled, expected []string
+	}{
+		{
+			"removesDuplicateComponents",
+			[]string{"helm", "kube-proxy", "coredns", "kube-proxy", "autopilot"},
+			[]string{"helm", "kube-proxy", "coredns", "autopilot"},
+		},
+		{
+			"replacesDeprecation",
+			[]string{"helm", "kubelet-config", "coredns", "kubelet-config", "autopilot"},
+			[]string{"helm", "worker-config", "coredns", "autopilot"},
+		},
+		{
+			"replacesDeprecationAvoidingDuplicates",
+			[]string{"helm", "kubelet-config", "coredns", "kubelet-config", "worker-config", "autopilot"},
+			[]string{"helm", "worker-config", "coredns", "autopilot"},
+		},
+	} {
+		underTest := ControllerOptions{DisableComponents: test.disabled}
 		err := underTest.Normalize()
 
 		require.NoError(t, err)
-		assert.Equal(t, expected, underTest.DisableComponents)
-	})
+		assert.Equal(t, test.expected, underTest.DisableComponents)
+	}
 }
