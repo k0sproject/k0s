@@ -41,7 +41,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli v1.22.10
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
-	github.com/vmware-tanzu/sonobuoy v0.56.11
+	github.com/vmware-tanzu/sonobuoy v0.56.13
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
 	go.etcd.io/etcd/api/v3 v3.5.5
@@ -74,7 +74,7 @@ require (
 	k8s.io/kube-aggregator v0.26.0
 	k8s.io/kubectl v0.26.0
 	k8s.io/kubelet v0.26.0
-	k8s.io/kubernetes v1.26.0
+	k8s.io/kubernetes v1.26.0-alpha.1
 	k8s.io/mount-utils v0.26.0
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 	sigs.k8s.io/controller-runtime v0.13.1-0.20221206203637-3da2de04734a // master branch as of 2022-12-06. We need to bump up when there's a new release compatible with k8s 1.26
