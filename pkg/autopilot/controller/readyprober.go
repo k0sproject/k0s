@@ -18,7 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"net/url"
+	"net/http"
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
@@ -114,15 +114,14 @@ func (p readyProber) probeOne(target apv1beta2.PlanCommandTargetStatus) error {
 		return fmt.Errorf("no internal IP address found for %v", target.Name)
 	}
 
-	url, err := url.Parse(fmt.Sprintf(readyzURLFormat, address))
-	if err != nil {
-		return fmt.Errorf("unable to parse URL for '%s': %w", address, err)
-	}
-
 	probe := k8shttpprobe.NewWithTLSConfig(p.tlsConfig, false /* followNonLocalRedirects */)
-
+	url := fmt.Sprintf(readyzURLFormat, address)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("unable to create HTTP request for '%s': %w", url, err)
+	}
 	// The body content is not interesting at the moment.
-	res, _, err := probe.Probe(url, nil, p.timeout)
+	res, _, err := probe.Probe(req, p.timeout)
 	if err != nil {
 		return fmt.Errorf("failed to HTTP probe '%v/%v': %w", target.Name, address, err)
 	}
