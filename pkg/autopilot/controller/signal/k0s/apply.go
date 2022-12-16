@@ -21,9 +21,9 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
-	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
@@ -58,9 +58,10 @@ func applyingUpdateEventFilter(hostname string, handler apsigpred.ErrorHandler) 
 }
 
 type applyingUpdate struct {
-	log      *logrus.Entry
-	client   crcli.Client
-	delegate apdel.ControllerDelegate
+	log          *logrus.Entry
+	client       crcli.Client
+	delegate     apdel.ControllerDelegate
+	k0sBinaryDir string
 }
 
 // registeryApplyingUpdate registers the 'applying-update' controller to the
@@ -68,7 +69,13 @@ type applyingUpdate struct {
 //
 // This controller is only interested in taking the downloaded update, and
 // applying it to the current k0s install.
-func registerApplyingUpdate(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerApplyingUpdate(
+	logger *logrus.Entry,
+	mgr crman.Manager,
+	eventFilter crpred.Predicate,
+	delegate apdel.ControllerDelegate,
+	k0sBinaryDir string,
+) error {
 	logger.Infof("Registering 'applying-update' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
@@ -76,9 +83,10 @@ func registerApplyingUpdate(logger *logrus.Entry, mgr crman.Manager, eventFilter
 		WithEventFilter(eventFilter).
 		Complete(
 			&applyingUpdate{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "applying-update", "object": delegate.Name()}),
-				client:   mgr.GetClient(),
-				delegate: delegate,
+				log:          logger.WithFields(logrus.Fields{"reconciler": "applying-update", "object": delegate.Name()}),
+				client:       mgr.GetClient(),
+				delegate:     delegate,
+				k0sBinaryDir: k0sBinaryDir,
 			},
 		)
 }
@@ -107,7 +115,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 
 	// TODO: make the filename part random
 	updateFilename := path.Base(updateURL.Path)
-	updateFilenamePath := path.Join(apconst.K0sBinaryDir, updateFilename)
+	updateFilenamePath := path.Join(r.k0sBinaryDir, updateFilename)
 
 	// Ensure that the expected file exists
 	if _, err := os.Stat(updateFilenamePath); errors.Is(err, os.ErrNotExist) {
@@ -120,7 +128,7 @@ func (r *applyingUpdate) Reconcile(ctx context.Context, req cr.Request) (cr.Resu
 	}
 
 	// Perform the update atomically
-	if err := os.Rename(updateFilenamePath, "/usr/local/bin/k0s"); err != nil {
+	if err := os.Rename(updateFilenamePath, filepath.Join(r.k0sBinaryDir, "k0s")); err != nil {
 		return cr.Result{}, fmt.Errorf("unable to update (rename) to the new file: %w", err)
 	}
 

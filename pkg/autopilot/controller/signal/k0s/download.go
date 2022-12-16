@@ -18,7 +18,6 @@ import (
 	"crypto/sha256"
 
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
-	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigpred "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common/predicate"
@@ -55,6 +54,7 @@ func downloadEventFilter(hostname string, handler apsigpred.ErrorHandler) crpred
 }
 
 type downloadManifestBuilderK0s struct {
+	k0sBinaryDir string
 }
 
 var _ apsigcomm.DownloadManifestBuilder = (*downloadManifestBuilderK0s)(nil)
@@ -65,14 +65,16 @@ var _ apsigcomm.DownloadManifestBuilder = (*downloadManifestBuilderK0s)(nil)
 // This controller is only interested when autopilot signaling annotations have
 // moved to a `Downloading` status. At this point, it will attempt to download
 // the file provided in the update request.
-func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerDownloading(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sBinaryDir string) error {
 	logger.Infof("Registering k0s 'downloading' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
 		For(delegate.CreateObject()).
 		WithEventFilter(eventFilter).
 		Complete(
-			apsigcomm.NewDownloadController(logger, mgr.GetClient(), delegate, &downloadManifestBuilderK0s{}),
+			apsigcomm.NewDownloadController(logger, mgr.GetClient(), delegate, &downloadManifestBuilderK0s{
+				k0sBinaryDir: k0sBinaryDir,
+			}),
 		)
 }
 
@@ -84,7 +86,7 @@ func (b downloadManifestBuilderK0s) Build(signalNode crcli.Object, signalData ap
 			URL:          signalData.Command.K0sUpdate.URL,
 			ExpectedHash: signalData.Command.K0sUpdate.Sha256,
 			Hasher:       sha256.New(),
-			DownloadDir:  apconst.K0sBinaryDir,
+			DownloadDir:  b.k0sBinaryDir,
 		},
 		SuccessState: Cordoning,
 	}
