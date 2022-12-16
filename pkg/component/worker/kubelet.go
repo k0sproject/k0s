@@ -29,8 +29,11 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/containerd/containerd"
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
@@ -129,8 +132,47 @@ func (k *Kubelet) Init(_ context.Context) error {
 	return nil
 }
 
+// waitForContainerd waits for containerd to start to 2 minutes.
+// If it doesn't start it exits without error anyway.
+func (k *Kubelet) waitForContainerd() error {
+	// If CRISocket is set, there is a custom runtime and starting it isn't
+	// our responsability. Therefore we don't have to wait for it.
+	if k.CRISocket != "" {
+		return nil
+	}
+
+	sockPath := k.getContainerdSockPath()
+
+	// Retry for up to 2 minutes for containerd to be healthy
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
+	return retry.Do(
+		func() error {
+			c, err := containerd.New(sockPath)
+			defer c.Close()
+			if err != nil {
+				return err
+			}
+
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			r, err := c.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{}, grpc.WaitForReady(true))
+			if err != nil {
+				return err
+			}
+			if r.Status != grpc_health_v1.HealthCheckResponse_SERVING {
+				return fmt.Errorf("Containerd is not serving")
+			}
+			return nil
+
+		}, retry.Delay(5*time.Second), retry.Context(ctx))
+}
+
 // Run runs kubelet
 func (k *Kubelet) Start(ctx context.Context) error {
+	err := k.waitForContainerd()
+	if err != nil {
+		logrus.Warnf("Containerd not ready: %v", err)
+	}
+
 	cmd := "kubelet"
 
 	kubeletConfigData := kubeletConfig{
@@ -192,7 +234,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		args["--container-runtime-endpoint"] = rtSock
 
 	} else {
-		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
+		sockPath := k.getContainerdSockPath()
 		args["--container-runtime-endpoint"] = fmt.Sprintf("unix://%s", sockPath)
 		args["--containerd"] = sockPath
 	}
@@ -217,7 +259,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		Args:    args.ToArgs(),
 	}
 
-	err := retry.Do(func() error {
+	err = retry.Do(func() error {
 		kubeletconfig, err := k.KubeletConfigClient.Get(ctx, k.Profile)
 		if err != nil {
 			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
@@ -243,6 +285,10 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	return k.supervisor.Supervise()
+}
+
+func (k *Kubelet) getContainerdSockPath() string {
+	return path.Join(k.K0sVars.RunDir, "containerd.sock")
 }
 
 // Stop stops kubelet
