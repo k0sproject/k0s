@@ -53,6 +53,13 @@ func NewManager(kubeconfig string) (*Manager, error) {
 	}, nil
 }
 
+// NewManagerForClient creates a new token manager using given client
+func NewManagerForClient(client kubernetes.Interface) (*Manager, error) {
+	return &Manager{
+		client: client,
+	}, nil
+}
+
 // Manager is responsible to manage the join tokens in kube API as secrets in kube-system namespace
 type Manager struct {
 	client kubernetes.Interface
