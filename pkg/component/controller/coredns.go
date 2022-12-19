@@ -144,18 +144,16 @@ spec:
           effect: "NoSchedule"
       nodeSelector:
         beta.kubernetes.io/os: linux
-      # Prefer running coredns replicas on different nodes
+      # Require running coredns replicas on different nodes
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              topologyKey: "kubernetes.io/hostname"
-              labelSelector:
-                matchExpressions:
-                - key: k8s-app
-                  operator: In
-                  values: ['kube-dns']
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+              matchExpressions:
+              - key: k8s-app
+                operator: In
+                values: ['kube-dns']
       containers:
       - name: coredns
         image: {{ .Image }}
