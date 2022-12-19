@@ -75,7 +75,7 @@ const (
 	KubernetesMajorMinorVersion = "1.26"
 	// Image Constants
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "0.0.32-k0s1"
+	KonnectivityImageVersion           = "0.0.33-k0s"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion            = "edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9"
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
