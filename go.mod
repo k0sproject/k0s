@@ -13,7 +13,7 @@ require (
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cloudflare/cfssl v1.6.3
-	github.com/containerd/containerd v1.6.12
+	github.com/containerd/containerd v1.6.14
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
@@ -107,7 +107,7 @@ require (
 	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
-	github.com/containerd/cgroups v1.0.3 // indirect
+	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
