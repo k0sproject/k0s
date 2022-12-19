@@ -359,9 +359,9 @@ spec:
       priorityClassName: system-cluster-critical
       tolerations:
         - operator: Exists
-      {{ if .TunneledNetworkingMode }}
+      {{- if .TunneledNetworkingMode }}
       hostNetwork: true
-      {{ end }}
+      {{- end }}
       containers:
         - image: {{ .Image }}
           imagePullPolicy: {{ .PullPolicy }}
@@ -387,11 +387,13 @@ spec:
                   "--service-account-token-path=/var/run/secrets/tokens/konnectivity-agent-token",
                   "--agent-identifiers=host=$(NODE_IP)",
                   "--agent-id=$(NODE_IP)",
-                  {{ if .TunneledNetworkingMode }}
+                  {{- if .TunneledNetworkingMode }}
                   # agent need to listen on the node ip to be on pair with the tunneled network reconciler
                   "--bind-address=$(NODE_IP)",
                   "--apiserver-port-mapping=6443:localhost:{{.KASPort}}"
-                  {{ end }} 
+                  {{- else }}
+                  "--feature-gates=NodeToMasterTraffic=false"
+                  {{- end }}
                   ]
           volumeMounts:
             - mountPath: /var/run/secrets/tokens
