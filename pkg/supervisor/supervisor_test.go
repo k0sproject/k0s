@@ -104,7 +104,7 @@ func TestGetEnv(t *testing.T) {
 
 	env := getEnv("/var/lib/k0s", "foo", false)
 	sort.Strings(env)
-	expected := "[HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin:/usr/local/bin k1=v1 k2=foo_v2 k3=foo_v3 k4=v4]"
+	expected := "[HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin:/usr/local/bin _K0S_MANAGED=yes k1=v1 k2=foo_v2 k3=foo_v3 k4=v4]"
 	actual := fmt.Sprintf("%s", env)
 	if actual != expected {
 		t.Errorf("Failed in env processing with keepEnvPrefix=false, expected: %q, actual: %q", expected, actual)
@@ -112,7 +112,7 @@ func TestGetEnv(t *testing.T) {
 
 	env = getEnv("/var/lib/k0s", "foo", true)
 	sort.Strings(env)
-	expected = "[FOO_PATH=/usr/local/bin FOO_k2=foo_v2 FOO_k3=foo_v3 HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin:/bin k1=v1 k2=v2 k3=v3 k4=v4]"
+	expected = "[FOO_PATH=/usr/local/bin FOO_k2=foo_v2 FOO_k3=foo_v3 HTTPS_PROXY=a.b.c:1080 PATH=/var/lib/k0s/bin:/bin _K0S_MANAGED=yes k1=v1 k2=v2 k3=v3 k4=v4]"
 	actual = fmt.Sprintf("%s", env)
 	if actual != expected {
 		t.Errorf("Failed in env processing with keepEnvPrefix=true, expected: %q, actual: %q", expected, actual)

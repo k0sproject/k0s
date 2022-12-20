@@ -49,6 +49,10 @@ type Supervisor struct {
 	TimeoutRespawn time.Duration
 	// For those components having env prefix convention such as ETCD_xxx, we should keep the prefix.
 	KeepEnvPrefix bool
+	// ProcFSPath is only used for testing
+	ProcFSPath string
+	// KillFunction is only used for testing
+	KillFunction func(int, syscall.Signal) error
 	// A function to clean some leftovers before starting or restarting the supervised process
 	CleanBeforeFn func() error
 
@@ -59,6 +63,8 @@ type Supervisor struct {
 	startStopMutex sync.Mutex
 	cancel         context.CancelFunc
 }
+
+const k0sManaged = "_K0S_MANAGED=yes"
 
 // processWaitQuit waits for a process to exit or a shut down signal
 // returns true if shutdown is requested
@@ -121,6 +127,10 @@ func (s *Supervisor) Supervise() error {
 	}
 	if s.TimeoutRespawn == 0 {
 		s.TimeoutRespawn = 5 * time.Second
+	}
+
+	if err := s.maybeKillPidFile(nil, nil); err != nil {
+		return err
 	}
 
 	var ctx context.Context
@@ -254,6 +264,8 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 		}
 		i++
 	}
+	env = append([]string{k0sManaged}, env...)
+	i++
 
 	return env[:i]
 }
