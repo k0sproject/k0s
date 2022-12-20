@@ -1929,9 +1929,12 @@ CALICO_IPV6POOL_CIDR: <span class="s2">&quot;{{ spec.network.dualStack.IPv6podCI
 </tbody>
 </table>
 <h3 id="specworkerprofiles"><code>spec.workerProfiles</code><a class="headerlink" href="#specworkerprofiles" title="Permanent link">#</a></h3>
-<p>Worker profiles are used to set kubelet parameters can for a worker. Each worker profile is then used to generate a config map containing a custom <code>kubelet.config.k8s.io</code> object.</p>
-<p>For a list of possible kubelet configuration keys: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go here</a>.</p>
-<p>The worker profiles are defined as an array of <code>spec.workerProfiles.workerProfile</code>. Each element has following properties:</p>
+<p>Worker profiles are used to manage worker-specific configuration in a
+centralized manner. A ConfigMap is generated for each worker profile. Based on
+the <code>--profile</code> argument given to the <code>k0s worker</code>, the configuration in the
+corresponding ConfigMap is is picked up during startup.</p>
+<p>The worker profiles are defined as an array. Each element has following
+properties:</p>
 <table>
 <thead>
 <tr>
@@ -1946,11 +1949,13 @@ CALICO_IPV6POOL_CIDR: <span class="s2">&quot;{{ spec.network.dualStack.IPv6podCI
 </tr>
 <tr>
 <td><code>values</code></td>
-<td>Mapping object</td>
+<td>Object; <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">Kubelet configuration</a> overrides, see below for details</td>
 </tr>
 </tbody>
 </table>
-<p>For each profile, the control plane creates a separate ConfigMap with <code>kubelet-config yaml</code>. Based on the <code>--profile</code> argument given to the <code>k0s worker</code>, the corresponding ConfigMap is used to extract the <code>kubelet-config.yaml</code> file. <code>values</code> are recursively merged with default <code>kubelet-config.yaml</code></p>
+<h4 id="specworkerprofilesvalues-kubelet-configuration-overrides"><code>spec.workerProfiles[].values</code> (Kubelet configuration overrides)<a class="headerlink" href="#specworkerprofilesvalues-kubelet-configuration-overrides" title="Permanent link">#</a></h4>
+<p>The Kubelet configuration overrides of a profile override the defaults defined
+by k0s.</p>
 <p>Note that there are several fields that cannot be overridden:</p>
 <ul>
 <li><code>clusterDNS</code></li>
@@ -2060,17 +2065,26 @@ The default value <code>external</code> makes no storage deployed.</p>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 </code></pre></div>
 <h2 id="disabling-controller-components">Disabling controller components<a class="headerlink" href="#disabling-controller-components" title="Permanent link">#</a></h2>
-<p>k0s allows completely disabling some of the system components. This allows the user to build a minimal Kubernetes control plane and use what ever components they need to fullfill their need for the controlplane. Disabling the system components happens through a commandline flag for the controller process:</p>
-<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: api-config,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,kubelet-config,metrics-server,network-provider,node-role,system-rbac<span class="o">)</span>
+<p>k0s allows to completely disable some of the system components. This allows
+users to build a minimal Kubernetes control plane and use what ever components
+they need to fulfill their need for the control plane. Disabling the system
+components happens through a command line flag for the controller process:</p>
+<div class="highlight"><pre><span></span><code>--disable-components strings                     disable components <span class="o">(</span>valid items: api-config,autopilot,control-api,coredns,csr-approver,endpoint-reconciler,helm,konnectivity-server,kube-controller-manager,kube-proxy,kube-scheduler,metrics-server,network-provider,node-role,system-rbac,worker-config<span class="o">)</span>
 </code></pre></div>
-<p>If you use k0sctl just add the flag when installing the cluster for the first controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
+<p><strong>Note:</strong> As of k0s 1.26, the kubelet-config component has been replaced by the
+worker-config component. k0s will issue a warning when the old component name is
+being used. It is scheduled for removal in k0s 1.27. Please update to the new
+component name.</p>
+<p>If you use k0sctl, just add the flag when installing the cluster for the first
+controller at <code>spec.hosts.installFlags</code> in the config file like e.g.:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span><span class="w"></span>
 <span class="w">    </span><span class="nt">installFlags</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--disable-components metrics-server</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--disable-components=metrics-server</span><span class="w"></span>
 </code></pre></div>
-<p>As seen from the component list, the only always-on component is the Kubernetes api-server, without that k0s serves no purpose.</p>
+<p>As seen from the component list, the only always-on component is the Kubernetes
+api-server, without that k0s serves no purpose.</p>
 
 
 

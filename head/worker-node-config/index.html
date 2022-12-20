@@ -660,16 +660,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kubelet-args" class="md-nav__link">
-    Kubelet args
+  <a href="#kubelet-configuration" class="md-nav__link">
+    Kubelet configuration
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="Kubelet configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#worker-profiles" class="md-nav__link">
     Worker Profiles
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1369,16 +1375,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kubelet-args" class="md-nav__link">
-    Kubelet args
+  <a href="#kubelet-configuration" class="md-nav__link">
+    Kubelet configuration
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="Kubelet configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#worker-profiles" class="md-nav__link">
     Worker Profiles
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1430,13 +1442,21 @@ controller0   NotReady   control-plane   10s   v1.26.0+k0s  beta.kubernetes.io/a
 controller0   <span class="o">[</span>map<span class="o">[</span>effect:NoSchedule key:node-role.kubernetes.io/master<span class="o">]]</span>
 worker0       &lt;none&gt;
 </code></pre></div>
-<h2 id="kubelet-args">Kubelet args<a class="headerlink" href="#kubelet-args" title="Permanent link">#</a></h2>
-<p>The <code>k0s worker</code> command accepts a generic flag to pass in any set of arguments for kubelet process.</p>
-<p>For example, running <code>k0s worker --token-file=k0s.token --kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"</code> passes in the given flags to kubelet as-is. As such, you must confirm that any flags you are passing in are properly formatted and valued as k0s will not validate those flags.</p>
-<h2 id="worker-profiles">Worker Profiles<a class="headerlink" href="#worker-profiles" title="Permanent link">#</a></h2>
-<p>kubelet parameters can also be set via a worker profile. Worker profiles are defined in the main k0s.yaml and are used to generate a config map containing a custom <code>kubelet.config.k8s.io</code> object.
-To see examples of k0s.yaml containing worker profiles: <a href="../configuration/#specworkerprofiles">go here</a>.
-For a list of possible kubelet configuration keys: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go here</a>.</p>
+<h2 id="kubelet-configuration">Kubelet configuration<a class="headerlink" href="#kubelet-configuration" title="Permanent link">#</a></h2>
+<p>The <code>k0s worker</code> command accepts a generic flag to pass in any set of arguments
+for kubelet process.</p>
+<p>For example, running <code>k0s worker --token-file=k0s.token
+--kubelet-extra-args="--node-ip=1.2.3.4 --address=0.0.0.0"</code> passes in the given
+flags to Kubelet as-is. As such, you must confirm that any flags you are passing
+in are properly formatted and valued as k0s will not validate those flags.</p>
+<h3 id="worker-profiles">Worker Profiles<a class="headerlink" href="#worker-profiles" title="Permanent link">#</a></h3>
+<p>Kubelet configuration fields can also be set via a worker profiles. Worker
+profiles are defined in the main k0s.yaml and are used to generate ConfigMaps
+containing a custom <code>kubelet.config.k8s.io/v1beta1/KubeletConfiguration</code> object.
+To see examples of k0s.yaml containing worker profiles: <a href="../configuration/#specworkerprofiles">go
+here</a>. For a list of possible Kubelet
+configuration fields: <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/">go
+here</a>.</p>
 <h2 id="iptables-mode">IPTables Mode<a class="headerlink" href="#iptables-mode" title="Permanent link">#</a></h2>
 <p>k0s detects iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.<br />
 There is a <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
