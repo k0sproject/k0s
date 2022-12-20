@@ -12,6 +12,7 @@ smoketests := \
 	check-ap-removedapis \
 	check-backup \
 	check-basic \
+	check-byocri \
 	check-calico \
 	check-cli \
 	check-clusterreboot \
@@ -50,5 +51,3 @@ smoketests := \
 	check-network-conformance-kuberouter \
 	check-network-conformance-calico \
 	check-embedded-binaries \
-#   byo-cri test disabled untill cri-dockerd has release with v1 CRI API
-#	check-byocri \
