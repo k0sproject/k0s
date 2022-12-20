@@ -143,7 +143,7 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       nodeSelector:
-        beta.kubernetes.io/os: linux
+        kubernetes.io/os: linux
       # Require running coredns replicas on different nodes
       affinity:
         podAntiAffinity:
