@@ -36,5 +36,6 @@ RUN curl -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etc
   | tar xz -C /opt --strip-components=1
 
 # Install cri-dockerd shim for custom CRI testing
-RUN curl -sSfL https://github.com/Mirantis/cri-dockerd/releases/download/v0.2.6/cri-dockerd-0.2.6.amd64.tgz | tar -zxv --strip-components=1 cri-dockerd/cri-dockerd -C /usr/local/bin/
+RUN curl -sSfLo /usr/local/bin/cri-dockerd https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.0/cri-dockerd-0.3.0.amd64 \
+  && chmod 755 /usr/local/bin/cri-dockerd
 ADD cri-dockerd.sh /etc/init.d/cri-dockerd
