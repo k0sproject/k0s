@@ -22,7 +22,7 @@ import (
 	"os"
 	"time"
 
-	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
+	k0sclient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/clusterconfig"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -47,8 +47,7 @@ type ClusterConfigReconciler struct {
 	ComponentManager  *manager.Manager
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
-	configClient  cfgClient.ClusterConfigInterface
-	kubeConfig    string
+	configClient  k0sclient.ClusterConfigInterface
 	leaderElector leaderelector.Interface
 	log           *logrus.Entry
 	saver         manifestsSaver
@@ -72,7 +71,6 @@ func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars c
 		ComponentManager:  mgr,
 		YamlConfig:        cfg,
 		KubeClientFactory: kubeClientFactory,
-		kubeConfig:        k0sVars.AdminKubeConfigPath,
 		leaderElector:     leaderElector,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
 		saver:             s,

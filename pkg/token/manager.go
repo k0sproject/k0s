@@ -44,7 +44,7 @@ func (t Token) ToArray() []string {
 // NewManager creates a new token manager using given kubeconfig
 func NewManager(kubeconfig string) (*Manager, error) {
 	logrus.Debugf("loading kubeconfig from: %s", kubeconfig)
-	client, err := k8sutil.NewClient(kubeconfig)
+	client, err := k8sutil.NewClientFromFile(kubeconfig)
 	if err != nil {
 		return nil, err
 	}

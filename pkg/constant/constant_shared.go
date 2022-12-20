@@ -106,7 +106,8 @@ const (
 	KubeControllerManagerComponentName = "kube-controller-manager"
 	KubeProxyComponentName             = "kube-proxy"
 	KubeSchedulerComponentName         = "kube-scheduler"
-	KubeletConfigComponentName         = "kubelet-config"
+	KubeletConfigComponentName         = "kubelet-config" // Deprecated: replaced by worker-config
+	WorkerConfigComponentName          = "worker-config"
 	MetricsServerComponentName         = "metrics-server"
 	NetworkProviderComponentName       = "network-provider"
 	SystemRbacComponentName            = "system-rbac"

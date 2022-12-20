@@ -79,7 +79,7 @@ func NewAPICmd() *cobra.Command {
 
 func (c *command) start() (err error) {
 	// Single kube client for whole lifetime of the API
-	c.client, err = kubeutil.NewClient(c.K0sVars.AdminKubeConfigPath)
+	c.client, err = kubeutil.NewClientFromFile(c.K0sVars.AdminKubeConfigPath)
 	if err != nil {
 		return err
 	}

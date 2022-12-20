@@ -180,6 +180,15 @@ func (k *KubeletConfig) save(data []byte) error {
 	if err := file.WriteContentAtomically(filePath, data, constant.CertMode); err != nil {
 		return fmt.Errorf("can't write kubelet configuration config map: %v", err)
 	}
+
+	deprecationNotice := []byte(`The kubelet-config component has been replaced by the worker-config component in k0s 1.26.
+It is scheduled for removal in k0s 1.27.
+`)
+
+	if err := file.WriteContentAtomically(filepath.Join(kubeletDir, "deprecated.txt"), deprecationNotice, constant.CertMode); err != nil {
+		k.log.WithError(err).Warn("Failed to write deprecation notice")
+	}
+
 	return nil
 }
 
@@ -257,6 +266,12 @@ kind: ConfigMap
 metadata:
   name: {{.Name}}
   namespace: kube-system
+  labels:
+    k0s.k0sproject.io/deprecated-since: "1.26"
+  annotations:
+    k0s.k0sproject.io/deprecated: |
+      The kubelet-config component has been replaced by the worker-config component in k0s 1.26.
+      It is scheduled for removal in k0s 1.27.
 data:
   kubelet: |
 {{ .KubeletConfigYAML | nindent 4 }}
@@ -268,6 +283,12 @@ kind: Role
 metadata:
   name: system:bootstrappers:kubelet-configmaps
   namespace: kube-system
+  labels:
+    k0s.k0sproject.io/deprecated-since: "1.26"
+  annotations:
+    k0s.k0sproject.io/deprecated: |
+      The kubelet-config component has been replaced by the worker-config component in k0s 1.26.
+      It is scheduled for removal in k0s 1.27.
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
@@ -282,6 +303,12 @@ kind: RoleBinding
 metadata:
   name: system:bootstrappers:kubelet-configmaps
   namespace: kube-system
+  labels:
+    k0s.k0sproject.io/deprecated-since: "1.26"
+  annotations:
+    k0s.k0sproject.io/deprecated: |
+      The kubelet-config component has been replaced by the worker-config component in k0s 1.26.
+      It is scheduled for removal in k0s 1.27.
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

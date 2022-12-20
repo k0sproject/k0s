@@ -26,16 +26,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
-
-	"github.com/avast/retry-go"
-	"github.com/docker/libnetwork/resolvconf"
-	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/validation"
-	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
-	"k8s.io/utils/pointer"
-	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -46,6 +36,15 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
+	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/pointer"
+
+	"github.com/docker/libnetwork/resolvconf"
+	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // Kubelet is the component implementation to manage kubelet
@@ -53,9 +52,9 @@ type Kubelet struct {
 	CRISocket           string
 	EnableCloudProvider bool
 	K0sVars             constant.CfgVars
-	KubeletConfigClient *KubeletConfigClient
+	Kubeconfig          string
+	Configuration       kubeletv1beta1.KubeletConfiguration
 	LogLevel            string
-	Profile             string
 	dataDir             string
 	supervisor          supervisor.Supervisor
 	ClusterDNS          string
@@ -152,7 +151,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	args := stringmap.StringMap{
 		"--root-dir":        k.dataDir,
 		"--config":          kubeletConfigPath,
-		"--kubeconfig":      k.K0sVars.KubeletAuthConfigPath,
+		"--kubeconfig":      k.Kubeconfig,
 		"--v":               k.LogLevel,
 		"--runtime-cgroups": "/system.slice/containerd.service",
 		"--cert-dir":        filepath.Join(k.dataDir, "pki"),
@@ -202,7 +201,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		args["--cloud-provider"] = "external"
 	}
 
-	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if k.ExtraArgs != "" {
 		extras := flags.Split(k.ExtraArgs)
 		args.Merge(extras)
@@ -217,29 +216,14 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		Args:    args.ToArgs(),
 	}
 
-	err := retry.Do(func() error {
-		kubeletconfig, err := k.KubeletConfigClient.Get(ctx, k.Profile)
-		if err != nil {
-			logrus.Warnf("failed to get initial kubelet config with join token: %s", err.Error())
-			return err
-		}
-		kubeletconfig, err = k.prepareLocalKubeletConfig(kubeletconfig, kubeletConfigData)
-		if err != nil {
-			logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
-			return err
-		}
-		err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
-		if err != nil {
-			return fmt.Errorf("failed to write kubelet config: %w", err)
-		}
-
-		return nil
-	},
-		retry.Context(ctx),
-		retry.Delay(time.Millisecond*500),
-		retry.DelayType(retry.BackOffDelay))
+	kubeletconfig, err := k.prepareLocalKubeletConfig(kubeletConfigData)
 	if err != nil {
+		logrus.Warnf("failed to prepare local kubelet config: %s", err.Error())
 		return err
+	}
+	err = file.WriteContentAtomically(kubeletConfigPath, []byte(kubeletconfig), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write kubelet config: %w", err)
 	}
 
 	return k.supervisor.Supervise()
@@ -250,19 +234,14 @@ func (k *Kubelet) Stop() error {
 	return k.supervisor.Stop()
 }
 
-func (k *Kubelet) prepareLocalKubeletConfig(kubeletconfig string, kubeletConfigData kubeletConfig) (string, error) {
-	var kubeletConfiguration kubeletv1beta1.KubeletConfiguration
-	err := yaml.Unmarshal([]byte(kubeletconfig), &kubeletConfiguration)
-	if err != nil {
-		return "", fmt.Errorf("can't unmarshal kubelet config: %v", err)
-	}
-
-	kubeletConfiguration.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
-	kubeletConfiguration.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
-	kubeletConfiguration.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
-	kubeletConfiguration.KubeletCgroups = kubeletConfigData.KubeletCgroups
-	kubeletConfiguration.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
-	kubeletConfiguration.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
+func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (string, error) {
+	preparedConfig := k.Configuration.DeepCopy()
+	preparedConfig.Authentication.X509.ClientCAFile = kubeletConfigData.ClientCAFile // filepath.Join(k.K0sVars.CertRootDir, "ca.crt")
+	preparedConfig.VolumePluginDir = kubeletConfigData.VolumePluginDir               // k.K0sVars.KubeletVolumePluginDir
+	preparedConfig.KubeReservedCgroup = kubeletConfigData.KubeReservedCgroup
+	preparedConfig.KubeletCgroups = kubeletConfigData.KubeletCgroups
+	preparedConfig.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
+	preparedConfig.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint
@@ -273,14 +252,14 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletconfig string, kubeletConfigD
 			}
 			taints = append(taints, parsedTaint)
 		}
-		kubeletConfiguration.RegisterWithTaints = taints
+		preparedConfig.RegisterWithTaints = taints
 	}
 
-	localKubeletConfig, err := yaml.Marshal(kubeletConfiguration)
+	preparedConfigBytes, err := yaml.Marshal(preparedConfig)
 	if err != nil {
 		return "", fmt.Errorf("can't marshal kubelet config: %v", err)
 	}
-	return string(localKubeletConfig), nil
+	return string(preparedConfigBytes), nil
 }
 
 const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"

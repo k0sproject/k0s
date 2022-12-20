@@ -30,9 +30,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var k0sVars = constant.GetConfig("")
-
 func Test_KubeletConfig(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
 		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
@@ -118,6 +117,7 @@ func Test_KubeletConfig(t *testing.T) {
 }
 
 func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
+	k0sVars := constant.GetConfig(t.TempDir())
 	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 
 	cfgProfileX := map[string]interface{}{
