@@ -6,12 +6,14 @@ ENV GOPATH=/go
 RUN apk upgrade -U -a && apk add \
 	build-base git \
 	btrfs-progs-dev btrfs-progs-static \
-	protoc
+	protoc curl
 
 ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
 RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/containerd/containerd.git $GOPATH/src/github.com/containerd/containerd
 WORKDIR /go/src/github.com/containerd/containerd
+
+RUN curl -L https://github.com/containerd/containerd/commit/3ee6dd5c1bca441d1ec4988cbaebadbfbcfde525.patch | git apply
 
 ARG TARGET_OS \
   BUILD_GO_TAGS \
