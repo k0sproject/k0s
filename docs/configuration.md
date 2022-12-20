@@ -42,71 +42,41 @@ metadata:
 spec:
   api:
     address: 192.168.68.104
-    port: 6443
-    k0sApiPort: 9443
     externalAddress: my-lb-address.example.com
+    k0sApiPort: 9443
+    port: 6443
     sans:
-      - 192.168.68.104
+    - 192.168.68.104
     tunneledNetworkingMode: false
-    extraArgs: {}
-  storage:
-    type: etcd
-    etcd:
-      peerAddress: 192.168.68.104
-      extraArgs: {}
-  network:
-    podCIDR: 10.244.0.0/16
-    serviceCIDR: 10.96.0.0/12
-    provider: kuberouter
-    calico: null
-    clusterDomain: cluster.local
-    dualStack: {}
-    kuberouter:
-      mtu: 0
-      peerRouterIPs: ""
-      peerRouterASNs: ""
-      autoMTU: true
-      hairpin: Enabled
-    kubeProxy:
-      disabled: false
-      mode: iptables
-      metricsBindAddress: 0.0.0.0:10249
-  telemetry:
-    enabled: true
-  controllerManager:
-    extraArgs: {}
-  scheduler:
-    extraArgs: {}
-  installConfig:
-    users:
-      etcdUser: etcd
-      kineUser: kube-apiserver
-      konnectivityUser: konnectivity-server
-      kubeAPIserverUser: kube-apiserver
-      kubeSchedulerUser: kube-scheduler
+  controllerManager: {}
+  extensions:
+    helm:
+      charts: null
+      repositories: null
+    storage:
+      create_default_storage_class: false
+      type: external_storage
   images:
-    konnectivity:
-      image: quay.io/k0sproject/apiserver-network-proxy-agent
-      version: 0.0.32-k0s1
-    metricsserver:
-      image: registry.k8s.io/metrics-server/metrics-server
-      version: v0.6.2
-    kubeproxy:
-      image: registry.k8s.io/kube-proxy
-      version: v1.26.0
-    coredns:
-      image: docker.io/coredns/coredns
-      version: v1.10.0
+    default_pull_policy: IfNotPresent
     calico:
       cni:
         image: docker.io/calico/cni
         version: v3.24.5
-      node:
-        image: docker.io/calico/node
-        version: v3.24.5
       kubecontrollers:
         image: docker.io/calico/kube-controllers
         version: v3.24.5
+      node:
+        image: docker.io/calico/node
+        version: v3.24.5
+    coredns:
+      image: docker.io/coredns/coredns
+      version: 1.10.0
+    konnectivity:
+      image: quay.io/k0sproject/apiserver-network-proxy-agent
+      version: 0.0.32-k0s1
+    kubeproxy:
+      image: registry.k8s.io/kube-proxy
+      version: v1.26.0
     kuberouter:
       cni:
         image: docker.io/cloudnativelabs/kube-router
@@ -114,25 +84,62 @@ spec:
       cniInstaller:
         image: quay.io/k0sproject/cni-node
         version: 1.1.1-k0s.0
-    default_pull_policy: IfNotPresent
+    metricsserver:
+      image: registry.k8s.io/metrics-server/metrics-server
+      version: v0.6.2
+    pushgateway:
+      image: quay.io/k0sproject/pushgateway-ttl
+      version: edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9
+  installConfig:
+    users:
+      etcdUser: etcd
+      kineUser: kube-apiserver
+      konnectivityUser: konnectivity-server
+      kubeAPIserverUser: kube-apiserver
+      kubeSchedulerUser: kube-scheduler
   konnectivity:
-    agentPort: 8132
     adminPort: 8133
+    agentPort: 8132
+  network:
+    calico: null
+    clusterDomain: cluster.local
+    dualStack: {}
+    kubeProxy:
+      metricsBindAddress: 0.0.0.0:10249
+      mode: iptables
+    kuberouter:
+      autoMTU: true
+      hairpin: Enabled
+      metricsPort: 8080
+      mtu: 0
+      peerRouterASNs: ""
+      peerRouterIPs: ""
+    podCIDR: 10.244.0.0/16
+    provider: kuberouter
+    serviceCIDR: 10.96.0.0/12
+  scheduler: {}
+  storage:
+    etcd:
+      externalCluster: null
+      peerAddress: 192.168.68.104
+    type: etcd
+  telemetry:
+    enabled: true
 ```
 
 ## `spec` Key Detail
 
 ### `spec.api`
 
-| Element           | Description                                                                                                                                                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `externalAddress` | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster. |
-| `address`         | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                  |
-| `sans`            | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                |
-| `extraArgs`       | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
-| `port`¹           | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
-| `k0sApiPort`¹     | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                 |
-| `tunneledNetworkingMode`     | Whether to tunnel Kubernetes access from worker nodes via local port forwarding. (default: `false`)                                                                                                                                                                 |
+| Element                  | Description                                                                                                                                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `externalAddress`        | The loadbalancer address (for k0s controllers running behind a loadbalancer). Configures all cluster components to connect to this address and also configures this address for use  when joining new nodes to the cluster. |
+| `address`                | Local address on which to bind an API. Also serves as one of the addresses pushed on the k0s create service certificate on the API. Defaults to first non-local address found on the node.                                  |
+| `sans`                   | List of additional addresses to push to API servers serving the certificate.                                                                                                                                                |
+| `extraArgs`              | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
+| `port`¹                  | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
+| `k0sApiPort`¹            | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                 |
+| `tunneledNetworkingMode` | Whether to tunnel Kubernetes access from worker nodes via local port forwarding. (default: `false`)                                                                                                                         |
 
 ¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the loadbalancer serving at `externalAddress` must listen on the same ports.
 
@@ -225,9 +232,9 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 #### `spec.network.kubeProxy`
 
-| Element          | Description                                                                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `disabled`       | Disable kube-proxy altogether (default: `false`).                                                                                                       |
+| Element          | Description                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `disabled`       | Disable kube-proxy altogether (default: `false`).                                                |
 | `mode`           | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
 
 ### `spec.controllerManager`
