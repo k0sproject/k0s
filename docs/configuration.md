@@ -73,7 +73,7 @@ spec:
       version: 1.10.0
     konnectivity:
       image: quay.io/k0sproject/apiserver-network-proxy-agent
-      version: 0.0.32-k0s1
+      version: 0.0.33-k0s
     kubeproxy:
       image: registry.k8s.io/kube-proxy
       version: v1.26.0
