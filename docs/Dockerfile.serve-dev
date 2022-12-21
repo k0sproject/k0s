@@ -13,9 +13,9 @@ COPY ./requirements_pip.txt ./requirements.txt /mkdocs/
 
 # Install python dependencies
 ENV VIRTUAL_ENV=/deps/venv PATH=/mkdocs/venv/bin:$PATH
-RUN pip install --disable-pip-version-check --require-hashes -r /mkdocs/requirements_pip.txt \
+RUN pip install --disable-pip-version-check -r /mkdocs/requirements_pip.txt \
   && pip --version \
-  && pip install --disable-pip-version-check --require-hashes -r /mkdocs/requirements.txt
+  && pip install --disable-pip-version-check -r /mkdocs/requirements.txt
 
 WORKDIR /k0s
 
