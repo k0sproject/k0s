@@ -44,42 +44,54 @@ import (
 )
 
 func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, workerOpts *config.WorkerOptions) error {
-	var bootstrapKubeconfigPath string
+	bootstrapKubeconfigPath := filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
+
+	// When using `k0s install` along with a join token, that join token
+	// argument will be registered within the k0s service definition and be
+	// passed to k0s each time it gets started as a service. Hence that token
+	// needs to be ignored if it has already been used. This results in the
+	// following order of precedence:
+
 	var bootstrapKubeconfig *clientcmdapi.Config
+	switch {
+	// 1: Regular kubelet kubeconfig file exists.
+	// The kubelet kubeconfig has been bootstrapped already.
+	case file.Exists(k0sVars.KubeletAuthConfigPath):
+		return nil
 
-	if workerOpts.TokenArg == "" {
-		if file.Exists(k0sVars.KubeletAuthConfigPath) {
-			// Regular kubelet kubeconfig file exists, nothing to do.
-			return nil
-		}
-
-		// Fallback to bootstrap kubeconfig file, if it exists.
-		bootstrapKubeconfigPath = filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
-		if !file.Exists(bootstrapKubeconfigPath) {
-			return fmt.Errorf("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
-		}
-
+	// 2: Kubelet bootstrap kubeconfig file exists.
+	// The kubelet kubeconfig will be bootstrapped without a join token.
+	case file.Exists(bootstrapKubeconfigPath):
 		var err error
 		bootstrapKubeconfig, err = clientcmd.LoadFromFile(bootstrapKubeconfigPath)
 		if err != nil {
 			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from file: %w", err)
 		}
-	} else {
+
+	// 3: A join token has been given.
+	// Bootstrap the kubelet kubeconfig via the embedded bootstrap config.
+	case workerOpts.TokenArg != "":
+		// Join token given, so use that.
 		kubeconfig, err := token.DecodeJoinToken(workerOpts.TokenArg)
 		if err != nil {
 			return fmt.Errorf("failed to decode join token: %w", err)
 		}
 
-		// Load the bootstrap kubeconfig to validate it
+		// Load the bootstrap kubeconfig to validate it.
 		bootstrapKubeconfig, err = clientcmd.Load(kubeconfig)
 		if err != nil {
 			return fmt.Errorf("failed to parse kubelet bootstrap kubeconfig from join token: %w", err)
 		}
 
+		// Write the kubelet bootstrap kubeconfig to a temporary file, as the
+		// kubelet bootstrap API only accepts files.
 		bootstrapKubeconfigPath, err = writeKubeletBootstrapKubeconfig(kubeconfig)
 		if err != nil {
 			return fmt.Errorf("failed to write kubelet bootstrap kubeconfig: %w", err)
 		}
+
+		// Ensure that the temporary kubelet bootstrap kubeconfig file will be
+		// removed when done.
 		defer func() {
 			if err := os.Remove(bootstrapKubeconfigPath); err != nil && !os.IsNotExist(err) {
 				logrus.WithError(err).Error("Failed to remove kubelet bootstrap kubeconfig file")
@@ -87,6 +99,10 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, w
 		}()
 
 		logrus.Debug("Wrote kubelet bootstrap kubeconfig file: ", bootstrapKubeconfigPath)
+
+	// 4: None of the above, bail out.
+	default:
+		return fmt.Errorf("neither regular nor bootstrap kubelet kubeconfig files exist and no join token given; dunno how to make kubelet authenticate to API server")
 	}
 
 	kubeletCAPath := path.Join(k0sVars.CertRootDir, "ca.crt")
