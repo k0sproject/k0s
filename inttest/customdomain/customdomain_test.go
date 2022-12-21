@@ -57,6 +57,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/nginx:1-alpine")
 		s.Require().NoError(err)
 		s.NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"))
+		s.NoError(common.WaitForPodLogs(s.Context(), kc, "default"))
 		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc exec nginx -- cat /etc/resolv.conf")
 		s.Require().NoError(err)
 		s.Contains(output, "search default.svc.something.local svc.something.local something.local")
