@@ -31,9 +31,9 @@ jobs:
         run: |
           # https://github.com/actions/setup-python/issues/521
           # https://github.com/actions/python-versions/blob/3.10.5-2650229445/installers/nix-setup-template.sh#L53
-          pip install --disable-pip-version-check --require-hashes -r docs/requirements_pip.txt
+          pip install --disable-pip-version-check -r docs/requirements_pip.txt
           pip --version
-          pip install --disable-pip-version-check --require-hashes -r docs/requirements.txt
+          pip install --disable-pip-version-check -r docs/requirements.txt
 
       - name: Generate docs
         run: make -C docs docs
