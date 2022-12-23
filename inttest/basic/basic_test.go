@@ -99,6 +99,8 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	}
 
 	s.verifyContainerdDefaultConfig()
+
+	s.verifyCoreDNSAntiAffinity(kc)
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
@@ -201,6 +203,16 @@ func (s *BasicSuite) verifyContainerdDefaultConfig() {
 		Image:   constant.KubePauseContainerImage,
 		Version: constant.KubePauseContainerImageVersion,
 	}).URI(), parsedConfig.Plugins.CRI.SandboxImage)
+}
+
+func (s *BasicSuite) verifyCoreDNSAntiAffinity(kc *kubernetes.Clientset) {
+	opts := metav1.ListOptions{
+		LabelSelector: "k8s-app=kube-dns",
+	}
+	pods, err := kc.CoreV1().Pods("kube-system").List(s.Context(), opts)
+	s.NoError(err)
+	s.Equal(2, len(pods.Items))
+	s.NotEqual(pods.Items[0].Spec.NodeName, pods.Items[1].Spec.NodeName)
 }
 
 func TestBasicSuite(t *testing.T) {
