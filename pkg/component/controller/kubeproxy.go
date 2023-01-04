@@ -18,18 +18,18 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/k0sproject/k0s/pkg/component/manager"
-
-	"github.com/sirupsen/logrus"
+	"reflect"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/sirupsen/logrus"
 )
 
 // KubeProxy is the component implementation to manage kube-proxy
@@ -78,7 +78,7 @@ func (k *KubeProxy) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	if err != nil {
 		return err
 	}
-	if cfg == k.previousConfig {
+	if reflect.DeepEqual(cfg, k.previousConfig) {
 		k.log.Infof("current cfg matches existing, not gonna do anything")
 		return nil
 	}
@@ -113,6 +113,18 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
 	}
 
+	iptables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPTables)
+	if err != nil {
+		return proxyConfig{}, err
+	}
+	cfg.IPTables = string(iptables)
+
+	ipvs, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPVS)
+	if err != nil {
+		return proxyConfig{}, err
+	}
+	cfg.IPVS = string(ipvs)
+
 	return cfg, nil
 }
 
@@ -124,6 +136,8 @@ type proxyConfig struct {
 	PullPolicy           string
 	Mode                 string
 	MetricsBindAddress   string
+	IPTables             string
+	IPVS                 string
 }
 
 const proxyTemplate = `
@@ -230,20 +244,8 @@ data:
     enableProfiling: false
     healthzBindAddress: ""
     hostnameOverride: ""
-    iptables:
-      masqueradeAll: false
-      masqueradeBit: null
-      minSyncPeriod: 0s
-      syncPeriod: 0s
-    ipvs:
-      excludeCIDRs: null
-      minSyncPeriod: 0s
-      scheduler: ""
-      strictARP: false
-      syncPeriod: 0s
-      tcpFinTimeout: 0s
-      tcpTimeout: 0s
-      udpTimeout: 0s
+    iptables: {{ .IPTables }}
+    ipvs: {{ .IPVS }}
     kind: KubeProxyConfiguration
     metricsBindAddress: {{ .MetricsBindAddress }}
     nodePortAddresses: null
