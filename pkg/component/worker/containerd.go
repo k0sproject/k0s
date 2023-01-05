@@ -17,6 +17,7 @@ limitations under the License.
 package worker
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
+	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -37,8 +39,12 @@ const confTmpl = `
 # If you wish to customize the config replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
 version = 2
+imports = [
+	"{{ .ImportsGlob }}"
+]
 `
 const confPath = "/etc/k0s/containerd.toml"
+const importsPath = "/etc/k0s/containerd_imports/*.toml"
 
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
@@ -98,7 +104,23 @@ func (c *ContainerD) setupConfig() error {
 	if err := dir.Init(filepath.Dir(confPath), 0755); err != nil {
 		return err
 	}
-	return file.WriteContentAtomically(confPath, []byte(confTmpl), 0644)
+	if err := dir.Init(filepath.Dir(importsPath), 0755); err != nil {
+		return err
+	}
+	output := bytes.NewBuffer([]byte{})
+	tw := templatewriter.TemplateWriter{
+		Name:     "containerdconfig",
+		Template: confTmpl,
+		Data: struct {
+			ImportsGlob string
+		}{
+			ImportsGlob: importsPath,
+		},
+	}
+	if err := tw.WriteToBuffer(output); err != nil {
+		return fmt.Errorf("can't create containerd config: %v", err)
+	}
+	return file.WriteContentAtomically(confPath, output.Bytes(), 0644)
 }
 
 // Stop stops containerD
