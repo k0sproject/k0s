@@ -54,7 +54,7 @@ require (
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
 	golang.org/x/mod v0.7.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.3.0
+	golang.org/x/sys v0.4.0
 	golang.org/x/tools v0.4.0
 	google.golang.org/grpc v1.51.0
 	helm.sh/helm/v3 v3.10.3
@@ -74,7 +74,7 @@ require (
 	k8s.io/kube-aggregator v0.26.0
 	k8s.io/kubectl v0.26.0
 	k8s.io/kubelet v0.26.0
-	k8s.io/kubernetes v1.26.0
+	k8s.io/kubernetes v1.26.0-alpha.1
 	k8s.io/mount-utils v0.26.0
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 	sigs.k8s.io/controller-runtime v0.13.1-0.20221206203637-3da2de04734a // master branch as of 2022-12-06. We need to bump up when there's a new release compatible with k8s 1.26
