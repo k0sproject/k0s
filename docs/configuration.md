@@ -110,6 +110,7 @@ spec:
     kuberouter:
       autoMTU: true
       hairpin: Enabled
+      ipMasq: false
       metricsPort: 8080
       mtu: 0
       peerRouterASNs: ""
@@ -227,6 +228,7 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 | `peerRouterASNs` | Comma-separated list of [global peer ASNs](https://github.com/cloudnativelabs/kube-router/blob/master/docs/bgp.md#global-external-bgp-peers).                                                                                                                             |
 | `hairpin`        | Hairpin mode, supported modes `Enabled`: enabled cluster wide, `Allowed`: must be allowed per service [using annotations](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode), `Disabled`: doesn't work at all (default: Enabled) |
 | `hairpinMode`    | **Deprecated** Use `hairpin` instead. If both `hairpin` and `hairpinMode` are defined, this is ignored. If only hairpinMode is configured explicitly activates hairpinMode (https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md#hairpin-mode).  |
+| `ipMasq`         | IP masquerade for traffic originating from the pod network, and destined outside of it (default: false) |
 
 **Note**: Kube-router allows many networking aspects to be configured per node, service, and pod (for more information, refer to the [Kube-router user guide](https://github.com/cloudnativelabs/kube-router/blob/master/docs/user-guide.md)).
 

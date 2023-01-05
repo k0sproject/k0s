@@ -45,6 +45,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	cfg.Spec.Network.KubeRouter.PeerRouterASNs = "12345,67890"
 	cfg.Spec.Network.KubeRouter.PeerRouterIPs = "1.2.3.4,4.3.2.1"
 	cfg.Spec.Network.KubeRouter.Hairpin = v1beta1.HairpinAllowed
+	cfg.Spec.Network.KubeRouter.IPMasq = true
 
 	saver := inMemorySaver{}
 	kr := NewKubeRouter(k0sVars, saver)
@@ -72,6 +73,7 @@ func TestKubeRouterConfig(t *testing.T) {
 	require.Equal(t, false, p.Dig("auto-mtu"))
 	require.Equal(t, float64(1450), p.Dig("mtu"))
 	require.Equal(t, true, p.Dig("hairpinMode"))
+	require.Equal(t, true, p.Dig("ipMasq"))
 }
 
 type hairpinTest struct {
@@ -143,6 +145,7 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 	require.Equal(t, true, p.Dig("auto-mtu"))
 	require.Nil(t, p.Dig("mtu"))
 	require.Equal(t, true, p.Dig("hairpinMode"))
+	require.Equal(t, false, p.Dig("ipMasq"))
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {

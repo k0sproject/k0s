@@ -50,6 +50,7 @@ type kubeRouterConfig struct {
 	CNIImage          string
 	GlobalHairpin     bool
 	CNIHairpin        bool
+	IPMasq            bool
 	PeerRouterIPs     string
 	PeerRouterASNs    string
 	PullPolicy        string
@@ -110,6 +111,7 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
 		PeerRouterIPs:     clusterConfig.Spec.Network.KubeRouter.PeerRouterIPs,
 		PeerRouterASNs:    clusterConfig.Spec.Network.KubeRouter.PeerRouterASNs,
+		IPMasq:            clusterConfig.Spec.Network.KubeRouter.IPMasq,
 		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
 		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
 		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
@@ -172,6 +174,7 @@ data:
              "bridge":"kube-bridge",
              "isDefaultGateway":true,
              "hairpinMode": {{ .CNIHairpin }},
+             "ipMasq": {{ .IPMasq }},
              "ipam":{
                 "type":"host-local"
              }

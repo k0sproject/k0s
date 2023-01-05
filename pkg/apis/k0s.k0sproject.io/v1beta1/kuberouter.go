@@ -30,6 +30,8 @@ type KubeRouter struct {
 	Hairpin Hairpin `json:"hairpin"`
 	// DEPRECATED: Use hairpin instead. Activates Hairpin Mode (allow a Pod behind a Service to communicate to its own ClusterIP:Port)
 	HairpinMode bool `json:"hairpinMode,omitempty"`
+	// IP masquerade for traffic originating from the pod network, and destined outside of it (default: false)
+	IPMasq bool `json:"ipMasq"`
 	// Comma-separated list of global peer addresses
 	PeerRouterASNs string `json:"peerRouterASNs"`
 	// Comma-separated list of global peer ASNs
