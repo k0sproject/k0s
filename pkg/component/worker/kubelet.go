@@ -170,8 +170,6 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		kubeletConfigData.ResolvConf = ""
 		args["--enforce-node-allocatable"] = ""
 		args["--pod-infra-container-image"] = "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
-		args["--network-plugin"] = "cni"
-		args["--cni-bin-dir"] = "C:\\k\\cni"
 		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
 		args["--hostname-override"] = node
 		args["--hairpin-mode"] = "promiscuous-bridge"
