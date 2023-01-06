@@ -17,7 +17,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
-	github.com/estesp/manifest-tool/v2 v2.0.1-0.20220217152536-f3906340b65e
+	github.com/estesp/manifest-tool/v2 v2.0.6
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-openapi/jsonpointer v0.19.5
@@ -31,7 +31,7 @@ require (
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
+	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/robfig/cron v1.2.0
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go v3.1.0+incompatible
@@ -122,7 +122,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
-	github.com/deislabs/oras v0.9.0 // indirect
 	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
