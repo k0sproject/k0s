@@ -1399,13 +1399,13 @@
 <p>If your k0s cluster has been deployed with k0sctl, then k0sctl provides the easiest upgrade method. In that case jump to the next chapter. However, if you have deployed k0s without k0sctl, then follow the upgrade method explained in this chapter.</p>
 <p>Before starting the upgrade, consider moving your applications to another node if you want to avoid downtime. This can be done by <a href="https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/">draining a worker node</a>. Remember to uncordon the worker node afterwards to tell Kubernetes that it can resume scheduling new pods onto the node.</p>
 <p>The upgrade process is started by stopping the currently running k0s service.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s stop
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>stop
 </code></pre></div>
 <p>Now you can replace the old k0s binary file. The easiest way is to use the download script. It will download the latest k0s binary and replace the old binary with it. You can also do this manually without the download script.</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSLf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 <p>Then you can start the service (with the upgraded k0s) and your upgrade is done.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s start
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <h2 id="upgrade-a-k0s-cluster-using-k0sctl">Upgrade a k0s cluster using k0sctl<a class="headerlink" href="#upgrade-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
 <p>The upgrading of k0s clusters using k0sctl occurs not through a particular command (there is no <code>upgrade</code> sub-command in k0sctl) but by way of the configuration file. The configuration file describes the desired state of the cluster, and when you pass the description to the <code>k0sctl apply</code> command a discovery of the current state is performed and the system does whatever is necessary to bring the cluster to the desired state (for example, perform an upgrade).</p>
@@ -1426,29 +1426,29 @@
 </li>
 </ol>
 <p>You can configure the desired cluster version in the k0sctl configuration by setting the value of <code>spec.k0s.version</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.26.0+k0s.0</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">k0s</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.26.0+k0s.0</span>
 </code></pre></div>
 <p>If you do not specify a version, k0sctl checks online for the latest version and defaults to it.</p>
-<div class="highlight"><pre><span></span><code>k0sctl apply
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>apply
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>...
 ...
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade controllers
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: starting upgrade
-INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: Running with legacy service name, migrating...
-INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.23:22: waiting <span class="k">for</span> the k0s service to start
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Upgrade workers
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> Upgrading <span class="m">1</span> workers <span class="k">in</span> parallel
-INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade starting
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: waiting <span class="k">for</span> node to become ready again
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.17:22: upgrade successful
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 27s
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> k0s cluster version <span class="m">1</span>.26.0+k0s.0 is now installed
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span> Tip: To access the cluster you can now fetch the admin kubeconfig using:
-INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span>      k0sctl kubeconfig
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Upgrade<span class="w"> </span>controllers
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.23:22:<span class="w"> </span>starting<span class="w"> </span>upgrade
+INFO<span class="o">[</span><span class="m">0001</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.23:22:<span class="w"> </span>Running<span class="w"> </span>with<span class="w"> </span>legacy<span class="w"> </span>service<span class="w"> </span>name,<span class="w"> </span>migrating...
+INFO<span class="o">[</span><span class="m">0011</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.23:22:<span class="w"> </span>waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>k0s<span class="w"> </span>service<span class="w"> </span>to<span class="w"> </span>start
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Upgrade<span class="w"> </span>workers
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span><span class="w"> </span>Upgrading<span class="w"> </span><span class="m">1</span><span class="w"> </span>workers<span class="w"> </span><span class="k">in</span><span class="w"> </span>parallel
+INFO<span class="o">[</span><span class="m">0016</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.17:22:<span class="w"> </span>upgrade<span class="w"> </span>starting
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.17:22:<span class="w"> </span>waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>node<span class="w"> </span>to<span class="w"> </span>become<span class="w"> </span>ready<span class="w"> </span>again
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.17:22:<span class="w"> </span>upgrade<span class="w"> </span>successful
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Disconnect<span class="w"> </span>from<span class="w"> </span>hosts
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Finished<span class="w"> </span><span class="k">in</span><span class="w"> </span>27s
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span>k0s<span class="w"> </span>cluster<span class="w"> </span>version<span class="w"> </span><span class="m">1</span>.26.0+k0s.0<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>installed
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w"> </span>Tip:<span class="w"> </span>To<span class="w"> </span>access<span class="w"> </span>the<span class="w"> </span>cluster<span class="w"> </span>you<span class="w"> </span>can<span class="w"> </span>now<span class="w"> </span>fetch<span class="w"> </span>the<span class="w"> </span>admin<span class="w"> </span>kubeconfig<span class="w"> </span>using:
+INFO<span class="o">[</span><span class="m">0027</span><span class="o">]</span><span class="w">      </span>k0sctl<span class="w"> </span>kubeconfig
 </code></pre></div>
 
 

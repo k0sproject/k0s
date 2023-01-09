@@ -1421,26 +1421,26 @@
 <h2 id="node-labels">Node labels<a class="headerlink" href="#node-labels" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--labels</code> flag, with which you can make the newly joined worker node the register itself, in the Kubernetes API, with the given set of labels.</p>
 <p>For example, running the worker with <code>k0s worker --token-file k0s.token --labels="k0sproject.io/foo=bar,k0sproject.io/other=xyz"</code> results in:</p>
-<div class="highlight"><pre><span></span><code>kubectl get node --show-labels
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>--show-labels
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME      STATUS     ROLES    AGE   VERSION        LABELS
-worker0   NotReady   &lt;none&gt;   10s   v1.26.0+k0s  beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,k0sproject.io/foo<span class="o">=</span>bar,k0sproject.io/other<span class="o">=</span>xyz,kubernetes.io/arch<span class="o">=</span>amd64,kubernetes.io/hostname<span class="o">=</span>worker0,kubernetes.io/os<span class="o">=</span>linux
+<div class="highlight"><pre><span></span><code>NAME<span class="w">      </span>STATUS<span class="w">     </span>ROLES<span class="w">    </span>AGE<span class="w">   </span>VERSION<span class="w">        </span>LABELS
+worker0<span class="w">   </span>NotReady<span class="w">   </span>&lt;none&gt;<span class="w">   </span>10s<span class="w">   </span>v1.26.0+k0s<span class="w">  </span>beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,k0sproject.io/foo<span class="o">=</span>bar,k0sproject.io/other<span class="o">=</span>xyz,kubernetes.io/arch<span class="o">=</span>amd64,kubernetes.io/hostname<span class="o">=</span>worker0,kubernetes.io/os<span class="o">=</span>linux
 </code></pre></div>
 <p>Controller worker nodes are assigned <code>node.k0sproject.io/role=control-plane</code> and <code>node-role.kubernetes.io/control-plane=true</code> labels:</p>
-<div class="highlight"><pre><span></span><code>kubectl get node --show-labels
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>node<span class="w"> </span>--show-labels
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME          STATUS     ROLES           AGE   VERSION        LABELS
-controller0   NotReady   control-plane   10s   v1.26.0+k0s  beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,kubernetes.io/hostname<span class="o">=</span>worker0,kubernetes.io/os<span class="o">=</span>linux,node.k0sproject.io/role<span class="o">=</span>control-plane,node-role.kubernetes.io/control-plane<span class="o">=</span><span class="nb">true</span>
+<div class="highlight"><pre><span></span><code>NAME<span class="w">          </span>STATUS<span class="w">     </span>ROLES<span class="w">           </span>AGE<span class="w">   </span>VERSION<span class="w">        </span>LABELS
+controller0<span class="w">   </span>NotReady<span class="w">   </span>control-plane<span class="w">   </span>10s<span class="w">   </span>v1.26.0+k0s<span class="w">  </span>beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,kubernetes.io/hostname<span class="o">=</span>worker0,kubernetes.io/os<span class="o">=</span>linux,node.k0sproject.io/role<span class="o">=</span>control-plane,node-role.kubernetes.io/control-plane<span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <p><strong>Note:</strong> Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.</p>
 <h2 id="taints">Taints<a class="headerlink" href="#taints" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts the <code>--taints</code> flag, with which you can make the newly joined worker node the register itself with the given set of taints.</p>
 <p><strong>Note:</strong> Controller nodes running with <code>--enable-worker</code> are assigned <code>node-role.kubernetes.io/master:NoExecute</code> taint automatically. You can disable default taints using <code>--no-taints</code>  parameter.</p>
-<div class="highlight"><pre><span></span><code>kubectl get nodes -o custom-columns<span class="o">=</span>NAME:.metadata.name,TAINTS:.spec.taints
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="w"> </span>custom-columns<span class="o">=</span>NAME:.metadata.name,TAINTS:.spec.taints
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAME          TAINTS
-controller0   <span class="o">[</span>map<span class="o">[</span>effect:NoSchedule key:node-role.kubernetes.io/master<span class="o">]]</span>
-worker0       &lt;none&gt;
+<div class="highlight"><pre><span></span><code>NAME<span class="w">          </span>TAINTS
+controller0<span class="w">   </span><span class="o">[</span>map<span class="o">[</span>effect:NoSchedule<span class="w"> </span>key:node-role.kubernetes.io/master<span class="o">]]</span>
+worker0<span class="w">       </span>&lt;none&gt;
 </code></pre></div>
 <h2 id="kubelet-configuration">Kubelet configuration<a class="headerlink" href="#kubelet-configuration" title="Permanent link">#</a></h2>
 <p>The <code>k0s worker</code> command accepts a generic flag to pass in any set of arguments
@@ -1460,7 +1460,7 @@ here</a>.</p>
 <h2 id="iptables-mode">IPTables Mode<a class="headerlink" href="#iptables-mode" title="Permanent link">#</a></h2>
 <p>k0s detects iptables backend automatically based on the existing records. On a brand-new setup, <code>iptables-nft</code> will be used.<br />
 There is a <code>--iptables-mode</code> flag to specify the mode explicitly. Valid values: <code>nft</code>, <code>legacy</code> and <code>auto</code> (default).</p>
-<div class="highlight"><pre><span></span><code>k0s worker --iptables-mode<span class="o">=</span>nft
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--iptables-mode<span class="o">=</span>nft
 </code></pre></div>
 
 

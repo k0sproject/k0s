@@ -1383,27 +1383,27 @@
 </ul>
 <h3 id="creating-kubeconfig-user-record">Creating kubeconfig user record<a class="headerlink" href="#creating-kubeconfig-user-record" title="Permanent link">#</a></h3>
 <p>Use the command and follow the instructions:</p>
-<div class="highlight"><pre><span></span><code>k8s-oidc-helper --client-id<span class="o">=</span>&lt;CLIENT_ID&gt; <span class="se">\</span>
-  --client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt; <span class="se">\</span>
-  --write<span class="o">=</span><span class="nb">true</span>
+<div class="highlight"><pre><span></span><code>k8s-oidc-helper<span class="w"> </span>--client-id<span class="o">=</span>&lt;CLIENT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--write<span class="o">=</span><span class="nb">true</span>
 </code></pre></div>
 <h2 id="using-kubelogin">Using kubelogin<a class="headerlink" href="#using-kubelogin" title="Permanent link">#</a></h2>
 <p>For other OIDC providers it is possible to use <code>kubelogin</code> plugin.
 Please refer to the <a href="https://github.com/int128/kubelogin/blob/master/docs/setup.md">setup guide</a> for details.</p>
 <h3 id="google-cloud-example-using-kubelogin">Google Cloud example using <code>kubelogin</code><a class="headerlink" href="#google-cloud-example-using-kubelogin" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>kubectl oidc-login setup <span class="se">\</span>
-  --oidc-issuer-url<span class="o">=</span>https://accounts.google.com <span class="se">\</span>
-  --oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt; <span class="se">\</span>
-  --oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>oidc-login<span class="w"> </span>setup<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--oidc-issuer-url<span class="o">=</span>https://accounts.google.com<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
 
-  kubectl config set-credentials oidc <span class="se">\</span>
-  --exec-api-version<span class="o">=</span>client.authentication.k8s.io/v1beta1 <span class="se">\</span>
-  --exec-command<span class="o">=</span>kubectl <span class="se">\</span>
-  --exec-arg<span class="o">=</span>oidc-login <span class="se">\</span>
-  --exec-arg<span class="o">=</span>get-token <span class="se">\</span>
-  --exec-arg<span class="o">=</span>--oidc-issuer-url<span class="o">=</span>https://accounts.google.com <span class="se">\</span>
-  --exec-arg<span class="o">=</span>--oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt;  <span class="se">\</span>
-  --exec-arg<span class="o">=</span>--oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
+<span class="w">  </span>kubectl<span class="w"> </span>config<span class="w"> </span>set-credentials<span class="w"> </span>oidc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-api-version<span class="o">=</span>client.authentication.k8s.io/v1beta1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-command<span class="o">=</span>kubectl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-arg<span class="o">=</span>oidc-login<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-arg<span class="o">=</span>get-token<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-arg<span class="o">=</span>--oidc-issuer-url<span class="o">=</span>https://accounts.google.com<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exec-arg<span class="o">=</span>--oidc-client-id<span class="o">=</span>&lt;CLIENT_ID&gt;<span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>--exec-arg<span class="o">=</span>--oidc-client-secret<span class="o">=</span>&lt;CLIENT_SECRET&gt;
 </code></pre></div>
 <p>You can switch the current context to oidc.</p>
 <p><code>kubectl config set-context --current --user=oidc</code></p>

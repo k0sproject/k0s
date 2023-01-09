@@ -1536,62 +1536,62 @@ as the <strong>Command</strong><ul>
 <p>The following is an example of a <strong>Plan</strong> that has been applied as is currently being
 processed by <strong>autopilot</strong>.</p>
 <p>(line numbers added for commentary below)</p>
-<div class="highlight"><pre><span></span><code><span class="w"> </span><span class="nt">1</span><span class="p">:</span><span class="w"> </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
-<span class="w"> </span><span class="nt">2</span><span class="p">:</span><span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span><span class="w"></span>
-<span class="w"> </span><span class="nt">3</span><span class="p">:</span><span class="w">  </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w"> </span><span class="nt">4</span><span class="p">:</span><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span><span class="w"></span>
-<span class="w"> </span><span class="nt">5</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">&lt;omitted&gt;</span><span class="w"></span>
-<span class="w"> </span><span class="nt">6</span><span class="p">:</span><span class="w">  </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w"> </span><span class="nt">7</span><span class="p">:</span><span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
-<span class="w"> </span><span class="nt">8</span><span class="p">:</span><span class="w">    </span><span class="nt">- airgapupdate</span><span class="p">:</span><span class="w"></span>
-<span class="w"> </span><span class="nt">9</span><span class="p">:</span><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span><span class="w"></span>
-<span class="nt">10</span><span class="p">:</span><span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
-<span class="nt">11</span><span class="p">:</span><span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
-<span class="nt">12</span><span class="p">:</span><span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-airgap-bundle-v1.26.0+k0s.0-amd64</span><span class="w"></span>
-<span class="nt">13</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">14</span><span class="p">:</span><span class="w">          </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="nt">15</span><span class="p">:</span><span class="w">            </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="nt">16</span><span class="p">:</span><span class="w">              </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="nt">17</span><span class="p">:</span><span class="w">              </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
-<span class="nt">18</span><span class="p">:</span><span class="w">    </span><span class="nt">- k0supdate</span><span class="p">:</span><span class="w"></span>
-<span class="nt">19</span><span class="p">:</span><span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span><span class="w"></span>
-<span class="nt">20</span><span class="p">:</span><span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
-<span class="nt">21</span><span class="p">:</span><span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
-<span class="nt">22</span><span class="p">:</span><span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-amd64</span><span class="w"></span>
-<span class="nt">23</span><span class="p">:</span><span class="w">        </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
-<span class="nt">24</span><span class="p">:</span><span class="w">          </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">25</span><span class="p">:</span><span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="nt">26</span><span class="p">:</span><span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="nt">27</span><span class="p">:</span><span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="nt">28</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
-<span class="nt">29</span><span class="p">:</span><span class="w">          </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">30</span><span class="p">:</span><span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="nt">31</span><span class="p">:</span><span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="nt">32</span><span class="p">:</span><span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="nt">33</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
-<span class="nt">34</span><span class="p">:</span><span class="w">    </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id123</span><span class="w"></span>
-<span class="nt">35</span><span class="p">:</span><span class="w">    </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span><span class="w"></span>
-<span class="nt">36</span><span class="p">:</span><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"></span>
-<span class="nt">37</span><span class="p">:</span><span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
-<span class="nt">38</span><span class="p">:</span><span class="w">    </span><span class="nt">- airgapupdate</span><span class="p">:</span><span class="w"></span>
-<span class="nt">39</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">40</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
-<span class="nt">41</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
-<span class="nt">42</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalSent</span><span class="w"></span>
-<span class="nt">43</span><span class="p">:</span><span class="w">      </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
-<span class="nt">44</span><span class="p">:</span><span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
-<span class="nt">45</span><span class="p">:</span><span class="w">    </span><span class="nt">- id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
-<span class="nt">46</span><span class="p">:</span><span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
-<span class="nt">47</span><span class="p">:</span><span class="w">        </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">48</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
-<span class="nt">49</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
-<span class="nt">50</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
-<span class="nt">51</span><span class="p">:</span><span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="nt">52</span><span class="p">:</span><span class="w">        </span><span class="nt">- lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span><span class="w"></span>
-<span class="nt">53</span><span class="p">:</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
-<span class="nt">54</span><span class="p">:</span><span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
-<span class="nt">55</span><span class="p">:</span><span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
-<span class="nt">56</span><span class="p">:</span><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w"> </span><span class="nt">1: apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span>
+<span class="w"> </span><span class="nt">2:  kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span>
+<span class="w"> </span><span class="nt">3:  metadata</span><span class="p">:</span>
+<span class="w"> </span><span class="nt">4:    annotations</span><span class="p">:</span>
+<span class="w"> </span><span class="nt">5</span><span class="p">:</span><span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">&lt;omitted&gt;</span>
+<span class="w"> </span><span class="nt">6:  spec</span><span class="p">:</span>
+<span class="w"> </span><span class="nt">7:    commands</span><span class="p">:</span>
+<span class="w"> </span><span class="nt">8:    - airgapupdate</span><span class="p">:</span>
+<span class="w"> </span><span class="nt">9:        version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span>
+<span class="nt">10:        platforms</span><span class="p">:</span>
+<span class="nt">11:          linux-amd64</span><span class="p">:</span>
+<span class="nt">12:            url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-airgap-bundle-v1.26.0+k0s.0-amd64</span>
+<span class="nt">13:        workers</span><span class="p">:</span>
+<span class="nt">14:          discovery</span><span class="p">:</span>
+<span class="nt">15:            static</span><span class="p">:</span>
+<span class="nt">16:              nodes</span><span class="p">:</span>
+<span class="nt">17</span><span class="p">:</span><span class="w">              </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
+<span class="nt">18:    - k0supdate</span><span class="p">:</span>
+<span class="nt">19:        version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span>
+<span class="nt">20:        platforms</span><span class="p">:</span>
+<span class="nt">21:          linux-amd64</span><span class="p">:</span>
+<span class="nt">22:            url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-amd64</span>
+<span class="nt">23:        targets</span><span class="p">:</span>
+<span class="nt">24:          controllers</span><span class="p">:</span>
+<span class="nt">25:            discovery</span><span class="p">:</span>
+<span class="nt">26:              static</span><span class="p">:</span>
+<span class="nt">27:                nodes</span><span class="p">:</span>
+<span class="nt">28</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span>
+<span class="nt">29:          workers</span><span class="p">:</span>
+<span class="nt">30:            discovery</span><span class="p">:</span>
+<span class="nt">31:              static</span><span class="p">:</span>
+<span class="nt">32:                nodes</span><span class="p">:</span>
+<span class="nt">33</span><span class="p">:</span><span class="w">                </span><span class="err">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
+<span class="nt">34:    id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id123</span>
+<span class="nt">35:    timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span>
+<span class="nt">36:  status</span><span class="p">:</span>
+<span class="nt">37:    commands</span><span class="p">:</span>
+<span class="nt">38:    - airgapupdate</span><span class="p">:</span>
+<span class="nt">39:        workers</span><span class="p">:</span>
+<span class="nt">40:        - lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span>
+<span class="nt">41:          name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
+<span class="nt">42:          state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalSent</span>
+<span class="nt">43:      id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">44:      state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
+<span class="nt">45:    - id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">46:      k0supdate</span><span class="p">:</span>
+<span class="nt">47:        controllers</span><span class="p">:</span>
+<span class="nt">48:        - lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span>
+<span class="nt">49:          name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span>
+<span class="nt">50:          state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
+<span class="nt">51:        workers</span><span class="p">:</span>
+<span class="nt">52:        - lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-05-11T19:13:02Z&quot;</span>
+<span class="nt">53:          name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
+<span class="nt">54:          state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
+<span class="nt">55:      state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
+<span class="nt">56:    state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
 </code></pre></div>
 <ul>
 <li>Lines <strong>7-33</strong> are the two <strong>Commands</strong> that make up this plan -- an <code>airgapupdate</code> and <code>k0supdate</code>.</li>

@@ -1433,14 +1433,14 @@
 <p>In case of HA control plane, all the controllers will need this part of the configuration as otherwise they will not be able to get the storage and Kubernetes API server running.</p>
 <h2 id="configuration-location">Configuration location<a class="headerlink" href="#configuration-location" title="Permanent link">#</a></h2>
 <p>The cluster wide configuration is stored in the Kubernetes API as a custom resource called <code>clusterconfig</code>. There's currently only one instance named <code>k0s</code>. You can edit the configuration with what ever means possible, for example with:</p>
-<div class="highlight"><pre><span></span><code>k0s config edit
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>config<span class="w"> </span>edit
 </code></pre></div>
 <p>This will open the configuration object for editing in your system's default editor.</p>
 <h2 id="configuration-reconciliation">Configuration reconciliation<a class="headerlink" href="#configuration-reconciliation" title="Permanent link">#</a></h2>
 <p>The dynamic configuration uses the typical operator pattern for operation. k0s controller will detect when the object changes and will reconcile the configuration changes to be reflected to how different components are configured. So say you want to change the MTU setting for kube-router CNI networking you'd change the config to contain e.g.:</p>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span><span class="w"></span>
-<span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span>
+<span class="w">      </span><span class="nt">autoMTU</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <p>This will change the kube-router related configmap and thus make kube-router to use different MTU settings for new pods.</p>
 <h2 id="configuration-options">Configuration options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h2>
@@ -1453,12 +1453,12 @@
 </ul>
 <h2 id="configuration-status">Configuration status<a class="headerlink" href="#configuration-status" title="Permanent link">#</a></h2>
 <p>The dynamic configuration reconciler operator will write status events for all the changes it detects. To see all dynamic config related events, use:</p>
-<div class="highlight"><pre><span></span><code>k0s config status
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>config<span class="w"> </span>status
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>LAST SEEN   TYPE      REASON                OBJECT              MESSAGE
-64s         Warning   FailedReconciling     clusterconfig/k0s   failed to validate config: <span class="o">[</span>invalid pod CIDR invalid ip address<span class="o">]</span>
-59s         Normal    SuccessfulReconcile   clusterconfig/k0s   Succesfully reconciler cluster config
-69s         Warning   FailedReconciling     clusterconfig/k0s   cannot change CNI provider from kuberouter to calico
+<div class="highlight"><pre><span></span><code>LAST<span class="w"> </span>SEEN<span class="w">   </span>TYPE<span class="w">      </span>REASON<span class="w">                </span>OBJECT<span class="w">              </span>MESSAGE
+64s<span class="w">         </span>Warning<span class="w">   </span>FailedReconciling<span class="w">     </span>clusterconfig/k0s<span class="w">   </span>failed<span class="w"> </span>to<span class="w"> </span>validate<span class="w"> </span>config:<span class="w"> </span><span class="o">[</span>invalid<span class="w"> </span>pod<span class="w"> </span>CIDR<span class="w"> </span>invalid<span class="w"> </span>ip<span class="w"> </span>address<span class="o">]</span>
+59s<span class="w">         </span>Normal<span class="w">    </span>SuccessfulReconcile<span class="w">   </span>clusterconfig/k0s<span class="w">   </span>Succesfully<span class="w"> </span>reconciler<span class="w"> </span>cluster<span class="w"> </span>config
+69s<span class="w">         </span>Warning<span class="w">   </span>FailedReconciling<span class="w">     </span>clusterconfig/k0s<span class="w">   </span>cannot<span class="w"> </span>change<span class="w"> </span>CNI<span class="w"> </span>provider<span class="w"> </span>from<span class="w"> </span>kuberouter<span class="w"> </span>to<span class="w"> </span>calico
 </code></pre></div>
 
 

@@ -1796,16 +1796,16 @@ There is a public update-server hosted on the same domain as the documentation s
 </ul>
 <h2 id="automatic-updates">Automatic updates<a class="headerlink" href="#automatic-updates" title="Permanent link">#</a></h2>
 <p>To enable automatic updates, create an <code>UpdateConfig</code> object:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdateConfig</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span><span class="w"></span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge_release</span><span class="w"></span>
-<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://docs.k0sproject.io/</span><span class="w"></span>
-<span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdateConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge_release</span>
+<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://docs.k0sproject.io/</span>
+<span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span>
 </code></pre></div>
 <h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
 <p>There are a number of safeguards in place to avoid breaking a cluster.</p>
@@ -1858,37 +1858,37 @@ additional changes to the plan (other than status) will be recognized.<ul>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h2>
 <p><strong>Autopilot</strong> relies on a <code>Plan</code> object on its instructions on what to update.</p>
 <p>Here is an arbitrary <strong>Autopilot</strong> plan:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Plan</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot</span>
 
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id1234</span><span class="w"></span>
-<span class="w">  </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">id1234</span>
+<span class="w">  </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">now</span>
 
-<span class="w">  </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span><span class="w"></span>
-<span class="w">        </span><span class="nt">platforms</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span><span class="w"></span>
-<span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-amd64</span><span class="w"></span>
-<span class="w">            </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15469210b61da094c6783e65c15a4ac951e1c4c50ff9cf13f30437ada48f446b</span><span class="w"></span>
-<span class="w">        </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span><span class="w"></span>
-<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span><span class="w"></span>
-<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span><span class="w"></span>
-<span class="w">          </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="w">            </span><span class="nt">limits</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
-<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
-<span class="w">                </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
+<span class="w">  </span><span class="nt">commands</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">k0supdate</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.0+k0s.0</span>
+<span class="w">        </span><span class="nt">platforms</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">linux-amd64</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-amd64</span>
+<span class="w">            </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15469210b61da094c6783e65c15a4ac951e1c4c50ff9cf13f30437ada48f446b</span>
+<span class="w">        </span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controllers</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">static</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span>
+<span class="w">                  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span>
+<span class="w">          </span><span class="nt">workers</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span>
+<span class="w">                </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span>
 </code></pre></div>
 <h3 id="core-fields">Core Fields<a class="headerlink" href="#core-fields" title="Permanent link">#</a></h3>
 <h4 id="apiversion-string-required"><code>apiVersion &lt;string&gt; (required)</code><a class="headerlink" href="#apiversion-string-required" title="Permanent link">#</a></h4>
@@ -1993,11 +1993,11 @@ to be updated at a time. If no value is provided, <code>1</code> is assumed.</li
 in <code>.nodes</code>.</p>
 <p>It is expected that a <code>Node</code> (workers) or <code>ControlNode</code> (controllers) object exists with
 the same name.</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">static</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span>
 </code></pre></div>
 <h4 id="speccommandsk0supdatetargetsdiscoverystaticnodes-string-required-for-static"><code>spec.commands[].k0supdate.targets.*.discovery.static.nodes[] &lt;string&gt; (required for static)</code><a class="headerlink" href="#speccommandsk0supdatetargetsdiscoverystaticnodes-string-required-for-static" title="Permanent link">#</a></h4>
 <ul>
@@ -2007,12 +2007,12 @@ the same name.</p>
 <p>The <code>selector</code> target discovery method relies on a dynamic query to the Kubernetes API
 using labels and fields to produce a set of hosts that should be updated.</p>
 <p>Providing both <code>labels</code> and <code>fields</code> in the <code>selector</code> definition will result in a logical <code>AND</code> of both operands.</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
-<span class="w">    </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span>
+<span class="w">    </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span>
 </code></pre></div>
 <p>Specifying an empty selector will result in <em>all</em> nodes being selected for this target set.</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
 </code></pre></div>
 <h4 id="speccommandsk0supdatetargetsdiscoveryselectorlabels-string-optional"><code>spec.commands[].k0supdate.targets.*.discovery.selector.labels &lt;string&gt; (optional)</code><a class="headerlink" href="#speccommandsk0supdatetargetsdiscoveryselectorlabels-string-optional" title="Permanent link">#</a></h4>
 <ul>
@@ -2030,34 +2030,34 @@ for the update of this target set.<ul>
 <h2 id="status-reporting">Status Reporting<a class="headerlink" href="#status-reporting" title="Permanent link">#</a></h2>
 <p>After a <code>Plan</code> has been applied, its progress can be viewed in the <code>.status</code> of the
 <code>autopilot</code> Plan.</p>
-<div class="highlight"><pre><span></span><code>    kubectl get plan autopilot -oyaml
+<div class="highlight"><pre><span></span><code><span class="w">    </span>kubectl<span class="w"> </span>get<span class="w"> </span>plan<span class="w"> </span>autopilot<span class="w"> </span>-oyaml
 </code></pre></div>
 <p>An example of a <code>Plan</code> status:</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
-<span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span><span class="w"></span>
-<span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:44Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller1</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller2</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
-<span class="w">        </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker1</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker2</span><span class="w"></span>
-<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">status</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
+<span class="w">    </span><span class="nt">commands</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SchedulableWait</span>
+<span class="w">      </span><span class="nt">k0supdate</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">controllers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:44Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller0</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller1</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalCompleted</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller2</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
+<span class="w">        </span><span class="nt">workers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker0</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker1</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastUpdatedTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2022-04-07T15:52:24Z&quot;</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker2</span>
+<span class="w">          </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SignalPending</span>
 </code></pre></div>
 <p>To read this status, this indicates that:</p>
 <ul>
@@ -2173,43 +2173,43 @@ update operation. There are a number of statuses available:</p>
 <li>Describes the behavior of the autopilot generated <code>Plan</code></li>
 </ul>
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdaterConfig</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span><span class="w"></span>
-<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span><span class="w"></span>
-<span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span><span class="w"></span>
-<span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span><span class="w"></span>
-<span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">commands</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional</span><span class="w"></span>
-<span class="w">          </span><span class="nt">forceupdate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># optional</span><span class="w"></span>
-<span class="w">          </span><span class="nt">targets</span><span class="p">:</span><span class="w"></span>
-<span class="w">            </span><span class="nt">controllers</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">static</span><span class="p">:</span><span class="w"></span>
-<span class="w">                  </span><span class="nt">nodes</span><span class="p">:</span><span class="w"></span>
-<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span><span class="w"></span>
-<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span><span class="w"></span>
-<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span><span class="w"></span>
-<span class="w">            </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">limits</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
-<span class="w">              </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">                  </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
-<span class="w">                  </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
-<span class="w">        </span><span class="nt">airgapupdate</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional</span><span class="w"></span>
-<span class="w">          </span><span class="nt">workers</span><span class="p">:</span><span class="w"></span>
-<span class="w">            </span><span class="nt">limits</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
-<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span><span class="w"></span>
-<span class="w">              </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">                </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span><span class="w"></span>
-<span class="w">                </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">autopilot.k0sproject.io/v1beta2</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UpdaterConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span>
+<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span>
+<span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span>
+<span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span>
+<span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">commands</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">k0supdate</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional</span>
+<span class="w">          </span><span class="nt">forceupdate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># optional</span>
+<span class="w">          </span><span class="nt">targets</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">controllers</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">discovery</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">static</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-44-131</span>
+<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-42-134</span>
+<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ip-172-31-39-65</span>
+<span class="w">            </span><span class="nt">workers</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">              </span><span class="nt">discovery</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span>
+<span class="w">                  </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span>
+<span class="w">        </span><span class="nt">airgapupdate</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional</span>
+<span class="w">          </span><span class="nt">workers</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">concurrent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">            </span><span class="nt">discovery</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environment=staging</span>
+<span class="w">                </span><span class="nt">fields</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metadata.name=worker2</span>
 </code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">#</a></h2>
 <h3 id="q-how-do-i-apply-the-plan-and-controlnode-crds">Q: How do I apply the <code>Plan</code> and <code>ControlNode</code> CRDs?<a class="headerlink" href="#q-how-do-i-apply-the-plan-and-controlnode-crds" title="Permanent link">#</a></h3>

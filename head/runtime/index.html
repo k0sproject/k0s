@@ -1421,28 +1421,28 @@
 <p><img alt="k0s_runtime" src="../img/k0s_runtime.png" /></p>
 <h2 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h2>
 <p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
-<div class="highlight"><pre><span></span><code>containerd config default &gt; /etc/k0s/containerd.toml
+<div class="highlight"><pre><span></span><code>containerd<span class="w"> </span>config<span class="w"> </span>default<span class="w"> </span>&gt;<span class="w"> </span>/etc/k0s/containerd.toml
 </code></pre></div>
 <p><code>k0s</code> runs containerd with the following default values:</p>
-<div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd <span class="se">\</span>
-    --root<span class="o">=</span>/var/lib/k0s/containerd <span class="se">\</span>
-    --state<span class="o">=</span>/run/k0s/containerd <span class="se">\</span>
-    --address<span class="o">=</span>/run/k0s/containerd.sock <span class="se">\</span>
-    --config<span class="o">=</span>/etc/k0s/containerd.toml
+<div class="highlight"><pre><span></span><code>/var/lib/k0s/bin/containerd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--root<span class="o">=</span>/var/lib/k0s/containerd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--state<span class="o">=</span>/run/k0s/containerd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--address<span class="o">=</span>/run/k0s/containerd.sock<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="o">=</span>/etc/k0s/containerd.toml
 </code></pre></div>
 <p>Next, add the following default values to the configuration file:</p>
-<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"></span>
-<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/containerd&quot;</span><span class="w"></span>
-<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd&quot;</span><span class="w"></span>
-<span class="p">...</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/containerd&quot;</span>
+<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd&quot;</span>
+<span class="p">...</span>
 
-<span class="k">[grpc]</span><span class="w"></span>
-<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span><span class="w"></span>
+<span class="k">[grpc]</span>
+<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span>
 </code></pre></div>
 <p>Finally, if you want to change CRI look into:</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span><span class="w"></span>
-<span class="w">    </span><span class="n">shim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;containerd-shim&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="n">runtime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;runc&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
+<span class="w">    </span><span class="n">shim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;containerd-shim&quot;</span>
+<span class="w">    </span><span class="n">runtime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;runc&quot;</span>
 </code></pre></div>
 <h2 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h2>
 <p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
@@ -1450,24 +1450,24 @@
 <li>
 <p>Install the needed gVisor binaries into the host.</p>
 <div class="highlight"><pre><span></span><code><span class="o">(</span>
-  <span class="nb">set</span> -e
-  <span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
-  wget <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc.sha512 <span class="se">\</span>
-    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim.sha512 <span class="se">\</span>
-    <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1 <span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1.sha512
-  sha512sum -c runsc.sha512 <span class="se">\</span>
-    -c gvisor-containerd-shim.sha512 <span class="se">\</span>
-    -c containerd-shim-runsc-v1.sha512
-  rm -f *.sha512
-  chmod a+rx runsc gvisor-containerd-shim containerd-shim-runsc-v1
-  sudo mv runsc gvisor-containerd-shim containerd-shim-runsc-v1 /usr/local/bin
+<span class="w">  </span><span class="nb">set</span><span class="w"> </span>-e
+<span class="w">  </span><span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
+<span class="w">  </span>wget<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc.sha512<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim.sha512<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1.sha512
+<span class="w">  </span>sha512sum<span class="w"> </span>-c<span class="w"> </span>runsc.sha512<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>gvisor-containerd-shim.sha512<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>containerd-shim-runsc-v1.sha512
+<span class="w">  </span>rm<span class="w"> </span>-f<span class="w"> </span>*.sha512
+<span class="w">  </span>chmod<span class="w"> </span>a+rx<span class="w"> </span>runsc<span class="w"> </span>gvisor-containerd-shim<span class="w"> </span>containerd-shim-runsc-v1
+<span class="w">  </span>sudo<span class="w"> </span>mv<span class="w"> </span>runsc<span class="w"> </span>gvisor-containerd-shim<span class="w"> </span>containerd-shim-runsc-v1<span class="w"> </span>/usr/local/bin
 <span class="o">)</span>
 </code></pre></div>
 <p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install docs</a> for more information.</p>
 </li>
 <li>
 <p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime:</p>
-<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
 <span class="s">disabled_plugins = [&quot;restart&quot;]</span>
 <span class="s">[plugins.linux]</span>
 <span class="s">  shim_debug = true</span>
@@ -1478,12 +1478,12 @@
 </li>
 <li>
 <p>Start and join the worker into the cluster, as normal:</p>
-<div class="highlight"><pre><span></span><code>k0s worker <span class="nv">$token</span>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span><span class="nv">$token</span>
 </code></pre></div>
 </li>
 <li>
 <p>Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):</p>
-<div class="highlight"><pre><span></span><code>cat <span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
 <span class="s">apiVersion: node.k8s.io/v1beta1</span>
 <span class="s">kind: RuntimeClass</span>
 <span class="s">metadata:</span>
@@ -1492,35 +1492,35 @@
 <span class="s">EOF</span>
 </code></pre></div>
 <p>At this point, you can use gVisor runtime for your workloads:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-gvisor</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">runtimeClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gvisor</span><span class="w"></span>
-<span class="w">  </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-gvisor</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">runtimeClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gvisor</span>
+<span class="w">  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
 </code></pre></div>
 </li>
 <li>
 <p>(Optional) Verify tht the created nginx pod is running under gVisor runtime:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># kubectl exec nginx-gvisor -- dmesg | grep -i gvisor</span>
-<span class="o">[</span>    <span class="m">0</span>.000000<span class="o">]</span> Starting gVisor...
+<span class="o">[</span><span class="w">    </span><span class="m">0</span>.000000<span class="o">]</span><span class="w"> </span>Starting<span class="w"> </span>gVisor...
 </code></pre></div>
 </li>
 </ol>
 <h2 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h2>
 <p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span><span class="w"></span>
-<span class="w">    </span><span class="n">default_runtime_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;nvidia&quot;</span><span class="w"></span>
-<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia]</span><span class="w"></span>
-<span class="w">    </span><span class="n">privileged_without_host_devices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"></span>
-<span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="n">runtime_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;io.containerd.runc.v1&quot;</span><span class="w"></span>
-<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia.options]</span><span class="w"></span>
-<span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/usr/bin/nvidia-container-runtime&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span>
+<span class="w">    </span><span class="n">default_runtime_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;nvidia&quot;</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia]</span>
+<span class="w">    </span><span class="n">privileged_without_host_devices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="n">runtime_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;io.containerd.runc.v1&quot;</span>
+<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia.options]</span>
+<span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/usr/bin/nvidia-container-runtime&quot;</span>
 </code></pre></div>
 <p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2">here</a>.</p>
 <p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>

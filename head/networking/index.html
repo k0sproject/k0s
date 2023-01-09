@@ -1575,21 +1575,21 @@
 <h2 id="firewalld-k0s">Firewalld &amp; k0s<a class="headerlink" href="#firewalld-k0s" title="Permanent link">#</a></h2>
 <p>If you are using <a href="https://firewalld.org/"><code>firewalld</code></a> on your hosts you need to ensure it is configured to use the same <code>FirewallBackend</code> as k0s and other Kubernetes components use. Otherwise networking will be broken in various ways.</p>
 <p>Here's an example configuration for a tested working networking setup:</p>
-<div class="highlight"><pre><span></span><code><span class="o">[</span>root@rhel-test ~<span class="o">]</span><span class="c1"># firewall-cmd --list-all</span>
-public <span class="o">(</span>active<span class="o">)</span>
-  target: default
-  icmp-block-inversion: no
-  interfaces: eth0
-  sources: <span class="m">10</span>.244.0.0/16 <span class="m">10</span>.96.0.0/12
-  services: cockpit dhcpv6-client ssh
-  ports: <span class="m">80</span>/tcp <span class="m">6443</span>/tcp <span class="m">8132</span>/tcp <span class="m">10250</span>/tcp <span class="m">179</span>/tcp <span class="m">179</span>/udp
-  protocols: 
-  forward: no
-  masquerade: yes
-  forward-ports: 
-  source-ports: 
-  icmp-blocks: 
-  rich rules:
+<div class="highlight"><pre><span></span><code><span class="o">[</span>root@rhel-test<span class="w"> </span>~<span class="o">]</span><span class="c1"># firewall-cmd --list-all</span>
+public<span class="w"> </span><span class="o">(</span>active<span class="o">)</span>
+<span class="w">  </span>target:<span class="w"> </span>default
+<span class="w">  </span>icmp-block-inversion:<span class="w"> </span>no
+<span class="w">  </span>interfaces:<span class="w"> </span>eth0
+<span class="w">  </span>sources:<span class="w"> </span><span class="m">10</span>.244.0.0/16<span class="w"> </span><span class="m">10</span>.96.0.0/12
+<span class="w">  </span>services:<span class="w"> </span>cockpit<span class="w"> </span>dhcpv6-client<span class="w"> </span>ssh
+<span class="w">  </span>ports:<span class="w"> </span><span class="m">80</span>/tcp<span class="w"> </span><span class="m">6443</span>/tcp<span class="w"> </span><span class="m">8132</span>/tcp<span class="w"> </span><span class="m">10250</span>/tcp<span class="w"> </span><span class="m">179</span>/tcp<span class="w"> </span><span class="m">179</span>/udp
+<span class="w">  </span>protocols:<span class="w"> </span>
+<span class="w">  </span>forward:<span class="w"> </span>no
+<span class="w">  </span>masquerade:<span class="w"> </span>yes
+<span class="w">  </span>forward-ports:<span class="w"> </span>
+<span class="w">  </span>source-ports:<span class="w"> </span>
+<span class="w">  </span>icmp-blocks:<span class="w"> </span>
+<span class="w">  </span>rich<span class="w"> </span>rules:
 </code></pre></div>
 
 

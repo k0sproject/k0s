@@ -1437,25 +1437,25 @@
 <h2 id="coredns-in-crashloop">CoreDNS in crashloop<a class="headerlink" href="#coredns-in-crashloop" title="Permanent link">#</a></h2>
 <p>The most common case we've encountered so far has been CoreDNS getting into crashloop on the node(s).</p>
 <p>With kubectl you see something like this:</p>
-<div class="highlight"><pre><span></span><code>$ kubectl get pod --all-namespaces
-NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
-kube-system   calico-kube-controllers-5f6546844f-25px6   <span class="m">1</span>/1     Running   <span class="m">0</span>          167m
-kube-system   calico-node-fwjx5                          <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   calico-node-t4tx5                          <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   calico-node-whwsg                          <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   coredns-5c98d7d4d8-tfs4q                   <span class="m">1</span>/1     Error     <span class="m">17</span>         167m
-kube-system   konnectivity-agent-9jkfd                   <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   konnectivity-agent-bvhdb                   <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   konnectivity-agent-r6mzj                   <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   kube-proxy-kr2r9                           <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   kube-proxy-tbljr                           <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   kube-proxy-xbw7p                           <span class="m">1</span>/1     Running   <span class="m">0</span>          164m
-kube-system   metrics-server-7d4bcb75dd-pqkrs            <span class="m">1</span>/1     Running   <span class="m">0</span>          167m
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>--all-namespaces
+NAMESPACE<span class="w">     </span>NAME<span class="w">                                       </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+kube-system<span class="w">   </span>calico-kube-controllers-5f6546844f-25px6<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>167m
+kube-system<span class="w">   </span>calico-node-fwjx5<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>calico-node-t4tx5<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>calico-node-whwsg<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>coredns-5c98d7d4d8-tfs4q<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Error<span class="w">     </span><span class="m">17</span><span class="w">         </span>167m
+kube-system<span class="w">   </span>konnectivity-agent-9jkfd<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>konnectivity-agent-bvhdb<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>konnectivity-agent-r6mzj<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>kube-proxy-kr2r9<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>kube-proxy-tbljr<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>kube-proxy-xbw7p<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>164m
+kube-system<span class="w">   </span>metrics-server-7d4bcb75dd-pqkrs<span class="w">            </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>167m
 </code></pre></div>
 <p>When you check the logs, it'll show something like this:</p>
-<div class="highlight"><pre><span></span><code>kubectl -n kube-system logs coredns-5c98d7d4d8-tfs4q
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>logs<span class="w"> </span>coredns-5c98d7d4d8-tfs4q
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>plugin/loop: Loop <span class="o">(</span><span class="m">127</span>.0.0.1:55953 -&gt; :1053<span class="o">)</span> detected <span class="k">for</span> zone <span class="s2">&quot;.&quot;</span>, see https://coredns.io/plugins/loop#troubleshooting. Query: <span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
+<div class="highlight"><pre><span></span><code>plugin/loop:<span class="w"> </span>Loop<span class="w"> </span><span class="o">(</span><span class="m">127</span>.0.0.1:55953<span class="w"> </span>-&gt;<span class="w"> </span>:1053<span class="o">)</span><span class="w"> </span>detected<span class="w"> </span><span class="k">for</span><span class="w"> </span>zone<span class="w"> </span><span class="s2">&quot;.&quot;</span>,<span class="w"> </span>see<span class="w"> </span>https://coredns.io/plugins/loop#troubleshooting.<span class="w"> </span>Query:<span class="w"> </span><span class="s2">&quot;HINFO 4547991504243258144.3688648895315093531.&quot;</span>
 </code></pre></div>
 <p>This is most often caused by systemd-resolved stub (or something similar) running locally and CoreDNS detects a possible loop with DNS queries.</p>
 <p>The easiest but most crude way to workaround is to disable the systemd-resolved stub and revert the hosts <code>/etc/resolv.conf</code> to original</p>
@@ -1481,16 +1481,16 @@ with etcd itself is not fully supported on ARM either.</p>
 <li>create a containerd config according to the <a href="/runtime">documentation</a>: <code>$ containerd config default &gt; /etc/k0s/containerd.toml</code></li>
 <li>modify the line in <code>/etc/k0s/containerd.toml</code>:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="p">...</span><span class="w"></span>
-<span class="w">    </span><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span><span class="w"></span>
-<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;overlayfs&quot;</span><span class="w"></span>
-<span class="p">...</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="p">...</span>
+<span class="w">    </span><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span>
+<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;overlayfs&quot;</span>
+<span class="p">...</span>
 </code></pre></div>
 <p>to</p>
-<div class="highlight"><pre><span></span><code><span class="p">...</span><span class="w"></span>
-<span class="w">    </span><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span><span class="w"></span>
-<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;zfs&quot;</span><span class="w"></span>
-<span class="p">...</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="p">...</span>
+<span class="w">    </span><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span>
+<span class="w">      </span><span class="n">snapshotter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;zfs&quot;</span>
+<span class="p">...</span>
 </code></pre></div>
 <ul>
 <li>create a ZFS dataset to be used as snapshot storage at your desired location, e.g. <code>$ zfs create -o mountpoint=/var/lib/k0s/containerd/io.containerd.snapshotter.v1.zfs rpool/containerd</code></li>
@@ -1504,29 +1504,29 @@ with etcd itself is not fully supported on ARM either.</p>
 <p>By default k0s does not run on nodes where <code>/usr</code> is read only.</p>
 <p>This can be fixed by changing the default path for <code>volumePluginDir</code> in your k0s config. You will need to change to values, one for the kubelet itself, and one for Calico.</p>
 <p>Here is a snippet of an example config with the default values changed:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">flex-volume-plugin-dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/kubernetes/kubelet-plugins/volume/exec&quot;</span><span class="w"></span>
-<span class="w">  </span><span class="nt">network</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">calico</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">flexVolumeDriverPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span><span class="w"></span>
-<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coreos</span><span class="w"></span>
-<span class="w">      </span><span class="nt">values</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">controllerManager</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">extraArgs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">flex-volume-plugin-dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/kubernetes/kubelet-plugins/volume/exec&quot;</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">flexVolumeDriverPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/nodeagent~uds</span>
+<span class="w">  </span><span class="nt">workerProfiles</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coreos</span>
+<span class="w">      </span><span class="nt">values</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">volumePluginDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/k0s/kubelet-plugins/volume/exec/</span>
 </code></pre></div>
 <p>With this config you can start your controller as usual. Any workers will need to be started with</p>
-<div class="highlight"><pre><span></span><code>k0s worker --profile coreos <span class="o">[</span>TOKEN<span class="o">]</span>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>worker<span class="w"> </span>--profile<span class="w"> </span>coreos<span class="w"> </span><span class="o">[</span>TOKEN<span class="o">]</span>
 </code></pre></div>
 <h2 id="profiling">Profiling<a class="headerlink" href="#profiling" title="Permanent link">#</a></h2>
 <p>We drop any debug related information and symbols from the compiled binary by utilzing <code>-w -s</code> linker flags.</p>
 <p>To keep those symbols use <code>DEBUG</code> env variable:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">DEBUG</span><span class="o">=</span><span class="nb">true</span> make k0s
+<div class="highlight"><pre><span></span><code><span class="nv">DEBUG</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>make<span class="w"> </span>k0s
 </code></pre></div>
 <p>Any value not equal to the "false" would work.</p>
 <p>To add custom linker flags use <code>LDFLAGS</code> variable.</p>
-<div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">&quot;--custom-flag=value&quot;</span> make k0s
+<div class="highlight"><pre><span></span><code><span class="nv">LD_FLAGS</span><span class="o">=</span><span class="s2">&quot;--custom-flag=value&quot;</span><span class="w"> </span>make<span class="w"> </span>k0s
 </code></pre></div>
 <h2 id="im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics">I'm using custom CRI and missing some labels in Prometheus metrics<a class="headerlink" href="#im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics" title="Permanent link">#</a></h2>
 <p>Due to removal of the embedded docker-shim from Kubelet, the Kubelets embedded <a href="https://github.com/google/cadvisor">cadvisor</a> metrics got slightly broken. If your container runtime is a custom containerd you can add <code>--kubelet-extra-flags="--containerd=&lt;path/to/containerd.sock&gt;"</code> into k0s worker startup. That configures the kubelet embedded cadvisor to talk directly with containerd to gather the metrics and thus gets the expected labels in place.</p>

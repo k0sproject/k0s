@@ -1354,15 +1354,15 @@
 <p>k0s generates all needed certificates automatically in the <code>&lt;data-dir&gt;/pki</code> directory (<code>/var/lib/k0s/pki</code>, by default).  </p>
 <p>But sometimes there is a need to have the CA certificate in advance.
 To make it work, just put <code>ca.key</code> and <code>ca.crt</code> files to the <code>&lt;data-dir&gt;/pki</code>:</p>
-<div class="highlight"><pre><span></span><code>mkdir -p /var/lib/k0s/pki
-<span class="nb">cd</span> /var/lib/k0s/pki
-openssl genrsa -out ca.key <span class="m">2048</span>
-openssl req -x509 -new -nodes -key ca.key -sha256 -days <span class="m">365</span> -out ca.crt -subj <span class="s2">&quot;/CN=Custom CA&quot;</span>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/lib/k0s/pki
+<span class="nb">cd</span><span class="w"> </span>/var/lib/k0s/pki
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>ca.key<span class="w"> </span><span class="m">2048</span>
+openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> </span>-new<span class="w"> </span>-nodes<span class="w"> </span>-key<span class="w"> </span>ca.key<span class="w"> </span>-sha256<span class="w"> </span>-days<span class="w"> </span><span class="m">365</span><span class="w"> </span>-out<span class="w"> </span>ca.crt<span class="w"> </span>-subj<span class="w"> </span><span class="s2">&quot;/CN=Custom CA&quot;</span>
 </code></pre></div>
 <p>Then you can <a href="../install/">install k0s as usual</a>.</p>
 <h2 id="pre-generated-tokens">Pre-generated tokens<a class="headerlink" href="#pre-generated-tokens" title="Permanent link">#</a></h2>
 <p>It's possible to get join in advance without having a running cluster.</p>
-<div class="highlight"><pre><span></span><code>k0s token pre-shared --role worker --cert /var/lib/k0s/pki/ca.crt --url https://&lt;controller-ip&gt;:6443/
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>token<span class="w"> </span>pre-shared<span class="w"> </span>--role<span class="w"> </span>worker<span class="w"> </span>--cert<span class="w"> </span>/var/lib/k0s/pki/ca.crt<span class="w"> </span>--url<span class="w"> </span>https://&lt;controller-ip&gt;:6443/
 </code></pre></div>
 <p>The command above generates a join token and a Secret. A Secret should be deployed to the cluster to authorize the token.
 For example, you can put the Secret under the <a href="../manifests/">manifest</a> directory and it will be deployed automatically.</p>

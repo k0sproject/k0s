@@ -1400,28 +1400,28 @@
 <li>
 <p>Download k0s</p>
 <p>Run the k0s download script to download the latest stable version of k0s and make it executable from /usr/bin/k0s.</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSLf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 </li>
 <li>
 <p>Install k0s as a service</p>
 <p>The <code>k0s install</code> sub-command installs k0s as a system service on the local host that is running one of the supported init systems: Systemd or OpenRC. You can execute the install for workers, controllers or single node (controller+worker) instances.</p>
 <p>Run the following command to install a single node k0s that includes the controller and worker functions with the default configuration:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller --single
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
 </code></pre></div>
 <p>The <code>k0s install controller</code> sub-command accepts the same flags and parameters as the <code>k0s controller</code>. Refer to <a href="../k0s-multi-node/#installation-steps">manual install</a> for a custom config file example.</p>
 <p>It is possible to set environment variables with the install command:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller -e <span class="nv">ETCD_UNSUPPORTED_ARCH</span><span class="o">=</span>arm
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>-e<span class="w"> </span><span class="nv">ETCD_UNSUPPORTED_ARCH</span><span class="o">=</span>arm
 </code></pre></div>
 <p>The system service can be reinstalled with the <code>--force</code> flag:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s install controller --single --force
-sudo systemctl daemon-reload
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single<span class="w"> </span>--force
+sudo<span class="w"> </span>systemctl<span class="w"> </span>daemon-reload
 </code></pre></div>
 </li>
 <li>
 <p>Start k0s as a service</p>
 <p>To start the k0s service, run:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s start
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <p>The k0s service will start automatically after the node restart.</p>
 <p>A minute or two typically passes before the node is ready to deploy applications.</p>
@@ -1429,21 +1429,21 @@ sudo systemctl daemon-reload
 <li>
 <p>Check service, logs and k0s status</p>
 <p>To get general information about your k0s instance's status, run:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s status
-Version: v1.26.0+k0s.0
-Process ID: <span class="m">436</span>
-Role: controller
-Workloads: <span class="nb">true</span>
-Init System: linux-systemd
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
+Version:<span class="w"> </span>v1.26.0+k0s.0
+Process<span class="w"> </span>ID:<span class="w"> </span><span class="m">436</span>
+Role:<span class="w"> </span>controller
+Workloads:<span class="w"> </span><span class="nb">true</span>
+Init<span class="w"> </span>System:<span class="w"> </span>linux-systemd
 </code></pre></div>
 </li>
 <li>
 <p>Access your cluster using kubectl</p>
 <p><strong>Note</strong>: k0s includes the Kubernetes command-line tool <em>kubectl</em>.</p>
 <p>Use kubectl to deploy your application or to check your node status:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s kubectl get nodes
-NAME   STATUS   ROLES    AGE    VERSION
-k0s    Ready    &lt;none&gt;   4m6s   v1.26.0+k0s
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+NAME<span class="w">   </span>STATUS<span class="w">   </span>ROLES<span class="w">    </span>AGE<span class="w">    </span>VERSION
+k0s<span class="w">    </span>Ready<span class="w">    </span>&lt;none&gt;<span class="w">   </span>4m6s<span class="w">   </span>v1.26.0+k0s
 </code></pre></div>
 </li>
 </ol>
@@ -1452,13 +1452,13 @@ k0s    Ready    &lt;none&gt;   4m6s   v1.26.0+k0s
 <ol>
 <li>
 <p>Stop the service.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s stop
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>stop
 </code></pre></div>
 </li>
 <li>
 <p>Execute the <code>k0s reset</code> command.</p>
 <p>The <code>k0s reset</code> command cleans up the installed system service, data directories, containers, mounts and network namespaces.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s reset
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>reset
 </code></pre></div>
 </li>
 <li>

@@ -1352,29 +1352,29 @@
 <p><code>k0sctl</code> currently does not support changing all the configuration of containerd (<code>state</code>, <code>root</code>) on the fly.</p>
 <p>For example, in order to move containerd's <code>root</code> directory to a new partition/drive, you have to provide <code>--data-dir /new/drive</code> in your k0sctl <code>installFlags</code> for each (worker) node. <code>--data-dir</code> is an option of <code>k0s</code> and then added to the service unit.</p>
 <p>The following is an example of that:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># spec.hosts[*].installFlags</span><span class="w"></span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span><span class="w"></span>
-<span class="w">    </span><span class="nt">installFlags</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--profile flatcar</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--enable-cloud-provider</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--data-dir /new/drive</span><span class="w"></span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--kubelet-extra-args=&quot;--cloud-provider=external&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1"># spec.hosts[*].installFlags</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">installFlags</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--profile flatcar</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--enable-cloud-provider</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--data-dir /new/drive</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--kubelet-extra-args=&quot;--cloud-provider=external&quot;</span>
 </code></pre></div>
 <p>However, the <code>installFlags</code> are only used when the node is installed.</p>
 <h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">#</a></h2>
 <p>Drain the node:</p>
-<div class="highlight"><pre><span></span><code>kubectl drain node.hostname
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>drain<span class="w"> </span>node.hostname
 </code></pre></div>
 <p>Access your node (e.g. via ssh) to stop and reset k0s:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s stop
-sudo k0s reset
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>stop
+sudo<span class="w"> </span>k0s<span class="w"> </span>reset
 </code></pre></div>
 <p>Reboot the node (for good measure):</p>
-<div class="highlight"><pre><span></span><code>sudo systemctl reboot
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span>reboot
 </code></pre></div>
 <p>Once the node is available again, run <code>k0sctl apply</code> to integrate it into your cluster and uncordon the node to allow pods to be scheduled:</p>
-<div class="highlight"><pre><span></span><code>k0sctl apply -c config.yaml
-kubectl uncordon node.hostname
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>apply<span class="w"> </span>-c<span class="w"> </span>config.yaml
+kubectl<span class="w"> </span>uncordon<span class="w"> </span>node.hostname
 </code></pre></div>
 
 

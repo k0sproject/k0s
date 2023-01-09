@@ -1581,7 +1581,7 @@ cloud-init by default. Confirm, though, that for whichever user you will deploy
 the cluster with on the build system, their SSH Key is <a href="https://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/">copied to each node's
 root user</a>. Before you start, the configuration should be such
 that the current user can run:</p>
-<div class="highlight"><pre><span></span><code>ssh root@<span class="si">${</span><span class="nv">HOST</span><span class="si">}</span>
+<div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>root@<span class="si">${</span><span class="nv">HOST</span><span class="si">}</span>
 </code></pre></div>
 <p>Where <code>${HOST}</code> is any node and the login can succeed with no further prompts.</p>
 <h3 id="optional-create-a-swap-file">(Optional) Create a swap file<a class="headerlink" href="#optional-create-a-swap-file" title="Permanent link">#</a></h3>
@@ -1591,10 +1591,10 @@ than 8 GB of RAM.</p>
 <ol>
 <li>
 <p>To create a swap file:</p>
-<div class="highlight"><pre><span></span><code>fallocate -l 2G /swapfile <span class="o">&amp;&amp;</span> <span class="se">\</span>
-chmod <span class="m">0600</span> /swapfile <span class="o">&amp;&amp;</span> <span class="se">\</span>
-mkswap /swapfile <span class="o">&amp;&amp;</span> <span class="se">\</span>
-swapon -a
+<div class="highlight"><pre><span></span><code>fallocate<span class="w"> </span>-l<span class="w"> </span>2G<span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+chmod<span class="w"> </span><span class="m">0600</span><span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+mkswap<span class="w"> </span>/swapfile<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+swapon<span class="w"> </span>-a
 </code></pre></div>
 </li>
 <li>
@@ -1605,29 +1605,29 @@ swapon -a
 <li>
 <p>Ensure that your swap is mounted after reboots by confirming that the
    following line exists in your <code>/etc/fstab</code> configuration:</p>
-<div class="highlight"><pre><span></span><code>/swapfile         none           swap sw       <span class="m">0</span> <span class="m">0</span>
+<div class="highlight"><pre><span></span><code>/swapfile<span class="w">         </span>none<span class="w">           </span>swap<span class="w"> </span>sw<span class="w">       </span><span class="m">0</span><span class="w"> </span><span class="m">0</span>
 </code></pre></div>
 </li>
 </ol>
 <h2 id="download-k0s">Download k0s<a class="headerlink" href="#download-k0s" title="Permanent link">#</a></h2>
 <p>Download a <a href="https://github.com/k0sproject/k0s/releases/latest">k0s release</a>. For
 example:</p>
-<div class="highlight"><pre><span></span><code>wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-arm64 <span class="c1"># replace version number!</span>
-sudo install /tmp/k0s /usr/local/bin/k0s
+<div class="highlight"><pre><span></span><code>wget<span class="w"> </span>-O<span class="w"> </span>/tmp/k0s<span class="w"> </span>https://github.com/k0sproject/k0s/releases/download/v1.26.0+k0s.0/k0s-v1.26.0+k0s.0-arm64<span class="w"> </span><span class="c1"># replace version number!</span>
+sudo<span class="w"> </span>install<span class="w"> </span>/tmp/k0s<span class="w"> </span>/usr/local/bin/k0s
 </code></pre></div>
 <p>― or ―</p>
 <p>Use the k0s download script (as one command) to download the latest stable k0s
 and make it executable in <code>/usr/bin/k0s</code>.</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSLf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
 </code></pre></div>
 <p>At this point you can run <code>k0s</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s version
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>version
 <span class="go">v1.26.0+k0s.0</span>
 </code></pre></div>
 <p>To check if k0s's <a href="../system-requirements/">system requirements</a> and <a href="../external-runtime-deps/">external
 runtime dependencies</a> are fulfilled by your current
 setup, you can invoke <code>k0s sysinfo</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s sysinfo
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>k0s<span class="w"> </span>sysinfo
 <span class="go">Machine ID: &quot;d84cde1f38844d1425dc04c454c5aa95e41fb11115bbb141c016f4cd3dea4f51&quot; (from machine) (pass)</span>
 <span class="go">Total memory: 3.7 GiB (pass)</span>
 <span class="go">Disk space available for /var/lib/k0s: 24.3 GiB (pass)</span>
@@ -1717,16 +1717,16 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 components and worker components. If you don't plan join any more nodes into the
 cluster, this is for you.</p>
 <p>Install the <code>k0scontroller</code> service:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s install controller --single
-<span class="gp">ubuntu@ubuntu:~$ </span>sudo systemctl status k0scontroller.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
 <span class="go">○ k0scontroller.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: inactive (dead)</span>
 <span class="go">       Docs: https://docs.k0sproject.io</span>
 </code></pre></div>
 <p>Start it:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo systemctl start k0scontroller.service
-<span class="gp">ubuntu@ubuntu:~$ </span>systemctl status k0scontroller.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0scontroller.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
 <span class="go">● k0scontroller.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: active (running) since Thu 2022-08-18 09:56:02 UTC; 2s ago</span>
@@ -1750,10 +1750,10 @@ cluster, this is for you.</p>
 <span class="go">Aug 18 09:56:04 ubuntu k0s[2720]: 2022/08/18 09:56:04 [INFO] signed certificate with serial number 336800507542010809697469355930007636411790073226</span>
 </code></pre></div>
 <p>When the cluster is up, try to have a look:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kc get nodes -owide
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
 <span class="go">ubuntu   Ready    control-plane   4m41s   v1.26.0+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10</span>
-<span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kc get pod -owide -A
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES</span>
 <span class="go">kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
 <span class="go">kube-system   kube-router-vf2pv                 1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
@@ -1761,7 +1761,7 @@ cluster, this is for you.</p>
 <span class="go">kube-system   metrics-server-7d7c4887f4-ssk49   1/1     Running   0          5m6s    10.244.0.3     ubuntu   &lt;none&gt;           &lt;none&gt;</span>
 </code></pre></div>
 <p>Overall, the single k0s node uses less than 1 GiB of RAM:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free -h
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
 <span class="go">               total        used        free      shared  buff/cache   available</span>
 <span class="go">Mem:           3.7Gi       715Mi       1.3Gi       3.0Mi       1.7Gi       2.8Gi</span>
 <span class="go">Swap:             0B          0B          0B</span>
@@ -1770,16 +1770,16 @@ cluster, this is for you.</p>
 <p>This will install k0s as a single non-HA controller. It won't be able to run any
 workloads, so you need to connect more workers to it.</p>
 <p>Install the <code>k0scontroller</code> service. Note that we're not specifying any flags:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s install controller
-<span class="gp">ubuntu@ubuntu:~$ </span>systemctl status k0scontroller.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
 <span class="go">○ k0scontroller.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: inactive (dead)</span>
 <span class="go">       Docs: https://docs.k0sproject.io</span>
 </code></pre></div>
 <p>Start it:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo systemctl start k0scontroller.service
-<span class="gp">ubuntu@ubuntu:~$ </span>systemctl status k0scontroller.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0scontroller.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0scontroller.service
 <span class="go">● k0scontroller.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0scontroller.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: active (running) since Thu 2022-08-18 10:31:07 UTC; 3s ago</span>
@@ -1804,9 +1804,9 @@ workloads, so you need to connect more workers to it.</p>
 </code></pre></div>
 <p>As soon as the controller is up, we can try to inspect the API as we did for the
 single node:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kc get nodes -owide
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">No resources found</span>
-<span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kc get pod -owide -A
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES</span>
 <span class="go">kube-system   coredns-88b745646-6tpwm           0/1     Pending   0          29s   &lt;none&gt;   &lt;none&gt;   &lt;none&gt;           &lt;none&gt;</span>
 <span class="go">kube-system   metrics-server-7d7c4887f4-9k5k5   0/1     Pending   0          24s   &lt;none&gt;   &lt;none&gt;   &lt;none&gt;           &lt;none&gt;</span>
@@ -1814,7 +1814,7 @@ single node:</p>
 <p>As we see, there are no nodes and two pending pods. A control plane without
 workers. The memory consumption is below the single node controller, but not
 much:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free -h
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
 <span class="go">               total        used        free      shared  buff/cache   available</span>
 <span class="go">Mem:           3.7Gi       678Mi       2.3Gi       3.0Mi       758Mi       2.9Gi</span>
 <span class="go">Swap:             0B          0B          0B</span>
@@ -1824,7 +1824,7 @@ to the lightweight <a href="https://github.com/k3s-io/kine">kine</a> based one f
 latter, k0s doesn't support joining new nodes.</p>
 <p>More nodes can be added by creating join tokens. To add a worker node, create a
 token for it:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s token create --role worker
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>token<span class="w"> </span>create<span class="w"> </span>--role<span class="w"> </span>worker
 <span class="go">H4sIAAAAAAAC/2yV0Y6jPBKF7/MUeYGZ30DonUTai5+Ak5DgbhuXHXwHmAnBhtAJHdKs9t1XnZmRdqW9K1cdfceyrDqzvD+L6no7X7rV/O7MSvtxG6rrbTX7Nv9dr2bz+Xx+q6736rqa18PQ31Z//eWg747vfvdfvvuL1cti4T1VZXUdzj/PZT5U3/KPob5cz8PnN50P+Wp+SNFwSJ01Ax3zcxAyEUMKKqYIA3vO0LA2TpwCC1hEQipFrxD2UogDhawQobWJY297jxHBCdbS70hIvWKTOMWGBcwhgUaMSegPhdPH+VY13GDGYNxTiwONdMSEJtTiLeVYMMALDn6dOKqXtt5r0WfQPpqK43cpWKBAecnWktxEiAvWVZEDghPCorhmXTlWp/7PTPz3jEPcVZF6p0KsFfIlNZiIiB11iFUhlJ+1jkxwn/EjU4kRnnI1zsEJkkiH4OHt2pI4a0gEINZUYEEhQinEkUb4qU0Rvn+9CQD5UKJ0dKfG1NVZ2dWCcfCkHFDKycjbYZuGIsk5DngY7Svcn3N5mdIGm1yylkU+Srcxyiy7l50ZRUTvGqtcNuK9QAvEjcihu4yJh/sipC5xy4nBssut9UrcB6nENz72JnfxKLBmxAseZftgyhHvfLIjaeK+PNYX2tmwkKQrGjPlSFAI2VRKmyZmidjnsGCefRfe6Vp4p6veBk0FCtaN/uBu7JAp9kS6nFKDCQvxVUXYsGPiFji+VU05UtFvdLt8oVK8JRE+5m6fZfbvBcGa8QhH0pzG6vxjLEOSEJvtZdRvhNSywNmCejEihiRMYp/IH34utZc6GpdwWwgbc9Hhh5Q+4ushLeXJEZ6t85YBCLxTTfwmGhyWW+HC2B+AE1DnYdK4l9pYJ/P0jhn1mrsq1MbHKYqcRO6cyuAQQG/kRlsq2aOK/HVp2FZKDVRqQg0OmNuz3MTB2jgBiXSQCGHYVmN6XnoAItDIrmnbBxDFHbdqB8ZZU5ktGMRAgQUApzuH3chQ9BCSRcrBR2riVCHxBt5ln3kYlXKxKKI6JEizV4wn3tWyMMk1N/iVtvpayvqaQ+nrKfj6gxMzOOCIBF/+cBQv4JG4AnATe0GZjUNy6gcWkkG5CJGpntKGTnzb472XfeqtekuQzqsWua+bpaw2j9d0ih02YZauh5y4/v7gqZzY2lYmVuWkahFqzF0cri1jbPu3n4d6nVp10G4fVw3OZbp8VabfaQfvtWN9zYNOdfVYmIWjz4PMzOOFmv5Nb3u39CgqXdUCth4xyxrwaQ8Oc3On9xIet3mHmewCj7kJgmP/pr3os5i0oLx+1+4yyj1mcwuTmDIko50DpndhWwNxHwcQQSuEGFljI0Z7lYJ1EhgnguJ3PukPYXr3VbJYOCdE5ECSFpBqgrDEpzFzRSfFxSUgIrJhUQZxW5jazxpCk445CfK3RMbHdcOGtL2N0O7uAuyCId8A0izZ4B2EseQb55EgwVX7+CyjmB9c1eSTVQXeLWiDj4CjUW7ZXXl9nR7pqDYKUXnZqyZ4r46x98bR/vduxtzQE0UiFZHdpEACEcFzLx/o5Z+z+bzL22o1N+g2Ky/dUD2GXznxq/6VE39C46n6anzcnqePorLV8K24XIbbcM37/6V9XK9VN3z7Q3o2zbnTq/n60v08n2b9tfpZXauurG6r+b/+PfuiPs1/Q/4P/mn8vMJwMVW3mrvL84/lj+8N8ia/uZ/Lf2izWFb57D8BAAD//zANvmsEBwAA</span>
 </code></pre></div>
 <p>Save the join token for subsequent steps.</p>
@@ -1835,16 +1835,16 @@ setup):</p>
 <div class="highlight"><pre><span></span><code><span class="go">sudo sh -c &#39;mkdir -p /var/lib/k0s/ &amp;&amp; umask 077 &amp;&amp; echo &quot;$TOKEN_CONTENT&quot; &gt; /var/lib/k0s/join-token&#39;</span>
 </code></pre></div>
 <p>After that, install the <code>k0sworker</code> service:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s install worker --token-file /var/lib/k0s/join-token
-<span class="gp">ubuntu@ubuntu:~$ </span>systemctl status k0sworker.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>worker<span class="w"> </span>--token-file<span class="w"> </span>/var/lib/k0s/join-token
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0sworker.service
 <span class="go">○ k0sworker.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0sworker.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: inactive (dead)</span>
 <span class="go">       Docs: https://docs.k0sproject.io</span>
 </code></pre></div>
 <p>Start the service:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo systemctl start k0sworker.service
-<span class="gp">ubuntu@ubuntu:~$ </span>systemctl status k0sworker.service
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>k0sworker.service
+<span class="gp">ubuntu@ubuntu:~$ </span>systemctl<span class="w"> </span>status<span class="w"> </span>k0sworker.service
 <span class="go">● k0sworker.service - k0s - Zero Friction Kubernetes</span>
 <span class="go">     Loaded: loaded (/etc/systemd/system/k0sworker.service; enabled; vendor preset: enabled)</span>
 <span class="go">     Active: active (running) since Thu 2022-08-18 13:48:58 UTC; 2s ago</span>
@@ -1870,7 +1870,7 @@ setup):</p>
 </code></pre></div>
 <p>As this is a worker node, we cannot access the Kubernetes API via the builtin
 <code>k0s kc</code> subcommand, but we can check the k0s API instead:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s status
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>status
 <span class="go">Version: v1.26.0+k0s.0</span>
 <span class="go">Process ID: 1631</span>
 <span class="go">Role: worker</span>
@@ -1878,7 +1878,7 @@ setup):</p>
 <span class="go">SingleNode: false</span>
 </code></pre></div>
 <p>The memory requirements are also pretty low:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free -h
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>free<span class="w"> </span>-h
 <span class="go">               total        used        free      shared  buff/cache   available</span>
 <span class="go">Mem:           3.7Gi       336Mi       2.1Gi       3.0Mi       1.2Gi       3.2Gi</span>
 <span class="go">Swap:             0B          0B          0B</span>
@@ -1886,9 +1886,9 @@ setup):</p>
 <h2 id="connect-to-the-cluster">Connect to the cluster<a class="headerlink" href="#connect-to-the-cluster" title="Permanent link">#</a></h2>
 <p>On a controller node, generate a new <code>raspi-cluster-master</code> user with admin
 rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/">kubeconfig</a> for it:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kc create clusterrolebinding raspi-cluster-master-admin --clusterrole<span class="o">=</span>admin --user<span class="o">=</span>raspi-cluster-master
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>create<span class="w"> </span>clusterrolebinding<span class="w"> </span>raspi-cluster-master-admin<span class="w"> </span>--clusterrole<span class="o">=</span>admin<span class="w"> </span>--user<span class="o">=</span>raspi-cluster-master
 <span class="go">clusterrolebinding.rbac.authorization.k8s.io/raspi-cluster-master-admin created</span>
-<span class="gp">ubuntu@ubuntu:~$ </span>sudo k0s kubeconfig create --groups system:masters raspi-cluster-master
+<span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>create<span class="w"> </span>--groups<span class="w"> </span>system:masters<span class="w"> </span>raspi-cluster-master
 
 <span class="go">apiVersion: v1</span>
 <span class="go">clusters:</span>
@@ -1911,7 +1911,7 @@ rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/orga
 <span class="go">    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdHN5TkgzR25tM2F5UExrb1lNRzNxNkxBQTMrRWVsOEJQbXVSN1ZDZGJyRmhqSHJjClpzQXkvNFJ4bHJZOFk3T00vSlJKN3hTNlBGKzIzOUZValpCVVFjT0lpQlVMb3laQUI4MlpWVmtueWtTTGZxMXQKaG9TcnZDcGVwdHNBSUMxMlNubmExd01wUTZVVDlGWXBNbmZHYTc4V0czM2I0UHViZE9SN1hnMEhLUmVpTWptUwpWUmc2c2NKVGZCYWEzTEljOWtMUTg2Nk5ZYzJ2TCtuMnB5RGlUSndMc0t4QldQV1BWeHVtNjJKbGlnT3daYk5zCm9OS1V0QjJ0dTdRVzFSNWxNTGs3dHljMDJiVXdOOWFlYkY3TXZ6OXpLOEVGdTEvYngra01URWNzNkJKeDloRlcKbEZnN2Z1ZzJ0SDF6UnhsMDZGNmRkWEkrb3hWUmhIb1BYWk9Sd1FJREFRQUJBb0lCQUFpYytzbFFnYVZCb29SWgo5UjBhQTUyQ3ZhbHNpTUY3V0lPb2JlZlF0SnBTb1ZZTk0vVmplUU94S2VrQURUaGxiVzg1VFlLR1o0QVF3bjBwClQrS2J1bHllNmYvL2ZkemlJSUk5bmN2M3QzaEFZcEpGZWJPczdLcWhGSFNvUFFsSEd4dkhRaGgvZmFKQ1ZQNWUKVVBLZjBpbWhoMWtrUlFnRTB2NWZCYkVZekEyVGl4bThJSGtQUkdmZWN4WmF1VHpBS2VLR0hjTFpDem8xRHhlSgp3bHpEUW9YWDdHQnY5MGxqR1pndENXcFEyRUxaZ1NwdW0rZ0crekg1WFNXZXgwMzJ4d0NhbkdDdGcyRmxHd2V2Ck9PaG8zSjNrRWVJR1MzSzFJY24rcU9hMjRGZmgvcmRsWXFSdStWeEZ4ZkZqWGxaUjdjZkF4Mnc1Z3NmWm9CRXIKUE1oMTdVRUNnWUVBejZiTDc4RWsvZU1jczF6aWdaVVpZcE5qa2FuWHlsS3NUUWM1dU1pRmNORFdObFkxdlQzVQprOHE5cHVLbnBZRVlTTGVVTS9tSWk5TVp6bmZjSmJSL0hJSG9YVjFMQVJ2blQ0djN3T0JsaDc5ajdKUjBpOW1OClYrR0Q1SlNPUmZCVmYxVlJHRXN6d3ZhOVJsS2lMZ0JVM2tKeWN2Q09jYm5aeFltSXRrbDhDbXNDZ1lFQTRWeG4KZTY2QURIYmR3T0plbEFSKytkVHh5eVYyRjY1SEZDNldPQVh2RVRucGRudnRRUUprWWhNYzM1Y2gvMldmZDBWYQpZb3lGZE9kRThKZSsvcWxuS1pBc3BHRC9yZHp2VmFteHQ4WXdrQXU5Q1diZWw2VENPYkZOQ2hjK1NUbmRqN0duCmlSUHprM1JYMnBEVi9OaW5FVFA0TEJnTHJQYkxlSVAwSzZ4bjk0TUNnWUVBeXZGMmNVendUVjRRNTgrSTVDS0gKVzhzMnpkOFRzbjVZUFRRcG1zb0hlTG55RWNyeDNKRTRXSFVXSTZ0ek01TFczQUxuU21DL3JnQlVRWER0Yk1CYQpWczh6L1VPM2tVN25JOXhrK0ZHWGlUTnBnb2VZM0RGMExZYVBNL0JvbUR3S0kxZUwyVlZ1TWthWnQ4ZjlEejV0CnM0ZDNlWlJYY3hpem1KY1JVUzdDbHg4Q2dZQk45Vmc2K2RlRCtFNm4zZWNYenlKWnJHZGtmZllISlJ1amlLWWcKaFRUNVFZNVlsWEF5Yi9CbjJQTEJDaGdSc0lia2pKSkN5eGVUcERrOS9WQnQ2ZzRzMjVvRjF5UTdjZFU5VGZHVApnRFRtYjVrYU9vSy85SmZYdTFUS0s5WTVJSkpibGZvOXVqQWxqemFnL2o5NE16NC8vamxZajR6aWJaRmZoRTRnCkdZanhud0tCZ0U1cFIwMlVCa1hYL3IvdjRqck52enNDSjR5V3U2aWtpem00UmJKUXJVdEVNd1Y3a2JjNEs0VFIKM2s1blo1M1J4OGhjYTlMbXREcDJIRWo2MlBpL2pMR0JTN0NhOCtQcStxNjZwWWFZTDAwWnc4UGI3OVMrUmpzQQpONkNuQWg1dDFYeDhVMTIvWm9JcjBpOWZDaERuNlBqVEM0MVh5M1EwWWd6TW5jYXMyNVBiCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==</span>
 </code></pre></div>
 <p>Using the above kubeconfig, you can now access and use the cluster:</p>
-<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig kubectl get nodes,deployments,pods -owide -A
+<div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes,deployments,pods<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
 <span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.26.0+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10</span>
 

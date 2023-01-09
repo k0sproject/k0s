@@ -1443,7 +1443,7 @@
 </ul>
 <h3 id="check-whether-selinux-is-enabled-on-host-os">Check whether SELinux is enabled on host OS<a class="headerlink" href="#check-whether-selinux-is-enabled-on-host-os" title="Permanent link">#</a></h3>
 <p>SELinux is enabled on CentOS and RHEL by default. Below command output indicates SELinux is enabled.</p>
-<div class="highlight"><pre><span></span><code>$ getenforce
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>getenforce
 Enforcing
 </code></pre></div>
 <h3 id="install-container-selinux">Install container-selinux<a class="headerlink" href="#install-container-selinux" title="Permanent link">#</a></h3>
@@ -1451,44 +1451,44 @@ Enforcing
 In most Fedora based distributions including Fedora 37, Red Hat Enterprise Linux 7, 8 and 8, CentOS
 7 and 8 and Rocky Linux 9 this can be achieved by installing the package container-selinux.</p>
 <p>In RHEL 7 and CentOS 7 this is achieved by running:</p>
-<div class="highlight"><pre><span></span><code>yum install -y container-selinux
+<div class="highlight"><pre><span></span><code>yum<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>container-selinux
 </code></pre></div>
 <p>In the rest of the metnioned distributions run:</p>
-<div class="highlight"><pre><span></span><code>dnf install -y container-selinux
+<div class="highlight"><pre><span></span><code>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>container-selinux
 </code></pre></div>
 <h3 id="set-selinux-labels-for-k0s-installation-files">Set SELinux labels for k0s installation files<a class="headerlink" href="#set-selinux-labels-for-k0s-installation-files" title="Permanent link">#</a></h3>
 <p>Run below commands on the host OS of the worker nodes.</p>
 <div class="highlight"><pre><span></span><code><span class="nv">DATA_DIR</span><span class="o">=</span><span class="s2">&quot;/var/lib/k0s&quot;</span>
-sudo semanage fcontext -a -t container_runtime_exec_t <span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/bin/containerd.*&quot;</span>
-sudo semanage fcontext -a -t container_runtime_exec_t <span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/bin/runc&quot;</span>
-sudo restorecon -R -v <span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span>/bin
-sudo semanage fcontext -a -t container_var_lib_t <span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd(/.*)?&quot;</span>
-sudo semanage fcontext -a -t container_ro_file_t <span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd/io.containerd.snapshotter.*/snapshots(/.*)?&quot;</span>
-sudo restorecon -R -v <span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span>/containerd
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_runtime_exec_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/bin/containerd.*&quot;</span>
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_runtime_exec_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/bin/runc&quot;</span>
+sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>-v<span class="w"> </span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span>/bin
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_var_lib_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd(/.*)?&quot;</span>
+sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>container_ro_file_t<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span><span class="s2">/containerd/io.containerd.snapshotter.*/snapshots(/.*)?&quot;</span>
+sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>-v<span class="w"> </span><span class="si">${</span><span class="nv">DATA_DIR</span><span class="si">}</span>/containerd
 </code></pre></div>
 <h3 id="enable-selinux-in-containerd-of-k0s">Enable SELinux in containerd of k0s<a class="headerlink" href="#enable-selinux-in-containerd-of-k0s" title="Permanent link">#</a></h3>
 <p>Add below lines to <code>/etc/k0s/containerd.toml</code> of the worker nodes. You need to restart k0s service on the node to make the change take effect.</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;]</span><span class="w"></span>
-<span class="w">  </span><span class="n">enable_selinux</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;]</span>
+<span class="w">  </span><span class="n">enable_selinux</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
 <h2 id="verify-selinux-works-in-kubernetes-environment">Verify SELinux works in Kubernetes environment<a class="headerlink" href="#verify-selinux-works-in-kubernetes-environment" title="Permanent link">#</a></h2>
 <p>By following the example <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#assign-selinux-labels-to-a-container">Assign SELinux labels to a Container</a>, deploy a testing pod using below YAML file:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-selinux</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">busybox</span><span class="w"></span>
-<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-selinux</span><span class="w"></span>
-<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;sleep&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;infinity&quot;</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">    </span><span class="nt">securityContext</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">seLinuxOptions</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;s0:c123,c456&quot;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-selinux</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">busybox</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test-selinux</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;sleep&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;infinity&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">securityContext</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">seLinuxOptions</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;s0:c123,c456&quot;</span>
 </code></pre></div>
 <p>After the pod starts, ssh to the worker node on which the pod is running and check the pod process. It should display the label <code>s0:c123,c456</code> that you sepecified in YAML file:</p>
-<div class="highlight"><pre><span></span><code>$ ps -efZ <span class="p">|</span> grep -F <span class="s1">&#39;sleep infinity&#39;</span>
-system_u:system_r:container_t:s0:c123,c456 root <span class="m">3346</span> <span class="m">3288</span>  <span class="m">0</span> <span class="m">16</span>:39 ?       <span class="m">00</span>:00:00 sleep infinity
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>ps<span class="w"> </span>-efZ<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-F<span class="w"> </span><span class="s1">&#39;sleep infinity&#39;</span>
+system_u:system_r:container_t:s0:c123,c456<span class="w"> </span>root<span class="w"> </span><span class="m">3346</span><span class="w"> </span><span class="m">3288</span><span class="w">  </span><span class="m">0</span><span class="w"> </span><span class="m">16</span>:39<span class="w"> </span>?<span class="w">       </span><span class="m">00</span>:00:00<span class="w"> </span>sleep<span class="w"> </span>infinity
 </code></pre></div>
 
 

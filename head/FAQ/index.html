@@ -1409,13 +1409,13 @@
 <p>kay-zero-ess</p>
 <h2 id="how-do-i-run-a-single-node-cluster">How do I run a single node cluster?<a class="headerlink" href="#how-do-i-run-a-single-node-cluster" title="Permanent link">#</a></h2>
 <p>The cluster can be started with:</p>
-<div class="highlight"><pre><span></span><code>k0s controller --single
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>controller<span class="w"> </span>--single
 </code></pre></div>
 <p>See also the <a href="https://docs.k0sproject.io/latest/install/">Getting Started</a> tutorial.</p>
 <h2 id="how-do-i-connect-to-the-cluster">How do I connect to the cluster?<a class="headerlink" href="#how-do-i-connect-to-the-cluster" title="Permanent link">#</a></h2>
 <p>You find the config in <code>${DATADIR}/pki/admin.conf</code> (default: <code>/var/lib/k0s/pki/admin.conf</code>). Copy this file, and change the <code>localhost</code> entry to the public ip of the controller. Use the modified config to connect with kubectl:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/admin.conf
-kubectl ...
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/admin.conf
+kubectl<span class="w"> </span>...
 </code></pre></div>
 <h2 id="why-doesnt-kubectl-get-nodes-list-the-k0s-controllers">Why doesn't <code>kubectl get nodes</code> list the k0s controllers?<a class="headerlink" href="#why-doesnt-kubectl-get-nodes-list-the-k0s-controllers" title="Permanent link">#</a></h2>
 <p>As a default, the control plane does not run kubelet at all, and will not accept any workloads, so the controller will not show up on the node list in kubectl. If you want your controller to accept workloads and run pods, you do so with:

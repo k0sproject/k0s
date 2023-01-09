@@ -1473,25 +1473,25 @@
 <ol>
 <li>
 <p>Run the following command to create a k0sctl configuration file:</p>
-<div class="highlight"><pre><span></span><code>k0sctl init &gt; k0sctl.yaml
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>init<span class="w"> </span>&gt;<span class="w"> </span>k0sctl.yaml
 </code></pre></div>
 <p>This action creates a <code>k0sctl.yaml</code> file in the current directory:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span><span class="w"></span>
-<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.0.1</span><span class="w"> </span><span class="c1"># replace with the controller&#39;s IP address</span><span class="w"></span>
-<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span><span class="w"></span>
-<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span><span class="w"></span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span><span class="w"></span>
-<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.0.2</span><span class="w"> </span><span class="c1"># replace with the worker&#39;s IP address</span><span class="w"></span>
-<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span><span class="w"></span>
-<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0sctl.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cluster</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s-cluster</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">controller</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.0.1</span><span class="w"> </span><span class="c1"># replace with the controller&#39;s IP address</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">    </span><span class="nt">ssh</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0.0.2</span><span class="w"> </span><span class="c1"># replace with the worker&#39;s IP address</span>
+<span class="w">      </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">      </span><span class="nt">keyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_rsa</span>
 </code></pre></div>
 </li>
 <li>
@@ -1501,67 +1501,67 @@
 <p><strong>Note</strong>: Refer to the <a href="https://github.com/k0sproject/k0sctl#configuration-file-spec-fields">k0sctl documentation</a> for k0sctl configuration specifications.</p>
 <h3 id="3-deploy-the-cluster">3. Deploy the cluster<a class="headerlink" href="#3-deploy-the-cluster" title="Permanent link">#</a></h3>
 <p>Run <code>k0sctl apply</code> to perform the cluster deployment:</p>
-<div class="highlight"><pre><span></span><code>k0sctl apply --config k0sctl.yaml
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>apply<span class="w"> </span>--config<span class="w"> </span>k0sctl.yaml
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████ █████████ ███
-⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███          ███    ███
-⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███          ███    ███
-⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███          ███    ███
-⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████    ███    ██████████
+<div class="highlight"><pre><span></span><code>⠀⣿⣿⡇⠀⠀⢀⣴⣾⣿⠟⠁⢸⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀█████████<span class="w"> </span>█████████<span class="w"> </span>███
+⠀⣿⣿⡇⣠⣶⣿⡿⠋⠀⠀⠀⢸⣿⡇⠀⠀⠀⣠⠀⠀⢀⣠⡆⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀███<span class="w">          </span>███<span class="w">    </span>███
+⠀⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⢸⣿⡇⠀⢰⣾⣿⠀⠀⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀███<span class="w">          </span>███<span class="w">    </span>███
+⠀⣿⣿⡏⠻⣿⣷⣤⡀⠀⠀⠀⠸⠛⠁⠀⠸⠋⠁⠀⠀⣿⣿⡇⠈⠉⠉⠉⠉⠉⠉⠉⠉⢹⣿⣿⠀███<span class="w">          </span>███<span class="w">    </span>███
+⠀⣿⣿⡇⠀⠀⠙⢿⣿⣦⣀⠀⠀⠀⣠⣶⣶⣶⣶⣶⣶⣿⣿⡇⢰⣶⣶⣶⣶⣶⣶⣶⣶⣾⣿⣿⠀█████████<span class="w">    </span>███<span class="w">    </span>██████████
 
-INFO k0sctl <span class="m">0</span>.0.0 Copyright <span class="m">2021</span>, Mirantis Inc.
-INFO Anonymized telemetry will be sent to Mirantis.
-INFO By continuing to use k0sctl you agree to these terms:
-INFO https://k0sproject.io/licenses/eula
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: connected
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: connected
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: is running Ubuntu <span class="m">20</span>.10
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: is running Ubuntu <span class="m">20</span>.10
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing kubectl
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather host facts
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: discovered <span class="m">10</span>.12.18.133 as private address
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Validate hosts
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Download K0s on the hosts
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: downloading k0s <span class="m">0</span>.11.0
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: downloading k0s <span class="m">0</span>.11.0
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Configure K0s
-WARN <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating default configuration
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: validating configuration
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: configuration was changed
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Initialize K0s Cluster
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: installing k0s controller
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> the k0s service to start
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: waiting <span class="k">for</span> kubernetes api to respond
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Install workers
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.1:22: generating token
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: writing join token
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: installing k0s worker
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: starting service
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">10</span>.0.0.2:22: waiting <span class="k">for</span> node to become ready
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 2m2s
-INFO k0s cluster version <span class="m">0</span>.11.0 is now installed
-INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
-INFO      k0sctl kubeconfig
+INFO<span class="w"> </span>k0sctl<span class="w"> </span><span class="m">0</span>.0.0<span class="w"> </span>Copyright<span class="w"> </span><span class="m">2021</span>,<span class="w"> </span>Mirantis<span class="w"> </span>Inc.
+INFO<span class="w"> </span>Anonymized<span class="w"> </span>telemetry<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>sent<span class="w"> </span>to<span class="w"> </span>Mirantis.
+INFO<span class="w"> </span>By<span class="w"> </span>continuing<span class="w"> </span>to<span class="w"> </span>use<span class="w"> </span>k0sctl<span class="w"> </span>you<span class="w"> </span>agree<span class="w"> </span>to<span class="w"> </span>these<span class="w"> </span>terms:
+INFO<span class="w"> </span>https://k0sproject.io/licenses/eula
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Connect<span class="w"> </span>to<span class="w"> </span>hosts
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>connected
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>connected
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Detect<span class="w"> </span>host<span class="w"> </span>operating<span class="w"> </span>systems
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>Ubuntu<span class="w"> </span><span class="m">20</span>.10
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>Ubuntu<span class="w"> </span><span class="m">20</span>.10
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Prepare<span class="w"> </span>hosts
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>installing<span class="w"> </span>kubectl
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Gather<span class="w"> </span>host<span class="w"> </span>facts
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>discovered<span class="w"> </span><span class="m">10</span>.12.18.133<span class="w"> </span>as<span class="w"> </span>private<span class="w"> </span>address
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Validate<span class="w"> </span>hosts
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Gather<span class="w"> </span>k0s<span class="w"> </span>facts
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Download<span class="w"> </span>K0s<span class="w"> </span>on<span class="w"> </span>the<span class="w"> </span>hosts
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>downloading<span class="w"> </span>k0s<span class="w"> </span><span class="m">0</span>.11.0
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>downloading<span class="w"> </span>k0s<span class="w"> </span><span class="m">0</span>.11.0
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Configure<span class="w"> </span>K0s
+WARN<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>generating<span class="w"> </span>default<span class="w"> </span>configuration
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>validating<span class="w"> </span>configuration
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>configuration<span class="w"> </span>was<span class="w"> </span>changed
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Initialize<span class="w"> </span>K0s<span class="w"> </span>Cluster
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>installing<span class="w"> </span>k0s<span class="w"> </span>controller
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>k0s<span class="w"> </span>service<span class="w"> </span>to<span class="w"> </span>start
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>kubernetes<span class="w"> </span>api<span class="w"> </span>to<span class="w"> </span>respond
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Install<span class="w"> </span>workers
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.1:22:<span class="w"> </span>generating<span class="w"> </span>token
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>writing<span class="w"> </span>join<span class="w"> </span>token
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>installing<span class="w"> </span>k0s<span class="w"> </span>worker
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>starting<span class="w"> </span>service
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">10</span>.0.0.2:22:<span class="w"> </span>waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>node<span class="w"> </span>to<span class="w"> </span>become<span class="w"> </span>ready
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Disconnect<span class="w"> </span>from<span class="w"> </span>hosts
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Finished<span class="w"> </span><span class="k">in</span><span class="w"> </span>2m2s
+INFO<span class="w"> </span>k0s<span class="w"> </span>cluster<span class="w"> </span>version<span class="w"> </span><span class="m">0</span>.11.0<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>installed
+INFO<span class="w"> </span>Tip:<span class="w"> </span>To<span class="w"> </span>access<span class="w"> </span>the<span class="w"> </span>cluster<span class="w"> </span>you<span class="w"> </span>can<span class="w"> </span>now<span class="w"> </span>fetch<span class="w"> </span>the<span class="w"> </span>admin<span class="w"> </span>kubeconfig<span class="w"> </span>using:
+INFO<span class="w">      </span>k0sctl<span class="w"> </span>kubeconfig
 </code></pre></div>
 <h3 id="4-access-the-cluster">4. Access the cluster<a class="headerlink" href="#4-access-the-cluster" title="Permanent link">#</a></h3>
 <p>To access your k0s cluster, use k0sctl to generate a <code>kubeconfig</code> for the purpose.</p>
-<div class="highlight"><pre><span></span><code>k0sctl kubeconfig &gt; kubeconfig
+<div class="highlight"><pre><span></span><code>k0sctl<span class="w"> </span>kubeconfig<span class="w"> </span>&gt;<span class="w"> </span>kubeconfig
 </code></pre></div>
 <p>With the <code>kubeconfig</code>, you can access your cluster using either kubectl or <a href="https://k8slens.dev/">Lens</a>.</p>
-<div class="highlight"><pre><span></span><code>kubectl get pods --kubeconfig kubeconfig -A
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>--kubeconfig<span class="w"> </span>kubeconfig<span class="w"> </span>-A
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
-kube-system   calico-kube-controllers-5f6546844f-w8x27   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m50s
-kube-system   calico-node-vd7lx                          <span class="m">1</span>/1     Running   <span class="m">0</span>          3m44s
-kube-system   coredns-5c98d7d4d8-tmrwv                   <span class="m">1</span>/1     Running   <span class="m">0</span>          4m10s
-kube-system   konnectivity-agent-d9xv2                   <span class="m">1</span>/1     Running   <span class="m">0</span>          3m31s
-kube-system   kube-proxy-xp9r9                           <span class="m">1</span>/1     Running   <span class="m">0</span>          4m4s
-kube-system   metrics-server-6fbcd86f7b-5frtn            <span class="m">1</span>/1     Running   <span class="m">0</span>          3m51s
+<div class="highlight"><pre><span></span><code>NAMESPACE<span class="w">     </span>NAME<span class="w">                                       </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+kube-system<span class="w">   </span>calico-kube-controllers-5f6546844f-w8x27<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>3m50s
+kube-system<span class="w">   </span>calico-node-vd7lx<span class="w">                          </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>3m44s
+kube-system<span class="w">   </span>coredns-5c98d7d4d8-tmrwv<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>4m10s
+kube-system<span class="w">   </span>konnectivity-agent-d9xv2<span class="w">                   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>3m31s
+kube-system<span class="w">   </span>kube-proxy-xp9r9<span class="w">                           </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>4m4s
+kube-system<span class="w">   </span>metrics-server-6fbcd86f7b-5frtn<span class="w">            </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>3m51s
 </code></pre></div>
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">#</a></h2>
 <ul>

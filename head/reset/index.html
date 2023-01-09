@@ -1370,51 +1370,51 @@
 <ol>
 <li>
 <p>Stop the service:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s stop
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>stop
 </code></pre></div>
 </li>
 <li>
 <p>Invoke the <code>reset</code> command:</p>
-<div class="highlight"><pre><span></span><code>$ sudo k0s reset
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:39<span class="o">]</span> * containers steps
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> successfully removed k0s containers!
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> no config file given, using defaults
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> * remove k0s users step:
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> no config file given, using defaults
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> * uninstall service step
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:44<span class="o">]</span> Uninstalling the k0s service
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:45<span class="o">]</span> * remove directories step
-INFO<span class="o">[</span><span class="m">2021</span>-06-29 <span class="m">13</span>:08:45<span class="o">]</span> * CNI leftovers cleanup step
-INFO k0s cleanup operations <span class="k">done</span>. To ensure a full reset, a node reboot is recommended.
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>k0s<span class="w"> </span>reset
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:39<span class="o">]</span><span class="w"> </span>*<span class="w"> </span>containers<span class="w"> </span>steps
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>successfully<span class="w"> </span>removed<span class="w"> </span>k0s<span class="w"> </span>containers!
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>no<span class="w"> </span>config<span class="w"> </span>file<span class="w"> </span>given,<span class="w"> </span>using<span class="w"> </span>defaults
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>*<span class="w"> </span>remove<span class="w"> </span>k0s<span class="w"> </span>users<span class="w"> </span>step:
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>no<span class="w"> </span>config<span class="w"> </span>file<span class="w"> </span>given,<span class="w"> </span>using<span class="w"> </span>defaults
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>*<span class="w"> </span>uninstall<span class="w"> </span>service<span class="w"> </span>step
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:44<span class="o">]</span><span class="w"> </span>Uninstalling<span class="w"> </span>the<span class="w"> </span>k0s<span class="w"> </span>service
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:45<span class="o">]</span><span class="w"> </span>*<span class="w"> </span>remove<span class="w"> </span>directories<span class="w"> </span>step
+INFO<span class="o">[</span><span class="m">2021</span>-06-29<span class="w"> </span><span class="m">13</span>:08:45<span class="o">]</span><span class="w"> </span>*<span class="w"> </span>CNI<span class="w"> </span>leftovers<span class="w"> </span>cleanup<span class="w"> </span>step
+INFO<span class="w"> </span>k0s<span class="w"> </span>cleanup<span class="w"> </span>operations<span class="w"> </span><span class="k">done</span>.<span class="w"> </span>To<span class="w"> </span>ensure<span class="w"> </span>a<span class="w"> </span>full<span class="w"> </span>reset,<span class="w"> </span>a<span class="w"> </span>node<span class="w"> </span>reboot<span class="w"> </span>is<span class="w"> </span>recommended.
 </code></pre></div>
 </li>
 </ol>
 <h2 id="uninstall-a-k0s-cluster-using-k0sctl">Uninstall a k0s cluster using k0sctl<a class="headerlink" href="#uninstall-a-k0s-cluster-using-k0sctl" title="Permanent link">#</a></h2>
 <p>k0sctl can be used to connect each node and remove all k0s-related files and processes from the hosts.</p>
 <ol>
-<li>Invoke <code>k0sctl reset</code> command:<div class="highlight"><pre><span></span><code>$ k0sctl reset --config k0sctl.yaml
-k0sctl v0.9.0 Copyright <span class="m">2021</span>, k0sctl authors.
+<li>Invoke <code>k0sctl reset</code> command:<div class="highlight"><pre><span></span><code>$<span class="w"> </span>k0sctl<span class="w"> </span>reset<span class="w"> </span>--config<span class="w"> </span>k0sctl.yaml
+k0sctl<span class="w"> </span>v0.9.0<span class="w"> </span>Copyright<span class="w"> </span><span class="m">2021</span>,<span class="w"> </span>k0sctl<span class="w"> </span>authors.
 
-? Going to reset all of the hosts, which will destroy all configuration and data, Are you sure? Yes
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Connect to hosts 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: connected              
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: connected            
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Detect host operating systems 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: is running Ubuntu <span class="m">20</span>.04.2 LTS 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: is running Ubuntu <span class="m">20</span>.04.2 LTS 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Prepare hosts    
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Gather k0s facts 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: found existing configuration 
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: is running k0s controller version <span class="m">1</span>.26.0+k0s.0
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: is running k0s worker version <span class="m">1</span>.26.0+k0s.0
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: checking <span class="k">if</span> worker  has joined 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Reset hosts      
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: stopping k0s           
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: stopping k0s         
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.218.149:22: running k0s reset    
-INFO <span class="o">[</span>ssh<span class="o">]</span> <span class="m">13</span>.53.43.63:22: running k0s reset      
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Running phase: Disconnect from hosts 
-<span class="nv">INFO</span> <span class="o">==</span>&gt; Finished <span class="k">in</span> 8s                  
+?<span class="w"> </span>Going<span class="w"> </span>to<span class="w"> </span>reset<span class="w"> </span>all<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>hosts,<span class="w"> </span>which<span class="w"> </span>will<span class="w"> </span>destroy<span class="w"> </span>all<span class="w"> </span>configuration<span class="w"> </span>and<span class="w"> </span>data,<span class="w"> </span>Are<span class="w"> </span>you<span class="w"> </span>sure?<span class="w"> </span>Yes
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Connect<span class="w"> </span>to<span class="w"> </span>hosts<span class="w"> </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>connected<span class="w">              </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.218.149:22:<span class="w"> </span>connected<span class="w">            </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Detect<span class="w"> </span>host<span class="w"> </span>operating<span class="w"> </span>systems<span class="w"> </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>Ubuntu<span class="w"> </span><span class="m">20</span>.04.2<span class="w"> </span>LTS<span class="w"> </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.218.149:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>Ubuntu<span class="w"> </span><span class="m">20</span>.04.2<span class="w"> </span>LTS<span class="w"> </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Prepare<span class="w"> </span>hosts<span class="w">    </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Gather<span class="w"> </span>k0s<span class="w"> </span>facts<span class="w"> </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>found<span class="w"> </span>existing<span class="w"> </span>configuration<span class="w"> </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>k0s<span class="w"> </span>controller<span class="w"> </span>version<span class="w"> </span><span class="m">1</span>.26.0+k0s.0
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.218.149:22:<span class="w"> </span>is<span class="w"> </span>running<span class="w"> </span>k0s<span class="w"> </span>worker<span class="w"> </span>version<span class="w"> </span><span class="m">1</span>.26.0+k0s.0
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>checking<span class="w"> </span><span class="k">if</span><span class="w"> </span>worker<span class="w">  </span>has<span class="w"> </span>joined<span class="w"> </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Reset<span class="w"> </span>hosts<span class="w">      </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>stopping<span class="w"> </span>k0s<span class="w">           </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.218.149:22:<span class="w"> </span>stopping<span class="w"> </span>k0s<span class="w">         </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.218.149:22:<span class="w"> </span>running<span class="w"> </span>k0s<span class="w"> </span>reset<span class="w">    </span>
+INFO<span class="w"> </span><span class="o">[</span>ssh<span class="o">]</span><span class="w"> </span><span class="m">13</span>.53.43.63:22:<span class="w"> </span>running<span class="w"> </span>k0s<span class="w"> </span>reset<span class="w">      </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Running<span class="w"> </span>phase:<span class="w"> </span>Disconnect<span class="w"> </span>from<span class="w"> </span>hosts<span class="w"> </span>
+<span class="nv">INFO</span><span class="w"> </span><span class="o">==</span>&gt;<span class="w"> </span>Finished<span class="w"> </span><span class="k">in</span><span class="w"> </span>8s<span class="w">                  </span>
 </code></pre></div>
 </li>
 </ol>

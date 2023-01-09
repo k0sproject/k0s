@@ -1441,104 +1441,104 @@
 <h2 id="install-k0s">Install k0s<a class="headerlink" href="#install-k0s" title="Permanent link">#</a></h2>
 <p>Let's start by installing k0s. Any k0s deployment option will do, but to keep things simple, this <a href="../../install/">Quick Start Guide</a> gets you started with a single node k0s cluster.</p>
 <p>Run these three commands to download k0s, install and start it:</p>
-<div class="highlight"><pre><span></span><code>curl -sSLf https://get.k0s.sh <span class="p">|</span> sudo sh
-sudo k0s install controller --single
-sudo k0s start
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sSLf<span class="w"> </span>https://get.k0s.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>sh
+sudo<span class="w"> </span>k0s<span class="w"> </span>install<span class="w"> </span>controller<span class="w"> </span>--single
+sudo<span class="w"> </span>k0s<span class="w"> </span>start
 </code></pre></div>
 <h2 id="set-kubeconfig">Set kubeconfig<a class="headerlink" href="#set-kubeconfig" title="Permanent link">#</a></h2>
 <p>Next, you need to set the KUBECONFIG variable, which is needed by Flux CLI later on.</p>
-<div class="highlight"><pre><span></span><code>sudo k0s kubeconfig admin &gt; kubeconfig
-<span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$PWD</span>/kubeconfig
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>kubeconfig<span class="w"> </span>admin<span class="w"> </span>&gt;<span class="w"> </span>kubeconfig
+<span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span><span class="nv">$PWD</span>/kubeconfig
 </code></pre></div>
 <h2 id="install-flux">Install Flux<a class="headerlink" href="#install-flux" title="Permanent link">#</a></h2>
 <p>To proceed with Flux, install the Flux CLI, which is used for configuring Flux to your Kubernetes cluster. For macOS and Linux, this can be done either with brew or bash script. Use one of them:</p>
-<div class="highlight"><pre><span></span><code>brew install fluxcd/tap/flux
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>fluxcd/tap/flux
 </code></pre></div>
 <p>or</p>
-<div class="highlight"><pre><span></span><code>curl -s https://fluxcd.io/install.sh <span class="p">|</span> sudo bash
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>https://fluxcd.io/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>bash
 </code></pre></div>
 <p>For more details of the Flux installation, check the <a href="https://fluxcd.io/docs/get-started/">Flux documentation</a>.</p>
 <h2 id="configure-flux-for-a-github-repository">Configure Flux for a GitHub repository<a class="headerlink" href="#configure-flux-for-a-github-repository" title="Permanent link">#</a></h2>
 <p>Export your GitHub personal access token (<a href="https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token">instructions how to get it</a>) and username:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_TOKEN</span><span class="o">=</span>&lt;your-token&gt;
-<span class="nb">export</span> <span class="nv">GITHUB_USER</span><span class="o">=</span>&lt;your-username&gt;
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_TOKEN</span><span class="o">=</span>&lt;your-token&gt;
+<span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_USER</span><span class="o">=</span>&lt;your-username&gt;
 </code></pre></div>
 <p>Come up with a GitHub repo name (e.g. flux-demo), which will be used by Flux to store (and sync) the config files.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">GITHUB_REPO_NAME</span><span class="o">=</span>&lt;<span class="k">select</span>-repo-name-to-be-created&gt;
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GITHUB_REPO_NAME</span><span class="o">=</span>&lt;<span class="k">select</span>-repo-name-to-be-created&gt;
 </code></pre></div>
 <p>Bootstrap flux to your cluster. The GitHub repo will be created automatically by Flux:</p>
-<div class="highlight"><pre><span></span><code>flux bootstrap github <span class="se">\</span>
---owner<span class="o">=</span><span class="nv">$GITHUB_USER</span> <span class="se">\</span>
---repository<span class="o">=</span><span class="nv">$GITHUB_REPO_NAME</span> <span class="se">\</span>
---branch<span class="o">=</span>main <span class="se">\</span>
---path<span class="o">=</span>./clusters/my-cluster <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>flux<span class="w"> </span>bootstrap<span class="w"> </span>github<span class="w"> </span><span class="se">\</span>
+--owner<span class="o">=</span><span class="nv">$GITHUB_USER</span><span class="w"> </span><span class="se">\</span>
+--repository<span class="o">=</span><span class="nv">$GITHUB_REPO_NAME</span><span class="w"> </span><span class="se">\</span>
+--branch<span class="o">=</span>main<span class="w"> </span><span class="se">\</span>
+--path<span class="o">=</span>./clusters/my-cluster<span class="w"> </span><span class="se">\</span>
 --personal
 </code></pre></div>
 <p>Now you are all set with Flux and can proceed to deploy your first application.</p>
 <h2 id="deploy-example-application">Deploy example application<a class="headerlink" href="#deploy-example-application" title="Permanent link">#</a></h2>
 <p>Next, we'll deploy a simple web application and expose it using a NodePort service. In the previous step, we configured Flux to track the path /clusters/my-cluster/ in your repository. Now clone the repo to your local machine:</p>
-<div class="highlight"><pre><span></span><code>git clone git@github.com:<span class="nv">$GITHUB_USER</span>/<span class="nv">$GITHUB_REPO_NAME</span>.git
-<span class="nb">cd</span> <span class="nv">$GITHUB_REPO_NAME</span>/clusters/my-cluster/
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:<span class="nv">$GITHUB_USER</span>/<span class="nv">$GITHUB_REPO_NAME</span>.git
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$GITHUB_REPO_NAME</span>/clusters/my-cluster/
 </code></pre></div>
 <p>Create the following YAML file (simple-web-server-with-nodeport.yaml) into the same directory:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="nn">---</span><span class="w"></span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server</span><span class="w"></span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="w">    </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="w">      </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd</span><span class="w"></span>
-<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd:2.4.53-alpine</span><span class="w"></span>
-<span class="w">          </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
-<span class="nn">---</span><span class="w"></span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span><span class="w"></span>
-<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server-service</span><span class="w"></span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NodePort</span><span class="w"></span>
-<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span><span class="w"></span>
-<span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
-<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
-<span class="w">      </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30003</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">    </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">      </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">httpd:2.4.53-alpine</span>
+<span class="w">          </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Service</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web-server-service</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NodePort</span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">  </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">      </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30003</span>
 </code></pre></div>
 <p>Then push the new file to the repository:</p>
-<div class="highlight"><pre><span></span><code>git add .
-git commit -m <span class="s2">&quot;Add web server manifest&quot;</span>
-git push
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Add web server manifest&quot;</span>
+git<span class="w"> </span>push
 </code></pre></div>
 <p>Check that Flux detects your changes and the web server gets applied (by default this should happen within 1 min):</p>
-<div class="highlight"><pre><span></span><code>flux get kustomizations
+<div class="highlight"><pre><span></span><code>flux<span class="w"> </span>get<span class="w"> </span>kustomizations
 </code></pre></div>
 <p>If the deployment went successfully, you should see the newly added objects:</p>
-<div class="highlight"><pre><span></span><code>sudo k0s kubectl get all -n web
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>k0s<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>all<span class="w"> </span>-n<span class="w"> </span>web
 </code></pre></div>
 <p>You can try to access the web application using</p>
-<div class="highlight"><pre><span></span><code>curl localhost:30003
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>localhost:30003
 </code></pre></div>
 <p>or by using a web browser <a href="http://localhost:30003">http://localhost:30003</a>.</p>
 <p><strong>Voilà!</strong> You have now installed the example application using the GitOps method with Flux. As a next step you can try to modify the web app YAML file or add another application directly in to the Git repo and see how Flux will automatically pick up the changes without accessing the cluster with kubectl.</p>
 <h2 id="uninstall-flux">Uninstall Flux<a class="headerlink" href="#uninstall-flux" title="Permanent link">#</a></h2>
 <p>If you want to uninstall Flux from the cluster, run:</p>
-<div class="highlight"><pre><span></span><code>flux uninstall --namespace<span class="o">=</span>flux-system
+<div class="highlight"><pre><span></span><code>flux<span class="w"> </span>uninstall<span class="w"> </span>--namespace<span class="o">=</span>flux-system
 </code></pre></div>
 <p>Your applications, which were installed by Flux, will remain in the cluster, but you don't have the Flux processes anymore to sync up the desired state from Git.</p>
 
