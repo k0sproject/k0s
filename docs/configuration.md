@@ -234,10 +234,36 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 #### `spec.network.kubeProxy`
 
-| Element          | Description                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------ |
-| `disabled`       | Disable kube-proxy altogether (default: `false`).                                                |
-| `mode`           | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
+| Element    | Description                                                                                      |
+|------------|--------------------------------------------------------------------------------------------------|
+| `disabled` | Disable kube-proxy altogether (default: `false`).                                                |
+| `mode`     | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
+| `iptables` | Kube proxy iptables settings                                                                     |
+| `ipvs`     | Kube proxy ipvs settings                                                                         |
+
+Default kube-proxy iptables settings:
+
+```yaml
+iptables:
+  masqueradeAll: false
+  masqueradeBit: null
+  minSyncPeriod: 0s
+  syncPeriod: 0s
+```
+
+Default kube-proxy ipvs settings:
+
+```yaml
+ipvs:
+  excludeCIDRs: null
+  minSyncPeriod: 0s
+  scheduler: ""
+  strictARP: false
+  syncPeriod: 0s
+  tcpFinTimeout: 0s
+  tcpTimeout: 0s
+  udpTimeout: 0s
+```
 
 ### `spec.controllerManager`
 

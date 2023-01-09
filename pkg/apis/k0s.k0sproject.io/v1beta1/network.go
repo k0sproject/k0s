@@ -176,6 +176,13 @@ func (n *Network) UnmarshalJSON(data []byte) error {
 
 	if n.KubeProxy == nil {
 		n.KubeProxy = DefaultKubeProxy()
+	} else {
+		if n.KubeProxy.IPTables == nil {
+			n.KubeProxy.IPTables = DefaultKubeProxyIPTables()
+		}
+		if n.KubeProxy.IPVS == nil {
+			n.KubeProxy.IPVS = DefaultKubeProxyIPVS()
+		}
 	}
 
 	return nil

@@ -345,6 +345,45 @@ spec:
                     properties:
                       disabled:
                         type: boolean
+                      iptables:
+                        description: KubeProxyIPTablesConfiguration contains iptables-related
+                          kube-proxy configuration @see https://github.com/kubernetes/kube-proxy/blob/master/config/v1alpha1/types.go#L26
+                        properties:
+                          localhostNodePorts:
+                            type: boolean
+                          masqueradeAll:
+                            type: boolean
+                          masqueradeBit:
+                            format: int32
+                            type: integer
+                          minSyncPeriod:
+                            type: string
+                          syncPeriod:
+                            type: string
+                        type: object
+                      ipvs:
+                        description: KubeProxyIPVSConfiguration contains ipvs-related
+                          kube-proxy configuration @see https://github.com/kubernetes/kube-proxy/blob/master/config/v1alpha1/types.go#L45
+                        properties:
+                          excludeCIDRs:
+                            items:
+                              type: string
+                            type: array
+                          minSyncPeriod:
+                            type: string
+                          scheduler:
+                            type: string
+                          strictARP:
+                            type: boolean
+                          syncPeriod:
+                            type: string
+                          tcpFinTimeout:
+                            type: string
+                          tcpTimeout:
+                            type: string
+                          udpTimeout:
+                            type: string
+                        type: object
                       metricsBindAddress:
                         type: string
                       mode:
