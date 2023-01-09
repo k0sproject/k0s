@@ -308,8 +308,7 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.17+incompatible
 
-	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.10.0
-
+	// https://github.com/kubernetes/kubernetes/blob/v1.26.0/go.mod#L251-L279
 	k8s.io/api => k8s.io/api v0.26.0
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.26.0
@@ -324,8 +323,10 @@ replace (
 	k8s.io/controller-manager => k8s.io/controller-manager v0.26.0
 	k8s.io/cri-api => k8s.io/cri-api v0.26.0
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.26.0
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.26.0
+	k8s.io/kms => k8s.io/kms v0.26.0
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.26.0
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.26.0-rc.1-rc.1
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.26.0
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.26.0
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.26.0
 	k8s.io/kubectl => k8s.io/kubectl v0.26.0
