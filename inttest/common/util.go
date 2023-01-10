@@ -80,6 +80,24 @@ func WaitForMetricsReady(ctx context.Context, c *rest.Config) error {
 		})
 }
 
+func WaitForNodeReadyStatus(ctx context.Context, clients kubernetes.Interface, nodeName string, status corev1.ConditionStatus) error {
+	return watch.Nodes(clients.CoreV1().Nodes()).
+		WithObjectName(nodeName).
+		Until(ctx, func(node *corev1.Node) (done bool, err error) {
+			for _, cond := range node.Status.Conditions {
+				if cond.Type == corev1.NodeReady {
+					if cond.Status == status {
+						return true, nil
+					}
+
+					break
+				}
+			}
+
+			return false, nil
+		})
+}
+
 // WaitForDaemonSet waits for daemon set be ready.
 func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string) error {
 	return watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
@@ -123,23 +141,6 @@ func waitForDefaultStorageClass(kc *kubernetes.Clientset) wait.ConditionWithCont
 		}
 
 		return sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true", nil
-	}
-}
-
-// WaitForDeploymentWithContext waits for a deployment to become ready as long
-// as the given context isn't canceled.
-func WaitForDeploymentWithContext(ctx context.Context, kc *kubernetes.Clientset, name string) error {
-	return Poll(ctx, waitForDeployment(kc, name))
-}
-
-func waitForDeployment(kc *kubernetes.Clientset, name string) wait.ConditionWithContextFunc {
-	return func(ctx context.Context) (done bool, err error) {
-		dep, err := kc.AppsV1().Deployments("kube-system").Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-
-		return *dep.Spec.Replicas == dep.Status.ReadyReplicas, nil
 	}
 }
 
@@ -191,17 +192,23 @@ func WaitForPodLogs(ctx context.Context, kc *kubernetes.Clientset, namespace str
 	})
 }
 
-func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) error {
+func WaitForLease(ctx context.Context, kc *kubernetes.Clientset, name string, namespace string) (string, error) {
+	var holderIdentity string
 	watchLeases := watch.FromClient[*coordinationv1.LeaseList, coordinationv1.Lease]
-	return watchLeases(kc.CoordinationV1().Leases(namespace)).
+	if err := watchLeases(kc.CoordinationV1().Leases(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(
 			ctx, func(lease *coordinationv1.Lease) (bool, error) {
+				holderIdentity = *lease.Spec.HolderIdentity
 				// Verify that there's a valid holder on the lease
-				return *lease.Spec.HolderIdentity != "", nil
+				return holderIdentity != "", nil
 			},
-		)
+		); err != nil {
+		return "", err
+	}
+
+	return holderIdentity, nil
 }
 
 func RetryWatchErrors(logf func(format string, args ...any)) watch.ErrorCallback {

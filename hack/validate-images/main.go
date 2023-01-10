@@ -26,9 +26,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
+	"k8s.io/utils/strings/slices"
 
 	"github.com/estesp/manifest-tool/v2/pkg/registry"
 	"github.com/estesp/manifest-tool/v2/pkg/store"
@@ -54,15 +55,25 @@ func main() {
 		panic("No architectures given")
 	}
 	cfg := v1beta1.DefaultClusterConfig()
-	uris := airgap.GetImageURIs(cfg.Spec.Images)
-	if err := validateImages(uris, architectures); err != nil {
+	uris := airgap.GetImageURIs(cfg.Spec, false)
+
+	var errs []error
+	errs = append(errs, validateImages(uris, architectures)...)
+
+	// Envoy doesn't have an official ARMv7 image!
+	architectures = slices.Filter(nil, architectures, func(s string) bool { return s != "arm" })
+	errs = append(errs, validateImages([]string{v1beta1.DefaultEnvoyProxyImage().URI()}, architectures)...)
+
+	if len(errs) > 0 {
+		fmt.Fprintln(os.Stderr, "Not all images were valid.")
+		for _, err := range errs {
+			fmt.Fprintln(os.Stderr, "Error: ", err)
+		}
 		os.Exit(1)
 	}
-
 }
 
-func validateImages(uris []string, architectures []string) error {
-	var errs []error
+func validateImages(uris []string, architectures []string) (errs []error) {
 	for _, name := range uris {
 		fmt.Println("validating image", name, "to have architectures: ", architectures)
 		imageRef, err := util.ParseName(name)
@@ -77,8 +88,8 @@ func validateImages(uris []string, architectures []string) error {
 			// this is a multi-platform image descriptor; marshal to Index type
 			var idx ocispec.Index
 			check(json.Unmarshal(db, &idx))
-			if err := validateList(name, architectures, memoryStore, descriptor, idx); err != nil {
-				errs = append(errs, err)
+			if validationErrs := validateList(name, architectures, memoryStore, descriptor, idx); validationErrs != nil {
+				errs = append(errs, validationErrs...)
 			}
 		case ocispec.MediaTypeImageManifest, types.MediaTypeDockerSchema2Manifest:
 			errs = append(errs, fmt.Errorf("image %s has single manifest, but we need multiarch manifests", name))
@@ -86,14 +97,10 @@ func validateImages(uris []string, architectures []string) error {
 			errs = append(errs, fmt.Errorf("image %s has unknown manifest type, can't validate architectures", name))
 		}
 	}
-	if len(errs) > 0 {
-		spew.Dump(errs)
-		return fmt.Errorf("image manifests have wrong architectures")
-	}
-	return nil
+	return
 }
 
-func validateList(name string, architectures []string, cs *store.MemoryStore, descriptor ocispec.Descriptor, index ocispec.Index) error {
+func validateList(name string, architectures []string, cs *store.MemoryStore, descriptor ocispec.Descriptor, index ocispec.Index) (errs []error) {
 	searchFor := map[string]bool{}
 
 	for _, m := range index.Manifests {
@@ -107,8 +114,9 @@ func validateList(name string, architectures []string, cs *store.MemoryStore, de
 	for _, platform := range architectures {
 		_, found := searchFor[platform]
 		if !found {
-			return fmt.Errorf("platform %s not found for image %s", platform, name)
+			errs = append(errs, fmt.Errorf("platform %s not found for image %s", platform, name))
 		}
 	}
-	return nil
+
+	return
 }

@@ -216,7 +216,7 @@ lint: .k0sbuild.docker-image.k0s go.sum codegen
 	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_DIRS)
 
 airgap-images.txt: k0s .k0sbuild.docker-image.k0s 
-	$(GO_ENV) ./k0s airgap list-images > '$@' || { \
+	$(GO_ENV) ./k0s airgap list-images --all > '$@' || { \
 	  code=$$? && \
 	  rm -f -- '$@' && \
 	  exit $$code ; \

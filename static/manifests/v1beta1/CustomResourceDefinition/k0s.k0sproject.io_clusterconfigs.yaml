@@ -186,6 +186,11 @@ spec:
                         type: string
                     type: object
                   default_pull_policy:
+                    default: IfNotPresent
+                    enum:
+                    - Always
+                    - IfNotPresent
+                    - Never
                     type: string
                   konnectivity:
                     description: ImageSpec container image settings
@@ -428,6 +433,69 @@ spec:
                         type: string
                       peerRouterIPs:
                         description: Comma-separated list of global peer ASNs
+                        type: string
+                    type: object
+                  nodeLocalLoadBalancing:
+                    description: 'nodeLocalLoadBalancing defines the configuration
+                      options related to k0s''s node-local load balancing feature.
+                      NOTE: This feature is experimental, and currently unsupported
+                      on ARMv7!'
+                    properties:
+                      enabled:
+                        description: 'enabled indicates if node-local load balancing
+                          should be used to access Kubernetes API servers from worker
+                          nodes. Default: false'
+                        type: boolean
+                      envoyProxy:
+                        description: envoyProxy contains configuration options related
+                          to the "EnvoyProxy" type of load balancing.
+                        properties:
+                          apiServerBindPort:
+                            default: 7443
+                            description: 'apiServerBindPort is the port number on
+                              which to bind the Envoy load balancer for the Kubernetes
+                              API server to on a worker''s loopback interface. This
+                              must be a valid port number, 0 < x < 65536. Default:
+                              7443'
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          image:
+                            description: image specifies the OCI image that's being
+                              used to run Envoy.
+                            properties:
+                              image:
+                                type: string
+                              version:
+                                type: string
+                            type: object
+                          imagePullPolicy:
+                            description: imagePullPolicy specifies the pull policy
+                              being used to run Envoy. Defaults to the default image
+                              pull policy.
+                            enum:
+                            - Always
+                            - Never
+                            - IfNotPresent
+                            type: string
+                          konnectivityServerBindPort:
+                            default: 7132
+                            description: 'konnectivityServerBindPort is the port number
+                              on which to bind the Envoy load balancer for the konnectivity
+                              server to on a worker''s loopback interface. This must
+                              be a valid port number, 0 < x < 65536. Default: 7132'
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                        type: object
+                      type:
+                        description: type indicates the type of the node-local load
+                          balancer to deploy. Currently, the only supported type is
+                          "EnvoyProxy".
+                        enum:
+                        - EnvoyProxy
                         type: string
                     type: object
                   podCIDR:

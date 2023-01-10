@@ -19,6 +19,7 @@ package workerconfig
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -29,12 +30,17 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/typed/core/v1/fake"
+	k8stesting "k8s.io/client-go/testing"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/utils/pointer"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
@@ -43,8 +49,9 @@ import (
 type kubeletConfig = kubeletv1beta1.KubeletConfiguration
 
 func TestReconciler_Lifecycle(t *testing.T) {
-	createdReconciler := func(t *testing.T) *Reconciler {
+	createdReconciler := func(t *testing.T) (*Reconciler, testutil.FakeClientFactory) {
 		t.Helper()
+		clients := testutil.NewFakeClientFactory()
 		underTest, err := NewReconciler(
 			constant.GetConfig(t.TempDir()),
 			&v1beta1.ClusterSpec{
@@ -54,18 +61,19 @@ func TestReconciler_Lifecycle(t *testing.T) {
 					ServiceCIDR:   "99.99.99.0/24",
 				},
 			},
-			testutil.NewFakeClientFactory(),
+			clients,
 			&leaderelector.Dummy{Leader: true},
+			true,
 		)
 		require.NoError(t, err)
 		underTest.log = newTestLogger(t)
-		return underTest
+		return underTest, clients
 	}
 
 	t.Run("when_created", func(t *testing.T) {
 
 		t.Run("init_succeeds", func(t *testing.T) {
-			underTest := createdReconciler(t)
+			underTest, _ := createdReconciler(t)
 
 			err := underTest.Init(testContext(t))
 
@@ -73,7 +81,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("start_fails", func(t *testing.T) {
-			underTest := createdReconciler(t)
+			underTest, _ := createdReconciler(t)
 
 			err := underTest.Start(testContext(t))
 
@@ -82,7 +90,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("reconcile_fails", func(t *testing.T) {
-			underTest := createdReconciler(t)
+			underTest, _ := createdReconciler(t)
 
 			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
 
@@ -91,7 +99,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("stop_fails", func(t *testing.T) {
-			underTest := createdReconciler(t)
+			underTest, _ := createdReconciler(t)
 
 			err := underTest.Stop()
 
@@ -100,17 +108,17 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 	})
 
-	initializedReconciler := func(t *testing.T) *Reconciler {
+	initializedReconciler := func(t *testing.T) (*Reconciler, testutil.FakeClientFactory) {
 		t.Helper()
-		underTest := createdReconciler(t)
+		underTest, clients := createdReconciler(t)
 		require.NoError(t, underTest.Init(testContext(t)))
-		return underTest
+		return underTest, clients
 	}
 
 	t.Run("when_initialized", func(t *testing.T) {
 
 		t.Run("another_init_fails", func(t *testing.T) {
-			underTest := initializedReconciler(t)
+			underTest, _ := initializedReconciler(t)
 
 			err := underTest.Init(testContext(t))
 
@@ -119,14 +127,14 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("start_and_stop_succeed", func(t *testing.T) {
-			underTest := initializedReconciler(t)
+			underTest, _ := initializedReconciler(t)
 
 			require.NoError(t, underTest.Start(testContext(t)))
 			assert.NoError(t, underTest.Stop())
 		})
 
 		t.Run("reconcile_fails", func(t *testing.T) {
-			underTest := initializedReconciler(t)
+			underTest, _ := initializedReconciler(t)
 
 			err := underTest.Reconcile(testContext(t), v1beta1.DefaultClusterConfig(nil))
 
@@ -135,7 +143,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 		})
 
 		t.Run("stop_fails", func(t *testing.T) {
-			underTest := initializedReconciler(t)
+			underTest, _ := initializedReconciler(t)
 
 			err := underTest.Stop()
 
@@ -146,7 +154,8 @@ func TestReconciler_Lifecycle(t *testing.T) {
 
 	startedReconciler := func(t *testing.T) (*Reconciler, *mockApplier) {
 		t.Helper()
-		underTest := initializedReconciler(t)
+		underTest, clients := initializedReconciler(t)
+		mockKubernetesEndpoints(t, clients)
 		mockApplier := installMockApplier(t, underTest)
 		require.NoError(t, underTest.Start(testContext(t)))
 		t.Cleanup(func() {
@@ -294,6 +303,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 }
 
 func TestReconciler_ResourceGeneration(t *testing.T) {
+	clients := testutil.NewFakeClientFactory()
 	underTest, err := NewReconciler(
 		constant.GetConfig(t.TempDir()),
 		&v1beta1.ClusterSpec{
@@ -303,14 +313,16 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 				ServiceCIDR:   "99.99.99.0/24",
 			},
 		},
-		testutil.NewFakeClientFactory(),
+		clients,
 		&leaderelector.Dummy{Leader: true},
+		true,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
 
 	require.NoError(t, underTest.Init(context.TODO()))
 
+	mockKubernetesEndpoints(t, clients)
 	mockApplier := installMockApplier(t, underTest)
 
 	require.NoError(t, underTest.Start(context.TODO()))
@@ -322,6 +334,21 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 
 	require.NoError(t, underTest.Reconcile(context.TODO(), &v1beta1.ClusterConfig{
 		Spec: &v1beta1.ClusterSpec{
+			Network: &v1beta1.Network{
+				NodeLocalLoadBalancing: &v1beta1.NodeLocalLoadBalancing{
+					Enabled: true,
+					Type:    v1beta1.NllbTypeEnvoyProxy,
+					EnvoyProxy: &v1beta1.EnvoyProxy{
+						Image: &v1beta1.ImageSpec{
+							Image: "envoy", Version: "test",
+						},
+						APIServerBindPort: 1337,
+					},
+				},
+			},
+			Images: &v1beta1.ClusterImages{
+				DefaultPullPolicy: string(corev1.PullNever),
+			},
 			WorkerProfiles: v1beta1.WorkerProfiles{{
 				Name:   "profile_XXX",
 				Config: []byte(`{"authentication": {"anonymous": {"enabled": true}}}`),
@@ -425,6 +452,7 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 
 func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	cluster := v1beta1.DefaultClusterConfig(nil)
+	clients := testutil.NewFakeClientFactory()
 	underTest, err := NewReconciler(
 		constant.GetConfig(t.TempDir()),
 		&v1beta1.ClusterSpec{
@@ -434,14 +462,16 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 				ServiceCIDR:   "99.99.99.0/24",
 			},
 		},
-		testutil.NewFakeClientFactory(),
+		clients,
 		&leaderelector.Dummy{Leader: true},
+		true,
 	)
 	require.NoError(t, err)
 	underTest.log = newTestLogger(t)
 
 	require.NoError(t, underTest.Init(context.TODO()))
 
+	mockKubernetesEndpoints(t, clients)
 	mockApplier := installMockApplier(t, underTest)
 
 	require.NoError(t, underTest.Start(context.TODO()))
@@ -550,6 +580,7 @@ func TestReconciler_runReconcileLoop(t *testing.T) {
 func TestReconciler_LeaderElection(t *testing.T) {
 	var le mockLeaderElector
 	cluster := v1beta1.DefaultClusterConfig(nil)
+	clients := testutil.NewFakeClientFactory()
 	underTest, err := NewReconciler(
 		constant.GetConfig(t.TempDir()),
 		&v1beta1.ClusterSpec{
@@ -559,14 +590,21 @@ func TestReconciler_LeaderElection(t *testing.T) {
 				ServiceCIDR:   "99.99.99.0/24",
 			},
 		},
-		testutil.NewFakeClientFactory(),
+		clients,
 		&le,
+		true,
 	)
 	require.NoError(t, err)
-	underTest.log = newTestLogger(t)
+
+	log := logrus.New()
+	log.SetLevel(logrus.DebugLevel)
+	var logs test.Hook
+	log.Hooks.Add(&logs)
+	underTest.log = log.WithField("test", t.Name())
 
 	require.NoError(t, underTest.Init(context.TODO()))
 
+	mockKubernetesEndpoints(t, clients)
 	mockApplier := installMockApplier(t, underTest)
 
 	require.NoError(t, underTest.Start(context.TODO()))
@@ -576,6 +614,32 @@ func TestReconciler_LeaderElection(t *testing.T) {
 
 	// Nothing should be applied here, since the leader lease is not acquired.
 	assert.NoError(t, underTest.Reconcile(context.TODO(), cluster))
+
+	// Need to wait for two skipped reconciliations: one for the cluster config
+	// reconciliation, and another one for the API servers.
+	assert.Eventually(t,
+		func() bool {
+			var numSkips uint
+			entries := logs.AllEntries()
+			for _, entry := range entries {
+				if strings.HasPrefix(entry.Message, "Skipping reconciliation") {
+					numSkips++
+				}
+			}
+
+			switch numSkips {
+			case 0, 1:
+				return false
+			case 2:
+				return true
+			default:
+				require.Fail(t, "Reconciliation skipped too often")
+				return true // diverges above
+			}
+		},
+		3*time.Second, 3*time.Millisecond,
+		"Expected to observe exactly two skipped reconciliations",
+	)
 
 	// Activate the leader lease and expect the resources to be applied.
 	applied := mockApplier.expectApply(t, nil)
@@ -745,6 +809,36 @@ func installMockApplier(t *testing.T, underTest *Reconciler) *mockApplier {
 	}
 
 	return &mockApplier
+}
+
+func mockKubernetesEndpoints(t *testing.T, clients testutil.FakeClientFactory) {
+	t.Helper()
+	client, err := clients.GetClient()
+	require.NoError(t, err)
+
+	ep := corev1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{ResourceVersion: t.Name()},
+		Subsets: []corev1.EndpointSubset{{
+			Addresses: []corev1.EndpointAddress{
+				{IP: "127.10.10.1"},
+			},
+			Ports: []corev1.EndpointPort{
+				{Name: "https", Port: 6443, Protocol: corev1.ProtocolTCP},
+			},
+		}},
+	}
+
+	epList := corev1.EndpointsList{
+		ListMeta: metav1.ListMeta{ResourceVersion: t.Name()},
+		Items:    []corev1.Endpoints{ep},
+	}
+
+	_, err = client.CoreV1().Endpoints("default").Create(context.TODO(), ep.DeepCopy(), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	clients.Client.CoreV1().(*fake.FakeCoreV1).PrependReactor("list", "endpoints", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, epList.DeepCopy(), nil
+	})
 }
 
 type mockLeaderElector struct {

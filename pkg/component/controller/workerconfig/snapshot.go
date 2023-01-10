@@ -17,11 +17,19 @@ limitations under the License.
 package workerconfig
 
 import (
+	"github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+
+	corev1 "k8s.io/api/core/v1"
+
+	"golang.org/x/exp/slices"
 )
 
 // snapshot holds a snapshot of the parts that influence worker configurations.
 type snapshot struct {
+	// The list of API server addresses that are currently running.
+	apiServers []net.HostPort
+
 	// The snapshot of the cluster configuration.
 	*configSnapshot
 
@@ -34,7 +42,10 @@ type snapshot struct {
 // configSnapshot holds a snapshot of the parts of the cluster config spec that
 // influence worker configurations.
 type configSnapshot struct {
-	profiles v1beta1.WorkerProfiles
+	nodeLocalLoadBalancing *v1beta1.NodeLocalLoadBalancing
+	konnectivityAgentPort  uint16
+	defaultImagePullPolicy corev1.PullPolicy
+	profiles               v1beta1.WorkerProfiles
 }
 
 func (s *snapshot) DeepCopy() *snapshot {
@@ -48,6 +59,7 @@ func (s *snapshot) DeepCopy() *snapshot {
 
 func (s *snapshot) DeepCopyInto(out *snapshot) {
 	*out = *s
+	out.apiServers = slices.Clone(s.apiServers)
 	out.configSnapshot = s.configSnapshot.DeepCopy()
 }
 
@@ -62,11 +74,22 @@ func (s *configSnapshot) DeepCopy() *configSnapshot {
 
 func (s *configSnapshot) DeepCopyInto(out *configSnapshot) {
 	*out = *s
+	out.nodeLocalLoadBalancing = s.nodeLocalLoadBalancing.DeepCopy()
 	out.profiles = s.profiles.DeepCopy()
 }
 
 func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
+	var konnectivityAgentPort uint16
+	if spec.Konnectivity != nil {
+		konnectivityAgentPort = uint16(spec.Konnectivity.AgentPort)
+	} else {
+		konnectivityAgentPort = uint16(v1beta1.DefaultKonnectivitySpec().AgentPort)
+	}
+
 	return configSnapshot{
+		spec.Network.NodeLocalLoadBalancing.DeepCopy(),
+		konnectivityAgentPort,
+		corev1.PullPolicy(spec.Images.DefaultPullPolicy),
 		spec.WorkerProfiles.DeepCopy(),
 	}
 }

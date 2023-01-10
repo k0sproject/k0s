@@ -24,6 +24,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/containerd/containerd/reference/docker"
@@ -71,7 +72,11 @@ type ClusterImages struct {
 	Calico     CalicoImageSpec     `json:"calico"`
 	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
 
-	Repository        string `json:"repository,omitempty"`
+	Repository string `json:"repository,omitempty"`
+
+	// +optional
+	// +kubebuilder:default=IfNotPresent
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	DefaultPullPolicy string `json:"default_pull_policy,omitempty"`
 }
 
@@ -82,8 +87,32 @@ func (ci *ClusterImages) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	ci.overrideImageRepositories()
-	ci.DefaultPullPolicy = "IfNotPresent"
+	if ci.DefaultPullPolicy == "" {
+		ci.DefaultPullPolicy = string(corev1.PullIfNotPresent)
+	}
 	return nil
+}
+
+func (ci *ClusterImages) Validate(path *field.Path) (errs field.ErrorList) {
+	if ci == nil {
+		return
+	}
+
+	defaultPullPolicy := corev1.PullPolicy(ci.DefaultPullPolicy)
+	switch defaultPullPolicy {
+	case corev1.PullAlways, corev1.PullIfNotPresent, corev1.PullNever:
+		break
+	case "":
+		errs = append(errs, field.Required(path.Child("default_pull_policy"), ""))
+	default:
+		errs = append(errs, field.NotSupported(field.NewPath("default_pull_policy"), defaultPullPolicy, []string{
+			string(corev1.PullAlways),
+			string(corev1.PullIfNotPresent),
+			string(corev1.PullNever),
+		}))
+	}
+
+	return
 }
 
 func (ci *ClusterImages) overrideImageRepositories() {
@@ -182,9 +211,4 @@ func overrideRepository(repository string, originalImage string) string {
 		return strings.Replace(originalImage, host, repository, 1)
 	}
 	return fmt.Sprintf("%s/%s", repository, originalImage)
-}
-
-// Validate stub for Validateable interface
-func (ci *ClusterImages) Validate() []error {
-	return nil
 }

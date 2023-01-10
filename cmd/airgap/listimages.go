@@ -26,6 +26,8 @@ import (
 )
 
 func NewAirgapListImagesCmd() *cobra.Command {
+	var all bool
+
 	cmd := &cobra.Command{
 		Use:     "list-images",
 		Short:   "List image names and version needed for air-gap install",
@@ -36,7 +38,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to load cluster config: %w", err)
 			}
-			uris := airgap.GetImageURIs(clusterConfig.Spec.Images)
+			uris := airgap.GetImageURIs(clusterConfig.Spec, all)
 			for _, uri := range uris {
 				fmt.Fprintln(cmd.OutOrStdout(), uri)
 			}
@@ -44,6 +46,7 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().AddFlagSet(config.FileInputFlag())
+	cmd.Flags().BoolVar(&all, "all", false, "include all images, even if they are not used in the current configuration")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }

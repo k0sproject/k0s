@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -103,9 +104,37 @@ func (k *KubeProxy) Stop() error {
 }
 
 func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig, error) {
+	controlPlaneEndpoint := k.nodeConf.Spec.API.APIAddressURL()
+	nllb := clusterConfig.Spec.Network.NodeLocalLoadBalancing
+	if nllb.IsEnabled() {
+		switch nllb.Type {
+		case v1beta1.NllbTypeEnvoyProxy:
+			k.log.Debugf("Enabling node-local load balancing via %s", nllb.Type)
+
+			// FIXME: Transitions from non-node-local load balanced to node-local load
+			// balanced setups will be problematic: The controller will update the
+			// DaemonSet with localhost, but the worker nodes won't reconcile their
+			// state (yet) and need to be restarted manually in order to start their
+			// load balancer. Transitions in the other direction suffer from the same
+			// limitation, but that will be less grave, as the node-local load
+			// balancers will remain operational until the next node restart and the
+			// proxy will stay connected.
+
+			// FIXME: This is not exactly on par with the way it's implemented on the
+			// worker side, i.e. there's no fallback if localhost doesn't resolve to a
+			// loopback address. But this would require some shenanigans to pull in
+			// node-specific values here. A possible solution would be to convert
+			// kube-proxy to a static Pod as well.
+			controlPlaneEndpoint = fmt.Sprintf("https://localhost:%d", nllb.EnvoyProxy.APIServerBindPort)
+
+		default:
+			k.log.Warnf("Unsupported node-local load balancer type (%q), using %q as control plane endpoint", controlPlaneEndpoint)
+		}
+	}
+
 	cfg := proxyConfig{
 		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
-		ControlPlaneEndpoint: clusterConfig.Spec.API.APIAddressURL(),
+		ControlPlaneEndpoint: controlPlaneEndpoint,
 		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,

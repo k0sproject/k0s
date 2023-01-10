@@ -19,6 +19,7 @@ package common
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -35,15 +36,24 @@ func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) s
 	return content
 }
 
-// PutFile writes content to file on given node
-func (s *FootlooseSuite) PutFile(node, path, content string) {
+// WriteFile writes the data provided by reader to a file at the given path on
+// the given node.
+func (s *FootlooseSuite) WriteFile(node, path string, reader io.Reader) {
 	ssh, err := s.SSH(node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >%s", content, path))
+	s.Require().NoError(ssh.Exec(s.Context(), fmt.Sprintf("cat >%s", path), SSHStreams{In: reader}))
+}
 
-	s.Require().NoError(err)
+// WriteFileContent writes content to a file at the given path on the given
+// node.
+func (s *FootlooseSuite) WriteFileContent(node, path string, content []byte) {
+	s.WriteFile(node, path, bytes.NewReader(content))
+}
+
+// PutFile writes content to file on given node
+func (s *FootlooseSuite) PutFile(node, path, content string) {
+	s.WriteFileContent(node, path, []byte(content))
 }
 
 // PutFileTemplate writes content to file on given node using templated data
@@ -57,26 +67,7 @@ func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template 
 
 	var buf bytes.Buffer
 	s.Require().NoError(tw.WriteToBuffer(&buf))
-
-	ssh, err := s.SSH(node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-
-	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >%s", buf.String(), filename))
-
-	s.Require().NoError(err)
-}
-
-// AppendFile appends content to file on given node
-func (s *FootlooseSuite) AppendFile(node, path, content string) {
-	ssh, err := s.SSH(node)
-	s.Require().NoError(err)
-	defer ssh.Disconnect()
-	// TODO: send data via pipe instead, so we can write data with single quotes '
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("echo '%s' >> %s", content, path))
-
-	s.Require().NoError(err)
+	s.WriteFile(node, filename, &buf)
 }
 
 // Mkdir makes directory

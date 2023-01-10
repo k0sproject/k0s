@@ -20,6 +20,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+func ConfigMaps(client Provider[*corev1.ConfigMapList]) *Watcher[corev1.ConfigMap] {
+	return FromClient[*corev1.ConfigMapList, corev1.ConfigMap](client)
+}
+
+func Endpoints(client Provider[*corev1.EndpointsList]) *Watcher[corev1.Endpoints] {
+	return FromClient[*corev1.EndpointsList, corev1.Endpoints](client)
+}
+
 func Nodes(client Provider[*corev1.NodeList]) *Watcher[corev1.Node] {
 	return FromClient[*corev1.NodeList, corev1.Node](client)
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+	"github.com/k0sproject/k0s/pkg/component/worker/nllb"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -112,14 +113,32 @@ func (c *Command) Start(ctx context.Context) error {
 	workerConfig, err := workerconfig.LoadProfile(
 		ctx,
 		kubernetes.KubeconfigFromFile(kubeletKubeconfigPath),
+		c.K0sVars.DataDir,
 		c.WorkerProfile,
 	)
 	if err != nil {
 		return err
 	}
+
 	pr := prober.New()
 	go pr.Run(ctx)
 	componentManager := manager.New(pr)
+
+	var staticPods worker.StaticPods
+
+	if !c.SingleNode && workerConfig.NodeLocalLoadBalancing.IsEnabled() {
+		sp := worker.NewStaticPods()
+		reconciler, err := nllb.NewReconciler(c.K0sVars, sp, c.WorkerProfile, *workerConfig.DeepCopy())
+		if err != nil {
+			return fmt.Errorf("failed to create node-local load balancer reconciler: %w", err)
+		}
+		kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
+		staticPods = sp
+
+		componentManager.Add(ctx, sp)
+		componentManager.Add(ctx, reconciler)
+	}
+
 	if runtime.GOOS == "windows" && c.CriSocket == "" {
 		return fmt.Errorf("windows worker needs to have external CRI")
 	}
@@ -139,6 +158,7 @@ func (c *Command) Start(ctx context.Context) error {
 		CRISocket:           c.CriSocket,
 		EnableCloudProvider: c.CloudProvider,
 		K0sVars:             c.K0sVars,
+		StaticPods:          staticPods,
 		Kubeconfig:          kubeletKubeconfigPath,
 		Configuration:       *workerConfig.KubeletConfiguration.DeepCopy(),
 		LogLevel:            c.Logging["kubelet"],

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"reflect"
 	"sort"
@@ -27,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+	k0snet "github.com/k0sproject/k0s/internal/pkg/net"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
@@ -34,16 +36,20 @@ import (
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/wait"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/utils/pointer"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 	"golang.org/x/exp/slices"
 	"sigs.k8s.io/yaml"
 )
@@ -55,10 +61,12 @@ type resources = []*unstructured.Unstructured
 type Reconciler struct {
 	log logrus.FieldLogger
 
-	clusterDomain string
-	clusterDNSIP  net.IP
-	clientFactory kubeutil.ClientFactoryInterface
-	leaderElector leaderelector.Interface
+	clusterDomain                  string
+	clusterDNSIP                   net.IP
+	apiServerReconciliationEnabled bool
+	clientFactory                  kubeutil.ClientFactoryInterface
+	leaderElector                  leaderelector.Interface
+	konnectivityEnabled            bool
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -87,7 +95,7 @@ var (
 )
 
 // NewReconciler creates a new reconciler for worker configurations.
-func NewReconciler(k0sVars constant.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) (*Reconciler, error) {
+func NewReconciler(k0sVars constant.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
 	clusterDNSIPString, err := nodeSpec.Network.DNSAddress()
@@ -102,10 +110,12 @@ func NewReconciler(k0sVars constant.CfgVars, nodeSpec *v1beta1.ClusterSpec, clie
 	reconciler := &Reconciler{
 		log: log,
 
-		clusterDomain: nodeSpec.Network.ClusterDomain,
-		clusterDNSIP:  clusterDNSIP,
-		clientFactory: clientFactory,
-		leaderElector: leaderElector,
+		clusterDomain:                  nodeSpec.Network.ClusterDomain,
+		clusterDNSIP:                   clusterDNSIP,
+		apiServerReconciliationEnabled: !nodeSpec.API.TunneledNetworkingMode,
+		clientFactory:                  clientFactory,
+		leaderElector:                  leaderElector,
+		konnectivityEnabled:            konnectivityEnabled,
 
 		state: reconcilerCreated,
 	}
@@ -176,6 +186,20 @@ func (r *Reconciler) Start(context.Context) error {
 		r.runReconcileLoop(reconcilerCtx, updates, apply)
 	}()
 
+	// Reconcile API server addresses if enabled.
+	if r.apiServerReconciliationEnabled {
+		go func() {
+			wait.UntilWithContext(reconcilerCtx, func(ctx context.Context) {
+				err := r.reconcileAPIServers(ctx, updates, stopped)
+				// Log any reconciliation errors, but only if they don't
+				// indicate that the reconciler has been stopped concurrently.
+				if err != nil && !errors.Is(err, reconcilerCtx.Err()) && !errors.Is(err, errStoppedConcurrently) {
+					r.log.WithError(err).Error("Failed to reconcile API server addresses")
+				}
+			}, 10*time.Second)
+		}()
+	}
+
 	// React to leader elector changes. Enforce a reconciliation whenever the
 	// lease is acquired.
 	r.leaderElector.AddAcquiredLeaseCallback(func() {
@@ -236,7 +260,7 @@ func (r *Reconciler) runReconcileLoop(ctx context.Context, updates <-chan update
 			return nil
 		}
 
-		if desiredState.configSnapshot == nil {
+		if desiredState.configSnapshot == nil || (r.apiServerReconciliationEnabled && len(desiredState.apiServers) < 1) {
 			r.log.Debug("Skipping reconciliation, snapshot not yet complete")
 			return nil
 		}
@@ -375,6 +399,87 @@ func (r *Reconciler) Stop() error {
 	return nil
 }
 
+func (r *Reconciler) reconcileAPIServers(ctx context.Context, updates chan<- updateFunc, stopped <-chan struct{}) error {
+	client, err := r.clientFactory.GetClient()
+	if err != nil {
+		return err
+	}
+
+	return watch.Endpoints(client.CoreV1().Endpoints("default")).
+		WithObjectName("kubernetes").
+		Until(ctx, func(endpoints *corev1.Endpoints) (bool, error) {
+			apiServers, err := extractAPIServerAddresses(endpoints)
+			if err != nil {
+				return false, err
+			}
+
+			return false, reconcile(ctx, updates, stopped, func(s *snapshot) { s.apiServers = apiServers })
+		})
+}
+
+func extractAPIServerAddresses(endpoints *corev1.Endpoints) ([]k0snet.HostPort, error) {
+	var warnings error
+	apiServers := []k0snet.HostPort{}
+
+	for sIdx, subset := range endpoints.Subsets {
+		var ports []uint16
+		for pIdx, port := range subset.Ports {
+			// FIXME: is a more sophisticated port detection required?
+			// E.g. does the service object need to be inspected?
+			if port.Protocol != corev1.ProtocolTCP || port.Name != "https" {
+				continue
+			}
+
+			if port.Port < 0 || port.Port > math.MaxUint16 {
+				path := field.NewPath("subsets").Index(sIdx).Child("ports").Index(pIdx).Child("port")
+				warning := field.Invalid(path, port.Port, "out of range")
+				warnings = multierr.Append(warnings, warning)
+				continue
+			}
+
+			ports = append(ports, uint16(port.Port))
+		}
+
+		if len(ports) < 1 {
+			path := field.NewPath("subsets").Index(sIdx)
+			warning := field.Forbidden(path, "no suitable TCP/https ports found")
+			warnings = multierr.Append(warnings, warning)
+			continue
+		}
+
+		for aIdx, address := range subset.Addresses {
+			host := address.IP
+			if host == "" {
+				host = address.Hostname
+			}
+			if host == "" {
+				path := field.NewPath("addresses").Index(aIdx)
+				warning := field.Forbidden(path, "neither ip nor hostname specified")
+				warnings = multierr.Append(warnings, warning)
+				continue
+			}
+
+			for _, port := range ports {
+				apiServer, err := k0snet.NewHostPort(host, port)
+				if err != nil {
+					warnings = multierr.Append(warnings, fmt.Errorf("%s:%d: %w", host, port, err))
+					continue
+				}
+
+				apiServers = append(apiServers, *apiServer)
+			}
+		}
+	}
+
+	if len(apiServers) < 1 {
+		// Never update the API servers with an empty list. This cannot
+		// be right in any case, and would never recover.
+		return nil, multierr.Append(errors.New("no API server addresses discovered"), warnings)
+	}
+
+	return apiServers, nil
+}
+
 type resource interface {
 	runtime.Object
 	metav1.Object
@@ -461,7 +566,7 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups:     []string{""},
 			Resources:     []string{"configmaps"},
-			Verbs:         []string{"get"},
+			Verbs:         []string{"get", "list", "watch"},
 			ResourceNames: configMapNames,
 		}},
 	})
@@ -489,6 +594,7 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 
 func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 	workerProfile := &workerconfig.Profile{
+		APIServerAddresses: slices.Clone(snapshot.apiServers),
 		KubeletConfiguration: kubeletv1beta1.KubeletConfiguration{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubeletv1beta1.SchemeGroupVersion.String(),
@@ -511,6 +617,17 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			ServerTLSBootstrap: true,
 			EventRecordQPS:     pointer.Int32(0),
 		},
+		NodeLocalLoadBalancing: snapshot.nodeLocalLoadBalancing.DeepCopy(),
+		Konnectivity: workerconfig.Konnectivity{
+			Enabled:   r.konnectivityEnabled,
+			AgentPort: snapshot.konnectivityAgentPort,
+		},
+	}
+
+	if workerProfile.NodeLocalLoadBalancing != nil &&
+		workerProfile.NodeLocalLoadBalancing.EnvoyProxy != nil &&
+		workerProfile.NodeLocalLoadBalancing.EnvoyProxy.ImagePullPolicy == "" {
+		workerProfile.NodeLocalLoadBalancing.EnvoyProxy.ImagePullPolicy = snapshot.defaultImagePullPolicy
 	}
 
 	return workerProfile
