@@ -33,7 +33,7 @@ type KubeRouterHairpinSuite struct {
 
 func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithHairpinning)
-	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.Require().NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--disable-components=konnectivity-server,metrics-server"))
 	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pod.yaml", podManifest)
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/service.yaml", serviceManifest)
