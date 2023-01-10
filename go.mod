@@ -98,7 +98,6 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/briandowns/spinner v1.19.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
@@ -305,9 +304,6 @@ replace github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-202
 
 // Replacements duplicated from upstream Kubernetes
 replace (
-	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker => github.com/docker/docker v20.10.17+incompatible
-
 	// https://github.com/kubernetes/kubernetes/blob/v1.26.0/go.mod#L251-L279
 	k8s.io/api => k8s.io/api v0.26.0
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.0
