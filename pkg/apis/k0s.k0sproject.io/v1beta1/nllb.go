@@ -37,8 +37,9 @@ type NodeLocalLoadBalancing struct {
 	// +optional
 	Enabled bool `json:"enabled,omitempty"`
 
-	// type indicates the type of the node-local load balancer to deploy.
-	// Currently, the only supported type is "EnvoyProxy".
+	// type indicates the type of the node-local load balancer to deploy on
+	// worker nodes. Currently, the only supported type is "EnvoyProxy".
+	// +kubebuilder:default=EnvoyProxy
 	// +optional
 	Type NllbType `json:"type,omitempty"`
 
@@ -113,11 +114,11 @@ func (n *NodeLocalLoadBalancing) IsEnabled() bool {
 // EnvoyProxy describes configuration options required for using Envoy as the
 // backing implementation for node-local load balancing.
 type EnvoyProxy struct {
-	// image specifies the OCI image that's being used to run Envoy.
+	// image specifies the OCI image that's being used for the Envoy Pod.
 	// +optional
 	Image *ImageSpec `json:"image"`
 
-	// imagePullPolicy specifies the pull policy being used to run Envoy.
+	// imagePullPolicy specifies the pull policy being used for the Envoy Pod.
 	// Defaults to the default image pull policy.
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	// +optional
