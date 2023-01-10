@@ -44,8 +44,9 @@ type telemetryData struct {
 type workerData map[string]interface{}
 
 type workerSums struct {
-	cpuTotal int64
-	memTotal int64
+	cpuTotal   int64
+	memTotal   int64
+	nodesTotal int
 }
 
 func (td telemetryData) asProperties() analytics.Properties {
@@ -75,7 +76,7 @@ func (c Component) collectTelemetry(ctx context.Context) (telemetryData, error) 
 		return data, fmt.Errorf("can't collect workers count: %v", err)
 	}
 
-	data.WorkerNodesCount = len(wds)
+	data.WorkerNodesCount = sums.nodesTotal
 	data.WorkerData = wds
 	data.MEMTotal = sums.memTotal
 	data.CPUTotal = sums.cpuTotal
@@ -105,29 +106,52 @@ func (c Component) getClusterID(ctx context.Context) (string, error) {
 	return fmt.Sprintf("kube-system:%s", ns.UID), nil
 }
 
+func (c Component) getWorkerGroup(os string, arch string, cpus int64, mem int64, runtime string) string {
+	// go maps are hashing the string pretty fast anyway so I don't think we need
+	// to do anything fancy here
+	return fmt.Sprintf("%s:%s:%d:%d:%s", os, arch, cpus, mem, runtime)
+}
+
 func (c Component) getWorkerData(ctx context.Context) ([]workerData, workerSums, error) {
 	nodes, err := c.kubernetesClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, workerSums{}, err
 	}
 
-	wds := make([]workerData, len(nodes.Items))
+	wm := make(map[string]workerData)
 	var memTotal int64
 	var cpuTotal int64
-	for idx, n := range nodes.Items {
-		wd := workerData{
-			"os":      n.Status.NodeInfo.OSImage,
-			"arch":    n.Status.NodeInfo.Architecture,
-			"cpus":    n.Status.Capacity.Cpu().Value(),
-			"mem":     n.Status.Capacity.Memory().ScaledValue(resource.Mega),
-			"runtime": n.Status.NodeInfo.ContainerRuntimeVersion,
+	for _, n := range nodes.Items {
+		os := n.Status.NodeInfo.OSImage
+		arch := n.Status.NodeInfo.Architecture
+		cpus := n.Status.Capacity.Cpu().Value()
+		mem := n.Status.Capacity.Memory().ScaledValue(resource.Mega)
+		runtime := n.Status.NodeInfo.ContainerRuntimeVersion
+		wg := c.getWorkerGroup(os, arch, cpus, mem, runtime)
+		if wm[wg] == nil {
+			wm[wg] = workerData{
+				"os":      os,
+				"arch":    arch,
+				"cpus":    cpus,
+				"mem":     mem,
+				"runtime": runtime,
+				"count":   0,
+			}
 		}
-		wds[idx] = wd
-		memTotal += n.Status.Capacity.Memory().ScaledValue(resource.Mega)
-		cpuTotal += n.Status.Capacity.Cpu().Value()
+		wm[wg]["count"] = wm[wg]["count"].(int) + 1
+		memTotal += mem
+		cpuTotal += cpus
 	}
 
-	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal}, nil
+	// convert map to slice so that we send it to segment without the key of the map
+	wds := make([]workerData, len(wm))
+	i := 0
+	for _, wd := range wm {
+		wds[i] = wd
+		i++
+	}
+
+	return wds, workerSums{cpuTotal: cpuTotal, memTotal: memTotal, nodesTotal: len(nodes.Items)}, nil
 }
 
 func (c Component) sendTelemetry(ctx context.Context) {
