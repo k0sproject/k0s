@@ -480,6 +480,7 @@ jobs:
           asset_path: inttest/sonobuoy/*_sonobuoy_*.tar.gz
           asset_name: sonobuoy-conformance-results-${{ needs.release.outputs.tag_name }}.tar.gz
           asset_content_type: application/gzip
+          overwrite: true # In case we need to re-run the conformance this let's us to overwrite the results tarball
         if: ${{ always() }}
       - name: Clean-Up Environment
         env:
