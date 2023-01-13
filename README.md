@@ -13,6 +13,14 @@
 ![k0s-logo-dark](docs/img/k0s-logo-full-color-dark.svg#gh-dark-mode-only)
 ![k0s-logo-light](docs/img/k0s-logo-full-color-light.svg#gh-light-mode-only)
 
+## What happened to Github stargazers?
+
+In September 2022 we made a human error while creating some build automation scripts&tools for the repo. Our automation accidentally changed the repo to a private one for few minutes. That itself is not a big deal and everything was restored quickly. But the nasty side effect is that it also removed all the stargazers at that point. :(
+
+Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.
+
+**So if you are reading this, and have not yet starred this repo we would highly appreciate the :star: to get our numbers closer to what they used to be.
+
 ## The Repository
 
 This repository ("k0s") is where Team Lens develops the [k0s](https://k8slens.dev/kubernetes) product together with the community. It is backed by a number of Kubernetes and cloud native ecosystem pioneers. This source code is available to everyone under the [Apache License 2.0](./LICENSE).
