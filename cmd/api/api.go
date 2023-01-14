@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -39,7 +40,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -85,28 +85,25 @@ func (c *command) start() (err error) {
 	}
 
 	prefix := "/v1beta1"
-	router := mux.NewRouter()
+	mux := http.NewServeMux()
 	storage := c.NodeConfig.Spec.Storage
 
 	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
 		// Only mount the etcd handler if we're running on internal etcd storage
 		// by default the mux will return 404 back which the caller should handle
-		router.Path(prefix + "/etcd/members").Methods("POST").Handler(
-			c.controllerHandler(c.etcdHandler()),
-		)
+		mux.Handle(prefix+"/etcd/members", mw.AllowMethods(http.MethodPost)(
+			c.controllerHandler(c.etcdHandler())))
 	}
 
 	if storage.IsJoinable() {
-		router.Path(prefix + "/ca").Methods("GET").Handler(
-			c.controllerHandler(c.caHandler()),
-		)
+		mux.Handle(prefix+"/ca", mw.AllowMethods(http.MethodGet)(
+			c.controllerHandler(c.caHandler())))
 	}
-	router.Path(prefix + "/calico/kubeconfig").Methods("GET").Handler(
-		c.workerHandler(c.kubeConfigHandler()),
-	)
+	mux.Handle(prefix+"/calico/kubeconfig", mw.AllowMethods(http.MethodGet)(
+		c.workerHandler(c.kubeConfigHandler())))
 
 	srv := &http.Server{
-		Handler:      router,
+		Handler:      mux,
 		Addr:         fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

@@ -22,7 +22,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.6
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/google/go-cmp v0.5.9
-	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/imdario/mergo v0.3.13
 	github.com/k0sproject/dig v0.2.0
@@ -167,6 +166,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/trillian v1.4.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect

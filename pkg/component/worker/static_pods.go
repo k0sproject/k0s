@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/gorilla/mux"
+	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 
@@ -391,10 +391,10 @@ func (s *staticPods) Start(ctx context.Context) error {
 }
 
 func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) (*http.Server, context.CancelFunc) {
-	router := mux.NewRouter()
+	mux := http.NewServeMux()
 
 	// The main endpoint to be consumed by the kubelet.
-	router.Path("/manifests").Methods("GET").Handler(
+	mux.Handle("/manifests", mw.AllowMethods(http.MethodGet)(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log := log.WithField("remote_addr", r.RemoteAddr)
 			content := contentFn()
@@ -402,21 +402,19 @@ func newStaticPodsServer(log logrus.FieldLogger, contentFn func() []byte) (*http
 			if _, err := w.Write(content); err != nil {
 				log.WithError(err).Warn("Failed to write HTTP response")
 			}
-		}),
-	)
+		})))
 
 	// Internal health check.
-	router.Path("/manifests/_healthz").Methods("GET").Handler(
+	mux.Handle("/manifests/_healthz", mw.AllowMethods(http.MethodGet)(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log := log.WithField("remote_addr", r.RemoteAddr)
 			log.Debugf("Answering health check")
 			w.WriteHeader(http.StatusNoContent)
-		}),
-	)
+		})))
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	srv := &http.Server{
-		Handler:      router,
+		Handler:      mux,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		BaseContext:  func(net.Listener) context.Context { return ctx },
