@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -67,15 +68,15 @@ func (s *StorageSpec) IsJoinable() bool {
 		return !s.Etcd.IsExternalClusterUsed()
 	}
 
-	if strings.HasPrefix(s.Kine.DataSource, "sqlite://") {
+	if strings.HasPrefix(s.Kine.DataSource, "sqlite:") {
 		return false
 	}
 
-	if strings.HasPrefix(s.Kine.DataSource, "mysql://") {
+	if strings.HasPrefix(s.Kine.DataSource, "mysql:") {
 		return true
 	}
 
-	if strings.HasPrefix(s.Kine.DataSource, "postgres://") {
+	if strings.HasPrefix(s.Kine.DataSource, "postgres:") {
 		return true
 	}
 
@@ -162,8 +163,14 @@ func DefaultEtcdConfig() *EtcdConfig {
 
 // DefaultKineConfig creates KineConfig with sane defaults
 func DefaultKineConfig(dataDir string) *KineConfig {
+	// https://www.sqlite.org/c3ref/open.html#urifilenamesinsqlite3open
 	return &KineConfig{
-		DataSource: "sqlite://" + dataDir + "/db/state.db?mode=rwc&_journal=WAL&cache=shared",
+		DataSource: (&url.URL{
+			Scheme:   "sqlite",
+			OmitHost: true,
+			Path:     filepath.ToSlash(filepath.Join(dataDir, "db", "state.db")),
+			RawQuery: "mode=rwc&_journal=WAL&cache=shared",
+		}).String(),
 	}
 }
 
