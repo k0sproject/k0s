@@ -42,6 +42,22 @@ Finally, if you want to change CRI look into:
     runtime = "runc"
 ```
 
+### Alternative method
+
+In case you don't want to change the original `/etc/k0s/containerd.toml` file, then you can easily add your customizations under the `/etc/k0s/containerd.d/` directory.
+
+Files under this path must have a `.toml` extention in order to get read by containerd:
+
+```shell
+cat << EOF > /etc/k0s/containerd.d/debug.toml
+[debug]
+  address = "/run/containerd/debug.sock"
+  uid = 0
+  gid = 0
+  level = "info"
+EOF
+```
+
 ## Using gVisor
 
 [gVisor](https://gvisor.dev/docs/) is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.
