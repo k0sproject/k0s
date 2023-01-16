@@ -32,13 +32,17 @@ import (
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
-const confTmpl = `
+const confPath = "/etc/k0s/containerd.toml"
+const confPathContainerd = "/etc/k0s/containerd.d"
+
+var confTmpl = fmt.Sprintf(`
 # This is a placeholder configuration for k0s managed containerD.
 # If you wish to customize the config replace this file with your custom configuration.
 # For reference see https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
 version = 2
-`
-const confPath = "/etc/k0s/containerd.toml"
+
+imports = ["%s/*.toml"]
+`, confPathContainerd)
 
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
@@ -96,6 +100,9 @@ func (c *ContainerD) setupConfig() error {
 	}
 
 	if err := dir.Init(filepath.Dir(confPath), 0755); err != nil {
+		return err
+	}
+	if err := dir.Init(confPathContainerd, 0755); err != nil {
 		return err
 	}
 	return file.WriteContentAtomically(confPath, []byte(confTmpl), 0644)
