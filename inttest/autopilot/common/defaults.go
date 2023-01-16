@@ -15,8 +15,6 @@
 package common
 
 import (
-	"runtime"
-
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -62,11 +60,11 @@ var Versions = K0sVersionedPlatformResourceMap{
 	},
 }
 
-// DefaultNodeLabels creates a default map of labels expected to be seen
-// on every signal node.
-func DefaultNodeLabels() map[string]string {
+// LinuxAMD64NodeLabels creates a default map of labels expected to be seen on
+// a linux-amd64 signal node.
+func LinuxAMD64NodeLabels() map[string]string {
 	return map[string]string{
-		v1.LabelOSStable:   runtime.GOOS,
-		v1.LabelArchStable: runtime.GOARCH,
+		v1.LabelOSStable:   "linux",
+		v1.LabelArchStable: "amd64",
 	}
 }

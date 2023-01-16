@@ -154,7 +154,7 @@ func signalNodeK0sUpdateCommandBuilder(node crcli.Object, cmd apv1beta2.PlanComm
 	updateContent, updateContentOk := cmd.K0sUpdate.Platforms[nodePlatformID]
 	if !updateContentOk {
 		updatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.K0sUpdate)
-		return nil, err
+		return nil, fmt.Errorf("for platform ID %s: %s", nodePlatformID, appc.SignalMissingPlatform)
 	}
 
 	return func() apsigv2.Command {

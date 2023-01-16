@@ -61,7 +61,7 @@ func TestSchedulable(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:        "worker0",
-						Annotations: aptcomm.DefaultNodeLabels(),
+						Annotations: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},
@@ -72,22 +72,6 @@ func TestSchedulable(t *testing.T) {
 						"linux-amd64": {
 							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
 							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-						},
-						"linux-arm64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm64",
-							Sha256: "234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1",
-						},
-						"linux-arm": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm",
-							Sha256: "34567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-						},
-						"darwin-amd64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-amd64",
-							Sha256: "4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123",
-						},
-						"darwin-arm64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-arm64",
-							Sha256: "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234",
 						},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
@@ -127,7 +111,7 @@ func TestSchedulable(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.DefaultNodeLabels(),
+						Labels: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},
@@ -138,22 +122,6 @@ func TestSchedulable(t *testing.T) {
 						"linux-amd64": {
 							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-amd64",
 							Sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-						},
-						"linux-arm64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm64",
-							Sha256: "234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1",
-						},
-						"linux-arm": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-linux-arm",
-							Sha256: "34567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-						},
-						"darwin-amd64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-amd64",
-							Sha256: "4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123",
-						},
-						"darwin-arm64": {
-							URL:    "https://k0s.example.com/downloads/k0s-v99.99.99-darwin-arm64",
-							Sha256: "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234",
 						},
 					},
 					Workers: apv1beta2.PlanCommandTarget{
