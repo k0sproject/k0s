@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -40,6 +41,12 @@ func TestDetectHostIPTablesMode(t *testing.T) {
 		path := filepath.Join(parentDir, fileName)
 		content = "#!" + sh + " -eu\n\n" + content
 		require.NoError(t, file.WriteContentAtomically(path, []byte(content), 0755))
+
+		if runtime.GOOS == "windows" {
+			// Add a shim for cmd.exe. Parameter forwarding is imperfect, but
+			// sufficient for these tests.
+			require.NoError(t, file.WriteContentAtomically(path+".cmd", []byte(fmt.Sprintf("@%q %q %%*", sh, path)), 0755))
+		}
 	}
 
 	writeXtables := func(t *testing.T, parentDir, mode, v4Script, v6Script string) {
