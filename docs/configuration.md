@@ -276,7 +276,7 @@ ipvs:
 
 #### `spec.network.nodeLocalLoadBalancing`
 
-Configuration options related to k0s's node-local load balancing feature.
+Configuration options related to k0s's [node-local load balancing] feature.
 
 **Note:** This feature is experimental! Expect instabilities and/or breaking
 changes.
@@ -286,6 +286,8 @@ changes.
 | `enabled`        | Indicates if node-local load balancing should be used to access Kubernetes API servers from worker nodes. Default: `false`.   |
 | `type`           | The type of the node-local load balancer to deploy on worker nodes. Default: `EnvoyProxy`. (This is the only option for now.) |
 | `envoyProxy`     | Configuration options related to the "EnvoyProxy" type of load balancing.                                                     |
+
+[node-local load balancing]: ../nllb
 
 ##### `spec.network.nodeLocalLoadBalancing.envoyProxy`
 

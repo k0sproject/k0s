@@ -70,9 +70,9 @@ spec:
             type: EnvoyProxy
 ```
 
-All newly added worker nodes will then use node-local load balancing. Worker
-nodes that are already running must be restarted for the new configuration to
-take effect.
+All newly added worker nodes will then use node-local load balancing. The k0s
+worker process on worker nodes that are already running must be restarted for
+the new configuration to take effect.
 
 [specapi]: ../configuration/#specapi
 
