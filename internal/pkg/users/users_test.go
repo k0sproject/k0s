@@ -17,10 +17,15 @@ limitations under the License.
 package users
 
 import (
+	"runtime"
 	"testing"
 )
 
 func TestGetUID(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("No numeric user IDs on Windows")
+	}
+
 	uid, err := GetUID("root")
 	if err != nil {
 		t.Errorf("failed to find uid for root: %v", err)
@@ -31,7 +36,6 @@ func TestGetUID(t *testing.T) {
 
 	uid, err = GetUID("some-non-existing-user")
 	if err == nil {
-		t.Errorf("unexpedly got uid for some-non-existing-user: %d", uid)
+		t.Errorf("unexpectedly got uid for some-non-existing-user: %d", uid)
 	}
-
 }
