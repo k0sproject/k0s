@@ -19,6 +19,7 @@ package constant
 import (
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -139,14 +140,15 @@ func TestRuncModuleVersions(t *testing.T) {
 }
 
 func getVersion(t *testing.T, component string) string {
-	cmd := exec.Command("./vars.sh", component+"_version")
+	cmd := exec.Command("sh", "./vars.sh", component+"_version")
 	cmd.Dir = filepath.Join("..", "..")
 
 	out, err := cmd.Output()
 	require.NoError(t, err)
 	require.NotEmpty(t, out, "failed to get %s version", component)
 
-	return strings.TrimSuffix(string(out), "\n")
+	trailingNewlines := regexp.MustCompilePOSIX("(\r?\n)+$")
+	return string(trailingNewlines.ReplaceAll(out, []byte{}))
 }
 
 func checkPackageModules(t *testing.T, filter func(modulePath string) bool, check func(t *testing.T, pkgPath string, module *packages.Module) bool) {
