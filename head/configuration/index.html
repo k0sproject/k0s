@@ -950,6 +950,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../nllb/" class="md-nav__link">
+        Node-local load balancing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../shell-completion/" class="md-nav__link">
         Shell Completion
       </a>
@@ -1724,6 +1738,15 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 <span class="w">      </span><span class="nt">mtu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">      </span><span class="nt">peerRouterASNs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
 <span class="w">      </span><span class="nt">peerRouterIPs</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">    </span><span class="nt">nodeLocalLoadBalancing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">envoyProxy</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">apiServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7443</span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/envoyproxy/envoy-distroless</span>
+<span class="w">          </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.24.1</span>
+<span class="w">        </span><span class="nt">konnectivityServerBindPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7132</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EnvoyProxy</span>
 <span class="w">    </span><span class="nt">podCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.244.0.0/16</span>
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kuberouter</span>
 <span class="w">    </span><span class="nt">serviceCIDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.96.0.0/12</span>
@@ -1995,6 +2018,62 @@ CALICO_IPV6POOL_CIDR:<span class="w"> </span><span class="s2">&quot;{{ spec.netw
 <span class="w">  </span><span class="nt">tcpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">  </span><span class="nt">udpTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 </code></pre></div>
+<h4 id="specnetworknodelocalloadbalancing"><code>spec.network.nodeLocalLoadBalancing</code><a class="headerlink" href="#specnetworknodelocalloadbalancing" title="Permanent link">#</a></h4>
+<p>Configuration options related to k0s's <a href="../nllb">node-local load balancing</a> feature.</p>
+<p><strong>Note:</strong> This feature is experimental! Expect instabilities and/or breaking
+changes.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>Indicates if node-local load balancing should be used to access Kubernetes API servers from worker nodes. Default: <code>false</code>.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>The type of the node-local load balancer to deploy on worker nodes. Default: <code>EnvoyProxy</code>. (This is the only option for now.)</td>
+</tr>
+<tr>
+<td><code>envoyProxy</code></td>
+<td>Configuration options related to the "EnvoyProxy" type of load balancing.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="specnetworknodelocalloadbalancingenvoyproxy"><code>spec.network.nodeLocalLoadBalancing.envoyProxy</code><a class="headerlink" href="#specnetworknodelocalloadbalancingenvoyproxy" title="Permanent link">#</a></h5>
+<p>Configuration options required for using Envoy as the backing implementation for
+node-local load balancing.</p>
+<p><strong>Note:</strong> This type of load balancing is not supported on ARMv7 workers.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image</code></td>
+<td>The OCI image that's being used for the Envoy Pod.</td>
+</tr>
+<tr>
+<td><code>imagePullPolicy</code></td>
+<td>The pull policy being used used for the Envoy Pod. Defaults to <code>spec.images.default_pull_policy</code> if omitted.</td>
+</tr>
+<tr>
+<td><code>apiServerBindPort</code></td>
+<td>Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface.  Default: <code>7443</code>.</td>
+</tr>
+<tr>
+<td><code>konnectivityServerBindPort</code></td>
+<td>Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: <code>7132</code>.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="speccontrollermanager"><code>spec.controllerManager</code><a class="headerlink" href="#speccontrollermanager" title="Permanent link">#</a></h3>
 <table>
 <thead>

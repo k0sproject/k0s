@@ -161,6 +161,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.k0sproject.io/head/nllb/</loc>
+         <lastmod>2023-01-17</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.k0sproject.io/head/podsecurity/</loc>
          <lastmod>2023-01-17</lastmod>
          <changefreq>daily</changefreq>
