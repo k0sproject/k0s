@@ -115,6 +115,15 @@ spec:
       mtu: 0
       peerRouterASNs: ""
       peerRouterIPs: ""
+    nodeLocalLoadBalancing:
+      enabled: false
+      envoyProxy:
+        apiServerBindPort: 7443
+        image:
+          image: docker.io/envoyproxy/envoy-distroless
+          version: v1.24.1
+        konnectivityServerBindPort: 7132
+      type: EnvoyProxy
     podCIDR: 10.244.0.0/16
     provider: kuberouter
     serviceCIDR: 10.96.0.0/12
@@ -264,6 +273,35 @@ ipvs:
   tcpTimeout: 0s
   udpTimeout: 0s
 ```
+
+#### `spec.network.nodeLocalLoadBalancing`
+
+Configuration options related to k0s's [node-local load balancing] feature.
+
+**Note:** This feature is experimental! Expect instabilities and/or breaking
+changes.
+
+| Element          | Description                                                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`        | Indicates if node-local load balancing should be used to access Kubernetes API servers from worker nodes. Default: `false`.   |
+| `type`           | The type of the node-local load balancer to deploy on worker nodes. Default: `EnvoyProxy`. (This is the only option for now.) |
+| `envoyProxy`     | Configuration options related to the "EnvoyProxy" type of load balancing.                                                     |
+
+[node-local load balancing]: ../nllb
+
+##### `spec.network.nodeLocalLoadBalancing.envoyProxy`
+
+Configuration options required for using Envoy as the backing implementation for
+node-local load balancing.
+
+**Note:** This type of load balancing is not supported on ARMv7 workers.
+
+| Element                      | Description                                                                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `image`                      | The OCI image that's being used for the Envoy Pod.                                                                                        |
+| `imagePullPolicy`            | The pull policy being used used for the Envoy Pod. Defaults to `spec.images.default_pull_policy` if omitted.                              |
+| `apiServerBindPort`          | Port number on which to bind the Envoy load balancer for the Kubernetes API server to on a worker's loopback interface.  Default: `7443`. |
+| `konnectivityServerBindPort` | Port number on which to bind the Envoy load balancer for the konnectivity server to on a worker's loopback interface. Default: `7132`.    |
 
 ### `spec.controllerManager`
 
