@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/Microsoft/go-winio v0.5.2
 	github.com/Microsoft/hcsshim v0.9.6
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -90,7 +91,6 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
-	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
