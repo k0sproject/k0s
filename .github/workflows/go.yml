@@ -175,6 +175,56 @@ jobs:
       - name: Validate OCI images manifests
         run: make check-image-validity
 
+  unittest_windows:
+    name: Unit test (windows)
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Prepare build environment
+        run: .github/workflows/prepare-build-env.sh
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache GOCACHE
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-unittest-gocache-windows-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-unittest-gocache-windows-${{ github.ref_name }}-
+          path: |
+            ~\AppData\Local\go-build
+
+      - name: Cache GOMODCACHE
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-unittest-gomodcache-windows-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-build-gomodcache-windows-${{ hashFiles('go.sum') }}
+          path: |
+            ~\go\pkg\mod
+
+      - name: Run unit tests
+        env:
+          EMBEDDED_BINS_BUILDMODE: none
+          TARGET_OS: windows
+          GO: go
+          GO_ENV: ''
+        run: |
+          make --touch .k0sbuild.docker-image.k0s go.sum
+          make bindata
+          make --touch codegen
+          make check-unit
+
   smoketest:
     name: Smoke test
     needs: build
