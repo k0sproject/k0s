@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -32,59 +33,68 @@ import (
 )
 
 type SupervisorTest struct {
-	shouldFail bool
-	proc       Supervisor
+	expectedErrMsg string
+	proc           Supervisor
 }
 
 func TestSupervisorStart(t *testing.T) {
+	sleep := selectCmd(t,
+		cmd{"sleep", []string{"60"}},
+		cmd{"powershell", []string{"-noprofile", "-noninteractive", "-command", "Start-Sleep -Seconds 60"}},
+	)
+
+	fail := selectCmd(t,
+		cmd{"false", []string{}},
+		cmd{"sh", []string{"-c", "exit 1"}},
+		cmd{"powershell", []string{"-noprofile", "-noninteractive", "-command", "exit 1"}},
+	)
+
 	var testSupervisors = []*SupervisorTest{
 		{
-			shouldFail: false,
 			proc: Supervisor{
 				Name:    "supervisor-test-sleep",
-				BinPath: "/bin/sh",
-				RunDir:  ".",
-				Args:    []string{"-c", "sleep 1s"},
+				BinPath: sleep.binPath,
+				Args:    sleep.binArgs,
+				RunDir:  t.TempDir(),
 			},
 		},
 		{
-			shouldFail: false,
 			proc: Supervisor{
 				Name:    "supervisor-test-fail",
-				BinPath: "/bin/sh",
-				RunDir:  ".",
-				Args:    []string{"-c", "false"},
+				BinPath: fail.binPath,
+				Args:    fail.binArgs,
+				RunDir:  t.TempDir(),
 			},
 		},
 		{
-			shouldFail: true,
+			expectedErrMsg: "exec",
 			proc: Supervisor{
 				Name:    "supervisor-test-non-executable",
-				BinPath: "/tmp",
-				RunDir:  ".",
+				BinPath: t.TempDir(),
+				RunDir:  t.TempDir(),
 			},
 		},
 		{
-			shouldFail: true,
+			expectedErrMsg: "mkdir " + sleep.binPath,
 			proc: Supervisor{
-				Name:    "supervisor-test-rundir-fail",
-				BinPath: "/tmp",
-				RunDir:  "/bin/sh/foo/bar",
+				Name:    "supervisor-test-rundir-init-fail",
+				BinPath: sleep.binPath,
+				Args:    sleep.binArgs,
+				RunDir:  filepath.Join(sleep.binPath, "obstructed"),
 			},
 		},
 	}
 
 	for _, s := range testSupervisors {
-		err := s.proc.Supervise()
-		if err != nil && !s.shouldFail {
-			t.Errorf("Failed to start %s: %v", s.proc.Name, err)
-		} else if err == nil && s.shouldFail {
-			t.Errorf("%s should fail but didn't", s.proc.Name)
-		}
-		err = s.proc.Stop()
-		if err != nil {
-			t.Errorf("Failed to stop %s: %v", s.proc.Name, err)
-		}
+		t.Run(s.proc.Name, func(t *testing.T) {
+			err := s.proc.Supervise()
+			if s.expectedErrMsg != "" {
+				assert.ErrorContains(t, err, s.expectedErrMsg)
+			} else {
+				assert.NoError(t, err, "Failed to start")
+			}
+			assert.NoError(t, s.proc.Stop(), "Failed to stop")
+		})
 	}
 }
 
@@ -207,4 +217,22 @@ func TestMultiThread(t *testing.T) {
 	}
 	wg.Wait()
 	_ = s.Stop()
+}
+
+type cmd struct {
+	binPath string
+	binArgs []string
+}
+
+func selectCmd(t *testing.T, cmds ...cmd) (_ cmd) {
+	var tested []string
+	for _, candidate := range cmds {
+		if path, err := exec.LookPath(candidate.binPath); err == nil {
+			return cmd{path, candidate.binArgs}
+		}
+		tested = append(tested, candidate.binPath)
+	}
+
+	require.Fail(t, "none of those executables in PATH, dunno how to create test process: %s", strings.Join(tested, ", "))
+	return // diverges above
 }
