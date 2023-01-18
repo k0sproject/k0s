@@ -214,14 +214,22 @@ func TestStopWhileRespawn(t *testing.T) {
 }
 
 func TestMultiThread(t *testing.T) {
+	sleep := selectCmd(t,
+		cmd{"sleep", []string{"60"}},
+		cmd{"powershell", []string{"-noprofile", "-noninteractive", "-command", "Start-Sleep -Seconds 60"}},
+	)
+
 	s := Supervisor{
 		Name:    "supervisor-test-multithread",
-		BinPath: "/bin/sh",
-		RunDir:  ".",
-		Args:    []string{"-c", "sleep 1s"},
+		BinPath: sleep.binPath,
+		Args:    sleep.binArgs,
+		RunDir:  t.TempDir(),
 	}
+
 	var wg sync.WaitGroup
-	_ = s.Supervise()
+	assert.NoError(t, s.Supervise(), "Failed to start")
+	t.Cleanup(func() { assert.NoError(t, s.Stop(), "Failed to stop") })
+
 	for i := 0; i < 255; i++ {
 		wg.Add(1)
 		go func() {
@@ -231,7 +239,6 @@ func TestMultiThread(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	_ = s.Stop()
 }
 
 type cmd struct {
