@@ -168,34 +168,49 @@ func TestRespawn(t *testing.T) {
 }
 
 func TestStopWhileRespawn(t *testing.T) {
-	falsePath, err := exec.LookPath("false")
-	if err != nil {
-		t.Errorf("could not find a path for 'false' executable: %s", err)
-	}
+	fail := selectCmd(t,
+		cmd{"false", []string{}},
+		cmd{"sh", []string{"-c", "exit 1"}},
+		cmd{"powershell", []string{"-noprofile", "-noninteractive", "-command", "exit 1"}},
+	)
 
 	s := Supervisor{
 		Name:           "supervisor-test-stop-while-respawn",
-		BinPath:        falsePath,
-		RunDir:         ".",
-		Args:           []string{},
-		TimeoutRespawn: 1 * time.Second,
-	}
-	err = s.Supervise()
-	if err != nil {
-		t.Errorf("Failed to start %s: %v", s.Name, err)
+		BinPath:        fail.binPath,
+		Args:           fail.binArgs,
+		RunDir:         t.TempDir(),
+		TimeoutRespawn: 1 * time.Hour,
 	}
 
-	// wait til the process exits
-	process := s.GetProcess()
-	for process != nil && process.Signal(syscall.Signal(0)) == nil {
-		time.Sleep(10 * time.Millisecond)
+	if assert.NoError(t, s.Supervise(), "Failed to start") {
+		// wait til the process exits
+		for process := s.GetProcess(); ; {
+			// Send "the null signal" to probe if the PID still exists
+			// (https://www.man7.org/linux/man-pages/man3/kill.3p.html). On
+			// Windows, the only emulated Signal is os.Kill, so this will return
+			// EWINDOWS if the process is still running, i.e. the
+			// WaitForSingleObject syscall on the process handle is still
+			// blocking.
+			err := process.Signal(syscall.Signal(0))
+
+			// Wait a bit to ensure that the supervisor has noticed a potential
+			// process exit as well, so that it's safe to assume that it reached
+			// the respawn timeout internally.
+			time.Sleep(100 * time.Millisecond)
+
+			// Ensure that the error indicates that the process is done. Note
+			// that on Windows, there seems to be a bug in os.Process that
+			// causes EINVAL being returned instead of ErrProcessDone, probably
+			// due to the wrong order of internal checks (i.e. the process
+			// handle is checked before the done flag).
+			if err == os.ErrProcessDone || err == syscall.EINVAL {
+				break
+			}
+		}
 	}
 
 	// try stop while waiting for respawn
-	err = s.Stop()
-	if err != nil {
-		t.Errorf("Failed to stop %s: %v", s.Name, err)
-	}
+	assert.NoError(t, s.Stop(), "Failed to stop")
 }
 
 func TestMultiThread(t *testing.T) {
