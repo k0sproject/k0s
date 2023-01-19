@@ -1498,32 +1498,59 @@
 <p>MetalLB implements the Kubernetes service of type LoadBalancer. When a LoadBalancer service is requested, MetalLB allocates an IP address from the configured range and makes the network aware that the IP “lives” in the cluster.</p>
 <p><img alt="k0s_metallb_loadbalancer" src="../../img/k0s_metallb_loadbalancer.png" /></p>
 <p>One of the benefits of MetalLB is that you avoid all cloud provider dependencies. That's why MetalLB is typically used for bare-metal deployments.</p>
-<p>See the MetalLB requirements in the <a href="https://metallb.universe.tf/#requirements">MetalLB's official documentation</a>. By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router and you are using kube-proxy in IPVS mode, you need to enable strict ARP mode in kube-proxy. See <a href="https://metallb.universe.tf/installation/#preparation">MetalLB preparations</a>.</p>
+<p>See the MetalLB requirements in the <a href="https://metallb.universe.tf/#requirements">MetalLB's official documentation</a>. By default, k0s runs with Kube-Router CNI, which is compatible with MetalLB as long as you don't use MetalLB’s BGP mode. If you are not using Kube-Router and you are using kube-proxy in IPVS mode, you need to enable strict ARP mode in kube-proxy (see <a href="https://metallb.universe.tf/installation/#preparation">MetalLB preparations</a>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s.k0sproject.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k0s</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kubeProxy</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ipvs</span>
+<span class="w">      </span><span class="nt">ipvs</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">strictARP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
 <p>Port 7946 (TCP &amp; UDP) must be allowed between the nodes. In addition, before installing MetalLB, make sure there is no other software running on port 7946 on the nodes, such as docker daemon.</p>
 <h3 id="install-metallb">Install MetalLB<a class="headerlink" href="#install-metallb" title="Permanent link">#</a></h3>
 <ol>
 <li>
-<p>Install MetalLB using the official manifests by MetalLB</p>
-<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
-kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+<p>Install MetalLB using the official Helm chart and k0s Helm <a href="../../helm-charts/">extension manager</a>:</p>
+<div class="highlight"><pre><span></span><code>apiVersion:<span class="w"> </span>k0s.k0sproject.io/v1beta1
+kind:<span class="w"> </span>ClusterConfig
+<span class="w">  </span>metadata:
+name:<span class="w"> </span>k0s
+spec:
+<span class="w">  </span>extensions:
+<span class="w">    </span>helm:
+<span class="w">      </span>repositories:
+<span class="w">      </span>-<span class="w"> </span>name:<span class="w"> </span>metallb
+<span class="w">        </span>url:<span class="w"> </span>https://metallb.github.io/metallb
+<span class="w">      </span>charts:
+<span class="w">      </span>-<span class="w"> </span>name:<span class="w"> </span>metallb
+<span class="w">        </span>chartname:<span class="w"> </span>metallb/metallb
+<span class="w">        </span>namespace:<span class="w"> </span>metallb
 </code></pre></div>
+<p>Other installation methods are available in the <a href="https://metallb.org/installation/">MetalLB's official documentation</a>.</p>
 </li>
 <li>
 <p>Create ConfigMap for MetalLB</p>
 <p>Next you need to create ConfigMap, which includes an IP address range for the load balancer. The pool of IPs must be dedicated to MetalLB's use. You can't reuse for example the Kubernetes node IPs or IPs controlled by other services. You can, however, use private IP addresses, for example 192.168.1.180-192.168.1.199, but then you need to take care of the routing from the external network if you need external access. In this example, we don't need it.</p>
-<p>Create a YAML file accordingly, and deploy it: <code>kubectl apply -f metallb-configmap.yaml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ConfigMap</span>
+<p>Create a YAML file accordingly, and deploy it: <code>kubectl apply -f metallb-l2-pool.yaml</code></p>
+<div class="highlight"><pre><span></span><code><span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IPAddressPool</span>
 <span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">first-pool</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">config</span>
-<span class="nt">data</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">    </span><span class="no">address-pools:</span>
-<span class="w">    </span><span class="no">- name: default</span>
-<span class="w">      </span><span class="no">protocol: layer2</span>
-<span class="w">      </span><span class="no">addresses:</span>
-<span class="w">      </span><span class="no">- &lt;ip-address-range-start&gt;-&lt;ip-address-range-stop&gt;</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">addresses</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ip-address-range-start&gt;-&lt;ip-address-range-stop&gt;</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">L2Advertisement</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metallb-system</span>
 </code></pre></div>
 </li>
 <li>
