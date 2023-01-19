@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -173,7 +174,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"127.0.0.1",
 	}
 
-	localIPs, err := detectLocalIPs()
+	localIPs, err := detectLocalIPs(ctx)
 	if err != nil {
 		return fmt.Errorf("error detecting local IP: %w", err)
 	}
@@ -217,23 +218,28 @@ func (c *Certificates) Init(ctx context.Context) error {
 	return eg.Wait()
 }
 
-func detectLocalIPs() ([]string, error) {
-	var localIPs []string
-	addrs, err := net.LookupIP("localhost")
+func detectLocalIPs(ctx context.Context) ([]string, error) {
+	resolver := net.DefaultResolver
+
+	addrs, err := resolver.LookupIPAddr(ctx, "localhost")
 	if err != nil {
 		return nil, err
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
-		hostnameAddrs, err := net.LookupIP(hostname)
+		hostnameAddrs, err := resolver.LookupIPAddr(ctx, hostname)
 		if err == nil {
 			addrs = append(addrs, hostnameAddrs...)
+		} else if errors.Is(err, ctx.Err()) {
+			return nil, err
 		}
 	}
 
+	var localIPs []string
 	for _, addr := range addrs {
-		if addr.To4() != nil {
-			localIPs = append(localIPs, addr.String())
+		ip := addr.IP
+		if ip.To4() != nil || ip.To16() != nil {
+			localIPs = append(localIPs, ip.String())
 		}
 	}
 
