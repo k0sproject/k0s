@@ -22,4 +22,3 @@ static/zz_generated_assets.go
 docs/cli
 site
 k0sctl.yaml
-*.swp
