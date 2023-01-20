@@ -84,11 +84,11 @@ spec:
 
   commands:
     - k0supdate:
-        version: v1.24.9+k0s.0
+        version: v1.24.10+k0s.0
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v1.24.9+k0s.0/k0s-v1.24.9+k0s.0-amd64
-            sha256: 15469210b61da094c6783e65c15a4ac951e1c4c50ff9cf13f30437ada48f446b
+            url: https://github.com/k0sproject/k0s/releases/download/v1.24.10+k0s.0/k0s-v1.24.10+k0s.0-amd64
+            sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         targets:
           controllers:
             discovery:
