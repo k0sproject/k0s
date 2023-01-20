@@ -191,6 +191,12 @@ func (s *FootlooseSuite) SetupSuite() {
 	go func() {
 		defer cleanupTasks.Done()
 		<-ctx.Done()
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			// Record a test failure when the deadline has been exceeded. This
+			// is to ensure that the test is actually marked as failed and the
+			// cluster state will be recorded.
+			assert.Fail(t, "Test deadline exceeded")
+		}
 
 		t.Logf("Cleaning up")
 
