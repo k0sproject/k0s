@@ -83,7 +83,7 @@ const (
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.2"
 	KubeProxyImage                     = "registry.k8s.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.26.0"
+	KubeProxyImageVersion              = "v1.26.1"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.10.0"
 	EnvoyProxyImage                    = "docker.io/envoyproxy/envoy-distroless"
