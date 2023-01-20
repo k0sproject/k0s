@@ -128,8 +128,8 @@ func (m *Manager) EnsureCertificate(certReq Request, ownerName string) (Certific
 			return Certificate{}, err
 		}
 		config := cli.Config{
-			CAFile:    certReq.CACert,
-			CAKeyFile: certReq.CAKey,
+			CAFile:    fmt.Sprintf("file:%s", certReq.CACert),
+			CAKeyFile: fmt.Sprintf("file:%s", certReq.CAKey),
 		}
 		s, err := sign.SignerFromConfig(config)
 		if err != nil {

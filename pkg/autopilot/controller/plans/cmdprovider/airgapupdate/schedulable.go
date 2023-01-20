@@ -118,7 +118,7 @@ func signalNodeAirgapUpdateCommandBuilder(node crcli.Object, cmd apv1beta2.PlanC
 	updateContent, updateContentOk := cmd.AirgapUpdate.Platforms[nodePlatformID]
 	if !updateContentOk {
 		appku.UpdatePlanCommandTargetStatusByName(node.GetName(), appc.SignalMissingPlatform, cmdStatus.AirgapUpdate.Workers)
-		return nil, err
+		return nil, fmt.Errorf("for platform ID %s: %s", nodePlatformID, appc.SignalMissingPlatform)
 	}
 
 	return func() apsigv2.Command {

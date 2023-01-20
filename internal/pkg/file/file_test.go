@@ -22,7 +22,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,13 +35,16 @@ import (
 func TestWriteAtomically(t *testing.T) {
 
 	t.Run("filePermissions", func(t *testing.T) {
-		for _, mode := range []os.FileMode{0400, 0755, 0644, 0777} {
-			modeStr := strconv.FormatUint(uint64(mode), 8)
+		for _, mode := range []struct{ posix, win os.FileMode }{
+			// On Windows, file mode just mimics the read-only flag
+			{0400, 0444}, {0755, 0666}, {0644, 0666}, {0777, 0666},
+		} {
+			modeStr := strconv.FormatUint(uint64(mode.posix), 8)
 			t.Run(modeStr, func(t *testing.T) {
 				dir := t.TempDir()
 				file := filepath.Join(dir, "file")
 
-				require.NoError(t, WriteAtomically(file, mode, func(file io.Writer) error {
+				require.NoError(t, WriteAtomically(file, mode.posix, func(file io.Writer) error {
 					_, err := file.Write([]byte(modeStr))
 					return err
 				}))
@@ -49,7 +54,12 @@ func TestWriteAtomically(t *testing.T) {
 				assert.Equal(t, []byte(modeStr), content)
 				info, err := os.Stat(file)
 				if assert.NoError(t, err) {
-					assert.Equal(t, mode, info.Mode())
+					expectedMode := mode.posix
+					if runtime.GOOS == "windows" {
+						expectedMode = mode.win
+					}
+
+					assert.Equal(t, expectedMode, info.Mode())
 				}
 			})
 		}
@@ -133,6 +143,9 @@ func TestWriteAtomically(t *testing.T) {
 			require.True(t, ok, "Doesn't have a name: %T", file)
 			tempPath = n.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
+			if runtime.GOOS == "windows" {
+				t.Skip("Cannot remove a file which is still opened on Windows")
+			}
 			require.NoError(t, os.Remove(tempPath))
 			return nil
 		})
@@ -170,7 +183,17 @@ func TestWriteAtomically(t *testing.T) {
 				"Expected the temporary file to be in the same directory as the target file",
 			)
 			assert.Equal(t, file, linkErr.New)
-			assert.True(t, errors.Is(linkErr.Err, fs.ErrExist), "Expected fs.ErrExist: %v", linkErr.Err)
+			if runtime.GOOS == "windows" {
+				// https://github.com/golang/go/blob/go1.19.2/src/syscall/types_windows.go#L11
+				//revive:disable-next-line:var-naming
+				const ERROR_ACCESS_DENIED syscall.Errno = 5
+				var errno syscall.Errno
+				ok := errors.As(linkErr.Err, &errno)
+				ok = ok && errno == ERROR_ACCESS_DENIED
+				assert.True(t, ok, "Expected ERROR_ACCESS_DENIED: %v", linkErr.Err)
+			} else {
+				assert.True(t, errors.Is(linkErr.Err, fs.ErrExist), "Expected fs.ErrExist: %v", linkErr.Err)
+			}
 		}
 
 		// Expect just the single directory that was created in order to obstruct the file path.
@@ -196,6 +219,10 @@ func TestWriteAtomically(t *testing.T) {
 			require.True(t, ok, "Doesn't have a name: %T", file)
 			tempPath = n.Name()
 			require.Equal(t, dir, filepath.Dir(tempPath))
+
+			if runtime.GOOS == "windows" {
+				t.Skip("Cannot remove a file which is still opened on Windows")
+			}
 
 			// Remove the temporary file ...
 			require.NoError(t, os.Remove(tempPath))
@@ -240,35 +267,43 @@ func TestWriteAtomically(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
-	dir := t.TempDir()
 
-	// test no-existing
-	got := Exists(filepath.Join(dir, "non-existing"))
-	want := false
-	if got != want {
-		t.Errorf("test non-existing: got %t, wanted %t", got, want)
-	}
+	t.Run("nonExisting", func(t *testing.T) {
+		got := Exists(filepath.Join(t.TempDir(), "non-existing"))
+		want := false
+		if got != want {
+			t.Errorf("test non-existing: got %t, wanted %t", got, want)
+		}
+	})
 
-	existingFileName := filepath.Join(dir, "existing")
-	require.NoError(t, os.WriteFile(existingFileName, []byte{}, 0644))
+	t.Run("existing", func(t *testing.T) {
+		existingFileName := filepath.Join(t.TempDir(), "existing")
+		require.NoError(t, os.WriteFile(existingFileName, []byte{}, 0644))
 
-	// test existing
-	got = Exists(existingFileName)
-	want = true
-	if got != want {
-		t.Errorf("test existing tempfile %s: got %t, wanted %t", existingFileName, got, want)
-	}
+		got := Exists(existingFileName)
+		want := true
+		if got != want {
+			t.Errorf("test existing tempfile %s: got %t, wanted %t", existingFileName, got, want)
+		}
+	})
 
-	// test what happens when we don't have permissions to the directory to file
-	// and can confirm that it actually exists
-	if assert.NoError(t, os.Chmod(dir, 0000)) {
-		t.Cleanup(func() { _ = os.Chmod(dir, 0755) })
-	}
+	t.Run("permissions", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("No UNIX-style permissions on Windows")
+		}
 
-	got = Exists(existingFileName)
-	want = false
-	if got != want {
-		t.Errorf("test existing tempfile %s: got %t, wanted %t", existingFileName, got, want)
-	}
+		// test what happens when we don't have permissions to the directory to file
+		// and can confirm that it actually exists
+		dir := t.TempDir()
+		existingFileName := filepath.Join(t.TempDir(), "existing")
+		if assert.NoError(t, os.Chmod(dir, 0000)) {
+			t.Cleanup(func() { _ = os.Chmod(dir, 0755) })
+		}
 
+		got := Exists(existingFileName)
+		want := false
+		if got != want {
+			t.Errorf("test existing tempfile %s: got %t, wanted %t", existingFileName, got, want)
+		}
+	})
 }

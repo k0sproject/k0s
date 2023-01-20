@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"runtime"
 	"testing"
 	"time"
 
@@ -309,12 +310,21 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("health_check_fails_after_stopped", func(t *testing.T) {
+		expectedErrMsg := "connection refused"
+		if runtime.GOOS == "windows" {
+			expectedErrMsg = "No connection could be made because the target machine actively refused it."
+		}
+
 		err := underTest.Ready()
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "connection refused")
+		require.ErrorContains(t, err, expectedErrMsg)
 	})
 
 	t.Run("does_not_serve_content_anymore", func(t *testing.T) {
+		expectedErrMsg := "connection refused"
+		if runtime.GOOS == "windows" {
+			expectedErrMsg = "No connection could be made because the target machine actively refused it."
+		}
+
 		url, err := underTest.ManifestURL()
 		require.NoError(t, err)
 
@@ -326,7 +336,7 @@ func TestStaticPods_Lifecycle(t *testing.T) {
 
 		resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 		if assert.Error(t, err) {
-			assert.Contains(t, err.Error(), "connection refused")
+			assert.Contains(t, err.Error(), expectedErrMsg)
 		} else {
 			assert.NoError(t, resp.Body.Close())
 		}

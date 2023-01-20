@@ -23,8 +23,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -241,7 +243,11 @@ func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars constant.CfgVars) ([]stri
 
 	switch storage.Type {
 	case v1beta1.KineStorageType:
-		args = append(args, fmt.Sprintf("--etcd-servers=unix://%s", k0sVars.KineSocketPath)) // kine endpoint
+		sockURL := url.URL{
+			Scheme: "unix", OmitHost: true,
+			Path: filepath.ToSlash(k0sVars.KineSocketPath),
+		} // kine endpoint
+		args = append(args, fmt.Sprintf("--etcd-servers=%s", sockURL.String()))
 	case v1beta1.EtcdStorageType:
 		args = append(args, fmt.Sprintf("--etcd-servers=%s", storage.Etcd.GetEndpointsAsString()))
 		if storage.Etcd.IsTLSEnabled() {

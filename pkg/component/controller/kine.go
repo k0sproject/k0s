@@ -90,7 +90,10 @@ func (k *Kine) Init(_ context.Context) error {
 	}
 
 	k.bypassClient, err = etcd.NewClientWithConfig(clientv3.Config{
-		Endpoints: []string{fmt.Sprintf("unix://%s", k.K0sVars.KineSocketPath)},
+		Endpoints: []string{(&url.URL{
+			Scheme: "unix", OmitHost: true,
+			Path: filepath.ToSlash(k.K0sVars.KineSocketPath),
+		}).String()},
 	})
 	if err != nil {
 		return fmt.Errorf("can't create bypass etcd client: %w", err)
@@ -103,6 +106,7 @@ func (k *Kine) Start(ctx context.Context) error {
 	logrus.Info("Starting kine")
 	logrus.Debugf("datasource: %s", k.Config.DataSource)
 	k.ctx = ctx
+
 	k.supervisor = supervisor.Supervisor{
 		Name:    "kine",
 		BinPath: assets.BinPath("kine", k.K0sVars.BinDir),
@@ -110,6 +114,9 @@ func (k *Kine) Start(ctx context.Context) error {
 		RunDir:  k.K0sVars.RunDir,
 		Args: []string{
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
+			// NB: kine doesn't parse URLs properly, so construct potentially
+			// invalid URLs that are understood by kine.
+			// https://github.com/k3s-io/kine/blob/v0.9.8/pkg/endpoint/endpoint.go#L274-L282
 			fmt.Sprintf("--listen-address=unix://%s", k.K0sVars.KineSocketPath),
 		},
 		UID: k.uid,

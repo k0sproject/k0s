@@ -14,28 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package users
+package testutil
 
 import (
-	"runtime"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestGetUID(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("No numeric user IDs on Windows")
-	}
-
-	uid, err := GetUID("root")
-	if err != nil {
-		t.Errorf("failed to find uid for root: %v", err)
-	}
-	if uid != 0 {
-		t.Errorf("root uid is not 0. It is %d", uid)
-	}
-
-	uid, err = GetUID("some-non-existing-user")
-	if err == nil {
-		t.Errorf("unexpectedly got uid for some-non-existing-user: %d", uid)
+// Chdir changes the current working directory to the named directory and
+// returns a function that, when called, restores the original working
+// directory.
+//
+// Use in tests like so:
+//
+//	tmpDir := t.TempDir()
+//	defer testutil.Chdir(t, tmpDir)()
+func Chdir(t *testing.T, dir string) func() {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(dir))
+	return func() {
+		require.NoError(t, os.Chdir(wd))
 	}
 }

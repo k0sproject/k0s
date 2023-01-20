@@ -55,16 +55,12 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.DefaultNodeLabels(),
+						Labels: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
-				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
-				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
+				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			true,
 			nil,
@@ -85,11 +81,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
-				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
-				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
+				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			false,
 			&appc.SignalMissingPlatform,
@@ -106,7 +98,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "controller0",
-						Labels: aptcomm.DefaultNodeLabels(),
+						Labels: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},
@@ -128,16 +120,12 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.DefaultNodeLabels(),
+						Labels: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
-				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
-				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
+				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			true,
 			nil,
@@ -158,11 +146,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 				},
 			},
 			apv1beta2.PlanPlatformResourceURLMap{
-				"linux-amd64":  apv1beta2.PlanResourceURL{}, // just needs to exist
-				"linux-arm64":  apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"linux-arm":    apv1beta2.PlanResourceURL{}, // arm smoke tests
-				"darwin-amd64": apv1beta2.PlanResourceURL{}, // local tests
-				"darwin-arm64": apv1beta2.PlanResourceURL{}, // local tests
+				"linux-amd64": apv1beta2.PlanResourceURL{}, // just needs to exist
 			},
 			false,
 			&appc.SignalMissingPlatform,
@@ -179,7 +163,7 @@ func TestObjectExistsWithPlatform(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "worker0",
-						Labels: aptcomm.DefaultNodeLabels(),
+						Labels: aptcomm.LinuxAMD64NodeLabels(),
 					},
 				},
 			},

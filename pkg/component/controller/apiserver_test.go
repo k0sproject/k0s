@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -36,11 +37,26 @@ func TestApiServerSuite(t *testing.T) {
 
 func (a *apiServerSuite) TestGetEtcdArgs() {
 	k0sVars := constant.CfgVars{
-		CertRootDir: "/var/lib/k0s/pki",
-		EtcdCertDir: "/var/lib/k0s/pki/etcd",
+		KineSocketPath: "/run/k0s/kine/kine.sock:2379",
+		CertRootDir:    "/var/lib/k0s/pki",
+		EtcdCertDir:    "/var/lib/k0s/pki/etcd",
 	}
 
-	a.T().Run("internal etcd cluster", func(t *testing.T) {
+	a.Run("kine", func() {
+		storageSpec := &v1beta1.StorageSpec{
+			Type: "kine",
+			Kine: v1beta1.DefaultKineConfig("/var/lib/k0s"),
+		}
+
+		result, err := getEtcdArgs(storageSpec, k0sVars)
+
+		require := a.Require()
+		require.NoError(err)
+		require.Len(result, 1)
+		require.Contains(result[0], "--etcd-servers=unix:/run/k0s/kine/kine.sock:2379")
+	})
+
+	a.Run("internal etcd cluster", func() {
 		storageSpec := &v1beta1.StorageSpec{
 			Etcd: &v1beta1.EtcdConfig{
 				PeerAddress: "192.168.68.104",
@@ -50,15 +66,16 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 
 		result, err := getEtcdArgs(storageSpec, k0sVars)
 
-		a.Nil(err)
-		a.Len(result, 4)
-		a.Contains(result[0], "--etcd-servers=https://127.0.0.1:2379")
-		a.Contains(result[1], "--etcd-cafile=/var/lib/k0s/pki/etcd/ca.crt")
-		a.Contains(result[2], "--etcd-certfile=/var/lib/k0s/pki/apiserver-etcd-client.crt")
-		a.Contains(result[3], "--etcd-keyfile=/var/lib/k0s/pki/apiserver-etcd-client.key")
+		require := a.Require()
+		require.NoError(err)
+		require.Len(result, 4)
+		require.Contains(result[0], "--etcd-servers=https://127.0.0.1:2379")
+		require.Contains(result[1], "--etcd-cafile="+filepath.FromSlash("/var/lib/k0s/pki/etcd/ca.crt"))
+		require.Contains(result[2], "--etcd-certfile="+filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.crt"))
+		require.Contains(result[3], "--etcd-keyfile="+filepath.FromSlash("/var/lib/k0s/pki/apiserver-etcd-client.key"))
 	})
 
-	a.T().Run("external etcd cluster with TLS", func(t *testing.T) {
+	a.Run("external etcd cluster with TLS", func() {
 		storageSpec := &v1beta1.StorageSpec{
 			Etcd: &v1beta1.EtcdConfig{
 				ExternalCluster: &v1beta1.ExternalCluster{
@@ -74,16 +91,17 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 
 		result, err := getEtcdArgs(storageSpec, k0sVars)
 
-		a.Nil(err)
-		a.Len(result, 5)
-		a.Contains(result[0], "--etcd-servers=https://192.168.10.10:2379,https://192.168.10.11:2379")
-		a.Contains(result[1], "--etcd-cafile=/etc/pki/CA/ca.crt")
-		a.Contains(result[2], "--etcd-certfile=/etc/pki/tls/certs/etcd-client.crt")
-		a.Contains(result[3], "--etcd-keyfile=/etc/pki/tls/private/etcd-client.key")
-		a.Contains(result[4], "--etcd-prefix=k0s-tenant-1")
+		require := a.Require()
+		require.NoError(err)
+		require.Len(result, 5)
+		require.Contains(result[0], "--etcd-servers=https://192.168.10.10:2379,https://192.168.10.11:2379")
+		require.Contains(result[1], "--etcd-cafile=/etc/pki/CA/ca.crt")
+		require.Contains(result[2], "--etcd-certfile=/etc/pki/tls/certs/etcd-client.crt")
+		require.Contains(result[3], "--etcd-keyfile=/etc/pki/tls/private/etcd-client.key")
+		require.Contains(result[4], "--etcd-prefix=k0s-tenant-1")
 	})
 
-	a.T().Run("external etcd cluster without TLS", func(t *testing.T) {
+	a.Run("external etcd cluster without TLS", func() {
 		storageSpec := &v1beta1.StorageSpec{
 			Etcd: &v1beta1.EtcdConfig{
 				ExternalCluster: &v1beta1.ExternalCluster{
@@ -96,9 +114,10 @@ func (a *apiServerSuite) TestGetEtcdArgs() {
 
 		result, err := getEtcdArgs(storageSpec, k0sVars)
 
-		a.Nil(err)
-		a.Len(result, 2)
-		a.Contains(result[0], "--etcd-servers=http://192.168.10.10:2379,http://192.168.10.11:2379")
-		a.Contains(result[1], "--etcd-prefix=k0s-tenant-1")
+		require := a.Require()
+		require.NoError(err)
+		require.Len(result, 2)
+		require.Contains(result[0], "--etcd-servers=http://192.168.10.10:2379,http://192.168.10.11:2379")
+		require.Contains(result[1], "--etcd-prefix=k0s-tenant-1")
 	})
 }

@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,7 +57,7 @@ func TestStorageSpec_IsJoinable(t *testing.T) {
 			storage: StorageSpec{
 				Type: "kine",
 				Kine: &KineConfig{
-					DataSource: "sqlite://foobar",
+					DataSource: "sqlite:foobar",
 				},
 			},
 			want: false,
@@ -110,7 +112,13 @@ spec:
 	assert.NoError(t, err)
 	assert.Equal(t, "kine", c.Spec.Storage.Type)
 	assert.NotNil(t, c.Spec.Storage.Kine)
-	assert.Equal(t, "sqlite:///var/lib/k0s/db/state.db?mode=rwc&_journal=WAL&cache=shared", c.Spec.Storage.Kine.DataSource)
+
+	expectedPath := "/var/lib/k0s/db/state.db"
+	if runtime.GOOS == "windows" {
+		expectedPath = "C:/var/lib/k0s/db/state.db"
+	}
+
+	assert.Equal(t, fmt.Sprintf("sqlite:%s?mode=rwc&_journal=WAL&cache=shared", expectedPath), c.Spec.Storage.Kine.DataSource)
 }
 
 type storageSuite struct {
