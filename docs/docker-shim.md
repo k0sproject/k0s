@@ -138,9 +138,9 @@ On the controller, you'll be able to see the worker started with the new docker 
 ```sh
 sudo k0s kubectl get nodes -o wide
 
-NAME                                        STATUS                     ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.24.9+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          64m    v1.24.9+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
+NAME                                        STATUS                     ROLES           AGE    VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready                      control-plane   117m   v1.24.10+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready,SchedulingDisabled   <none>          64m    v1.24.10+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```
 
 ### Uncordon the Node
@@ -156,7 +156,7 @@ You should now see the node Ready for scheduling with the docker Runtime:
 ```sh
 sudo k0s kubectl get nodes -o wide
 
-NAME                                        STATUS   ROLES           AGE    VERSION       INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.24.9+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
-ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          66m    v1.24.9+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
+NAME                                        STATUS   ROLES           AGE    VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+ip-10-0-49-188.eu-west-1.compute.internal   Ready    control-plane   119m   v1.24.10+k0s   10.0.49.188   <none>        Ubuntu 20.04.4 LTS   5.13.0-1022-aws   docker://20.10.16
+ip-10-0-62-250.eu-west-1.compute.internal   Ready    <none>          66m    v1.24.10+k0s   10.0.62.250   <none>        Ubuntu 20.04.4 LTS   5.13.0-1017-aws   docker://20.10.16
 ```
