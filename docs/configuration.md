@@ -56,40 +56,6 @@ spec:
     storage:
       create_default_storage_class: false
       type: external_storage
-  images:
-    default_pull_policy: IfNotPresent
-    calico:
-      cni:
-        image: docker.io/calico/cni
-        version: v3.24.5
-      kubecontrollers:
-        image: docker.io/calico/kube-controllers
-        version: v3.24.5
-      node:
-        image: docker.io/calico/node
-        version: v3.24.5
-    coredns:
-      image: docker.io/coredns/coredns
-      version: 1.10.0
-    konnectivity:
-      image: quay.io/k0sproject/apiserver-network-proxy-agent
-      version: 0.0.33-k0s
-    kubeproxy:
-      image: registry.k8s.io/kube-proxy
-      version: v1.26.1
-    kuberouter:
-      cni:
-        image: docker.io/cloudnativelabs/kube-router
-        version: v1.5.1
-      cniInstaller:
-        image: quay.io/k0sproject/cni-node
-        version: 1.1.1-k0s.0
-    metricsserver:
-      image: registry.k8s.io/metrics-server/metrics-server
-      version: v0.6.2
-    pushgateway:
-      image: quay.io/k0sproject/pushgateway-ttl
-      version: edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9
   installConfig:
     users:
       etcdUser: etcd
@@ -411,6 +377,8 @@ spec:
       image: quay.io/coredns/coredns
       version: v1.7.0
 ```
+
+If you want to get the default values or the full struct, use `k0s config create --include-images`.
 
 #### Available keys
 

@@ -27,11 +27,18 @@ import (
 )
 
 func NewCreateCmd() *cobra.Command {
+	var includeImages bool
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Output the default k0s configuration yaml to stdout",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := yaml.Marshal(v1beta1.DefaultClusterConfig())
+			config := v1beta1.DefaultClusterConfig()
+			if !includeImages {
+				config.Spec.Images = nil
+			}
+
+			cfg, err := yaml.Marshal(config)
 			if err != nil {
 				return err
 			}
@@ -39,6 +46,7 @@ func NewCreateCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&includeImages, "include-images", false, "include the default images in the output")
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
