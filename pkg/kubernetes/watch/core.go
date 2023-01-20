@@ -35,3 +35,7 @@ func Nodes(client Provider[*corev1.NodeList]) *Watcher[corev1.Node] {
 func Pods(client Provider[*corev1.PodList]) *Watcher[corev1.Pod] {
 	return FromClient[*corev1.PodList, corev1.Pod](client)
 }
+
+func Events(client Provider[*corev1.EventList]) *Watcher[corev1.Event] {
+	return FromClient[*corev1.EventList, corev1.Event](client)
+}

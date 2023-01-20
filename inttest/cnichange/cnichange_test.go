@@ -17,11 +17,17 @@ limitations under the License.
 package cnichange
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/k0sproject/k0s/inttest/common"
+
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
 type CNIChangeSuite struct {
@@ -29,21 +35,39 @@ type CNIChangeSuite struct {
 }
 
 func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
-	// Run controller with defaults only --> kube-router in use
-	s.NoError(s.InitController(0))
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKubeRouter)
 
-	// Restart the controller with new config, should fail as the CNI change is not supported
+	// Run controller with defaults only --> kube-router in use
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+
+	kc, err := s.KubeClient(s.ControllerNode(0))
+	s.Require().NoError(err)
+
+	// Wait till we see kube-router DS created
+	watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
+		WithObjectName("kube-router").
+		Until(s.Context(), func(ds *appsv1.DaemonSet) (bool, error) {
+			return true, nil
+		})
+
+	// Restart the controller with new config, should keep kube-router still in use
 	sshC1, err := s.SSH(s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
-	s.T().Log("killing k0s")
-	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")
-	s.Require().NoError(err)
 
-	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
-	s.T().Log("restarting k0s with new cni, this should fail")
-	_, err = sshC1.ExecWithOutput(s.Context(), "/usr/local/bin/k0s controller --debug --config /tmp/k0s.yaml")
-	s.Require().Error(err)
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithCalico)
+
+	s.T().Log("restarting k0s")
+	_, err = sshC1.ExecWithOutput(s.Context(), "rc-service k0scontroller restart")
+	s.Require().NoError(err)
+	s.WaitForKubeAPI(s.ControllerNode(0))
+
+	// check that we see the expeted warning event
+	watch.Events(kc.CoreV1().Events("kube-system")).
+		WithFieldSelector(fields.ParseSelectorOrDie("involvedObject.name=k0s")).
+		Until(s.Context(), func(e *corev1.Event) (bool, error) {
+			return e.Type == "Warning" && strings.Contains(e.Message, "cannot change CNI provider from kuberouter to calico"), nil
+		})
 }
 
 func TestCNIChangeSuite(t *testing.T) {
@@ -51,14 +75,21 @@ func TestCNIChangeSuite(t *testing.T) {
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     0,
+			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	}
 	suite.Run(t, &s)
 }
 
-const k0sConfig = `
+const k0sConfigWithCalico = `
 spec:
   network:
     provider: calico
     calico:
+`
+
+const k0sConfigWithKubeRouter = `
+spec:
+  network:
+    provider: kuberouter
 `
