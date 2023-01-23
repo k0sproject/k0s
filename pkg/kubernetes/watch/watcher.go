@@ -25,6 +25,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/utils/pointer"
@@ -48,6 +49,7 @@ type Watcher[T any] struct {
 
 	includeDeletions bool
 	fieldSelector    string
+	labelSelector    string
 	errorCallback    ErrorCallback
 }
 
@@ -94,6 +96,9 @@ func FromProvider[L VersionedResource, I any](provider Provider[L], itemsFromLis
 			return list.GetResourceVersion(), itemsFromList(list), nil
 		},
 		Watch: provider.Watch,
+
+		fieldSelector: fields.Everything().String(),
+		labelSelector: labels.Everything().String(),
 	}
 }
 
@@ -138,9 +143,13 @@ func (w *Watcher[T]) WithObjectName(name string) *Watcher[T] {
 	return w.WithFieldSelector(fields.OneTermEqualSelector(metav1.ObjectNameField, name))
 }
 
-// WithFieldSelector sets the given field selector for this Watcher. Refer to
-// the [concept] for a general introduction to field selectors. To gain an
-// overview of the supported values, have a look at the usages of
+// WithFieldSelector sets the given field selector for this Watcher. The default
+// is to match everything:
+//
+//	watcher.FromClient(...).WithFieldSelector(fields.Everything())
+//
+// Refer to the [concept] for a general introduction to field selectors. To gain
+// an overview of the supported values, have a look at the usages of
 // [k8s.io/apimachinery/pkg/runtime.Scheme.AddFieldLabelConversionFunc] in the
 // [Kubernetes codebase].
 //
@@ -151,11 +160,21 @@ func (w *Watcher[T]) WithFieldSelector(selector fields.Selector) *Watcher[T] {
 	return w
 }
 
-// WithoutFieldSelector clears any field selector from this Watcher.
-// This is the default.
-func (w *Watcher[T]) WithoutFieldSelector() *Watcher[T] {
-	w.fieldSelector = ""
+// WithLabelSelector sets the given label selector for this Watcher. The default
+// is to match everything:
+//
+//	watcher.FromClient(...).WithLabelSelector(labels.Everything())
+func (w *Watcher[T]) WithLabelSelector(selector labels.Selector) *Watcher[T] {
+	w.labelSelector = selector.String()
 	return w
+}
+
+// WithLabels sets this Watcher's label selector to match exactly the given Set.
+// A nil and empty Sets are considered equivalent to labels.Everything(). It
+// does not perform any validation, which means the server will reject the
+// request if the Set contains invalid values.
+func (w *Watcher[T]) WithLabels(l labels.Set) *Watcher[T] {
+	return w.WithLabelSelector(labels.SelectorFromSet(l))
 }
 
 // WithErrorCallback sets this Watcher's error callback. It's invoked every time
@@ -239,6 +258,7 @@ func (w *Watcher[T]) list(ctx context.Context, condition Condition[T]) (*startWa
 	defer cancel()
 	resourceVersion, items, err := w.List(ctx, metav1.ListOptions{
 		FieldSelector:  w.fieldSelector,
+		LabelSelector:  w.labelSelector,
 		TimeoutSeconds: pointer.Int64(maxListDurationSecs),
 	})
 	if err != nil {
