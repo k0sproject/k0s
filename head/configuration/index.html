@@ -1679,40 +1679,6 @@ sudo<span class="w"> </span>k0s<span class="w"> </span>start
 <span class="w">    </span><span class="nt">storage</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">create_default_storage_class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">external_storage</span>
-<span class="w">  </span><span class="nt">images</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">default_pull_policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IfNotPresent</span>
-<span class="w">    </span><span class="nt">calico</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">cni</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/calico/cni</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.24.5</span>
-<span class="w">      </span><span class="nt">kubecontrollers</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/calico/kube-controllers</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.24.5</span>
-<span class="w">      </span><span class="nt">node</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/calico/node</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v3.24.5</span>
-<span class="w">    </span><span class="nt">coredns</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/coredns/coredns</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.10.0</span>
-<span class="w">    </span><span class="nt">konnectivity</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/apiserver-network-proxy-agent</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.33-k0s</span>
-<span class="w">    </span><span class="nt">kubeproxy</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.k8s.io/kube-proxy</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.26.1</span>
-<span class="w">    </span><span class="nt">kuberouter</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">cni</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/cloudnativelabs/kube-router</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.5.1</span>
-<span class="w">      </span><span class="nt">cniInstaller</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/cni-node</span>
-<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1.1-k0s.0</span>
-<span class="w">    </span><span class="nt">metricsserver</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.k8s.io/metrics-server/metrics-server</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v0.6.2</span>
-<span class="w">    </span><span class="nt">pushgateway</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/k0sproject/pushgateway-ttl</span>
-<span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9</span>
 <span class="w">  </span><span class="nt">installConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">users</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">etcdUser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">etcd</span>
@@ -2189,6 +2155,7 @@ by k0s.</p>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/coredns/coredns</span>
 <span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.7.0</span>
 </code></pre></div>
+<p>If you want the list of default images and their versions to be included, use <code>k0s config create --include-images</code>.</p>
 <h4 id="available-keys">Available keys<a class="headerlink" href="#available-keys" title="Permanent link">#</a></h4>
 <ul>
 <li><code>spec.images.konnectivity</code></li>
