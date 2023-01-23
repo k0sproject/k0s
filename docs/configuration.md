@@ -378,7 +378,7 @@ spec:
       version: v1.7.0
 ```
 
-If you want to get the default values or the full struct, use `k0s config create --include-images`.
+If you want the list of default images and their versions to be included, use `k0s config create --include-images`.
 
 #### Available keys
 
