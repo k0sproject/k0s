@@ -44,10 +44,10 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.56.14
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
-	go.etcd.io/etcd/api/v3 v3.5.5
-	go.etcd.io/etcd/client/pkg/v3 v3.5.5
-	go.etcd.io/etcd/client/v3 v3.5.5
-	go.etcd.io/etcd/etcdutl/v3 v3.5.4
+	go.etcd.io/etcd/api/v3 v3.5.7
+	go.etcd.io/etcd/client/pkg/v3 v3.5.7
+	go.etcd.io/etcd/client/v3 v3.5.7
+	go.etcd.io/etcd/etcdutl/v3 v3.5.7
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.5.0
@@ -106,6 +106,7 @@ require (
 	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
+	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
@@ -139,11 +140,11 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
-	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/fullstorydev/grpcurl v1.8.5 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
+	github.com/getsentry/sentry-go v0.17.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -155,6 +156,7 @@ require (
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -185,7 +187,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -249,13 +251,13 @@ require (
 	github.com/zmap/zcrypto v0.0.0-20210511125630-18f1e0152cfc // indirect
 	github.com/zmap/zlint/v3 v3.1.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.5 // indirect
-	go.etcd.io/etcd/etcdctl/v3 v3.5.4 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.5 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.5 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.5 // indirect
-	go.etcd.io/etcd/tests/v3 v3.5.4 // indirect
-	go.etcd.io/etcd/v3 v3.5.4 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.7 // indirect
+	go.etcd.io/etcd/etcdctl/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/tests/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/v3 v3.5.7 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.35.0 // indirect
