@@ -98,6 +98,9 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 	// Prerequisite for required config NETFILTER_XT_MATCH_COMMENT
 	netfilter.AssertKernelConfig("NETFILTER_ADVANCED", "Advanced netfilter configuration")
 
+	// kube-proxy will fail without connection tracking
+	netfilter.RequireKernelConfig("NF_CONNTRACK", "Netfilter connection tracking support")
+
 	// Core Netfilter Configuration
 	xtables := netfilter.RequireKernelConfig("NETFILTER_XTABLES", "Netfilter Xtables support")
 	//  *** Xtables targets ***
@@ -121,7 +124,6 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 
 	// Core Netfilter Configuration
 	netfilter.AssertKernelConfig("NETFILTER_NETLINK", "")
-	netfilter.AssertKernelConfig("NF_CONNTRACK", "Netfilter connection tracking support")
 	netfilter.AssertKernelConfig("NF_NAT", "") // prerequisite for some required configs
 	//  *** Xtables combined modules ***
 	xtables.AssertKernelConfig("NETFILTER_XT_MARK", "nfmark target and match support")
