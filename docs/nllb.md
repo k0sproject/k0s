@@ -88,7 +88,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: v1.26.0+k0s.0
+    version: v1.26.1+k0s.0
     config:
       spec:
         network:
@@ -176,11 +176,11 @@ level=info msg="==> Running phase: Validate hosts"
 level=info msg="==> Running phase: Gather k0s facts"
 level=info msg="==> Running phase: Validate facts"
 level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.0+k0s.0"
-level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.0+k0s.0"
-level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.0+k0s.0"
-level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.0+k0s.0"
-level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.0+k0s.0"
+level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.1+k0s.0"
+level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.1+k0s.0"
+level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.1+k0s.0"
+level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.1+k0s.0"
+level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v1.26.1+k0s.0"
 level=info msg="==> Running phase: Configure k0s"
 level=info msg="[ssh] 10.81.146.254:22: validating configuration"
 level=info msg="[ssh] 10.81.146.184:22: validating configuration"
@@ -220,7 +220,7 @@ level=info msg="[ssh] 10.81.146.51:22: waiting for node to become ready"
 level=info msg="==> Running phase: Release exclusive host lock"
 level=info msg="==> Running phase: Disconnect from hosts"
 level=info msg="==> Finished in 3m30s"
-level=info msg="k0s cluster version v1.26.0+k0s.0 is now installed"
+level=info msg="k0s cluster version v1.26.1+k0s.0 is now installed"
 level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
 level=info msg="     k0sctl kubeconfig"
 ```
@@ -258,8 +258,8 @@ listed, too:
 ```console
 $ kubectl get nodes -owide
 NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   2m16s   v1.26.0+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
-k0s-worker-1   Ready    <none>   2m15s   v1.26.0+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
+k0s-worker-0   Ready    <none>   2m16s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
+k0s-worker-1   Ready    <none>   2m15s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
 ```
 
 There is one node-local load balancer pod running for each worker node:
@@ -304,8 +304,8 @@ $ sed -i s#https://10\\.81\\.146\\.254:6443#https://10.81.146.184:6443#g k0s-kub
 
 $ kubectl get nodes -owide
 NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   3m35s   v1.26.0+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
-k0s-worker-1   Ready    <none>   3m34s   v1.26.0+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
+k0s-worker-0   Ready    <none>   3m35s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
+k0s-worker-1   Ready    <none>   3m34s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.15
 
 $ kubectl -n kube-system get pods -owide -l app.kubernetes.io/managed-by=k0s,app.kubernetes.io/component=nllb
 NAME                READY   STATUS    RESTARTS   AGE     IP              NODE           NOMINATED NODE   READINESS GATES
