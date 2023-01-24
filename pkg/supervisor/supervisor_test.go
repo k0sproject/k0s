@@ -99,20 +99,26 @@ func TestSupervisorStart(t *testing.T) {
 }
 
 func TestGetEnv(t *testing.T) {
-	// backup environment vars
+	// backup environment vars, and restore them when test finishes
 	oldEnv := os.Environ()
+	t.Cleanup(func() {
+		for _, e := range oldEnv {
+			key, val, _ := strings.Cut(e, "=")
+			assert.NoError(t, os.Setenv(key, val))
+		}
+	})
 
 	os.Clearenv()
-	os.Setenv("k3", "v3")
-	os.Setenv("PATH", "/bin")
-	os.Setenv("k2", "v2")
-	os.Setenv("FOO_k3", "foo_v3")
-	os.Setenv("k4", "v4")
-	os.Setenv("FOO_k2", "foo_v2")
-	os.Setenv("FOO_HTTPS_PROXY", "a.b.c:1080")
-	os.Setenv("HTTPS_PROXY", "1.2.3.4:8888")
-	os.Setenv("k1", "v1")
-	os.Setenv("FOO_PATH", "/usr/local/bin")
+	t.Setenv("k3", "v3")
+	t.Setenv("PATH", "/bin")
+	t.Setenv("k2", "v2")
+	t.Setenv("FOO_k3", "foo_v3")
+	t.Setenv("k4", "v4")
+	t.Setenv("FOO_k2", "foo_v2")
+	t.Setenv("FOO_HTTPS_PROXY", "a.b.c:1080")
+	t.Setenv("HTTPS_PROXY", "1.2.3.4:8888")
+	t.Setenv("k1", "v1")
+	t.Setenv("FOO_PATH", "/usr/local/bin")
 
 	env := getEnv("/var/lib/k0s", "foo", false)
 	sort.Strings(env)
@@ -128,13 +134,6 @@ func TestGetEnv(t *testing.T) {
 	actual = fmt.Sprintf("%s", env)
 	if actual != expected {
 		t.Errorf("Failed in env processing with keepEnvPrefix=true, expected: %q, actual: %q", expected, actual)
-	}
-
-	//restore environment vars
-	os.Clearenv()
-	for _, e := range oldEnv {
-		kv := strings.SplitN(e, "=", 2)
-		os.Setenv(kv[0], kv[1])
 	}
 }
 
