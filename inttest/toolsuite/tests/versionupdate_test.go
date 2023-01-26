@@ -45,18 +45,10 @@ func (s *VersionUpdateSuite) TestUpdate() {
 	s.T().Logf("Waiting for Plan completion (timeout = %v)", s.Config.OperationTimeout)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, s.Config.OperationTimeout, func(plan *apv1beta2.Plan) bool {
-		completed := plan.Status.State == appc.PlanCompleted
-		if completed {
-			s.T().Log("Plan completed successfully!")
-		}
-		return completed
-	})
-
-	s.T().Log("Plan completed execution")
-
-	assert.NoError(s.T(), err)
-	assert.NotEmpty(s.T(), plan)
+	plan, err := apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, s.Config.OperationTimeout, appc.PlanCompleted)
+	if s.NoError(err) {
+		s.NotEmpty(plan)
+	}
 }
 
 // VersionUpdatePlan creates an autopilot Plan that consists of all controllers and workers as

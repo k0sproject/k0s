@@ -16,11 +16,13 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -34,6 +36,33 @@ import (
 // On timeout, an error is returned.
 func WaitForPlanByName(ctx context.Context, client apclient.Interface, name string, timeout time.Duration, conds ...func(obj *apv1beta2.Plan) bool) (*apv1beta2.Plan, error) {
 	return WaitForByName[*apv1beta2.PlanList](ctx, client.AutopilotV1beta2().Plans(), name, timeout, conds...)
+}
+
+// WaitForPlanState waits for the the Plan with the given name to reach the given state.
+func WaitForPlanState(ctx context.Context, client apclient.Interface, name string, timeout time.Duration, state apv1beta2.PlanStateType) (*apv1beta2.Plan, error) {
+	plan, err := WaitForPlanByName(ctx, client, name, timeout, func(plan *apv1beta2.Plan) bool {
+		switch plan.Status.State {
+		case state:
+			return true
+
+		// Those are non-terminal states, so keep on waiting.
+		case appc.PlanSchedulable, appc.PlanSchedulableWait, "":
+			return false
+
+		// All other states are considered terminal.
+		default:
+			return true
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if plan.Status.State != state {
+		return nil, fmt.Errorf("unexpected Plan state: %s", plan.Status.State)
+	}
+
+	return plan, nil
 }
 
 // Some shortcuts for very long type names.

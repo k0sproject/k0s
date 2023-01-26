@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
@@ -74,12 +73,8 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, 5*time.Minute, func(plan *apv1beta2.Plan) bool {
-		return plan.Status.State == appc.PlanWarning
-	})
-
+	plan, err := apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, 5*time.Minute, appc.PlanWarning)
 	s.Require().NoError(err)
-	s.Equal(appc.PlanWarning, plan.Status.State)
 
 	s.Equal(1, len(plan.Status.Commands))
 	cmd := plan.Status.Commands[0]
