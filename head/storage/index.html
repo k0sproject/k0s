@@ -765,6 +765,19 @@
     CSI
   </a>
   
+    <nav class="md-nav" aria-label="CSI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-3rd-party-storage-solutions" class="md-nav__link">
+    Installing 3rd party storage solutions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1450,6 +1463,19 @@
     CSI
   </a>
   
+    <nav class="md-nav" aria-label="CSI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-3rd-party-storage-solutions" class="md-nav__link">
+    Installing 3rd party storage solutions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1554,6 +1580,8 @@ pvc-9a7fae2d-eb03-42c3-aaa9-1a807d5df12f<span class="w">   </span>5Gi<span class
 <p>k0s supports a wide range of different storage options by utilizing Container Storage Interface (CSI). All Kubernetes storage solutions are supported and users can easily select the storage that fits best for their needs.</p>
 <p>When the storage solution implements Container Storage Interface (CSI), containers can communicate with the storage for creation and configuration of persistent volumes. This makes it easy to dynamically provision the requested volumes. It also expands the supported storage solutions from the previous generation, in-tree volume plugins. More information about the CSI concept is described on the <a href="https://kubernetes.io/blog/2019/01/15/container-storage-interface-ga/">Kubernetes Blog</a>.</p>
 <p><img alt="k0s storage" src="../img/k0s_storage.png" /></p>
+<h3 id="installing-3rd-party-storage-solutions">Installing 3rd party storage solutions<a class="headerlink" href="#installing-3rd-party-storage-solutions" title="Permanent link">#</a></h3>
+<p>Follow your storage driver's installation instructions. Note that the Kubelet installed by k0s uses a slightly different path for its working directory (<code>/varlib/k0s/kubelet</code> instead of <code>/var/lib/kubelet</code>). Consult the CSI driver's configuration documentation on how to customize this path.</p>
 <h2 id="example-storage-solutions">Example storage solutions<a class="headerlink" href="#example-storage-solutions" title="Permanent link">#</a></h2>
 <p>Different Kubernetes storage solutions are explained in the <a href="https://kubernetes.io/docs/concepts/storage/volumes/">official Kubernetes storage documentation</a>. All of them can be used with k0s. Here are some popular ones:</p>
 <ul>

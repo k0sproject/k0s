@@ -1230,6 +1230,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#customized-configurations" class="md-nav__link">
+    Customized configurations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1489,6 +1496,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#customized-configurations" class="md-nav__link">
+    Customized configurations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1605,6 +1619,14 @@ with etcd itself is not fully supported on ARM either.</p>
 <p>Due to removal of the embedded docker-shim from Kubelet, the Kubelets embedded <a href="https://github.com/google/cadvisor">cadvisor</a> metrics got slightly broken. If your container runtime is a custom containerd you can add <code>--kubelet-extra-flags="--containerd=&lt;path/to/containerd.sock&gt;"</code> into k0s worker startup. That configures the kubelet embedded cadvisor to talk directly with containerd to gather the metrics and thus gets the expected labels in place.</p>
 <p>Unfortunately this does not work on when using Docker via cri-dockerd shim. There's currently no easy workarounds for this.</p>
 <p>In the future kubelet will be refactored to get the container metrics from CRI interface rather than from the runtime directly. This work is specified and followed up in <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md">KEP-2371</a> but until that work completes the only option is to run a standalone cAdvisor. There's ongoing <a href="https://github.com/kubernetes/website/issues/30681">effort</a> to both document the current shortcomings and how to run standalone cAdvisor in Kubernetes community.</p>
+<h2 id="customized-configurations">Customized configurations<a class="headerlink" href="#customized-configurations" title="Permanent link">#</a></h2>
+<ul>
+<li>All data directories reside under <code>/var/lib/k0s</code>, for example:<ul>
+<li><code>/var/lib/k0s/kubelet</code></li>
+<li><code>/var/lib/k0s/etcd</code></li>
+</ul>
+</li>
+</ul>
 
 
 
