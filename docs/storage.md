@@ -106,6 +106,10 @@ When the storage solution implements Container Storage Interface (CSI), containe
 
 ![k0s storage](img/k0s_storage.png)
 
+### Installing 3rd party storage solutions
+
+Follow your storage driver's installation instructions. Note that the Kubelet installed by k0s uses a slightly different path for its working directory (`/varlib/k0s/kubelet` instead of `/var/lib/kubelet`). Consult the CSI driver's configuration documentation on how to customize this path.
+
 ## Example storage solutions
 
 Different Kubernetes storage solutions are explained in the [official Kubernetes storage documentation](https://kubernetes.io/docs/concepts/storage/volumes/). All of them can be used with k0s. Here are some popular ones:

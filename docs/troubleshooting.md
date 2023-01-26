@@ -149,3 +149,9 @@ Due to removal of the embedded docker-shim from Kubelet, the Kubelets embedded [
 Unfortunately this does not work on when using Docker via cri-dockerd shim. There's currently no easy workarounds for this.
 
 In the future kubelet will be refactored to get the container metrics from CRI interface rather than from the runtime directly. This work is specified and followed up in [KEP-2371](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md) but until that work completes the only option is to run a standalone cAdvisor. There's ongoing [effort](https://github.com/kubernetes/website/issues/30681) to both document the current shortcomings and how to run standalone cAdvisor in Kubernetes community.
+
+## Customized configurations
+
+- All data directories reside under `/var/lib/k0s`, for example:
+  - `/var/lib/k0s/kubelet`
+  - `/var/lib/k0s/etcd`
