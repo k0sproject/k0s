@@ -77,8 +77,8 @@ jobs:
           mike alias -u head main
           mike alias -u "${STABLE}" stable
           mike set-default --push stable
-          echo ::set-output name=LATEST::${LATEST}
-          echo ::set-output name=STABLE::${STABLE}
+          echo LATEST="$LATEST" >> $GITHUB_OUTPUT
+          echo STABLE="$STABLE" >> $GITHUB_OUTPUT
 
       # Ensures the current branch is gh-pages,
       # Creates / updates the "stable" and "latest" plain text files with the corresponding versions
