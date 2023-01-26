@@ -147,6 +147,7 @@ func (c Component) sendTelemetry(ctx context.Context) {
 	hostData.Extra["cpuArch"] = runtime.GOARCH
 
 	addSysInfo(&hostData)
+	c.addCustomData(ctx, &hostData)
 
 	c.log.WithField("data", data).WithField("hostdata", hostData).Info("sending telemetry")
 	if err := c.analyticsClient.Enqueue(analytics.Track{
@@ -156,6 +157,16 @@ func (c Component) sendTelemetry(ctx context.Context) {
 		Context:     &hostData,
 	}); err != nil {
 		c.log.WithError(err).Warning("can't send telemetry data")
+	}
+}
+
+func (c Component) addCustomData(ctx context.Context, analyticCtx *analytics.Context) {
+	cm, err := c.kubernetesClient.CoreV1().ConfigMaps("kube-system").Get(ctx, "k0s-telemetry", metav1.GetOptions{})
+	if err != nil {
+		return
+	}
+	for k, v := range cm.Data {
+		analyticCtx.Extra[fmt.Sprintf("custom.%s", k)] = v
 	}
 }
 
