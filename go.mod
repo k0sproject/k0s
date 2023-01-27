@@ -55,7 +55,7 @@ require (
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.4.0
 	golang.org/x/tools v0.5.0
-	google.golang.org/grpc v1.52.1
+	google.golang.org/grpc v1.52.3
 	helm.sh/helm/v3 v3.11.0
 )
 
