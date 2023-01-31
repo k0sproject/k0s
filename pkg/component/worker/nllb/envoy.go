@@ -84,9 +84,6 @@ type envoyPodParams struct {
 
 // envoyFilesParams holds the parameters for the Envoy config files.
 type envoyFilesParams struct {
-	// Port to which Envoy will bind the konnectivity server load balancer.
-	konnectivityServerBindPort uint16
-
 	// Addresses on which the upstream API servers are listening.
 	apiServers []k0snet.HostPort
 
@@ -167,10 +164,6 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 		},
 	}
 
-	if nllb.EnvoyProxy.KonnectivityServerBindPort != nil {
-		e.config.envoyFilesParams.konnectivityServerBindPort = uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
-	}
-
 	err = writeEnvoyConfigFiles(&e.config.envoyParams, &e.config.envoyFilesParams)
 	if err != nil {
 		return err
@@ -223,6 +216,10 @@ func (e *envoyProxy) stop() {
 }
 
 func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) error {
+	var konnectivityServerBindPort uint16
+	if params.konnectivityServerBindPort != nil {
+		konnectivityServerBindPort = *params.konnectivityServerBindPort
+	}
 	data := struct {
 		BindIP                     net.IP
 		APIServerBindPort          uint16
@@ -232,7 +229,7 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 	}{
 		BindIP:                     params.bindIP,
 		APIServerBindPort:          params.apiServerBindPort,
-		KonnectivityServerBindPort: filesParams.konnectivityServerBindPort,
+		KonnectivityServerBindPort: konnectivityServerBindPort,
 		KonnectivityServerPort:     filesParams.konnectivityServerPort,
 		UpstreamServers:            filesParams.apiServers,
 	}
