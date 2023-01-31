@@ -70,7 +70,7 @@ type envoyParams struct {
 	apiServerBindPort uint16
 
 	// Port to which Konnectivity will bind.
-	konnectivityServerBindPort *uint16
+	konnectivityServerBindPort uint16
 }
 
 // envoyPodParams holds the parameters for the static Envoy pod template.
@@ -141,10 +141,9 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 	}
 
 	nllb := profile.NodeLocalLoadBalancing
-	var konnectivityBindPort *uint16
+	var konnectivityBindPort uint16
 	if nllb.EnvoyProxy.KonnectivityServerBindPort != nil {
-		port := uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
-		konnectivityBindPort = &port
+		konnectivityBindPort = uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
 	}
 
 	e.config = &envoyConfig{
@@ -216,10 +215,6 @@ func (e *envoyProxy) stop() {
 }
 
 func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) error {
-	var konnectivityServerBindPort uint16
-	if params.konnectivityServerBindPort != nil {
-		konnectivityServerBindPort = *params.konnectivityServerBindPort
-	}
 	data := struct {
 		BindIP                     net.IP
 		APIServerBindPort          uint16
@@ -229,7 +224,7 @@ func writeEnvoyConfigFiles(params *envoyParams, filesParams *envoyFilesParams) e
 	}{
 		BindIP:                     params.bindIP,
 		APIServerBindPort:          params.apiServerBindPort,
-		KonnectivityServerBindPort: konnectivityServerBindPort,
+		KonnectivityServerBindPort: params.konnectivityServerBindPort,
 		KonnectivityServerPort:     filesParams.konnectivityServerPort,
 		UpstreamServers:            filesParams.apiServers,
 	}
@@ -268,8 +263,8 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 	ports := []corev1.ContainerPort{
 		{Name: "api-server", ContainerPort: int32(params.apiServerBindPort), Protocol: corev1.ProtocolTCP},
 	}
-	if params.konnectivityServerBindPort != nil {
-		ports = append(ports, corev1.ContainerPort{Name: "konnectivity", ContainerPort: int32(*params.konnectivityServerBindPort), Protocol: corev1.ProtocolTCP})
+	if params.konnectivityServerBindPort != 0 {
+		ports = append(ports, corev1.ContainerPort{Name: "konnectivity", ContainerPort: int32(params.konnectivityServerBindPort), Protocol: corev1.ProtocolTCP})
 	}
 	return corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
