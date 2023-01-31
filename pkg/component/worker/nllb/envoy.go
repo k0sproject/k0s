@@ -68,6 +68,9 @@ type envoyParams struct {
 
 	// Port to which Envoy will bind the API server load balancer.
 	apiServerBindPort uint16
+
+	// Port to which Konnectivity will bind.
+	konnectivityServerBindPort *uint16
 }
 
 // envoyPodParams holds the parameters for the static Envoy pod template.
@@ -141,11 +144,18 @@ func (e *envoyProxy) start(ctx context.Context, profile workerconfig.Profile, ap
 	}
 
 	nllb := profile.NodeLocalLoadBalancing
+	var konnectivityBindPort *uint16
+	if nllb.EnvoyProxy.KonnectivityServerBindPort != nil {
+		port := uint16(*nllb.EnvoyProxy.KonnectivityServerBindPort)
+		konnectivityBindPort = &port
+	}
+
 	e.config = &envoyConfig{
 		envoyParams{
 			e.dir,
 			loopbackIP,
 			uint16(profile.NodeLocalLoadBalancing.EnvoyProxy.APIServerBindPort),
+			konnectivityBindPort,
 		},
 		envoyPodParams{
 			*nllb.EnvoyProxy.Image,
@@ -258,6 +268,12 @@ func (e *envoyProxy) provision() error {
 }
 
 func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod {
+	ports := []corev1.ContainerPort{
+		{Name: "api-server", ContainerPort: int32(params.apiServerBindPort), Protocol: corev1.ProtocolTCP},
+	}
+	if params.konnectivityServerBindPort != nil {
+		ports = append(ports, corev1.ContainerPort{Name: "konnectivity", ContainerPort: int32(*params.konnectivityServerBindPort), Protocol: corev1.ProtocolTCP})
+	}
 	return corev1.Pod{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -274,9 +290,7 @@ func makePodManifest(params *envoyParams, podParams *envoyPodParams) corev1.Pod 
 				Name:            "nllb",
 				Image:           podParams.image.URI(),
 				ImagePullPolicy: podParams.pullPolicy,
-				Ports: []corev1.ContainerPort{
-					{Name: "nllb", ContainerPort: 80, Protocol: corev1.ProtocolTCP},
-				},
+				Ports:           ports,
 				SecurityContext: &corev1.SecurityContext{
 					ReadOnlyRootFilesystem:   pointer.Bool(true),
 					Privileged:               pointer.Bool(false),
