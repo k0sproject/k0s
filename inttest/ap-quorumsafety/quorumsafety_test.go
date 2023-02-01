@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
@@ -153,12 +152,8 @@ spec:
 
 	// The plan should fail with "InconsistentTargets" due to autopilot detecting that `controller2`
 	// despite existing as a `ControlNode`, does not resolve.
-	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, 10*time.Minute, func(plan *apv1beta2.Plan) bool {
-		return plan.Status.State == appc.PlanInconsistentTargets
-	})
-
+	_, err = apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, 10*time.Minute, appc.PlanInconsistentTargets)
 	s.Require().NoError(err)
-	s.Equal(appc.PlanInconsistentTargets, plan.Status.State)
 }
 
 // TestQuorumSafetySuite sets up a suite using 2 controllers, and runs a specific

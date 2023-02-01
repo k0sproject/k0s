@@ -158,14 +158,10 @@ spec:
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanByName(s.Context(), client, apconst.AutopilotName, 10*time.Minute, func(plan *apv1beta2.Plan) bool {
-		return plan.Status.State == appc.PlanCompleted
-	})
+	plan, err := apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, 10*time.Minute, appc.PlanCompleted)
 	s.Require().NoError(err)
 
 	// Ensure all state/status are completed
-	s.Equal(appc.PlanCompleted, plan.Status.State)
-
 	s.Equal(1, len(plan.Status.Commands))
 	cmd := plan.Status.Commands[0]
 
