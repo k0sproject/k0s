@@ -3,6 +3,9 @@
 
 set -eu
 
+# Don't deal with recursive make stuff here!
+unset -v MAKEFLAGS MAKELEVEL
+
 from=
 var=
 

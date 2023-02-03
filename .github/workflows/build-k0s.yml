@@ -12,6 +12,9 @@ on:
         required: true
         description: The architecture to build k0s for.
 
+env:
+  MAKEFLAGS: -j
+
 jobs:
   build:
     name: ${{ inputs.target-os }}-${{ inputs.target-arch }}

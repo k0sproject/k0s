@@ -29,6 +29,9 @@ on:
       - 'mkdocs.yml'
       - '*.md'
 
+env:
+  MAKEFLAGS: -j
+
 jobs:
   lint:
     name: Lint
