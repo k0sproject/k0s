@@ -18,17 +18,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         name: Go modules cache
         with:
           path: ~/go/pkg/mod
@@ -46,7 +46,7 @@ jobs:
           go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
 
       - name: Checkout k0s
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
