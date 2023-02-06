@@ -17,11 +17,11 @@ jobs:
         node-version: [12.x]
     steps:
       - name: Set up Python 3.7
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: '3.x'
       - name: Checkout deps
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: lensapp/mkdocs-material-insiders
           token: ${{ env.GITHUB_TOKEN }}
