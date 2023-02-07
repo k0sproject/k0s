@@ -53,7 +53,7 @@ type Supervisor struct {
 
 	cmd            *exec.Cmd
 	done           chan bool
-	log            *logrus.Entry
+	log            logrus.FieldLogger
 	mutex          sync.Mutex
 	startStopMutex sync.Mutex
 	cancel         context.CancelFunc
@@ -151,8 +151,15 @@ func (s *Supervisor) Supervise() error {
 			// get signals sent directly to parent.
 			s.cmd.SysProcAttr = DetachAttr(s.UID, s.GID)
 
-			s.cmd.Stdout = s.log.Writer()
-			s.cmd.Stderr = s.log.Writer()
+			const maxLogChunkLen = 16 * 1024
+			s.cmd.Stdout = &logWriter{
+				log: s.log.WithField("stream", "stdout"),
+				buf: make([]byte, maxLogChunkLen),
+			}
+			s.cmd.Stderr = &logWriter{
+				log: s.log.WithField("stream", "stderr"),
+				buf: make([]byte, maxLogChunkLen),
+			}
 
 			err := s.cmd.Start()
 			s.mutex.Unlock()
