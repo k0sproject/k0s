@@ -27,7 +27,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/spf13/cobra"
 )
 
@@ -68,9 +67,6 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 	optionally add groups:
 	$ k0s kubeconfig create username --groups [groups]`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// disable cfssl log
-			log.Level = log.LevelFatal
-
 			if len(args) == 0 {
 				return fmt.Errorf("username is mandatory")
 			}
