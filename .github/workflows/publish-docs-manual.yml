@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -37,7 +37,7 @@ jobs:
           pip install git+https://${{ secrets.GH_TOKEN }}@github.com/lensapp/mkdocs-material-insiders.git
 
       - name: Checkout k0s ${{ github.event.inputs.version }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: '${{ github.event.inputs.version }}'
           fetch-depth: 0
