@@ -25,6 +25,7 @@ package dualstack
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -33,8 +34,16 @@ import (
 
 	"testing"
 
+	"time"
+
 	"github.com/k0sproject/k0s/inttest/common"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
+
+	"context"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type DualstackSuite struct {
@@ -77,7 +86,11 @@ func (s *DualstackSuite) cmdlineForExecutable(node, binary string) []string {
 }
 
 func (s *DualstackSuite) SetupSuite() {
+	isDockerIPv6Enabled, err := s.IsDockerIPv6Enabled()
+	s.NoError(err)
+	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
 	s.FootlooseSuite.SetupSuite()
+
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
 	if os.Getenv("K0S_ENABLE_DYNAMIC_CONFIG") == "true" {
@@ -94,6 +107,71 @@ func (s *DualstackSuite) SetupSuite() {
 	err = s.WaitForNodeReady(s.WorkerNode(1), client)
 	s.Require().NoError(err)
 
+	kc, err := s.KubeClient("controller0", "")
+	s.Require().NoError(err)
+	restConfig, err := s.GetKubeConfig("controller0", "")
+	s.Require().NoError(err)
+
+	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": "worker0",
+			},
+		},
+	}, metav1.CreateOptions{})
+	s.Require().NoError(err)
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", "default"), "nginx-worker0 pod did not start")
+
+	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
+	s.Require().NoError(err)
+
+	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
+		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "alpine", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": "worker1",
+			},
+		},
+	}, metav1.CreateOptions{})
+	s.Require().NoError(err)
+	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", "default"), "nginx-worker1 pod did not start")
+
+	// test ipv6 address
+	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
+		s.Require().Equal(len(targetPod.Status.PodIPs), 2)
+		podIP := targetPod.Status.PodIPs[1].IP
+		targetIP := net.ParseIP(podIP)
+		s.Require().NotNil(targetIP)
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
+		s.T().Log(out, err)
+		if err != nil {
+			return false, err
+		}
+		s.T().Log("server response", out)
+		return strings.Contains(out, "Welcome to nginx"), nil
+	})
+	s.Require().NoError(err)
+
+	// test ipv4 address
+	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
+		s.Require().Equal(len(targetPod.Status.PodIPs), 2)
+		podIP := targetPod.Status.PodIPs[0].IP
+		targetIP := net.ParseIP(podIP)
+		s.Require().NotNil(targetIP)
+		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
+		s.T().Log(out, err)
+		if err != nil {
+			return false, err
+		}
+		s.T().Log("server response", out)
+		return strings.Contains(out, "Welcome to nginx"), nil
+	})
+	s.Require().NoError(err)
 	s.client = client
 }
 
