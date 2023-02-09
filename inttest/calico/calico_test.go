@@ -19,13 +19,10 @@ package calico
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,36 +69,32 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 
 	createdTargetPod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "nginx"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker0"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{Name: "nginx", Image: "docker.io/library/nginx:1.23.1-alpine"}},
+			Containers: []corev1.Container{{Name: "nginx-worker0", Image: "docker.io/library/nginx:1.23.1-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker0",
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx", "default"), "nginx pod did not start")
+	s.Require().NoError(common.WaitForPod(s.Context(), kc, "nginx-worker0", "default"), "nginx-worker0 pod did not start")
 
 	targetPod, err := kc.CoreV1().Pods(createdTargetPod.Namespace).Get(s.Context(), createdTargetPod.Name, metav1.GetOptions{})
 	s.Require().NoError(err)
 
 	sourcePod, err := kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "alpine"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nginx-worker1"},
 		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Name:    "alpine",
-				Image:   "docker.io/library/alpine:" + getAlpineVersion(s.T()),
-				Command: []string{"sleep", "infinity"},
-			}},
+			Containers: []corev1.Container{{Name: "nginx-worker1", Image: "docker.io/library/nginx:1.23.1-alpine"}},
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": "worker1",
 			},
 		},
 	}, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.NoError(common.WaitForPod(s.Context(), kc, "alpine", "default"), "alpine pod did not start")
+	s.NoError(common.WaitForPod(s.Context(), kc, "nginx-worker1", "default"), "nginx-worker1 pod did not start")
 
 	err = wait.PollImmediateWithContext(s.Context(), 100*time.Millisecond, time.Minute, func(ctx context.Context) (done bool, err error) {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
@@ -112,16 +105,6 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 		return strings.Contains(out, "Welcome to nginx"), nil
 	})
 	s.Require().NoError(err)
-}
-
-func getAlpineVersion(t *testing.T) string {
-	cmd := exec.Command("."+string(filepath.Separator)+"vars.sh", "alpine_version")
-	cmd.Dir = filepath.Join("..", "..")
-	out, err := cmd.Output()
-	require.NoError(t, err)
-	version, _, _ := strings.Cut(string(out), "\n")
-	require.NotEmpty(t, version, "Failed to get Alpine version")
-	return version
 }
 
 func TestCalicoSuite(t *testing.T) {
