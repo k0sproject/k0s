@@ -26,6 +26,9 @@ linters-settings:
     min-confidence: 0
   goheader:
     template-path: .go-header.txt
+    values:
+      regexp:
+        year: 202[0-9]
 
 issues:
   max-issues-per-linter: 0
