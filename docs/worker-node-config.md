@@ -14,7 +14,7 @@ kubectl get node --show-labels
 
 ```shell
 NAME      STATUS     ROLES    AGE   VERSION        LABELS
-worker0   NotReady   <none>   10s   v1.26.1+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
+worker0   NotReady   <none>   10s   v{{{ extra.k8s_version }}}+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,k0sproject.io/foo=bar,k0sproject.io/other=xyz,kubernetes.io/arch=amd64,kubernetes.io/hostname=worker0,kubernetes.io/os=linux
 ```
 
 Controller worker nodes are assigned `node.k0sproject.io/role=control-plane` and `node-role.kubernetes.io/control-plane=true` labels:
@@ -25,7 +25,7 @@ kubectl get node --show-labels
 
 ```shell
 NAME          STATUS     ROLES           AGE   VERSION        LABELS
-controller0   NotReady   control-plane   10s   v1.26.1+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
+controller0   NotReady   control-plane   10s   v{{{ extra.k8s_version }}}+k0s  beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=worker0,kubernetes.io/os=linux,node.k0sproject.io/role=control-plane,node-role.kubernetes.io/control-plane=true
 ```
 
 **Note:** Setting the labels is only effective on the first registration of the node. Changing the labels thereafter has no effect.

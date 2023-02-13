@@ -52,7 +52,7 @@ You can configure the desired cluster version in the k0sctl configuration by set
 ```yaml
 spec:
   k0s:
-    version: 1.26.1+k0s.0
+    version: {{{ extra.k0s_version }}}
 ```
 
 If you do not specify a version, k0sctl checks online for the latest version and defaults to it.
@@ -75,7 +75,7 @@ INFO[0027] [ssh] 10.0.0.17:22: waiting for node to become ready again
 INFO[0027] [ssh] 10.0.0.17:22: upgrade successful
 INFO[0027] ==> Running phase: Disconnect from hosts
 INFO[0027] ==> Finished in 27s
-INFO[0027] k0s cluster version 1.26.1+k0s.0 is now installed
+INFO[0027] k0s cluster version {{{ extra.k0s_version }}} is now installed
 INFO[0027] Tip: To access the cluster you can now fetch the admin kubeconfig using:
 INFO[0027]      k0sctl kubeconfig
 ```

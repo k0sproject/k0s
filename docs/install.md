@@ -61,7 +61,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
 
     ```shell
     $ sudo k0s status
-    Version: v1.26.1+k0s.0
+    Version: v{{{ extra.k0s_version }}}
     Process ID: 436
     Role: controller
     Workloads: true
@@ -77,7 +77,7 @@ Though the Quick Start material is written for Debian/Ubuntu, you can use it for
     ```shell
     $ sudo k0s kubectl get nodes
     NAME   STATUS   ROLES    AGE    VERSION
-    k0s    Ready    <none>   4m6s   v1.26.1+k0s
+    k0s    Ready    <none>   4m6s   v{{{ extra.k8s_version }}}+k0s
     ```
 
 ## Uninstall k0s

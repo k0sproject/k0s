@@ -125,7 +125,7 @@ Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For
 example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.26.1+k0s.0/k0s-v1.26.1+k0s.0-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v{{{ extra.k0s_version }}}/k0s-v{{{ extra.k0s_version }}}-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -142,7 +142,7 @@ At this point you can run `k0s`:
 
 ```console
 ubuntu@ubuntu:~$ k0s version
-v1.26.1+k0s.0
+v{{{ extra.k0s_version }}}
 ```
 
 To check if k0s's [system requirements](system-requirements.md) and [external
@@ -288,7 +288,7 @@ When the cluster is up, try to have a look:
 ```console
 ubuntu@ubuntu:~$ sudo k0s kc get nodes -owide
 NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-ubuntu   Ready    control-plane   4m41s   v1.26.1+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10
+ubuntu   Ready    control-plane   4m41s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10
 ubuntu@ubuntu:~$ sudo k0s kc get pod -owide -A
 NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES
 kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   <none>           <none>
@@ -445,7 +445,7 @@ As this is a worker node, we cannot access the Kubernetes API via the builtin
 
 ```console
 ubuntu@ubuntu:~$ sudo k0s status
-Version: v1.26.1+k0s.0
+Version: v{{{ extra.k0s_version }}}
 Process ID: 1631
 Role: worker
 Workloads: true
@@ -497,7 +497,7 @@ Using the above kubeconfig, you can now access and use the cluster:
 ```console
 ubuntu@ubuntu:~$ KUBECONFIG=/path/to/kubeconfig kubectl get nodes,deployments,pods -owide -A
 NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-node/ubuntu   Ready    <none>   5m1s   v1.26.1+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10
+node/ubuntu   Ready    <none>   5m1s   v{{{ extra.k8s_version }}}+k0s   10.152.56.54   <none>        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.6.10
 
 NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR
 kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns

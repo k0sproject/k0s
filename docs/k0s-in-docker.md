@@ -13,7 +13,7 @@ The k0s containers are published both on Docker Hub and GitHub. For reasons of s
 - docker.io/k0sproject/k0s:latest
 - docker.pkg.github.com/k0sproject/k0s/k0s:"version"
 
-**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v1.26.1+k0s.0` is tagged as `docker.io/k0sproject/k0s:v1.26.1-k0s.0`.
+**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v{{{ extra.k0s_version }}}` is tagged as `docker.io/k0sproject/k0s:v{{{ extra.k8s_version }}}-k0s.0`.
 
 ## Start k0s
 

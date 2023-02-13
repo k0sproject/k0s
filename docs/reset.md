@@ -50,8 +50,8 @@ k0sctl can be used to connect each node and remove all k0s-related files and pro
     INFO ==> Running phase: Prepare hosts    
     INFO ==> Running phase: Gather k0s facts 
     INFO [ssh] 13.53.43.63:22: found existing configuration 
-    INFO [ssh] 13.53.43.63:22: is running k0s controller version 1.26.1+k0s.0
-    INFO [ssh] 13.53.218.149:22: is running k0s worker version 1.26.1+k0s.0
+    INFO [ssh] 13.53.43.63:22: is running k0s controller version {{{ extra.k0s_version }}}
+    INFO [ssh] 13.53.218.149:22: is running k0s worker version {{{ extra.k0s_version }}}
     INFO [ssh] 13.53.43.63:22: checking if worker  has joined 
     INFO ==> Running phase: Reset hosts      
     INFO [ssh] 13.53.43.63:22: stopping k0s           
