@@ -31,6 +31,11 @@ RUN curl -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-re
   && chmod +x /usr/local/bin/kubectl
 ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 
+# Install troublbeshoot support bundle
+RUN curl -Lo - https://github.com/replicatedhq/troubleshoot/releases/download/v0.55.0/support-bundle_linux_amd64.tar.gz \
+  | tar xzO support-bundle >/usr/local/bin/kubectl-supportbundle \
+  && chmod +x /usr/local/bin/kubectl-supportbundle
+
 # Install etcd for smoke tests with external etcd
 RUN curl -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$ETCD_ARCH.tar.gz \
   | tar xz -C /opt --strip-components=1
