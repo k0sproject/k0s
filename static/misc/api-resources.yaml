@@ -226,7 +226,9 @@
   kind: FlowControl
   removed_in: v1.26.0
   version: v1beta1
-- group: k0s.k0sproject.io
-  kind: Test
-  removed_in: v1.42.0
+
+# This is used solely for integration testing.
+- group: autopilot.k0sproject.io
+  kind: RemovedCRD
+  removed_in: v99.99.99
   version: v1beta1

@@ -15,15 +15,16 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
 	ts "github.com/k0sproject/k0s/inttest/toolsuite"
 	tsops "github.com/k0sproject/k0s/inttest/toolsuite/operations"
 	tsutil "github.com/k0sproject/k0s/inttest/toolsuite/util"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
@@ -42,10 +43,12 @@ func (s *VersionUpdateSuite) TestUpdate() {
 	client, err := s.AutopilotClient()
 	assert.NoError(s.T(), err)
 
-	s.T().Logf("Waiting for Plan completion (timeout = %v)", s.Config.OperationTimeout)
-
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, s.Config.OperationTimeout, appc.PlanCompleted)
+	ctx, cancel := context.WithTimeout(s.Context(), s.Config.OperationTimeout)
+	defer cancel()
+	deadline, _ := ctx.Deadline()
+	s.T().Logf("Waiting for Plan completion (deadline = %s)", deadline)
+	plan, err := aptest.WaitForPlanState(ctx, client, apconst.AutopilotName, appc.PlanCompleted)
 	if s.NoError(err) {
 		s.NotEmpty(plan)
 	}
@@ -60,8 +63,8 @@ func VersionUpdatePlan(output tsutil.TerraformOutputMap) (*apv1beta2.Plan, error
 		return nil, err
 	}
 
-	var updateK0sUrl string
-	if err := tsutil.TerraformOutput(&updateK0sUrl, output, "k0s_update_binary_url"); err != nil {
+	var updateK0sURL string
+	if err := tsutil.TerraformOutput(&updateK0sURL, output, "k0s_update_binary_url"); err != nil {
 		return nil, err
 	}
 
@@ -95,7 +98,7 @@ func VersionUpdatePlan(output tsutil.TerraformOutputMap) (*apv1beta2.Plan, error
 						ForceUpdate: true,
 						Platforms: apv1beta2.PlanPlatformResourceURLMap{
 							"linux-amd64": apv1beta2.PlanResourceURL{
-								URL: updateK0sUrl,
+								URL: updateK0sURL,
 							},
 						},
 						Targets: apv1beta2.PlanCommandTargets{

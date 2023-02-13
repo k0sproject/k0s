@@ -25,10 +25,12 @@ import (
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	"github.com/k0sproject/k0s/pkg/component/status"
+	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
+	extensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -94,13 +96,13 @@ func (sc *setupController) Run(ctx context.Context) error {
 }
 
 // createNamespace creates a namespace with the provided name
-func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string) (*v1.Namespace, error) {
+func createNamespace(ctx context.Context, cf apcli.FactoryInterface, name string) (*corev1.Namespace, error) {
 	client, err := cf.GetClient()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create obtain a kube client: %w", err)
 	}
 
-	namespace := v1.Namespace{
+	namespace := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -122,12 +124,8 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	node, err := client.AutopilotV1beta2().ControlNodes().Get(ctx, name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		logger.Info("Autopilot 'controlnodes' CRD not found, waiting...")
-		extClient, err := cf.GetExtensionClient()
-		if err != nil {
-			return fmt.Errorf("unable to obtain extensions client: %w", err)
-		}
-		if _, err := apcomm.WaitForCRDByName(ctx, extClient, "controlnodes.autopilot.k0sproject.io", 2*time.Minute); err != nil {
-			return fmt.Errorf("timed out waiting for autopilot 'controlnodes' CRD: %v", err)
+		if err := sc.waitForControlNodesCRD(ctx, cf); err != nil {
+			return fmt.Errorf("while waiting for autopilot 'controlnodes' CRD: %w", err)
 		}
 
 		logger.Info("Autopilot 'controlnodes' CRD found, continuing")
@@ -142,9 +140,9 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 				Name: name,
 				// Create the usual os and arch labels as this describes a controller node
 				Labels: map[string]string{
-					v1.LabelHostname:   name,
-					v1.LabelOSStable:   runtime.GOOS,
-					v1.LabelArchStable: runtime.GOARCH,
+					corev1.LabelHostname:   name,
+					corev1.LabelOSStable:   runtime.GOOS,
+					corev1.LabelArchStable: runtime.GOARCH,
 				},
 				Annotations: map[string]string{
 					apconst.K0SControlNodeModeAnnotation: mode,
@@ -183,19 +181,19 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 // TODO re-use from somewhere else
 const DefaultK0sStatusSocketPath = "/run/k0s/status.sock"
 
-func getControlNodeAddresses(hostname string) ([]v1.NodeAddress, error) {
-	addresses := []v1.NodeAddress{}
+func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
+	addresses := []corev1.NodeAddress{}
 	apiAddress, err := getControllerAPIAddress()
 	if err != nil {
 		return addresses, err
 	}
-	addresses = append(addresses, v1.NodeAddress{
-		Type:    v1.NodeInternalIP,
+	addresses = append(addresses, corev1.NodeAddress{
+		Type:    corev1.NodeInternalIP,
 		Address: apiAddress,
 	})
 
-	addresses = append(addresses, v1.NodeAddress{
-		Type:    v1.NodeHostName,
+	addresses = append(addresses, corev1.NodeAddress{
+		Type:    corev1.NodeHostName,
 		Address: hostname,
 	})
 
@@ -209,4 +207,43 @@ func getControllerAPIAddress() (string, error) {
 	}
 
 	return status.ClusterConfig.Spec.API.Address, nil
+}
+
+// waitForControlNodesCRD waits until the controlnodes CRD is established for
+// max 2 minutes.
+func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.FactoryInterface) error {
+	// Some shortcuts for very long type names.
+	type (
+		crd     = extensionsv1.CustomResourceDefinition
+		crdList = extensionsv1.CustomResourceDefinitionList
+	)
+
+	extClient, err := cf.GetExtensionClient()
+	if err != nil {
+		return fmt.Errorf("unable to obtain extensions client: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	return watch.FromClient[*crdList, crd](extClient.CustomResourceDefinitions()).
+		WithObjectName(fmt.Sprintf("controlnodes.%s", apv1beta2.SchemeGroupVersion.Group)).
+		WithErrorCallback(func(err error) (time.Duration, error) {
+			if retryDelay, e := watch.IsRetryable(err); e == nil {
+				sc.log.WithError(err).Debugf(
+					"Encountered transient error while waiting for autopilot 'controlnodes' CRD, retrying in %s",
+					retryDelay,
+				)
+				return retryDelay, nil
+			}
+			return 0, err
+		}).
+		Until(ctx, func(item *crd) (bool, error) {
+			for _, cond := range item.Status.Conditions {
+				if cond.Type == extensionsv1.Established {
+					return cond.Status == extensionsv1.ConditionTrue, nil
+				}
+			}
+
+			return false, nil
+		})
 }

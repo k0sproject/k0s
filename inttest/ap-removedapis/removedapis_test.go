@@ -19,11 +19,11 @@ import (
 	"testing"
 	"time"
 
-	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	aptest "github.com/k0sproject/k0s/inttest/common/autopilot"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -35,26 +35,24 @@ type plansRemovedAPIsSuite struct {
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *plansRemovedAPIsSuite) SetupTest() {
+	ctx := s.Context()
 	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 
 	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
-	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/crd.yaml", testCRD)
+	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test")
+	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test/crd.yaml", removedCRD)
 
 	client, err := s.ExtensionsClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	_, err = apcomm.WaitForCRDByName(s.Context(), client, "k0s-tests.k0s.k0sproject.io", 2*time.Minute)
-	s.Require().NoError(err)
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "removedcrds"))
 
-	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/test.yaml", testManifest)
+	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/removedapis-test/resource.yaml", removedResource)
 
-	_, perr := apcomm.WaitForCRDByName(s.Context(), client, "plans.autopilot.k0sproject.io", 2*time.Minute)
-	s.Require().NoError(perr)
-	_, cerr := apcomm.WaitForCRDByName(s.Context(), client, "controlnodes.autopilot.k0sproject.io", 2*time.Minute)
-	s.Require().NoError(cerr)
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "plans"))
+	s.Require().NoError(aptest.WaitForCRDByName(ctx, client, "controlnodes"))
 }
 
 // TestApply applies a well-formed `plan` yaml, and asserts that all of the correct values
@@ -73,13 +71,10 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 	s.NotEmpty(client)
 
 	// The plan has enough information to perform a successful update of k0s, so wait for it.
-	plan, err := apcomm.WaitForPlanState(s.Context(), client, apconst.AutopilotName, 5*time.Minute, appc.PlanWarning)
-	s.Require().NoError(err)
-
-	s.Equal(1, len(plan.Status.Commands))
-	cmd := plan.Status.Commands[0]
-
-	s.Equal(appc.PlanWarning, cmd.State)
+	plan, err := aptest.WaitForPlanState(s.Context(), client, apconst.AutopilotName, appc.PlanWarning)
+	if s.NoError(err) && s.Len(plan.Status.Commands, 1) {
+		s.Equal(appc.PlanWarning, plan.Status.Commands[0].State)
+	}
 }
 
 // TestPlansRemovedAPIsSuite sets up a suite using a single controller, running various
@@ -104,7 +99,7 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: v1.42.0
+        version: v99.99.99
         platforms:
           linux-amd64:
             url: http://localhost/dist/k0s
@@ -116,23 +111,24 @@ spec:
                   - controller0
 `
 
-const testManifest = `
-apiVersion: k0s.k0sproject.io/v1beta1
-kind: Test
+const removedResource = `
+apiVersion: autopilot.k0sproject.io/v1beta1
+kind: RemovedCRD
 metadata:
-  name: test-com
+  name: removed-resource
   namespace: default
 spec:
-  description: "foobar"
+  description: |
+    I am a removed resource and should trigger a PlanWarning state.
 `
 
-const testCRD = `
+const removedCRD = `
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: k0s-tests.k0s.k0sproject.io
+  name: removedcrds.autopilot.k0sproject.io
 spec:
-  group: k0s.k0sproject.io
+  group: autopilot.k0sproject.io
   versions:
     - name: v1beta1
       served: true
@@ -148,9 +144,9 @@ spec:
                   type: string
   scope: Namespaced
   names:
-    plural: k0s-tests
-    singular: k0s-test
-    kind: Test
+    plural: removedcrds
+    singular: removedcrd
+    kind: RemovedCRD
     shortNames:
-    - tt
+    - rr
 `
