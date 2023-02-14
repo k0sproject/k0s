@@ -274,19 +274,14 @@ jobs:
           }
           make -C inttest ${{ matrix.smoke-suite }}
 
-      - name: Collect test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: smoketest-${{ matrix.smoke-suite }}-logs
-          path: /tmp/*.log
-
-      - name: Collect cluster state
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: smoketest-${{ matrix.smoke-suite }}-cluster-state
-          path: /tmp/cluster-state.tar
+          name: smoketest-${{ matrix.smoke-suite }}-files
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
       - name: Collect sonobuoy results
         if: failure() && contains(matrix.smoke-suite, 'conformance')
@@ -363,19 +358,14 @@ jobs:
         run: |
           make -C inttest ${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN=../k0s-${{ matrix.version }}
 
-      - name: Collect test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-logs
-          path: /tmp/*.log
-
-      - name: Collect cluster state
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-cluster-state
-          path: /tmp/cluster-state.tar
+          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-files
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
   smoketest-arm:
     name: Smoke test on armv7/arm64
@@ -504,19 +494,14 @@ jobs:
           make --touch airgap-image-bundle-linux-${{ matrix.arch }}.tar
           make check-airgap
 
-      - name: Collect test logs
+      - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: smoketest-${{ matrix.arch }}-check-basic-logs
-          path: /tmp/*.log
-
-      - name: Collect cluster state
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: smoketest-${{ matrix.arch }}-smoke-cluster-state
-          path: /tmp/cluster-state.tar
+          name: smoketest-${{ matrix.arch }}-check-basic-files
+          path: |
+            /tmp/*.log
+            /tmp/support-bundle.tar.gz
 
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752
       # Golang mod cache tends to set directories to read-only, which breaks any

@@ -44,6 +44,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
@@ -327,38 +328,39 @@ func (s *FootlooseSuite) TearDownSuite() {
 // Intended to be called after the suite's context has been canceled.
 func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 	ctx := s.Context()
-	var wg sync.WaitGroup
 
-	tmpDir := os.TempDir()
+	if t.Failed() {
+		var wg sync.WaitGroup
+		tmpDir := os.TempDir()
 
-	if t.Failed() && s.ControllerCount > 0 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			s.dumpClusterState(t, ctx, filepath.Join(tmpDir, "cluster-state.tar"))
-		}()
-	}
-
-	machines, err := s.InspectMachines(nil)
-	if err != nil {
-		t.Logf("Failed to inspect machines: %s", err.Error())
-		machines = nil
-	}
-
-	for _, m := range machines {
-		node := m.Hostname()
-		if strings.HasPrefix(node, "lb") {
-			continue
+		if s.ControllerCount > 0 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				s.collectTroubleshootSupportBundle(ctx, t, filepath.Join(tmpDir, "support-bundle.tar.gz"))
+			}()
 		}
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			s.dumpNodeLogs(t, ctx, node, tmpDir)
-		}()
-	}
+		machines, err := s.InspectMachines(nil)
+		if err != nil {
+			t.Logf("Failed to inspect machines: %s", err.Error())
+			machines = nil
+		}
 
-	wg.Wait()
+		for _, m := range machines {
+			node := m.Hostname()
+			if strings.HasPrefix(node, "lb") {
+				continue
+			}
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				s.dumpNodeLogs(t, ctx, node, tmpDir)
+			}()
+		}
+		wg.Wait()
+	}
 
 	if keepEnvironment(t) {
 		t.Logf("footloose cluster left intact for debugging; needs to be manually cleaned up with: footloose delete --config %s", path.Join(s.clusterDir, "footloose.yaml"))
@@ -372,50 +374,41 @@ func (s *FootlooseSuite) cleanupSuite(t *testing.T) {
 	cleanupClusterDir(t, s.clusterDir)
 }
 
-func (s *FootlooseSuite) dumpClusterState(t *testing.T, ctx context.Context, filePath string) {
-	node := s.ControllerNode(0)
+func (s *FootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t *testing.T, filePath string) {
+	dataDir := constant.DataDirDefault
+	if s.dataDirOpt != "" {
+		dataDir = s.dataDirOpt[len(dataDirOptPrefix):]
+	}
+	cmd := fmt.Sprintf("troubleshoot-k0s-inttest.sh %q", dataDir)
 
+	node := s.ControllerNode(0)
 	ssh, err := s.SSH(node)
 	if err != nil {
-		t.Logf("Failed to ssh into node %s to dump cluster state: %s", node, err.Error())
+		t.Logf("Failed to ssh into %s to collect support bundle: %s", node, err.Error())
 		return
 	}
 	defer ssh.Disconnect()
 
-	var cmdBuf strings.Builder
-	cmdBuf.WriteString(s.K0sFullPath)
-	if s.dataDirOpt != "" {
-		cmdBuf.WriteRune(' ')
-		cmdBuf.WriteString(s.dataDirOpt)
-	}
-	cmdBuf.WriteString(` kc cluster-info dump -A --output-directory="${TMPDIR-/tmp}"/cluster-state`)
-	cmd := cmdBuf.String()
-
-	if err := ssh.Exec(ctx, cmd, SSHStreams{}); err != nil {
-		t.Logf("Failed to dump cluster state on node %s: %s", node, err.Error())
-		return
-	}
-
-	err = file.WriteAtomically(filePath, 0644, func(unbuffered io.Writer) error {
-		w := bufio.NewWriter(unbuffered)
-		err := ssh.Exec(ctx, `tar c -C "${TMPDIR-/tmp}" cluster-state`, SSHStreams{Out: w})
+	err = file.WriteAtomically(filePath, 0644, func(file io.Writer) error {
+		stdout := bufio.NewWriter(file)
+		err := ssh.Exec(ctx, cmd, SSHStreams{Out: stdout})
 		if err != nil {
 			return err
 		}
-		return w.Flush()
+		return stdout.Flush()
 	})
 	if err != nil {
-		t.Logf("Failed to dump cluster state into %s: %s", filePath, err.Error())
+		t.Logf("Failed to collect troubleshoot support bundle on %s into %s using %q: %s", node, filePath, cmd, err.Error())
 		return
 	}
 
-	t.Logf("Dumped cluster state into %s", filePath)
+	t.Logf("Collected troubleshoot support bundle on %s into %s", node, filePath)
 }
 
 func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, dir string) {
 	ssh, err := s.SSH(node)
 	if err != nil {
-		t.Logf("Failed to ssh into node %s to get logs: %s", node, err.Error())
+		t.Logf("Failed to ssh into %s to get logs: %s", node, err.Error())
 		return
 	}
 	defer ssh.Disconnect()
@@ -450,7 +443,7 @@ func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, d
 		return s.launchDelegate.ReadK0sLogs(ctx, ssh, outLog.writer, errLog.writer)
 	}()
 	if err != nil {
-		t.Logf("Failed to save k0s logs from node %s: %s", node, err.Error())
+		t.Logf("Failed to collect k0s logs from %s: %s", node, err.Error())
 	}
 
 	nonEmptyPaths := make([]string, 0, 2)
@@ -468,7 +461,7 @@ func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, d
 	}
 
 	if len(nonEmptyPaths) > 0 {
-		t.Logf("Saved k0s logs of node %s to %s", node, strings.Join(nonEmptyPaths, " and "))
+		t.Logf("Collected k0s logs from %s into %s", node, strings.Join(nonEmptyPaths, " and "))
 	}
 }
 
@@ -488,9 +481,11 @@ func keepEnvironment(t *testing.T) bool {
 	}
 }
 
+const dataDirOptPrefix = "--data-dir="
+
 func getDataDirOpt(args []string) string {
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "--data-dir=") {
+		if strings.HasPrefix(arg, dataDirOptPrefix) {
 			return arg
 		}
 	}
