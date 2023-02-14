@@ -51,9 +51,9 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.Require().NoError(err)
 	err = as.WaitForNodeReady(as.WorkerNode(0), kc)
 	as.NoError(err)
-	as.waitForTestRelease(addonName, "0.4.0", 1)
-	as.waitForTestRelease(ociAddonName, "0.6.0", 1)
-	as.waitForTestRelease(fileAddonName, "0.6.0", 1)
+	as.waitForTestRelease(addonName, "0.4.0", "default", 1)
+	as.waitForTestRelease(ociAddonName, "0.6.0", "default", 1)
+	as.waitForTestRelease(fileAddonName, "0.6.0", "kube-system", 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
@@ -64,7 +64,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 		},
 	}
 	as.doTestAddonUpdate(addonName, values)
-	chart := as.waitForTestRelease(addonName, "0.4.0", 2)
+	chart := as.waitForTestRelease(addonName, "0.4.0", "default", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.doPrometheusDelete(chart)
 }
@@ -110,7 +110,7 @@ func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	}))
 }
 
-func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, rev int64) *v1beta1.Chart {
+func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *v1beta1.Chart {
 	as.T().Logf("waiting to see test-addon release ready in kube API, generation %d", rev)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
@@ -141,9 +141,9 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, rev int6
 			return false, nil
 		}
 
-		as.Require().Equal("default", chart.Status.Namespace)
+		as.Require().Equal(namespace, chart.Status.Namespace)
 		as.Require().Equal(appVersion, chart.Status.AppVersion)
-		as.Require().Equal("default", chart.Status.Namespace)
+		as.Require().Equal(namespace, chart.Status.Namespace)
 		as.Require().NotEmpty(chart.Status.ReleaseName)
 		as.Require().Empty(chart.Status.Error)
 		as.Require().Equal(rev, chart.Status.Revision)
@@ -234,7 +234,7 @@ spec:
             chartname: /tmp/chart.tgz
             version: "0.0.1"
             values: ""
-            namespace: default
+            namespace: kube-system
 `
 
 // TODO: this actually duplicates logic from the controller code
