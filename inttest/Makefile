@@ -32,6 +32,7 @@ bin/sonobuoy: | bin
 	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	  --build-arg ETCD_ARCH=$(etcd_arch) \
 	  --build-arg ETCD_VERSION=$(etcd_version) \
+	  --build-arg HELM_VERSION=$(helm_version) \
 	  --build-arg KUBE_VERSION=$(kubernetes_version) \
 	  -t footloose-alpine \
 	  -f footloose-alpine/Dockerfile \

@@ -32,6 +32,12 @@ helm:
     version: "0.0.1"
     values: ""
     namespace: default
+  # Other way is to use local tgz file with chart
+  - name: tgz-chart
+    chartname: /tmp/chart.tgz
+    version: "0.0.1"
+    values: ""
+    namespace: default
 ```
 
 By using the configuration above, the cluster would:

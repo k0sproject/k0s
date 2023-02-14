@@ -41,9 +41,10 @@ type AddonsSuite struct {
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
 	addonName := "test-addon"
-	ociAddonName := "oci-test"
+	ociAddonName := "oci-addon"
+	fileAddonName := "tgz-addon"
 	as.PutFile(as.ControllerNode(0), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithAddon, addonName))
-
+	as.pullHelmChart(as.ControllerNode(0))
 	as.Require().NoError(as.InitController(0, "--config=/tmp/k0s.yaml"))
 	as.NoError(as.RunWorkers())
 	kc, err := as.KubeClient(as.ControllerNode(0))
@@ -52,6 +53,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.NoError(err)
 	as.waitForTestRelease(addonName, "0.4.0", 1)
 	as.waitForTestRelease(ociAddonName, "0.6.0", 1)
+	as.waitForTestRelease(fileAddonName, "0.6.0", 1)
 
 	as.AssertSomeKubeSystemPods(kc)
 
@@ -65,6 +67,19 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	chart := as.waitForTestRelease(addonName, "0.4.0", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.doPrometheusDelete(chart)
+}
+
+func (as *AddonsSuite) pullHelmChart(node string) {
+	ssh, err := as.SSH(node)
+	as.Require().NoError(err)
+	defer ssh.Disconnect()
+
+	_, err = ssh.ExecWithOutput(as.Context(), "helm repo add ealenn https://ealenn.github.io/charts")
+	as.Require().NoError(err)
+	_, err = ssh.ExecWithOutput(as.Context(), "helm pull --destination /tmp ealenn/echo-server")
+	as.Require().NoError(err)
+	_, err = ssh.ExecWithOutput(as.Context(), "mv /tmp/echo-server* /tmp/chart.tgz")
+	as.Require().NoError(err)
 }
 
 func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
@@ -210,9 +225,14 @@ spec:
             version: "0.3.1"
             values: ""
             namespace: default
-          - name: oci-test
+          - name: oci-addon
             chartname: oci://ghcr.io/makhov/k0s-charts/echo-server
             version: "0.5.0"
+            values: ""
+            namespace: default
+          - name: tgz-addon
+            chartname: /tmp/chart.tgz
+            version: "0.0.1"
             values: ""
             namespace: default
 `

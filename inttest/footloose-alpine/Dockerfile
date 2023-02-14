@@ -4,7 +4,7 @@ FROM docker.io/library/alpine:$ALPINE_VERSION
 ARG ETCD_ARCH
 ARG ETCD_VERSION
 ARG KUBE_VERSION
-
+ARG HELM_VERSION
 # Apply our changes to the image
 COPY root/ /
 
@@ -35,6 +35,10 @@ ENV KUBECONFIG=/var/lib/k0s/pki/admin.conf
 RUN curl -Lo - https://github.com/replicatedhq/troubleshoot/releases/download/v0.55.0/support-bundle_linux_amd64.tar.gz \
   | tar xzO support-bundle >/usr/local/bin/kubectl-supportbundle \
   && chmod +x /usr/local/bin/kubectl-supportbundle
+
+# Put helm into place to ease up debugging and for helm integration tests
+RUN curl -L https://get.helm.sh/helm-v$HELM_VERSION-linux-amd64.tar.gz \
+  | tar xz -C /usr/local/bin --strip-components=1 && chmod +x /usr/local/bin/helm
 
 # Install etcd for smoke tests with external etcd
 RUN curl -L https://github.com/etcd-io/etcd/releases/download/v$ETCD_VERSION/etcd-v$ETCD_VERSION-linux-$ETCD_ARCH.tar.gz \

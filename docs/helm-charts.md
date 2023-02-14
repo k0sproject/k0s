@@ -23,14 +23,14 @@ It is possible to customize timeout by using `.Timeout` field.
 
 ### Chart configuration
 
-| Field     | Default value | Description                              |
-|-----------|---------------|------------------------------------------|
-| name      | -             | Release name                             |
-| chartname | -             | chartname in form "repository/chartname" |
-| version   | -             | version to install                       |
-| timeout   | 10m           | timeout to wait for release install      |
-| values    | -             | yaml as a string, custom chart values    |
-| namespace | -             | namespace to install chart into          |
+| Field     | Default value | Description                                                  |
+|-----------|---------------|--------------------------------------------------------------|
+| name      | -             | Release name                                                 |
+| chartname | -             | chartname in form "repository/chartname" or path to tgz file |
+| version   | -             | version to install                                           |
+| timeout   | 10m           | timeout to wait for release install                          |
+| values    | -             | yaml as a string, custom chart values                        |
+| namespace | -             | namespace to install chart into                              |
 
 ## Example
 
@@ -61,6 +61,12 @@ spec:
       # We don't need to specify the repo in the repositories section for OCI charts
       - name: oci-chart
         chartname: oci://registry:8080/chart
+        version: "0.0.1"
+        values: ""
+        namespace: default
+      # Other way is to use local tgz file with chart
+      - name: tgz-chart
+        chartname: /tmp/chart.tgz
         version: "0.0.1"
         values: ""
         namespace: default

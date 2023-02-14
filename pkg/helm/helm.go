@@ -175,7 +175,6 @@ func (hc *Commands) locateChart(name string, version string) (string, error) {
 		RepositoryConfig: hc.repoFile,
 		RepositoryCache:  hc.helmCacheDir,
 	}
-	//if c.Verify {
 
 	if err := dir.Init(hc.helmCacheDir, constant.DataDirMode); err != nil {
 		return "", fmt.Errorf("can't locate chart `%s-%s`: %v", name, version, err)
