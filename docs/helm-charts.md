@@ -65,6 +65,7 @@ spec:
         values: ""
         namespace: default
       # Other way is to use local tgz file with chart
+      # the file must exist on all controller nodes
       - name: tgz-chart
         chartname: /tmp/chart.tgz
         version: "0.0.1"
