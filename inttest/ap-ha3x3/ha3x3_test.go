@@ -145,7 +145,7 @@ spec:
 	s.T().Logf("kubectl apply output: '%s'", out)
 	s.Require().NoError(err)
 
-	ssh, err := s.SSH(s.WorkerNode(0))
+	ssh, err := s.SSH(s.Context(), s.WorkerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")

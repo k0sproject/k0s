@@ -35,7 +35,7 @@ type HAControlplaneSuite struct {
 func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
-	sshCon, err := s.SSH(s.ControllerNode(fromControllerIdx))
+	sshCon, err := s.SSH(s.Context(), s.ControllerNode(fromControllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	output, err := sshCon.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list 2>/dev/null")
@@ -51,7 +51,7 @@ func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]strin
 }
 
 func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddress string) {
-	sshCon, err := s.SSH(s.ControllerNode(executeOnControllerIdx))
+	sshCon, err := s.SSH(s.Context(), s.ControllerNode(executeOnControllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	for i := 0; i < 20; i++ {
@@ -67,7 +67,7 @@ func (s *HAControlplaneSuite) makeNodeLeave(executeOnControllerIdx int, peerAddr
 
 func (s *HAControlplaneSuite) TestDeregistration() {
 	// Verify that k0s return failure (https://github.com/k0sproject/k0s/issues/790)
-	sshC0, err := s.SSH(s.ControllerNode(0))
+	sshC0, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	_, err = sshC0.ExecWithOutput(s.Context(), "/usr/local/bin/k0s etcd member-list")
 	s.Require().Error(err)
@@ -103,7 +103,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 
 	// Restart the second controller with a token to see it comes up
 	// It should just ignore the token as there's CA etc already in place
-	sshC1, err := s.SSH(s.ControllerNode(1))
+	sshC1, err := s.SSH(s.Context(), s.ControllerNode(1))
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
 	_, err = sshC1.ExecWithOutput(s.Context(), "kill $(pidof k0s) && while pidof k0s; do sleep 0.1s; done")

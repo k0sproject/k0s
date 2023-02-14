@@ -32,7 +32,7 @@ type CustomCASuite struct {
 
 func (s *CustomCASuite) TestK0sGetsUp() {
 	// Create an custom certificate to prove that k0s manage to work with it
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

@@ -69,7 +69,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 
 func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
-	ssh, err := as.SSH(as.ControllerNode(0))
+	ssh, err := as.SSH(as.Context(), as.ControllerNode(0))
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
 

@@ -28,7 +28,7 @@ import (
 )
 
 type Airgap struct {
-	SSH  func(node string) (*SSHConnection, error)
+	SSH  func(ctx context.Context, node string) (*SSHConnection, error)
 	Logf func(format string, args ...any)
 }
 
@@ -142,7 +142,7 @@ func (a *Airgap) airgapMachine(ctx context.Context, name, cidrs string, blockIPv
 
 	a.Logf("Airgapping %s", name)
 
-	ssh, err := a.SSH(name)
+	ssh, err := a.SSH(ctx, name)
 	if err != nil {
 		return err
 	}

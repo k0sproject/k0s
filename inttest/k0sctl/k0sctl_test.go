@@ -117,7 +117,7 @@ func (s *K0sctlSuite) k0sctlInitConfig() map[string]interface{} {
 		addresses = append(addresses, fmt.Sprintf("127.0.0.1:%d", port))
 	}
 
-	ssh, err := s.SSH(nodes[0])
+	ssh, err := s.SSH(s.Context(), nodes[0])
 	if err != nil {
 		s.FailNow("ssh connection failed", "%s", err)
 	}

@@ -33,7 +33,7 @@ type CliSuite struct {
 }
 
 func (s *CliSuite) TestK0sCliCommandNegative() {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
@@ -55,7 +55,7 @@ func (s *CliSuite) TestK0sCliCommandNegative() {
 }
 
 func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
 

@@ -58,7 +58,7 @@ func (s *SingleNodeSuite) TestK0sGetsUp() {
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 
 	s.T().Run("verify", func(t *testing.T) {
-		ssh, err := s.SSH(s.ControllerNode(0))
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		require.NoError(t, err, "failed to SSH into controller")
 		defer ssh.Disconnect()
 

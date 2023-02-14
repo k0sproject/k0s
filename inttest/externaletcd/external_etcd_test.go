@@ -43,7 +43,7 @@ type ExternalEtcdSuite struct {
 func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.T().Log("starting etcd")
 	err := retry.Do(func() error {
-		ssh, err := s.SSH(s.ExternalEtcdNode())
+		ssh, err := s.SSH(s.Context(), s.ExternalEtcdNode())
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.Require().NoError(err)
 
 	s.T().Log("configuring k0s controller to resolve etcd0 hostname")
-	k0sControllerSSH, err := s.SSH(s.ControllerNode(0))
+	k0sControllerSSH, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer k0sControllerSSH.Disconnect()
 
@@ -79,7 +79,7 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("checking if etcd contains keys")
-	etcdSSH, err := s.SSH(s.ExternalEtcdNode())
+	etcdSSH, err := s.SSH(s.Context(), s.ExternalEtcdNode())
 	s.Require().NoError(err)
 	defer etcdSSH.Disconnect()
 

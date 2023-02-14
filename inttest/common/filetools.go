@@ -27,7 +27,7 @@ import (
 
 // GetFile gets file from the controller with given index
 func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) string {
-	sshCon, err := s.SSH(s.ControllerNode(controllerIdx))
+	sshCon, err := s.SSH(s.Context(), s.ControllerNode(controllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
 	content, err := sshCon.ExecWithOutput(s.Context(), fmt.Sprintf("cat %s", path))
@@ -39,7 +39,7 @@ func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) s
 // WriteFile writes the data provided by reader to a file at the given path on
 // the given node.
 func (s *FootlooseSuite) WriteFile(node, path string, reader io.Reader) {
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	s.Require().NoError(ssh.Exec(s.Context(), fmt.Sprintf("cat >%s", path), SSHStreams{In: reader}))
@@ -72,7 +72,7 @@ func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template 
 
 // Mkdir makes directory
 func (s *FootlooseSuite) MakeDir(node, path string) {
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir %s", path))

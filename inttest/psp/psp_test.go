@@ -48,7 +48,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 
 	s.PutFile(s.ControllerNode(0), "/tmp/role.yaml", k0sTestUserRoleBinding)
 
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

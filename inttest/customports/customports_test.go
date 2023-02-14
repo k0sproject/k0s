@@ -130,7 +130,7 @@ func (ds *Suite) TestControllerJoinsWithCustomPort() {
 
 	// https://github.com/k0sproject/k0s/issues/1202
 	ds.T().Run("kubeconfigIncludesExternalAddress", func(t *testing.T) {
-		ssh, err := ds.SSH(ds.ControllerNode(0))
+		ssh, err := ds.SSH(ds.Context(), ds.ControllerNode(0))
 		ds.Require().NoError(err)
 		defer ssh.Disconnect()
 
