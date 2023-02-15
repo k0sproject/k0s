@@ -1439,3 +1439,21 @@ func (s *FootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) 
 
 	return false
 }
+
+func (s *FootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
+	cmd := exec.Command("docker", "inspect", "bridge", "--format", "\"{{ .EnableIPv6 }}\"")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("failed to run docker inspect: %w", err)
+	}
+	var docker_bridge_EnableIPv6 string
+	err = json.Unmarshal(output, &docker_bridge_EnableIPv6)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse default docker bridge EnableIPv6: %w", err)
+	}
+	bridge_EnableIPv6, err := strconv.ParseBool(docker_bridge_EnableIPv6)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse default docker bridge EnableIPv6: %w", err)
+	}
+	return bridge_EnableIPv6, nil
+}
