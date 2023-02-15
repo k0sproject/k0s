@@ -28,6 +28,16 @@ k0s supports providing only partial configurations. In case of partial configura
     sudo k0s start
     ```
 
+## Configuring k0s via k0sctl
+
+k0sctl can deploy your configuration options at cluster creation time. Your
+options should be placed in the `spec.k0s.config` section of the k0sctl's
+configuration file. See the section on how to install [k0s via
+k0sctl][k0sctl-install] and the [k0sctl README] for more information.
+
+[k0sctl-install]: ../k0sctl-install
+[k0sctl README]: https://github.com/k0sproject/k0sctl/blob/main/README.md
+
 ## Configuration file reference
 
 **CAUTION**: As many of the available options affect items deep in the stack, you should fully understand the correlation between the configuration file components and your specific environment before making any changes.
