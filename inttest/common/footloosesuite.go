@@ -36,7 +36,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"testing"
 	"text/template"
@@ -105,10 +104,7 @@ type FootlooseSuite struct {
 	ControllerNetworks           []string
 	WorkerNetworks               []string
 
-	/* context and cancellation */
-
-	ctxPtr atomic.Pointer[suiteCtx]
-
+	sctx suiteCtx
 	/* footloose cluster setup */
 
 	clusterDir     string
@@ -168,15 +164,11 @@ func (s *FootlooseSuite) SetupSuite() {
 
 	ctx, cancel := newSuiteContext(t)
 	var cleanupTasks sync.WaitGroup
-	sctx := suiteCtx{ctx, func() {
+
+	s.sctx = suiteCtx{ctx, func() {
 		cancel()
 		cleanupTasks.Wait()
 	}}
-
-	if !s.ctxPtr.CompareAndSwap(nil, &sctx) {
-		s.Require().Fail("Failed to install suite context")
-	}
-
 	if deadline, hasDeadline := ctx.Deadline(); hasDeadline {
 		t.Logf("test teardown deadline: %s", deadline)
 	} else {
@@ -204,15 +196,6 @@ func (s *FootlooseSuite) SetupSuite() {
 		// Replace the done context with a fresh one.
 		ctx, cancel := newSuiteContext(t)
 		defer cancel()
-		if s.ctxPtr.CompareAndSwap(&sctx, &suiteCtx{ctx, cleanupTasks.Wait}) {
-			if deadline, hasDeadline := ctx.Deadline(); hasDeadline {
-				t.Logf("Test cleanup deadline: %s", deadline)
-			} else {
-				t.Log("Test cleanup has no deadline")
-			}
-		} else {
-			t.Log("Failed to replace suite context during cleanup")
-		}
 
 		s.cleanupSuite(t, ctx)
 	}()
@@ -277,9 +260,8 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 
 // Context returns this suite's context, which should be passed to all blocking operations.
 func (s *FootlooseSuite) Context() context.Context {
-	sctx := s.ctxPtr.Load()
-	s.Require().NotNil(sctx, "No suite context installed")
-	return sctx.ctx
+	s.Require().NotNil(s.sctx, "No suite context installed")
+	return s.sctx.ctx
 }
 
 // ControllerNode gets the node name of given controller index
@@ -319,9 +301,8 @@ func (s *FootlooseSuite) Stop(machineNames []string) error {
 // TearDownSuite is called by testify at the very end of the suite's run.
 // It cancels the suite's context in order to free the suite's resources.
 func (s *FootlooseSuite) TearDownSuite() {
-	sctx := s.ctxPtr.Load()
-	s.Require().NotNil(sctx, "No suite context installed")
-	sctx.stop()
+	s.Require().NotNil(s.sctx, "No suite context installed")
+	s.sctx.stop()
 }
 
 // cleanupSuite does the cleanup work, namely destroy the footloose machines.
