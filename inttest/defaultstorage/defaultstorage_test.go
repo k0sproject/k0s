@@ -49,7 +49,7 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 	s.MakeDir(s.ControllerNode(0), "/var/lib/k0s/manifests/test")
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/pvc.yaml", pvcManifest)
 	s.PutFile(s.ControllerNode(0), "/var/lib/k0s/manifests/test/deployment.yaml", deploymentManifest)
-	err = common.WaitForDeployment(s.Context(), kc, "nginx")
+	err = common.WaitForDeployment(s.Context(), kc, "nginx", "kube-system")
 	s.NoError(err)
 
 	s.AssertSomeKubeSystemPods(kc)

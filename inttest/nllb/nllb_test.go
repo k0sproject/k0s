@@ -313,7 +313,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 	for _, deployment := range []string{"coredns", "metrics-server"} {
 		deployment := deployment
 		eg.Go(func() error {
-			if err := common.WaitForDeployment(ctx, clients, deployment); err != nil {
+			if err := common.WaitForDeployment(ctx, clients, deployment, "kube-system"); err != nil {
 				return fmt.Errorf("%s did not become ready: %w", deployment, err)
 			}
 			s.T().Log(deployment, "is ready")
