@@ -194,7 +194,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		t.Logf("Cleaning up")
 
 		// Replace the done context with a fresh one.
-		ctx, cancel := newSuiteContext(t)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		s.cleanupSuite(t, ctx)
