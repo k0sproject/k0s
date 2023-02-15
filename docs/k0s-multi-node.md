@@ -22,10 +22,10 @@ curl -sSLf https://get.k0s.sh | sudo sh
 
 The download script accepts the following environment variables:
 
-| Variable                    | Purpose                                           |
-|:----------------------------|:--------------------------------------------------|
+| Variable                    | Purpose                                                              |
+|:----------------------------|:---------------------------------------------------------------------|
 | `K0S_VERSION=v{{{ extra.k8s_version }}}+k0s.0` | Select the version of k0s to be installed         |
-| `DEBUG=true`                | Output commands and their arguments at execution. |
+| `DEBUG=true`                                   | Output commands and their arguments at execution. |
 
 **Note**: If you require environment variables and use sudo, you can do:
 
