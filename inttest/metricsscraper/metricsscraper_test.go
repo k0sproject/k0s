@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package metricscraper
+package metricsscraper
 
 import (
 	"strings"
@@ -29,11 +29,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-type MetricScraperSuite struct {
+type MetricsScraperSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *MetricScraperSuite) TestK0sGetsUp() {
+func (s *MetricsScraperSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--single", "--enable-metrics-scraper"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -47,7 +47,7 @@ func (s *MetricScraperSuite) TestK0sGetsUp() {
 	s.NoError(s.waitForMetrics())
 }
 
-func (s *MetricScraperSuite) waitForPushgateway() error {
+func (s *MetricsScraperSuite) waitForPushgateway() error {
 	s.T().Logf("waiting to see pushgateway is ready")
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	if err != nil {
@@ -70,7 +70,7 @@ func (s *MetricScraperSuite) waitForPushgateway() error {
 	})
 }
 
-func (s *MetricScraperSuite) waitForMetrics() error {
+func (s *MetricsScraperSuite) waitForMetrics() error {
 	s.T().Logf("waiting to see metrics")
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -90,8 +90,8 @@ func (s *MetricScraperSuite) waitForMetrics() error {
 	})
 }
 
-func TestMetricScraperSuite(t *testing.T) {
-	s := MetricScraperSuite{
+func TestMetricsScraperSuite(t *testing.T) {
+	s := MetricsScraperSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			ControllerUmask: 027,
