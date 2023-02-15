@@ -65,12 +65,12 @@ func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 	err = retry.Do(func() error {
 		client, err = containerd.New(sock, containerd.WithDefaultNamespace("k8s.io"), containerd.WithDefaultPlatform(platforms.OnlyStrict(platforms.DefaultSpec())))
 		if err != nil {
-			logrus.WithError(err).Errorf("can't connect to containerd socket %s", sock)
+			a.log.WithError(err).Errorf("can't connect to containerd socket %s", sock)
 			return err
 		}
 		_, err := client.ListImages(ctx)
 		if err != nil {
-			logrus.WithError(err).Errorf("can't use containerd client")
+			a.log.WithError(err).Errorf("can't use containerd client")
 			return err
 		}
 		return nil
@@ -82,7 +82,7 @@ func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 
 	for _, file := range files {
 		if err := a.unpackBundle(ctx, client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
-			logrus.WithError(err).Errorf("can't unpack bundle %s", file.Name())
+			a.log.WithError(err).Errorf("can't unpack bundle %s", file.Name())
 			return fmt.Errorf("can't unpack bundle %s: %w", file.Name(), err)
 		}
 	}
@@ -100,7 +100,7 @@ func (a OCIBundleReconciler) unpackBundle(ctx context.Context, client *container
 		return fmt.Errorf("can't import bundle: %v", err)
 	}
 	for _, i := range images {
-		logrus.Infof("Imported image %s", i.Name)
+		a.log.Infof("Imported image %s", i.Name)
 	}
 	return nil
 }
