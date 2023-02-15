@@ -129,8 +129,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra:
-  k8s_version: 1.26.1
-  k0s_version: 1.26.1+k0s.0
+  k8s_version: !!python/object/apply:os.getenv ["KUBE_VERSION"]
   generator: false
   social:
     - icon: fontawesome/brands/github

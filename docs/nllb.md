@@ -88,7 +88,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: v{{{ extra.k0s_version }}}
+    version: v{{{ extra.k8s_version }}}+k0s.0
     config:
       spec:
         network:
@@ -176,11 +176,11 @@ level=info msg="==> Running phase: Validate hosts"
 level=info msg="==> Running phase: Gather k0s facts"
 level=info msg="==> Running phase: Validate facts"
 level=info msg="==> Running phase: Upload k0s binaries to hosts"
-level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k0s_version }}}"
-level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k0s_version }}}"
-level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k0s_version }}}"
-level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k0s_version }}}"
-level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k0s_version }}}"
+level=info msg="[ssh] 10.81.146.254:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
+level=info msg="[ssh] 10.81.146.113:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
+level=info msg="[ssh] 10.81.146.51:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
+level=info msg="[ssh] 10.81.146.198:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
+level=info msg="[ssh] 10.81.146.184:22: uploading k0s binary from /home/k0sctl/.cache/k0sctl/k0s/linux/amd64/k0s-v{{{ extra.k8s_version }}}+k0s.0"
 level=info msg="==> Running phase: Configure k0s"
 level=info msg="[ssh] 10.81.146.254:22: validating configuration"
 level=info msg="[ssh] 10.81.146.184:22: validating configuration"
@@ -220,7 +220,7 @@ level=info msg="[ssh] 10.81.146.51:22: waiting for node to become ready"
 level=info msg="==> Running phase: Release exclusive host lock"
 level=info msg="==> Running phase: Disconnect from hosts"
 level=info msg="==> Finished in 3m30s"
-level=info msg="k0s cluster version v{{{ extra.k0s_version }}} is now installed"
+level=info msg="k0s cluster version v{{{ extra.k8s_version }}}+k0s.0 is now installed"
 level=info msg="Tip: To access the cluster you can now fetch the admin kubeconfig using:"
 level=info msg="     k0sctl kubeconfig"
 ```

@@ -66,7 +66,7 @@ metadata:
   name: k0s-cluster
 spec:
   k0s:
-    version: {{{ extra.k0s_version }}}
+    version: {{{ extra.k8s_version }}}+k0s.0
   hosts:
     - role: controller
       ssh:

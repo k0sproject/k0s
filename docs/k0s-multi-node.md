@@ -24,13 +24,13 @@ The download script accepts the following environment variables:
 
 | Variable                    | Purpose                                           |
 |:----------------------------|:--------------------------------------------------|
-| `K0S_VERSION=v{{{ extra.k0s_version }}}` | Select the version of k0s to be installed         |
+| `K0S_VERSION=v{{{ extra.k8s_version }}}+k0s.0` | Select the version of k0s to be installed         |
 | `DEBUG=true`                | Output commands and their arguments at execution. |
 
 **Note**: If you require environment variables and use sudo, you can do:
 
 ```shell
-curl -sSLf https://get.k0s.sh | sudo K0S_VERSION=v{{{ extra.k0s_version }}} sh
+curl -sSLf https://get.k0s.sh | sudo K0S_VERSION=v{{{ extra.k8s_version }}}+k0s.0 sh
 ```
 
 ### 2. Bootstrap a controller node
@@ -126,7 +126,7 @@ To get general information about your k0s instance's status:
 ```
 
 ```shell
-Version: v{{{ extra.k0s_version }}}
+Version: v{{{ extra.k8s_version }}}+k0s.0
 Process ID: 2769
 Parent Process ID: 1
 Role: controller
