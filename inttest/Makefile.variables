@@ -44,7 +44,7 @@ smoketests := \
 	check-upgrade \
 	check-kubectl \
 	check-k0sctl \
-	check-metricscraper \
+	check-metricsscraper \
 	check-customdomain \
 	check-capitalhostnames \
 	check-customca \
