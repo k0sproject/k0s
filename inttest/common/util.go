@@ -110,8 +110,8 @@ func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string
 
 // WaitForDeployment waits for the Deployment with the given name to become
 // available as long as the given context isn't canceled.
-func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name string) error {
-	return watch.Deployments(kc.AppsV1().Deployments("kube-system")).
+func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+	return watch.Deployments(kc.AppsV1().Deployments(namespace)).
 		WithObjectName(name).
 		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(deployment *appsv1.Deployment) (bool, error) {
