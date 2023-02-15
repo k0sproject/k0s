@@ -210,7 +210,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		os.Exit(1)
 	}()
 
-	s.waitForSSH(context.Background())
+	s.waitForSSH(ctx)
 
 	if s.WithLB {
 		s.startHAProxy()
