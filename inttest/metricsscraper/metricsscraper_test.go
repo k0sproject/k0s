@@ -14,71 +14,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package metricscraper
+package metricsscraper
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-type MetricScraperSuite struct {
+type MetricsScraperSuite struct {
 	common.FootlooseSuite
 }
 
-func (s *MetricScraperSuite) TestK0sGetsUp() {
+func (s *MetricsScraperSuite) TestK0sGetsUp() {
 	s.NoError(s.InitController(0, "--single", "--enable-metrics-scraper"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.ControllerNode(0), kc)
-	s.NoError(err)
+	s.Require().NoError(err)
 
-	s.NoError(s.waitForPushgateway())
+	s.T().Logf("Waiting to see pushgateway is ready")
+	s.Require().NoError(s.waitForPushgateway())
 
-	s.NoError(s.waitForMetrics())
+	s.T().Logf("Waiting for metrics")
+	s.Require().NoError(s.waitForMetrics())
 }
 
-func (s *MetricScraperSuite) waitForPushgateway() error {
-	s.T().Logf("waiting to see pushgateway is ready")
+func (s *MetricsScraperSuite) waitForPushgateway() error {
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
 
-	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
-		pods, err := kc.CoreV1().Pods("k0s-system").List(s.Context(), v1.ListOptions{})
-		if err != nil {
-			return false, nil
-		}
-
-		for _, pod := range pods.Items {
-			if strings.HasPrefix(pod.Name, "k0s-pushgateway") {
-				return pods.Items[0].Status.Phase == corev1.PodRunning, nil
-			}
-		}
-
-		return false, nil
-	})
+	return common.WaitForDeployment(s.Context(), kc, "k0s-pushgateway", "k0s-system")
 }
 
-func (s *MetricScraperSuite) waitForMetrics() error {
-	s.T().Logf("waiting to see metrics")
-
+func (s *MetricsScraperSuite) waitForMetrics() error {
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
 
-	return wait.PollImmediate(time.Second*5, 2*time.Minute, func() (done bool, err error) {
+	return wait.PollImmediateUntilWithContext(s.Context(), 5*time.Second, func(ctx context.Context) (done bool, err error) {
 
 		b, err := kc.RESTClient().Get().AbsPath("/api/v1/namespaces/k0s-system/services/http:k0s-pushgateway:http/proxy/metrics").DoRaw(s.Context())
 		if err != nil {
@@ -90,8 +75,8 @@ func (s *MetricScraperSuite) waitForMetrics() error {
 	})
 }
 
-func TestMetricScraperSuite(t *testing.T) {
-	s := MetricScraperSuite{
+func TestMetricsScraperSuite(t *testing.T) {
+	s := MetricsScraperSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
 			ControllerUmask: 027,
