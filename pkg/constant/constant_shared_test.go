@@ -127,6 +127,22 @@ func TestRuncModuleVersions(t *testing.T) {
 	)
 }
 
+func TestHelmModuleVersions(t *testing.T) {
+	helmVersion := getVersion(t, "helm")
+
+	checkPackageModules(t,
+		func(modulePath string) bool {
+			return modulePath == "helm.sh/helm/v3"
+		},
+		func(t *testing.T, pkgPath string, module *packages.Module) bool {
+			return !assert.Equal(t, "v"+helmVersion, module.Version,
+				"Module version for package %s doesn't match: %+#v",
+				pkgPath, module,
+			)
+		},
+	)
+}
+
 func getVersion(t *testing.T, component string) string {
 	cmd := exec.Command("sh", "./vars.sh", component+"_version")
 	cmd.Dir = filepath.Join("..", "..")
