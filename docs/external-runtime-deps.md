@@ -150,12 +150,13 @@ Optional cgroup controllers:
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
 
-### containerd needs `apparmor_parser`
+### containerd and AppArmor
 
-If containerd [detects][cd-aa] that the system is configured to use [AppArmor]
-it will require a tool called `apparmor_parser` to be installed on the system.
+In order to use containerd in conjunction with [AppArmor], it must be enabled in
+the kernel and the `/sbin/apparmor_parser` executable must be installed on the
+host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
-[cd-aa]: https://github.com/containerd/containerd/blob/v1.5.10/pkg/apparmor/apparmor_linux.go#L37-L48
+[cd-aa]: https://github.com/containerd/containerd/blob/v1.6.18/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
 
 ### Other dependencies in previous versions of k0s
