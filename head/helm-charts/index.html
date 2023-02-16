@@ -1524,7 +1524,7 @@
 <tr>
 <td>chartname</td>
 <td>-</td>
-<td>chartname in form "repository/chartname"</td>
+<td>chartname in form "repository/chartname" or path to tgz file</td>
 </tr>
 <tr>
 <td>version</td>
@@ -1574,6 +1574,13 @@
 <span class="w">      </span><span class="c1"># We don&#39;t need to specify the repo in the repositories section for OCI charts</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci-chart</span>
 <span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci://registry:8080/chart</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span>
+<span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">      </span><span class="c1"># Other way is to use local tgz file with chart</span>
+<span class="w">      </span><span class="c1"># the file must exist on all controller nodes</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tgz-chart</span>
+<span class="w">        </span><span class="nt">chartname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp/chart.tgz</span>
 <span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.1&quot;</span>
 <span class="w">        </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
 <span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
