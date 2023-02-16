@@ -48,7 +48,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	customDataDir := "/var/lib/k0s/custom-data-dir"
 
 	// Create an empty file to prove that k0s manage to rewrite a partially written file
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
@@ -111,7 +111,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 }
 
 func (s *BasicSuite) checkCertPerms(node string) error {
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (s *BasicSuite) checkCertPerms(node string) error {
 
 // Verifies that kubelet process has the address flag set
 func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func isCSRApproved(csr certificatesv1.CertificateSigningRequest) bool {
 
 func (s *BasicSuite) verifyContainerdDefaultConfig() {
 	var defaultConfig bytes.Buffer
-	ssh, err := s.SSH(s.WorkerNode(0))
+	ssh, err := s.SSH(s.Context(), s.WorkerNode(0))
 	if !s.NoError(err) {
 		return
 	}

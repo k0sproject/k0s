@@ -51,7 +51,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 	s.T().Run("check custom domain existence in pod", func(t *testing.T) {
 		// All done via SSH as it's much simpler :)
 		// e.g. execing via client-go is super complex and would require too much wiring
-		ssh, err := s.SSH(s.ControllerNode(0))
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		s.Require().NoError(err)
 		defer ssh.Disconnect()
 		_, err = ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kc run nginx --image docker.io/nginx:1-alpine")

@@ -41,11 +41,11 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.WaitForNodeReady(s.ControllerNode(1), kcC1))
 
-	sshC0, err := s.SSH(s.ControllerNode(0))
+	sshC0, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer sshC0.Disconnect()
 
-	sshC1, err := s.SSH(s.ControllerNode(1))
+	sshC1, err := s.SSH(s.Context(), s.ControllerNode(1))
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
 

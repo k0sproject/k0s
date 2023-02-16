@@ -43,7 +43,7 @@ func (s *DisabledComponentsSuite) TestK0sGetsUp() {
 		s.Empty(pods.Items, "Expected to see no pods in kube-system namespace")
 	}
 
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	s.True(s.processExists("kube-apiserver", ssh))

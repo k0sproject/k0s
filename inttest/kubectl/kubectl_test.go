@@ -42,7 +42,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	s.Require().NoError(s.InitController(0))
 	s.PutFile(s.ControllerNode(0), "/bin/kubectl-foo", pluginContent)
 
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err, "failed to SSH into controller")
 	defer ssh.Disconnect()
 

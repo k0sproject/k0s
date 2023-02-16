@@ -70,7 +70,7 @@ func (s *DualstackSuite) TestDualStackControlPlaneComponentsHaveServiceCIDRs() {
 
 func (s *DualstackSuite) cmdlineForExecutable(node, binary string) []string {
 	require := s.Require()
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	require.NoError(err)
 	defer ssh.Disconnect()
 

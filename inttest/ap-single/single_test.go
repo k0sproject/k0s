@@ -42,7 +42,7 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 
 	// Move the k0s binary to a new location, so we can check the binary location detection
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	_, err = ssh.ExecWithOutput(s.Context(), "cp /dist/k0s /tmp/k0s")

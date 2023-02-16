@@ -56,7 +56,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 	if token == "" {
 		return fmt.Errorf("got empty token for worker join")
 	}
-	sshWorker, err := s.SSH(s.WorkerNode(0))
+	sshWorker, err := s.SSH(s.Context(), s.WorkerNode(0))
 	if err != nil {
 		return err
 	}

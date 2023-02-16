@@ -51,7 +51,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 		})
 
 	// Restart the controller with new config, should keep kube-router still in use
-	sshC1, err := s.SSH(s.ControllerNode(0))
+	sshC1, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer sshC1.Disconnect()
 

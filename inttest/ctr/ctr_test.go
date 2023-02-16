@@ -31,7 +31,7 @@ type CtrSuite struct {
 }
 
 func (s *CtrSuite) TestK0sCtrCommand() {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 

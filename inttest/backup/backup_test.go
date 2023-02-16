@@ -161,7 +161,7 @@ func (s *BackupSuite) makeSnapshot(kc *kubernetes.Clientset) snapshot {
 }
 
 func (s *BackupSuite) VerifyFileSystemRestore() error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (s *BackupSuite) VerifyFileSystemRestore() error {
 }
 
 func (s *BackupSuite) takeBackup() error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (s *BackupSuite) takeBackup() error {
 }
 
 func (s *BackupSuite) takeBackupStdout() error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func (s *BackupSuite) takeBackupStdout() error {
 }
 
 func (s *BackupSuite) restoreBackup() error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (s *BackupSuite) restoreBackup() error {
 }
 
 func (s *BackupSuite) restoreBackupStdin() error {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 	if err != nil {
 		return err
 	}

@@ -36,7 +36,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	dlCommand := fmt.Sprintf("curl -sSfL https://get.k0s.sh | K0S_VERSION=%s sh", previousVersion)
 	g := errgroup.Group{}
 	g.Go(func() error {
-		ssh, err := s.SSH(s.ControllerNode(0))
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		if err != nil {
 			return err
 		}
@@ -59,7 +59,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	for i := 0; i < s.WorkerCount; i++ {
 		node := s.WorkerNode(i)
 		g.Go(func() error {
-			ssh, err := s.SSH(node)
+			ssh, err := s.SSH(s.Context(), node)
 			if err != nil {
 				return err
 			}
@@ -84,7 +84,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	for i := 0; i < s.WorkerCount; i++ {
 		node := s.WorkerNode(i)
 		g.Go(func() error {
-			ssh, err := s.SSH(node)
+			ssh, err := s.SSH(s.Context(), node)
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	for i := 0; i < s.ControllerCount; i++ {
 		node := s.ControllerNode(i)
 		g.Go(func() error {
-			ssh, err := s.SSH(node)
+			ssh, err := s.SSH(s.Context(), node)
 			if err != nil {
 				return err
 			}
@@ -142,7 +142,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 	for i := 0; i < s.WorkerCount; i++ {
 		node := s.WorkerNode(i)
 		g.Go(func() error {
-			ssh, err := s.SSH(node)
+			ssh, err := s.SSH(s.Context(), node)
 			if err != nil {
 				return err
 			}

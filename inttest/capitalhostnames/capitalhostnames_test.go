@@ -69,7 +69,7 @@ func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
 }
 
 func (s *CapitalHostnamesSuite) setHostname(node, hostname string) error {
-	ssh, err := s.SSH(node)
+	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
 		return err
 	}

@@ -58,7 +58,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 	s.T().Run("check hairpin mode", func(t *testing.T) {
 		// All done via SSH as it's much simpler :)
 		// e.g. execing via client-go is super complex and would require too much wiring
-		ssh, err := s.SSH(s.ControllerNode(0))
+		ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
 		require.NoError(t, err)
 		defer ssh.Disconnect()
 
