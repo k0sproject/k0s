@@ -23,17 +23,13 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/cmd"
-	"github.com/sirupsen/logrus"
+	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 )
 
 //go:generate make codegen
 
 func init() {
-	logrus.SetLevel(logrus.WarnLevel)
-	customFormatter := new(logrus.TextFormatter)
-	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
-	customFormatter.FullTimestamp = true
-	logrus.SetFormatter(customFormatter)
+	k0slog.InitLogging()
 }
 
 func main() {

@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -29,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	mw "github.com/k0sproject/k0s/internal/pkg/middleware"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -65,7 +65,7 @@ func NewAPICmd() *cobra.Command {
 		Short: "Run the controller API",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logrus.SetOutput(cmd.OutOrStdout())
-			logrus.SetLevel(logrus.InfoLevel)
+			k0slog.SetInfoLevel()
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -109,12 +109,10 @@ func (c *command) start() (err error) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServeTLS(
+	return srv.ListenAndServeTLS(
 		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.crt"),
 		filepath.Join(c.K0sVars.CertRootDir, "k0s-api.key"),
-	))
-
-	return nil
+	)
 }
 
 func (c *command) etcdHandler() http.Handler {

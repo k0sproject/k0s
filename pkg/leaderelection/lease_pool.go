@@ -20,7 +20,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/machineid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +49,7 @@ type LeaseConfiguration struct {
 	duration      time.Duration
 	renewDeadline time.Duration
 	retryPeriod   time.Duration
-	log           *logrus.Entry
+	log           logrus.FieldLogger
 	ctx           context.Context
 }
 
@@ -82,7 +81,10 @@ func WithRetryPeriod(retryPeriod time.Duration) LeaseOpt {
 }
 
 // WithLogger allows the consumer to pass a different logrus entry with additional context
-func WithLogger(logger *logrus.Entry) LeaseOpt {
+func WithLogger(logger logrus.FieldLogger) LeaseOpt {
+	if logger == nil {
+		logger = logrus.StandardLogger()
+	}
 	return func(config LeaseConfiguration) LeaseConfiguration {
 		config.log = logger
 		return config
@@ -117,7 +119,7 @@ func WithNamespace(namespace string) LeaseOpt {
 func NewLeasePool(ctx context.Context, client kubernetes.Interface, name string, opts ...LeaseOpt) (*LeasePool, error) {
 
 	leaseConfig := LeaseConfiguration{
-		log:           logrus.NewEntry(logrus.StandardLogger()),
+		log:           logrus.StandardLogger(),
 		duration:      60 * time.Second,
 		renewDeadline: 15 * time.Second,
 		retryPeriod:   5 * time.Second,
@@ -200,11 +202,11 @@ func (p *LeasePool) Watch(opts ...WatchOpt) (*LeaseEvents, context.CancelFunc, e
 		RetryPeriod:     p.config.retryPeriod,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				log.Info("acquired leader lease")
+				p.config.log.Info("Acquired leader lease")
 				p.events.AcquiredLease <- struct{}{}
 			},
 			OnStoppedLeading: func() {
-				log.Info("lost leader lease")
+				p.config.log.Info("Lost leader lease")
 				p.events.LostLease <- struct{}{}
 			},
 			OnNewLeader: nil,

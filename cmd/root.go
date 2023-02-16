@@ -41,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/cmd/validate"
 	"github.com/k0sproject/k0s/cmd/version"
 	"github.com/k0sproject/k0s/cmd/worker"
+	k0slog "github.com/k0sproject/k0s/internal/pkg/log"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/config"
 
@@ -57,12 +58,13 @@ func NewRootCmd() *cobra.Command {
 		Short: "k0s - Zero Friction Kubernetes",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if config.Verbose {
-				logrus.SetLevel(logrus.InfoLevel)
+				k0slog.SetInfoLevel()
 			}
 
 			if config.Debug {
 				// TODO: check if it actually works and is not overwritten by something else
-				logrus.SetLevel(logrus.DebugLevel)
+				k0slog.SetDebugLevel()
+
 				go func() {
 					log := logrus.WithField("debug_server", config.DebugListenOn)
 					log.Debug("Starting debug server")
