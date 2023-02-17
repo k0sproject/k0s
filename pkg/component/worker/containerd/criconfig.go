@@ -22,98 +22,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"text/template"
 
-	"github.com/BurntSushi/toml"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
+
+	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
-
-// FIXME Figure out if we can get this programmatically from containerd so we're always in sync
-const runcCRIConfigTemplate = `
-[plugins."io.containerd.grpc.v1.cri"]
-    device_ownership_from_security_context = false
-    disable_apparmor = false
-    disable_cgroup = false
-    disable_hugetlb_controller = true
-    disable_proc_mount = false
-    disable_tcp_service = true
-    enable_selinux = false
-    enable_tls_streaming = false
-    enable_unprivileged_icmp = false
-    enable_unprivileged_ports = false
-    ignore_image_defined_volumes = false
-    max_concurrent_downloads = 3
-    max_container_log_line_size = 16384
-    netns_mounts_under_state_dir = false
-    restrict_oom_score_adj = false
-    sandbox_image = "{{.PauseImage}}"
-    selinux_category_range = 1024
-    stats_collect_period = 10
-    stream_idle_timeout = "4h0m0s"
-    stream_server_address = "127.0.0.1"
-    stream_server_port = "0"
-    systemd_cgroup = false
-    tolerate_missing_hugetlb_controller = true
-    unset_seccomp_profile = ""
-
-    [plugins."io.containerd.grpc.v1.cri".cni]
-      bin_dir = "/opt/cni/bin"
-      conf_dir = "/etc/cni/net.d"
-      conf_template = ""
-      ip_pref = ""
-      max_conf_num = 1
-
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      default_runtime_name = "runc"
-      disable_snapshot_annotations = true
-      discard_unpacked_layers = false
-      ignore_rdt_not_enabled_errors = false
-      no_pivot = false
-      snapshotter = "overlayfs"
-
-      [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
-        base_runtime_spec = ""
-        cni_conf_dir = ""
-        cni_max_conf_num = 0
-        container_annotations = []
-        pod_annotations = []
-        privileged_without_host_devices = false
-        runtime_engine = ""
-        runtime_path = ""
-        runtime_root = ""
-        runtime_type = ""
-
-        [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime.options]
-
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-          base_runtime_spec = ""
-          cni_conf_dir = ""
-          cni_max_conf_num = 0
-          container_annotations = []
-          pod_annotations = []
-          privileged_without_host_devices = false
-          runtime_engine = ""
-          runtime_path = ""
-          runtime_root = ""
-          runtime_type = "io.containerd.runc.v2"
-
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-            BinaryName = ""
-            CriuImagePath = ""
-            CriuPath = ""
-            CriuWorkPath = ""
-            IoGid = 0
-            IoUid = 0
-            NoNewKeyring = false
-            NoPivotRoot = false
-            Root = ""
-            ShimCgroup = ""
-            SystemdCgroup = false
-`
 
 const importsPath = "/etc/k0s/containerd.d/*.toml"
 const containerdCRIConfigPath = "/run/k0s/containerd-cri.toml"
@@ -148,8 +64,8 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 	var imports []string
 	var criConfigBuffer bytes.Buffer
 
-	// Add runc CRI config
-	err := c.generateRunCConfig(&criConfigBuffer)
+	// Add default runc based CRI config
+	err := c.generateDefaultCRIConfig(&criConfigBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -195,23 +111,30 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 	return imports, nil
 }
 
-func (c *CRIConfigurer) generateRunCConfig(w io.Writer) error {
-	t, err := template.New("runcCRIConfig").Parse(runcCRIConfigTemplate)
+// We need to use custom struct so we can unmarshal the CRI plugin config only
+type config struct {
+	Version int
+	Plugins map[string]interface{} `toml:"plugins"`
+}
+
+// generateDefaultCRIConfig generates the default CRI config and writes it to the given writer
+// It uses the containerd containerd package to generate the config so we can keep it in sync with containerd
+func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
+	criPluginConfig := criconfig.DefaultConfig()
+	// Set pause image
+	criPluginConfig.SandboxImage = c.pauseImage
+
+	containerdConfig := config{
+		Version: 2,
+		Plugins: map[string]interface{}{
+			"io.containerd.grpc.v1.cri": criPluginConfig,
+		},
+	}
+
+	err := toml.NewEncoder(w).Encode(containerdConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate containerd default CRI config: %w", err)
 	}
-
-	data := struct {
-		PauseImage string
-	}{
-		PauseImage: c.pauseImage,
-	}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
