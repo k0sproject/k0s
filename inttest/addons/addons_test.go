@@ -70,15 +70,16 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 }
 
 func (as *AddonsSuite) pullHelmChart(node string) {
-	ssh, err := as.SSH(node)
+	ctx := as.Context()
+	ssh, err := as.SSH(ctx, node)
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
 
-	_, err = ssh.ExecWithOutput(as.Context(), "helm repo add ealenn https://ealenn.github.io/charts")
+	_, err = ssh.ExecWithOutput(ctx, "helm repo add ealenn https://ealenn.github.io/charts")
 	as.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(as.Context(), "helm pull --destination /tmp ealenn/echo-server")
+	_, err = ssh.ExecWithOutput(ctx, "helm pull --destination /tmp ealenn/echo-server")
 	as.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(as.Context(), "mv /tmp/echo-server* /tmp/chart.tgz")
+	_, err = ssh.ExecWithOutput(ctx, "mv /tmp/echo-server* /tmp/chart.tgz")
 	as.Require().NoError(err)
 }
 

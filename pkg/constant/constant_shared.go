@@ -79,7 +79,7 @@ const (
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
 	KonnectivityImageVersion           = "0.0.33-k0s.1"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
-	PushGatewayImageVersion            = "edge@sha256:8a615f19b52c301413a868638ab6e15b4d9d17ba69a64b872d7b76d8ae8ed217"
+	PushGatewayImageVersion            = "1.4.0-k0s.0"
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.2"
 	KubeProxyImage                     = "registry.k8s.io/kube-proxy"
