@@ -33,7 +33,8 @@ type ContainerDImportsSuite struct {
 }
 
 func (s *ContainerDImportsSuite) TestK0sGetsUp() {
-	ssh, err := s.SSH(s.ControllerNode(0))
+	ctx := s.Context()
+	ssh, err := s.SSH(ctx, s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 
@@ -52,7 +53,7 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 
 	s.addContainerDRuntime()
 	s.T().Log("Creating new RuntimeClass for foo runtime")
@@ -64,7 +65,7 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 		},
 		Handler: runtimeClassName,
 	}
-	_, err = kc.NodeV1().RuntimeClasses().Create(s.Context(), &runtimeClass, metav1.CreateOptions{})
+	_, err = kc.NodeV1().RuntimeClasses().Create(ctx, &runtimeClass, metav1.CreateOptions{})
 	s.Require().NoError(err)
 	s.T().Log("Creating new Pod for foo runtime")
 	// Create new Pod for foo runtime
@@ -82,9 +83,9 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Pods("default").Create(s.Context(), &pod, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Pods("default").Create(ctx, &pod, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "foo", "default"))
+	s.Require().NoError(common.WaitForPod(ctx, kc, "foo", "default"))
 
 	s.T().Log("Creating new Pod for default runc runtime")
 	normalNginxPod := corev1.Pod{
@@ -100,27 +101,28 @@ func (s *ContainerDImportsSuite) TestK0sGetsUp() {
 			},
 		},
 	}
-	_, err = kc.CoreV1().Pods("default").Create(s.Context(), &normalNginxPod, metav1.CreateOptions{})
+	_, err = kc.CoreV1().Pods("default").Create(ctx, &normalNginxPod, metav1.CreateOptions{})
 	s.Require().NoError(err)
-	s.Require().NoError(common.WaitForPod(s.Context(), kc, "normal-nginx", "default"))
+	s.Require().NoError(common.WaitForPod(ctx, kc, "normal-nginx", "default"))
 
 }
 
 func (s *ContainerDImportsSuite) addContainerDRuntime() {
+	ctx := s.Context()
 	s.T().Log("Setting up alternative runtime and config")
-	workerSSH, err := s.SSH(s.WorkerNode(0))
+	workerSSH, err := s.SSH(ctx, s.WorkerNode(0))
 	s.Require().NoError(err)
 	defer workerSSH.Disconnect()
 
 	// Make an "alias" runtime using runc
-	workerSSH.Exec(s.Context(), "ln -s /var/lib/k0s/bin/runc /var/lib/k0s/bin/runfoo", common.SSHStreams{})
+	workerSSH.Exec(ctx, "ln -s /var/lib/k0s/bin/runc /var/lib/k0s/bin/runfoo", common.SSHStreams{})
 
 	// Configure containerd to use it
 	s.PutFile(s.WorkerNode(0), "/etc/k0s/containerd.d/foo.toml", fooRuntimeConfig)
 
 	// Restart k0s to pick up the new config for containerd
 	s.T().Log("Restarting k0s on worker")
-	workerSSH.Exec(s.Context(), "rc-service k0sworker restart", common.SSHStreams{})
+	workerSSH.Exec(ctx, "rc-service k0sworker restart", common.SSHStreams{})
 }
 
 func TestContainerDImportsSuite(t *testing.T) {
