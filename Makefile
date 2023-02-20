@@ -118,7 +118,7 @@ codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stam
 pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/autopilot.k0sproject.io/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
-pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
+pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
 	rm -f -- '$(dir $@)'zz_*.go
 	CGO_ENABLED=0 $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(controller-gen_version)
@@ -126,7 +126,7 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/Makefile
 	  crd \
 	  paths="./$(dir $@)..." \
 	  output:crd:artifacts:config=./static/manifests/$(gen_output_dir)/CustomResourceDefinition \
-	  object
+	  object:headerFile=hack/tools/boilerplate.go.txt
 	touch -- '$@'
 
 # Note: k0s.k0sproject.io omits the version from the output directory, so this needs
@@ -152,6 +152,7 @@ pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.
 	  --clientset-name=clientset \
 	  --output-package=github.com/k0sproject/k0s/pkg/apis/$(gen_output_dir)/
 	touch -- '$@'
+
 
 codegen_targets += static/zz_generated_assets.go
 static_asset_dirs := static/manifests static/misc
@@ -212,6 +213,7 @@ bindata: static/zz_generated_assets.go pkg/assets/zz_generated_offsets_$(TARGET_
 .PHONY: lint
 lint: GOLANGCI_LINT_FLAGS ?=
 lint: .k0sbuild.docker-image.k0s go.sum codegen
+	hack/copyright.sh
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
 	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_DIRS)
 
@@ -277,6 +279,7 @@ clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/zz_generated_assets.go
 	-rm -rf $(K0S_GO_BUILD_CACHE) 
 	-find pkg/apis -type f \( -name .client-gen.stamp -or -name .controller-gen.stamp \) -delete
+	-rm -f hack/.copyright.stamp
 	-$(MAKE) -C docs clean
 	-$(MAKE) -C embedded-bins clean
 	-$(MAKE) -C inttest clean
