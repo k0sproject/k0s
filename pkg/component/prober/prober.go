@@ -134,7 +134,7 @@ func (p *Prober) healthCheckLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case at := <-ticker.C:
-			p.l.Error("Probing components")
+			p.l.Debug("Probing components")
 			p.checkComponentsHealth(ctx, at)
 			// limit amount of iterations for the test purposes
 			if p.stopAfterIterationNum > 0 {
@@ -190,13 +190,13 @@ func (p *Prober) Register(name string, component any) {
 
 	withHealth, ok := component.(Healthz)
 	if ok {
-		l.Warnf("component implements Healthz interface, observing")
+		l.Info("component implements Healthz interface, observing")
 		p.withHealthComponents[name] = withHealth
 	}
 
 	withEvents, ok := component.(Eventer)
 	if ok {
-		l.Warnf("component implements Eventer interface, subscribing")
+		l.Info("component implements Eventer interface, subscribing")
 		p.withEventComponents[name] = withEvents
 		p.spawnEventCollector(name, withEvents)
 	}
