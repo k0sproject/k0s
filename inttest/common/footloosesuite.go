@@ -1426,14 +1426,14 @@ func (s *FootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to run docker inspect: %w", err)
 	}
-	var docker_bridge_EnableIPv6 string
-	err = json.Unmarshal(output, &docker_bridge_EnableIPv6)
+	var dockerBridgeEnableIPv6 string
+	err = json.Unmarshal(output, &dockerBridgeEnableIPv6)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse default docker bridge EnableIPv6: %w", err)
 	}
-	bridge_EnableIPv6, err := strconv.ParseBool(docker_bridge_EnableIPv6)
+	bridgeEnableIPv6, err := strconv.ParseBool(dockerBridgeEnableIPv6)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse default docker bridge EnableIPv6: %w", err)
 	}
-	return bridge_EnableIPv6, nil
+	return bridgeEnableIPv6, nil
 }
