@@ -52,7 +52,7 @@ jobs:
       - name: mike deploy head
         if: contains(github.ref, 'refs/heads/main')
         run: |
-          mike deploy --push head
+          KUBE_VERSION="$(./vars.sh kubernetes_version)" mike deploy --push head
 
       # If a release has been published, deploy it as a new version
       - name: mike deploy new version
@@ -64,7 +64,7 @@ jobs:
         env:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
-          mike deploy --push "$VERSION"
+          KUBE_VERSION="$(./vars.sh kubernetes_version)" mike deploy --push "$VERSION"
 
       - name: Update mike version aliases
         if: github.repository == 'k0sproject/k0s'
