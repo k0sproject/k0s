@@ -80,6 +80,9 @@ check-ap-ha3x3: K0S_UPDATE_FROM_BIN ?= ../k0s
 check-ap-ha3x3: K0S_UPDATE_FROM_PATH ?= $(realpath $(K0S_UPDATE_FROM_BIN))
 check-ap-ha3x3: TIMEOUT=6m
 
+check-customports-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
+check-customports-dynamicconfig: TEST_PACKAGE=customports
+
 check-kubeletcertrotate: TIMEOUT=15m
 
 check-dualstack-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
