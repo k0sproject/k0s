@@ -543,6 +543,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#containerd-and-apparmor" class="md-nav__link">
+    containerd and AppArmor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
     Other dependencies in previous versions of k0s
   </a>
@@ -1459,6 +1466,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#containerd-and-apparmor" class="md-nav__link">
+    containerd and AppArmor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#other-dependencies-in-previous-versions-of-k0s" class="md-nav__link">
     Other dependencies in previous versions of k0s
   </a>
@@ -1636,6 +1650,10 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.</li>
 </ul>
+<h3 id="containerd-and-apparmor">containerd and AppArmor<a class="headerlink" href="#containerd-and-apparmor" title="Permanent link">#</a></h3>
+<p>In order to use containerd in conjunction with <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>, it must be enabled in
+the kernel and the <code>/sbin/apparmor_parser</code> executable must be installed on the
+host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v1.6.18/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
 <h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
 <ul>
 <li>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
