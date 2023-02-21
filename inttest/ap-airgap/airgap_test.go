@@ -31,7 +31,7 @@ type airgapSuite struct {
 	common.FootlooseSuite
 }
 
-const network = "airgap"
+const network = "ap-airgap"
 
 // SetupSuite creates the required network before starting footloose.
 func (s *airgapSuite) SetupSuite() {
@@ -74,6 +74,13 @@ func (s *airgapSuite) SetupTest() {
 }
 
 func (s *airgapSuite) TestApply() {
+	(&common.Airgap{
+		SSH:  s.SSH,
+		Logf: s.T().Logf,
+	}).LockdownMachines(s.Context(),
+		s.ControllerNode(0), s.WorkerNode(0),
+	)
+
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
