@@ -2,6 +2,8 @@ ARG PYTHON_IMAGE_VERSION
 
 FROM python:${PYTHON_IMAGE_VERSION} as builder
 
+ARG KUBE_VERSION
+
 # Prepare Python virtual env
 ENV PYTHONUNBUFFERED 1
 RUN \
@@ -23,5 +25,6 @@ WORKDIR /k0s
 EXPOSE 8000
 
 # Start development server by default
+ENV KUBE_VERSION=${KUBE_VERSION}
 ENTRYPOINT ["mkdocs"]
 CMD ["serve", "--dev-addr=0.0.0.0:8000"]

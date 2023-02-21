@@ -77,6 +77,7 @@ cli:
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables
 	docker build \
 	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine$(alpine_version) \
+	  --build-arg KUBE_VERSION=$(kubernetes_version) \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'
 
