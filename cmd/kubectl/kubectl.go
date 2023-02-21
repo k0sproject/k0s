@@ -20,59 +20,61 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
-	"syscall"
 
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/component-base/logs"
 	kubectl "k8s.io/kubectl/pkg/cmd"
+	"k8s.io/kubectl/pkg/cmd/plugin"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
-type kubectlPluginHandler struct{}
-
-func (h *kubectlPluginHandler) Lookup(filename string) (string, bool) {
-	path, err := exec.LookPath(fmt.Sprintf("kubectl-%s", filename))
-	if err != nil || path == "" {
-		return "", false
+func checkKubectlInPath() {
+	// exec.LookPath on windows handles filename extensions
+	if _, err := exec.LookPath("kubectl"); err == nil {
+		return
 	}
-	return path, true
+	exe, err := os.Executable()
+	if err != nil {
+		return
+	}
+	switch runtime.GOOS {
+	case "windows":
+		logrus.Warnf("Kubectl not found in %%PATH%%. Some kubectl plugins try to call it via 'kubectl'. You can use k0s as a drop-in replacement by creating a symlink, for example: `mklink \"%s\" \"%s\\kubectl.exe\"`", exe, filepath.Base(exe))
+	default:
+		logrus.Warnf("Kubectl not found in $PATH. Some kubectl plugins try to call it via 'kubectl'. You can use k0s as a drop-in replacement by creating a symlink, for example: `sudo ln -s \"%s\" /usr/local/bin/kubectl`", exe)
+	}
 }
 
-// adapted from kubectl.DefaultPluginHandler
+type kubectlPluginHandler struct {
+	kubectl.DefaultPluginHandler
+}
+
 func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environment []string) error {
-	if _, err := exec.LookPath("kubectl"); err != nil {
-		if exe, err := os.Executable(); err == nil {
-			logrus.Warnf("kubectl not found in $PATH. many kubectl plugins try to run 'kubectl'. you can use k0s as a replacement by creating a symlink, for example: `sudo ln -s \"%s\" /usr/local/bin/kubectl`", exe)
-		}
-	}
+	checkKubectlInPath()
 
-	// Windows does not support exec syscall.
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command(executablePath, cmdArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
-		cmd.Env = environment
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-		os.Exit(0)
-	}
-
-	// invoke cmd binary relaying the environment and args given
-	// append executablePath to cmdArgs, as execve will make first argument the "binary name".
-	return syscall.Exec(executablePath, append([]string{executablePath}, cmdArgs...), environment)
+	// this will replace the current process and exit on its own if successful
+	// error from here is a failure to exec, not an error-exit of a plugin.
+	return h.DefaultPluginHandler.Execute(executablePath, cmdArgs, environment)
 }
 
 func NewK0sKubectlCmd() *cobra.Command {
 	_ = pflag.CommandLine.MarkHidden("log-flush-frequency")
 	_ = pflag.CommandLine.MarkHidden("version")
+
+	var idx int
+	for i, arg := range os.Args {
+		if arg == "kubectl" || arg == "kc" {
+			idx = i
+			break
+		}
+	}
 
 	args := kubectl.KubectlOptions{
 		IOStreams: genericclioptions.IOStreams{
@@ -80,12 +82,17 @@ func NewK0sKubectlCmd() *cobra.Command {
 			Out:    os.Stdout,
 			ErrOut: os.Stderr,
 		},
-		Arguments:     os.Args,
-		PluginHandler: &kubectlPluginHandler{},
+		Arguments: os.Args[idx:],
+		PluginHandler: &kubectlPluginHandler{
+			DefaultPluginHandler: kubectl.DefaultPluginHandler{
+				ValidPrefixes: plugin.ValidPluginFilenamePrefixes,
+			},
+		},
 	}
-	cmd := kubectl.NewKubectlCommand(args)
 
+	cmd := kubectl.NewDefaultKubectlCommandWithArgs(args)
 	cmd.Aliases = []string{"kc"}
+
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
@@ -99,7 +106,9 @@ func NewK0sKubectlCmd() *cobra.Command {
 
 		return originalPreRunE(cmd, args)
 	}
+
 	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
+
 	originalRun := cmd.Run
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
@@ -111,10 +120,12 @@ func NewK0sKubectlCmd() *cobra.Command {
 		}
 
 		originalRun(cmd, args)
+
 		return nil
 	}
 
 	logs.AddFlags(cmd.PersistentFlags())
+
 	return cmd
 }
 

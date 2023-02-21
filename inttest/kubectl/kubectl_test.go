@@ -17,8 +17,10 @@ limitations under the License.
 package kubectl
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -100,6 +102,46 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			})
 		}
 	}
+
+	s.T().Run("plugin list", func(t *testing.T) {
+		require := require.New(t)
+
+		s.PutFile(s.ControllerNode(0), "/bin/kubectl-testplug", "#!/bin/sh\necho \"testplug called with args: $*\"\n")
+		_, err := ssh.ExecWithOutput(s.Context(), "chmod +x /bin/kubectl-testplug")
+		require.NoError(err)
+
+		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubectl plugin list")
+		require.NoError(err)
+		require.Contains(output, "kubectl-testplug")
+	})
+
+	s.T().Run("plugin arg passing", func(t *testing.T) {
+		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubectl testplug hello")
+		s.Require().NoError(err)
+		s.Require().Contains(out, "testplug called with args: hello")
+
+		out, err = ssh.ExecWithOutput(s.Context(), "kubectl testplug --help")
+		s.Require().NoError(err)
+		s.Require().Equal("testplug called with args: --help", out)
+	})
+
+	// Try with kubectl symlink, a warning should not be printed
+	var errOut bytes.Buffer
+	streams := common.SSHStreams{In: nil, Out: io.Discard, Err: &errOut}
+	s.Require().NoError(ssh.Exec(s.Context(), "/usr/local/bin/k0s kubectl testplug hello", streams))
+	s.Require().NotContains(errOut.String(), "You can use k0s as a drop-in replacement")
+
+	// Try without kubectl symlink, a warning should be printed
+	_, err = ssh.ExecWithOutput(s.Context(), "rm -f /usr/bin/kubectl /bin/kubectl /usr/local/bin/kubectl")
+	s.Require().NoError(err)
+	_, err = ssh.ExecWithOutput(s.Context(), "command -v kubectl")
+	s.Require().Error(err)
+	errOut.Reset()
+	s.Require().NoError(ssh.Exec(s.Context(), "/usr/local/bin/k0s kubectl testplug hello", streams))
+	s.Require().Contains(errOut.String(), "You can use k0s as a drop-in replacement")
+
+	// restore link for any other tests
+	_, _ = ssh.ExecWithOutput(s.Context(), "ln -s /usr/local/bin/k0s /usr/bin/kubectl")
 }
 
 func requiredValue[V any](t *testing.T, obj map[string]any, key string) V {
