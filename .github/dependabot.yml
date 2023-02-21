@@ -63,3 +63,8 @@ updates:
     schedule:
       interval: daily
 
+  - package-ecosystem: gomod
+    directory: /hack/tool
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
