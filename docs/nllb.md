@@ -258,8 +258,8 @@ listed, too:
 ```console
 $ kubectl get nodes -owide
 NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   2m16s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.17
-k0s-worker-1   Ready    <none>   2m15s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.17
+k0s-worker-0   Ready    <none>   2m16s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.18
+k0s-worker-1   Ready    <none>   2m15s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.18
 ```
 
 There is one node-local load balancer pod running for each worker node:
@@ -304,8 +304,8 @@ $ sed -i s#https://10\\.81\\.146\\.254:6443#https://10.81.146.184:6443#g k0s-kub
 
 $ kubectl get nodes -owide
 NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-k0s-worker-0   Ready    <none>   3m35s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.17
-k0s-worker-1   Ready    <none>   3m34s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.17
+k0s-worker-0   Ready    <none>   3m35s   v1.26.1+k0s   10.81.146.198   <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.18
+k0s-worker-1   Ready    <none>   3m34s   v1.26.1+k0s   10.81.146.51    <none>        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.6.18
 
 $ kubectl -n kube-system get pods -owide -l app.kubernetes.io/managed-by=k0s,app.kubernetes.io/component=nllb
 NAME                READY   STATUS    RESTARTS   AGE     IP              NODE           NOMINATED NODE   READINESS GATES
