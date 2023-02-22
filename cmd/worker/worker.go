@@ -194,6 +194,7 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 
 		componentManager.Add(ctx, &status.Status{
+			Prober: pr,
 			StatusInformation: status.K0sStatus{
 				Pid:           os.Getpid(),
 				Role:          "worker",
