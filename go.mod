@@ -42,7 +42,7 @@ require (
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/vmware-tanzu/sonobuoy v0.56.14
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
-	github.com/zcalusic/sysinfo v0.0.0-20210905121133-6fa2f969a900
+	github.com/zcalusic/sysinfo v0.9.5
 	go.etcd.io/etcd/api/v3 v3.5.7
 	go.etcd.io/etcd/client/pkg/v3 v3.5.7
 	go.etcd.io/etcd/client/v3 v3.5.7
