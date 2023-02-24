@@ -21,24 +21,26 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
+	"github.com/k0sproject/k0s/pkg/component/manager"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
-	v1core "k8s.io/api/core/v1"
+
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/sirupsen/logrus"
 )
 
 type TunneledEndpointReconciler struct {
-	cfg *v1beta1.ClusterConfig
-
 	logger *logrus.Entry
 
 	leaderElector     leaderelector.Interface
 	kubeClientFactory k8sutil.ClientFactoryInterface
 }
+
+var _ manager.Component = (*TunneledEndpointReconciler)(nil)
 
 func (ter TunneledEndpointReconciler) Init(_ context.Context) error {
 	return nil
@@ -53,10 +55,10 @@ func (ter *TunneledEndpointReconciler) Start(ctx context.Context) error {
 			case <-ticker.C:
 				err := ter.reconcile(ctx)
 				if err != nil {
-					ter.logger.Warnf("external API address reconciliation failed: %s", err.Error())
+					ter.logger.WithError(err).Warn("External API address reconciliation failed")
 				}
 			case <-ctx.Done():
-				ter.logger.Info("endpoint reconciler done")
+				ter.logger.Info("Endpoint reconciler done")
 				return
 			}
 		}
@@ -68,22 +70,10 @@ func (ter *TunneledEndpointReconciler) Stop() error {
 	return nil
 }
 
-func (ter *TunneledEndpointReconciler) Reconcile(ctx context.Context, cfg *v1beta1.ClusterConfig) error {
-	ter.cfg = cfg
-	return nil
-}
-
-func (ter TunneledEndpointReconciler) reconcile(ctx context.Context) error {
-	if ter.cfg == nil {
-		return nil
-	}
+func (ter *TunneledEndpointReconciler) reconcile(ctx context.Context) error {
 	if !ter.leaderElector.IsLeader() {
-		ter.logger.Debug("we're not the leader, not reconciling api endpoints")
+		ter.logger.Debug("Not the leader, not reconciling API endpoints")
 		return nil
-	}
-
-	if !ter.cfg.Spec.API.TunneledNetworkingMode {
-		return fmt.Errorf("impossible to disable tunneled networking for the KAS server on the fly, restart the node")
 	}
 
 	if err := ter.makeDefaultServiceInternalOnly(ctx); err != nil {
@@ -111,10 +101,10 @@ func (ter TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) err
 	if len(addresses) == 0 {
 		return nil
 	}
-	subsets := []v1core.EndpointSubset{
+	subsets := []corev1.EndpointSubset{
 		{
 			Addresses: addresses,
-			Ports: []v1core.EndpointPort{
+			Ports: []corev1.EndpointPort{
 				{
 					Name:     "https",
 					Protocol: "TCP",
@@ -123,7 +113,7 @@ func (ter TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) err
 			},
 		},
 	}
-	kubernetesEndpoint, err := epClient.Get(ctx, "kubernetes", v1.GetOptions{})
+	kubernetesEndpoint, err := epClient.Get(ctx, "kubernetes", metav1.GetOptions{})
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -133,7 +123,7 @@ func (ter TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) err
 	}
 
 	kubernetesEndpoint.Subsets = subsets
-	_, err = epClient.Update(ctx, kubernetesEndpoint, v1.UpdateOptions{})
+	_, err = epClient.Update(ctx, kubernetesEndpoint, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -141,22 +131,22 @@ func (ter TunneledEndpointReconciler) reconcileEndpoint(ctx context.Context) err
 	return nil
 }
 
-func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.EndpointAddress, error) {
-	nodes, err := c.CoreV1().Nodes().List(ctx, v1.ListOptions{})
+func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]corev1.EndpointAddress, error) {
+	nodes, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("can't list nodes: %w", err)
 	}
 
-	addresses := make([]v1core.EndpointAddress, 0, len(nodes.Items))
+	addresses := make([]corev1.EndpointAddress, 0, len(nodes.Items))
 	for _, node := range nodes.Items {
 		var publicAddr string
 		var internalAddr string
 		node := node
 		for _, addr := range node.Status.Addresses {
 			switch addr.Type {
-			case v1core.NodeInternalIP:
+			case corev1.NodeInternalIP:
 				internalAddr = addr.Address
-			case v1core.NodeExternalIP:
+			case corev1.NodeExternalIP:
 				publicAddr = addr.Address
 			}
 		}
@@ -169,7 +159,7 @@ func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.E
 		if address == "" {
 			address = publicAddr
 		}
-		addresses = append(addresses, v1core.EndpointAddress{
+		addresses = append(addresses, corev1.EndpointAddress{
 			IP:       address,
 			NodeName: &node.Name,
 		})
@@ -177,14 +167,14 @@ func makeNodesAddresses(ctx context.Context, c kubernetes.Interface) ([]v1core.E
 	return addresses, nil
 }
 
-func (ter TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets []v1core.EndpointSubset) error {
+func (ter TunneledEndpointReconciler) createEndpoint(ctx context.Context, subsets []corev1.EndpointSubset) error {
 
-	ep := &v1core.Endpoints{
-		TypeMeta: v1.TypeMeta{
+	ep := &corev1.Endpoints{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kubernetes",
 		},
 		Subsets: subsets,
@@ -195,7 +185,7 @@ func (ter TunneledEndpointReconciler) createEndpoint(ctx context.Context, subset
 		return err
 	}
 
-	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, v1.CreateOptions{})
+	_, err = c.CoreV1().Endpoints("default").Create(ctx, ep, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("can't create new endpoints for kubernetes serice: %w", err)
 	}
@@ -211,16 +201,16 @@ func (ter TunneledEndpointReconciler) makeDefaultServiceInternalOnly(ctx context
 
 	svcClient := c.CoreV1().Services("default")
 
-	svc, err := svcClient.Get(ctx, "kubernetes", v1.GetOptions{})
+	svc, err := svcClient.Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("can't get default service: %w", err)
 	}
 
 	newSvc := svc.DeepCopy()
-	p := v1core.ServiceInternalTrafficPolicyLocal
+	p := corev1.ServiceInternalTrafficPolicyLocal
 	newSvc.Spec.InternalTrafficPolicy = &p
 
-	if _, err := svcClient.Update(ctx, newSvc, v1.UpdateOptions{}); err != nil {
+	if _, err := svcClient.Update(ctx, newSvc, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("can't update default service: %w", err)
 	}
 	return nil
