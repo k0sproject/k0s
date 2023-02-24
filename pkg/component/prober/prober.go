@@ -45,6 +45,7 @@ type Prober struct {
 
 	closeCh chan struct{}
 	startCh chan struct{}
+	runOnce sync.Once
 
 	eventsTrackLength int
 	eventState        map[string]*ring.Ring
@@ -67,6 +68,9 @@ func New() *Prober {
 		startCh:              make(chan struct{}),
 	}
 }
+
+// DefaultProber default global instance
+var DefaultProber = New()
 
 // State gives read-only copy of current state
 func (p *Prober) State(maxCount int) State {
@@ -121,9 +125,11 @@ type State struct {
 
 // Run starts the prober workin loop
 func (p *Prober) Run(ctx context.Context) {
-	close(p.startCh)
-	p.healthCheckLoop(ctx)
-	close(p.closeCh)
+	p.runOnce.Do(func() {
+		close(p.startCh)
+		p.healthCheckLoop(ctx)
+		close(p.closeCh)
+	})
 }
 
 func (p *Prober) healthCheckLoop(ctx context.Context) {
@@ -174,7 +180,7 @@ func (p *Prober) spawnEventCollector(name string, component Eventer) {
 			case <-p.closeCh:
 				return
 			case event := <-component.Events():
-				p.l.Infof("Got event from %s: %v", name, event)
+				p.l.WithField("component", name).WithField("event", event).Debug("Got event")
 				p.Lock()
 				p.eventState[name].Value = event
 				p.eventState[name] = p.eventState[name].Next()
@@ -190,13 +196,13 @@ func (p *Prober) Register(name string, component any) {
 
 	withHealth, ok := component.(Healthz)
 	if ok {
-		l.Info("component implements Healthz interface, observing")
+		l.Debug("component implements Healthz interface, observing")
 		p.withHealthComponents[name] = withHealth
 	}
 
 	withEvents, ok := component.(Eventer)
 	if ok {
-		l.Info("component implements Eventer interface, subscribing")
+		l.Debug("component implements Eventer interface, subscribing")
 		p.withEventComponents[name] = withEvents
 		p.spawnEventCollector(name, withEvents)
 	}

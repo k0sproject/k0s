@@ -30,14 +30,15 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type proberRegistrator interface {
+type prober interface {
 	Register(name string, component any)
+	Run(context.Context)
 }
 
 // Manager manages components
 type Manager struct {
 	Components        []Component
-	prober            proberRegistrator
+	prober            prober
 	ReadyWaitDuration time.Duration
 
 	started              *list.List
@@ -45,7 +46,7 @@ type Manager struct {
 }
 
 // New creates a manager
-func New(prober proberRegistrator) *Manager {
+func New(prober prober) *Manager {
 	return &Manager{
 		Components:        []Component{},
 		ReadyWaitDuration: 2 * time.Minute,
@@ -83,6 +84,7 @@ func (m *Manager) Init(ctx context.Context) error {
 
 // Start starts all managed components
 func (m *Manager) Start(ctx context.Context) error {
+	go m.prober.Run(ctx)
 	perfTimer := performance.NewTimer("component-start").Buffer().Start()
 	for _, comp := range m.Components {
 		compName := reflect.TypeOf(comp).Elem().Name()

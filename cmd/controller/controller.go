@@ -123,10 +123,8 @@ func NewControllerCmd() *cobra.Command {
 }
 
 func (c *command) start(ctx context.Context) error {
-	pr := prober.New()
-	go pr.Run(ctx)
-	c.NodeComponents = manager.New(pr)
-	c.ClusterComponents = manager.New(pr)
+	c.NodeComponents = manager.New(prober.DefaultProber)
+	c.ClusterComponents = manager.New(prober.DefaultProber)
 
 	perfTimer := performance.NewTimer("controller-start").Buffer().Start()
 
@@ -258,7 +256,7 @@ func (c *command) start(ctx context.Context) error {
 		)
 	}
 	c.NodeComponents.Add(ctx, &status.Status{
-		Prober: pr,
+		Prober: prober.DefaultProber,
 		StatusInformation: status.K0sStatus{
 			Pid:           os.Getpid(),
 			Role:          "controller",
@@ -516,7 +514,6 @@ func (c *command) start(ctx context.Context) error {
 
 	if c.EnableWorker {
 		perfTimer.Checkpoint("starting-worker")
-
 		if err := c.startWorker(ctx, c.WorkerProfile); err != nil {
 			logrus.WithError(err).Error("Failed to start controller worker")
 		} else {
