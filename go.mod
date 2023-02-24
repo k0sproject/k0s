@@ -26,7 +26,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.18.0
 	github.com/imdario/mergo v0.3.13
 	github.com/k0sproject/dig v0.2.0
-	github.com/kardianos/service v1.2.1-0.20210728001519-a323c3813bc7
+	github.com/kardianos/service v1.2.2
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
