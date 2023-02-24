@@ -22,10 +22,10 @@ FIX=${FIX:=n}
 get_year(){
     # The -1 has to be added because if a file has been added, removed and added
     # again we'll get two lines with both dates. We only pick the newest one.
-    YEAR=$(git log -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
+    YEAR=$(TZ=UTC git log -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
     if [ -z "$YEAR" ]; then
-	echo "FATAL!! $1 doesn't seem to be commited in the repo" 1>&2
-        exit 1
+        YEAR=$(TZ=UTC date +%Y)
+	    echo "WARN: $1 doesn't seem to be commited in the repo, assuming $YEAR" 1>&2
     fi
     echo $YEAR
 }
@@ -44,25 +44,30 @@ has_date_copyright(){
 # Deliberately do not search in docs as the date of the matches for the
 # Copyright notice aren't related to the date of the document.
 for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -name 'zz_generated*'); do
-    DATE=$(get_year $i)
-
-    # codegen gets the header from a static file, so instead we'll replace it every time.
-    # Also fix every file if FIX=y
-    if [[ "$FIX" == 'y' ]] ; then
-        sed -i "s/Copyright 20../Copyright $DATE/" "$i"
-    fi
-
-    if [[ $i == "pkg/apis/k0s.k0sproject.io/clientset/"* ]] || [[ $i == "pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/"* ]]; then
+    case "$i" in
+    pkg/apis/k0s.k0sproject.io/clientset/* | \
+        pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/*)
         if ! has_basic_copyright "$i"; then
-            echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
-            RESULT=1
+          echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
+          RESULT=1
         fi
-    else
+        ;;
+
+    *)
+        DATE=$(get_year "$i")
+
+        # codegen gets the header from a static file, so instead we'll replace it every time.
+        # Also fix every file if FIX=y
+        if [[ "$FIX" == 'y' ]]; then
+          sed -i "s/Copyright 20../Copyright $DATE/" "$i"
+        fi
+
         if ! has_date_copyright "$DATE" "$i"; then
-            echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
-            RESULT=1
+          echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
+          RESULT=1
         fi
-    fi
+        ;;
+    esac
 done
 
 if [[ "$RESULT" != 0 ]]; then
