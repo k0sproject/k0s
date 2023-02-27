@@ -104,7 +104,9 @@ type FootlooseSuite struct {
 	ControllerNetworks           []string
 	WorkerNetworks               []string
 
-	sctx suiteCtx
+	ctx      context.Context
+	tearDown func()
+
 	/* footloose cluster setup */
 
 	clusterDir     string
@@ -113,11 +115,6 @@ type FootlooseSuite struct {
 	launchDelegate launchDelegate
 
 	dataDirOpt string // Data directory option of first controller, required to fetch the cluster state
-}
-
-type suiteCtx struct {
-	ctx  context.Context
-	stop func()
 }
 
 // initializeDefaults initializes any unset configuration knobs to their defaults.
@@ -162,15 +159,23 @@ func (s *FootlooseSuite) SetupSuite() {
 
 	s.initializeDefaults()
 
-	ctx, cancel := newSuiteContext(t)
-	var cleanupTasks sync.WaitGroup
+	tornDown := errors.New("suite torn down")
 
-	s.sctx = suiteCtx{ctx, func() {
-		cancel()
+	var cleanupTasks sync.WaitGroup
+	ctx, cancel := newSuiteContext(t)
+
+	t.Cleanup(func() {
+		cancel(errors.New("test cleanup"))
 		cleanupTasks.Wait()
-	}}
+	})
+
+	s.ctx, s.tearDown = ctx, func() {
+		cancel(tornDown)
+		cleanupTasks.Wait()
+	}
+
 	if deadline, hasDeadline := ctx.Deadline(); hasDeadline {
-		t.Logf("test teardown deadline: %s", deadline)
+		t.Logf("test suite deadline: %s", deadline)
 	} else {
 		t.Log("test suite has no deadline")
 	}
@@ -184,30 +189,19 @@ func (s *FootlooseSuite) SetupSuite() {
 	go func() {
 		defer cleanupTasks.Done()
 		<-ctx.Done()
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			// Record a test failure when the deadline has been exceeded. This
-			// is to ensure that the test is actually marked as failed and the
-			// cluster state will be recorded.
-			assert.Fail(t, "Test deadline exceeded")
+		// Record a test failure when the context has been canceled other than
+		// through the test tear down itself. This is to ensure that the test is
+		// actually marked as failed and the cluster state will be recorded.
+		if err := context.Cause(ctx); !errors.Is(err, tornDown) {
+			assert.Failf(t, "Test suite not properly torn down", "%v", err)
 		}
 
 		t.Logf("Cleaning up")
 
-		// Replace the done context with a fresh one.
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
+		// Get a fresh context for the cleanup tasks.
+		ctx, cancel := signalAwareCtx(context.Background())
+		defer cancel(nil)
 		s.cleanupSuite(t, ctx)
-	}()
-
-	// set up signal handler so we teardown on Interrupt or SIGTERM
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		signal := <-c
-		assert.Fail(t, "Signal received", "%s", signal)
-		s.TearDownSuite()
-		os.Exit(1)
 	}()
 
 	s.waitForSSH(ctx)
@@ -215,6 +209,23 @@ func (s *FootlooseSuite) SetupSuite() {
 	if s.WithLB {
 		s.startHAProxy()
 	}
+}
+
+func signalAwareCtx(parent context.Context) (context.Context, context.CancelCauseFunc) {
+	ctx, cancel := context.WithCancelCause(parent)
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		defer signal.Stop(sigs)
+		select {
+		case <-ctx.Done():
+		case sig := <-sigs:
+			cancel(fmt.Errorf("signal received: %s", sig))
+		}
+	}()
+
+	return ctx, cancel
 }
 
 // waitForSSH waits to get a SSH connection to all footloose machines defined as part of the test suite.
@@ -238,7 +249,7 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 		nodeName := node
 		g.Go(func() error {
 			return wait.PollUntilWithContext(ctx, 1*time.Second, func(ctx context.Context) (bool, error) {
-				ssh, err := s.SSH(s.Context(), nodeName)
+				ssh, err := s.SSH(ctx, nodeName)
 				if err != nil {
 					return false, nil
 				}
@@ -260,8 +271,9 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 
 // Context returns this suite's context, which should be passed to all blocking operations.
 func (s *FootlooseSuite) Context() context.Context {
-	s.Require().NotNil(s.sctx, "No suite context installed")
-	return s.sctx.ctx
+	ctx := s.ctx
+	s.Require().NotNil(ctx, "No suite context installed")
+	return ctx
 }
 
 // ControllerNode gets the node name of given controller index
@@ -301,8 +313,10 @@ func (s *FootlooseSuite) Stop(machineNames []string) error {
 // TearDownSuite is called by testify at the very end of the suite's run.
 // It cancels the suite's context in order to free the suite's resources.
 func (s *FootlooseSuite) TearDownSuite() {
-	s.Require().NotNil(s.sctx, "No suite context installed")
-	s.sctx.stop()
+	tearDown := s.tearDown
+	if s.NotNil(tearDown, "Failed to tear down suite") {
+		tearDown()
+	}
 }
 
 // cleanupSuite does the cleanup work, namely destroy the footloose machines.
@@ -362,7 +376,7 @@ func (s *FootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t
 	cmd := fmt.Sprintf("troubleshoot-k0s-inttest.sh %q", dataDir)
 
 	node := s.ControllerNode(0)
-	ssh, err := s.SSH(s.Context(), node)
+	ssh, err := s.SSH(ctx, node)
 	if err != nil {
 		t.Logf("Failed to ssh into %s to collect support bundle: %s", node, err.Error())
 		return
@@ -1244,19 +1258,25 @@ func cleanupClusterDir(t *testing.T, dir string) {
 	}
 }
 
-func newSuiteContext(t *testing.T) (context.Context, context.CancelFunc) {
+func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
+	signalCtx, cancel := signalAwareCtx(context.Background())
+
 	// We need to reserve some time to conduct a proper teardown of the suite before the test timeout kicks in.
-	if deadline, hasDeadline := t.Deadline(); hasDeadline {
-		remainingTestDuration := time.Until(deadline)
-		//  Let's reserve 10% ...
-		reservedTeardownDuration := time.Duration(float64(remainingTestDuration.Milliseconds())*0.10) * time.Millisecond
-		// ... but at least 20 seconds.
-		reservedTeardownDuration = time.Duration(math.Max(float64(20*time.Second), float64(reservedTeardownDuration)))
-		// And construct the context accordingly
-		return context.WithDeadline(context.Background(), deadline.Add(-reservedTeardownDuration))
+	deadline, hasDeadline := t.Deadline()
+	if !hasDeadline {
+		return signalCtx, cancel
 	}
 
-	return context.WithCancel(context.Background())
+	remainingTestDuration := time.Until(deadline)
+	//  Let's reserve 10% ...
+	reservedTeardownDuration := time.Duration(float64(remainingTestDuration.Milliseconds())*0.10) * time.Millisecond
+	// ... but at least 20 seconds.
+	reservedTeardownDuration = time.Duration(math.Max(float64(20*time.Second), float64(reservedTeardownDuration)))
+	// Then construct the context accordingly.
+	deadlineCtx, subCancel := context.WithDeadline(signalCtx, deadline.Add(-reservedTeardownDuration))
+	_ = subCancel // Silence linter: the deadlined context is implicitly canceled when canceling the signal context
+
+	return deadlineCtx, cancel
 }
 
 // GetControllerIPAddress returns controller ip address
