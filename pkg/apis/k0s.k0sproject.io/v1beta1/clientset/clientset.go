@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net/http"
 
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/typed/k0s.k0sproject.io/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

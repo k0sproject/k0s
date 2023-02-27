@@ -26,8 +26,8 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/typed/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 

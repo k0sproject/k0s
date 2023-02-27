@@ -21,8 +21,8 @@ package v1beta1
 import (
 	"net/http"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/clientset/scheme"
 	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
