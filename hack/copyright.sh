@@ -22,7 +22,7 @@ FIX=${FIX:=n}
 get_year(){
     # The -1 has to be added because if a file has been added, removed and added
     # again we'll get two lines with both dates. We only pick the newest one.
-    YEAR=$(TZ=UTC git log -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
+    YEAR=$(TZ=UTC git log --follow -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
     if [ -z "$YEAR" ]; then
         YEAR=$(TZ=UTC date +%Y)
 	    echo "WARN: $1 doesn't seem to be commited in the repo, assuming $YEAR" 1>&2
