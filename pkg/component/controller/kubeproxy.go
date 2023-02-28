@@ -104,7 +104,7 @@ func (k *KubeProxy) Stop() error {
 func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig, error) {
 	cfg := proxyConfig{
 		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
-		ControlPlaneEndpoint: clusterConfig.Spec.API.APIAddressURL(),
+		ControlPlaneEndpoint: k.nodeConf.Spec.API.APIAddressURL(),
 		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
 		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
