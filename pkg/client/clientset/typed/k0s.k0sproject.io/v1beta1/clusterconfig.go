@@ -23,7 +23,7 @@ import (
 	"time"
 
 	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	scheme "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/scheme"
+	scheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"

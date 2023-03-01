@@ -21,10 +21,10 @@ import (
 	"time"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

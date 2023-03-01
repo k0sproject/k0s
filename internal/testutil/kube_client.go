@@ -32,7 +32,7 @@ import (
 	restfake "k8s.io/client-go/rest/fake"
 	kubetesting "k8s.io/client-go/testing"
 
-	cfgClient "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/typed/k0s.k0sproject.io/v1beta1"
+	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s.k0sproject.io/v1beta1"
 )
 
 // NewFakeClientFactory creates new client factory which uses internally only the kube fake client interface

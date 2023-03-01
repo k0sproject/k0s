@@ -19,22 +19,30 @@ limitations under the License.
 package fake
 
 import (
-	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1/clientset/typed/k0s.k0sproject.io/v1beta1"
+	v1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot.k0sproject.io/v1beta2"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeK0sV1beta1 struct {
+type FakeAutopilotV1beta2 struct {
 	*testing.Fake
 }
 
-func (c *FakeK0sV1beta1) ClusterConfigs(namespace string) v1beta1.ClusterConfigInterface {
-	return &FakeClusterConfigs{c, namespace}
+func (c *FakeAutopilotV1beta2) ControlNodes() v1beta2.ControlNodeInterface {
+	return &FakeControlNodes{c}
+}
+
+func (c *FakeAutopilotV1beta2) Plans() v1beta2.PlanInterface {
+	return &FakePlans{c}
+}
+
+func (c *FakeAutopilotV1beta2) UpdateConfigs() v1beta2.UpdateConfigInterface {
+	return &FakeUpdateConfigs{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeK0sV1beta1) RESTClient() rest.Interface {
+func (c *FakeAutopilotV1beta2) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

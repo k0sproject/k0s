@@ -26,7 +26,7 @@ import (
 	"path"
 	"time"
 
-	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

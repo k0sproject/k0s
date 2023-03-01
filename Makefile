@@ -82,6 +82,11 @@ GO_ENV ?= docker run --rm \
 	k0sbuild.docker-image.k0s
 GO ?= $(GO_ENV) go
 
+# https://www.gnu.org/software/make/manual/make.html#index-spaces_002c-in-variable-values
+nullstring :=
+space := $(nullstring) # space now holds a single space
+comma := ,
+
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
 build: k0s.exe
@@ -129,21 +134,19 @@ pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerpl
 	  object:headerFile=hack/tools/boilerplate.go.txt
 	touch -- '$@'
 
-codegen_targets += pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp
-pkg/apis/k0s.k0sproject.io/v1beta1/.client-gen.stamp: $(shell find pkg/apis/k0s.k0sproject.io/v1beta1/ -maxdepth 1 -type f -name \*.go -not -name zz_\*.go)
-
-codegen_targets += pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp
-pkg/apis/autopilot.k0sproject.io/v1beta2/.client-gen.stamp: $(shell find pkg/apis/autopilot.k0sproject.io/v1beta2/ -maxdepth 1 -type f -name \*.go -not -name zz_\*.go)
-
-pkg/apis/%/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
-	$(eval groupver := $(@:pkg/apis/%/.client-gen.stamp=%))
-	rm -rf 'pkg/apis/$(groupver)/clientset/'
-	CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(patsubst 1.%,0.%,$(kubernetes_version)) \
-	  --go-header-file hack/tools/boilerplate.go.txt \
-	  --input=$(groupver) \
-	  --input-base=github.com/k0sproject/k0s/pkg/apis \
-	  --clientset-name=clientset \
-	  --output-package=github.com/k0sproject/k0s/pkg/apis/$(groupver)
+clientset_input_dirs := pkg/apis/autopilot.k0sproject.io/v1beta2 pkg/apis/k0s.k0sproject.io/v1beta1
+codegen_targets += pkg/client/clientset/.client-gen.stamp
+pkg/client/clientset/.client-gen.stamp: $(shell find $(clientset_input_dirs) -type f -name \*.go -not -name \*_test.go -not -name zz_\*)
+pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt embedded-bins/Makefile.variables
+	rm -rf -- '$(dir $@)'
+	CGO_ENABLED=0 $(GO) run k8s.io/code-generator/cmd/client-gen@v$(kubernetes_version:1.%=0.%) \
+	  --go-header-file=hack/tools/boilerplate.go.txt \
+	  --input-base='' \
+	  --input=$(subst $(space),$(comma),$(clientset_input_dirs:%=github.com/k0sproject/k0s/%)) \
+	  --output-package=github.com/k0sproject/k0s/$(patsubst %/,%,$(dir $(patsubst %/,%,$(dir $@)))) \
+	  --clientset-name=$(notdir $(patsubst %/,%,$(dir $@))) \
+	  --output-base=. \
+	  --trim-path-prefix=github.com/k0sproject/k0s
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go

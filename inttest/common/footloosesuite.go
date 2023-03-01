@@ -42,7 +42,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
-	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"

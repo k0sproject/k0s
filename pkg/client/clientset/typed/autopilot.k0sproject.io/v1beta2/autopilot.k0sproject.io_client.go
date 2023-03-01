@@ -22,7 +22,7 @@ import (
 	"net/http"
 
 	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	"github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
+	"github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
