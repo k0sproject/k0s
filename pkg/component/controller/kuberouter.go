@@ -170,7 +170,6 @@ data:
              {{- if not .AutoMTU }}
              "mtu": {{ .MTU }},
              {{- end }}
-             "auto-mtu": {{ .AutoMTU }},
              "bridge":"kube-bridge",
              "isDefaultGateway":true,
              "hairpinMode": {{ .CNIHairpin }},
@@ -284,6 +283,9 @@ spec:
         - "--bgp-graceful-restart=true"
         - "--metrics-port={{ .MetricsPort }}"
         - "--hairpin-mode={{ .GlobalHairpin }}"
+        {{- if not .AutoMTU }}
+        - "--auto-mtu=false"
+        {{- end }}
         {{- if .PeerRouterIPs }}
         - "--peer-router-ips={{ .PeerRouterIPs }}"
         {{- end }}
