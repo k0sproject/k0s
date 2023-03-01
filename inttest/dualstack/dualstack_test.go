@@ -150,7 +150,8 @@ func (s *DualstackSuite) SetupSuite() {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
 		s.T().Log(out, err)
 		if err != nil {
-			return false, err
+			s.T().Log("error calling ipv6 address: ", err)
+			return false, nil
 		}
 		s.T().Log("server response", out)
 		return strings.Contains(out, "Welcome to nginx"), nil
@@ -166,7 +167,8 @@ func (s *DualstackSuite) SetupSuite() {
 		out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetIP))
 		s.T().Log(out, err)
 		if err != nil {
-			return false, err
+			s.T().Log("error calling ipv4 address: ", err)
+			return false, nil
 		}
 		s.T().Log("server response", out)
 		return strings.Contains(out, "Welcome to nginx"), nil
