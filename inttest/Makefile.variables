@@ -18,6 +18,7 @@ smoketests := \
 	check-configchange \
 	check-ctr \
 	check-customports \
+	check-customports-dynamicconfig \
 	check-defaultstorage \
 	check-disabledcomponents \
 	check-dualstack \
