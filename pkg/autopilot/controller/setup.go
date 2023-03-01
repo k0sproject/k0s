@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"time"
 
+	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
@@ -226,7 +227,7 @@ func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 	return watch.FromClient[*crdList, crd](extClient.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("controlnodes.%s", apv1beta2.SchemeGroupVersion.Group)).
+		WithObjectName(fmt.Sprintf("controlnodes.%s", autopilot.GroupName)).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
 				sc.log.WithError(err).Debugf(

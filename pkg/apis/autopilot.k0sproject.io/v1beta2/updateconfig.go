@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +groupName=autopilot.k0sproject.io
 package v1beta2
 
 import (
@@ -31,7 +30,6 @@ func init() {
 // +genclient
 // +genclient:onlyVerbs=create,delete,list,get,watch,update
 // +genclient:nonNamespaced
-// +groupName=autopilot.k0sproject.io
 type UpdateConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`

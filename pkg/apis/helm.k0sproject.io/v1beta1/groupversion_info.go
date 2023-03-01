@@ -14,19 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1beta1 contains API Schema definitions for the helm v1beta1 API group
-// +kubebuilder:object:generate=true
-// +groupName=helm.k0sproject.io
 package v1beta1
 
 import (
+	helm "github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "helm.k0sproject.io", Version: "v1beta1"}
+	GroupVersion = schema.GroupVersion{Group: helm.GroupName, Version: Version}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
