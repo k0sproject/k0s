@@ -28,6 +28,7 @@ import (
 	"github.com/containerd/containerd/platforms"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/component/prober"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -36,6 +37,7 @@ import (
 type OCIBundleReconciler struct {
 	k0sVars constant.CfgVars
 	log     *logrus.Entry
+	*prober.EventEmitter
 }
 
 var _ manager.Component = (*OCIBundleReconciler)(nil)
@@ -43,8 +45,9 @@ var _ manager.Component = (*OCIBundleReconciler)(nil)
 // NewOCIBundleReconciler builds new reconciler
 func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
-		k0sVars: vars,
-		log:     logrus.WithField("component", "OCIBundleReconciler"),
+		k0sVars:      vars,
+		log:          logrus.WithField("component", "OCIBundleReconciler"),
+		EventEmitter: prober.NewEventEmitter(),
 	}
 }
 
@@ -55,8 +58,10 @@ func (a *OCIBundleReconciler) Init(_ context.Context) error {
 func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 	files, err := os.ReadDir(a.k0sVars.OCIBundleDir)
 	if err != nil {
+		a.Emit("can't read bundles directory")
 		return fmt.Errorf("can't read bundles directory")
 	}
+	a.EmitWithPayload("importing OCI bundles", files)
 	if len(files) == 0 {
 		return nil
 	}
@@ -76,16 +81,20 @@ func (a *OCIBundleReconciler) Start(ctx context.Context) error {
 		return nil
 	}, retry.Context(ctx), retry.Delay(time.Second*5))
 	if err != nil {
+		a.EmitWithPayload("can't connect to containerd socket", map[string]interface{}{"socket": sock, "error": err})
 		return fmt.Errorf("can't connect to containerd socket %s: %v", sock, err)
 	}
 	defer client.Close()
 
 	for _, file := range files {
 		if err := a.unpackBundle(ctx, client, a.k0sVars.OCIBundleDir+"/"+file.Name()); err != nil {
+			a.EmitWithPayload("unpacking OCI bundle error", map[string]interface{}{"file": file.Name(), "error": err})
 			a.log.WithError(err).Errorf("can't unpack bundle %s", file.Name())
 			return fmt.Errorf("can't unpack bundle %s: %w", file.Name(), err)
 		}
+		a.EmitWithPayload("unpacked OCI bundle", file.Name())
 	}
+	a.Emit("finished importing OCI bundle")
 	return nil
 }
 

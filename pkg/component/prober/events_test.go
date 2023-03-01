@@ -114,6 +114,36 @@ func TestEvents(t *testing.T) {
 		assert.Len(t, st.Events["component_with_events"], 3)
 		cancel()
 	})
+	t.Run("multiple_emitters", func(t *testing.T) {
+		emitter := &EventEmitter{
+			events: make(chan Event, 3),
+		}
+		comp := struct {
+			*EventEmitter
+		}{EventEmitter: emitter}
+		emitter.Emit("message1")
+		emitter.Emit("message2")
+		emitter.Emit("message3")
+
+		emitter2 := &EventEmitter{
+			events: make(chan Event, 3),
+		}
+		comp2 := struct {
+			*EventEmitter
+		}{EventEmitter: emitter2}
+		_ = comp2
+		emitter2.Emit("message4")
+		emitter2.Emit("message5")
+		prober := testProber(10)
+		prober.Register("component_with_events", comp)
+		prober.Register("component_with_events2", comp2)
+		prober.Run(context.Background())
+		state := prober.State(maxEvents)
+
+		assert.Len(t, state.Events, 2)
+		assert.Len(t, state.Events["component_with_events"], 3)
+		assert.Len(t, state.Events["component_with_events2"], 2)
+	})
 }
 
 type mockComponentWithEvents struct {
