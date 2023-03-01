@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	helm "github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io"
+	helm "github.com/k0sproject/k0s/pkg/apis/helm"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"

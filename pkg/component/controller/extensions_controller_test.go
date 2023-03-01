@@ -19,7 +19,7 @@ package controller
 import (
 	"testing"
 
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 

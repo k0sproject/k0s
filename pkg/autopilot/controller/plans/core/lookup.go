@@ -17,7 +17,7 @@ package core
 import (
 	"reflect"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 )
 
 // planCommandProviderLookup will iterate through all of the fields in a `PlanCommand`, looking

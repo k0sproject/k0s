@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sync"
 
-	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s.k0sproject.io/v1beta1"
+	cfgClient "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"k8s.io/client-go/discovery"

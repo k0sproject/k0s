@@ -20,8 +20,8 @@ import (
 	"runtime"
 	"time"
 
-	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
 	apconst "github.com/k0sproject/k0s/pkg/autopilot/constant"

@@ -16,7 +16,8 @@ package k0supdate
 
 import (
 	"context"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	"github.com/k0sproject/k0s/pkg/autopilot/checks"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appkd "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/cmdprovider/k0supdate/discovery"

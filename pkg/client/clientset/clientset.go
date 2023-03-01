@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"net/http"
 
-	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot.k0sproject.io/v1beta2"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s.k0sproject.io/v1beta1"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/client/clientset/typed/autopilot/v1beta2"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/client/clientset/typed/k0s/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

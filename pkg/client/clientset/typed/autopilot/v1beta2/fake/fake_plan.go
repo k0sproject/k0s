@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	watch "k8s.io/apimachinery/pkg/watch"

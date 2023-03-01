@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	k0s "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io"
+	k0s "github.com/k0sproject/k0s/pkg/apis/k0s"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"

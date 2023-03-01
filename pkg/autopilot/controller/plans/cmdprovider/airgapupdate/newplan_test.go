@@ -20,7 +20,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	aptcomm "github.com/k0sproject/k0s/inttest/autopilot/common"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"

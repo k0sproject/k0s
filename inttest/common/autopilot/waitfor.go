@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 
-	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
