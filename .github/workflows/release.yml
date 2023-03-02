@@ -350,8 +350,18 @@ jobs:
       - armv7
     runs-on: [self-hosted, linux, x64]
     steps:
+      # docker context must be created prior to setting up Docker Buildx
+      # https://github.com/actions-runner-controller/actions-runner-controller/issues/893
+      - name: Set up Docker Context for Buildx
+        shell: bash
+        id: buildx-context
+        run: |
+          docker context create buildx-context
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          endpoint: buildx-context
 
       - name: Run git checkout
         uses: actions/checkout@v3
