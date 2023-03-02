@@ -40,7 +40,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/urfave/cli v1.22.12
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	github.com/vmware-tanzu/sonobuoy v0.56.14
+	github.com/vmware-tanzu/sonobuoy v0.56.16
 	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v0.9.5
 	go.etcd.io/etcd/api/v3 v3.5.7
