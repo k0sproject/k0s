@@ -356,7 +356,7 @@ jobs:
         shell: bash
         id: buildx-context
         run: |
-          docker context create buildx-context
+          docker context inspect buildx-context -f ' ' || docker context create buildx-context
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
