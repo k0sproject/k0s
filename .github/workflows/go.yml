@@ -317,10 +317,19 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - id: set-matrix
+      - name: Generate Autopilot test matrix
+        id: set-matrix
         run: |
-          matrix=$(./hack/tools/gen-matrix.sh 1.24.3 1.24.4)
-          echo matrix="$matrix" >> $GITHUB_OUTPUT
+          set -x
+          k8sVersion="$(./vars.sh kubernetes_version)"
+          majorVersion="${k8sVersion%%.*}"
+          minorVersion=${k8sVersion#$majorVersion.}
+          minorVersion="${minorVersion%%.*}"
+
+          {
+            printf matrix=
+            hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
+          } >> "$GITHUB_OUTPUT"
 
   autopilot-smoketest:
     name: Autopilot smoke test
