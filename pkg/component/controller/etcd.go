@@ -156,15 +156,20 @@ func (e *Etcd) Run(ctx context.Context) error {
 		"--listen-peer-urls":            peerURL,
 		"--initial-advertise-peer-urls": peerURL,
 		"--name":                        name,
-		"--trusted-ca-file":             etcdCaCert,
-		"--cert-file":                   etcdServerCert,
-		"--key-file":                    etcdServerKey,
-		"--peer-trusted-ca-file":        etcdCaCert,
-		"--peer-key-file":               etcdPeerKey,
-		"--peer-cert-file":              etcdPeerCert,
-		"--log-level":                   e.LogLevel,
-		"--peer-client-cert-auth":       "true",
-		"--enable-pprof":                "false",
+		// Specifying a minimum TLS version is not yet possible in etcd,
+		// although support for it has already been merged upstream. Enable this
+		// flag once it's available in the etcd release that ships with k0s.
+		// https://github.com/etcd-io/etcd/pull/15156
+		// "--tls-min-version": "TLS1.2",
+		"--trusted-ca-file":       etcdCaCert,
+		"--cert-file":             etcdServerCert,
+		"--key-file":              etcdServerKey,
+		"--peer-trusted-ca-file":  etcdCaCert,
+		"--peer-key-file":         etcdPeerKey,
+		"--peer-cert-file":        etcdPeerCert,
+		"--log-level":             e.LogLevel,
+		"--peer-client-cert-auth": "true",
+		"--enable-pprof":          "false",
 	}
 
 	if file.Exists(filepath.Join(e.K0sVars.EtcdDataDir, "member", "snap", "db")) {
@@ -186,6 +191,14 @@ func (e *Etcd) Run(ctx context.Context) error {
 	if file.Exists(etcdSignKey) && file.Exists(etcdSignPub) {
 		auth := fmt.Sprintf("jwt,pub-key=%s,priv-key=%s,sign-method=RS512,ttl=10m", etcdSignPub, etcdSignKey)
 		args["--auth-token"] = auth
+	}
+
+	// The tls-min-version flag is not yet supported by etcd, but support for it
+	// has already been merged upstream. Once it becomes available, specifying a
+	// minimum version of TLS 1.3 _and_ a list of cipher suites will be rejected.
+	// https://github.com/etcd-io/etcd/pull/15156/files#diff-538c79cd00ec18cb43b5dddd5f36b979d9d050cf478a241304493284739d31bfR810-R813
+	if args["--cipher-suites"] == "" && args["--tls-min-version"] != "TLS1.3" {
+		args["--cipher-suites"] = constant.AllowedTLS12CipherSuiteNames()
 	}
 
 	logrus.Debugf("starting etcd with args: %v", args)
