@@ -16,9 +16,11 @@ limitations under the License.
 package constant
 
 import (
+	"crypto/tls"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // WinDataDirDefault default data-dir for windows
@@ -122,6 +124,33 @@ const (
 	NodeRoleLabelNamespace = "node-role.kubernetes.io"
 	K0SNodeRoleLabel       = "node.k0sproject.io/role"
 )
+
+// The list of allowed TLS v1.2 cipher suites. Those should be used for k0s
+// itself and all embedded components. Note that TLS v1.3 ciphers are currently
+// not configurable in Go.
+//
+// https://ssl-config.mozilla.org/#server=go&config=intermediate
+var AllowedTLS12CipherSuiteIDs = []uint16{
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+}
+
+// A comma-separated string version of [AllowedTLS12CipherSuiteIDs], suitable to
+// be used as CLI arg for binaries.
+func AllowedTLS12CipherSuiteNames() string {
+	var cipherSuites strings.Builder
+	for i, cipherSuite := range AllowedTLS12CipherSuiteIDs {
+		if i > 0 {
+			cipherSuites.WriteRune(',')
+		}
+		cipherSuites.WriteString(tls.CipherSuiteName(cipherSuite))
+	}
+	return cipherSuites.String()
+}
 
 // CfgVars is a struct that holds all the config variables required for K0s
 type CfgVars struct {
