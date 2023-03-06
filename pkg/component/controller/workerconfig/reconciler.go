@@ -18,6 +18,7 @@ package workerconfig
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"math"
@@ -593,6 +594,11 @@ func buildRBACResources(configMaps []*corev1.ConfigMap) []resource {
 }
 
 func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
+	cipherSuites := make([]string, len(constant.AllowedTLS12CipherSuiteIDs))
+	for i, cipherSuite := range constant.AllowedTLS12CipherSuiteIDs {
+		cipherSuites[i] = tls.CipherSuiteName(cipherSuite)
+	}
+
 	workerProfile := &workerconfig.Profile{
 		APIServerAddresses: slices.Clone(snapshot.apiServers),
 		KubeletConfiguration: kubeletv1beta1.KubeletConfiguration{
@@ -600,18 +606,10 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 				APIVersion: kubeletv1beta1.SchemeGroupVersion.String(),
 				Kind:       "KubeletConfiguration",
 			},
-			ClusterDNS:    []string{r.clusterDNSIP.String()},
-			ClusterDomain: r.clusterDomain,
-			TLSCipherSuites: []string{
-				"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-				"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-				"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-				"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-				"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-				"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-				"TLS_RSA_WITH_AES_128_GCM_SHA256",
-				"TLS_RSA_WITH_AES_256_GCM_SHA384",
-			},
+			ClusterDNS:         []string{r.clusterDNSIP.String()},
+			ClusterDomain:      r.clusterDomain,
+			TLSMinVersion:      "VersionTLS12",
+			TLSCipherSuites:    cipherSuites,
 			FailSwapOn:         pointer.Bool(false),
 			RotateCertificates: true,
 			ServerTLSBootstrap: true,
