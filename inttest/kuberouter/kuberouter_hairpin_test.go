@@ -19,12 +19,14 @@ package kuberouter
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type KubeRouterHairpinSuite struct {
@@ -77,10 +79,15 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 			},
 		} {
 			t.Run(test.desc, func(t *testing.T) {
-				output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
-				if !assert.NoError(t, err) || !assert.Contains(t, output, "Thank you for using nginx.") {
-					t.Log(output)
-				}
+				err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+					output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("%s --connect-timeout 5 -sS http://%s", curl, test.dnsName))
+					if err != nil {
+						t.Log(output)
+						return false, nil
+					}
+					return assert.Contains(t, output, "Thank you for using nginx."), nil
+				})
+				require.NoError(t, err)
 			})
 		}
 	})

@@ -118,6 +118,8 @@ spec:
         platforms:
           linux-amd64:
             url: http://localhost/dist/k0s
+          linux-arm64:
+            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:

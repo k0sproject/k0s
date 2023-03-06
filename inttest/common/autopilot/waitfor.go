@@ -48,7 +48,7 @@ func WaitForPlanState(ctx context.Context, client apclient.Interface, name strin
 
 			// All other states are considered terminal.
 			default:
-				return false, fmt.Errorf("unexpected Plan state: %s", plan.Status.State)
+				return false, fmt.Errorf("unexpected Plan state: %s", candidate.Status.State)
 			}
 		})
 	return

@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"syscall"
 	"time"
@@ -227,6 +228,10 @@ func RetryWatchErrors(logf func(format string, args ...any)) watch.ErrorCallback
 
 		case errors.Is(err, syscall.ECONNREFUSED):
 			logf("Encountered connection refused while watching, retrying in %s: %v", retryDelay, err)
+			return retryDelay, nil
+
+		case errors.Is(err, io.EOF):
+			logf("Encountered EOF while watching, retrying in %s: %v", retryDelay, err)
 			return retryDelay, nil
 		}
 
