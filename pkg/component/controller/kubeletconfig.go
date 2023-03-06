@@ -19,6 +19,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -236,22 +237,18 @@ func getDefaultProfile(dnsAddress string, clusterDomain string) unstructuredYaml
 	// - it's easier to merge programatically defined structure
 	// - apart from map[string]interface there is no good way to define free-form mapping
 
+	cipherSuites := make([]string, len(constant.AllowedTLS12CipherSuiteIDs))
+	for i, cipherSuite := range constant.AllowedTLS12CipherSuiteIDs {
+		cipherSuites[i] = tls.CipherSuiteName(cipherSuite)
+	}
+
 	// for the authentication.x509.clientCAFile and volumePluginDir we want to use later binding so we put template placeholder instead of actual value there
 	profile := unstructuredYamlObject{
-		"apiVersion":    "kubelet.config.k8s.io/v1beta1",
-		"kind":          "KubeletConfiguration",
-		"clusterDNS":    []string{dnsAddress},
-		"clusterDomain": clusterDomain,
-		"tlsCipherSuites": []string{
-			"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-			"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-			"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-			"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-			"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-			"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-			"TLS_RSA_WITH_AES_256_GCM_SHA384",
-			"TLS_RSA_WITH_AES_128_GCM_SHA256",
-		},
+		"apiVersion":         "kubelet.config.k8s.io/v1beta1",
+		"kind":               "KubeletConfiguration",
+		"clusterDNS":         []string{dnsAddress},
+		"clusterDomain":      clusterDomain,
+		"tlsCipherSuites":    cipherSuites,
 		"failSwapOn":         false,
 		"rotateCertificates": true,
 		"serverTLSBootstrap": true,
