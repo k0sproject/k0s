@@ -53,6 +53,8 @@ jobs:
           rm -rf main
 
       - name: Generate docs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: make -C docs docs clean-k0s
 
       - name: git config
