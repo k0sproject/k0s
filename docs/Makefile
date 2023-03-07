@@ -29,14 +29,15 @@ docs: .require-mkdocs cli
 
 .PHONY: .k0s-download-url .k0s.exe-download-url
 ifeq ($(TARGET_VERSION),latest)
-.k0s-download-url .k0s.exe-download-url: release_metadata_url = $(k0s_releases_url)/latest
+.k0s-download-url .k0s.exe-download-url: release_metadata_path = repos/k0sproject/k0s/releases/latest
 else
-.k0s-download-url .k0s.exe-download-url: release_metadata_url = $(k0s_releases_url)/tags/$(TARGET_VERSION)
+.k0s-download-url .k0s.exe-download-url: release_metadata_path = repos/k0sproject/k0s/releases/tags/$(TARGET_VERSION)
 endif
 .k0s-download-url .k0s.exe-download-url:
 	$(eval binary_suffix = $(patsubst .k0s%,%,$(@:-download-url=)))
-	curl -sS -- '$(release_metadata_url)' \
-	  | jq -r '. as {name: $$ver, assets: $$a} | $$a[] | select(.name == "k0s-"+$$ver+"-amd64$(binary_suffix)") | .browser_download_url'
+	gh api \
+	  --jq '. as {name: $$ver, assets: $$a} | $$a[] | select(.name == "k0s-"+$$ver+"-amd64$(binary_suffix)") | .browser_download_url' \
+	  -- '$(release_metadata_path)'
 
 .PHONY: k0s k0s.exe
 ifeq ($(TARGET_VERSION),local)

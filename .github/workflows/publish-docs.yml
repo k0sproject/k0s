@@ -40,6 +40,8 @@ jobs:
           go install github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
 
       - name: Generate docs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: make -C docs docs clean-k0s
 
       - name: git config

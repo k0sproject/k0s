@@ -37,6 +37,8 @@ jobs:
           pip install --disable-pip-version-check -r docs/requirements.txt
 
       - name: Generate docs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: make -C docs docs
 
       - name: Upload site/
