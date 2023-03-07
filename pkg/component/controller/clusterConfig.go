@@ -30,7 +30,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/k0sproject/k0s/static"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -50,12 +49,11 @@ type ClusterConfigReconciler struct {
 	configClient  k0sclient.ClusterConfigInterface
 	leaderElector leaderelector.Interface
 	log           *logrus.Entry
-	saver         manifestsSaver
 	configSource  clusterconfig.ConfigSource
 }
 
 // NewClusterConfigReconciler creates a new clusterConfig reconciler
-func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars constant.CfgVars, mgr *manager.Manager, s manifestsSaver, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
+func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars constant.CfgVars, mgr *manager.Manager, kubeClientFactory kubeutil.ClientFactoryInterface, configSource clusterconfig.ConfigSource) (*ClusterConfigReconciler, error) {
 	loadingRules := config.ClientConfigLoadingRules{K0sVars: k0sVars}
 	cfg, err := loadingRules.ParseRuntimeConfig()
 	if err != nil {
@@ -73,23 +71,12 @@ func NewClusterConfigReconciler(leaderElector leaderelector.Interface, k0sVars c
 		KubeClientFactory: kubeClientFactory,
 		leaderElector:     leaderElector,
 		log:               logrus.WithFields(logrus.Fields{"component": "clusterConfig-reconciler"}),
-		saver:             s,
 		configSource:      configSource,
 		configClient:      configClient,
 	}, nil
 }
 
-func (r *ClusterConfigReconciler) Init(_ context.Context) error {
-	// If we do not need to store the config in API we do not need the CRDs either
-	if !r.configSource.NeedToStoreInitialConfig() {
-		return nil
-	}
-	err := r.writeCRD()
-	if err != nil {
-		return fmt.Errorf("failed to write api-config CRD to API: %v", err)
-	}
-	return nil
-}
+func (r *ClusterConfigReconciler) Init(context.Context) error { return nil }
 
 func (r *ClusterConfigReconciler) Start(ctx context.Context) error {
 	if r.configSource.NeedToStoreInitialConfig() {
@@ -220,22 +207,4 @@ func (r *ClusterConfigReconciler) createClusterConfig(ctx context.Context) error
 	clusterWideConfig := r.YamlConfig.GetClusterWideConfig().StripDefaults().CRValidator()
 	_, err := r.configClient.Create(ctx, clusterWideConfig, metav1.CreateOptions{})
 	return err
-}
-
-func (r *ClusterConfigReconciler) writeCRD() error {
-	crd, err := static.AssetDir("manifests/v1beta1/CustomResourceDefinition")
-	if err != nil {
-		r.log.Errorf("error retrieving api-config manifests: %s. will retry", err.Error())
-	}
-	for _, filename := range crd {
-		content, err := static.Asset(fmt.Sprintf("manifests/v1beta1/CustomResourceDefinition/%s", filename))
-		if err != nil {
-			return fmt.Errorf("failed to fetch crd `%s`: %v", filename, err)
-		}
-		err = r.saver.Save(filename, content)
-		if err != nil {
-			return fmt.Errorf("error writing api-config CRD, will NOT retry: %v", err)
-		}
-	}
-	return nil
 }

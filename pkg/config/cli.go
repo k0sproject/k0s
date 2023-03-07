@@ -103,7 +103,18 @@ func (o *ControllerOptions) Normalize() error {
 	// Normalize component names
 	var disabledComponents []string
 	for _, disabledComponent := range o.DisableComponents {
-		if disabledComponent == constant.KubeletConfigComponentName {
+		switch disabledComponent {
+		case constant.APIConfigComponentName:
+			logrus.Warnf("Usage of deprecated component name %q, please switch to %q",
+				constant.APIConfigComponentName, "--enable-dynamic-config=false",
+			)
+			if o.EnableDynamicConfig {
+				logrus.Warnf("Cannot disable component %q, because %q is selected",
+					constant.APIConfigComponentName, "--enable-dynamic-config",
+				)
+			}
+
+		case constant.KubeletConfigComponentName:
 			logrus.Warnf("Usage of deprecated component name %q, please switch to %q",
 				constant.KubeletConfigComponentName, constant.WorkerConfigComponentName,
 			)
@@ -186,7 +197,6 @@ func GetWorkerFlags() *pflag.FlagSet {
 }
 
 var availableComponents = []string{
-	constant.APIConfigComponentName,
 	constant.AutopilotComponentName,
 	constant.ControlAPIComponentName,
 	constant.CoreDNSComponentname,
