@@ -18,6 +18,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -32,6 +33,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -108,8 +110,12 @@ func (c *command) start() (err error) {
 	)
 
 	srv := &http.Server{
-		Handler:      router,
-		Addr:         fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
+		Handler: router,
+		Addr:    fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
+		TLSConfig: &tls.Config{
+			MinVersion:   tls.VersionTLS12,
+			CipherSuites: constant.AllowedTLS12CipherSuiteIDs,
+		},
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
