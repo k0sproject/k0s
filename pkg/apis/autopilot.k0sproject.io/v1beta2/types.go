@@ -64,9 +64,6 @@ func (c *ControlNodeStatus) GetInternalIP() string {
 //
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
-// +genclient
-// +genclient:onlyVerbs=create
-// +genclient:nonNamespaced
 type ControlNodeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -101,9 +98,6 @@ type Plan struct {
 //
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
-// +genclient
-// +genclient:onlyVerbs=create
-// +genclient:nonNamespaced
 type PlanList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

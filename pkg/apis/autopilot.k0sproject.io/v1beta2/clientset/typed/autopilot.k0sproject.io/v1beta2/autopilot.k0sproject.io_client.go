@@ -29,11 +29,8 @@ import (
 type AutopilotV1beta2Interface interface {
 	RESTClient() rest.Interface
 	ControlNodesGetter
-	ControlNodeListsGetter
 	PlansGetter
-	PlanListsGetter
 	UpdateConfigsGetter
-	UpdateConfigListsGetter
 }
 
 // AutopilotV1beta2Client is used to interact with features provided by the autopilot.k0sproject.io group.
@@ -45,24 +42,12 @@ func (c *AutopilotV1beta2Client) ControlNodes() ControlNodeInterface {
 	return newControlNodes(c)
 }
 
-func (c *AutopilotV1beta2Client) ControlNodeLists() ControlNodeListInterface {
-	return newControlNodeLists(c)
-}
-
 func (c *AutopilotV1beta2Client) Plans() PlanInterface {
 	return newPlans(c)
 }
 
-func (c *AutopilotV1beta2Client) PlanLists() PlanListInterface {
-	return newPlanLists(c)
-}
-
 func (c *AutopilotV1beta2Client) UpdateConfigs() UpdateConfigInterface {
 	return newUpdateConfigs(c)
-}
-
-func (c *AutopilotV1beta2Client) UpdateConfigLists() UpdateConfigListInterface {
-	return newUpdateConfigLists(c)
 }
 
 // NewForConfig creates a new AutopilotV1beta2Client for the given config.

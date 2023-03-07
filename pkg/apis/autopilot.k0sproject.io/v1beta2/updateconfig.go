@@ -85,9 +85,6 @@ type UpgradeStrategy struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
-// +genclient
-// +genclient:onlyVerbs=create
-// +genclient:nonNamespaced
 type UpdateConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

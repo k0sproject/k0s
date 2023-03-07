@@ -146,8 +146,6 @@ var _ Validateable = (*SchedulerSpec)(nil)
 func (*SchedulerSpec) Validate() []error { return nil }
 
 // +kubebuilder:object:root=true
-// +genclient
-// +genclient:onlyVerbs=create
 // ClusterConfigList contains a list of ClusterConfig
 type ClusterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
