@@ -42,9 +42,9 @@ body:
       description: "Use: `k0s sysinfo`"
       value: |
         <details><summary>`k0s sysinfo`</summary>
-        ```text
+        <pre>
         ➡️ Please replace this text with the output of `k0s sysinfo`. ⬅️
-        ```
+        </pre>
         </details>
 
   - type: textarea
