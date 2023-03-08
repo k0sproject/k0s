@@ -87,7 +87,7 @@ func (c *ContainerD) Start(_ context.Context) error {
 	logrus.Info("Starting containerD")
 
 	if err := c.setupConfig(); err != nil {
-		return err
+		return fmt.Errorf("failed to setup containerd config: %w", err)
 	}
 
 	c.supervisor = supervisor.Supervisor{
@@ -189,7 +189,7 @@ func isK0sManagedConfig(path string) (bool, error) {
 
 func isPre1_27ManagedConfig(path string) (bool, error) {
 	// Check MD5 sum of the config file
-	// If it matches the pre 1.26 config, it's k0s managed
+	// If it matches the pre 1.27 config, it's k0s managed
 	md5sum := md5.New()
 	f, err := os.Open(path)
 	if err != nil {
@@ -203,12 +203,12 @@ func isPre1_27ManagedConfig(path string) (bool, error) {
 
 	sum := md5sum.Sum(nil)
 
-	pre1_26ConfigSumBytes, err := hex.DecodeString(pre1_27ConfigSum)
+	pre1_27ConfigSumBytes, err := hex.DecodeString(pre1_27ConfigSum)
 	if err != nil {
 		return false, err
 	}
 
-	if bytes.Equal(pre1_26ConfigSumBytes, sum) {
+	if bytes.Equal(pre1_27ConfigSumBytes, sum) {
 		return true, nil
 	}
 
