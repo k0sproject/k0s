@@ -17,6 +17,7 @@ package constant
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -44,6 +46,19 @@ func TestConstants(t *testing.T) {
 		kubeMajorMinor := ver[0] + "." + ver[1]
 		assert.Equal(t, kubeMajorMinor, KubernetesMajorMinorVersion)
 	})
+}
+
+func TestTLSCipherSuites(t *testing.T) {
+	// Verify that the ciphers in use are still considered secure by Go.
+	cipherSuites := tls.CipherSuites()
+	for _, cipherSuite := range AllowedTLS12CipherSuiteIDs {
+		idx := slices.IndexFunc(cipherSuites, func(x *tls.CipherSuite) bool {
+			return x.ID == cipherSuite
+		})
+		if idx < 0 {
+			assert.Fail(t, "Not in tls.CipherSuites(), potentially insecure", "(0x%04x) %s", cipherSuite, tls.CipherSuiteName(cipherSuite))
+		}
+	}
 }
 
 func TestKubernetesModuleVersions(t *testing.T) {
