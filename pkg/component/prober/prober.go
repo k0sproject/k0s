@@ -81,6 +81,7 @@ func (p *Prober) State(maxCount int) State {
 		Events:       make(map[string][]Event),
 	}
 	for name, r := range p.healthCheckState {
+		maxCount := maxCount
 		state.HealthProbes[name] = make([]ProbeResult, 0, p.probesTrackLength*len(p.withHealthComponents))
 		r.Do(func(v interface{}) {
 			if v == nil {
@@ -97,6 +98,7 @@ func (p *Prober) State(maxCount int) State {
 		state.HealthProbes[name] = state.HealthProbes[name][0:maxCount]
 	}
 	for name, r := range p.eventState {
+		maxCount := maxCount
 		state.Events[name] = make([]Event, 0, p.eventsTrackLength*len(p.withEventComponents))
 		r.Do(func(v interface{}) {
 			if v == nil {
