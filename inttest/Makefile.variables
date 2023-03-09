@@ -41,3 +41,4 @@ smoketests := \
 	check-metricscraper \
 	check-customdomain \
 	check-capitalhostnames \
+	check-custom-cidrs \
