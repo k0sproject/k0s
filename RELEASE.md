@@ -4,7 +4,16 @@ We try to follow the practice of releasing often. That allows us to have smaller
 
 ## Creating a release
 
-Creating a release happens via GitHub Actions by creating an [annotated](https://git-scm.com/book/en/v2/Git-Basics-Tagging#_creating_tags) git tag. Tag creation triggers the release workflow which will do most of the heavy-lifting:
+Creating a release happens via GitHub Actions by creating an [annotated](https://git-scm.com/book/en/v2/Git-Basics-Tagging#_creating_tags) git tag.
+To create the annotated tag do:
+
+```git tag -a -m "release <version>" <version>```
+
+When releasing multiple versions make sure to tag from the oldest version to the newest in order, this is important because it will affect the order in the release page.
+
+**WARNING**: The tag cannot be pushed with `git push --tags` because it won't trigger the [release GitHub Action](https://github.com/k0sproject/k0s/actions/workflows/release.yml). You must do `git push <tag>`.
+
+Tag creation triggers the release workflow which will do most of the heavy-lifting:
 
 - Create the actual release in [releases](https://github.com/k0sproject/k0s/releases/)
 - Build `k0s` binary on both AMD64 and ARM64 architectures
@@ -13,6 +22,8 @@ Creating a release happens via GitHub Actions by creating an [annotated](https:/
 After the action completes, the release will be in `draft` state to allow manual modification of the release notes. Currently there is no automation for the release notes, this has to be manually collected.
 
 Once the release notes are done we can publish the release.
+
+If for some reason there is an error triggering the action, it is safe to delete the tag remotely with `git push --delete origin <tag>` and push it again.
 
 ## Semver
 
