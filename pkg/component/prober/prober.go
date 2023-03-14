@@ -19,6 +19,8 @@ package prober
 import (
 	"container/ring"
 	"context"
+	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -211,9 +213,51 @@ func (p *Prober) Register(name string, component any) {
 
 }
 
+// ProbeError is a string that implements the error interface.
+// This is necessary because errors in golang are an interface and not structs,
+// which means they are marshalled as an empty json and cannot be unmarshalled.
+type ProbeError string
+
 // ProbeResult represents a result of a probe
 type ProbeResult struct {
+	Component string
+	At        time.Time
+	Error     error
+}
+
+// probeResultMarshaller is a struct used internally to marshal and unmarshal
+// ProbeResults. It's meant to be used only internally.
+type probeResultMarshaller struct {
 	Component string    `json:"component"`
 	At        time.Time `json:"at"`
-	Error     error     `json:"error"`
+	Error     string    `json:"error"`
+}
+
+func (pr *ProbeResult) MarshalJSON() ([]byte, error) {
+	errStr := ""
+	if pr.Error != nil {
+		errStr = pr.Error.Error()
+	}
+
+	prm := &probeResultMarshaller{
+		Component: pr.Component,
+		At:        pr.At,
+		Error:     errStr,
+	}
+
+	return json.Marshal(prm)
+}
+
+func (pr *ProbeResult) UnmarshalJSON(data []byte) error {
+	upr := &probeResultMarshaller{}
+
+	err := json.Unmarshal(data, upr)
+	if err != nil {
+		return err
+	}
+
+	pr.Component = upr.Component
+	pr.At = upr.At
+	pr.Error = errors.New(upr.Error)
+	return nil
 }

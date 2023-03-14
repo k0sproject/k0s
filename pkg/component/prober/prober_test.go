@@ -18,6 +18,8 @@ package prober
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -116,4 +118,36 @@ func (mc *mockComponent) Healthy() error {
 	err := mc.errors[mc.counter]
 	mc.counter++
 	return err
+}
+
+func TestMarshalling(t *testing.T) {
+	tests := []*ProbeResult{
+		{
+			Component: "foo",
+			At:        time.Date(2023, time.March, 17, 12, 52, 35, 123578000, time.UTC),
+			Error:     nil,
+		},
+		{
+			Component: "bar",
+			At:        time.Date(2023, time.March, 18, 12, 52, 35, 123578000, time.UTC),
+			Error:     errors.New("bar"),
+		},
+	}
+
+	for _, source := range tests {
+		data, err := json.Marshal(source)
+		assert.NoError(t, err, "marshalling ProbeError shouldn't fail")
+
+		target := &ProbeResult{}
+		err = json.Unmarshal(data, target)
+		assert.NoError(t, err, "unmarshalling ProbeError shouldn't fail")
+		assert.Equal(t, source.Component, target.Component)
+		assert.Equal(t, source.At, target.At)
+		if source.Error == nil {
+			assert.Equal(t, errors.New(""), target.Error)
+		} else {
+			assert.Equal(t, source.Error, target.Error)
+		}
+	}
+
 }
