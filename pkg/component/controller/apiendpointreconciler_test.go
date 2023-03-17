@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,25 +32,18 @@ import (
 )
 
 var expectedAddresses = []string{
-	"185.199.108.153",
-	"185.199.109.153",
-	"185.199.110.153",
-	"185.199.111.153",
+	"2001:db8::1",
+	"2001:db8::2",
+	"240.0.0.2",
+	"240.0.0.3",
 }
 
 func TestBasicReconcilerWithNoLeader(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
 
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
+	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory)
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: false}, fakeFactory, fakeResolver{})
 
 	ctx := context.TODO()
 	assert.NoError(t, r.Init(ctx))
@@ -66,16 +60,9 @@ func TestBasicReconcilerWithNoLeader(t *testing.T) {
 
 func TestBasicReconcilerWithNoExistingEndpoint(t *testing.T) {
 	fakeFactory := testutil.NewFakeClientFactory()
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
+	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
 
 	ctx := context.TODO()
 	assert.NoError(t, r.Init(ctx))
@@ -102,16 +89,9 @@ func TestBasicReconcilerWithEmptyEndpointSubset(t *testing.T) {
 	ctx := context.TODO()
 	_, err = fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
+	config := getFakeConfig()
 
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
 
 	assert.NoError(t, r.Init(ctx))
 
@@ -145,15 +125,9 @@ func TestReconcilerWithNoNeedForUpdate(t *testing.T) {
 	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
+	config := getFakeConfig()
+
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
 
 	assert.NoError(t, r.Init(ctx))
 
@@ -188,16 +162,9 @@ func TestReconcilerWithNeedForUpdate(t *testing.T) {
 	_, err := fakeClient.CoreV1().Endpoints("default").Create(ctx, &existingEp, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	config := &v1beta1.ClusterConfig{
-		Spec: &v1beta1.ClusterSpec{
-			API: &v1beta1.APISpec{
-				Address:         "1.2.3.4",
-				ExternalAddress: "get.k0s.sh",
-			},
-		},
-	}
-	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory)
+	config := getFakeConfig()
 
+	r := NewEndpointReconciler(config, &leaderelector.Dummy{Leader: true}, fakeFactory, fakeResolver{})
 	assert.NoError(t, r.Init(ctx))
 
 	assert.NoError(t, r.reconcileEndpoints(ctx))
@@ -212,4 +179,27 @@ func verifyEndpointAddresses(t *testing.T, expectedAddresses []string, fakeFacto
 	assert.Equal(t, expectedAddresses, endpointAddressesToStrings(ep.Subsets[0].Addresses))
 
 	return ep
+}
+
+type fakeResolver struct{}
+
+func (fr fakeResolver) LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error) {
+	return []net.IPAddr{
+		{IP: net.ParseIP("2001:db8::1")},
+		{IP: net.ParseIP("2001:db8::2")},
+		{IP: net.ParseIP("240.0.0.2")},
+		{IP: net.ParseIP("240.0.0.3")},
+	}, nil
+}
+
+func getFakeConfig() *v1beta1.ClusterConfig {
+	return &v1beta1.ClusterConfig{
+		Spec: &v1beta1.ClusterSpec{
+			API: &v1beta1.APISpec{
+				Address:         "240.0.0.1",
+				ExternalAddress: "fake.k0s",
+			},
+		},
+	}
+
 }
