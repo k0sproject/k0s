@@ -192,7 +192,7 @@ func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest
 		usages.Insert(string(usage))
 	}
 
-	return certificates.ValidateKubeletServingCSR(x509cr, usages, false)
+	return certificates.ValidateKubeletServingCSR(x509cr, usages)
 }
 
 func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (approved bool, denied bool) {

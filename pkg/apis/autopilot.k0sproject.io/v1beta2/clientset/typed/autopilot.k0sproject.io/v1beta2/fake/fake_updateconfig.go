@@ -24,7 +24,6 @@ import (
 	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 )
@@ -34,9 +33,9 @@ type FakeUpdateConfigs struct {
 	Fake *FakeAutopilotV1beta2
 }
 
-var updateconfigsResource = schema.GroupVersionResource{Group: "autopilot.k0sproject.io", Version: "v1beta2", Resource: "updateconfigs"}
+var updateconfigsResource = v1beta2.SchemeGroupVersion.WithResource("updateconfigs")
 
-var updateconfigsKind = schema.GroupVersionKind{Group: "autopilot.k0sproject.io", Version: "v1beta2", Kind: "UpdateConfig"}
+var updateconfigsKind = v1beta2.SchemeGroupVersion.WithKind("UpdateConfig")
 
 // Get takes name of the updateConfig, and returns the corresponding updateConfig object, and an error if there is any.
 func (c *FakeUpdateConfigs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.UpdateConfig, err error) {

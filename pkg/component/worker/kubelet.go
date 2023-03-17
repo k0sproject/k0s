@@ -24,7 +24,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -189,19 +188,10 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		kubeletConfigData.ResolvConf = determineKubeletResolvConfPath()
 	}
 
-	if k.CRISocket != "" {
-		// Due to the removal of dockershim from kube 1.24, we no longer need to
-		// handle any special docker case
-		_, rtSock, err := SplitRuntimeConfig(k.CRISocket)
-		if err != nil {
-			return err
-		}
-		args["--container-runtime-endpoint"] = rtSock
-
-	} else {
-		sockPath := path.Join(k.K0sVars.RunDir, "containerd.sock")
-		args["--container-runtime-endpoint"] = fmt.Sprintf("unix://%s", sockPath)
-		args["--containerd"] = sockPath
+	if k.CRISocket == "" {
+		// Still use this deprecated cAdvisor flag that the kubelet leaks until
+		// KEP 2371 lands. ("cAdvisor-less, CRI-full Container and Pod Stats")
+		args["--containerd"] = filepath.Join(k.K0sVars.RunDir, "containerd.sock")
 	}
 
 	// We only support external providers
@@ -250,6 +240,17 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig.ResolverConfig = pointer.String(kubeletConfigData.ResolvConf)
 	preparedConfig.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
 	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
+
+	if k.CRISocket == "" { // This will never be true for Windows (it needs an externally managed CRI).
+		socketPath := filepath.Join(k.K0sVars.RunDir, "containerd.sock")
+		preparedConfig.ContainerRuntimeEndpoint = "unix://" + filepath.ToSlash(socketPath)
+	} else {
+		_, runtimeEndpoint, err := SplitRuntimeConfig(k.CRISocket)
+		if err != nil {
+			return "", err
+		}
+		preparedConfig.ContainerRuntimeEndpoint = runtimeEndpoint
+	}
 
 	if len(k.Taints) > 0 {
 		var taints []corev1.Taint

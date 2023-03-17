@@ -35,8 +35,8 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	nodeutil "k8s.io/component-helpers/node/util"
 	"k8s.io/kubernetes/pkg/kubelet/certificate/bootstrap"
-	nodeutil "k8s.io/kubernetes/pkg/util/node"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"

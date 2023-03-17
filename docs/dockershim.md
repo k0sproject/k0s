@@ -136,7 +136,7 @@ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Image
 CONTAINER ID   NAMES                                                                                                STATE     STATUS          IMAGE
 1b9b4624ddfd   k8s_konnectivity-agent_konnectivity-agent-5jpd7_kube-system_1b3101ea-baeb-4a22-99a2-088d7ca5be85_1   running   Up 51 minutes   quay.io/k0sproject/apiserver-network-proxy-agent
 414758a8a951   k8s_kube-router_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a67f2db730_1                 running   Up 51 minutes   3a67679337a5
-b81960bb304c   k8s_kube-proxy_kube-proxy-tv95n_kube-system_164dc9f8-f47c-4f6c-acb7-ede5dbcd63cd_1                   running   Up 51 minutes   registry.k8s.io/kube-proxy
+b81960bb304c   k8s_kube-proxy_kube-proxy-tv95n_kube-system_164dc9f8-f47c-4f6c-acb7-ede5dbcd63cd_1                   running   Up 51 minutes   quay.io/k0sproject/kube-proxy
 fb888cbc5ae0   k8s_POD_kube-router-qlkgg_kube-system_9a1b67bf-5347-4acd-98ac-f9a67f2db730_0                         running   Up 51 minutes   registry.k8s.io/pause:3.1
 382d0a938c9d   k8s_POD_konnectivity-agent-5jpd7_kube-system_1b3101ea-baeb-4a22-99a2-088d7ca5be85_0                  running   Up 51 minutes   registry.k8s.io/pause:3.1
 72d4a47b5609   k8s_POD_kube-proxy-tv95n_kube-system_164dc9f8-f47c-4f6c-acb7-ede5dbcd63cd_0                          running   Up 51 minutes   registry.k8s.io/pause:3.1

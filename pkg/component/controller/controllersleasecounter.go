@@ -22,13 +22,12 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
-
-	"github.com/sirupsen/logrus"
-
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
 
-	nodeutil "k8s.io/kubernetes/pkg/util/node"
+	nodeutil "k8s.io/component-helpers/node/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 // K0sControllersLeaseCounter implements a component that manages a lease per controller.

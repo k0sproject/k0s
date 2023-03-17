@@ -24,7 +24,6 @@ import (
 	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 )
@@ -34,9 +33,9 @@ type FakePlans struct {
 	Fake *FakeAutopilotV1beta2
 }
 
-var plansResource = schema.GroupVersionResource{Group: "autopilot.k0sproject.io", Version: "v1beta2", Resource: "plans"}
+var plansResource = v1beta2.SchemeGroupVersion.WithResource("plans")
 
-var plansKind = schema.GroupVersionKind{Group: "autopilot.k0sproject.io", Version: "v1beta2", Kind: "Plan"}
+var plansKind = v1beta2.SchemeGroupVersion.WithKind("Plan")
 
 // Get takes name of the plan, and returns the corresponding plan object, and an error if there is any.
 func (c *FakePlans) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.Plan, err error) {

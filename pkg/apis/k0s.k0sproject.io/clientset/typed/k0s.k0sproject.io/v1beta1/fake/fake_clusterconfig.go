@@ -24,7 +24,6 @@ import (
 	v1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 )
@@ -35,9 +34,9 @@ type FakeClusterConfigs struct {
 	ns   string
 }
 
-var clusterconfigsResource = schema.GroupVersionResource{Group: "k0s.k0sproject.io", Version: "v1beta1", Resource: "clusterconfigs"}
+var clusterconfigsResource = v1beta1.SchemeGroupVersion.WithResource("clusterconfigs")
 
-var clusterconfigsKind = schema.GroupVersionKind{Group: "k0s.k0sproject.io", Version: "v1beta1", Kind: "ClusterConfig"}
+var clusterconfigsKind = v1beta1.SchemeGroupVersion.WithKind("ClusterConfig")
 
 // Get takes name of the clusterConfig, and returns the corresponding clusterConfig object, and an error if there is any.
 func (c *FakeClusterConfigs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.ClusterConfig, err error) {
