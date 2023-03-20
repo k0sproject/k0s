@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -379,6 +380,7 @@ func (c *command) start(ctx context.Context) error {
 			c.NodeConfig,
 			leaderElector,
 			adminClientFactory,
+			net.DefaultResolver,
 		))
 	}
 

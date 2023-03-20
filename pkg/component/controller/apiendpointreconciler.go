@@ -39,6 +39,10 @@ import (
 // Dummy checks so we catch easily if we miss some interface implementation
 var _ manager.Component = (*APIEndpointReconciler)(nil)
 
+type resolver interface {
+	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+}
+
 // APIEndpointReconciler is the component to reconcile in-cluster API address endpoint based from externalName
 type APIEndpointReconciler struct {
 	logger *logrus.Entry
@@ -47,12 +51,13 @@ type APIEndpointReconciler struct {
 	apiServerPort     int
 	leaderElector     leaderelector.Interface
 	kubeClientFactory kubeutil.ClientFactoryInterface
+	resolver          resolver
 
 	stopCh chan struct{}
 }
 
 // NewEndpointReconciler creates new endpoint reconciler
-func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface) *APIEndpointReconciler {
+func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector leaderelector.Interface, kubeClientFactory kubeutil.ClientFactoryInterface, resolver resolver) *APIEndpointReconciler {
 	return &APIEndpointReconciler{
 		logger:            logrus.WithFields(logrus.Fields{"component": "endpointreconciler"}),
 		externalAddress:   nodeConfig.Spec.API.ExternalAddress,
@@ -60,6 +65,7 @@ func NewEndpointReconciler(nodeConfig *v1beta1.ClusterConfig, leaderElector lead
 		leaderElector:     leaderElector,
 		stopCh:            make(chan struct{}),
 		kubeClientFactory: kubeClientFactory,
+		resolver:          resolver,
 	}
 }
 
@@ -105,7 +111,7 @@ func (a *APIEndpointReconciler) reconcileEndpoints(ctx context.Context) error {
 
 	externalAddress := a.externalAddress
 
-	ipAddrs, err := net.DefaultResolver.LookupIPAddr(ctx, externalAddress)
+	ipAddrs, err := a.resolver.LookupIPAddr(ctx, externalAddress)
 	if err != nil {
 		return fmt.Errorf("while resolving external address %q: %w", externalAddress, err)
 	}
