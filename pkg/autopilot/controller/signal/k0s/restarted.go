@@ -34,9 +34,10 @@ import (
 )
 
 type restarted struct {
-	log      *logrus.Entry
-	client   crcli.Client
-	delegate apdel.ControllerDelegate
+	log             *logrus.Entry
+	client          crcli.Client
+	delegate        apdel.ControllerDelegate
+	k0sStatusSocket string
 }
 
 // restartedEventFilter creates a controller-runtime predicate that governs which
@@ -60,7 +61,7 @@ func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, k0sStatusSocket string) error {
 	logger.Infof("Registering 'restarted' reconciler for '%s'", delegate.Name())
 
 	return cr.NewControllerManagedBy(mgr).
@@ -68,9 +69,10 @@ func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpr
 		WithEventFilter(eventFilter).
 		Complete(
 			&restarted{
-				log:      logger.WithFields(logrus.Fields{"reconciler": "restarted", "object": delegate.Name()}),
-				client:   mgr.GetClient(),
-				delegate: delegate,
+				log:             logger.WithFields(logrus.Fields{"reconciler": "restarted", "object": delegate.Name()}),
+				client:          mgr.GetClient(),
+				delegate:        delegate,
+				k0sStatusSocket: k0sStatusSocket,
 			},
 		)
 }
@@ -94,7 +96,7 @@ func (r *restarted) Reconcile(ctx context.Context, req cr.Request) (cr.Result, e
 
 	// Get the current version of k0s
 	logger.Info("Determining the current version of k0s")
-	k0sVersion, err := getK0sVersion(DefaultK0sStatusSocketPath)
+	k0sVersion, err := getK0sVersion(r.k0sStatusSocket)
 	if err != nil {
 		logger.Info("Unable to determine current verion of k0s; requeuing")
 		return cr.Result{}, fmt.Errorf("unable to get k0s version: %w", err)

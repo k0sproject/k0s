@@ -490,6 +490,7 @@ func (c *command) start(ctx context.Context) error {
 		K0sVars:            c.K0sVars,
 		AdminClientFactory: adminClientFactory,
 		EnableWorker:       c.EnableWorker,
+		StatusSocket:       config.StatusSocket,
 	})
 
 	perfTimer.Checkpoint("starting-cluster-components-init")

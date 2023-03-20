@@ -106,7 +106,7 @@ func (w *rootWorker) Run(ctx context.Context) error {
 			return fmt.Errorf("unable to register indexers: %w", err)
 		}
 
-		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID); err != nil {
+		if err := apsig.RegisterControllers(ctx, logger, mgr, apdel.NodeControllerDelegate(), w.cfg.K0sDataDir, clusterID, w.cfg.K0sStatusSocket); err != nil {
 			return fmt.Errorf("unable to register 'controlnodes' controllers: %w", err)
 		}
 		// The controller-runtime start blocks until the context is cancelled.

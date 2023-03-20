@@ -28,7 +28,6 @@ import (
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
-	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
 	"github.com/k0sproject/k0s/pkg/component/status"
 )
@@ -53,7 +52,7 @@ var patchOpts = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateServerToken string) (*updater, error) {
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateServerToken string, k0sStatusSocket string) (*updater, error) {
 	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
@@ -64,7 +63,7 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 		schedule = defaultCronSchedule
 	}
 
-	status, err := status.GetStatusInfo(k0s.DefaultK0sStatusSocketPath)
+	status, err := status.GetStatusInfo(k0sStatusSocket)
 	if err != nil {
 		return nil, err
 	}

@@ -209,8 +209,9 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 
 	componentManager.Add(ctx, &worker.Autopilot{
-		K0sVars:     c.K0sVars,
-		CertManager: certManager,
+		K0sVars:      c.K0sVars,
+		CertManager:  certManager,
+		StatusSocket: config.StatusSocket,
 	})
 
 	// extract needed components

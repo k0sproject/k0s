@@ -36,6 +36,7 @@ type Autopilot struct {
 	K0sVars            constant.CfgVars
 	AdminClientFactory kubernetes.ClientFactoryInterface
 	EnableWorker       bool
+	StatusSocket       string
 }
 
 func (a *Autopilot) Init(ctx context.Context) error {
@@ -53,6 +54,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	autopilotRoot, err := apcont.NewRootController(aproot.RootConfig{
 		KubeConfig:          a.K0sVars.AdminKubeConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
+		K0sStatusSocket:     a.StatusSocket,
 		Mode:                "controller",
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",

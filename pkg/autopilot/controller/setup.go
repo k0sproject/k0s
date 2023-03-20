@@ -42,21 +42,23 @@ type SetupController interface {
 }
 
 type setupController struct {
-	log           *logrus.Entry
-	clientFactory apcli.FactoryInterface
-	k0sDataDir    string
-	enableWorker  bool
+	log             *logrus.Entry
+	clientFactory   apcli.FactoryInterface
+	k0sDataDir      string
+	k0sStatusSocket string
+	enableWorker    bool
 }
 
 var _ SetupController = (*setupController)(nil)
 
 // NewSetupController creates a `SetupController`
-func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir string, enableWorker bool) SetupController {
+func NewSetupController(logger *logrus.Entry, cf apcli.FactoryInterface, k0sDataDir, k0sStatusSocket string, enableWorker bool) SetupController {
 	return &setupController{
-		log:           logger.WithField("controller", "setup"),
-		clientFactory: cf,
-		k0sDataDir:    k0sDataDir,
-		enableWorker:  enableWorker,
+		log:             logger.WithField("controller", "setup"),
+		clientFactory:   cf,
+		k0sDataDir:      k0sDataDir,
+		k0sStatusSocket: k0sStatusSocket,
+		enableWorker:    enableWorker,
 	}
 }
 
@@ -159,7 +161,7 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 		return err
 	}
 
-	addresses, err := getControlNodeAddresses(name)
+	addresses, err := getControlNodeAddresses(name, sc.k0sStatusSocket)
 	if err != nil {
 		return err
 	}
@@ -178,12 +180,9 @@ func (sc *setupController) createControlNode(ctx context.Context, cf apcli.Facto
 	return nil
 }
 
-// TODO re-use from somewhere else
-const DefaultK0sStatusSocketPath = "/run/k0s/status.sock"
-
-func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
+func getControlNodeAddresses(hostname, socketPath string) ([]corev1.NodeAddress, error) {
 	addresses := []corev1.NodeAddress{}
-	apiAddress, err := getControllerAPIAddress()
+	apiAddress, err := getControllerAPIAddress(socketPath)
 	if err != nil {
 		return addresses, err
 	}
@@ -200,8 +199,8 @@ func getControlNodeAddresses(hostname string) ([]corev1.NodeAddress, error) {
 	return addresses, nil
 }
 
-func getControllerAPIAddress() (string, error) {
-	status, err := status.GetStatusInfo(DefaultK0sStatusSocketPath)
+func getControllerAPIAddress(socketPath string) (string, error) {
+	status, err := status.GetStatusInfo(socketPath)
 	if err != nil {
 		return "", err
 	}

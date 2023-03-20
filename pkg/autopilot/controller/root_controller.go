@@ -74,7 +74,7 @@ func NewRootController(cfg aproot.RootConfig, logger *logrus.Entry, enableWorker
 	c.stopSubHandler = c.stopSubControllers
 	c.leaseWatcherCreator = NewLeaseWatcher
 	c.setupHandler = func(ctx context.Context, cf apcli.FactoryInterface) error {
-		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, enableWorker)
+		setupController := NewSetupController(c.log, cf, cfg.K0sDataDir, cfg.K0sStatusSocket, enableWorker)
 		return setupController.Run(ctx)
 	}
 
@@ -198,7 +198,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 	}
 	clusterID := string(ns.UID)
 
-	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID); err != nil {
+	if err := apsig.RegisterControllers(ctx, logger, mgr, delegateMap[apdel.ControllerDelegateController], c.cfg.K0sDataDir, clusterID, c.cfg.K0sStatusSocket); err != nil {
 		logger.WithError(err).Error("unable to register 'signal' controllers")
 		return err
 	}
@@ -208,7 +208,7 @@ func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *
 		return err
 	}
 
-	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID); err != nil {
+	if err := apupdate.RegisterControllers(ctx, logger, mgr, c.autopilotClientFactory, leaderMode, clusterID, c.cfg.K0sStatusSocket); err != nil {
 		logger.WithError(err).Error("unable to register 'update' controllers")
 		return err
 	}

@@ -35,7 +35,6 @@ import (
 
 const (
 	SignalResponseProcessingTimeout = 1 * time.Minute
-	DefaultK0sStatusSocketPath      = "/run/k0s/status.sock"
 )
 
 type k0sVersionHandlerFunc func() (string, error)
@@ -71,7 +70,7 @@ type signalControllerHandler struct {
 //
 // This controller is only interested in changes to its own annotations, and is the main
 // mechanism in identifying incoming autopilot k0s signaling updates.
-func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID string) error {
+func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, clusterID, k0sStatusSocket string) error {
 	logr := logger.WithFields(logrus.Fields{"updatetype": "k0s"})
 
 	logr.Infof("Registering 'signal' reconciler for '%s'", delegate.Name())
@@ -88,7 +87,7 @@ func registerSignalController(logger *logrus.Entry, mgr crman.Manager, eventFilt
 					timeout:   SignalResponseProcessingTimeout,
 					clusterID: clusterID,
 					k0sVersionHandler: func() (string, error) {
-						return getK0sVersion(DefaultK0sStatusSocketPath)
+						return getK0sVersion(k0sStatusSocket)
 					},
 				},
 			),

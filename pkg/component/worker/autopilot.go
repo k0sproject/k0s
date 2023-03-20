@@ -41,8 +41,9 @@ const (
 var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
-	K0sVars     constant.CfgVars
-	CertManager *CertificateManager
+	K0sVars      constant.CfgVars
+	CertManager  *CertificateManager
+	StatusSocket string
 }
 
 func (a *Autopilot) Init(ctx context.Context) error {
@@ -87,6 +88,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
 		KubeConfig:          a.K0sVars.KubeletAuthConfigPath,
 		K0sDataDir:          a.K0sVars.DataDir,
+		K0sStatusSocket:     a.StatusSocket,
 		Mode:                "worker",
 		ManagerPort:         8899,
 		MetricsBindAddr:     "0",
