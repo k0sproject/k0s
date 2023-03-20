@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 
@@ -62,7 +61,6 @@ type CLIOptions struct {
 	K0sVars          constant.CfgVars
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
 	Verbose          bool
-	AutopilotRoot    aproot.Root
 }
 
 // Shared controller cli flags
@@ -147,12 +145,19 @@ func DefaultLogLevels() map[string]string {
 	}
 }
 
+func DefaultStatusSocketPath() string {
+	if runtime.GOOS == "windows" {
+		return `\\.\pipe\k0s-status`
+	}
+	return filepath.Join(K0sVars.RunDir, "status.sock")
+}
+
 func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset := &pflag.FlagSet{}
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
-	flagset.StringVar(&StatusSocket, "status-socket", filepath.Join(K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
+	flagset.StringVar(&StatusSocket, "status-socket", DefaultStatusSocketPath(), "status.sock"), "Full file path to the socket file.")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
 }
