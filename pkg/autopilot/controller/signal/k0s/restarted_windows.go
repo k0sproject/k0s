@@ -33,6 +33,6 @@ func restartedEventFilter(hostname string, handler apsigpred.ErrorHandler) crpre
 //
 // This controller is only interested in changes to signal nodes where its signaling
 // status is marked as `Restart`
-func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate) error {
+func registerRestarted(logger *logrus.Entry, mgr crman.Manager, eventFilter crpred.Predicate, delegate apdel.ControllerDelegate, _ string) error {
 	return nil
 }
