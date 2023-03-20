@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/k0sproject/k0s/pkg/component/status"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -42,9 +41,6 @@ func NewStatusCmd() *cobra.Command {
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
-			}
 
 			statusInfo, err := status.GetStatusInfo(config.StatusSocket)
 			if err != nil {
@@ -74,9 +70,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 		Example: `The command will return information about k0s components.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			if runtime.GOOS == "windows" {
-				return fmt.Errorf("currently not supported on windows")
-			}
 			fmt.Fprintln(os.Stderr, "!!! per component status is not yet finally ready, information here might be not full yet")
 			state, err := status.GetComponentStatus(config.StatusSocket, maxCount)
 			if err != nil {

@@ -2,7 +2,7 @@
 // +build !windows
 
 /*
-Copyright 2021 k0s authors
+Copyright 2023 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,12 +16,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package status
 
-import "net"
+import (
+	"context"
+	"fmt"
+	"net"
+)
 
-func init() {
-	listen = func(path string) (net.Listener, error) {
-		return net.Listen("unix", path)
+func httpDialer(socket string) dialcontext {
+	return func(ctx context.Context, _, _ string) (net.Conn, error) {
+		conn, err := (&net.Dialer{}).DialContext(ctx, "unix", socket)
+		if err != nil {
+			return nil, fmt.Errorf("dial socket: %w", err)
+		}
+		return conn, nil
 	}
 }

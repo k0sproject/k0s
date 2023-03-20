@@ -59,8 +59,6 @@ var _ manager.Component = (*Status)(nil)
 
 var listen func(string) (net.Listener, error) // set by listen.go / listen_windows.go
 
-var listen listenFunc = net.Listen
-
 const defaultMaxEvents = 5
 
 // Init initializes component
