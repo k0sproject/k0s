@@ -23,6 +23,7 @@ RUN \
 	if [ ${BUILD_GO_CGO_ENABLED:-0} -eq 1 ]; then \
 		export KUBE_CGO_OVERRIDES="${COMMANDS}"; \
 	fi; \
+	export FORCE_HOST_GO=y; \
 	for cmd in $COMMANDS; do \
 		export KUBE_GIT_VERSION="v$VERSION+k0s"; \
 		make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \
