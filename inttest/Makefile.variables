@@ -53,3 +53,4 @@ smoketests := \
 	check-network-conformance-kuberouter \
 	check-network-conformance-calico \
 	check-embedded-binaries \
+	check-custom-cidrs \
