@@ -388,7 +388,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.CoreDNSComponentname) {
-		coreDNS, err := controller.NewCoreDNS(c.K0sVars, adminClientFactory)
+		coreDNS, err := controller.NewCoreDNS(c.K0sVars, adminClientFactory, c.NodeConfig)
 		if err != nil {
 			return fmt.Errorf("failed to create CoreDNS reconciler: %w", err)
 		}
