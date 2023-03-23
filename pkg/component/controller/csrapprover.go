@@ -20,13 +20,14 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	authorization "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
@@ -39,20 +40,8 @@ import (
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
 
-var kubeletServerUsages = []v1.KeyUsage{
-	v1.UsageKeyEncipherment,
-	v1.UsageDigitalSignature,
-	v1.UsageServerAuth,
-}
-
-type csrRecognizer struct {
-	recognize      func(csr *v1.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool
-	permission     authorization.ResourceAttributes
-	successMessage string
-}
-
 type CSRApprover struct {
-	L    *logrus.Entry
+	log  *logrus.Entry
 	stop context.CancelFunc
 
 	ClusterConfig     *v1beta1.ClusterConfig
@@ -71,7 +60,7 @@ func NewCSRApprover(c *v1beta1.ClusterConfig, leaderElector leaderelector.Interf
 		ClusterConfig:     c,
 		leaderElector:     leaderElector,
 		KubeClientFactory: kubeClientFactory,
-		L:                 logrus.WithFields(logrus.Fields{"component": "csrapprover"}),
+		log:               logrus.WithFields(logrus.Fields{"component": "csrapprover"}),
 	}
 }
 
@@ -104,10 +93,10 @@ func (a *CSRApprover) Start(ctx context.Context) error {
 			case <-ticker.C:
 				err := a.approveCSR(ctx)
 				if err != nil {
-					a.L.Warnf("CSR approval failed: %s", err.Error())
+					a.log.WithError(err).Warn("CSR approval failed")
 				}
 			case <-ctx.Done():
-				a.L.Info("CSR Approver context done")
+				a.log.Info("CSR Approver context done")
 				return
 			}
 		}
@@ -119,7 +108,7 @@ func (a *CSRApprover) Start(ctx context.Context) error {
 // Majority of this code has been adapted from https://github.com/kontena/kubelet-rubber-stamp
 func (a *CSRApprover) approveCSR(ctx context.Context) error {
 	if !a.leaderElector.IsLeader() {
-		a.L.Debug("not the leader, can't approve certificates")
+		a.log.Debug("not the leader, can't approve certificates")
 		return nil
 	}
 
@@ -129,46 +118,46 @@ func (a *CSRApprover) approveCSR(ctx context.Context) error {
 
 	csrs, err := a.clientset.CertificatesV1().CertificateSigningRequests().List(ctx, opts)
 	if err != nil {
-		a.L.Errorf("can't fetch CSRs: %v", err)
-		return fmt.Errorf("can't fetch CSRs: %v", err)
+		return fmt.Errorf("can't fetch CSRs: %w", err)
 	}
 
 	for _, csr := range csrs.Items {
 		if approved, denied := getCertApprovalCondition(&csr.Status); approved || denied {
-			a.L.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
+			a.log.Debugf("CSR %s is approved=%t || denied=%t. Carry on", csr.Name, approved, denied)
 			continue
 		}
 
 		x509cr, err := parseCSR(&csr)
 		if err != nil {
-			a.L.Errorf("unable to parse csr %q: %v", csr.Name, err)
-			return fmt.Errorf("unable to parse csr %q: %v", csr.Name, err)
+			return fmt.Errorf("unable to parse csr %q: %w", csr.Name, err)
 		}
 
-		for _, recognizer := range a.recognizers() {
-			if !recognizer.recognize(&csr, x509cr) {
-				continue
-			}
-
-			approved, err := a.authorize(ctx, &csr, recognizer.permission)
-			if err != nil {
-				a.L.Warningf("SubjectAccessReview failed: %s", err)
-				return err
-			}
-
-			if approved {
-				a.L.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
-				appendApprovalCondition(&csr, recognizer.successMessage)
-				_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
-				if err != nil {
-					a.L.Errorf("error updating approval for csr: %v", err)
-					return fmt.Errorf("error updating approval for csr: %v", err)
-				}
-			} else {
-				return fmt.Errorf("failed to perform SubjectAccessReview")
-			}
-			return nil
+		if err := a.ensureKubeletServingCert(&csr, x509cr); err != nil {
+			a.log.WithError(err).Infof("Not approving CSR %q as it is not recognized as a kubelet-serving certificate", csr.Name)
+			continue
 		}
+
+		approved, err := a.authorize(ctx, &csr, authorization.ResourceAttributes{
+			Group:    "certificates.k8s.io",
+			Resource: "certificatesigningrequests",
+			Verb:     "create",
+		})
+		if err != nil {
+			return fmt.Errorf("SubjectAccessReview failed for CSR %q: %w", csr.Name, err)
+		}
+
+		if !approved {
+			return fmt.Errorf("failed to perform SubjectAccessReview for CSR %q", csr.Name)
+		}
+
+		a.log.Infof("approving csr %s with SANs: %s, IP Addresses:%s", csr.ObjectMeta.Name, x509cr.DNSNames, x509cr.IPAddresses)
+		appendApprovalCondition(&csr, "Auto approving kubelet serving certificate after SubjectAccessReview.")
+		_, err = a.clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(ctx, csr.Name, &csr, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("error updating approval for CSR %q: %w", csr.Name, err)
+		}
+
+		return nil
 	}
 
 	return nil
@@ -198,57 +187,65 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningR
 	return sar.Status.Allowed, nil
 }
 
-func (a *CSRApprover) recognizers() []csrRecognizer {
-	recognizers := []csrRecognizer{
-		{
-			recognize:      a.isNodeServingCert,
-			permission:     authorization.ResourceAttributes{Group: "certificates.k8s.io", Resource: "certificatesigningrequests", Verb: "create"},
-			successMessage: "Auto approving kubelet serving certificate after SubjectAccessReview.",
-		},
-	}
-	return recognizers
-}
+func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest, x509cr *x509.CertificateRequest) error {
+	var errs []error
 
-func (a *CSRApprover) isNodeServingCert(csr *v1.CertificateSigningRequest, x509cr *x509.CertificateRequest) bool {
-	if !reflect.DeepEqual([]string{"system:nodes"}, x509cr.Subject.Organization) {
-		a.L.Warningf("Org does not match: %s", x509cr.Subject.Organization)
-		return false
+	expectedOrg := []string{"system:nodes"}
+	if !slices.Equal(expectedOrg, x509cr.Subject.Organization) {
+		err := fmt.Errorf("organization doesn't match: expected %v, got %v", expectedOrg, x509cr.Subject.Organization)
+		errs = append(errs, err)
 	}
-	if (len(x509cr.DNSNames) < 1) && (len(x509cr.IPAddresses) < 1) {
-		return false
+
+	if len(x509cr.DNSNames) < 1 {
+		err := errors.New("no DNS names")
+		errs = append(errs, err)
 	}
-	if !hasExactUsages(csr, kubeletServerUsages) {
-		a.L.Info("Usage does not match")
-		return false
+
+	if len(x509cr.IPAddresses) < 1 {
+		err := errors.New("no IP addresses")
+		errs = append(errs, err)
 	}
+
+	kubeletServerUsages := []v1.KeyUsage{
+		v1.UsageKeyEncipherment,
+		v1.UsageDigitalSignature,
+		v1.UsageServerAuth,
+	}
+	if err := ensureUsages(csr, kubeletServerUsages); err != nil {
+		err := fmt.Errorf("usages don't match: %w", err)
+		errs = append(errs, err)
+	}
+
 	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
-		a.L.Warningf("CN does not start with 'system:node': %s", x509cr.Subject.CommonName)
-		return false
+		err := fmt.Errorf("x509 CN does not start with %q: %q", "system:node:", x509cr.Subject.CommonName)
+		errs = append(errs, err)
 	}
+
 	if csr.Spec.Username != x509cr.Subject.CommonName {
-		a.L.Warningf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
-		return false
+		err := fmt.Errorf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
+		errs = append(errs, err)
 	}
-	return true
+
+	return errors.Join(errs...)
 }
 
-func hasExactUsages(csr *v1.CertificateSigningRequest, usages []v1.KeyUsage) bool {
-	if len(usages) != len(csr.Spec.Usages) {
-		return false
-	}
+func ensureUsages(csr *v1.CertificateSigningRequest, usages []v1.KeyUsage) error {
+	var errs []error
 
-	usageMap := map[v1.KeyUsage]struct{}{}
-	for _, u := range usages {
-		usageMap[u] = struct{}{}
-	}
-
-	for _, u := range csr.Spec.Usages {
-		if _, ok := usageMap[u]; !ok {
-			return false
+	extraUsages := slices.Clone(csr.Spec.Usages)
+	for _, usage := range usages {
+		if idx := slices.Index(extraUsages, usage); idx >= 0 {
+			extraUsages = slices.Delete(extraUsages, idx, idx+1)
+		} else {
+			errs = append(errs, fmt.Errorf("missing: %q", usage))
 		}
 	}
 
-	return true
+	for _, usage := range extraUsages {
+		errs = append(errs, fmt.Errorf("extra: %q", usage))
+	}
+
+	return errors.Join(errs...)
 }
 
 func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (approved bool, denied bool) {
