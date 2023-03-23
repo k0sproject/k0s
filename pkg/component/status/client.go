@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/prober"
@@ -76,6 +77,7 @@ func doStatusRequest(socketPath string, path string, tgt interface{}) error {
 		Transport: &http.Transport{
 			DialContext: httpDialer(socketPath),
 		},
+		Timeout: 3 * time.Second,
 	}
 
 	response, err := httpc.Get("http://localhost/" + path)
