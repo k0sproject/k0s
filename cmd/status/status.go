@@ -17,12 +17,9 @@ limitations under the License.
 package status
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -86,34 +83,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 	cmd.Flags().IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
 	return cmd
 
-}
-
-// TODO: move it somewhere else, now here just for quick manual testing
-func GetOverSocket(socketPath string, path string, tgt interface{}) error {
-
-	httpc := http.Client{
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
-			},
-		},
-	}
-
-	response, err := httpc.Get("http://localhost/" + path)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	responseData, err := io.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(responseData, tgt); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func printStatus(w io.Writer, status *status.K0sStatus, output string) {
