@@ -244,15 +244,6 @@ func GetCmdOpts() CLIOptions {
 		K0sVars.DefaultStorageType = "kine"
 	}
 
-	// When CfgFile is set, verify the file can be opened
-	if CfgFile != "" {
-		if fd, err := os.Open(CfgFile); err != nil {
-			logrus.WithError(err).Fatalf("Cannot access config file (%s)", CfgFile)
-		} else {
-			_ = fd.Close()
-		}
-	}
-
 	opts := CLIOptions{
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
