@@ -164,7 +164,7 @@ func (rules *ClientConfigLoadingRules) writeConfig(yamlData []byte, storageSpec 
 		return fmt.Errorf("failed to marshal config: %v", err)
 	}
 
-	err = file.WriteContentAtomically(rules.RuntimeConfigPath, data, 0755)
+	err = file.WriteContentAtomically(rules.RuntimeConfigPath, data, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write runtime config to %s (%v): %v", rules.K0sVars.RunDir, rules.RuntimeConfigPath, err)
 	}
