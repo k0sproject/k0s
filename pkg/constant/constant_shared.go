@@ -79,13 +79,13 @@ const (
 	/* Image Constants */
 
 	KonnectivityImage                  = "quay.io/k0sproject/apiserver-network-proxy-agent"
-	KonnectivityImageVersion           = "0.0.33-k0s"
+	KonnectivityImageVersion           = "0.0.33-k0s.1"
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
-	PushGatewayImageVersion            = "edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9"
+	PushGatewayImageVersion            = "1.4.0-k0s.0"
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.2"
 	KubeProxyImage                     = "registry.k8s.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.26.2"
+	KubeProxyImageVersion              = "v1.26.3"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.10.1"
 	EnvoyProxyImage                    = "docker.io/envoyproxy/envoy-distroless"
@@ -97,13 +97,13 @@ const (
 	KubeRouterCNIImage                 = "docker.io/cloudnativelabs/kube-router"
 	KubeRouterCNIImageVersion          = "v1.5.1"
 	KubeRouterCNIInstallerImage        = "quay.io/k0sproject/cni-node"
-	KubeRouterCNIInstallerImageVersion = "1.1.1-k0s.0"
+	KubeRouterCNIInstallerImageVersion = "1.1.1-k0s.1"
 	OpenEBSRepository                  = "https://openebs.github.io/charts"
 	OpenEBSVersion                     = "3.3.0"
 
 	/* Controller component names */
 
-	APIConfigComponentName             = "api-config"
+	APIConfigComponentName             = "api-config" // Deprecated: just don't use dynamic config
 	APIEndpointReconcilerComponentName = "endpoint-reconciler"
 	ControlAPIComponentName            = "control-api"
 	CoreDNSComponentname               = "coredns"
