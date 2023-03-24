@@ -1,18 +1,5 @@
 name: Go lint
 on:
-  push:
-    branches:
-      - main
-      - release-*
-    paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
-      - LICENSE
-      - '**.svg'
-      - '.github/workflows/docs.yml'
-      - '.github/workflows/mkdocs-set-default-version.yml'
-      - 'mkdocs.yml'
   pull_request:
     branches:
       - main
