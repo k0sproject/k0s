@@ -44,7 +44,7 @@ jobs:
 
     outputs:
       smoke-test-matrix: ${{ steps.list-smoke-tests.outputs.linux-matrix }}
-      airgap-image-bundle-hash-linux: ${{ steps.create-airgap-image-list.outputs.linux-hash }}
+      airgap-image-bundle-hash-linux: ${{ steps.image-bundle-source.outputs.linux-hash }}
 
     steps:
       - name: Check out code into the Go module directory
@@ -101,23 +101,30 @@ jobs:
         id: list-smoke-tests
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(. != "") ] | "::set-output name=${{ matrix.target }}-matrix::" + tojson'
+              'split(" ") | [ .[] | select(. != "") ] | "${{ matrix.target }}-matrix=" + tojson' >> $GITHUB_OUTPUT
 
       - name: Create airgap image list
-        id: create-airgap-image-list
         if: matrix.airgap-image-bundle
-        # Capture the calculated image bundle hash in a build output, so it can
-        # be shared between the cache actions in this job and in the integration
-        # test matrix. A cleaner solution would have been to use the cache here,
-        # and then upload the cached image bundle, to be downloaded later on in
-        # the integration tests. That's the way it's done for the k0s binary.
-        # Unfortunately, the upload action is significantly slower than the
-        # cache action, for unclear reasons, so stick with this solution for
-        # faster builds. See:
+        run: make airgap-images.txt && cat airgap-images.txt
+
+        # Capture the calculated image bundle source hash in a build output, so
+        # it can be shared between the cache actions in this job and in the
+        # integration test matrix. Do this in a separate step, as the hashFiles
+        # function is evaluated before the step execution. So all the required
+        # files need to exist before that. A cleaner solution would have been to
+        # use the cache here, and then upload the cached image bundle, to be
+        # downloaded later on in the integration tests. That's the way it's done
+        # for the k0s binary. Unfortunately, the upload action is significantly
+        # slower than the cache action, for unclear reasons, so stick with this
+        # solution for faster builds. See:
         # * https://github.com/actions/upload-artifact/issues/199#issuecomment-1190171851
-        run: |
-          make airgap-images.txt
-          echo ::set-output name=${{ matrix.target }}-hash::${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+      - name: Calculate airgap image bundle source hash
+        id: image-bundle-source
+        if: matrix.airgap-image-bundle
+        env:
+          HASH_KEY: ${{ matrix.target }}-hash
+          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
+        run: printf '%s=%s\n' "$HASH_KEY" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
 
       - name: Cache airgap image bundle
         id: cache-airgap-image-bundle
@@ -129,7 +136,7 @@ jobs:
         # * https://github.com/actions/cache/issues/321
         # * https://github.com/actions/cache/pull/420
         with:
-          key: ${{ matrix.airgap-image-bundle }}-${{ steps.create-airgap-image-list.outputs[format('{0}-hash', matrix.target)] }}
+          key: ${{ matrix.airgap-image-bundle }}-${{ steps.image-bundle-source.outputs[format('{0}-hash', matrix.target)] }}
           path: ${{ matrix.airgap-image-bundle }}
 
       - name: Create airgap image bundle if not cached
@@ -257,7 +264,7 @@ jobs:
       - id: set-matrix
         run: |
           matrix=$(./hack/tools/gen-matrix.sh 1.24.3 1.24.4)
-          echo "::set-output name=matrix::$matrix"
+          echo matrix="$matrix" >> $GITHUB_OUTPUT
 
   autopilot-smoketest:
     name: Autopilot smoke test

@@ -18,6 +18,7 @@ smoketests := \
 	check-configchange \
 	check-ctr \
 	check-customports \
+	check-customports-dynamicconfig \
 	check-defaultstorage \
 	check-disabledcomponents \
 	check-dualstack \
@@ -43,3 +44,4 @@ smoketests := \
 	check-customdomain \
 	check-capitalhostnames \
 	check-dualstack-dynamicconfig \
+	check-customca \

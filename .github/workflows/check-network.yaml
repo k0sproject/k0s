@@ -96,23 +96,22 @@ jobs:
         id: k0s_build
         run: |
           make build
-          echo ::set-output name=KUBERNETES_VERSION::$(make print-kubernetes_version)
+          KUBERNETES_VERSION=$(make print-kubernetes_version)
+          echo KUBERNETES_VERSION="$KUBERNETES_VERSION" >> $GITHUB_OUTPUT
         working-directory: ./
 
       - name: Set k0s' Version
         id: bin_info
         run: |
           # run k0s version
-          export ROOTDIR=${{ github.workspace }}
+          K0S_VER=$("$GITHUB_WORKSPACE/k0s" version)
 
-          K0S_VER=$($ROOTDIR/k0s version)
-
-          if [ ${K0S_VER} == "" ]; then
+          if [ -z "$K0S_VER" ]; then
             echo "empty k0s version. failing..."
             exit 1
           fi
 
-          echo ::set-output name=K0S_VERSION::${K0S_VER}
+          echo K0S_VERSION="$K0S_VER" >> $GITHUB_OUTPUT
 
       - name: Terraform Apply
         env:

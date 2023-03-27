@@ -104,11 +104,11 @@ spec:
 
   commands:
     - k0supdate:
-        version: v1.25.5+k0s.0
+        version: v1.25.7+k0s.0
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v1.25.5+k0s.0/k0s-v1.25.5+k0s.0-amd64
-            sha256: 15469210b61da094c6783e65c15a4ac951e1c4c50ff9cf13f30437ada48f446b
+            url: https://github.com/k0sproject/k0s/releases/download/v1.25.7+k0s.0/k0s-v1.25.7+k0s.0-amd64
+            sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:
             discovery:
@@ -370,7 +370,49 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 
 #### `spec.planSpec <string> (optional)`
 
-* [Plan specification](#Spec Fields).
+* Describes the behavior of the autopilot generated `Plan`
+
+### Example
+
+```yaml
+apiVersion: autopilot.k0sproject.io/v1beta2
+kind: UpdaterConfig
+metadata:
+  name: example
+spec:
+  channel: stable
+  updateServer: https://updates.k0sproject.io/
+  upgradeStrategy:
+    cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
+  # Optional. Specifies a created Plan object
+  planSpec:
+    commands:
+      - k0supdate: # optional
+          forceupdate: true # optional
+          targets:
+            controllers:
+              discovery:
+                static:
+                  nodes:
+                    - ip-172-31-44-131
+                    - ip-172-31-42-134
+                    - ip-172-31-39-65
+            workers:
+              limits:
+                concurrent: 5
+              discovery:
+                selector:
+                  labels: environment=staging
+                  fields: metadata.name=worker2
+        airgapupdate: # optional
+          workers:
+            limits:
+              concurrent: 5
+            discovery:
+              selector:
+                labels: environment=staging
+                fields: metadata.name=worker2
+```
 
 ## FAQ
 

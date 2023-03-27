@@ -135,6 +135,7 @@ func (k *Konnectivity) defaultArgs() stringmap.StringMap {
 		"--delete-existing-uds-file": "true",
 		"--server-id":                machineID.ID(),
 		"--proxy-strategies":         "destHost,default",
+		"--cipher-suites":            constant.AllowedTLS12CipherSuiteNames(),
 	}
 }
 

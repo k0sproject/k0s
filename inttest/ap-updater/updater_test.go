@@ -71,15 +71,9 @@ spec:
   upgradeStrategy:
     cron: "* * * * * *"
   planSpec:
-    id: id123
-    timestamp: now
     commands:
     - k0supdate:
-        version: v0.0.0
         forceupdate: true
-        platforms:
-          linux-amd64:
-            url: http://localhost/dist/k0s
         targets:
           controllers:
             discovery:

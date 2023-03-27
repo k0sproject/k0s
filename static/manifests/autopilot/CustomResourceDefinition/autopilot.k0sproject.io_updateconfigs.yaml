@@ -36,43 +36,21 @@ spec:
               channel:
                 type: string
               planSpec:
-                description: PlanSpec describes the behavior of the `Plan`
+                description: AutopilotPlanSpec describes the behavior of the autopilot
+                  generated `Plan`
                 properties:
                   commands:
                     description: Commands are a collection of all of the commands
                       that need to be executed in order for this plan to transition
                       to Completed.
                     items:
-                      description: PlanCommand is a command that can be run within
-                        a `Plan`
+                      description: AutopilotPlanCommand is a command that can be run
+                        within a `Plan`
                       properties:
                         airgapupdate:
                           description: AirgapUpdate is the `AirgapUpdate` command
                             which is responsible for updating a k0s airgap bundle.
                           properties:
-                            platforms:
-                              additionalProperties:
-                                description: PlanResourceURL is a remote URL resource.
-                                properties:
-                                  sha256:
-                                    description: Sha256 provides an optional SHA256
-                                      hash of the URL's content for verification.
-                                    type: string
-                                  url:
-                                    description: URL is the URL of a downloadable
-                                      resource.
-                                    type: string
-                                required:
-                                - url
-                                type: object
-                              description: Platforms is a map of PlanResourceUrls
-                                to platform identifiers, allowing a single k0s airgap
-                                version to have multiple Url resources based on platform.
-                              type: object
-                            version:
-                              description: Version is the version that `AirgapUpdate`
-                                will be upgrading to.
-                              type: string
                             workers:
                               description: Workers defines how the k0s workers will
                                 be discovered and airgap updated.
@@ -125,8 +103,6 @@ spec:
                               - discovery
                               type: object
                           required:
-                          - platforms
-                          - version
                           - workers
                           type: object
                         k0supdate:
@@ -137,25 +113,6 @@ spec:
                               description: ForceUpdate ensures that version checking
                                 is ignored and that all updates are applied.
                               type: boolean
-                            platforms:
-                              additionalProperties:
-                                description: PlanResourceURL is a remote URL resource.
-                                properties:
-                                  sha256:
-                                    description: Sha256 provides an optional SHA256
-                                      hash of the URL's content for verification.
-                                    type: string
-                                  url:
-                                    description: URL is the URL of a downloadable
-                                      resource.
-                                    type: string
-                                required:
-                                - url
-                                type: object
-                              description: Platforms is a map of PlanResourceUrls
-                                to platform identifiers, allowing a single k0s version
-                                to have multiple URL resources based on platform.
-                              type: object
                             targets:
                               description: Targets defines how the controllers/workers
                                 should be discovered and upgraded.
@@ -267,28 +224,13 @@ spec:
                                   - discovery
                                   type: object
                               type: object
-                            version:
-                              description: Version is the version that `K0sUpdate`
-                                will be upgrading to.
-                              type: string
                           required:
-                          - platforms
                           - targets
-                          - version
                           type: object
                       type: object
                     type: array
-                  id:
-                    description: ID is a user-provided identifier for this plan.
-                    type: string
-                  timestamp:
-                    description: Timestamp is a user-provided time that the plan was
-                      created.
-                    type: string
                 required:
                 - commands
-                - id
-                - timestamp
                 type: object
               updateServer:
                 type: string

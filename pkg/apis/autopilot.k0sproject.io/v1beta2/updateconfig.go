@@ -40,10 +40,43 @@ type UpdateConfig struct {
 }
 
 type UpdateSpec struct {
-	Channel         string          `json:"channel,omitempty"`
-	UpdateServer    string          `json:"updateServer,omitempty"`
-	UpgradeStrategy UpgradeStrategy `json:"upgradeStrategy,omitempty"`
-	PlanSpec        PlanSpec        `json:"planSpec,omitempty"`
+	Channel         string            `json:"channel,omitempty"`
+	UpdateServer    string            `json:"updateServer,omitempty"`
+	UpgradeStrategy UpgradeStrategy   `json:"upgradeStrategy,omitempty"`
+	PlanSpec        AutopilotPlanSpec `json:"planSpec,omitempty"`
+}
+
+// AutopilotPlanSpec describes the behavior of the autopilot generated `Plan`
+type AutopilotPlanSpec struct {
+	// Commands are a collection of all of the commands that need to be executed
+	// in order for this plan to transition to Completed.
+	Commands []AutopilotPlanCommand `json:"commands"`
+}
+
+// AutopilotPlanCommand is a command that can be run within a `Plan`
+type AutopilotPlanCommand struct {
+	// K0sUpdate is the `K0sUpdate` command which is responsible for updating a k0s node (controller/worker)
+	K0sUpdate *AutopilotPlanCommandK0sUpdate `json:"k0supdate,omitempty"`
+
+	// AirgapUpdate is the `AirgapUpdate` command which is responsible for updating a k0s airgap bundle.
+	AirgapUpdate *AutopilotPlanCommandAirgapUpdate `json:"airgapupdate,omitempty"`
+}
+
+// AutopilotPlanCommandK0sUpdate provides all of the information to for a `K0sUpdate` command to
+// update a set of target signal nodes.
+type AutopilotPlanCommandK0sUpdate struct {
+	// ForceUpdate ensures that version checking is ignored and that all updates are applied.
+	ForceUpdate bool `json:"forceupdate,omitempty"`
+
+	// Targets defines how the controllers/workers should be discovered and upgraded.
+	Targets PlanCommandTargets `json:"targets"`
+}
+
+// AutopilotPlanCommandAirgapUpdate provides all of the information to for a `AirgapUpdate` command to
+// update a set of target signal nodes
+type AutopilotPlanCommandAirgapUpdate struct {
+	// Workers defines how the k0s workers will be discovered and airgap updated.
+	Workers PlanCommandTarget `json:"workers"`
 }
 
 type UpgradeStrategy struct {

@@ -44,7 +44,7 @@ users:
     token: the token
 `
 
-	kubeconfig, err := generateKubeconfig("the join URL", []byte("the cert"), "the user", "the token")
+	kubeconfig, err := GenerateKubeconfig("the join URL", []byte("the cert"), "the user", "the token")
 	require.NoError(t, err)
 	assert.Equal(t, expected, string(kubeconfig))
 }

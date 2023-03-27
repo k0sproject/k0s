@@ -1,7 +1,7 @@
 alpine_version = 3.16
 alpine_patch_version = $(alpine_version).3
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
-go_version = 1.19.4
+go_version = 1.19.7
 
 runc_version = 1.1.4
 runc_buildimage = golang:$(go_version)-alpine3.16
@@ -12,7 +12,7 @@ runc_build_go_tags = "seccomp"
 #runc_build_go_ldflags =
 runc_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-containerd_version = 1.6.10
+containerd_version = 1.6.18
 containerd_buildimage = golang:$(go_version)-alpine3.16
 containerd_build_go_tags = "apparmor,selinux"
 containerd_build_shim_go_cgo_enabled = 0
@@ -22,7 +22,7 @@ containerd_build_shim_go_cgo_enabled = 0
 #containerd_build_go_ldflags =
 containerd_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kubernetes_version = 1.25.5
+kubernetes_version = 1.25.7
 kubernetes_buildimage = golang:$(go_version)-alpine3.16
 kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_enabled =
@@ -31,16 +31,16 @@ kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
 kubernetes_build_go_ldflags_extra = "-w -s -extldflags=-static"
 
-kine_version = 0.9.8
+kine_version = 0.9.9
 kine_buildimage = golang:$(go_version)-alpine3.16
 #kine_build_go_tags =
 #kine_build_go_cgo_enabled =
-kine_build_go_cgo_cflags = "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1" # Flags taken from https://github.com/k3s-io/kine/blob/v0.9.8/scripts/build#L22
+kine_build_go_cgo_cflags = "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_USE_ALLOCA=1" # Flags taken from https://github.com/k3s-io/kine/blob/v0.9.9/scripts/build#L22
 #kine_build_go_flags =
 kine_build_go_ldflags = "-w -s"
 kine_build_go_ldflags_extra = "-extldflags=-static"
 
-etcd_version = 3.5.6
+etcd_version = 3.5.7
 etcd_buildimage = golang:$(go_version)-alpine3.16
 #etcd_build_go_tags =
 etcd_build_go_cgo_enabled = 0
