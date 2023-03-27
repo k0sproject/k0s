@@ -17,6 +17,12 @@ limitations under the License.
 package config
 
 import (
+	"errors"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -31,12 +37,30 @@ func NewValidateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := config.GetCmdOpts()
 
-			loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
-			_, err := loadingRules.ParseRuntimeConfig()
-			return err
+			var cfgFile io.Reader
+			switch c.CfgFile {
+			case "":
+				return fmt.Errorf("config file not specified")
+			case "-":
+				cfgFile = cmd.InOrStdin()
+			default:
+				f, err := os.Open(c.CfgFile)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				cfgFile = f
+			}
+
+			cfg, err := v1beta1.ConfigFromReader(cfgFile)
+			if err != nil {
+				return err
+			}
+
+			return errors.Join(cfg.Validate()...)
 		},
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
