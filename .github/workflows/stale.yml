@@ -7,7 +7,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v7
+      - uses: actions/stale@v8
         with:
           stale-issue-message: 'The issue is marked as stale since no activity has been recorded in 30 days'
           stale-pr-message: 'The PR is marked as stale since no activity has been recorded in 30 days'
