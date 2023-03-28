@@ -29,7 +29,6 @@ import (
 type K0sV1beta1Interface interface {
 	RESTClient() rest.Interface
 	ClusterConfigsGetter
-	ClusterConfigListsGetter
 }
 
 // K0sV1beta1Client is used to interact with features provided by the k0s.k0sproject.io group.
@@ -39,10 +38,6 @@ type K0sV1beta1Client struct {
 
 func (c *K0sV1beta1Client) ClusterConfigs(namespace string) ClusterConfigInterface {
 	return newClusterConfigs(c, namespace)
-}
-
-func (c *K0sV1beta1Client) ClusterConfigLists(namespace string) ClusterConfigListInterface {
-	return newClusterConfigLists(c, namespace)
 }
 
 // NewForConfig creates a new K0sV1beta1Client for the given config.

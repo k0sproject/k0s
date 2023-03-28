@@ -32,10 +32,6 @@ func (c *FakeK0sV1beta1) ClusterConfigs(namespace string) v1beta1.ClusterConfigI
 	return &FakeClusterConfigs{c, namespace}
 }
 
-func (c *FakeK0sV1beta1) ClusterConfigLists(namespace string) v1beta1.ClusterConfigListInterface {
-	return &FakeClusterConfigLists{c, namespace}
-}
-
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeK0sV1beta1) RESTClient() rest.Interface {

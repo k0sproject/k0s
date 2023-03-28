@@ -32,24 +32,12 @@ func (c *FakeAutopilotV1beta2) ControlNodes() v1beta2.ControlNodeInterface {
 	return &FakeControlNodes{c}
 }
 
-func (c *FakeAutopilotV1beta2) ControlNodeLists() v1beta2.ControlNodeListInterface {
-	return &FakeControlNodeLists{c}
-}
-
 func (c *FakeAutopilotV1beta2) Plans() v1beta2.PlanInterface {
 	return &FakePlans{c}
 }
 
-func (c *FakeAutopilotV1beta2) PlanLists() v1beta2.PlanListInterface {
-	return &FakePlanLists{c}
-}
-
 func (c *FakeAutopilotV1beta2) UpdateConfigs() v1beta2.UpdateConfigInterface {
 	return &FakeUpdateConfigs{c}
-}
-
-func (c *FakeAutopilotV1beta2) UpdateConfigLists() v1beta2.UpdateConfigListInterface {
-	return &FakeUpdateConfigLists{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -20,12 +20,6 @@ package v1beta2
 
 type ControlNodeExpansion interface{}
 
-type ControlNodeListExpansion interface{}
-
 type PlanExpansion interface{}
 
-type PlanListExpansion interface{}
-
 type UpdateConfigExpansion interface{}
-
-type UpdateConfigListExpansion interface{}
