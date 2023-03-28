@@ -323,25 +323,27 @@ func (c *command) start(ctx context.Context) error {
 	}
 	defer configSource.Stop()
 
-	if !slices.Contains(c.DisableComponents, constant.APIConfigComponentName) {
+	// The CRDs are only required if the config is stored in the cluster.
+	if configSource.NeedToStoreInitialConfig() {
 		apiConfigSaver, err := controller.NewManifestsSaver("api-config", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to initialize api-config manifests saver: %w", err)
 		}
 
-		cfgReconciler, err := controller.NewClusterConfigReconciler(
-			leaderElector,
-			c.K0sVars,
-			c.ClusterComponents,
-			apiConfigSaver,
-			adminClientFactory,
-			configSource,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to initialize cluster-config reconciler: %w", err)
-		}
-		c.ClusterComponents.Add(ctx, cfgReconciler)
+		c.ClusterComponents.Add(ctx, controller.NewCRD(apiConfigSaver, []string{"v1beta1"}))
 	}
+
+	cfgReconciler, err := controller.NewClusterConfigReconciler(
+		leaderElector,
+		c.K0sVars,
+		c.ClusterComponents,
+		adminClientFactory,
+		configSource,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize cluster-config reconciler: %w", err)
+	}
+	c.ClusterComponents.Add(ctx, cfgReconciler)
 
 	if !slices.Contains(c.DisableComponents, constant.HelmComponentName) {
 		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
