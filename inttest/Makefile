@@ -104,7 +104,7 @@ check-nllb: TIMEOUT=10m
 include Makefile.variables
 
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
-$(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-amd64.tar)
+$(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
 $(smoketests): .footloose-alpine.stamp
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
 $(smoketests):
