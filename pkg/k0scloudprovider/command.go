@@ -44,7 +44,7 @@ type Config struct {
 func NewCommand(c Config) (Command, error) {
 	ccmo, err := options.NewCloudControllerManagerOptions()
 	if err != nil {
-		return nil, fmt.Errorf("unable to initialize command options: %w", err)
+		return nil, fmt.Errorf("unable to initialize cloud provider command options: %w", err)
 	}
 
 	ccmo.KubeCloudShared.CloudProvider.Name = Name
@@ -58,36 +58,31 @@ func NewCommand(c Config) (Command, error) {
 		ccmo.NodeStatusUpdateFrequency = metav1.Duration{Duration: c.UpdateFrequency}
 	}
 
-	controllerList := []string{"cloud-node", "cloud-node-lifecycle", "service", "route"}
-	disabledControllerList := []string{"service", "route"}
-
-	ccmc, err := ccmo.Config(controllerList, disabledControllerList)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create k0s-cloud-provider configuration: %w", err)
+	cloudInitializer := func(*config.CompletedConfig) cloudprovider.Interface {
+		// Returns the "k0s cloud provider" using the specified `AddressCollector`
+		return NewProvider(c.AddressCollector)
 	}
 
-	return func(stopCh <-chan struct{}) {
-		cloudInitializer := func(config *config.CompletedConfig) cloudprovider.Interface {
-			// Builds the provider using the specified `AddressCollector`
-			cloud := NewProvider(c.AddressCollector)
-
-			controllerInitializers := app.ConstructControllerInitializers(app.DefaultInitFuncConstructors, ccmc.Complete(), cloud)
-			for _, disabledController := range disabledControllerList {
-				delete(controllerInitializers, disabledController)
-			}
-
-			cloud.Initialize(ccmc.ClientBuilder, stopCh)
-
-			return cloud
+	// K0s only supports the cloud-node controller, so only use that.
+	initFuncConstructors := make(map[string]app.ControllerInitFuncConstructor)
+	for _, name := range []string{"cloud-node"} {
+		var ok bool
+		initFuncConstructors[name], ok = app.DefaultInitFuncConstructors[name]
+		if !ok {
+			return nil, fmt.Errorf("failed to find cloud provider controller %q", name)
 		}
+	}
+
+	additionalFlags := cliflag.NamedFlagSets{}
+
+	return func(stopCh <-chan struct{}) {
+		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, initFuncConstructors, additionalFlags, stopCh)
 
 		// Override the commands arguments to avoid it by default using `os.Args[]`
-		fss := cliflag.NamedFlagSets{}
-		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, app.DefaultInitFuncConstructors, fss, stopCh)
 		command.SetArgs([]string{})
 
 		if err := command.Execute(); err != nil {
-			logrus.Errorf("unable to execute command: %v", err)
+			logrus.WithError(err).Errorf("Failed to execute k0s cloud provider")
 		}
 	}, nil
 }
