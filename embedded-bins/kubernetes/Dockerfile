@@ -29,6 +29,8 @@ RUN \
   # Ensure that all of the binaries are built with CGO \
   if [ ${BUILD_GO_CGO_ENABLED:-0} -eq 1 ]; then \
     export KUBE_CGO_OVERRIDES=$commands; \
+  else \
+    export KUBE_STATIC_OVERRIDES=$commands; \
   fi; \
   mkdir /out; \
   export FORCE_HOST_GO=y; \
