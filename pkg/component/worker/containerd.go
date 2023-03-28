@@ -27,7 +27,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
@@ -38,6 +41,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
@@ -83,7 +87,7 @@ func (c *ContainerD) Init(ctx context.Context) error {
 }
 
 // Run runs containerD
-func (c *ContainerD) Start(_ context.Context) error {
+func (c *ContainerD) Start(ctx context.Context) error {
 	logrus.Info("Starting containerD")
 
 	if err := c.setupConfig(); err != nil {
@@ -104,7 +108,13 @@ func (c *ContainerD) Start(_ context.Context) error {
 		},
 	}
 
-	return c.supervisor.Supervise()
+	if err := c.supervisor.Supervise(); err != nil {
+		return err
+	}
+
+	go c.watchDropinConfigs(ctx)
+
+	return nil
 }
 
 func (c *ContainerD) setupConfig() error {
@@ -146,6 +156,69 @@ func (c *ContainerD) setupConfig() error {
 		return fmt.Errorf("can't create containerd config: %v", err)
 	}
 	return file.WriteContentAtomically(confPath, output.Bytes(), 0644)
+}
+
+func (c *ContainerD) watchDropinConfigs(ctx context.Context) {
+	log := logrus.WithField("component", "containerd")
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.WithError(err).Error("failed to create watcher for drop-ins")
+		return
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(importsPath)
+	if err != nil {
+		log.WithError(err).Error("failed to watch for drop-ins")
+		return
+	}
+
+	debouncer := debounce.Debouncer[fsnotify.Event]{
+		Input:   watcher.Events,
+		Timeout: 3 * time.Second,
+		Filter: func(item fsnotify.Event) bool {
+			switch item.Op {
+			case fsnotify.Create, fsnotify.Remove, fsnotify.Write, fsnotify.Rename:
+				return true
+			default:
+				return false
+			}
+		},
+		Callback: func(fsnotify.Event) { c.restart() },
+	}
+
+	// Consume and log any errors from watcher
+	go func() {
+		for {
+			err, ok := <-watcher.Errors
+			if !ok {
+				return
+			}
+			log.WithError(err).Error("error while watching drop-ins")
+		}
+	}()
+
+	log.Infof("started to watch events on %s", importsPath)
+
+	err = debouncer.Run(ctx)
+	if err != nil {
+		log.WithError(err).Warn("dropin watch bouncer exited with error")
+	}
+}
+
+func (c *ContainerD) restart() {
+	log := logrus.WithFields(logrus.Fields{"component": "containerd", "phase": "restart"})
+
+	log.Info("restart requested")
+	if err := c.setupConfig(); err != nil {
+		log.WithError(err).Warn("failed to resolve config")
+		return
+	}
+
+	p := c.supervisor.GetProcess()
+	if err := p.Signal(syscall.SIGHUP); err != nil {
+		log.WithError(err).Warn("failed to send SIGHUP")
+	}
 }
 
 // Stop stops containerD

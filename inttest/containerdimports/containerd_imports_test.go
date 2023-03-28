@@ -119,10 +119,6 @@ func (s *ContainerDImportsSuite) addContainerDRuntime() {
 
 	// Configure containerd to use it
 	s.PutFile(s.WorkerNode(0), "/etc/k0s/containerd.d/foo.toml", fooRuntimeConfig)
-
-	// Restart k0s to pick up the new config for containerd
-	s.T().Log("Restarting k0s on worker")
-	workerSSH.Exec(ctx, "rc-service k0sworker restart", common.SSHStreams{})
 }
 
 func TestContainerDImportsSuite(t *testing.T) {

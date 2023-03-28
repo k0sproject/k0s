@@ -50,7 +50,7 @@ state = "/run/k0s/containerd"
 
 From 1.27.0 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in `/etc/k0s/containerd.d/` where user can drop-in partial containerd configuration snippets.
 
-When k0s starts up it'll find these files and adds these in containerd configuration `imports` list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at [containerd#8056](https://github.com/containerd/containerd/pull/8056)
+k0s will automatically pick up these files and adds these in containerd configuration `imports` list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at [containerd#8056](https://github.com/containerd/containerd/pull/8056)
 
 ### Examples
 
@@ -100,7 +100,7 @@ Following chapters provide some examples how to configure different runtimes for
 
     ```shell
     cat <<EOF | kubectl apply -f -
-    apiVersion: node.k8s.io/v1beta1
+    apiVersion: node.k8s.io/v1
     kind: RuntimeClass
     metadata:
       name: gvisor
@@ -156,7 +156,7 @@ Create the needed `RuntimeClass`:
 
 ```shell
 cat <<EOF | kubectl apply -f -
-apiVersion: node.k8s.io/v1beta1
+apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
   name: nvidia
@@ -165,8 +165,6 @@ EOF
 ```
 
 **Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
-
-After editing the configuration, restart `k0s` to get containerd using the newly configured runtime.
 
 ## Using custom CRI runtime
 
