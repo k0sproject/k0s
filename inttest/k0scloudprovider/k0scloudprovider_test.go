@@ -44,9 +44,6 @@ func (s *K0sCloudProviderSuite) TestK0sGetsUp() {
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
 	s.Require().NoError(err)
 
-	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.Require().NoError(err)
-
 	// Test the adding of various addresses using addition via annotations
 	w0Helper := defaultNodeAddValueHelper(s.AddNodeAnnotation)
 	s.testAddAddress(kc, s.WorkerNode(0), "1.2.3.4", w0Helper)
@@ -123,7 +120,7 @@ func TestK0sCloudProviderSuite(t *testing.T) {
 	suite.Run(t, &K0sCloudProviderSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
-			WorkerCount:     2,
+			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,
 		},
 	})
