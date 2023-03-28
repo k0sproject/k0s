@@ -1032,19 +1032,6 @@ func (s *FootlooseSuite) GetKubeletCMDLine(node string) (string, error) {
 }
 
 func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
-	binPath := os.Getenv("K0S_PATH")
-	if binPath == "" {
-		return errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
-	}
-
-	fileInfo, err := os.Stat(binPath)
-	if err != nil {
-		return fmt.Errorf("failed to locate k0s binary %s: %w", binPath, err)
-	}
-	if fileInfo.IsDir() {
-		return fmt.Errorf("failed to locate k0s binary %s: is a directory", binPath)
-	}
-
 	volumes := []config.Volume{
 		{
 			Type:        "volume",
@@ -1052,26 +1039,9 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		},
 	}
 
-	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
-	if updateFromBinPath != "" {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      updateFromBinPath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		}, config.Volume{
-			Type:        "bind",
-			Source:      binPath,
-			Destination: k0sNewBindMountFullPath,
-			ReadOnly:    true,
-		})
-	} else {
-		volumes = append(volumes, config.Volume{
-			Type:        "bind",
-			Source:      binPath,
-			Destination: k0sBindMountFullPath,
-			ReadOnly:    true,
-		})
+	volumes, err := s.maybeAddBinPath(volumes)
+	if err != nil {
+		return err
 	}
 
 	if len(s.AirgapImageBundleMountPoints) > 0 {
@@ -1456,4 +1426,46 @@ func (s *FootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
 		return false, fmt.Errorf("failed to parse default docker bridge EnableIPv6: %w", err)
 	}
 	return bridgeEnableIPv6, nil
+}
+
+func (s *FootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volume, error) {
+	if os.Getenv("K0S_USE_DEFAULT_K0S_BINARIES") == "true" {
+		return volumes, nil
+	}
+
+	binPath := os.Getenv("K0S_PATH")
+	if binPath == "" {
+		return nil, errors.New("failed to locate k0s binary: K0S_PATH environment variable not set")
+	}
+
+	fileInfo, err := os.Stat(binPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to locate k0s binary %s: %w", binPath, err)
+	}
+	if fileInfo.IsDir() {
+		return nil, fmt.Errorf("failed to locate k0s binary %s: is a directory", binPath)
+	}
+
+	updateFromBinPath := os.Getenv("K0S_UPDATE_FROM_PATH")
+	if updateFromBinPath != "" {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      updateFromBinPath,
+			Destination: k0sBindMountFullPath,
+			ReadOnly:    true,
+		}, config.Volume{
+			Type:        "bind",
+			Source:      binPath,
+			Destination: k0sNewBindMountFullPath,
+			ReadOnly:    true,
+		})
+	} else {
+		volumes = append(volumes, config.Volume{
+			Type:        "bind",
+			Source:      binPath,
+			Destination: k0sBindMountFullPath,
+			ReadOnly:    true,
+		})
+	}
+	return volumes, nil
 }
