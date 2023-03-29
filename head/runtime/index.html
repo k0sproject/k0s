@@ -1225,6 +1225,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../dockershim/" class="md-nav__link">
+        Dockershim deprecation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../troubleshooting/" class="md-nav__link">
         Common Pitfalls
       </a>
@@ -1603,7 +1617,7 @@
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
 <h3 id="using-dockershim">Using dockershim<a class="headerlink" href="#using-dockershim" title="Permanent link">#</a></h3>
 <p>To run k0s with a pre-existing Dockershim setup, run the worker with <code>k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock &lt;token&gt;</code>.
-A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our <a href="../docker-shim/">k0s dockershim guide</a>.</p>
+A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our <a href="../dockershim/">k0s dockershim guide</a>.</p>
 
 
 

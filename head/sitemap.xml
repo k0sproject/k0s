@@ -81,7 +81,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/head/docker-shim/</loc>
+         <loc>https://docs.k0sproject.io/head/dockershim/</loc>
          <lastmod>2023-03-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
