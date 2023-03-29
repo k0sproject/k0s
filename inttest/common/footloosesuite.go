@@ -78,6 +78,8 @@ const (
 	k0sNewBindMountFullPath  = "/dist/k0s-new"
 
 	defaultK0sUpdateVersion = "v0.0.0"
+
+	defaultFootLooseImage = "footloose-alpine"
 )
 
 // FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
@@ -103,6 +105,7 @@ type FootlooseSuite struct {
 	K0sUpdateVersion             string
 	ControllerNetworks           []string
 	WorkerNetworks               []string
+	FootLooseImage               string
 
 	ctx      context.Context
 	tearDown func()
@@ -150,6 +153,11 @@ func (s *FootlooseSuite) initializeDefaults() {
 		s.launchDelegate = &openRCLaunchDelegate{s.K0sFullPath}
 	default:
 		s.Require().Fail("Unknown launch mode", s.LaunchMode)
+	}
+
+	s.FootLooseImage = os.Getenv("FOOTLOOSE_IMAGE")
+	if s.FootLooseImage == "" {
+		s.FootLooseImage = defaultFootLooseImage
 	}
 }
 
@@ -1127,7 +1135,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			{
 				Count: s.ControllerCount,
 				Spec: config.Machine{
-					Image:        "footloose-alpine",
+					Image:        s.FootLooseImage,
 					Name:         controllerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
@@ -1138,7 +1146,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			{
 				Count: s.WorkerCount,
 				Spec: config.Machine{
-					Image:        "footloose-alpine",
+					Image:        s.FootLooseImage,
 					Name:         workerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
@@ -1153,7 +1161,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         lbNodeNameFormat,
-				Image:        "footloose-alpine",
+				Image:        defaultFootLooseImage,
 				Privileged:   true,
 				Volumes:      volumes,
 				PortMappings: portMaps,
@@ -1168,7 +1176,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         etcdNodeNameFormat,
-				Image:        "footloose-alpine",
+				Image:        defaultFootLooseImage,
 				Privileged:   true,
 				PortMappings: []config.PortMapping{{ContainerPort: 22}},
 			},
