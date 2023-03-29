@@ -1,16 +1,16 @@
-# Dockershim Deprecation - What Does It Mean For K0s?
+# Dockershim deprecation - what does it mean for K0s?
 
 Back in December 2020, Kubernetes have announced the [deprecation of the
-docker-shim][deprecate-dockershim] from version 1.24 onwards. As a consequence,
-k0s 1.24 and above don't support the docker-shim as well.
+dockershim][deprecate-dockershim] from version 1.24 onwards. As a consequence,
+k0s 1.24 and above don't support the dockershim as well.
 
 [deprecate-dockershim]: https://kubernetes.io/blog/2020/12/02/dockershim-faq/
 
-## What Is Dockershim, and Why Was It Deprecated?
+## What is dockershim and why was it deprecated?
 
 The dockershim is a transparent library that intercepts API calls to the kubernetes API and handles their operation in the Docker API. Early versions of Kubernetes used this shim in order to allow containers to run over docker. Later versions of Kubernetes started creating containers via the CRI (Container Runtime Interface). Since CRI has become the de-facto default runtime for Kubernetes, maintaining the dockershim turned into a heavy burden for Kubernetes maintainers, and so the decision to deprecate the built-in dockershim support came into being.
 
-### So What's going to happen to Dockershim?
+### So what's going to happen to dockershim?
 
 Dockershim is not gone. It's only changed ownership. Mirantis has agreed to maintain dockershim (now called cri-dockerd). See: [The Future of Dockershim is cri-dockerd](https://www.mirantis.com/blog/the-future-of-dockershim-is-cri-dockerd/).
 
@@ -23,6 +23,11 @@ In order to continue to use the Docker engine with Kubernetes v1.24+, you will h
 *This migration guide assumes that you've been running k0s with docker on version 1.23 and below.*
 
 The following steps will need to be done on ALL k0s' worker nodes, or single-node controllers. Basically any node that runs containers will need to be migrated using the process detailed below.
+
+Please note that there are currently some [pitfalls around container
+metrics][cadvisor-metrics] when using CRI-dockerd.
+
+[cadvisor-metrics]: ./troubleshooting.md#im-using-custom-cri-and-missing-some-labels-in-prometheus-metrics
 
 ### Cordon and drain the node
 
