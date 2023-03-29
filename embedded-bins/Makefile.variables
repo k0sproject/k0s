@@ -3,7 +3,7 @@ alpine_patch_version = $(alpine_version).3
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 go_version = 1.19.7
 
-runc_version = 1.1.4
+runc_version = 1.1.5
 runc_buildimage = $(golang_buildimage)
 runc_build_go_tags = "seccomp"
 #runc_build_go_cgo_enabled =
