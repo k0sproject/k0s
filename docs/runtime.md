@@ -146,4 +146,4 @@ Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the
 ### Using dockershim
 
 To run k0s with a pre-existing Dockershim setup, run the worker with `k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock <token>`.
-A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our [k0s dockershim guide](./docker-shim.md).
+A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our [k0s dockershim guide](./dockershim.md).

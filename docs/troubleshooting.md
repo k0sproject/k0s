@@ -144,11 +144,27 @@ LD_FLAGS="--custom-flag=value" make k0s
 
 ## I'm using custom CRI and missing some labels in Prometheus metrics
 
-Due to removal of the embedded docker-shim from Kubelet, the Kubelets embedded [cadvisor](https://github.com/google/cadvisor) metrics got slightly broken. If your container runtime is a custom containerd you can add `--kubelet-extra-flags="--containerd=<path/to/containerd.sock>"` into k0s worker startup. That configures the kubelet embedded cadvisor to talk directly with containerd to gather the metrics and thus gets the expected labels in place.
+Due to removal of the embedded dockershim from Kubelet, the Kubelet's embedded
+[cAdvisor] metrics got slightly broken. If your container runtime is a custom
+containerd you can add
+`--kubelet-extra-flags="--containerd=<path/to/containerd.sock>"` into k0s worker
+startup. That configures the Kubelet embedded cAdvisor to talk directly with
+containerd to gather the metrics and thus gets the expected labels in place.
 
-Unfortunately this does not work on when using Docker via cri-dockerd shim. There's currently no easy workarounds for this.
+Unfortunately this does not work on when using Docker via cri-dockerd shim.
+Currently, there is no easy solution to this problem.
 
-In the future kubelet will be refactored to get the container metrics from CRI interface rather than from the runtime directly. This work is specified and followed up in [KEP-2371](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md) but until that work completes the only option is to run a standalone cAdvisor. There's ongoing [effort](https://github.com/kubernetes/website/issues/30681) to both document the current shortcomings and how to run standalone cAdvisor in Kubernetes community.
+In the future Kubelet will be refactored to get the container metrics from CRI
+interface rather than from the runtime directly. This work is specified and
+followed up in [KEP-2371] but until that work completes the only option is to
+run a standalone cAdvisor. The [known issues][dockershim-known-issues]
+section in the official Kubernetes documentation about migrating away from
+dockershim explains the current shortcomings and shows how to run cAdvisor
+as a standalone DaemonSet.
+
+[cAdvisor]: https://github.com/google/cadvisor
+[KEP-2371]: https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/2371-cri-pod-container-stats/README.md
+[dockershim-known-issues]: https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/check-if-dockershim-removal-affects-you/#some-filesystem-metrics-are-missing-and-the-metrics-format-is-different
 
 ## Customized configurations
 
