@@ -88,6 +88,15 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			assert.Empty(t, stderr)
 		}},
 
+		{"unknown_subcommand", "%s i-dont-exist", func(t *testing.T, stdout, stderr string, err error) {
+			var exitErr *ssh.ExitError
+			if assert.ErrorAs(t, err, &exitErr, "Error doesn't have an exit code") {
+				assert.Equal(t, 1, exitErr.ExitStatus(), "Exit code mismatch")
+			}
+			assert.Empty(t, stdout)
+			assert.Equal(t, "Error: unknown command \"i-dont-exist\" for \"k0s kubectl\"\n", stderr)
+		}},
+
 		{"plugin_list", "%s plugin list --name-only", func(t *testing.T, stdout, stderr string, err error) {
 			assert.NoError(t, err)
 			assert.Equal(t, "The following compatible plugins are available:\n\nkubectl-foo\n", stdout)

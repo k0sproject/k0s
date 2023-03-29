@@ -89,6 +89,13 @@ func NewK0sKubectlCmd() *cobra.Command {
 	cmd := kubectl.NewDefaultKubectlCommandWithArgs(args)
 	cmd.Aliases = []string{"kc"}
 
+	// The basic kubectl command will never accept any arguments. This will be
+	// handled more or less automatically by Cobra when used as a root command.
+	// When run as a subcommand, Cobra will instead pass all of the arguments to
+	// the command's run methods, which will trigger some unexpected output.
+	// Address this by specifying NoArgs for the kubectl command.
+	cmd.Args = cobra.NoArgs
+
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
