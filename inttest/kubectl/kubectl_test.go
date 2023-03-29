@@ -20,8 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"strings"
 	"testing"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -29,119 +27,128 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/crypto/ssh"
 )
 
 type KubectlSuite struct {
 	common.FootlooseSuite
 }
 
-const pluginContent = `#!/usr/bin/env sh
+const pluginContent = `#!/bin/sh
 
-echo foo-plugin
+echo "${0##*/}" "$#" "$@"
 `
 
 func (s *KubectlSuite) TestEmbeddedKubectl() {
-	s.Require().NoError(s.InitController(0))
-	s.PutFile(s.ControllerNode(0), "/bin/kubectl-foo", pluginContent)
-
-	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
+	sshConn, err := s.SSH(s.Context(), s.ControllerNode(0))
 	s.Require().NoError(err, "failed to SSH into controller")
-	defer ssh.Disconnect()
+	defer sshConn.Disconnect()
 
-	_, err = ssh.ExecWithOutput(s.Context(), "chmod +x /bin/kubectl-foo")
-	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), "ln -s /usr/local/bin/k0s /usr/bin/kubectl")
-	s.Require().NoError(err)
+	// Create a dummy kubectl plugin for testing
+	s.MakeDir(s.ControllerNode(0), "/inttest/bin")
+	s.PutFile(s.ControllerNode(0), "/inttest/bin/kubectl-foo", pluginContent)
+
+	// Create the kubectl symlink and make plugins executable
+	s.Require().NoError(sshConn.Exec(s.Context(), `
+		mkdir /inttest/symlink &&
+		ln -s /usr/local/bin/k0s /inttest/symlink/kubectl &&
+		chmod +x /inttest/bin/kubectl-*
+	`, common.SSHStreams{}))
+
+	s.Require().NoError(s.InitController(0))
 
 	s.T().Log("Check that different ways to call kubectl subcommand work")
 
 	callingConventions := []struct {
-		name string
-		cmd  []string
+		name    string
+		cmdline string
 	}{
-		{"full_subcommand", []string{"/usr/local/bin/k0s", "kubectl"}},
-		{"short_subcommand", []string{"/usr/local/bin/k0s", "kc"}},
-		{"symlink", []string{"/usr/bin/kubectl"}},
+		{"full_subcommand", "/usr/local/bin/k0s kubectl"},
+		{"short_subcommand", "/usr/local/bin/k0s kc"},
+		{"symlink", "/inttest/symlink/kubectl"},
 	}
 
 	subcommands := []struct {
-		name  string
-		cmd   []string
-		check func(t *testing.T, output string)
+		name    string
+		cmdline string
+		check   func(t *testing.T, stdout, stderr string, err error)
 	}{
-		{"plain", nil, func(t *testing.T, output string) {
-			assert.Contains(t, output, `kubectl controls the Kubernetes cluster manager.`)
+		{"plain", "%s", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Contains(t, stdout, "kubectl controls the Kubernetes cluster manager.\n")
+			assert.Empty(t, stderr)
 		}},
 
-		{"JSON_version", []string{"version", "--output=json"}, func(t *testing.T, output string) {
+		{"JSON_version", "%s version --output=json", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
 			var versions map[string]any
-			require.NoError(t, json.Unmarshal([]byte(output), &versions))
+			require.NoError(t, json.Unmarshal([]byte(stdout), &versions))
 			checkClientVersion(t, requiredValue[map[string]any](t, versions, "clientVersion"))
 			checkServerVersion(t, requiredValue[map[string]any](t, versions, "serverVersion"))
+			assert.Empty(t, stderr)
 		}},
 
-		{"plugin_loader", []string{"foo"}, func(t *testing.T, output string) {
-			assert.Equal(t, "foo-plugin", output)
+		{"plugin_list", "%s plugin list --name-only", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Equal(t, "The following compatible plugins are available:\n\nkubectl-foo\n", stdout)
+			assert.Empty(t, stderr)
+		}},
+
+		{"plugin_loader_foo", "%s foo", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Equal(t, "kubectl-foo 0\n", stdout)
+			assert.Empty(t, stderr)
+		}},
+		{"plugin_loader_foo_bar", "%s foo bar", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Equal(t, "kubectl-foo 1 bar\n", stdout)
+			assert.Empty(t, stderr)
+		}},
+		{"plugin_loader_foo_bar_arg", "%s foo --bar", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Equal(t, "kubectl-foo 1 --bar\n", stdout)
+			assert.Empty(t, stderr)
+		}},
+		{"plugin_loader_bar_arg_foo", "%s --bar foo", func(t *testing.T, stdout, stderr string, err error) {
+			var exitErr *ssh.ExitError
+			if assert.ErrorAs(t, err, &exitErr, "Error doesn't have an exit code") {
+				assert.Equal(t, 1, exitErr.ExitStatus(), "Exit code mismatch")
+			}
+			assert.Empty(t, stdout)
+			assert.Equal(t, "Error: unknown flag: --bar\nSee 'k0s kubectl --help' for usage.\n", stderr)
+		}},
+
+		// This test executes without having kubectl in PATH
+		{"plugin_loader_symlink_warning", "PATH=/inttest/bin %s foo", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.Equal(t, "kubectl-foo 0\n", stdout)
+			assert.Contains(t, stderr, "You can use k0s as a drop-in replacement")
 		}},
 	}
 
 	for _, callingConvention := range callingConventions {
 		for _, subcommand := range subcommands {
 			s.T().Run(fmt.Sprint(callingConvention.name, "_", subcommand.name), func(t *testing.T) {
-				cmd := strings.Join(append(callingConvention.cmd, subcommand.cmd...), " ")
+				cmd := fmt.Sprintf(subcommand.cmdline, callingConvention.cmdline)
+				cmd = fmt.Sprintf("PATH=/inttest/bin:/inttest/symlink %s", cmd)
 				t.Log("Executing", cmd)
-				output, err := ssh.ExecWithOutput(s.Context(), cmd)
+
+				var stdoutBuf bytes.Buffer
+				var stderrBuf bytes.Buffer
+				err := sshConn.Exec(s.Context(), cmd, common.SSHStreams{Out: &stdoutBuf, Err: &stderrBuf})
+				stdout, stderr := stdoutBuf.String(), stderrBuf.String()
 				t.Cleanup(func() {
 					if t.Failed() {
 						t.Log("Error: ", err)
-						t.Log("Output: ", output)
+						t.Log("Stdout: ", stdout)
+						t.Log("Stderr: ", stderr)
 					}
 				})
-				assert.NoError(t, err)
-				subcommand.check(t, output)
+
+				subcommand.check(t, stdout, stderr, err)
 			})
 		}
 	}
-
-	s.T().Run("plugin list", func(t *testing.T) {
-		require := require.New(t)
-
-		s.PutFile(s.ControllerNode(0), "/bin/kubectl-testplug", "#!/bin/sh\necho \"testplug called with args: $*\"\n")
-		_, err := ssh.ExecWithOutput(s.Context(), "chmod +x /bin/kubectl-testplug")
-		require.NoError(err)
-
-		output, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubectl plugin list")
-		require.NoError(err)
-		require.Contains(output, "kubectl-testplug")
-	})
-
-	s.T().Run("plugin arg passing", func(t *testing.T) {
-		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s kubectl testplug hello")
-		s.Require().NoError(err)
-		s.Require().Contains(out, "testplug called with args: hello")
-
-		out, err = ssh.ExecWithOutput(s.Context(), "kubectl testplug --help")
-		s.Require().NoError(err)
-		s.Require().Equal("testplug called with args: --help", out)
-	})
-
-	// Try with kubectl symlink, a warning should not be printed
-	var errOut bytes.Buffer
-	streams := common.SSHStreams{In: nil, Out: io.Discard, Err: &errOut}
-	s.Require().NoError(ssh.Exec(s.Context(), "/usr/local/bin/k0s kubectl testplug hello", streams))
-	s.Require().NotContains(errOut.String(), "You can use k0s as a drop-in replacement")
-
-	// Try without kubectl symlink, a warning should be printed
-	_, err = ssh.ExecWithOutput(s.Context(), "rm -f /usr/bin/kubectl /bin/kubectl /usr/local/bin/kubectl")
-	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), "command -v kubectl")
-	s.Require().Error(err)
-	errOut.Reset()
-	s.Require().NoError(ssh.Exec(s.Context(), "/usr/local/bin/k0s kubectl testplug hello", streams))
-	s.Require().Contains(errOut.String(), "You can use k0s as a drop-in replacement")
-
-	// restore link for any other tests
-	_, _ = ssh.ExecWithOutput(s.Context(), "ln -s /usr/local/bin/k0s /usr/bin/kubectl")
 }
 
 func requiredValue[V any](t *testing.T, obj map[string]any, key string) V {
