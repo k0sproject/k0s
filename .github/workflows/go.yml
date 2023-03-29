@@ -198,7 +198,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -253,7 +253,7 @@ jobs:
         run: .github/workflows/prepare-docker-ipv6.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -313,7 +313,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -352,7 +352,7 @@ jobs:
         run: .github/workflows/prepare-build-env.sh
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -418,7 +418,7 @@ jobs:
       # We cannot rely on this for arm: https://github.com/actions/setup-go/issues/106
       - name: Set up Go
         if: matrix.arch != 'arm'
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
