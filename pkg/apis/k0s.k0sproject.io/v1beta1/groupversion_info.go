@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1beta1 contains API Schema definitions for the  v1beta1 API group
-//+kubebuilder:object:generate=true
-//+groupName=k0s.k0sproject.io
+// +kubebuilder:object:generate=true
+// +groupName=k0s.k0sproject.io
 package v1beta1
 
 import (
