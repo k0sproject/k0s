@@ -19,7 +19,7 @@ endif
 K0S_GO_BUILD_CACHE ?= build/cache
 
 GO_SRCS := $(shell find . -type f -name '*.go' -not -path './$(K0S_GO_BUILD_CACHE)/*' -not -path './inttest/*' -not -name '*_test.go' -not -name 'zz_generated*')
-GO_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
+GO_CHECK_UNIT_DIRS := . ./cmd/... ./pkg/... ./internal/... ./static/... ./hack/...
 
 # EMBEDDED_BINS_BUILDMODE can be either:
 #   docker	builds the binaries in docker
@@ -210,12 +210,18 @@ codegen: $(codegen_targets)
 .PHONY: bindata
 bindata: static/zz_generated_assets.go pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 
-.PHONY: lint
-lint: GOLANGCI_LINT_FLAGS ?=
-lint: .k0sbuild.docker-image.k0s go.sum codegen
+.PHONY: lint-copyright
+lint-copyright:
 	hack/copyright.sh
+
+.PHONY: lint-go
+lint-go: GOLANGCI_LINT_FLAGS ?=
+lint-go: .k0sbuild.docker-image.k0s go.sum codegen
 	CGO_ENABLED=0 $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v$(golangci-lint_version)
-	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_DIRS)
+	$(GO_ENV) golangci-lint run --verbose $(GOLANGCI_LINT_FLAGS) $(GO_LINT_DIRS)
+
+.PHONY: lint
+lint: lint-copyright lint-go
 
 airgap-images.txt: k0s .k0sbuild.docker-image.k0s 
 	$(GO_ENV) ./k0s airgap list-images --all > '$@' || { \
@@ -254,7 +260,7 @@ smoketests: $(smoketests)
 .PHONY: check-unit
 check-unit: GO_TEST_RACE ?= -race
 check-unit: go.sum codegen
-	$(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_DIRS)`
+	$(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
 
 .PHONY: check-image-validity
 check-image-validity: go.sum

@@ -44,11 +44,12 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.Require().NoError(err)
 
 	// Wait till we see kube-router DS created
-	watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
+	err = watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
 		WithObjectName("kube-router").
 		Until(s.Context(), func(ds *appsv1.DaemonSet) (bool, error) {
 			return true, nil
 		})
+	s.Require().NoError(err)
 
 	// Restart the controller with new config, should keep kube-router still in use
 	sshC1, err := s.SSH(s.Context(), s.ControllerNode(0))
@@ -60,14 +61,15 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 	s.T().Log("restarting k0s")
 	_, err = sshC1.ExecWithOutput(s.Context(), "rc-service k0scontroller restart")
 	s.Require().NoError(err)
-	s.WaitForKubeAPI(s.ControllerNode(0))
+	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
 
 	// check that we see the expeted warning event
-	watch.Events(kc.CoreV1().Events("kube-system")).
+	err = watch.Events(kc.CoreV1().Events("kube-system")).
 		WithFieldSelector(fields.ParseSelectorOrDie("involvedObject.name=k0s")).
 		Until(s.Context(), func(e *corev1.Event) (bool, error) {
 			return e.Type == "Warning" && strings.Contains(e.Message, "cannot change CNI provider from kuberouter to calico"), nil
 		})
+	s.Require().NoError(err)
 }
 
 func TestCNIChangeSuite(t *testing.T) {

@@ -115,7 +115,7 @@ func (s *ContainerDImportsSuite) addContainerDRuntime() {
 	defer workerSSH.Disconnect()
 
 	// Make an "alias" runtime using runc
-	workerSSH.Exec(ctx, "ln -s /var/lib/k0s/bin/runc /var/lib/k0s/bin/runfoo", common.SSHStreams{})
+	s.Require().NoError(workerSSH.Exec(ctx, "ln -s /var/lib/k0s/bin/runc /var/lib/k0s/bin/runfoo", common.SSHStreams{}))
 
 	// Configure containerd to use it
 	s.PutFile(s.WorkerNode(0), "/etc/k0s/containerd.d/foo.toml", fooRuntimeConfig)

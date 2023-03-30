@@ -49,7 +49,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -201,7 +200,7 @@ func (s *FootlooseSuite) SetupSuite() {
 		// Get a fresh context for the cleanup tasks.
 		ctx, cancel := signalAwareCtx(context.Background())
 		defer cancel(nil)
-		s.cleanupSuite(t, ctx)
+		s.cleanupSuite(ctx, t)
 	}()
 
 	s.waitForSSH(ctx)
@@ -321,8 +320,7 @@ func (s *FootlooseSuite) TearDownSuite() {
 
 // cleanupSuite does the cleanup work, namely destroy the footloose machines.
 // Intended to be called after the suite's context has been canceled.
-func (s *FootlooseSuite) cleanupSuite(t *testing.T, ctx context.Context) {
-
+func (s *FootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 	if t.Failed() {
 		var wg sync.WaitGroup
 		tmpDir := os.TempDir()
@@ -350,7 +348,7 @@ func (s *FootlooseSuite) cleanupSuite(t *testing.T, ctx context.Context) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				s.dumpNodeLogs(t, ctx, node, tmpDir)
+				s.dumpNodeLogs(ctx, t, node, tmpDir)
 			}()
 		}
 		wg.Wait()
@@ -399,7 +397,7 @@ func (s *FootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t
 	t.Logf("Collected troubleshoot support bundle on %s into %s", node, filePath)
 }
 
-func (s *FootlooseSuite) dumpNodeLogs(t *testing.T, ctx context.Context, node, dir string) {
+func (s *FootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, dir string) {
 	ssh, err := s.SSH(ctx, node)
 	if err != nil {
 		t.Logf("Failed to ssh into %s to get logs: %s", node, err.Error())
@@ -1430,7 +1428,7 @@ func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
 }
 
 func (s *FootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
-	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), v1.ListOptions{
+	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), metav1.ListOptions{
 		Limit: 100,
 	}); s.NoError(err) {
 		s.T().Logf("Found %d pods in kube-system", len(pods.Items))
