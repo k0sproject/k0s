@@ -30,9 +30,9 @@ type provider struct {
 
 var _ cloudprovider.Interface = (*provider)(nil)
 
-// NewProvider creates a new `cloudprovider.Interfaces` using the
-// provided `AddressCollector`
-func NewProvider(ac AddressCollector) cloudprovider.Interface {
+// newProvider creates a new cloud provider using the provided
+// `AddressCollector`
+func newProvider(ac AddressCollector) *provider {
 	return &provider{
 		instances: newInstancesV2(ac),
 	}

@@ -21,13 +21,31 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/spf13/pflag"
+
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
 	"k8s.io/cloud-provider/app/config"
 	"k8s.io/cloud-provider/options"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cliflag "k8s.io/component-base/cli/flag"
+	"k8s.io/component-base/version/verflag"
 )
+
+const (
+	// DefaultBindPort is the default port for the cloud controller manager
+	// server. This value may be overridden by a flag at startup.
+	//
+	// (The constant has been aliased from k8s.io/cloud-provider, as importing
+	// that package directly calls some init functions that register unwanted
+	// global CLI flags. This package's init function suppresses those flags.)
+	DefaultBindPort = cloudprovider.CloudControllerManagerPort
+)
+
+func init() {
+	hideUndesiredGlobalFlags()
+}
 
 type Command func(stopCh <-chan struct{})
 
@@ -60,7 +78,7 @@ func NewCommand(c Config) (Command, error) {
 
 	cloudInitializer := func(*config.CompletedConfig) cloudprovider.Interface {
 		// Returns the "k0s cloud provider" using the specified `AddressCollector`
-		return NewProvider(c.AddressCollector)
+		return newProvider(c.AddressCollector)
 	}
 
 	// K0s only supports the cloud-node controller, so only use that.
@@ -85,4 +103,15 @@ func NewCommand(c Config) (Command, error) {
 			logrus.WithError(err).Errorf("Failed to execute k0s cloud provider")
 		}
 	}, nil
+}
+
+// hideUndesiredGlobalFlags hides some global flags registered by k8s.io
+// components, so that they aren't displayed in help texts. These flags will
+// still be accepted by Cobra, i.e. they won't cause flag parsing errors, but
+// that's all that can be done, since Cobra doesn't allow removing flags, nor is
+// there a way to intercept and suppress their addition.
+func hideUndesiredGlobalFlags() {
+	var flagsToHide pflag.FlagSet
+	verflag.AddFlags(&flagsToHide)
+	flagsToHide.VisitAll(func(f *pflag.Flag) { f.Hidden = true })
 }

@@ -32,7 +32,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func checkKubectlInPath() {
@@ -65,9 +64,6 @@ func (h *kubectlPluginHandler) Execute(executablePath string, cmdArgs, environme
 }
 
 func NewK0sKubectlCmd() *cobra.Command {
-	_ = pflag.CommandLine.MarkHidden("log-flush-frequency")
-	_ = pflag.CommandLine.MarkHidden("version")
-
 	var idx int
 	for i, arg := range os.Args {
 		if arg == "kubectl" || arg == "kc" {
