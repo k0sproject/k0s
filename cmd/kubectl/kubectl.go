@@ -96,9 +96,20 @@ func NewK0sKubectlCmd() *cobra.Command {
 	// Address this by specifying NoArgs for the kubectl command.
 	cmd.Args = cobra.NoArgs
 
+	// Add some additional kubectl flags:
+	persistentFlags := cmd.PersistentFlags()
+	logs.AddFlags(persistentFlags)                         // This is done by k8s.io/component-base/cli
+	persistentFlags.AddFlagSet(config.GetKubeCtlFlagSet()) // This is k0s specific
+
 	// Get handle on the original kubectl prerun so we can call it later
 	originalPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// In vanilla kubectl, log initialization and flushing is handled by
+		// k8s.io/component-base/cli. But k0s doesn't use it, so it needs to
+		// deal with that manually.
+		logs.InitLogs()
+		cobra.OnFinalize(logs.FlushLogs)
+
 		if err := fallbackToK0sKubeconfig(cmd); err != nil {
 			return err
 		}
@@ -110,10 +121,10 @@ func NewK0sKubectlCmd() *cobra.Command {
 		return originalPreRunE(cmd, args)
 	}
 
-	cmd.PersistentFlags().AddFlagSet(config.GetKubeCtlFlagSet())
-
 	originalRun := cmd.Run
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		defer logs.FlushLogs() // This is done by k8s.io/component-base/cli
+
 		if len(args) > 0 {
 			if err := kubectl.HandlePluginCommand(&kubectlPluginHandler{}, args); err != nil {
 				// note: the plugin exec will replace the k0s process and exit on it's own,
@@ -126,8 +137,6 @@ func NewK0sKubectlCmd() *cobra.Command {
 
 		return nil
 	}
-
-	logs.AddFlags(cmd.PersistentFlags())
 
 	return cmd
 }
