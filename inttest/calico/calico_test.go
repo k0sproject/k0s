@@ -98,6 +98,7 @@ func (s *CalicoSuite) TestK0sGetsUp() {
 
 	out, err := common.PodExecCmdOutput(kc, restConfig, sourcePod.Name, sourcePod.Namespace, fmt.Sprintf("/usr/bin/wget -qO- %s", targetPod.Status.PodIP))
 	s.Require().NoError(err, out)
+	s.T().Log(out)
 	s.Require().True(strings.Contains(out, "Welcome to nginx"))
 }
 
