@@ -47,6 +47,8 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 	// Create a dummy kubectl plugin for testing
 	s.MakeDir(s.ControllerNode(0), "/inttest/bin")
 	s.PutFile(s.ControllerNode(0), "/inttest/bin/kubectl-foo", pluginContent)
+	// Used to ensure that kubectl plugins don't obstruct regular k0s commands
+	s.PutFile(s.ControllerNode(0), "/inttest/bin/kubectl-airgap", pluginContent)
 
 	// Create the kubectl symlink and make plugins executable
 	s.Require().NoError(sshConn.Exec(s.Context(), `
@@ -57,9 +59,23 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 
 	s.Require().NoError(s.InitController(0))
 
-	s.T().Log("Check that different ways to call kubectl subcommand work")
+	type checkFunc func(t *testing.T, stdout, stderr string, err error)
+	type cmdlineTest struct {
+		name    string
+		cmdline string
+		check   checkFunc
+	}
 
-	callingConventions := []struct {
+	commands := []cmdlineTest{
+		// Check that kubectl plugins don't obstruct regular k0s commands
+		{"no_plugins_for_airgap", "%s airgap list-images", func(t *testing.T, stdout, stderr string, err error) {
+			assert.NoError(t, err)
+			assert.NotContains(t, stdout, "kubectl-airgap")
+			assert.Empty(t, stderr)
+		}},
+	}
+
+	kubectlCallingConventions := []struct {
 		name    string
 		cmdline string
 	}{
@@ -68,11 +84,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		{"symlink", "/inttest/symlink/kubectl"},
 	}
 
-	subcommands := []struct {
-		name    string
-		cmdline string
-		check   func(t *testing.T, stdout, stderr string, err error)
-	}{
+	kubectlCommands := []cmdlineTest{
 		{"plain", "%s", func(t *testing.T, stdout, stderr string, err error) {
 			assert.NoError(t, err)
 			assert.Contains(t, stdout, "kubectl controls the Kubernetes cluster manager.\n")
@@ -88,7 +100,7 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			assert.Empty(t, stderr)
 		}},
 
-		{"unknown_subcommand", "%s i-dont-exist", func(t *testing.T, stdout, stderr string, err error) {
+		{"unknown_command", "%s i-dont-exist", func(t *testing.T, stdout, stderr string, err error) {
 			var exitErr *ssh.ExitError
 			if assert.ErrorAs(t, err, &exitErr, "Error doesn't have an exit code") {
 				assert.Equal(t, 1, exitErr.ExitStatus(), "Exit code mismatch")
@@ -96,10 +108,18 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 			assert.Empty(t, stdout)
 			assert.Equal(t, "Error: unknown command \"i-dont-exist\" for \"k0s kubectl\"\n", stderr)
 		}},
+		{"unknown_subcommand", "%s version i-dont-exist", func(t *testing.T, stdout, stderr string, err error) {
+			var exitErr *ssh.ExitError
+			if assert.ErrorAs(t, err, &exitErr, "Error doesn't have an exit code") {
+				assert.Equal(t, 1, exitErr.ExitStatus(), "Exit code mismatch")
+			}
+			assert.Empty(t, stdout)
+			assert.Equal(t, "error: extra arguments: [i-dont-exist]\n", stderr)
+		}},
 
 		{"plugin_list", "%s plugin list --name-only", func(t *testing.T, stdout, stderr string, err error) {
 			assert.NoError(t, err)
-			assert.Equal(t, "The following compatible plugins are available:\n\nkubectl-foo\n", stdout)
+			assert.Equal(t, "The following compatible plugins are available:\n\nkubectl-airgap\nkubectl-foo\n", stdout)
 			assert.Empty(t, stderr)
 		}},
 
@@ -135,26 +155,35 @@ func (s *KubectlSuite) TestEmbeddedKubectl() {
 		}},
 	}
 
-	for _, callingConvention := range callingConventions {
-		for _, subcommand := range subcommands {
-			s.T().Run(fmt.Sprint(callingConvention.name, "_", subcommand.name), func(t *testing.T) {
-				cmd := fmt.Sprintf(subcommand.cmdline, callingConvention.cmdline)
-				cmd = fmt.Sprintf("PATH=/inttest/bin:/inttest/symlink %s", cmd)
-				t.Log("Executing", cmd)
+	execTest := func(t *testing.T, cmdline string, check checkFunc) {
+		cmdline = fmt.Sprintf("PATH=/inttest/bin:/inttest/symlink %s", cmdline)
+		t.Log("Executing", cmdline)
 
-				var stdoutBuf bytes.Buffer
-				var stderrBuf bytes.Buffer
-				err := sshConn.Exec(s.Context(), cmd, common.SSHStreams{Out: &stdoutBuf, Err: &stderrBuf})
-				stdout, stderr := stdoutBuf.String(), stderrBuf.String()
-				t.Cleanup(func() {
-					if t.Failed() {
-						t.Log("Error: ", err)
-						t.Log("Stdout: ", stdout)
-						t.Log("Stderr: ", stderr)
-					}
-				})
+		var stdoutBuf bytes.Buffer
+		var stderrBuf bytes.Buffer
+		err := sshConn.Exec(s.Context(), cmdline, common.SSHStreams{Out: &stdoutBuf, Err: &stderrBuf})
+		stdout, stderr := stdoutBuf.String(), stderrBuf.String()
+		t.Cleanup(func() {
+			if t.Failed() {
+				t.Log("Error: ", err)
+				t.Log("Stdout: ", stdout)
+				t.Log("Stderr: ", stderr)
+			}
+		})
 
-				subcommand.check(t, stdout, stderr, err)
+		check(t, stdout, stderr, err)
+	}
+
+	for _, command := range commands {
+		s.T().Run(command.name, func(t *testing.T) {
+			execTest(t, fmt.Sprintf(command.cmdline, "/usr/local/bin/k0s"), command.check)
+		})
+	}
+
+	for _, callingConvention := range kubectlCallingConventions {
+		for _, command := range kubectlCommands {
+			s.T().Run(fmt.Sprint(callingConvention.name, "_", command.name), func(t *testing.T) {
+				execTest(t, fmt.Sprintf(command.cmdline, callingConvention.cmdline), command.check)
 			})
 		}
 	}
