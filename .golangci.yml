@@ -22,6 +22,14 @@ linters-settings:
   depguard:
     packages:
       - gopkg.in/yaml*
+    additional-guards:
+      # Only allow usages of the k8s cloud provider from within the k0s cloud
+      # provider package. This is to ensure that it's not leaking global flags
+      # into k0s.
+      - packages:
+          - k8s.io/cloud-provider*
+        ignore-file-rules:
+          - "**/pkg/k0scloudprovider/*.go"
   golint:
     min-confidence: 0
   goheader:
