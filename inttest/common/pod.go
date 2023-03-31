@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -31,14 +32,16 @@ func PodExecCmdOutput(client kubernetes.Interface, config *restclient.Config, po
 		return "", err
 	}
 
-	var b bytes.Buffer
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 	err = exec.Stream(remotecommand.StreamOptions{
-		Stdout: &b,
-		Stderr: &b,
+		Stdout: &stdout,
+		Stderr: &stderr,
 	})
+
 	if err != nil {
-		return b.String(), err
+		return stdout.String(), fmt.Errorf("%w: %s", err, stderr.String())
 	}
 
-	return b.String(), nil
+	return stdout.String(), nil
 }
