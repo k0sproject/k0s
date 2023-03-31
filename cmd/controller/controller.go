@@ -431,7 +431,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.KubeletConfigComponentName) {
-		c.ClusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory))
+		c.ClusterComponents.Add(ctx, controller.NewKubeletConfig(c.K0sVars, adminClientFactory, c.NodeConfig))
 	}
 
 	if !slices.Contains(c.DisableComponents, constant.SystemRbacComponentName) {
