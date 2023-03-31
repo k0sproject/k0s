@@ -53,15 +53,17 @@ type KubeletConfig struct {
 	kubeClientFactory k8sutil.ClientFactoryInterface
 	k0sVars           constant.CfgVars
 	previousProfiles  v1beta1.WorkerProfiles
+	nodeConfig        *v1beta1.ClusterConfig
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *KubeletConfig {
+func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) *KubeletConfig {
 	return &KubeletConfig{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeletconfig"}),
 
 		kubeClientFactory: clientFactory,
 		k0sVars:           k0sVars,
+		nodeConfig:        nodeConfig,
 	}
 }
 
@@ -123,7 +125,7 @@ func (k *KubeletConfig) defaultProfilesExist(ctx context.Context) (bool, error) 
 }
 
 func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*bytes.Buffer, error) {
-	dnsAddress, err := clusterSpec.Spec.Network.DNSAddress()
+	dnsAddress, err := k.nodeConfig.Spec.Network.DNSAddress()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DNS address for kubelet config: %v", err)
 	}
