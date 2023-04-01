@@ -31,6 +31,7 @@ import (
 )
 
 func Test_KubeletConfig(t *testing.T) {
+	cfg := config.DefaultClusterConfig()
 	k0sVars := constant.GetConfig(t.TempDir())
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
@@ -61,12 +62,12 @@ func Test_KubeletConfig(t *testing.T) {
 		), profile["clusterDomain"])
 	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
-		k := defaultConfigWithUserProvidedProfiles(t)
-		buf, err := k.createProfiles(cfg)
+		k, cfgWithUserProvidedProfiles := defaultConfigWithUserProvidedProfiles(t)
+		buf, err := k.createProfiles(cfgWithUserProvidedProfiles)
 		require.NoError(t, err)
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
 		expectedManifestsCount := 6
-		require.Len(t, manifestYamls, expectedManifestsCount, "Must have exactly 3 generated manifests per profile")
+		require.Len(t, manifestYamls, expectedManifestsCount, "Must have exactly 6 generated manifests per profile")
 
 		t.Run("final_output_must_have_manifests_for_profiles", func(t *testing.T) {
 			// check that each profile has config map, role and role binding
@@ -116,7 +117,8 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 }
 
-func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
+func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *config.ClusterConfig) {
+	cfg := config.DefaultClusterConfig()
 	k0sVars := constant.GetConfig(t.TempDir())
 	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
 
@@ -157,7 +159,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 			Config: wcy,
 		},
 	)
-	return k
+	return k, cfg
 }
 
 func requireConfigMap(t *testing.T, spec string, name string) {
