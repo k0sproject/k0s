@@ -33,6 +33,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -54,6 +55,45 @@ func Poll(ctx context.Context, condition wait.ConditionWithContextFunc) error {
 // the context isn't canceled.
 func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error {
 	return WaitForDaemonSet(ctx, kc, "kube-router")
+}
+
+// WaitForCoreDNSReady waits to see all coredns pods healthy as long as the context isn't canceled.
+// It also waits to see all the related svc endpoints to be ready to make sure coreDNS is actually
+// ready to serve requests.
+func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
+	err := WaitForDeployment(ctx, kc, "coredns", "kube-system")
+	if err != nil {
+		return err
+	}
+	// Wait till we see the svc endpoints ready
+	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (bool, error) {
+		epSlices, err := kc.DiscoveryV1().EndpointSlices("kube-system").List(ctx, metav1.ListOptions{
+			LabelSelector: "k8s-app=kube-dns",
+		})
+
+		// NotFound is ok, it might not be created yet
+		if err != nil && !apierrors.IsNotFound(err) {
+			return true, err
+		} else if err != nil {
+			return false, nil
+		}
+
+		if len(epSlices.Items) < 1 {
+			return false, nil
+		}
+
+		// Check that all addresses show ready conditions
+		for _, epSlice := range epSlices.Items {
+			for _, endpoint := range epSlice.Endpoints {
+				if !(*endpoint.Conditions.Ready && *endpoint.Conditions.Serving) {
+					// endpoint not ready&serving yet
+					return false, nil
+				}
+			}
+		}
+
+		return true, nil
+	})
 }
 
 func WaitForMetricsReady(ctx context.Context, c *rest.Config) error {
