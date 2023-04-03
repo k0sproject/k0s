@@ -75,7 +75,7 @@ func DefaultKubeProxy() *KubeProxy {
 
 func DefaultKubeProxyIPTables() *KubeProxyIPTablesConfiguration {
 	return &KubeProxyIPTablesConfiguration{
-		MasqueradeAll: true,
+		MasqueradeAll: false,
 		SyncPeriod:    metav1.Duration{Duration: 0},
 		MinSyncPeriod: metav1.Duration{Duration: 0},
 		MasqueradeBit: nil,
