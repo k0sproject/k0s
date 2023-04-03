@@ -40,24 +40,13 @@ func (d FileSystemStep) Name() string {
 }
 
 func (d FileSystemStep) Backup() (StepResult, error) {
-	s, err := os.Stat(d.path)
-	if os.IsNotExist(err) {
-		logrus.Debugf("Path `%s` does not exist, skipping...", d.path)
-		return StepResult{}, nil
-	}
-	if err != nil {
-		return StepResult{}, fmt.Errorf("can't stat path `%s`: %v", d.path, err)
-	}
-	if s.IsDir() {
-		return d.dir()
-	}
-	return StepResult{filesForBackup: []string{d.path}}, nil
-}
-
-func (d FileSystemStep) dir() (StepResult, error) {
 	var files []string
 	if err := filepath.Walk(d.path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			if os.IsNotExist(err) {
+				logrus.Debugf("Path `%s` does not exist, skipping...", d.path)
+				return nil
+			}
 			return err
 		}
 		files = append(files, path)
