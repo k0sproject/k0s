@@ -84,8 +84,8 @@ func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
 	return file.Copy(objectPathInArchive, objectPathInRestored)
 }
 
-// NewFilesystemStep constructor
-func NewFilesystemStep(path string) FileSystemStep {
+// NewFileSystemStep constructor
+func NewFileSystemStep(path string) FileSystemStep {
 	return FileSystemStep{path: path}
 
 }
