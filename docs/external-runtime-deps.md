@@ -150,7 +150,12 @@ Optional cgroup controllers:
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
 
-### containerd and AppArmor
+### External soft dependencies
+
+There are a few external tools that may be needed or used under specific
+circumstances:
+
+#### containerd and AppArmor
 
 In order to use containerd in conjunction with [AppArmor], it must be enabled in
 the kernel and the `/sbin/apparmor_parser` executable must be installed on the
@@ -158,6 +163,33 @@ host, otherwise containerd will [disable][cd-aa] AppArmor support.
 
 [cd-aa]: https://github.com/containerd/containerd/blob/v1.6.18/pkg/apparmor/apparmor_linux.go#L34-L45
 [AppArmor]: https://wiki.ubuntu.com/AppArmor
+
+#### iptables
+
+iptables may be executed to detect if there are any existing iptables rules and
+if those are in legacy of nft mode. If iptables is not found, k0s will assume
+that there are no pre-existing iptables rules.
+
+#### useradd / adduser
+
+During `k0s install` the external tool `useradd` will be used on the controllers
+to create system user accounts for k0s. If this does exist it will fall-back to
+busybox's `adduser`.
+
+#### userdel / deluser
+
+`k0s reset` will execute either `userdel` or `deluser` to clean up system user
+accounts.
+
+#### modprobe
+
+On k0s worker will `modprobe` be executed to load missing kernel modules if they
+are not detected.
+
+#### id
+
+External `/usr/bin/id` will be executed as a fallback if local user lookup
+fails, in case NSS is used.
 
 ### Other dependencies in previous versions of k0s
 
