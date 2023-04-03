@@ -22,11 +22,9 @@ package backup
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	cp "github.com/otiai10/copy"
 	"github.com/sirupsen/logrus"
 )
 
@@ -58,19 +56,15 @@ func (d FileSystemStep) Backup() (StepResult, error) {
 }
 
 func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
-	_, childName := path.Split(d.path)
-	objectPathInArchive := path.Join(restoreFrom, childName)
-	objectPathInRestored := path.Join(restoreTo, childName)
-	stat, err := os.Stat(objectPathInArchive)
+	childName := filepath.Base(d.path)
+	objectPathInArchive := filepath.Join(restoreFrom, childName)
+	err := cp.Copy(filepath.Join(restoreFrom, childName), filepath.Join(restoreTo, childName))
 	if os.IsNotExist(err) {
 		logrus.Debugf("Path `%s` not found in the archive, skipping...", objectPathInArchive)
 		return nil
 	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, restoreTo)
-	if stat.IsDir() {
-		return dir.Copy(objectPathInArchive, restoreTo)
-	}
-	return file.Copy(objectPathInArchive, objectPathInRestored)
+	return err
 }
 
 // NewFileSystemStep constructor

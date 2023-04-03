@@ -18,12 +18,10 @@ package dir_test
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,41 +41,4 @@ func TestGetAll(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"dir1"}, dirs)
 	})
-}
-
-func TestCopy_empty(t *testing.T) {
-	src := t.TempDir()
-	dst := t.TempDir()
-	srcDirname := filepath.Base(src)
-
-	require.NoError(t, dir.Copy(src, dst), "Unable to copy empty dir")
-
-	//rmdir will fail if the directory has anything at all
-	require.NoError(t, os.Remove(path.Join(dst, srcDirname)), "Unable to remove supposedly empty dir")
-}
-
-func TestCopy_FilesAndDirs(t *testing.T) {
-	src := t.TempDir()
-	dst := t.TempDir()
-	srcDirname := filepath.Base(src)
-
-	expectedDirs := []string{"dir1/", "dir2/", "dir2/dir1/", "dir2/dir2/"}
-	expectedFiles := []string{"dir1/file1", "dir1/file2", "dir2/file1", "dir2/dir2/file1"}
-
-	for _, dir := range expectedDirs {
-		p := filepath.Join(src, dir)
-		require.NoErrorf(t, os.Mkdir(p, 0700), "Unable to create directory %s", p)
-	}
-
-	for _, file := range expectedFiles {
-		p := filepath.Join(src, file)
-		require.NoError(t, os.WriteFile(p, []byte{}, 0600), "Unable to create file %s:", p)
-	}
-
-	require.NoError(t, dir.Copy(src, dst), "Unable to copy dir with contents")
-
-	destPath := filepath.Join(dst, srcDirname)
-	for _, file := range expectedFiles {
-		assert.FileExists(t, filepath.Join(destPath, file), "File not copied")
-	}
 }
