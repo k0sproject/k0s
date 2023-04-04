@@ -60,7 +60,7 @@ func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error
 // It also waits to see all the related svc endpoints to be ready to make sure coreDNS is actually
 // ready to serve requests.
 func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
-	err := WaitForDeployment(ctx, kc, "coredns", "kube-system")
+	err := WaitForDeployment(ctx, kc, "coredns")
 	if err != nil {
 		return err
 	}
