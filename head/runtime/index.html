@@ -733,19 +733,38 @@
     containerd configuration
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-gvisor" class="md-nav__link">
-    Using gVisor
+    <nav class="md-nav" aria-label="containerd configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-managed-containerd-configuration" class="md-nav__link">
+    User managed containerd configuration
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-nvidia-container-runtime" class="md-nav__link">
-    Using nvidia-container-runtime
+  <a href="#k0s-managed-dynamic-runtime-configuration" class="md-nav__link">
+    k0s managed dynamic runtime configuration
   </a>
+  
+    <nav class="md-nav" aria-label="k0s managed dynamic runtime configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    Examples
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1453,19 +1472,38 @@
     containerd configuration
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-gvisor" class="md-nav__link">
-    Using gVisor
+    <nav class="md-nav" aria-label="containerd configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-managed-containerd-configuration" class="md-nav__link">
+    User managed containerd configuration
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-nvidia-container-runtime" class="md-nav__link">
-    Using nvidia-container-runtime
+  <a href="#k0s-managed-dynamic-runtime-configuration" class="md-nav__link">
+    k0s managed dynamic runtime configuration
   </a>
+  
+    <nav class="md-nav" aria-label="k0s managed dynamic runtime configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    Examples
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1508,6 +1546,12 @@
 <p>k0s uses <a href="https://github.com/containerd/containerd">containerd</a> as the default Container Runtime Interface (CRI) and runc as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.</p>
 <p><img alt="k0s_runtime" src="../img/k0s_runtime.png" /></p>
 <h2 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h2>
+<p>By default k0s manages the full containerd configuration. User has the option of fully overriding, and thus also managing, the configuration themselves.</p>
+<h3 id="user-managed-containerd-configuration">User managed containerd configuration<a class="headerlink" href="#user-managed-containerd-configuration" title="Permanent link">#</a></h3>
+<p>In the default k0s generated configuration there's a "magic" comment telling k0s it is k0s managed:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># k0s_managed=true</span>
+</code></pre></div>
+<p>If you wish to take over the configuration management remove this line.</p>
 <p>To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to <code>/etc/k0s/containerd.toml</code>:</p>
 <div class="highlight"><pre><span></span><code>containerd<span class="w"> </span>config<span class="w"> </span>default<span class="w"> </span>&gt;<span class="w"> </span>/etc/k0s/containerd.toml
 </code></pre></div>
@@ -1527,39 +1571,37 @@
 <span class="k">[grpc]</span>
 <span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span>
 </code></pre></div>
-<p>Finally, if you want to change CRI look into:</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="k">[plugins.&quot;io.containerd.runtime.v1.linux&quot;]</span>
-<span class="w">    </span><span class="n">shim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;containerd-shim&quot;</span>
-<span class="w">    </span><span class="n">runtime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;runc&quot;</span>
-</code></pre></div>
-<h2 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h2>
+<h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
+<p>From 1.27.0 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where user can drop-in partial containerd configuration snippets.</p>
+<p>k0s will automatically pick up these files and adds these in containerd configuration <code>imports</code> list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at <a href="https://github.com/containerd/containerd/pull/8056">containerd#8056</a></p>
+<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
+<p>Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.</p>
+<h4 id="using-gvisor">Using gVisor<a class="headerlink" href="#using-gvisor" title="Permanent link">#</a></h4>
 <p><a href="https://gvisor.dev/docs/">gVisor</a> is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.</p>
 <ol>
 <li>
 <p>Install the needed gVisor binaries into the host.</p>
 <div class="highlight"><pre><span></span><code><span class="o">(</span>
 <span class="w">  </span><span class="nb">set</span><span class="w"> </span>-e
-<span class="w">  </span><span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest
+<span class="w">  </span><span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span>
+<span class="w">  </span><span class="nv">URL</span><span class="o">=</span>https://storage.googleapis.com/gvisor/releases/release/latest/<span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span>
 <span class="w">  </span>wget<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/runsc.sha512<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/gvisor-containerd-shim.sha512<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1<span class="w"> </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span>/containerd-shim-runsc-v1.sha512
 <span class="w">  </span>sha512sum<span class="w"> </span>-c<span class="w"> </span>runsc.sha512<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-c<span class="w"> </span>gvisor-containerd-shim.sha512<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-c<span class="w"> </span>containerd-shim-runsc-v1.sha512
 <span class="w">  </span>rm<span class="w"> </span>-f<span class="w"> </span>*.sha512
-<span class="w">  </span>chmod<span class="w"> </span>a+rx<span class="w"> </span>runsc<span class="w"> </span>gvisor-containerd-shim<span class="w"> </span>containerd-shim-runsc-v1
-<span class="w">  </span>sudo<span class="w"> </span>mv<span class="w"> </span>runsc<span class="w"> </span>gvisor-containerd-shim<span class="w"> </span>containerd-shim-runsc-v1<span class="w"> </span>/usr/local/bin
+<span class="w">  </span>chmod<span class="w"> </span>a+rx<span class="w"> </span>runsc<span class="w"> </span>containerd-shim-runsc-v1
+<span class="w">  </span>sudo<span class="w"> </span>mv<span class="w"> </span>runsc<span class="w"> </span>containerd-shim-runsc-v1<span class="w"> </span>/usr/local/bin
 <span class="o">)</span>
 </code></pre></div>
 <p>Refer to the <a href="https://gvisor.dev/docs/user_guide/install/">gVisor install docs</a> for more information.</p>
 </li>
 <li>
 <p>Prepare the config for <code>k0s</code> managed containerD, to utilize gVisor as additional runtime:</p>
-<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.toml</span>
-<span class="s">disabled_plugins = [&quot;restart&quot;]</span>
-<span class="s">[plugins.linux]</span>
-<span class="s">  shim_debug = true</span>
-<span class="s">[plugins.cri.containerd.runtimes.runsc]</span>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml</span>
+<span class="s">version = 2</span>
+
+<span class="s">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.runsc]</span>
 <span class="s">  runtime_type = &quot;io.containerd.runsc.v1&quot;</span>
 <span class="s">EOF</span>
 </code></pre></div>
@@ -1572,7 +1614,7 @@
 <li>
 <p>Register containerd to the Kubernetes side to make gVisor runtime usable for workloads (by default, containerd uses normal runc as the runtime):</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
-<span class="s">apiVersion: node.k8s.io/v1beta1</span>
+<span class="s">apiVersion: node.k8s.io/v1</span>
 <span class="s">kind: RuntimeClass</span>
 <span class="s">metadata:</span>
 <span class="s">  name: gvisor</span>
@@ -1592,17 +1634,21 @@
 </code></pre></div>
 </li>
 <li>
-<p>(Optional) Verify tht the created nginx pod is running under gVisor runtime:</p>
+<p>(Optional) Verify that the created nginx pod is running under gVisor runtime:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># kubectl exec nginx-gvisor -- dmesg | grep -i gvisor</span>
 <span class="o">[</span><span class="w">    </span><span class="m">0</span>.000000<span class="o">]</span><span class="w"> </span>Starting<span class="w"> </span>gVisor...
 </code></pre></div>
 </li>
 </ol>
-<h2 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h2>
-<p>By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing <code>runc</code> with <code>nvidia-container-runtime</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd]</span>
-<span class="w">    </span><span class="n">default_runtime_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;nvidia&quot;</span>
-<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia]</span>
+<h4 id="using-nvidia-container-runtime">Using <code>nvidia-container-runtime</code><a class="headerlink" href="#using-nvidia-container-runtime" title="Permanent link">#</a></h4>
+<p>First, install the NVIDIA runtime components:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">distribution</span><span class="o">=</span><span class="k">$(</span>.<span class="w"> </span>/etc/os-release<span class="p">;</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$ID$VERSION_ID</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="o">&amp;&amp;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-L<span class="w"> </span>https://nvidia.github.io/nvidia-docker/gpgkey<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>apt-key<span class="w"> </span>add<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="o">&amp;&amp;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-L<span class="w"> </span>https://nvidia.github.io/nvidia-docker/<span class="nv">$distribution</span>/nvidia-docker.list<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/apt/sources.list.d/nvidia-docker.list
+sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>nvidia-container-runtime
+</code></pre></div>
+<p>Next, drop in the containerd runtime configuration snippet into <code>/etc/k0s/containerd.d/nvidia.toml</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia]</span>
 <span class="w">    </span><span class="n">privileged_without_host_devices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
 <span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
@@ -1610,8 +1656,16 @@
 <span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia.options]</span>
 <span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/usr/bin/nvidia-container-runtime&quot;</span>
 </code></pre></div>
+<p>Create the needed <code>RuntimeClass</code>:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | kubectl apply -f -</span>
+<span class="s">apiVersion: node.k8s.io/v1</span>
+<span class="s">kind: RuntimeClass</span>
+<span class="s">metadata:</span>
+<span class="s">  name: nvidia</span>
+<span class="s">handler: nvidia</span>
+<span class="s">EOF</span>
+</code></pre></div>
 <p><strong>Note</strong> Detailed instruction on how to run <code>nvidia-container-runtime</code> on your node is available <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2">here</a>.</p>
-<p>After editing the configuration, restart <code>k0s</code> to get containerd using the newly configured runtime.</p>
 <h2 id="using-custom-cri-runtime">Using custom CRI runtime<a class="headerlink" href="#using-custom-cri-runtime" title="Permanent link">#</a></h2>
 <p><strong>Warning</strong>: You can use your own CRI runtime with k0s (for example, <code>docker</code>). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.</p>
 <p>Use the option <code>--cri-socket</code> to run a k0s worker with a custom CRI runtime. the option takes input in the form of <code>&lt;type&gt;:&lt;socket_path&gt;</code> (for <code>type</code>, use <code>docker</code> for a pure Docker setup and <code>remote</code> for anything else).</p>
