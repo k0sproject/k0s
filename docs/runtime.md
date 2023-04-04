@@ -6,6 +6,18 @@ k0s uses [containerd](https://github.com/containerd/containerd) as the default C
 
 ## containerd configuration
 
+By default k0s manages the full containerd configuration. User has the option of fully overriding, and thus also managing, the configuration themselves.
+
+### User managed containerd configuration
+
+In the default k0s generated configuration there's a "magic" comment telling k0s it is k0s managed:
+
+```toml
+# k0s_managed=true
+```
+
+If you wish to take over the configuration management remove this line.
+
 To make changes to containerd configuration you must first generate a default containerd configuration, with the default values set to `/etc/k0s/containerd.toml`:
 
 ```shell
@@ -34,15 +46,17 @@ state = "/run/k0s/containerd"
   address = "/run/k0s/containerd.sock"
 ```
 
-Finally, if you want to change CRI look into:
+## k0s managed dynamic runtime configuration
 
-```toml
-  [plugins."io.containerd.runtime.v1.linux"]
-    shim = "containerd-shim"
-    runtime = "runc"
-```
+From 1.27.0 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in `/etc/k0s/containerd.d/` where user can drop-in partial containerd configuration snippets.
 
-## Using gVisor
+k0s will automatically pick up these files and adds these in containerd configuration `imports` list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at [containerd#8056](https://github.com/containerd/containerd/pull/8056)
+
+### Examples
+
+Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.
+
+#### Using gVisor
 
 [gVisor](https://gvisor.dev/docs/) is an application kernel, written in Go, that implements a substantial portion of the Linux system call interface. It provides an additional layer of isolation between running applications and the host operating system.
 
@@ -51,16 +65,15 @@ Finally, if you want to change CRI look into:
     ```shell
     (
       set -e
-      URL=https://storage.googleapis.com/gvisor/releases/release/latest
+      ARCH=$(uname -m)
+      URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
       wget ${URL}/runsc ${URL}/runsc.sha512 \
-        ${URL}/gvisor-containerd-shim ${URL}/gvisor-containerd-shim.sha512 \
         ${URL}/containerd-shim-runsc-v1 ${URL}/containerd-shim-runsc-v1.sha512
       sha512sum -c runsc.sha512 \
-        -c gvisor-containerd-shim.sha512 \
         -c containerd-shim-runsc-v1.sha512
       rm -f *.sha512
-      chmod a+rx runsc gvisor-containerd-shim containerd-shim-runsc-v1
-      sudo mv runsc gvisor-containerd-shim containerd-shim-runsc-v1 /usr/local/bin
+      chmod a+rx runsc containerd-shim-runsc-v1
+      sudo mv runsc containerd-shim-runsc-v1 /usr/local/bin
     )
     ```
 
@@ -69,11 +82,10 @@ Finally, if you want to change CRI look into:
 2. Prepare the config for `k0s` managed containerD, to utilize gVisor as additional runtime:
 
     ```shell
-    cat <<EOF | sudo tee /etc/k0s/containerd.toml
-    disabled_plugins = ["restart"]
-    [plugins.linux]
-      shim_debug = true
-    [plugins.cri.containerd.runtimes.runsc]
+    cat <<EOF | sudo tee /etc/k0s/containerd.d/gvisor.toml
+    version = 2
+
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
       runtime_type = "io.containerd.runsc.v1"
     EOF
     ```
@@ -88,7 +100,7 @@ Finally, if you want to change CRI look into:
 
     ```shell
     cat <<EOF | kubectl apply -f -
-    apiVersion: node.k8s.io/v1beta1
+    apiVersion: node.k8s.io/v1
     kind: RuntimeClass
     metadata:
       name: gvisor
@@ -110,20 +122,27 @@ Finally, if you want to change CRI look into:
         image: nginx
     ```
 
-5. (Optional) Verify tht the created nginx pod is running under gVisor runtime:
+5. (Optional) Verify that the created nginx pod is running under gVisor runtime:
 
     ```shell
     # kubectl exec nginx-gvisor -- dmesg | grep -i gvisor
     [    0.000000] Starting gVisor...
     ```
 
-## Using `nvidia-container-runtime`
+#### Using `nvidia-container-runtime`
 
-By default, CRI is set to runC. As such, you must configure Nvidia GPU support by replacing `runc` with `nvidia-container-runtime`:
+First, install the NVIDIA runtime components:
+
+```shell
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
+```
+
+Next, drop in the containerd runtime configuration snippet into `/etc/k0s/containerd.d/nvidia.toml`
 
 ```toml
-[plugins."io.containerd.grpc.v1.cri".containerd]
-    default_runtime_name = "nvidia"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
     privileged_without_host_devices = false
     runtime_engine = ""
@@ -133,9 +152,19 @@ By default, CRI is set to runC. As such, you must configure Nvidia GPU support b
     BinaryName = "/usr/bin/nvidia-container-runtime"
 ```
 
-**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
+Create the needed `RuntimeClass`:
 
-After editing the configuration, restart `k0s` to get containerd using the newly configured runtime.
+```shell
+cat <<EOF | kubectl apply -f -
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
+EOF
+```
+
+**Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
 
 ## Using custom CRI runtime
 
