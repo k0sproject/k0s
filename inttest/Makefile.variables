@@ -45,3 +45,4 @@ smoketests := \
 	check-capitalhostnames \
 	check-dualstack-dynamicconfig \
 	check-customca \
+	check-custom-cidrs \
