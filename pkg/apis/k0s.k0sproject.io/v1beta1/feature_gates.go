@@ -18,23 +18,95 @@ package v1beta1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/stringmap"
 )
 
-const (
-	ServiceInternalTrafficPolicyFeatureGate = "ServiceInternalTrafficPolicy"
-)
+var _ Validateable = (*FeatureGates)(nil)
 
-// EnableFeatureGate enables given feature gate in the arguments
-func EnableFeatureGate(args stringmap.StringMap, gateName string) stringmap.StringMap {
-	gateString := fmt.Sprintf("%s=true", gateName)
-	fg, found := args["feature-gates"]
-	if !found {
-		args["feature-gates"] = gateString
-	} else {
-		fg = fg + "," + gateString
-		args["feature-gates"] = fg
+// KubernetesComponents default components to use feature gates with
+var KubernetesComponents = []string{
+	"kube-apiserver",
+	"kube-controller-manager",
+	"kubelet",
+	"kube-scheduler",
+}
+
+// FeatureGates collection of feature gate specs
+type FeatureGates []FeatureGate
+
+// Validate validates all profiles
+func (fgs FeatureGates) Validate() []error {
+	var errors []error
+	for _, p := range fgs {
+		if err := p.Validate(); err != nil {
+			errors = append(errors, err)
+		}
 	}
+	return errors
+}
+
+func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
+	componentFeatureGates := []string{}
+	fg, componentHasFeatureGates := args["feature-gates"]
+	for _, feature := range fgs {
+		if feature.EnabledFor(component) {
+			componentFeatureGates = append(componentFeatureGates,
+				feature.String())
+		}
+	}
+	featureGatesString := strings.Join(componentFeatureGates, ",")
+	if componentHasFeatureGates {
+		fg = fmt.Sprintf("%s,%s", fg, featureGatesString)
+	} else {
+		fg = featureGatesString
+	}
+	args["feature-gates"] = fg
+	return args
+}
+
+// FeatureGate specifies single feature gate
+type FeatureGate struct {
+	// Name of the feature gate
+	Name string `json:"name,omitempty"`
+	// Enabled or disabled
+	Enabled bool `json:"enabled,omitempty"`
+	// Components to use feature gate on, if empty `KubernetesComponents` is used as the list
+	Components []string `json:"components,omitempty"`
+}
+
+// EnabledFor checks if current feature gate is enabled for a given component
+func (fg *FeatureGate) EnabledFor(component string) bool {
+	if !fg.Enabled {
+		return false
+	}
+	components := fg.Components
+	if len(components) == 0 {
+		components = KubernetesComponents
+	}
+	for _, c := range components {
+		if c == component {
+			return true
+		}
+	}
+	return false
+}
+
+// Validate given feature gate
+func (fg *FeatureGate) Validate() error {
+	if fg.Name == "" {
+		return fmt.Errorf("feature gate must have name")
+	}
+	return nil
+}
+
+// String represents feature gate as a string
+func (fg *FeatureGate) String() string {
+	return fmt.Sprintf("%s=%t", fg.Name, fg.Enabled)
+}
+
+// AddFeatureGatesToArgs builds component args to have given feature gate enabled
+func (fg *FeatureGate) AddFeatureGatesToArgs(args stringmap.StringMap, component string) stringmap.StringMap {
 	return args
 }
