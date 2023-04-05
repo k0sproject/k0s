@@ -82,4 +82,29 @@ func TestValidation(t *testing.T) {
 
 	})
 
+	t.Run("chart_manifest_name", func(t *testing.T) {
+		chart := Chart{
+			Name:      "release",
+			ChartName: "k0s/chart",
+			TargetNS:  "default",
+		}
+
+		chart1 := Chart{
+			Name:      "release",
+			ChartName: "k0s/chart",
+			TargetNS:  "default",
+			Order:     1,
+		}
+
+		chart2 := Chart{
+			Name:      "release",
+			ChartName: "k0s/chart",
+			TargetNS:  "default",
+			Order:     2,
+		}
+		assert.Equal(t, chart.ManifestFileName(), "0_helm_extension_release.yaml")
+		assert.Equal(t, chart1.ManifestFileName(), "1_helm_extension_release.yaml")
+		assert.Equal(t, chart2.ManifestFileName(), "2_helm_extension_release.yaml")
+	})
+
 }

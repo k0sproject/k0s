@@ -39,6 +39,8 @@ spec:
                 type: string
               namespace:
                 type: string
+              order:
+                type: integer
               releaseName:
                 type: string
               timeout:

@@ -19,6 +19,7 @@ package v1beta1
 import (
 	"crypto/sha256"
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -32,6 +33,7 @@ type ChartSpec struct {
 	Version     string `json:"version,omitempty"`
 	Namespace   string `json:"namespace,omitempty"`
 	Timeout     string `json:"timeout,omitempty"`
+	Order       int    `json:"order,omitempty"`
 }
 
 // YamlValues returns values as map
