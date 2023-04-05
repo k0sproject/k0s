@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -94,6 +95,12 @@ type Chart struct {
 	Values    string        `json:"values"`
 	TargetNS  string        `json:"namespace"`
 	Timeout   time.Duration `json:"timeout"`
+	Order     int           `json:"order"`
+}
+
+// ManifestFileName returns filename to use for the crd manifest
+func (c Chart) ManifestFileName() string {
+	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
 }
 
 // Validate performs validation
