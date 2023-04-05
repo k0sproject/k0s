@@ -548,8 +548,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#containerd-and-apparmor" class="md-nav__link">
-    containerd and AppArmor
+  <a href="#external-soft-dependencies" class="md-nav__link">
+    External soft dependencies
   </a>
   
 </li>
@@ -1492,8 +1492,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#containerd-and-apparmor" class="md-nav__link">
-    containerd and AppArmor
+  <a href="#external-soft-dependencies" class="md-nav__link">
+    External soft dependencies
   </a>
   
 </li>
@@ -1676,10 +1676,30 @@ and, if enabled as a module, to load the <code>configs</code> module: <code>modp
    containerd and cri-o will use blkio to track disk I/O and throttling in both
    cgroup v1 and v2.</li>
 </ul>
-<h3 id="containerd-and-apparmor">containerd and AppArmor<a class="headerlink" href="#containerd-and-apparmor" title="Permanent link">#</a></h3>
+<h3 id="external-soft-dependencies">External soft dependencies<a class="headerlink" href="#external-soft-dependencies" title="Permanent link">#</a></h3>
+<p>There are a few external tools that may be needed or used under specific
+circumstances:</p>
+<h4 id="containerd-and-apparmor">containerd and AppArmor<a class="headerlink" href="#containerd-and-apparmor" title="Permanent link">#</a></h4>
 <p>In order to use containerd in conjunction with <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>, it must be enabled in
 the kernel and the <code>/sbin/apparmor_parser</code> executable must be installed on the
 host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v1.6.18/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
+<h4 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h4>
+<p>iptables may be executed to detect if there are any existing iptables rules and
+if those are in legacy of nft mode. If iptables is not found, k0s will assume
+that there are no pre-existing iptables rules.</p>
+<h4 id="useradd-adduser">useradd / adduser<a class="headerlink" href="#useradd-adduser" title="Permanent link">#</a></h4>
+<p>During <code>k0s install</code> the external tool <code>useradd</code> will be used on the controllers
+to create system user accounts for k0s. If this does exist it will fall-back to
+busybox's <code>adduser</code>.</p>
+<h4 id="userdel-deluser">userdel / deluser<a class="headerlink" href="#userdel-deluser" title="Permanent link">#</a></h4>
+<p><code>k0s reset</code> will execute either <code>userdel</code> or <code>deluser</code> to clean up system user
+accounts.</p>
+<h4 id="modprobe">modprobe<a class="headerlink" href="#modprobe" title="Permanent link">#</a></h4>
+<p>On k0s worker will <code>modprobe</code> be executed to load missing kernel modules if they
+are not detected.</p>
+<h4 id="id">id<a class="headerlink" href="#id" title="Permanent link">#</a></h4>
+<p>External <code>/usr/bin/id</code> will be executed as a fallback if local user lookup
+fails, in case NSS is used.</p>
 <h3 id="other-dependencies-in-previous-versions-of-k0s">Other dependencies in previous versions of k0s<a class="headerlink" href="#other-dependencies-in-previous-versions-of-k0s" title="Permanent link">#</a></h3>
 <ul>
 <li>up until k0s v1.21.9+k0s.0: <code>iptables</code><br />
