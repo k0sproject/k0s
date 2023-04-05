@@ -49,24 +49,26 @@ import (
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	saver         manifestsSaver
-	L             *logrus.Entry
-	helm          *helm.Commands
-	kubeConfig    string
-	leaderElector leaderelector.Interface
+	concurrencyLevel int
+	saver            manifestsSaver
+	L                *logrus.Entry
+	helm             *helm.Commands
+	kubeConfig       string
+	leaderElector    leaderelector.Interface
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
+func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, concurrencyLevel int) *ExtensionsController {
 	return &ExtensionsController{
-		saver:         s,
-		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		helm:          helm.NewCommands(k0sVars),
-		kubeConfig:    k0sVars.AdminKubeConfigPath,
-		leaderElector: leaderElector,
+		concurrencyLevel: concurrencyLevel,
+		saver:            s,
+		L:                logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
+		helm:             helm.NewCommands(k0sVars),
+		kubeConfig:       k0sVars.AdminKubeConfigPath,
+		leaderElector:    leaderElector,
 	}
 }
 
@@ -344,22 +346,23 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
+	gk := schema.GroupKind{
+		Group: v1beta1.GroupVersion.Group,
+		Kind:  "Chart",
+	}
 
 	mgr, err := ctrlManager.New(config, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
 		Controller: v1alpha1.ControllerConfigurationSpec{
-			GroupKindConcurrency: map[string]int{"": 10},
+			GroupKindConcurrency: map[string]int{gk.String(): 10},
 		},
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
 	if err := retry.Do(func() error {
-		_, err := mgr.GetRESTMapper().RESTMapping(schema.GroupKind{
-			Group: v1beta1.GroupVersion.Group,
-			Kind:  "Chart",
-		})
+		_, err := mgr.GetRESTMapper().RESTMapping(gk)
 		if err != nil {
 			ec.L.Warn("Extensions CRD is not yet ready, waiting before starting ExtensionsController")
 			return err
