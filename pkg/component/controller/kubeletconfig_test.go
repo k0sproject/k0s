@@ -33,9 +33,10 @@ import (
 var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
+	cfg := config.DefaultClusterConfig()
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
-		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
+		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
 
 		t.Log("starting to run...")
 		buf, err := k.createProfiles(cfg)
@@ -68,7 +69,7 @@ func Test_KubeletConfig(t *testing.T) {
 		), profile["clusterDomain"])
 	})
 	t.Run("with_user_provided_profiles", func(t *testing.T) {
-		k := defaultConfigWithUserProvidedProfiles(t)
+		k := defaultConfigWithUserProvidedProfiles(t, cfg)
 		buf, err := k.createProfiles(cfg)
 		require.NoError(t, err)
 		manifestYamls := strings.Split(strings.TrimSuffix(buf.String(), "---"), "---")[1:]
@@ -123,8 +124,9 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 }
 
-func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
-	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory())
+func defaultConfigWithUserProvidedProfiles(t *testing.T, cfg *config.ClusterConfig) *KubeletConfig {
+	k0sVars := constant.GetConfig(t.TempDir())
+	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
 
 	cfgProfileX := map[string]interface{}{
 		"authentication": map[string]interface{}{
