@@ -113,6 +113,8 @@ spec:
                               type: string
                           type: object
                         type: array
+                      concurrencyLevel:
+                        type: integer
                       repositories:
                         description: RepositoriesSettings repository settings
                         items:

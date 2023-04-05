@@ -357,6 +357,7 @@ func (c *command) start(ctx context.Context) error {
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
+			c.NodeConfig.Spec.Extensions.Helm.ConcurrencyLevel,
 		))
 	}
 

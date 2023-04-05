@@ -34,8 +34,9 @@ type ClusterExtensions struct {
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	Repositories RepositoriesSettings `json:"repositories"`
-	Charts       ChartsSettings       `json:"charts"`
+	ConcurrencyLevel int                  `json:"concurrencyLevel"`
+	Repositories     RepositoriesSettings `json:"repositories"`
+	Charts           ChartsSettings       `json:"charts"`
 }
 
 // RepositoriesSettings repository settings
@@ -165,6 +166,8 @@ func DefaultExtensions() *ClusterExtensions {
 			Type:                      ExternalStorage,
 			CreateDefaultStorageClass: false,
 		},
-		Helm: &HelmExtensions{},
+		Helm: &HelmExtensions{
+			ConcurrencyLevel: 5,
+		},
 	}
 }

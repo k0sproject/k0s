@@ -40,6 +40,7 @@ In the example, Prometheus is configured from "stable" Helms chart repository. A
 spec:
   extensions:
     helm:
+      concurrencyLevel: 5
       repositories:
       - name: stable
         url: https://charts.helm.sh/stable

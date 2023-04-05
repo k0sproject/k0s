@@ -61,6 +61,7 @@ spec:
   controllerManager: {}
   extensions:
     helm:
+      concurrencyLevel: 5
       charts: null
       repositories: null
     storage:
