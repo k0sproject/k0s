@@ -57,6 +57,8 @@ type APIServer struct {
 var _ manager.Component = (*APIServer)(nil)
 var _ manager.Ready = (*APIServer)(nil)
 
+const kubeAPIComponentName = "kube-apiserver"
+
 var apiDefaultArgs = map[string]string{
 	"allow-privileged":                   "true",
 	"requestheader-extra-headers-prefix": "X-Remote-Extra-",
@@ -89,7 +91,7 @@ func (a *APIServer) Init(_ context.Context) error {
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-apiserver as root: %w", err))
 	}
-	return assets.Stage(a.K0sVars.BinDir, "kube-apiserver", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, kubeAPIComponentName, constant.BinDirMode)
 }
 
 // Run runs kube api
@@ -141,8 +143,7 @@ func (a *APIServer) Start(_ context.Context) error {
 		}
 		args[name] = value
 	}
-
-	args = v1beta1.EnableFeatureGate(args, v1beta1.ServiceInternalTrafficPolicyFeatureGate)
+	args = a.ClusterConfig.Spec.FeatureGates.BuildArgs(args, kubeAPIComponentName)
 	for name, value := range apiDefaultArgs {
 		if args[name] == "" {
 			args[name] = value
@@ -162,8 +163,8 @@ func (a *APIServer) Start(_ context.Context) error {
 	}
 
 	a.supervisor = supervisor.Supervisor{
-		Name:    "kube-apiserver",
-		BinPath: assets.BinPath("kube-apiserver", a.K0sVars.BinDir),
+		Name:    kubeAPIComponentName,
+		BinPath: assets.BinPath(kubeAPIComponentName, a.K0sVars.BinDir),
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    apiServerArgs,

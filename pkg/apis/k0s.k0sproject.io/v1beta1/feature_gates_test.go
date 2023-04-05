@@ -24,16 +24,22 @@ import (
 )
 
 func TestArgsFeatureGates(t *testing.T) {
+	featureGates := FeatureGates{
+		{
+			Name:    "ServiceInternalTrafficPolicy",
+			Enabled: true,
+		},
+	}
 	t.Run("if_no_feature_gates_add_new_one", func(t *testing.T) {
 		args := stringmap.StringMap{}
-		EnableFeatureGate(args, ServiceInternalTrafficPolicyFeatureGate)
+		args = featureGates.BuildArgs(args, KubernetesComponents[0])
 		require.Equal(t, "ServiceInternalTrafficPolicy=true", args["feature-gates"])
 	})
 	t.Run("if_args_has_some_argument_preserve_it", func(t *testing.T) {
 		args := stringmap.StringMap{
 			"some-argument": "value",
 		}
-		EnableFeatureGate(args, ServiceInternalTrafficPolicyFeatureGate)
+		args = featureGates.BuildArgs(args, KubernetesComponents[0])
 		require.Equal(t, "ServiceInternalTrafficPolicy=true", args["feature-gates"])
 		require.Equal(t, "value", args["some-argument"])
 	})
@@ -41,7 +47,67 @@ func TestArgsFeatureGates(t *testing.T) {
 		args := stringmap.StringMap{
 			"feature-gates": "Magic=true",
 		}
-		EnableFeatureGate(args, ServiceInternalTrafficPolicyFeatureGate)
+		args = featureGates.BuildArgs(args, KubernetesComponents[0])
 		require.Equal(t, "Magic=true,ServiceInternalTrafficPolicy=true", args["feature-gates"])
+	})
+
+	t.Run("enabled_for_component", func(t *testing.T) {
+		enabledFeature := FeatureGate{
+			Name:       "some_feature_gate",
+			Enabled:    true,
+			Components: []string{"component_a"},
+		}
+
+		explicitlyDisabledFeature := FeatureGate{
+			Name:       "another_feature_gate",
+			Enabled:    false,
+			Components: []string{"component_a"},
+		}
+
+		featureGateWithDefaultComponents := FeatureGate{
+			Name:    "all_k8s_related_components",
+			Enabled: true,
+		}
+
+		require.True(t, enabledFeature.EnabledFor("component_a"), "Must be true for explicitly set component")
+		require.False(t, enabledFeature.EnabledFor("component_b"), "Must be false for non set component")
+
+		require.False(t, explicitlyDisabledFeature.EnabledFor("component_a"), "Disabled feature gate must always be false")
+		require.False(t, explicitlyDisabledFeature.EnabledFor("component_b"), "Disabled feature gate must always be false")
+
+		for _, k8sComponent := range KubernetesComponents {
+			require.True(t, featureGateWithDefaultComponents.EnabledFor(k8sComponent))
+		}
+
+		require.False(t, featureGateWithDefaultComponents.EnabledFor("something"))
+	})
+
+	t.Run("to_string", func(t *testing.T) {
+		enabledFeature := FeatureGate{
+			Name:       "some_feature_gate",
+			Enabled:    true,
+			Components: []string{"component_a"},
+		}
+
+		explicitlyDisabledFeature := FeatureGate{
+			Name:       "another_feature_gate",
+			Enabled:    false,
+			Components: []string{"component_a"},
+		}
+
+		require.Equal(t, "some_feature_gate=true", enabledFeature.String())
+		require.Equal(t, "another_feature_gate=false", explicitlyDisabledFeature.String())
+
+	})
+
+	t.Run("feature_gate_validation", func(t *testing.T) {
+		validFeature := FeatureGate{
+			Name: "some_feature_gate",
+		}
+
+		invalidFeatureGate := FeatureGate{}
+
+		require.NoError(t, validFeature.Validate())
+		require.Error(t, invalidFeatureGate.Validate())
 	})
 }
