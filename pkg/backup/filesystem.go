@@ -22,11 +22,9 @@ package backup
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
-	"github.com/k0sproject/k0s/internal/pkg/dir"
-	"github.com/k0sproject/k0s/internal/pkg/file"
+	cp "github.com/otiai10/copy"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,24 +38,13 @@ func (d FileSystemStep) Name() string {
 }
 
 func (d FileSystemStep) Backup() (StepResult, error) {
-	s, err := os.Stat(d.path)
-	if os.IsNotExist(err) {
-		logrus.Debugf("Path `%s` does not exist, skipping...", d.path)
-		return StepResult{}, nil
-	}
-	if err != nil {
-		return StepResult{}, fmt.Errorf("can't stat path `%s`: %v", d.path, err)
-	}
-	if s.IsDir() {
-		return d.dir()
-	}
-	return StepResult{filesForBackup: []string{d.path}}, nil
-}
-
-func (d FileSystemStep) dir() (StepResult, error) {
 	var files []string
 	if err := filepath.Walk(d.path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			if os.IsNotExist(err) {
+				logrus.Debugf("Path `%s` does not exist, skipping...", d.path)
+				return nil
+			}
 			return err
 		}
 		files = append(files, path)
@@ -69,23 +56,19 @@ func (d FileSystemStep) dir() (StepResult, error) {
 }
 
 func (d FileSystemStep) Restore(restoreFrom, restoreTo string) error {
-	_, childName := path.Split(d.path)
-	objectPathInArchive := path.Join(restoreFrom, childName)
-	objectPathInRestored := path.Join(restoreTo, childName)
-	stat, err := os.Stat(objectPathInArchive)
+	childName := filepath.Base(d.path)
+	objectPathInArchive := filepath.Join(restoreFrom, childName)
+	err := cp.Copy(filepath.Join(restoreFrom, childName), filepath.Join(restoreTo, childName))
 	if os.IsNotExist(err) {
 		logrus.Debugf("Path `%s` not found in the archive, skipping...", objectPathInArchive)
 		return nil
 	}
 	logrus.Infof("restoring from `%s` to `%s`", objectPathInArchive, restoreTo)
-	if stat.IsDir() {
-		return dir.Copy(objectPathInArchive, restoreTo)
-	}
-	return file.Copy(objectPathInArchive, objectPathInRestored)
+	return err
 }
 
-// NewFilesystemStep constructor
-func NewFilesystemStep(path string) FileSystemStep {
+// NewFileSystemStep constructor
+func NewFileSystemStep(path string) FileSystemStep {
 	return FileSystemStep{path: path}
 
 }

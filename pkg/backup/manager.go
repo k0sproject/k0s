@@ -101,7 +101,7 @@ func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.Cluste
 		if action == "backup" {
 			logrus.Infof("adding `%s` path to the backup archive", path)
 		}
-		bm.Add(NewFilesystemStep(path))
+		bm.Add(NewFileSystemStep(path))
 	}
 	bm.Add(newConfigurationStep(configFilePath, restoredConfigPath, out))
 }
