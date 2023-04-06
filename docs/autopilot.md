@@ -99,7 +99,7 @@ spec:
         version: v1.26.1+k0s.0
         platforms:
           linux-amd64:
-            url: https://github.com/k0sproject/k0s/releases/download/v1.26.2+k0s.0/k0s-v1.26.2+k0s.0-amd64
+            url: https://github.com/k0sproject/k0s/releases/download/v1.26.3+k0s.0/k0s-v1.26.3+k0s.0-amd64
             sha256: '0000000000000000000000000000000000000000000000000000000000000000'
         targets:
           controllers:
