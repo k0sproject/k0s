@@ -39,6 +39,15 @@ bin/sonobuoy: | bin
 	  footloose-alpine
 	touch $@
 
+.footloose-k0s.stamp: K0S_PATH ?= $(realpath ../k0s)
+.footloose-k0s.stamp: .footloose-alpine.stamp
+	docker build \
+	  --build-arg K0S_PATH=$(notdir $(K0S_PATH)) \
+	  -t footloose-k0s \
+	  -f footloose-k0s/Dockerfile \
+	  $(dir $(K0S_PATH))
+	touch $@
+
 .update-server.stamp: .footloose-alpine.stamp update-server/Dockerfile update-server/html/stable/index.yaml
 	docker build -t update-server --build-arg BASE=footloose-alpine -f update-server/Dockerfile update-server
 	touch $@
