@@ -47,6 +47,7 @@ func (fgs FeatureGates) Validate() []error {
 	return errors
 }
 
+// BuildArgs build cli args using the given args and component name
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
 	componentFeatureGates := []string{}
 	fg, componentHasFeatureGates := args["feature-gates"]
@@ -64,6 +65,17 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 	}
 	args["feature-gates"] = fg
 	return args
+}
+
+// AsMapBool returns feature gates as map[string]bool, used in kubelet
+func (fgs FeatureGates) AsMapBool(component string) map[string]bool {
+	componentFeatureGates := map[string]bool{}
+	for _, feature := range fgs {
+		if feature.EnabledFor(component) {
+			componentFeatureGates[feature.Name] = true
+		}
+	}
+	return componentFeatureGates
 }
 
 // FeatureGate specifies single feature gate
