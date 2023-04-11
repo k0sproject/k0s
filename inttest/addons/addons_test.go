@@ -66,7 +66,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 	as.doTestAddonUpdate(addonName, values)
 	chart := as.waitForTestRelease(addonName, "0.4.0", "default", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
-	as.doPrometheusDelete(chart)
+	as.deleteRelease(chart)
 }
 
 func (as *AddonsSuite) pullHelmChart(node string) {
@@ -83,22 +83,22 @@ func (as *AddonsSuite) pullHelmChart(node string) {
 	as.Require().NoError(err)
 }
 
-func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
+func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
 	ssh, err := as.SSH(as.Context(), as.ControllerNode(0))
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
-
-	_, err = ssh.ExecWithOutput(as.Context(), "rm /var/lib/k0s/manifests/helm/addon_crd_manifest_test-addon.yaml")
+	_, err = ssh.ExecWithOutput(as.Context(), "rm /var/lib/k0s/manifests/helm/0_helm_extension_test-addon.yaml")
 	as.Require().NoError(err)
-
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
 	k8sclient, err := k8s.NewForConfig(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
 		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Namespace, chart.Name)
-		items, err := k8sclient.CoreV1().Secrets("default").List(as.Context(), v1.ListOptions{})
+		items, err := k8sclient.CoreV1().Secrets("default").List(as.Context(), v1.ListOptions{
+			LabelSelector: fmt.Sprintf("name=%s", chart.Name),
+		})
 		if err != nil {
 			as.T().Logf("listing secrets error %s", err.Error())
 			return false, nil
@@ -112,7 +112,7 @@ func (as *AddonsSuite) doPrometheusDelete(chart *v1beta1.Chart) {
 }
 
 func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *v1beta1.Chart {
-	as.T().Logf("waiting to see test-addon release ready in kube API, generation %d", rev)
+	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
@@ -174,7 +174,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 }
 
 func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]interface{}) {
-	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/addon_crd_manifest_%s.yaml", addonName)
+	path := fmt.Sprintf("/var/lib/k0s/manifests/helm/0_helm_extension_%s.yaml", addonName)
 	valuesBytes, err := yaml.Marshal(values)
 	as.Require().NoError(err)
 	tw := templatewriter.TemplateWriter{
