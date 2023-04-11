@@ -18,10 +18,11 @@ package basic
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
@@ -30,10 +31,9 @@ import (
 
 	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/BurntSushi/toml"
@@ -44,18 +44,24 @@ type BasicSuite struct {
 	common.FootlooseSuite
 }
 
+type (
+	CSR     = certificatesv1.CertificateSigningRequest
+	CSRList = certificatesv1.CertificateSigningRequestList
+)
+
 func (s *BasicSuite) TestK0sGetsUp() {
+	ctx := s.Context()
 	customDataDir := "/var/lib/k0s/custom-data-dir"
 
 	// Create an empty file to prove that k0s manage to rewrite a partially written file
-	ssh, err := s.SSH(s.Context(), s.ControllerNode(0))
+	ssh, err := s.SSH(ctx, s.ControllerNode(0))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
+	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("mkdir -p %s/bin && touch -t 202201010000 %s/bin/kube-apiserver", customDataDir, customDataDir))
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
+	_, err = ssh.ExecWithOutput(ctx, fmt.Sprintf("touch -t 202201010000 %s", s.K0sFullPath))
 	s.Require().NoError(err)
-	_, err = ssh.ExecWithOutput(s.Context(), "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
+	_, err = ssh.ExecWithOutput(ctx, "mkdir -p /run/k0s/konnectivity-server/ && touch -t 202201010000 /run/k0s/konnectivity-server/konnectivity-server.sock")
 	s.Require().NoError(err)
 
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
@@ -83,41 +89,43 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.AssertSomeKubeSystemPods(kc)
 
 	s.T().Log("waiting to see kube-router pods ready")
-	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
+	s.NoError(common.WaitForKubeRouterReady(ctx, kc), "kube-router did not start")
 
-	s.Require().NoError(s.checkCertPerms(s.ControllerNode(0)))
-	s.Require().NoError(s.checkCSRs(s.WorkerNode(0), kc))
-	s.Require().NoError(s.checkCSRs(s.WorkerNode(1), kc))
+	s.Require().NoError(s.checkCertPerms(ctx, s.ControllerNode(0)))
 
-	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(0)))
-	s.Require().NoError(s.verifyKubeletAddressFlag(s.WorkerNode(1)))
+	s.T().Log("Waiting for all worker CSRs to be approved")
+	s.Require().NoError(s.checkCSRs(ctx, kc))
+
+	s.Require().NoError(s.verifyKubeletAddressFlag(ctx, s.WorkerNode(0)))
+	s.Require().NoError(s.verifyKubeletAddressFlag(ctx, s.WorkerNode(1)))
 	for _, lease := range []string{"kube-scheduler", "kube-controller-manager"} {
-		_, err := common.WaitForLease(s.Context(), kc, lease, "kube-system")
+		s.T().Logf("Waiting for %s lease", lease)
+		_, err := common.WaitForLease(ctx, kc, lease, "kube-system")
 		s.Require().NoError(err, lease)
 	}
 
 	// We need to first wait till we see pod logs, that's a signal that konnectivity tunnels are up and thus we can then connect to kubelet
 	// via the API.
-	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "kube-system"))
 	for i := 0; i < s.WorkerCount; i++ {
 		node := s.WorkerNode(i)
 		s.T().Logf("checking that we can connect to kubelet metrics on %s", node)
-		s.Require().NoError(common.VerifyKubeletMetrics(s.Context(), kc, node))
+		s.Require().NoError(common.VerifyKubeletMetrics(ctx, kc, node))
 	}
 
-	s.verifyContainerdDefaultConfig()
+	s.verifyContainerdDefaultConfig(ctx)
 
-	s.verifyCoreDNSAntiAffinity(kc)
+	s.Require().NoError(s.probeCoreDNSAntiAffinity(ctx, kc))
 }
 
-func (s *BasicSuite) checkCertPerms(node string) error {
-	ssh, err := s.SSH(s.Context(), node)
+func (s *BasicSuite) checkCertPerms(ctx context.Context, node string) error {
+	ssh, err := s.SSH(ctx, node)
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(s.Context(), `find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
+	output, err := ssh.ExecWithOutput(ctx, `find /var/lib/k0s/custom-data-dir/pki/  \( -name '*.key' -o -name '*.conf' \) -a \! -perm 0640`)
 	if err != nil {
 		return err
 	}
@@ -130,14 +138,14 @@ func (s *BasicSuite) checkCertPerms(node string) error {
 }
 
 // Verifies that kubelet process has the address flag set
-func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
-	ssh, err := s.SSH(s.Context(), node)
+func (s *BasicSuite) verifyKubeletAddressFlag(ctx context.Context, node string) error {
+	ssh, err := s.SSH(ctx, node)
 	if err != nil {
 		return err
 	}
 	defer ssh.Disconnect()
 
-	output, err := ssh.ExecWithOutput(s.Context(), `grep -e '--address=0.0.0.0' /proc/$(pidof kubelet)/cmdline`)
+	output, err := ssh.ExecWithOutput(ctx, `grep -e '--address=0.0.0.0' /proc/$(pidof kubelet)/cmdline`)
 	if err != nil {
 		return err
 	}
@@ -148,48 +156,59 @@ func (s *BasicSuite) verifyKubeletAddressFlag(node string) error {
 	return nil
 }
 
-func (s *BasicSuite) checkCSRs(node string, kc *kubernetes.Clientset) error {
+func (s *BasicSuite) checkCSRs(ctx context.Context, kc *kubernetes.Clientset) error {
+	// Wait until CSRs for all worker nodes got signed
+	approvedNodes := map[string]struct{}{}
 
-	return wait.PollImmediate(1*time.Second, 30*time.Second, func() (bool, error) {
-		opts := metav1.ListOptions{
-			FieldSelector: "spec.signerName=kubernetes.io/kubelet-serving",
-		}
-		csrs, err := kc.CertificatesV1().CertificateSigningRequests().List(s.Context(), opts)
-		if err != nil {
-			return false, err
-		}
-
-		for _, csr := range csrs.Items {
-			if csr.Spec.Username == fmt.Sprintf("system:node:%s", node) {
-				if isCSRApproved(csr) {
-					return true, nil
-				}
+	return watch.FromClient[*CSRList, CSR](kc.CertificatesV1().CertificateSigningRequests()).
+		WithFieldSelector(fields.OneTermEqualSelector("spec.signerName", "kubernetes.io/kubelet-serving")).
+		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
+		Until(ctx, func(csr *CSR) (bool, error) {
+			if !strings.HasPrefix(csr.Spec.Username, "system:node:worker") {
+				return false, nil
 			}
-		}
-		// No approved CSRs found, continue polling
-		return false, nil
-	})
+			if _, alreadyApproved := approvedNodes[csr.Spec.Username]; alreadyApproved {
+				return false, nil
+			}
 
+			if reason, ok := getCSRApprovalReason(csr); !ok {
+				s.T().Logf("CSR for %s is not yet approved", csr.Spec.Username)
+				return false, nil
+			} else if reason != "Autoapproved by K0s CSRApprover" {
+				return false, fmt.Errorf("CSR for %s has an unexpected approval reason: %q", csr.Spec.Username, reason)
+			}
+
+			s.T().Logf("CSR for %s is approved", csr.Spec.Username)
+
+			approvedNodes[csr.Spec.Username] = struct{}{}
+			if len(approvedNodes) == s.WorkerCount {
+				return true, nil
+			}
+
+			return false, nil
+		})
 }
 
-func isCSRApproved(csr certificatesv1.CertificateSigningRequest) bool {
+func getCSRApprovalReason(csr *CSR) (string, bool) {
 	for _, condition := range csr.Status.Conditions {
-		if condition.Type == certificatesv1.CertificateApproved && condition.Reason == "Autoapproved by K0s CSRApprover" {
-			return true
+		if condition.Type != certificatesv1.CertificateApproved {
+			continue
 		}
+		return condition.Reason, true
 	}
-	return false
+
+	return "", false
 }
 
-func (s *BasicSuite) verifyContainerdDefaultConfig() {
+func (s *BasicSuite) verifyContainerdDefaultConfig(ctx context.Context) {
 	var defaultConfig bytes.Buffer
-	ssh, err := s.SSH(s.Context(), s.WorkerNode(0))
+	ssh, err := s.SSH(ctx, s.WorkerNode(0))
 	if !s.NoError(err) {
 		return
 	}
 	defer ssh.Disconnect()
 
-	if !s.NoError(ssh.Exec(s.Context(), "/var/lib/k0s/bin/containerd --config=/etc/k0s/containerd.toml config dump", common.SSHStreams{Out: &defaultConfig})) {
+	if !s.NoError(ssh.Exec(ctx, "/var/lib/k0s/bin/containerd --config=/etc/k0s/containerd.toml config dump", common.SSHStreams{Out: &defaultConfig})) {
 		return
 	}
 
@@ -212,14 +231,14 @@ func (s *BasicSuite) verifyContainerdDefaultConfig() {
 	}).URI(), parsedConfig.Plugins.CRI.SandboxImage)
 }
 
-func (s *BasicSuite) verifyCoreDNSAntiAffinity(kc *kubernetes.Clientset) {
-	// Wait until both CoreDNs Pods got assigned to a node
+func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernetes.Clientset) error {
+	// Wait until both CoreDNS Pods got assigned to a node
 	pods := map[string]types.UID{}
 
-	s.NoError(watch.Pods(kc.CoreV1().Pods("kube-system")).
+	return watch.Pods(kc.CoreV1().Pods("kube-system")).
 		WithLabels(labels.Set{"k8s-app": "kube-dns"}).
 		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
-		Until(s.Context(), func(pod *corev1.Pod) (bool, error) {
+		Until(ctx, func(pod *corev1.Pod) (bool, error) {
 			// Keep waiting if there's no node assigned yet.
 			nodeName := pod.Spec.NodeName
 			if nodeName == "" {
@@ -236,7 +255,7 @@ func (s *BasicSuite) verifyCoreDNSAntiAffinity(kc *kubernetes.Clientset) {
 
 			pods[nodeName] = pod.GetUID()
 			return len(pods) > 1, nil
-		}))
+		})
 }
 
 func TestBasicSuite(t *testing.T) {
