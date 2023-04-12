@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -33,8 +34,9 @@ type ClusterExtensions struct {
 
 // HelmExtensions specifies settings for cluster helm based extensions
 type HelmExtensions struct {
-	Repositories RepositoriesSettings `json:"repositories"`
-	Charts       ChartsSettings       `json:"charts"`
+	ConcurrencyLevel int                  `json:"concurrencyLevel"`
+	Repositories     RepositoriesSettings `json:"repositories"`
+	Charts           ChartsSettings       `json:"charts"`
 }
 
 // RepositoriesSettings repository settings
@@ -94,6 +96,12 @@ type Chart struct {
 	Values    string        `json:"values"`
 	TargetNS  string        `json:"namespace"`
 	Timeout   time.Duration `json:"timeout"`
+	Order     int           `json:"order"`
+}
+
+// ManifestFileName returns filename to use for the crd manifest
+func (c Chart) ManifestFileName() string {
+	return fmt.Sprintf("%d_helm_extension_%s.yaml", c.Order, c.Name)
 }
 
 // Validate performs validation
@@ -158,6 +166,8 @@ func DefaultExtensions() *ClusterExtensions {
 			Type:                      ExternalStorage,
 			CreateDefaultStorageClass: false,
 		},
-		Helm: &HelmExtensions{},
+		Helm: &HelmExtensions{
+			ConcurrencyLevel: 5,
+		},
 	}
 }

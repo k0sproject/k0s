@@ -344,19 +344,19 @@ func (c *command) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize cluster-config reconciler: %w", err)
 	}
 	c.ClusterComponents.Add(ctx, cfgReconciler)
-
 	if !slices.Contains(c.DisableComponents, constant.HelmComponentName) {
 		helmSaver, err := controller.NewManifestsSaver("helm", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to initialize helm manifests saver: %w", err)
 		}
-
 		c.ClusterComponents.Add(ctx, controller.NewCRD(helmSaver, []string{"helm"}))
 		c.ClusterComponents.Add(ctx, controller.NewExtensionsController(
 			helmSaver,
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
+			// Hardcode until the config loading is fixed
+			10,
 		))
 	}
 

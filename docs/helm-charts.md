@@ -23,14 +23,15 @@ It is possible to customize timeout by using `.Timeout` field.
 
 ### Chart configuration
 
-| Field     | Default value | Description                                                  |
-|-----------|---------------|--------------------------------------------------------------|
-| name      | -             | Release name                                                 |
-| chartname | -             | chartname in form "repository/chartname" or path to tgz file |
-| version   | -             | version to install                                           |
-| timeout   | 10m           | timeout to wait for release install                          |
-| values    | -             | yaml as a string, custom chart values                        |
-| namespace | -             | namespace to install chart into                              |
+| Field     | Default value | Description                                                          |
+|-----------|---------------|----------------------------------------------------------------------|
+| name      | -             | Release name                                                         |
+| chartname | -             | chartname in form "repository/chartname" or path to tgz file         |
+| version   | -             | version to install                                                   |
+| timeout   | 10m           | timeout to wait for release install                                  |
+| values    | -             | yaml as a string, custom chart values                                |
+| namespace | -             | namespace to install chart into                                      |
+| order     | 0             | order to apply manifest. For equal values, alphanum ordering is used |
 
 ## Example
 
@@ -40,6 +41,7 @@ In the example, Prometheus is configured from "stable" Helms chart repository. A
 spec:
   extensions:
     helm:
+      concurrencyLevel: 5
       repositories:
       - name: stable
         url: https://charts.helm.sh/stable
@@ -50,6 +52,7 @@ spec:
         chartname: prometheus-community/prometheus
         version: "14.6.1"
         timeout: 20m
+        order: 1
         values: |
           alertmanager:
             persistentVolume:
@@ -62,6 +65,7 @@ spec:
       - name: oci-chart
         chartname: oci://registry:8080/chart
         version: "0.0.1"
+        order: 2
         values: ""
         namespace: default
       # Other way is to use local tgz file with chart
@@ -69,6 +73,7 @@ spec:
       - name: tgz-chart
         chartname: /tmp/chart.tgz
         version: "0.0.1"
+        order: 2 
         values: ""
         namespace: default
 ```

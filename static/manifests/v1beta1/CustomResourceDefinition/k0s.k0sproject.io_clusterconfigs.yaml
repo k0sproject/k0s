@@ -98,6 +98,8 @@ spec:
                               type: string
                             namespace:
                               type: string
+                            order:
+                              type: integer
                             timeout:
                               description: A Duration represents the elapsed time
                                 between two instants as an int64 nanosecond count.
@@ -111,6 +113,8 @@ spec:
                               type: string
                           type: object
                         type: array
+                      concurrencyLevel:
+                        type: integer
                       repositories:
                         description: RepositoriesSettings repository settings
                         items:
