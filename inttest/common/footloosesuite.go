@@ -68,6 +68,7 @@ import (
 const (
 	controllerNodeNameFormat   = "controller%d"
 	workerNodeNameFormat       = "worker%d"
+	k0smotronNodeNameFormat    = "k0smotron%d"
 	lbNodeNameFormat           = "lb%d"
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
@@ -100,10 +101,12 @@ type FootlooseSuite struct {
 	WithExternalEtcd             bool
 	WithLB                       bool
 	WorkerCount                  int
+	K0smotronWorkerCount         int
 	WithUpdateServer             bool
 	K0sUpdateVersion             string
 	ControllerNetworks           []string
 	WorkerNetworks               []string
+	K0smotronNetworks            []string
 	FootLooseImage               string
 
 	ctx      context.Context
@@ -245,6 +248,9 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 	for i := 0; i < s.WorkerCount; i++ {
 		nodes = append(nodes, s.WorkerNode(i))
 	}
+	for i := 0; i < s.K0smotronWorkerCount; i++ {
+		nodes = append(nodes, s.K0smotronNode(i))
+	}
 	if s.WithLB {
 		nodes = append(nodes, s.LBNode())
 	}
@@ -291,6 +297,11 @@ func (s *FootlooseSuite) ControllerNode(idx int) string {
 // WorkerNode gets the node name of given worker index
 func (s *FootlooseSuite) WorkerNode(idx int) string {
 	return fmt.Sprintf(workerNodeNameFormat, idx)
+}
+
+// K0smotronNode gets the node name of given K0smotron node index
+func (s *FootlooseSuite) K0smotronNode(idx int) string {
+	return fmt.Sprintf(k0smotronNodeNameFormat, idx)
 }
 
 func (s *FootlooseSuite) LBNode() string {
@@ -1150,6 +1161,17 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 					Volumes:      volumes,
 					PortMappings: portMaps,
 					Networks:     s.WorkerNetworks,
+				},
+			},
+			{
+				Count: s.K0smotronWorkerCount,
+				Spec: config.Machine{
+					Image:        s.FootLooseImage,
+					Name:         k0smotronNodeNameFormat,
+					Privileged:   true,
+					Volumes:      volumes,
+					PortMappings: portMaps,
+					Networks:     s.K0smotronNetworks,
 				},
 			},
 		},
