@@ -189,7 +189,7 @@ func (s *BasicSuite) verifyContainerdDefaultConfig() {
 	}
 	defer ssh.Disconnect()
 
-	if !s.NoError(ssh.Exec(s.Context(), "/var/lib/k0s/bin/containerd config default", common.SSHStreams{Out: &defaultConfig})) {
+	if !s.NoError(ssh.Exec(s.Context(), "/var/lib/k0s/bin/containerd --config=/etc/k0s/containerd.toml config dump", common.SSHStreams{Out: &defaultConfig})) {
 		return
 	}
 
