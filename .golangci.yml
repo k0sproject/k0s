@@ -5,6 +5,11 @@ run:
   build-tags:
     - hack
   skip-dirs-use-default: false
+  skip-dirs:
+    - build
+    - docs
+    - embedded-bins
+    - examples
   skip-files:
     - "zz_*"
   tests: true

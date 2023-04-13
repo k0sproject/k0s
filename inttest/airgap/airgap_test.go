@@ -51,12 +51,13 @@ func (s *AirgapSuite) TearDownSuite() {
 }
 
 func (s *AirgapSuite) TestK0sGetsUp() {
-	(&common.Airgap{
+	err := (&common.Airgap{
 		SSH:  s.SSH,
 		Logf: s.T().Logf,
 	}).LockdownMachines(s.Context(),
 		s.ControllerNode(0), s.WorkerNode(0),
 	)
+	s.Require().NoError(err)
 
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfig)
 	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))

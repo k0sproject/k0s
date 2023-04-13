@@ -74,12 +74,13 @@ func (s *airgapSuite) SetupTest() {
 }
 
 func (s *airgapSuite) TestApply() {
-	(&common.Airgap{
+	err := (&common.Airgap{
 		SSH:  s.SSH,
 		Logf: s.T().Logf,
 	}).LockdownMachines(s.Context(),
 		s.ControllerNode(0), s.WorkerNode(0),
 	)
+	s.Require().NoError(err)
 
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
