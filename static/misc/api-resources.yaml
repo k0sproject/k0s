@@ -226,6 +226,10 @@
   kind: FlowControl
   removed_in: v1.26.0
   version: v1beta1
+- group: storage.k8s.io
+  kind: CSIStorageCapacity
+  removed_in: v1.27.0
+  version: v1beta1
 
 # This is used solely for integration testing.
 - group: autopilot.k0sproject.io
