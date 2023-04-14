@@ -20,24 +20,23 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 	authorization "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/certificates/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
+	certificates "k8s.io/kubernetes/pkg/apis/certificates"
 )
 
 type CSRApprover struct {
@@ -188,64 +187,12 @@ func (a *CSRApprover) authorize(ctx context.Context, csr *v1.CertificateSigningR
 }
 
 func (a *CSRApprover) ensureKubeletServingCert(csr *v1.CertificateSigningRequest, x509cr *x509.CertificateRequest) error {
-	var errs []error
-
-	expectedOrg := []string{"system:nodes"}
-	if !slices.Equal(expectedOrg, x509cr.Subject.Organization) {
-		err := fmt.Errorf("organization doesn't match: expected %v, got %v", expectedOrg, x509cr.Subject.Organization)
-		errs = append(errs, err)
+	usages := sets.NewString()
+	for _, usage := range csr.Spec.Usages {
+		usages.Insert(string(usage))
 	}
 
-	if len(x509cr.DNSNames) < 1 {
-		err := errors.New("no DNS names")
-		errs = append(errs, err)
-	}
-
-	if len(x509cr.IPAddresses) < 1 {
-		err := errors.New("no IP addresses")
-		errs = append(errs, err)
-	}
-
-	kubeletServerUsages := []v1.KeyUsage{
-		v1.UsageKeyEncipherment,
-		v1.UsageDigitalSignature,
-		v1.UsageServerAuth,
-	}
-	if err := ensureUsages(csr, kubeletServerUsages); err != nil {
-		err := fmt.Errorf("usages don't match: %w", err)
-		errs = append(errs, err)
-	}
-
-	if !strings.HasPrefix(x509cr.Subject.CommonName, "system:node:") {
-		err := fmt.Errorf("x509 CN does not start with %q: %q", "system:node:", x509cr.Subject.CommonName)
-		errs = append(errs, err)
-	}
-
-	if csr.Spec.Username != x509cr.Subject.CommonName {
-		err := fmt.Errorf("x509 CN %q doesn't match CSR username %q", x509cr.Subject.CommonName, csr.Spec.Username)
-		errs = append(errs, err)
-	}
-
-	return errors.Join(errs...)
-}
-
-func ensureUsages(csr *v1.CertificateSigningRequest, usages []v1.KeyUsage) error {
-	var errs []error
-
-	extraUsages := slices.Clone(csr.Spec.Usages)
-	for _, usage := range usages {
-		if idx := slices.Index(extraUsages, usage); idx >= 0 {
-			extraUsages = slices.Delete(extraUsages, idx, idx+1)
-		} else {
-			errs = append(errs, fmt.Errorf("missing: %q", usage))
-		}
-	}
-
-	for _, usage := range extraUsages {
-		errs = append(errs, fmt.Errorf("extra: %q", usage))
-	}
-
-	return errors.Join(errs...)
+	return certificates.ValidateKubeletServingCSR(x509cr, usages, false)
 }
 
 func getCertApprovalCondition(status *v1.CertificateSigningRequestStatus) (approved bool, denied bool) {
