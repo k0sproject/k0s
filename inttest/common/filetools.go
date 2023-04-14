@@ -75,6 +75,5 @@ func (s *FootlooseSuite) MakeDir(node, path string) {
 	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(s.Context(), fmt.Sprintf("mkdir %s", path))
-	s.Require().NoError(err)
+	s.Require().NoError(ssh.Exec(s.Context(), fmt.Sprintf("mkdir -p -- %q", path), SSHStreams{}))
 }
