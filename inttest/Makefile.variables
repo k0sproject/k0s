@@ -41,4 +41,5 @@ smoketests := \
 	check-metricscraper \
 	check-customdomain \
 	check-capitalhostnames \
+	check-dualstack-dynamicconfig \
 	check-custom-cidrs \
