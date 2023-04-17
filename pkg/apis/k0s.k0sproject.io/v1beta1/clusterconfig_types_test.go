@@ -262,3 +262,40 @@ func TestStripDefaults(t *testing.T) {
 	a.Nil(stripped.Spec.Scheduler)
 	a.Nil(stripped.Spec.Network)
 }
+
+func TestFeatureGates(t *testing.T) {
+	yamlData := `
+    apiVersion: k0s.k0sproject.io/v1beta1
+    kind: ClusterConfig
+    metadata:
+      name: foobar
+    spec:
+      featureGates:
+        - name: feature_XXX
+          enabled: true
+          components: ["x", "y", "z"]
+        - name: feature_YYY
+          enabled: true
+        -
+          name: feature_ZZZ
+          enabled: false
+`
+	c, err := ConfigFromString(yamlData)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(c.Spec.FeatureGates))
+	assert.Equal(t, "feature_XXX", c.Spec.FeatureGates[0].Name)
+	assert.True(t, c.Spec.FeatureGates[0].Enabled)
+	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("x"))
+	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("y"))
+	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("z"))
+
+	assert.Equal(t, "feature_YYY", c.Spec.FeatureGates[1].Name)
+	assert.True(t, c.Spec.FeatureGates[1].Enabled)
+	for _, k8sComponent := range KubernetesComponents {
+		assert.True(t, c.Spec.FeatureGates[1].EnabledFor(k8sComponent))
+	}
+
+	assert.Equal(t, "feature_ZZZ", c.Spec.FeatureGates[2].Name)
+
+	assert.False(t, c.Spec.FeatureGates[2].Enabled)
+}

@@ -59,6 +59,8 @@ var cmDefaultArgs = stringmap.StringMap{
 	"use-service-account-credentials": "true",
 }
 
+const kubeControllerManagerComponent = "kube-controller-manager"
+
 var _ manager.Component = (*Manager)(nil)
 var _ manager.Reconciler = (*Manager)(nil)
 
@@ -76,7 +78,7 @@ func (a *Manager) Init(_ context.Context) error {
 	if err := os.Chown(path.Join(a.K0sVars.CertRootDir, "ca.key"), a.uid, -1); err != nil && os.Geteuid() == 0 {
 		logrus.Warning(fmt.Errorf("failed to change permissions for the ca.key: %w", err))
 	}
-	return assets.Stage(a.K0sVars.BinDir, "kube-controller-manager", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, kubeControllerManagerComponent, constant.BinDirMode)
 }
 
 // Run runs kube Manager
@@ -84,7 +86,7 @@ func (a *Manager) Start(_ context.Context) error { return nil }
 
 // Reconcile detects changes in configuration and applies them to the component
 func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterConfig) error {
-	logger := logrus.WithField("component", "kube-controller-manager")
+	logger := logrus.WithField("component", kubeControllerManagerComponent)
 	logger.Info("Starting reconcile")
 	ccmAuthConf := filepath.Join(a.K0sVars.CertRootDir, "ccm.conf")
 	args := stringmap.StringMap{
@@ -132,6 +134,8 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		args["leader-elect"] = "false"
 	}
 
+	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeControllerManagerComponent)
+
 	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing
 		logger.Info("reconcile has nothing to do")
@@ -148,8 +152,8 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	}
 
 	a.supervisor = &supervisor.Supervisor{
-		Name:    "kube-controller-manager",
-		BinPath: assets.BinPath("kube-controller-manager", a.K0sVars.BinDir),
+		Name:    kubeControllerManagerComponent,
+		BinPath: assets.BinPath(kubeControllerManagerComponent, a.K0sVars.BinDir),
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),

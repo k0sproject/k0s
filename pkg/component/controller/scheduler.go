@@ -46,6 +46,8 @@ type Scheduler struct {
 var _ manager.Component = (*Scheduler)(nil)
 var _ manager.Reconciler = (*Scheduler)(nil)
 
+const kubeSchedulerComponentName = "kube-scheduler"
+
 // Init extracts the needed binaries
 func (a *Scheduler) Init(_ context.Context) error {
 	var err error
@@ -53,7 +55,7 @@ func (a *Scheduler) Init(_ context.Context) error {
 	if err != nil {
 		logrus.Warning(fmt.Errorf("running kube-scheduler as root: %w", err))
 	}
-	return assets.Stage(a.K0sVars.BinDir, "kube-scheduler", constant.BinDirMode)
+	return assets.Stage(a.K0sVars.BinDir, kubeSchedulerComponentName, constant.BinDirMode)
 }
 
 // Run runs kube scheduler
@@ -93,15 +95,16 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	if a.SingleNode {
 		args["leader-elect"] = "false"
 	}
+	args = clusterConfig.Spec.FeatureGates.BuildArgs(args, kubeSchedulerComponentName)
 
 	if args.Equals(a.previousConfig) && a.supervisor != nil {
 		// no changes and supervisor already running, do nothing
-		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
+		logrus.WithField("component", kubeSchedulerComponentName).Info("reconcile has nothing to do")
 		return nil
 	}
 	// Stop in case there's process running already and we need to change the config
 	if a.supervisor != nil {
-		logrus.WithField("component", "kube-scheduler").Info("reconcile has nothing to do")
+		logrus.WithField("component", kubeSchedulerComponentName).Info("reconcile has nothing to do")
 		err := a.supervisor.Stop()
 		a.supervisor = nil
 		if err != nil {
@@ -110,8 +113,8 @@ func (a *Scheduler) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterC
 	}
 
 	a.supervisor = &supervisor.Supervisor{
-		Name:    "kube-scheduler",
-		BinPath: assets.BinPath("kube-scheduler", a.K0sVars.BinDir),
+		Name:    kubeSchedulerComponentName,
+		BinPath: assets.BinPath(kubeSchedulerComponentName, a.K0sVars.BinDir),
 		RunDir:  a.K0sVars.RunDir,
 		DataDir: a.K0sVars.DataDir,
 		Args:    args.ToDashedArgs(),
