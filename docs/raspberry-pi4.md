@@ -100,7 +100,7 @@ In addition, add each of these modules to your `/etc/modules-load.d/modules.conf
 Download a [k0s release](https://github.com/k0sproject/k0s/releases/latest). For example:
 
 ```shell
-wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.24.12+k0s.0/k0s-v1.24.12+k0s.0-arm64 # replace version number!
+wget -O /tmp/k0s https://github.com/k0sproject/k0s/releases/download/v1.24.13+k0s.0/k0s-v1.24.13+k0s.0-arm64 # replace version number!
 sudo install /tmp/k0s /usr/local/bin/k0s
 ```
 
@@ -120,7 +120,7 @@ k0s version
 ```
 
 ```shell
-v1.24.12+k0s.0
+v1.24.13+k0s.0
 ```
 
 ### Deploy Kubernetes
@@ -202,9 +202,9 @@ kubectl get nodes,deployments,pods -A
 
 ```shell
 NAME         STATUS   ROLES    AGE     VERSION
-node/k8s-4   Ready    <none>   5m9s    v1.24.12+k0s
-node/k8s-5   Ready    <none>   5m      v1.24.12+k0s
-node/k8s-6   Ready    <none>   4m45s   v1.24.12+k0s
+node/k8s-4   Ready    <none>   5m9s    v1.24.13+k0s
+node/k8s-5   Ready    <none>   5m      v1.24.13+k0s
+node/k8s-6   Ready    <none>   4m45s   v1.24.13+k0s
 
 NAMESPACE     NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
 kube-system   deployment.apps/calico-kube-controllers   1/1     1            1           12m
