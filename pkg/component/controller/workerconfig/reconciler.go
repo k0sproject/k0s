@@ -601,7 +601,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 	workerProfile := &workerconfig.Profile{
 		APIServerAddresses: slices.Clone(snapshot.apiServers),
 		KubeletConfiguration: kubeletv1beta1.KubeletConfiguration{
-			FeatureGates: snapshot.featureGates.AsMapBool("kubelet"),
+			FeatureGates: snapshot.featureGates.AsMap("kubelet"),
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: kubeletv1beta1.SchemeGroupVersion.String(),
 				Kind:       "KubeletConfiguration",
