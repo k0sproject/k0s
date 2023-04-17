@@ -31,6 +31,7 @@ var KubernetesComponents = []string{
 	"kube-controller-manager",
 	"kubelet",
 	"kube-scheduler",
+	"kube-proxy",
 }
 
 // FeatureGates collection of feature gate specs

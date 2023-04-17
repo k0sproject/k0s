@@ -140,7 +140,7 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
 		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
 		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
-		FeatureGates:         clusterConfig.Spec.FeatureGates,
+		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
 	}
 
 	iptables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPTables)
@@ -168,7 +168,7 @@ type proxyConfig struct {
 	MetricsBindAddress   string
 	IPTables             string
 	IPVS                 string
-	FeatureGates         []string
+	FeatureGates         map[string]bool
 }
 
 const proxyTemplate = `
@@ -264,7 +264,9 @@ data:
     clusterCIDR: {{ .ClusterCIDR }}
     configSyncPeriod: 0s
     featureGates:
-      ServiceInternalTrafficPolicy: true
+{{- range $key, $value := .FeatureGates }}
+      {{ $key }}: {{ $value }}
+{{- end }}
     mode: "{{ .Mode }}"
     conntrack:
       maxPerCore: 0
