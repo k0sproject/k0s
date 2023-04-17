@@ -1,6 +1,6 @@
 
-ARCH = $(shell go env GOARCH)
-OS = $(shell go env GOOS)
+ARCH := $(shell go env GOARCH)
+OS := $(shell go env GOOS)
 K0S_UPDATE_TO_VERSION ?= $(shell ../k0s version)
 
 SONOBUOY_VERSION ?= 0.56.11
@@ -12,12 +12,6 @@ bins = bin/sonobuoy
 
 include ../embedded-bins/Makefile.variables
 
-ifeq ($(ARCH),amd64)
-etcd_arch = amd64
-else
-etcd_arch = arm64
-endif
-
 .PHONY: all
 all: $(bins) .footloose-alpine.stamp
 
@@ -27,17 +21,24 @@ bin:
 bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
-.footloose-alpine.stamp: footloose-alpine/Dockerfile $(shell find footloose-alpine/root -type f)
-	docker build \
-	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
-	  --build-arg ETCD_ARCH=$(etcd_arch) \
-	  --build-arg ETCD_VERSION=$(etcd_version) \
-	  --build-arg HELM_VERSION=$(helm_version) \
-	  --build-arg KUBE_VERSION=$(kubernetes_version) \
-	  -t footloose-alpine \
-	  -f footloose-alpine/Dockerfile \
-	  footloose-alpine
+footloose_alpine_build_cmdline := \
+	--build-arg GOLANG_IMAGE=$(golang_buildimage) \
+	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
+	--build-arg ETCD_VERSION=$(etcd_version) \
+	--build-arg HELM_VERSION=$(helm_version) \
+	--build-arg KUBE_VERSION=$(kubernetes_version) \
+	-t footloose-alpine \
+	-f footloose-alpine/Dockerfile \
+	footloose-alpine
+
+.footloose-alpine.stamp:
+	docker build --build-arg TARGETARCH=$(ARCH) $(footloose_alpine_build_cmdline)
 	touch $@
+
+# This is a special target to test the footloose alpine image locally for all supported platforms.
+.PHONY: check-footloose-alpine-buildx
+check-footloose-alpine-buildx:
+	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 $(footloose_alpine_build_cmdline)
 
 .footloose-k0s.stamp: K0S_PATH ?= $(realpath ../k0s)
 .footloose-k0s.stamp: .footloose-alpine.stamp
