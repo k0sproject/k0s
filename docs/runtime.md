@@ -48,7 +48,7 @@ state = "/run/k0s/containerd"
 
 ## k0s managed dynamic runtime configuration
 
-From 1.27.0 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in `/etc/k0s/containerd.d/` where user can drop-in partial containerd configuration snippets.
+From 1.27.1 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in `/etc/k0s/containerd.d/` where user can drop-in partial containerd configuration snippets.
 
 k0s will automatically pick up these files and adds these in containerd configuration `imports` list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at [containerd#8056](https://github.com/containerd/containerd/pull/8056)
 
