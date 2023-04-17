@@ -362,6 +362,7 @@ Available components are:
 - kube-controller-manager
 - kubelet
 - kube-scheduler
+- kube-proxy
 
 If `components` are omitted, propagates to all kube components.
 
