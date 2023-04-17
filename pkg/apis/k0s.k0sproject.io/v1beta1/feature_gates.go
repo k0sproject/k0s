@@ -49,14 +49,8 @@ func (fgs FeatureGates) Validate() []error {
 
 // BuildArgs build cli args using the given args and component name
 func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) stringmap.StringMap {
-	componentFeatureGates := []string{}
+	componentFeatureGates := fgs.AsSliceOfStrings(component)
 	fg, componentHasFeatureGates := args["feature-gates"]
-	for _, feature := range fgs {
-		if feature.EnabledFor(component) {
-			componentFeatureGates = append(componentFeatureGates,
-				feature.String())
-		}
-	}
 	featureGatesString := strings.Join(componentFeatureGates, ",")
 	if componentHasFeatureGates {
 		fg = fmt.Sprintf("%s,%s", fg, featureGatesString)
@@ -67,15 +61,22 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 	return args
 }
 
-// AsMapBool returns feature gates as map[string]bool, used in kubelet
-func (fgs FeatureGates) AsMapBool(component string) map[string]bool {
+// AsMap returns feature gates as map[string]bool, used in kubelet
+func (fgs FeatureGates) AsMap(component string) map[string]bool {
 	componentFeatureGates := map[string]bool{}
 	for _, feature := range fgs {
-		if feature.EnabledFor(component) {
-			componentFeatureGates[feature.Name] = true
-		}
+		componentFeatureGates[feature.Name] = feature.EnabledFor(component)
 	}
 	return componentFeatureGates
+}
+
+// AsSliceOfStrings returns feature gates as slice of strings, used in arguments
+func (fgs FeatureGates) AsSliceOfStrings(component string) []string {
+	featureGates := []string{}
+	for _, feature := range fgs {
+		featureGates = append(featureGates, feature.String(component))
+	}
+	return featureGates
 }
 
 // FeatureGate specifies single feature gate
@@ -114,11 +115,6 @@ func (fg *FeatureGate) Validate() error {
 }
 
 // String represents feature gate as a string
-func (fg *FeatureGate) String() string {
-	return fmt.Sprintf("%s=%t", fg.Name, fg.Enabled)
-}
-
-// AddFeatureGatesToArgs builds component args to have given feature gate enabled
-func (fg *FeatureGate) AddFeatureGatesToArgs(args stringmap.StringMap, component string) stringmap.StringMap {
-	return args
+func (fg *FeatureGate) String(component string) string {
+	return fmt.Sprintf("%s=%t", fg.Name, fg.EnabledFor(component))
 }

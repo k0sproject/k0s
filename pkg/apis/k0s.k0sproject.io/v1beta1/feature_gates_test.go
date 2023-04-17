@@ -95,8 +95,9 @@ func TestArgsFeatureGates(t *testing.T) {
 			Components: []string{"component_a"},
 		}
 
-		require.Equal(t, "some_feature_gate=true", enabledFeature.String())
-		require.Equal(t, "another_feature_gate=false", explicitlyDisabledFeature.String())
+		require.Equal(t, "some_feature_gate=true", enabledFeature.String("component_a"))
+		require.Equal(t, "some_feature_gate=false", enabledFeature.String("component_b"))
+		require.Equal(t, "another_feature_gate=false", explicitlyDisabledFeature.String("component_a"))
 
 	})
 
@@ -109,5 +110,40 @@ func TestArgsFeatureGates(t *testing.T) {
 
 		require.NoError(t, validFeature.Validate())
 		require.Error(t, invalidFeatureGate.Validate())
+	})
+
+	t.Run("feature_gates_as_slice_of_strings", func(t *testing.T) {
+		featureGates := FeatureGates{
+			{
+				Name:    "FeatureGate1",
+				Enabled: true,
+			},
+			{
+				Name:    "FeatureGate2",
+				Enabled: false,
+			},
+			{
+				Name:    "FeatureGate3",
+				Enabled: true,
+			},
+		}
+		require.Equal(t, []string{"FeatureGate1=true", "FeatureGate2=false", "FeatureGate3=true"}, featureGates.AsSliceOfStrings("kubelet"))
+	})
+	t.Run("feature_gates_as_map", func(t *testing.T) {
+		featureGates := FeatureGates{
+			{
+				Name:    "FeatureGate1",
+				Enabled: true,
+			},
+			{
+				Name:    "FeatureGate2",
+				Enabled: false,
+			},
+			{
+				Name:    "FeatureGate3",
+				Enabled: true,
+			},
+		}
+		require.Equal(t, map[string]bool{"FeatureGate1": true, "FeatureGate2": false, "FeatureGate3": true}, featureGates.AsMap("kubelet"))
 	})
 }
