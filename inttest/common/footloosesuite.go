@@ -692,19 +692,28 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 	return s.RunWorkersWithToken(token, args...)
 }
 
+// RunWorkersWithToken joins all the workers to the cluster with the given token
 func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
 	for i := 0; i < s.WorkerCount; i++ {
-		workerNode := s.WorkerNode(i)
-		sshWorker, err := s.SSH(s.Context(), workerNode)
+		err := s.RunWithToken(s.WorkerNode(i), token, args...)
 		if err != nil {
 			return err
 		}
-		defer sshWorker.Disconnect()
+	}
+	return nil
+}
 
-		if err := s.launchDelegate.InitWorker(s.Context(), sshWorker, token, args...); err != nil {
-			s.T().Logf("failed to start k0sworker on %s: %v", workerNode, err)
-			return err
-		}
+// RunWithToken joins a worker node to the cluster with the given token
+func (s *FootlooseSuite) RunWithToken(worker string, token string, args ...string) error {
+	sshWorker, err := s.SSH(s.Context(), worker)
+	if err != nil {
+		return err
+	}
+	defer sshWorker.Disconnect()
+
+	if err := s.launchDelegate.InitWorker(s.Context(), sshWorker, token, args...); err != nil {
+		s.T().Logf("failed to start k0sworker on %s: %v", worker, err)
+		return err
 	}
 	return nil
 }
