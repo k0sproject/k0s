@@ -68,6 +68,7 @@ import (
 const (
 	controllerNodeNameFormat   = "controller%d"
 	workerNodeNameFormat       = "worker%d"
+	k0smotronNodeNameFormat    = "k0smotron%d"
 	lbNodeNameFormat           = "lb%d"
 	etcdNodeNameFormat         = "etcd%d"
 	updateServerNodeNameFormat = "updateserver%d"
@@ -87,24 +88,27 @@ type FootlooseSuite struct {
 
 	/* config knobs (initialized via `initializeDefaults`) */
 
-	LaunchMode                   LaunchMode
-	ControllerCount              int
-	ControllerUmask              int
-	ExtraVolumes                 []config.Volume
-	K0sFullPath                  string
-	AirgapImageBundleMountPoints []string
-	K0sAPIExternalPort           int
-	KonnectivityAdminPort        int
-	KonnectivityAgentPort        int
-	KubeAPIExternalPort          int
-	WithExternalEtcd             bool
-	WithLB                       bool
-	WorkerCount                  int
-	WithUpdateServer             bool
-	K0sUpdateVersion             string
-	ControllerNetworks           []string
-	WorkerNetworks               []string
-	FootLooseImage               string
+	LaunchMode                      LaunchMode
+	ControllerCount                 int
+	ControllerUmask                 int
+	ExtraVolumes                    []config.Volume
+	K0sFullPath                     string
+	AirgapImageBundleMountPoints    []string
+	K0smotronImageBundleMountPoints []string
+	K0sAPIExternalPort              int
+	KonnectivityAdminPort           int
+	KonnectivityAgentPort           int
+	KubeAPIExternalPort             int
+	WithExternalEtcd                bool
+	WithLB                          bool
+	WorkerCount                     int
+	K0smotronWorkerCount            int
+	WithUpdateServer                bool
+	K0sUpdateVersion                string
+	ControllerNetworks              []string
+	WorkerNetworks                  []string
+	K0smotronNetworks               []string
+	FootLooseImage                  string
 
 	ctx      context.Context
 	tearDown func()
@@ -245,6 +249,9 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 	for i := 0; i < s.WorkerCount; i++ {
 		nodes = append(nodes, s.WorkerNode(i))
 	}
+	for i := 0; i < s.K0smotronWorkerCount; i++ {
+		nodes = append(nodes, s.K0smotronNode(i))
+	}
 	if s.WithLB {
 		nodes = append(nodes, s.LBNode())
 	}
@@ -291,6 +298,11 @@ func (s *FootlooseSuite) ControllerNode(idx int) string {
 // WorkerNode gets the node name of given worker index
 func (s *FootlooseSuite) WorkerNode(idx int) string {
 	return fmt.Sprintf(workerNodeNameFormat, idx)
+}
+
+// K0smotronNode gets the node name of given K0smotron node index
+func (s *FootlooseSuite) K0smotronNode(idx int) string {
+	return fmt.Sprintf(k0smotronNodeNameFormat, idx)
 }
 
 func (s *FootlooseSuite) LBNode() string {
@@ -652,6 +664,25 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 	return token, nil
 }
 
+// ImportK0smotrtonImages imports
+func (s *FootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
+	for i := 0; i < s.WorkerCount; i++ {
+		workerNode := s.WorkerNode(i)
+		s.T().Logf("Importing images in %s", workerNode)
+		sshWorker, err := s.SSH(s.Context(), workerNode)
+		if err != nil {
+			return err
+		}
+		defer sshWorker.Disconnect()
+
+		_, err = sshWorker.ExecWithOutput(ctx, fmt.Sprintf("k0s ctr images import %s", s.K0smotronImageBundleMountPoints[0]))
+		if err != nil {
+			return fmt.Errorf("failed to import k0smotron images: %v", err)
+		}
+	}
+	return nil
+}
+
 // RunWorkers joins all the workers to the cluster
 func (s *FootlooseSuite) RunWorkers(args ...string) error {
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
@@ -661,19 +692,28 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 	return s.RunWorkersWithToken(token, args...)
 }
 
+// RunWorkersWithToken joins all the workers to the cluster with the given token
 func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
 	for i := 0; i < s.WorkerCount; i++ {
-		workerNode := s.WorkerNode(i)
-		sshWorker, err := s.SSH(s.Context(), workerNode)
+		err := s.RunWithToken(s.WorkerNode(i), token, args...)
 		if err != nil {
 			return err
 		}
-		defer sshWorker.Disconnect()
+	}
+	return nil
+}
 
-		if err := s.launchDelegate.InitWorker(s.Context(), sshWorker, token, args...); err != nil {
-			s.T().Logf("failed to start k0sworker on %s: %v", workerNode, err)
-			return err
-		}
+// RunWithToken joins a worker node to the cluster with the given token
+func (s *FootlooseSuite) RunWithToken(worker string, token string, args ...string) error {
+	sshWorker, err := s.SSH(s.Context(), worker)
+	if err != nil {
+		return err
+	}
+	defer sshWorker.Disconnect()
+
+	if err := s.launchDelegate.InitWorker(s.Context(), sshWorker, token, args...); err != nil {
+		s.T().Logf("failed to start k0sworker on %s: %v", worker, err)
+		return err
 	}
 	return nil
 }
@@ -1068,6 +1108,24 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		}
 	}
 
+	if len(s.K0smotronImageBundleMountPoints) > 0 {
+		path, ok := os.LookupEnv("K0SMOTRON_IMAGES_BUNDLE")
+		if !ok {
+			return errors.New("cannot bind-mount K0smotron image bundle, environment variable K0SMOTRON_IMAGES_BUNDLE not set")
+		} else if !file.Exists(path) {
+			return fmt.Errorf("cannot bind-mount airgap image bundle, no such file: %q", path)
+		}
+
+		for _, dest := range s.K0smotronImageBundleMountPoints {
+			volumes = append(volumes, config.Volume{
+				Type:        "bind",
+				Source:      path,
+				Destination: dest,
+				ReadOnly:    true,
+			})
+		}
+	}
+
 	// Ensure that kernel config is available in the footloose boxes.
 	// See https://github.com/kubernetes/system-validators/blob/v1.6.0/validators/kernel_validator.go#L180-L190
 
@@ -1150,6 +1208,17 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 					Volumes:      volumes,
 					PortMappings: portMaps,
 					Networks:     s.WorkerNetworks,
+				},
+			},
+			{
+				Count: s.K0smotronWorkerCount,
+				Spec: config.Machine{
+					Image:        s.FootLooseImage,
+					Name:         k0smotronNodeNameFormat,
+					Privileged:   true,
+					Volumes:      volumes,
+					PortMappings: portMaps,
+					Networks:     s.K0smotronNetworks,
 				},
 			},
 		},
