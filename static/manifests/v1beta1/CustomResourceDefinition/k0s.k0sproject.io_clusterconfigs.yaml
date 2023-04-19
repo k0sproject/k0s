@@ -145,6 +145,25 @@ spec:
                         type: string
                     type: object
                 type: object
+              featureGates:
+                description: FeatureGates collection of feature gate specs
+                items:
+                  description: FeatureGate specifies single feature gate
+                  properties:
+                    components:
+                      description: Components to use feature gate on, if empty `KubernetesComponents`
+                        is used as the list
+                      items:
+                        type: string
+                      type: array
+                    enabled:
+                      description: Enabled or disabled
+                      type: boolean
+                    name:
+                      description: Name of the feature gate
+                      type: string
+                  type: object
+                type: array
               images:
                 description: ClusterImages sets docker images for addon components
                 properties:
