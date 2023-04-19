@@ -46,11 +46,11 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/zap v1.23.0
-	golang.org/x/crypto v0.0.0-20220824171710-5757bc0c5503
+	golang.org/x/crypto v0.1.0
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.5.0
-	golang.org/x/tools v0.1.12
+	golang.org/x/sys v0.6.0
+	golang.org/x/tools v0.6.0
 	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.9.4
@@ -204,7 +204,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/runc v1.1.5 // indirect
+	github.com/opencontainers/runc v1.1.6 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -258,11 +258,11 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.3.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
