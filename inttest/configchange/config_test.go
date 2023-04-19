@@ -26,6 +26,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -127,6 +128,13 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		})
 		s.Require().NoError(err)
 
+		// Get the resource version for the current ds
+		ds, err := kc.AppsV1().DaemonSets("kube-system").List(s.Context(), metav1.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("metadata.name", "kube-router").String(),
+		})
+
+		s.Require().NoError(err)
+
 		_, err = cfgClient.Update(s.Context(), newConfig, metav1.UpdateOptions{})
 		s.Require().NoError(err)
 		if event, err := s.waitForReconcileEvent(eventWatch); s.NoError(err) {
@@ -137,22 +145,33 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 		// Verify MTU setting have been propagated properly
 		// It takes a while to actually apply the changes through stack applier
 		// Start the watch only from last version so we only get changed cm(s) and not the original one
-		w, err := kc.CoreV1().ConfigMaps("kube-system").Watch(s.Context(), metav1.ListOptions{
+		configMapWatch, err := kc.CoreV1().ConfigMaps("kube-system").Watch(s.Context(), metav1.ListOptions{
 			FieldSelector:   fields.OneTermEqualSelector("metadata.name", "kube-router-cfg").String(),
 			ResourceVersion: cml.ResourceVersion,
 		})
 		s.Require().NoError(err)
-		defer w.Stop()
+
+		daemonSetWatchChannel, err := kc.AppsV1().DaemonSets("kube-system").Watch(s.Context(), metav1.ListOptions{
+			FieldSelector:   fields.OneTermEqualSelector("metadata.name", "kube-router").String(),
+			ResourceVersion: ds.ResourceVersion,
+		})
+		s.Require().NoError(err)
+		defer configMapWatch.Stop()
 		timeout := time.After(20 * time.Second)
-		select {
-		case e := <-w.ResultChan():
-			cm := e.Object.(*corev1.ConfigMap)
-			cniConf := cm.Data["cni-conf.json"]
-			s.Contains(cniConf, `"mtu": 1300`)
-			s.Contains(cniConf, `"auto-mtu": false`)
-		case <-timeout:
-			s.Require().Fail("timed out while waiting for ConfigMap change")
+		for i := 0; i < 2; i++ {
+			select {
+			case event := <-configMapWatch.ResultChan():
+				cm := event.Object.(*corev1.ConfigMap)
+				cniConf := cm.Data["cni-conf.json"]
+				s.Contains(cniConf, `"mtu": 1300`)
+			case event := <-daemonSetWatchChannel.ResultChan():
+				ds := event.Object.(*appsv1.DaemonSet)
+				s.Require().Contains(ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
+			case <-timeout:
+				s.Require().Fail("timed out while waiting for ConfigMap change")
+			}
 		}
+
 	})
 }
 

@@ -70,7 +70,6 @@ func TestKubeRouterConfig(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, false, p.Dig("auto-mtu"))
 	require.Equal(t, float64(1450), p.Dig("mtu"))
 	require.Equal(t, true, p.Dig("hairpinMode"))
 	require.Equal(t, true, p.Dig("ipMasq"))
@@ -142,10 +141,42 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 
 	p, err := getKubeRouterPlugin(cm, "bridge")
 	require.NoError(t, err)
-	require.Equal(t, true, p.Dig("auto-mtu"))
 	require.Nil(t, p.Dig("mtu"))
 	require.Equal(t, true, p.Dig("hairpinMode"))
 	require.Equal(t, false, p.Dig("ipMasq"))
+}
+
+func TestKubeRouterManualMTUManifests(t *testing.T) {
+	k0sVars := constant.GetConfig(t.TempDir())
+	cfg := v1beta1.DefaultClusterConfig()
+	cfg.Spec.Network.Calico = nil
+	cfg.Spec.Network.Provider = "kuberouter"
+	cfg.Spec.Network.KubeRouter = v1beta1.DefaultKubeRouter()
+	cfg.Spec.Network.KubeRouter.AutoMTU = false
+	cfg.Spec.Network.KubeRouter.MTU = 1234
+	saver := inMemorySaver{}
+	kr := NewKubeRouter(k0sVars, saver)
+	require.NoError(t, kr.Reconcile(context.Background(), cfg))
+	require.NoError(t, kr.Stop())
+
+	manifestData, foundRaw := saver["kube-router.yaml"]
+	require.True(t, foundRaw, "must have manifests for kube-router")
+
+	resources, err := testutil.ParseManifests(manifestData)
+	require.NoError(t, err)
+	ds, err := findDaemonset(resources)
+	require.NoError(t, err)
+	require.NotNil(t, ds)
+
+	assert.Contains(t, ds.Spec.Template.Spec.Containers[0].Args, "--auto-mtu=false")
+
+	cm, err := findConfig(resources)
+	require.NoError(t, err)
+	require.NotNil(t, cm)
+
+	p, err := getKubeRouterPlugin(cm, "bridge")
+	require.NoError(t, err)
+	require.Equal(t, float64(1234), p.Dig("mtu"))
 }
 
 func findConfig(resources []*unstructured.Unstructured) (corev1.ConfigMap, error) {
