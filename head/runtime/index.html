@@ -1572,7 +1572,7 @@
 <span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span>
 </code></pre></div>
 <h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
-<p>From 1.27.0 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where user can drop-in partial containerd configuration snippets.</p>
+<p>From 1.27.1 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where user can drop-in partial containerd configuration snippets.</p>
 <p>k0s will automatically pick up these files and adds these in containerd configuration <code>imports</code> list. If k0s sees the configuration drop-ins are CRI related configurations k0s will automatically collect all these into a single file and adds that as a single import file. This is to overcome some hard limitation on containerd 1.X versions. Read more at <a href="https://github.com/containerd/containerd/pull/8056">containerd#8056</a></p>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h3>
 <p>Following chapters provide some examples how to configure different runtimes for containerd using k0s managed drop-in configurations.</p>
