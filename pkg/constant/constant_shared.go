@@ -74,7 +74,7 @@ const (
 	KonnectivityServerUser = "konnectivity-server"
 
 	// KubernetesMajorMinorVersion defines the current embedded major.minor version info
-	KubernetesMajorMinorVersion = "1.26"
+	KubernetesMajorMinorVersion = "1.27"
 
 	/* Image Constants */
 
@@ -85,7 +85,7 @@ const (
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.2"
 	KubeProxyImage                     = "quay.io/k0sproject/kube-proxy"
-	KubeProxyImageVersion              = "v1.26.4"
+	KubeProxyImageVersion              = "v1.27.1"
 	CoreDNSImage                       = "quay.io/k0sproject/coredns"
 	CoreDNSImageVersion                = "1.10.1"
 	EnvoyProxyImage                    = "quay.io/k0sproject/envoy-distroless"

@@ -66,7 +66,7 @@ func NewCommand(c Config) (Command, error) {
 	}
 
 	ccmo.KubeCloudShared.CloudProvider.Name = Name
-	ccmo.Kubeconfig = c.KubeConfig
+	ccmo.Generic.ClientConnection.Kubeconfig = c.KubeConfig
 
 	if c.BindPort != 0 {
 		ccmo.SecureServing.BindPort = c.BindPort

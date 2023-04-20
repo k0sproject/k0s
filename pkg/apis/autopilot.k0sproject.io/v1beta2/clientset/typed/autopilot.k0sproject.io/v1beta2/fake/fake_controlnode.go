@@ -24,7 +24,6 @@ import (
 	v1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 )
@@ -34,9 +33,9 @@ type FakeControlNodes struct {
 	Fake *FakeAutopilotV1beta2
 }
 
-var controlnodesResource = schema.GroupVersionResource{Group: "autopilot.k0sproject.io", Version: "v1beta2", Resource: "controlnodes"}
+var controlnodesResource = v1beta2.SchemeGroupVersion.WithResource("controlnodes")
 
-var controlnodesKind = schema.GroupVersionKind{Group: "autopilot.k0sproject.io", Version: "v1beta2", Kind: "ControlNode"}
+var controlnodesKind = v1beta2.SchemeGroupVersion.WithKind("ControlNode")
 
 // Get takes name of the controlNode, and returns the corresponding controlNode object, and an error if there is any.
 func (c *FakeControlNodes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta2.ControlNode, err error) {

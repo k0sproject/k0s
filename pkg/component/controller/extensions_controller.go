@@ -39,7 +39,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	ctrlManager "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -185,11 +185,6 @@ type ChartReconciler struct {
 	helm          *helm.Commands
 	leaderElector leaderelector.Interface
 	L             *logrus.Entry
-}
-
-func (cr *ChartReconciler) InjectClient(c client.Client) error {
-	cr.Client = c
-	return nil
 }
 
 func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -342,7 +337,7 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 
 // Run
 func (ec *ExtensionsController) Start(ctx context.Context) error {
-	config, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
+	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
 	}
@@ -351,10 +346,10 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
-	mgr, err := ctrlManager.New(config, ctrlManager.Options{
+	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
-		Controller: v1alpha1.ControllerConfigurationSpec{
+		Controller: config.Controller{
 			GroupKindConcurrency: map[string]int{gk.String(): 10},
 		},
 	})
@@ -390,6 +385,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 			),
 		).
 		Complete(&ChartReconciler{
+			Client:        mgr.GetClient(),
 			leaderElector: ec.leaderElector, // TODO: drop in favor of controller-runtime lease manager?
 			helm:          ec.helm,
 			L:             ec.L.WithField("extensions_type", "helm"),

@@ -17,7 +17,7 @@ package common
 import (
 	"os"
 
-	nodeutil "k8s.io/kubernetes/pkg/util/node"
+	nodeutil "k8s.io/component-helpers/node/util"
 )
 
 const (
