@@ -217,6 +217,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		extras := flags.Split(k.ExtraArgs)
 		args.Merge(extras)
 	}
+
 	logrus.Debugf("starting kubelet with args: %v", args)
 	k.supervisor = supervisor.Supervisor{
 		Name:    cmd,
