@@ -135,15 +135,6 @@ spec:
     type: etcd
   telemetry:
     enabled: true
-  featureGates:
-    - name: feature_XXX
-      enabled: true
-      components: ["kubelet", "kube-api", "kube-scheduler"]
-    - name: feature_YYY
-      enabled: true
-    -
-      name: feature_ZZZ
-      enabled: false
 ```
 
 ## `spec` Key Detail
@@ -354,52 +345,22 @@ Note that there are several fields that cannot be overridden:
 
 [kubelet-config]: https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 
-### `spec.featureGates`
+#### Examples
 
-Available components are:
+##### Feature Gates
 
-- kube-apiserver
-- kube-controller-manager
-- kubelet
-- kube-scheduler
-- kube-proxy
-
-If `components` are omitted, propagates to all kube components.
-
-Modifies extraArgs.
-
-#### Example
+The below is an example of a worker profile with feature gates enabled:
 
 ```yaml
 spec:
-    featureGates:
-      - name: feature-gate-0
-        enabled: true
-        components: ["kube-apiserver", "kube-controller-manager", "kubelet", "kube-scheduler"]
-      - name: feature-gate-1
-        enabled: true
-      - name: feature-gate-2
-        enabled: false
+  workerProfiles:
+    - name: custom-feature-gate      # name of the worker profile
+      values:
+         featureGates:        # feature gates mapping
+            DevicePlugins: true
+            Accelerators: true
+            AllowExtTrafficLocalEndpoints: false
 ```
-
-#### Kubelet feature gates example
-
-The below is an example of a k0s config with feature gates enabled:
-
-```yaml
-spec:
-    featureGates:
-      - name: DevicePlugins
-        enabled: true
-        components: ["kubelet"]
-      - name: Accelerators
-        enabled: true
-        components: ["kubelet"]
-      - name: AllowExtTrafficLocalEndpoints
-        enabled: false
-```
-
-#### Configuration examples
 
 ##### Custom volumePluginDir
 
@@ -469,7 +430,7 @@ spec:
 
 If `spec.images.default_pull_policy` is set and not empty, it will be used as a pull policy for each bundled image.
 
-#### Image example
+#### Example
 
 ```yaml
 images:
