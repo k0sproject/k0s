@@ -139,7 +139,8 @@ func WaitForNodeReadyStatus(ctx context.Context, clients kubernetes.Interface, n
 		})
 }
 
-// WaitForDaemonSet waits for daemon set be ready.
+// WaitForDaemonset waits for the DaemonlSet with the given name to have
+// as many ready replicas as defined in the spec.
 func WaitForDaemonSet(ctx context.Context, kc *kubernetes.Clientset, name string) error {
 	return watch.DaemonSets(kc.AppsV1().DaemonSets("kube-system")).
 		WithObjectName(name).
@@ -167,6 +168,17 @@ func WaitForDeployment(ctx context.Context, kc *kubernetes.Clientset, name, name
 			}
 
 			return false, nil
+		})
+}
+
+// WaitForStatefulSet waits for the StatefulSet with the given name to have
+// as many ready replicas as defined in the spec.
+func WaitForStatefulSet(ctx context.Context, kc *kubernetes.Clientset, name, namespace string) error {
+	return watch.StatefulSets(kc.AppsV1().StatefulSets(namespace)).
+		WithObjectName(name).
+		WithErrorCallback(RetryWatchErrors(logrus.Infof)).
+		Until(ctx, func(s *appsv1.StatefulSet) (bool, error) {
+			return s.Status.ReadyReplicas == *s.Spec.Replicas, nil
 		})
 }
 
