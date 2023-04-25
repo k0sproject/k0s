@@ -77,7 +77,7 @@ require (
 	k8s.io/kubernetes v1.27.1
 	k8s.io/mount-utils v0.27.1
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
-	sigs.k8s.io/controller-runtime v0.13.1-0.20230412185432-fbd6b944a634 // includes https://github.com/kubernetes-sigs/controller-runtime/pull/2223
+	sigs.k8s.io/controller-runtime v0.13.1 // includes https://github.com/kubernetes-sigs/controller-runtime/pull/2223
 	sigs.k8s.io/yaml v1.3.0
 )
 
