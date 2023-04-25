@@ -72,25 +72,27 @@ func GetComponentStatus(socketPath string, maxCount int) (*prober.State, error) 
 func doHTTPRequestViaUnixSocket(socketPath string, path string, tgt interface{}) error {
 	httpc := http.Client{
 		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, "unix", socketPath)
 			},
 		},
 	}
 
 	response, err := httpc.Get("http://localhost/" + path)
 	if err != nil {
-		return fmt.Errorf("status: can't do http request: %v %v", socketPath, path)
+		return fmt.Errorf("status: can't get %q via %q: %w", path, socketPath, err)
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("status: unexpected http status code: %v %v", socketPath, path)
+		return fmt.Errorf("status: can't get %q via %q: status code %d", path, socketPath, response.StatusCode)
 	}
 
 	if err := json.NewDecoder(response.Body).Decode(tgt); err != nil {
-		return fmt.Errorf("status: can't decode json: %v", err)
+		return fmt.Errorf("status: can't get %q via %q: can't decode JSON: %w", path, socketPath, err)
 	}
+
 	return nil
 }
