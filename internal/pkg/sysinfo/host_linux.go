@@ -146,6 +146,9 @@ func (s *K0sSysinfoSpec) addKernelConfigs(linux *linux.LinuxProbes) {
 
 	ipvs := netfilter.AssertKernelConfig("IP_VS", "IP virtual server support")
 	ipvs.AssertKernelConfig("IP_VS_NFCT", "Netfilter connection tracking")
+	ipvs.AssertKernelConfig("IP_VS_SH", "Source hashing scheduling")
+	ipvs.AssertKernelConfig("IP_VS_RR", "Round-robin scheduling")
+	ipvs.AssertKernelConfig("IP_VS_WRR", "Weighted round-robin scheduling")
 
 	// IP: Netfilter Configuration
 	netfilter.AssertKernelConfig("NF_CONNTRACK_IPV4", "IPv4 connetion tracking support (required for NAT)") // enables NF_NAT_IPV4, merged into NF_CONNTRACK in Linux 4.19 (a0ae2562c6c4)
