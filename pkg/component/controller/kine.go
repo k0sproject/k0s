@@ -116,7 +116,7 @@ func (k *Kine) Start(ctx context.Context) error {
 			fmt.Sprintf("--endpoint=%s", k.Config.DataSource),
 			// NB: kine doesn't parse URLs properly, so construct potentially
 			// invalid URLs that are understood by kine.
-			// https://github.com/k3s-io/kine/blob/v0.9.9/pkg/endpoint/endpoint.go#L274-L282
+			// https://github.com/k3s-io/kine/blob/v0.10.0/pkg/endpoint/endpoint.go#L275-L283
 			fmt.Sprintf("--listen-address=unix://%s", k.K0sVars.KineSocketPath),
 		},
 		UID: k.uid,
