@@ -84,6 +84,8 @@ theme:
   logo: img/k0s_social.png
   palette:
     - scheme: default
+      primary: custom
+      accent: custom
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
