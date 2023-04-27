@@ -87,6 +87,8 @@ nullstring :=
 space := $(nullstring) # space now holds a single space
 comma := ,
 
+.DELETE_ON_ERROR:
+
 .PHONY: build
 ifeq ($(TARGET_OS),windows)
 build: k0s.exe
@@ -155,7 +157,7 @@ static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.va
 static/zz_generated_assets.go: $(shell find $(static_asset_dirs) -type f)
 	-rm -f -- '$@'
 	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
-	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs)) || rm -f -- '$@'
+	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs))
 
 codegen_targets += pkg/assets/zz_generated_offsets_$(TARGET_OS).go
 zz_os = $(patsubst pkg/assets/zz_generated_offsets_%.go,%,$@)
@@ -219,11 +221,7 @@ lint-go: .k0sbuild.docker-image.k0s go.sum codegen
 lint: lint-copyright lint-go
 
 airgap-images.txt: k0s .k0sbuild.docker-image.k0s 
-	$(GO_ENV) ./k0s airgap list-images --all > '$@' || { \
-	  code=$$? && \
-	  rm -f -- '$@' && \
-	  exit $$code ; \
-	}
+	$(GO_ENV) ./k0s airgap list-images --all > '$@'
 
 airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
 airgap-image-bundle-linux-arm64.tar: TARGET_PLATFORM := linux/arm64
@@ -233,9 +231,7 @@ airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
 	docker run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
-	  k0sbuild.image-bundler < airgap-images.txt > '$@' || { \
-	    code=$$? && rm -f -- '$@' && exit $$code ; \
-	  }
+	  k0sbuild.image-bundler < airgap-images.txt > '$@'
 
 .k0sbuild.image-bundler.stamp: hack/image-bundler/*
 	docker build \
