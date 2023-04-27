@@ -31,8 +31,11 @@ func NewStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Display dynamic configuration reconciliation status",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := config.GetCmdOpts()
-			os.Args = []string{os.Args[0], "kubectl", "--data-dir", c.K0sVars.DataDir, "-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+			os.Args = []string{os.Args[0], "kubectl", "--data-dir", opts.K0sVars.DataDir, "-n", "kube-system", "get", "event", "--field-selector", "involvedObject.name=k0s"}
 			if outputFormat != "" {
 				os.Args = append(os.Args, "-o", outputFormat)
 			}

@@ -40,6 +40,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/debounce"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -66,7 +67,7 @@ const importsPath = "/etc/k0s/containerd.d/"
 type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
-	K0sVars    constant.CfgVars
+	K0sVars    *config.CfgVars
 
 	OCIBundlePath string
 }

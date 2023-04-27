@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
@@ -96,7 +97,7 @@ var (
 )
 
 // NewReconciler creates a new reconciler for worker configurations.
-func NewReconciler(k0sVars constant.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled bool) (*Reconciler, error) {
+func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, konnectivityEnabled bool) (*Reconciler, error) {
 	log := logrus.WithFields(logrus.Fields{"component": "workerconfig.Reconciler"})
 
 	clusterDNSIPString, err := nodeSpec.Network.DNSAddress()

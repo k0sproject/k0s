@@ -23,12 +23,13 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 type KubeProxy struct {
-	K0sVars    constant.CfgVars
+	K0sVars    *config.CfgVars
 	CIDRRange  string
 	LogLevel   string
 	supervisor supervisor.Supervisor

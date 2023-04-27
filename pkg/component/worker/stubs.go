@@ -23,7 +23,7 @@ import (
 	"context"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 type CalicoInstaller struct {
@@ -48,7 +48,7 @@ func (c CalicoInstaller) Stop() error {
 }
 
 type KubeProxy struct {
-	K0sVars   constant.CfgVars
+	K0sVars   *config.CfgVars
 	CIDRRange string
 	LogLevel  string
 }

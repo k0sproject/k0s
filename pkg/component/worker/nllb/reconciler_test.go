@@ -32,7 +32,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -55,7 +55,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 
 		dataDir := t.TempDir()
 		reconciler, err := NewReconciler(
-			constant.CfgVars{
+			&config.CfgVars{
 				DataDir:               dataDir,
 				KubeletAuthConfigPath: writeKubeconfig(t),
 			},
@@ -306,7 +306,7 @@ func TestReconciler_ConfigMgmt(t *testing.T) {
 		staticPods := new(staticPodsMock)
 		staticPods.On("ClaimStaticPod", mock.Anything, mock.Anything).Return(staticPod, nil)
 		reconciler, err := NewReconciler(
-			constant.CfgVars{
+			&config.CfgVars{
 				DataDir:               dataDir,
 				KubeletAuthConfigPath: writeKubeconfig(t),
 			},
@@ -444,7 +444,7 @@ func TestReconciler_APIServerAddressFromKubeconfig(t *testing.T) {
 	loadBalancer.On("getAPIServerAddress").Maybe().Return(apiServer, nil)
 	loadBalancer.On("stop", mock.Anything).Return(nil)
 	underTest, err := NewReconciler(
-		constant.CfgVars{
+		&config.CfgVars{
 			DataDir:               dataDir,
 			KubeletAuthConfigPath: writeKubeconfig(t),
 		},

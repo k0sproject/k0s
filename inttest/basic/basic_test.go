@@ -65,7 +65,7 @@ func (s *BasicSuite) TestK0sGetsUp() {
 	s.Require().NoError(err)
 
 	dataDirOpt := fmt.Sprintf("--data-dir=%s", customDataDir)
-	s.NoError(s.InitController(0, dataDirOpt))
+	s.Require().NoError(s.InitController(0, dataDirOpt))
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
 	s.Require().NoError(err)

@@ -21,7 +21,8 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,7 +37,7 @@ func TestApiServerSuite(t *testing.T) {
 }
 
 func (a *apiServerSuite) TestGetEtcdArgs() {
-	k0sVars := constant.CfgVars{
+	k0sVars := &config.CfgVars{
 		KineSocketPath: "/run/k0s/kine/kine.sock:2379",
 		CertRootDir:    "/var/lib/k0s/pki",
 		EtcdCertDir:    "/var/lib/k0s/pki/etcd",

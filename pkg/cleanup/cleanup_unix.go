@@ -21,8 +21,8 @@ import (
 	"os/exec"
 
 	"github.com/k0sproject/k0s/pkg/component/worker"
+	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/container/runtime"
 	"github.com/sirupsen/logrus"
 )
@@ -32,7 +32,7 @@ type Config struct {
 	containerd       *containerdConfig
 	containerRuntime runtime.ContainerRuntime
 	dataDir          string
-	k0sVars          constant.CfgVars
+	k0sVars          *config.CfgVars
 	runDir           string
 }
 
@@ -42,7 +42,7 @@ type containerdConfig struct {
 	socketPath string
 }
 
-func NewConfig(k0sVars constant.CfgVars, cfgFile string, criSocketPath string) (*Config, error) {
+func NewConfig(k0sVars *config.CfgVars, cfgFile string, criSocketPath string) (*Config, error) {
 	runDir := "/run/k0s" // https://github.com/k0sproject/k0s/pull/591/commits/c3f932de85a0b209908ad39b817750efc4987395
 
 	var err error

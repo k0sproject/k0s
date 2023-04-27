@@ -27,6 +27,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/certificate"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,7 +42,7 @@ type Certificates struct {
 	CACert      string
 	CertManager certificate.Manager
 	ClusterSpec *v1beta1.ClusterSpec
-	K0sVars     constant.CfgVars
+	K0sVars     *config.CfgVars
 }
 
 // Init initializes the certificate component

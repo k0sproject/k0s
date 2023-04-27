@@ -17,12 +17,12 @@ limitations under the License.
 package etcd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -31,10 +31,21 @@ func etcdListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "member-list",
 		Short: "Returns etcd cluster members list",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			// ensure logs don't mess up the output
+			logrus.SetOutput(cmd.ErrOrStderr())
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.GetCmdOpts()
-			ctx := context.Background()
-			etcdClient, err := etcd.NewClient(c.K0sVars.CertRootDir, c.K0sVars.EtcdCertDir, c.NodeConfig.Spec.Storage.Etcd)
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+			nodeConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return err
+			}
+			ctx := cmd.Context()
+			etcdClient, err := etcd.NewClient(opts.K0sVars.CertRootDir, opts.K0sVars.EtcdCertDir, nodeConfig.Spec.Storage.Etcd)
 			if err != nil {
 				return fmt.Errorf("can't list etcd cluster members: %v", err)
 			}

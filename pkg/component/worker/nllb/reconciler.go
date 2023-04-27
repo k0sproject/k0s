@@ -35,6 +35,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"golang.org/x/exp/slices"
@@ -94,7 +95,7 @@ type backend interface {
 // NewReconciler creates a component that reconciles a static Pod that
 // implements node-local load balancing.
 func NewReconciler(
-	k0sVars constant.CfgVars,
+	k0sVars *config.CfgVars,
 	staticPods worker.StaticPods,
 	workerProfileName string,
 	workerProfile workerconfig.Profile,

@@ -22,14 +22,14 @@ import (
 	"os"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
 
 // K0SControlAPI implements the k0s control API component
 type K0SControlAPI struct {
 	ConfigPath string
-	K0sVars    constant.CfgVars
+	K0sVars    *config.CfgVars
 	supervisor supervisor.Supervisor
 }
 

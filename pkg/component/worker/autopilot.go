@@ -26,9 +26,9 @@ import (
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/sirupsen/logrus"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 )
@@ -41,7 +41,7 @@ const (
 var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
-	K0sVars     constant.CfgVars
+	K0sVars     *config.CfgVars
 	CertManager *CertificateManager
 }
 

@@ -53,17 +53,17 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 	}
 
 	err = s.WaitForNodeReady(s.WorkerNode(0), kc)
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.AssertSomeKubeSystemPods(kc)
 
 	ctx := s.Context()
 
-	s.NoError(common.WaitForKubeRouterReady(ctx, kc))
-	s.NoError(common.WaitForCoreDNSReady(ctx, kc))
+	s.Require().NoError(common.WaitForKubeRouterReady(ctx, kc))
+	s.Require().NoError(common.WaitForCoreDNSReady(ctx, kc))
 
 	s.T().Log("creating nginx pod to verify DNS settings")
 	_, err = kc.CoreV1().Pods("default").Create(s.Context(), &corev1.Pod{
@@ -88,14 +88,16 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 			},
 		},
 	}, metav1.CreateOptions{})
-	s.NoError(err)
+	s.Require().NoError(err)
 	// Wait till we see the pod ready and are able to get logs
 	// Getting logs means konnectivity tunnels are up and running
-	s.NoError(common.WaitForPod(ctx, kc, "nginx", "default"))
-	s.NoError(common.WaitForPodLogs(ctx, kc, "default"))
+	s.Require().NoError(common.WaitForPod(ctx, kc, "nginx", "default"))
+	s.Require().NoError(common.WaitForPodLogs(ctx, kc, "default"))
 
 	restConfig, err := s.GetKubeConfig("controller0", "")
-	s.NoError(err)
+	s.Require().NoError(err)
+	s.Require().NotNil(restConfig)
+
 	// Check the pod resolv.conf is correct
 	resolv, err := common.PodExecCmdOutput(kc, restConfig, "nginx", "default", "cat /etc/resolv.conf")
 	s.NoError(err)
@@ -103,14 +105,14 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 
 	// Verify lookup actually works
 	nslookup, err := common.PodExecCmdOutput(kc, restConfig, "nginx", "default", "nslookup kubernetes.default.svc.cluster.local")
-	s.NoError(err)
-	s.Contains(nslookup, "Address: 10.152.184.1")
+	s.Require().NoError(err)
+	s.Require().Contains(nslookup, "Address: 10.152.184.1")
 
 	// Check that we can access the kubernetes svc via DNS name
 	kubeSvcOutput, err := common.PodExecCmdOutput(kc, restConfig, "nginx", "default", `curl -v -k --connect-timeout 2 -s -I https://kubernetes.default.svc.cluster.local`)
-	s.NoError(err)
+	s.Require().NoError(err)
 
-	s.Contains(kubeSvcOutput, "HTTP/2 401")
+	s.Require().Contains(kubeSvcOutput, "HTTP/2 401")
 }
 
 func TestCustomCIDRsSuite(t *testing.T) {

@@ -36,6 +36,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 )
 
@@ -63,7 +64,7 @@ var getters = getter.Providers{
 }
 
 // NewCommands builds new Commands instance with default values
-func NewCommands(k0sVars constant.CfgVars) *Commands {
+func NewCommands(k0sVars *config.CfgVars) *Commands {
 	return &Commands{
 		repoFile:     k0sVars.HelmRepositoryConfig,
 		helmCacheDir: k0sVars.HelmRepositoryCache,

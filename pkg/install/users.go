@@ -29,7 +29,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/stringslice"
 	"github.com/k0sproject/k0s/internal/pkg/users"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
@@ -37,7 +37,7 @@ func GetControllerUsers(clusterConfig *v1beta1.ClusterConfig) []string {
 }
 
 // CreateControllerUsers accepts a cluster config, and cfgVars and creates controller users accordingly
-func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars constant.CfgVars) error {
+func CreateControllerUsers(clusterConfig *v1beta1.ClusterConfig, k0sVars *config.CfgVars) error {
 	users := getUserList(*clusterConfig.Spec.Install.SystemUsers)
 	var messages []string
 	for _, v := range users {

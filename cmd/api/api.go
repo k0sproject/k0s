@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -47,7 +48,7 @@ import (
 )
 
 type command struct {
-	config.CLIOptions
+	*config.CLIOptions
 	client kubernetes.Interface
 }
 
@@ -71,7 +72,11 @@ func NewAPICmd() *cobra.Command {
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return (&command{CLIOptions: config.GetCmdOpts()}).start()
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+			return (&command{CLIOptions: opts}).start()
 		},
 	}
 	cmd.SilenceUsage = true
@@ -88,7 +93,11 @@ func (c *command) start() (err error) {
 
 	prefix := "/v1beta1"
 	mux := http.NewServeMux()
-	storage := c.NodeConfig.Spec.Storage
+	nodeConfig, err := c.K0sVars.NodeConfig()
+	if err != nil {
+		return err
+	}
+	storage := nodeConfig.Spec.Storage
 
 	if storage.Type == v1beta1.EtcdStorageType && !storage.Etcd.IsExternalClusterUsed() {
 		// Only mount the etcd handler if we're running on internal etcd storage
@@ -102,11 +111,12 @@ func (c *command) start() (err error) {
 			c.controllerHandler(c.caHandler())))
 	}
 	mux.Handle(prefix+"/calico/kubeconfig", mw.AllowMethods(http.MethodGet)(
-		c.workerHandler(c.kubeConfigHandler())))
+		c.workerHandler(c.kubeConfigHandler(nodeConfig.Spec.API.APIAddressURL())),
+	))
 
 	srv := &http.Server{
 		Handler: mux,
-		Addr:    fmt.Sprintf(":%d", c.NodeConfig.Spec.API.K0sAPIPort),
+		Addr:    fmt.Sprintf(":%d", nodeConfig.Spec.API.K0sAPIPort),
 		TLSConfig: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
 			CipherSuites: constant.AllowedTLS12CipherSuiteIDs,
@@ -177,7 +187,7 @@ func (c *command) etcdHandler() http.Handler {
 	})
 }
 
-func (c *command) kubeConfigHandler() http.Handler {
+func (c *command) kubeConfigHandler(apiAddress string) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		tpl := `apiVersion: v1
 kind: Config
@@ -214,7 +224,7 @@ users:
 			break
 		}
 		if !found {
-			sendError(fmt.Errorf("no calico-node-token secret found"), resp)
+			sendError(errors.New("no calico-node-token secret found"), resp)
 			return
 		}
 
@@ -227,7 +237,7 @@ users:
 				Token     string
 				Namespace string
 			}{
-				Server:    c.NodeConfig.Spec.API.APIAddressURL(),
+				Server:    apiAddress,
 				Ca:        base64.StdEncoding.EncodeToString(secretWithToken.Data["ca.crt"]),
 				Token:     string(secretWithToken.Data["token"]),
 				Namespace: string(secretWithToken.Data["namespace"]),

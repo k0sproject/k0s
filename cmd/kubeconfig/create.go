@@ -19,6 +19,7 @@ package kubeconfig
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -66,19 +68,32 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 
 	optionally add groups:
 	$ k0s kubeconfig create username --groups [groups]`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			// ensure logs don't mess up the output
+			logrus.SetOutput(cmd.ErrOrStderr())
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("username is mandatory")
-			}
 			username := args[0]
-			c := config.GetCmdOpts()
-			clusterAPIURL := c.NodeConfig.Spec.API.APIAddressURL()
+			if username == "" {
+				return errors.New("username cannot be empty")
+			}
 
-			caCert, err := os.ReadFile(path.Join(c.K0sVars.CertRootDir, "ca.crt"))
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+			nodeConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return err
+			}
+			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
+
+			caCert, err := os.ReadFile(path.Join(opts.K0sVars.CertRootDir, "ca.crt"))
 			if err != nil {
 				return fmt.Errorf("failed to read cluster ca certificate: %w, check if the control plane is initialized on this node", err)
 			}
-			caCertPath, caCertKey := path.Join(c.K0sVars.CertRootDir, "ca.crt"), path.Join(c.K0sVars.CertRootDir, "ca.key")
+			caCertPath, caCertKey := path.Join(opts.K0sVars.CertRootDir, "ca.crt"), path.Join(opts.K0sVars.CertRootDir, "ca.key")
 			userReq := certificate.Request{
 				Name:   username,
 				CN:     username,
@@ -87,7 +102,7 @@ Note: A certificate once signed cannot be revoked for a particular user`,
 				CAKey:  caCertKey,
 			}
 			certManager := certificate.Manager{
-				K0sVars: c.K0sVars,
+				K0sVars: opts.K0sVars,
 			}
 			userCert, err := certManager.EnsureCertificate(userReq, "root")
 			if err != nil {

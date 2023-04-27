@@ -23,10 +23,8 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 
 	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/yaml"
 )
 
 type ConfigGetter struct {
@@ -34,11 +32,11 @@ type ConfigGetter struct {
 	YamlData   string
 
 	t       *testing.T
-	k0sVars constant.CfgVars
+	k0sVars *config.CfgVars
 }
 
 // NewConfigGetter sets the parameters required to fetch a fake config for testing
-func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars constant.CfgVars) *ConfigGetter {
+func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars *config.CfgVars) *ConfigGetter {
 	return &ConfigGetter{
 		YamlData:   yamlData,
 		NodeConfig: isNodeConfig,
@@ -49,29 +47,24 @@ func NewConfigGetter(t *testing.T, yamlData string, isNodeConfig bool, k0sVars c
 
 // FakeRuntimeConfig takes a yaml construct and returns a config object from a fake runtime config path
 func (c *ConfigGetter) FakeConfigFromFile() *v1beta1.ClusterConfig {
-	loadingRules := config.ClientConfigLoadingRules{
-		RuntimeConfigPath: c.initRuntimeConfig(),
-		Nodeconfig:        c.NodeConfig,
-		K0sVars:           c.k0sVars,
-	}
+	c.k0sVars.RuntimeConfigPath = c.initRuntimeConfig()
+	rtc, err := config.LoadRuntimeConfig(c.k0sVars)
+	require.NoError(c.t, err, "failed to create fake runtime config")
+	defer require.NoError(c.t, os.Remove(c.k0sVars.RuntimeConfigPath))
 
-	cfg, err := loadingRules.Load()
-	require.NoError(c.t, err, "failed to load fake config from file")
-	return cfg
+	return rtc.NodeConfig
 }
 
 func (c *ConfigGetter) initRuntimeConfig() string {
+	vars := c.k0sVars.DeepCopy()
 	cfg, err := v1beta1.ConfigFromString(c.YamlData, c.getStorageSpec())
 	require.NoError(c.t, err, "failed to parse config")
+	vars.SetNodeConfig(cfg)
+	vars.RuntimeConfigPath = path.Join(c.t.TempDir(), "fake-k0s-runtime.yaml")
+	_, err = config.NewRuntimeConfig(vars)
+	require.NoError(c.t, err, "failed to create fake runtime config")
 
-	data, err := yaml.Marshal(&cfg)
-	require.NoError(c.t, err, "failed to marshal config")
-
-	fakeConfigPath := path.Join(c.t.TempDir(), "fake-k0s.yaml")
-	err = os.WriteFile(fakeConfigPath, data, 0644)
-	require.NoError(c.t, err, "failed to write runtime config to %q", fakeConfigPath)
-
-	return fakeConfigPath
+	return vars.RuntimeConfigPath
 }
 
 func (c *ConfigGetter) getStorageSpec() *v1beta1.StorageSpec {

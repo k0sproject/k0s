@@ -39,21 +39,25 @@ import (
 )
 
 type command struct {
-	config.CLIOptions
+	*config.CLIOptions
 	restoredConfigPath string
 }
 
 func NewRestoreCmd() *cobra.Command {
-	var c command
+	var restoredConfigPath string
 
 	cmd := &cobra.Command{
 		Use:   "restore filename",
 		Short: "restore k0s state from given backup archive. Use '-' as filename to read from stdin. Must be run as root (or with sudo)",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c.CLIOptions = config.GetCmdOpts()
-			if len(args) != 1 {
-				return fmt.Errorf("path to backup archive expected")
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
 			}
+
+			c := command{opts, restoredConfigPath}
+
 			return c.restore(args[0], cmd.OutOrStdout())
 		},
 	}
@@ -66,7 +70,7 @@ func NewRestoreCmd() *cobra.Command {
 	}
 
 	restoredConfigPathDescription := fmt.Sprintf("Specify desired name and full path for the restored k0s.yaml file (default: %s/k0s_<archive timestamp>.yaml", cwd)
-	cmd.Flags().StringVar(&c.restoredConfigPath, "config-out", "", restoredConfigPathDescription)
+	cmd.Flags().StringVar(&restoredConfigPath, "config-out", "", restoredConfigPathDescription)
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	return cmd
 }
@@ -76,7 +80,7 @@ func (c *command) restore(path string, out io.Writer) error {
 		return fmt.Errorf("this command must be run as root")
 	}
 
-	k0sStatus, _ := status.GetStatusInfo(config.StatusSocket)
+	k0sStatus, _ := status.GetStatusInfo(c.K0sVars.StatusSocketPath)
 	if k0sStatus != nil && k0sStatus.Pid != 0 {
 		logrus.Fatal("k0s seems to be running! k0s must be down during the restore operation.")
 	}

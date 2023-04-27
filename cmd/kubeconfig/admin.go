@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/k0sproject/k0s/pkg/config"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -34,14 +35,26 @@ func kubeConfigAdminCmd() *cobra.Command {
 		Example: `	$ k0s kubeconfig admin > ~/.kube/config
 	$ export KUBECONFIG=~/.kube/config
 	$ kubectl get nodes`,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			// ensure logs don't mess up the output
+			logrus.SetOutput(cmd.ErrOrStderr())
+		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := config.GetCmdOpts()
-			content, err := os.ReadFile(c.K0sVars.AdminKubeConfigPath)
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+
+			content, err := os.ReadFile(opts.K0sVars.AdminKubeConfigPath)
 			if err != nil {
 				return fmt.Errorf("failed to read admin config, check if the control plane is initialized on this node: %w", err)
 			}
 
-			clusterAPIURL := c.NodeConfig.Spec.API.APIAddressURL()
+			nodeConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return err
+			}
+			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 			newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
 			_, err = cmd.OutOrStdout().Write([]byte(newContent))
 			return err

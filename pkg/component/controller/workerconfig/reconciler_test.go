@@ -28,13 +28,14 @@ import (
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/typed/core/v1/fake"
+
 	k8stesting "k8s.io/client-go/testing"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/utils/pointer"
@@ -53,8 +54,10 @@ func TestReconciler_Lifecycle(t *testing.T) {
 	createdReconciler := func(t *testing.T) (*Reconciler, testutil.FakeClientFactory) {
 		t.Helper()
 		clients := testutil.NewFakeClientFactory()
+		k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+		require.NoError(t, err)
 		underTest, err := NewReconciler(
-			constant.GetConfig(t.TempDir()),
+			k0sVars,
 			&v1beta1.ClusterSpec{
 				API: &v1beta1.APISpec{},
 				Network: &v1beta1.Network{
@@ -305,8 +308,10 @@ func TestReconciler_Lifecycle(t *testing.T) {
 
 func TestReconciler_ResourceGeneration(t *testing.T) {
 	clients := testutil.NewFakeClientFactory()
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	underTest, err := NewReconciler(
-		constant.GetConfig(t.TempDir()),
+		k0sVars,
 		&v1beta1.ClusterSpec{
 			API: &v1beta1.APISpec{},
 			Network: &v1beta1.Network{
@@ -465,8 +470,10 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	cluster := v1beta1.DefaultClusterConfig(nil)
 	clients := testutil.NewFakeClientFactory()
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	underTest, err := NewReconciler(
-		constant.GetConfig(t.TempDir()),
+		k0sVars,
 		&v1beta1.ClusterSpec{
 			API: &v1beta1.APISpec{},
 			Network: &v1beta1.Network{
@@ -593,8 +600,10 @@ func TestReconciler_LeaderElection(t *testing.T) {
 	var le mockLeaderElector
 	cluster := v1beta1.DefaultClusterConfig(nil)
 	clients := testutil.NewFakeClientFactory()
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	underTest, err := NewReconciler(
-		constant.GetConfig(t.TempDir()),
+		k0sVars,
 		&v1beta1.ClusterSpec{
 			API: &v1beta1.APISpec{},
 			Network: &v1beta1.Network{

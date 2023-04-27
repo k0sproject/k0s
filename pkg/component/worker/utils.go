@@ -43,7 +43,7 @@ import (
 	"go.uber.org/multierr"
 )
 
-func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars constant.CfgVars, workerOpts *config.WorkerOptions) error {
+func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, workerOpts *config.WorkerOptions) error {
 	bootstrapKubeconfigPath := filepath.Join(k0sVars.DataDir, "kubelet-bootstrap.conf")
 
 	// When using `k0s install` along with a join token, that join token

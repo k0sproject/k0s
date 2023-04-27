@@ -24,8 +24,8 @@ import (
 	apcont "github.com/k0sproject/k0s/pkg/autopilot/controller"
 	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 )
@@ -33,7 +33,7 @@ import (
 var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
-	K0sVars            constant.CfgVars
+	K0sVars            *config.CfgVars
 	AdminClientFactory kubernetes.ClientFactoryInterface
 	EnableWorker       bool
 }

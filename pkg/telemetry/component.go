@@ -22,8 +22,8 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 
-	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -33,7 +33,7 @@ import (
 // Component is a telemetry component for k0s component manager
 type Component struct {
 	clusterConfig     *v1beta1.ClusterConfig
-	K0sVars           constant.CfgVars
+	K0sVars           *config.CfgVars
 	Version           string
 	KubeClientFactory kubeutil.ClientFactoryInterface
 

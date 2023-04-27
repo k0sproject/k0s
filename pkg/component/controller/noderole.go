@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 )
@@ -38,11 +39,11 @@ type NodeRole struct {
 	log logrus.FieldLogger
 
 	kubeClientFactory k8sutil.ClientFactoryInterface
-	k0sVars           constant.CfgVars
+	k0sVars           *config.CfgVars
 }
 
 // NewNodeRole creates new NodeRole reconciler
-func NewNodeRole(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *NodeRole {
+func NewNodeRole(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface) *NodeRole {
 	return &NodeRole{
 		log: logrus.WithFields(logrus.Fields{"component": "noderole"}),
 
