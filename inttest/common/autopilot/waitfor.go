@@ -18,9 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apclient "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset"
+	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
+	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 
 	"github.com/k0sproject/k0s/inttest/common"
@@ -63,7 +64,7 @@ func WaitForCRDByName(ctx context.Context, client extensionsclient.Apiextensions
 	)
 
 	return watch.FromClient[*crdList, crd](client.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("%s.%s", name, apv1beta2.SchemeGroupVersion.Group)).
+		WithObjectName(fmt.Sprintf("%s.%s", name, autopilot.GroupName)).
 		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
 		Until(ctx, func(item *crd) (bool, error) {
 			for _, cond := range item.Status.Conditions {

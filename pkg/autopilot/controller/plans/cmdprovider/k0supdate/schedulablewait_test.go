@@ -19,12 +19,12 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	apscheme "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2/clientset/scheme"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apdel "github.com/k0sproject/k0s/pkg/autopilot/controller/delegate"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apsigcomm "github.com/k0sproject/k0s/pkg/autopilot/controller/signal/common"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
+	apscheme "github.com/k0sproject/k0s/pkg/client/clientset/scheme"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"

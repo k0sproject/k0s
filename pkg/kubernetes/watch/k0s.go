@@ -17,8 +17,8 @@ limitations under the License.
 package watch
 
 import (
-	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
-	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	autopilotv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 func ClusterConfigs(client Provider[*k0sv1beta1.ClusterConfigList]) *Watcher[k0sv1beta1.ClusterConfig] {

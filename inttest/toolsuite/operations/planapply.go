@@ -25,7 +25,7 @@ import (
 
 	ts "github.com/k0sproject/k0s/inttest/toolsuite"
 	tsutil "github.com/k0sproject/k0s/inttest/toolsuite/util"
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 
 	"sigs.k8s.io/yaml"
 

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"time"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -17,7 +17,7 @@ package utils
 import (
 	"testing"
 
-	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot.k0sproject.io/v1beta2"
+	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apsigv2 "github.com/k0sproject/k0s/pkg/autopilot/signaling/v2"
 
 	"github.com/stretchr/testify/assert"

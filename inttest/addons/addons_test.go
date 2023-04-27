@@ -26,7 +26,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
-	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
