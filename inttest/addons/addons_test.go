@@ -18,6 +18,8 @@ package addons
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -84,23 +86,27 @@ func (as *AddonsSuite) pullHelmChart(node string) {
 }
 
 func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
+	ctx := as.Context()
 	as.T().Logf("Deleting chart %s/%s", chart.Namespace, chart.Name)
-	ssh, err := as.SSH(as.Context(), as.ControllerNode(0))
+	ssh, err := as.SSH(ctx, as.ControllerNode(0))
 	as.Require().NoError(err)
 	defer ssh.Disconnect()
-	_, err = ssh.ExecWithOutput(as.Context(), "rm /var/lib/k0s/manifests/helm/0_helm_extension_test-addon.yaml")
+	_, err = ssh.ExecWithOutput(ctx, "rm /var/lib/k0s/manifests/helm/0_helm_extension_test-addon.yaml")
 	as.Require().NoError(err)
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
 	k8sclient, err := k8s.NewForConfig(cfg)
 	as.Require().NoError(err)
-	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Namespace, chart.Name)
-		items, err := k8sclient.CoreV1().Secrets("default").List(as.Context(), v1.ListOptions{
+		items, err := k8sclient.CoreV1().Secrets("default").List(pollCtx, v1.ListOptions{
 			LabelSelector: fmt.Sprintf("name=%s", chart.Name),
 		})
 		if err != nil {
-			as.T().Logf("listing secrets error %s", err.Error())
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while listing secrets:", err)
 			return false, nil
 		}
 		if len(items.Items) > 1 {
@@ -112,6 +118,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 }
 
 func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespace string, rev int64) *v1beta1.Chart {
+	ctx := as.Context()
 	as.T().Logf("waiting to see %s release ready in kube API, generation %d", addonName, rev)
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
@@ -123,13 +130,16 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	})
 	as.Require().NoError(err)
 	var chart v1beta1.Chart
-	as.Require().NoError(wait.PollImmediate(time.Second, 5*time.Minute, func() (done bool, err error) {
-		err = chartClient.Get(as.Context(), client.ObjectKey{
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
+		err = chartClient.Get(pollCtx, client.ObjectKey{
 			Namespace: "kube-system",
 			Name:      fmt.Sprintf("k0s-addon-chart-%s", addonName),
 		}, &chart)
 		if err != nil {
-			as.T().Log("Error while quering for chart", err)
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while querying for chart:", err)
 			return false, nil
 		}
 		if chart.Status.ReleaseName == "" {
@@ -156,15 +166,20 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 }
 
 func (as *AddonsSuite) checkCustomValues(releaseName string) error {
+	ctx := as.Context()
 	as.T().Logf("waiting to see release to have values set from CRD yaml")
 	kc, err := as.KubeClient(as.ControllerNode(0))
 	if err != nil {
 		return err
 	}
-	return wait.PollImmediate(time.Second, 2*time.Minute, func() (done bool, err error) {
+	return wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		serverDeployment := fmt.Sprintf("%s-echo-server", releaseName)
-		d, err := kc.AppsV1().Deployments("default").Get(as.Context(), serverDeployment, v1.GetOptions{})
+		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, v1.GetOptions{})
 		if err != nil {
+			if ctxErr := context.Cause(ctx); ctxErr != nil {
+				return false, errors.Join(err, ctxErr)
+			}
+			as.T().Log("Error while getting Deployment:", err)
 			return false, nil
 		}
 		as.Require().Equal(int32(2), *d.Spec.Replicas, "Must have replicas value set from passed values")
