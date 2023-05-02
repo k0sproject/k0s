@@ -74,8 +74,8 @@ const (
 
 // Run runs the extensions controller
 func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0sAPI.ClusterConfig) error {
-	ec.L.Info("Extensions reconcilation started")
-	defer ec.L.Info("Extensions reconcilation finished")
+	ec.L.Info("Extensions reconciliation started")
+	defer ec.L.Info("Extensions reconciliation finished")
 
 	helmSettings := clusterConfig.Spec.Extensions.Helm
 	var err error
@@ -83,13 +83,13 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 	case k0sAPI.OpenEBSLocal:
 		helmSettings, err = addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
 		if err != nil {
-			ec.L.Errorf("can't add openebs helm extension: %v", err)
+			ec.L.WithError(err).Error("Can't add openebs helm extension")
 		}
 	default:
 	}
 
 	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
-		return fmt.Errorf("can't reconcile helm based extensions: %v", err)
+		return fmt.Errorf("can't reconcile helm based extensions: %w", err)
 	}
 
 	return nil
@@ -148,7 +148,7 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 
 	for _, repo := range helmSpec.Repositories {
 		if err := ec.addRepo(repo); err != nil {
-			return fmt.Errorf("can't init repository `%s`: %v", repo.URL, err)
+			return fmt.Errorf("can't init repository %q: %w", repo.URL, err)
 		}
 	}
 
@@ -166,11 +166,10 @@ func (ec *ExtensionsController) reconcileHelmExtensions(helmSpec *k0sAPI.HelmExt
 		}
 		buf := bytes.NewBuffer([]byte{})
 		if err := tw.WriteToBuffer(buf); err != nil {
-			ec.L.WithError(err).Errorf("can't create chart CR instance `%s`: %v", chart.ChartName, err)
-			return fmt.Errorf("can't create chart CR instance `%s`: %v", chart.ChartName, err)
+			return fmt.Errorf("can't create chart CR instance %q: %w", chart.ChartName, err)
 		}
 		if err := ec.saver.Save("addon_crd_manifest_"+chart.Name+".yaml", buf.Bytes()); err != nil {
-			return fmt.Errorf("can't save addon CRD manifest: %v", err)
+			return fmt.Errorf("can't save addon CRD manifest for chart CR instance %q: %w", chart.ChartName, err)
 		}
 	}
 	return nil
@@ -192,8 +191,8 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	if !cr.leaderElector.IsLeader() {
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Got helm chart reconcilation request: %s", req)
-	defer cr.L.Tracef("Finished processing helm chart reconcilation request: %s", req)
+	cr.L.Tracef("Got helm chart reconciliation request: %s", req)
+	defer cr.L.Tracef("Finished processing helm chart reconciliation request: %s", req)
 
 	var chartInstance v1beta1.Chart
 
@@ -205,7 +204,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	}
 
 	if !chartInstance.ObjectMeta.DeletionTimestamp.IsZero() {
-		cr.L.Tracef("Uninstall reconcilation request: %s", req)
+		cr.L.Debugf("Uninstall reconciliation request: %s", req)
 		// uninstall chart
 		if err := cr.uninstall(ctx, chartInstance); err != nil {
 			return reconcile.Result{}, fmt.Errorf("can't uninstall chart: %w", err)
@@ -216,15 +215,17 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 		}
 		return reconcile.Result{}, nil
 	}
-	cr.L.Tracef("Install or update reconcilation request: %s", req)
+	cr.L.Debugf("Install or update reconciliation request: %s", req)
 	if err := cr.updateOrInstallChart(ctx, chartInstance); err != nil {
 		return reconcile.Result{Requeue: true}, fmt.Errorf("can't update or install chart: %w", err)
 	}
+
+	cr.L.Debugf("Installed or updated reconciliation request: %s", req)
 	return reconcile.Result{}, nil
 }
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
 	if err := cr.helm.UninstallRelease(chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
-		return fmt.Errorf("can't uninstall release `%s/%s`: %v", chart.Status.Namespace, chart.Status.ReleaseName, err)
+		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
 }
@@ -259,7 +260,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 			timeout,
 		)
 		if err != nil {
-			return fmt.Errorf("can't reconcile installation for `%s`: %v", chart.GetName(), err)
+			return fmt.Errorf("can't reconcile installation for %q: %w", chart.GetName(), err)
 		}
 	} else {
 		if cr.chartNeedsUpgrade(chart) {
@@ -272,7 +273,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 				timeout,
 			)
 			if err != nil {
-				return fmt.Errorf("can't reconcile upgrade for `%s`: %v", chart.GetName(), err)
+				return fmt.Errorf("can't reconcile upgrade for %q: %w", chart.GetName(), err)
 			}
 		}
 	}
@@ -303,7 +304,7 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart
 	}
 	chart.Status.ValuesHash = chart.Spec.HashValues()
 	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
-		cr.L.Errorf("Failed to update status for chart release %s: %s", chart.Name, updErr)
+		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
 	}
 }
 
@@ -391,7 +392,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 
 	go func() {
 		if err := mgr.Start(ctx); err != nil {
-			ec.L.Tracef("controller-runtime working loop finished: %s", err)
+			ec.L.WithError(err).Error("Controller manager working loop exited")
 		}
 	}()
 
