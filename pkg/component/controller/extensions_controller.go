@@ -301,6 +301,8 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart
 	chart.Status.Updated = time.Now().String()
 	if err != nil {
 		chart.Status.Error = err.Error()
+	} else {
+		chart.Status.Error = ""
 	}
 	chart.Status.ValuesHash = chart.Spec.HashValues()
 	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
