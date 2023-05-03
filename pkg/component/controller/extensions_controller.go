@@ -289,6 +289,8 @@ func (cr *ChartReconciler) updateStatus(ctx context.Context, chart v1beta1.Chart
 	chart.Status.Updated = time.Now().String()
 	if err != nil {
 		chart.Status.Error = err.Error()
+	} else {
+		chart.Status.Error = ""
 	}
 	if updErr := cr.Client.Status().Update(ctx, &chart); updErr != nil {
 		cr.L.WithError(updErr).Error("Failed to update status for chart release", chart.Name)
