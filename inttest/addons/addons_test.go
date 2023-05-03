@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -130,6 +131,7 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 	})
 	as.Require().NoError(err)
 	var chart v1beta1.Chart
+	var lastResourceVersion string
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		err = chartClient.Get(pollCtx, client.ObjectKey{
 			Namespace: "kube-system",
@@ -142,13 +144,27 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 			as.T().Log("Error while querying for chart:", err)
 			return false, nil
 		}
+		if lastResourceVersion != "" && lastResourceVersion == chart.ResourceVersion {
+			return false, nil // That version has already been inspected.
+		}
+
+		var errs []string
 		if chart.Status.ReleaseName == "" {
-			return false, nil
+			errs = append(errs, "no release name")
 		}
 		if chart.Generation != rev {
-			return false, nil
+			errs = append(errs, fmt.Sprintf("expected generation to be %d, but was %d", rev, chart.Generation))
 		}
 		if chart.Status.Revision != rev {
+			errs = append(errs, fmt.Sprintf("expected revision to be %d, but was %d", rev, chart.Status.Revision))
+		}
+		if chart.Status.Error != "" {
+			errs = append(errs, fmt.Sprintf("expected error to be empty, but was %q", chart.Status.Error))
+		}
+
+		lastResourceVersion = chart.ResourceVersion
+		if len(errs) > 0 {
+			as.T().Logf("Test addon release doesn't meet criteria yet (version %q): %s", lastResourceVersion, strings.Join(errs, "; "))
 			return false, nil
 		}
 
@@ -156,9 +172,8 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 		as.Require().Equal(appVersion, chart.Status.AppVersion)
 		as.Require().Equal(namespace, chart.Status.Namespace)
 		as.Require().NotEmpty(chart.Status.ReleaseName)
-		as.Require().Empty(chart.Status.Error)
 		as.Require().Equal(rev, chart.Status.Revision)
-		as.T().Logf("found test addon release: %s\n", chart.Name)
+		as.T().Log("Found test addon release:", chart.Name)
 		as.Require().Equal(rev, chart.Generation)
 		return true, nil
 	}))
