@@ -16,7 +16,7 @@ require (
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/containerd v1.7.0
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/estesp/manifest-tool/v2 v2.0.6
+	github.com/estesp/manifest-tool/v2 v2.0.5
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-openapi/jsonpointer v0.19.6
@@ -57,7 +57,6 @@ require (
 	golang.org/x/sys v0.7.0
 	golang.org/x/tools v0.8.0
 	google.golang.org/grpc v1.55.0
-	helm.sh/helm/v3 v3.11.3
 )
 
 // Kubernetes
@@ -80,6 +79,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.1-0.20230412185432-fbd6b944a634 // includes https://github.com/kubernetes-sigs/controller-runtime/pull/2223
 	sigs.k8s.io/yaml v1.3.0
 )
+
+require helm.sh/helm/v3 v3.11.3
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
