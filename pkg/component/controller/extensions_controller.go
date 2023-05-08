@@ -265,7 +265,7 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 		if cr.chartNeedsUpgrade(chart) {
 			// update
 			chartRelease, err = cr.helm.UpgradeChart(chart.Spec.ChartName,
-				chart.Status.Version,
+				chart.Spec.Version,
 				chart.Status.ReleaseName,
 				chart.Status.Namespace,
 				chart.Spec.YamlValues(),
