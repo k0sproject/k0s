@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Copyright 2023 k0s authors
 #
@@ -57,8 +57,8 @@ for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -
 
         # codegen gets the header from a static file, so instead we'll replace it every time.
         # Also fix every file if FIX=y
-        if [[ "$FIX" == 'y' ]]; then
-          sed -i "s/Copyright 20../Copyright $DATE/" "$i"
+        if [ "$FIX" = 'y' ]; then
+          sed -i.tmp -e "s/Copyright 20../Copyright $DATE/" -- "$i" && rm -f "$i".tmp
         fi
 
         if ! has_date_copyright "$DATE" "$i"; then
@@ -69,8 +69,8 @@ for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -
     esac
 done
 
-if [[ "$RESULT" != 0 ]]; then
-    if [[ "$FIX" == 'y' ]]; then
+if [ "$RESULT" != "0" ]; then
+    if [ "$FIX" = 'y' ]; then
         echo "hack/copyright.sh can't fix the problem automatically. Manual intervention is required"
     else
         echo "Retry running the script with FIX=y hack/copyright.sh to see if can be fixed automatically"
