@@ -20,13 +20,8 @@ import (
 	"crypto/tls"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
-
-// WinDataDirDefault default data-dir for windows
-// this one is defined here because it is used not only on windows worker but also during the control plane bootstrap
-const WinDataDirDefault = "C:\\var\\lib\\k0s"
 
 // Network providers
 const (
@@ -161,7 +156,6 @@ type CfgVars struct {
 	AdminKubeConfigPath        string // The cluster admin kubeconfig location
 	BinDir                     string // location for all pki related binaries
 	CertRootDir                string // CertRootDir defines the root location for all pki related artifacts
-	WindowsCertRootDir         string // WindowsCertRootDir defines the root location for all pki related artifacts
 	DataDir                    string // Data directory containing k0s state
 	EtcdCertDir                string // EtcdCertDir contains etcd certificates
 	EtcdDataDir                string // EtcdDataDir contains etcd state
@@ -184,12 +178,7 @@ type CfgVars struct {
 // GetConfig returns the pointer to a Config struct
 func GetConfig(dataDir string) CfgVars {
 	if dataDir == "" {
-		switch runtime.GOOS {
-		case "windows":
-			dataDir = WinDataDirDefault
-		default:
-			dataDir = DataDirDefault
-		}
+		dataDir = DataDirDefault
 	}
 
 	// fetch absolute path for dataDir
@@ -205,7 +194,6 @@ func GetConfig(dataDir string) CfgVars {
 		runDir = formatPath(dataDir, "run")
 	}
 	certDir := formatPath(dataDir, "pki")
-	winCertDir := WinDataDirDefault + "\\pki" // hacky but we need it to be windows style even on linux machine
 	helmHome := formatPath(dataDir, "helmhome")
 
 	return CfgVars{
@@ -213,7 +201,6 @@ func GetConfig(dataDir string) CfgVars {
 		BinDir:                     formatPath(dataDir, "bin"),
 		OCIBundleDir:               formatPath(dataDir, "images"),
 		CertRootDir:                certDir,
-		WindowsCertRootDir:         winCertDir,
 		DataDir:                    dataDir,
 		EtcdCertDir:                formatPath(certDir, "etcd"),
 		EtcdDataDir:                formatPath(dataDir, "etcd"),
