@@ -66,7 +66,7 @@ func (as *AddonsSuite) TestHelmBasedAddons() {
 		},
 	}
 	as.doTestAddonUpdate(addonName, values)
-	chart := as.waitForTestRelease(addonName, "0.4.0", "default", 2)
+	chart := as.waitForTestRelease(addonName, "0.6.0", "default", 2)
 	as.Require().NoError(as.checkCustomValues(chart.Status.ReleaseName))
 	as.deleteRelease(chart)
 }
@@ -205,7 +205,7 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 			Name:      "test-addon",
 			ChartName: "ealenn/echo-server",
 			Values:    string(valuesBytes),
-			Version:   "0.4.0",
+			Version:   "0.5.0",
 			TargetNS:  "default",
 		},
 	}
