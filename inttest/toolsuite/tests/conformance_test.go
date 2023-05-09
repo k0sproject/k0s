@@ -53,6 +53,7 @@ func TestConformanceSuite(t *testing.T) {
 				tsops.SonobuoyConfig{
 					Parameters: []string{
 						"--mode=certified-conformance",
+						"--plugin-env=e2e.E2E_EXTRA_ARGS=\"--ginkgo.v\"",
 						fmt.Sprintf("--kubernetes-version=%s", config.KubernetesVersion),
 					},
 				},

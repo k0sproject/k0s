@@ -62,6 +62,7 @@ check-network: bin/sonobuoy
 check-conformance: bin/sonobuoy
 	$(realpath bin/sonobuoy) run --wait=1200 \
 		--mode=certified-conformance \
+		--plugin-env=e2e.E2E_EXTRA_ARGS="--ginkgo.v" \
 		--kubernetes-version=v$(kubernetes_version)
 
 get-conformance-results: bin/sonobuoy
