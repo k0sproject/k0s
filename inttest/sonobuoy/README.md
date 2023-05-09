@@ -151,6 +151,7 @@ Example Output:
 ➜ make check-conformance
 /home/ubuntu/k0s/inttest/bin/sonobuoy run --wait=1200 \
         --mode=certified-conformance \
+        --plugin-env=e2e.E2E_EXTRA_ARGS="--ginkgo.v" \
         --kubernetes-version=v1.27.1
 INFO[0000] create request issued                         name=sonobuoy namespace= resource=namespaces
 INFO[0000] create request issued                         name=sonobuoy-serviceaccount namespace=sonobuoy resource=serviceaccounts
