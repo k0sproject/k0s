@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Copyright 2023 k0s authors
 #
@@ -22,12 +22,12 @@ FIX=${FIX:=n}
 get_year(){
     # The -1 has to be added because if a file has been added, removed and added
     # again we'll get two lines with both dates. We only pick the newest one.
-    YEAR=$(TZ=UTC git log --follow -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
+    YEAR=$(TZ=UTC git log --follow --find-copies=90% -1 --diff-filter=A --pretty=format:%ad --date=format:%Y -- "$1")
     if [ -z "$YEAR" ]; then
         YEAR=$(TZ=UTC date +%Y)
 	    echo "WARN: $1 doesn't seem to be commited in the repo, assuming $YEAR" 1>&2
     fi
-    echo $YEAR
+    echo "$YEAR"
 }
 
 has_basic_copyright(){
@@ -57,20 +57,20 @@ for i in $(find cmd hack internal inttest pkg static -type f -name '*.go' -not -
 
         # codegen gets the header from a static file, so instead we'll replace it every time.
         # Also fix every file if FIX=y
-        if [[ "$FIX" == 'y' ]]; then
-          sed -i "s/Copyright 20../Copyright $DATE/" "$i"
+        if [ "$FIX" = 'y' ]; then
+          sed -i.tmp -e "s/Copyright 20../Copyright $DATE/" -- "$i" && rm -f "$i".tmp
         fi
 
         if ! has_date_copyright "$DATE" "$i"; then
-          echo "ERROR: $i doesn't have a proper copyright notice" 1>&2
+          echo "ERROR: $i doesn't have a proper copyright notice. Expected $DATE" 1>&2
           RESULT=1
         fi
         ;;
     esac
 done
 
-if [[ "$RESULT" != 0 ]]; then
-    if [[ "$FIX" == 'y' ]]; then
+if [ "$RESULT" != "0" ]; then
+    if [ "$FIX" = 'y' ]; then
         echo "hack/copyright.sh can't fix the problem automatically. Manual intervention is required"
     else
         echo "Retry running the script with FIX=y hack/copyright.sh to see if can be fixed automatically"
