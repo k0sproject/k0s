@@ -1697,8 +1697,8 @@ file in order to interact with it:</p>
 listed, too:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME</span>
-<span class="go">k0s-worker-0   Ready    &lt;none&gt;   2m16s   v1.27.1+k0s   10.81.146.198   &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.0</span>
-<span class="go">k0s-worker-1   Ready    &lt;none&gt;   2m15s   v1.27.1+k0s   10.81.146.51    &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.0</span>
+<span class="go">k0s-worker-0   Ready    &lt;none&gt;   2m16s   v1.27.1+k0s   10.81.146.198   &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.1</span>
+<span class="go">k0s-worker-1   Ready    &lt;none&gt;   2m15s   v1.27.1+k0s   10.81.146.51    &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.1</span>
 </code></pre></div>
 <p>There is one node-local load balancer pod running for each worker node:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">$ </span>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/managed-by<span class="o">=</span>k0s,app.kubernetes.io/component<span class="o">=</span>nllb
@@ -1731,8 +1731,8 @@ endpoints</code> above.</p>
 
 <span class="gp">$ </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">NAME           STATUS   ROLES    AGE     VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME</span>
-<span class="go">k0s-worker-0   Ready    &lt;none&gt;   3m35s   v1.27.1+k0s   10.81.146.198   &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.0</span>
-<span class="go">k0s-worker-1   Ready    &lt;none&gt;   3m34s   v1.27.1+k0s   10.81.146.51    &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.0</span>
+<span class="go">k0s-worker-0   Ready    &lt;none&gt;   3m35s   v1.27.1+k0s   10.81.146.198   &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.1</span>
+<span class="go">k0s-worker-1   Ready    &lt;none&gt;   3m34s   v1.27.1+k0s   10.81.146.51    &lt;none&gt;        Alpine Linux v3.17   5.15.83-0-virt   containerd://1.7.1</span>
 
 <span class="gp">$ </span>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-owide<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/managed-by<span class="o">=</span>k0s,app.kubernetes.io/component<span class="o">=</span>nllb
 <span class="go">NAME                READY   STATUS    RESTARTS   AGE     IP              NODE           NOMINATED NODE   READINESS GATES</span>

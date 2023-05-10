@@ -1688,7 +1688,7 @@ circumstances:</p>
 <h4 id="containerd-and-apparmor">containerd and AppArmor<a class="headerlink" href="#containerd-and-apparmor" title="Permanent link">#</a></h4>
 <p>In order to use containerd in conjunction with <a href="https://wiki.ubuntu.com/AppArmor">AppArmor</a>, it must be enabled in
 the kernel and the <code>/sbin/apparmor_parser</code> executable must be installed on the
-host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v1.7.0/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
+host, otherwise containerd will <a href="https://github.com/containerd/containerd/blob/v1.7.1/pkg/apparmor/apparmor_linux.go#L34-L45">disable</a> AppArmor support.</p>
 <h4 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h4>
 <p>iptables may be executed to detect if there are any existing iptables rules and
 if those are in legacy of nft mode. If iptables is not found, k0s will assume

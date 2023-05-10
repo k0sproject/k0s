@@ -1846,7 +1846,7 @@ cluster, this is for you.</p>
 <p>When the cluster is up, try to have a look:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-owide
 <span class="go">NAME     STATUS   ROLES           AGE     VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
-<span class="go">ubuntu   Ready    control-plane   4m41s   v1.27.1+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.0</span>
+<span class="go">ubuntu   Ready    control-plane   4m41s   v1.27.1+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.1</span>
 <span class="gp">ubuntu@ubuntu:~$ </span>sudo<span class="w"> </span>k0s<span class="w"> </span>kc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE     NOMINATED NODE   READINESS GATES</span>
 <span class="go">kube-system   kube-proxy-kkv2l                  1/1     Running   0          4m44s   10.152.56.54   ubuntu   &lt;none&gt;           &lt;none&gt;</span>
@@ -2007,7 +2007,7 @@ rights and get a <a href="https://kubernetes.io/docs/concepts/configuration/orga
 <p>Using the above kubeconfig, you can now access and use the cluster:</p>
 <div class="highlight"><pre><span></span><code><span class="gp">ubuntu@ubuntu:~$ </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes,deployments,pods<span class="w"> </span>-owide<span class="w"> </span>-A
 <span class="go">NAME          STATUS   ROLES    AGE    VERSION       INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME</span>
-<span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.27.1+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.0</span>
+<span class="go">node/ubuntu   Ready    &lt;none&gt;   5m1s   v1.27.1+k0s   10.152.56.54   &lt;none&gt;        Ubuntu 22.04.1 LTS   5.15.0-1013-raspi   containerd://1.7.1</span>
 
 <span class="go">NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS       IMAGES                                                 SELECTOR</span>
 <span class="go">kube-system   deployment.apps/coredns          1/1     1            1           33m   coredns          registry.k8s.io/coredns/coredns:v1.7.0                 k8s-app=kube-dns</span>
