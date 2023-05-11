@@ -7,13 +7,13 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/Microsoft/hcsshim v0.9.6
+	github.com/Microsoft/hcsshim v0.9.8
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cloudflare/cfssl v1.6.3
-	github.com/containerd/containerd v1.6.18
+	github.com/containerd/containerd v1.6.21
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20201031180254-535ef365dc1d
 	github.com/estesp/manifest-tool/v2 v2.0.6
@@ -30,7 +30,7 @@ require (
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/opencontainers/image-spec v1.1.0-rc2
+	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
 	github.com/robfig/cron v1.2.0
 	github.com/rqlite/rqlite v4.6.0+incompatible
 	github.com/segmentio/analytics-go v3.1.0+incompatible
@@ -111,7 +111,7 @@ require (
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/go-cni v1.1.6 // indirect
 	github.com/containerd/go-runc v1.0.0 // indirect
-	github.com/containerd/ttrpc v1.1.0 // indirect
+	github.com/containerd/ttrpc v1.1.1 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
 	github.com/containernetworking/cni v1.1.1 // indirect
 	github.com/containernetworking/plugins v1.1.1 // indirect
