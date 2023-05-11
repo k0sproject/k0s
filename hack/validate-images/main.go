@@ -79,7 +79,7 @@ func validateImages(uris []string, architectures []string) (errs []error) {
 		imageRef, err := util.ParseName(name)
 		check(err)
 		memoryStore := store.NewMemoryStore()
-		resolver := util.NewResolver("", "", true, true)
+		resolver := util.NewResolver("", "", true, true, "")
 		descriptor, err := registry.FetchDescriptor(resolver, memoryStore, imageRef)
 		check(err)
 		_, db, _ := memoryStore.Get(descriptor)
