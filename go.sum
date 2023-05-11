@@ -1473,8 +1473,8 @@ k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5 h1:kmDqav+P+/5e1i9tFfHq1qcF3sOrD
 k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 oras.land/oras-go v1.2.4-0.20230505142456-f92397840738 h1:Nb9UIOXWjmxhbZ/og27D3TpDytMvT/jKyNw9jho2BhI=
 oras.land/oras-go v1.2.4-0.20230505142456-f92397840738/go.mod h1:65/f2TQuA8aUflDSRfM4icoTEizKMUenFKfNq5zzK3E=
-oras.land/oras-go/v2 v2.0.0 h1:+LRAz92WF7AvYQsQjPEAIw3Xb2zPPhuydjpi4pIHmc0=
-oras.land/oras-go/v2 v2.0.0/go.mod h1:iVExH1NxrccIxjsiq17L91WCZ4KIw6jVQyCLsZsu1gc=
+oras.land/oras-go/v2 v2.1.0 h1:1nS8BIeEP6CBVQifwxrsth2bkuD+cYfjp7Hf7smUcS8=
+oras.land/oras-go/v2 v2.1.0/go.mod h1:v5ZSAPIMEJYnZjZ6rTGPAyaonH+rCFmbE95IAzCTeGU=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
 rsc.io/quote/v3 v3.1.0/go.mod h1:yEA65RcK8LyAZtP9Kv3t0HmxON59tX3rD+tICJqUlj0=
 rsc.io/sampler v1.3.0/go.mod h1:T1hPZKmBbMNahiBKFy5HrXp6adAjACjK9JXDnKaTXpA=
