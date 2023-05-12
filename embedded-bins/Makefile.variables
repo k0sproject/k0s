@@ -1,5 +1,5 @@
-alpine_version = 3.17
-alpine_patch_version = $(alpine_version).3
+alpine_version = 3.18
+alpine_patch_version = $(alpine_version).0
 golang_buildimage=docker.io/library/golang:$(go_version)-alpine$(alpine_version)
 go_version = 1.20.4
 
