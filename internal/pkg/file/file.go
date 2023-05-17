@@ -23,9 +23,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/k0sproject/k0s/internal/pkg/users"
-
 	"go.uber.org/multierr"
 )
 
@@ -43,7 +43,18 @@ func Exists(fileName string) bool {
 func Chown(file, owner string, permissions os.FileMode) error {
 	// Chown the file properly for the owner
 	uid, _ := users.GetUID(owner)
-	err := os.Chown(file, uid, -1)
+
+	stat, err := os.Stat(file)
+	if err != nil {
+		return err
+	}
+
+	//statT, ok := stat.Sys().(*syscall.Stat_t)
+	if stat.Mode() == permissions && stat.Sys().(*syscall.Stat_t).Uid == uint32(uid) {
+		return nil
+	}
+
+	err = os.Chown(file, uid, -1)
 	if err != nil && os.Geteuid() == 0 {
 		return err
 	}
