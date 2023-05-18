@@ -71,6 +71,51 @@ http://<ip-addr>:9000
 
 Restart HAProxy to apply the configuration changes.
 
+### Example configuration: Citrix VPX Load Balancer
+
+**Note: This is extremely expermintial; so use at your own risk.**
+
+The config below shows how you can input this into the CLI on your Citrix VPX load balancer. You **must** replace **[IP ADDRESS]** with your network IPv4 address settings.
+
+#### Controller Entries
+```txt
+add server srv_kube_controller_01 [IP ADDRESS]
+add server srv_kube_controller_02 [IP ADDRESS]
+```
+Add as many k0s controllers you plan on having.
+
+#### Service Groups
+```txt
+add serviceGroup sg_kube_controllers ANY -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport NO -cltTimeout 120 -svrTimeout 120 -CKA NO -TCPB NO -CMP NO -appflowLog DISABLED
+```
+
+#### LB vServer
+```txt
+add lb vserver lb_control_kubernetes ANY [IP ADDRESS] * -persistenceType NONE -timeout 15 -Listenpolicy "CLIENT.TCP.DSTPORT.EQ(6443)||Client.TCP.DSTPORT.EQ(8132)||Client.TCP.DSTPORT.EQ(9443)" -Listenpriority 1 -cltTimeout 120 -appflowLog DISABLED
+bind lb vserver lb_control_kubernetes sg_kube_controllers
+```
+
+#### LB Monitor Settings
+```txt
+add lb monitor tcp_kube_6443 TCP -LRTM DISABLED -destPort 6443
+add lb monitor tcp_kube_8132 TCP -LRTM DISABLED -destPort 8132
+add lb monitor tcp_kube_9443 TCP -LRTM DISABLED -destPort 9443
+```
+
+#### Service Group Members
+```txt
+bind serviceGroup sg_kube_controllers srv_kube_controller_02 *
+bind serviceGroup sg_kube_controllers srv_kube_controller_01 *
+```
+Be sure to include all your Controller entries here.
+
+#### Monitor Bindings
+```txt
+bind serviceGroup sg_kube_controllers -monitorName tcp_kube_6443
+bind serviceGroup sg_kube_controllers -monitorName tcp_kube_8132
+bind serviceGroup sg_kube_controllers -monitorName tcp_kube_9443
+```
+
 ## k0s configuration
 
 The load balancer address must be configured to k0s either by using `k0s.yaml` or by using k0sctl to automatically deploy all controllers with the same configuration:
