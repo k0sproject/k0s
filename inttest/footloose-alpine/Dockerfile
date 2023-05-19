@@ -4,6 +4,7 @@ ARG GOLANG_IMAGE
 FROM docker.io/library/alpine:$ALPINE_VERSION
 
 ARG TARGETARCH
+ARG CRI_DOCKERD_VERSION=0.3.2
 ARG ETCD_VERSION
 ARG KUBE_VERSION
 ARG TROUBLESHOOT_VERSION=v0.61.0
@@ -55,7 +56,7 @@ RUN if [ "$TARGETARCH" != arm ]; then \
 # Install cri-dockerd shim for custom CRI testing
 # No arm binaries available (check-byocri won't work on ARMv7)
 RUN if [ "$TARGETARCH" != arm ]; then \
-    curl -sSfLo /tmp/cri-dockerd.tgz https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.1/cri-dockerd-0.3.1.$TARGETARCH.tgz \
+    curl -sSfLo /tmp/cri-dockerd.tgz https://github.com/Mirantis/cri-dockerd/releases/download/v$CRI_DOCKERD_VERSION/cri-dockerd-$CRI_DOCKERD_VERSION.$TARGETARCH.tgz \
       && tar xf /tmp/cri-dockerd.tgz --directory /tmp/ \
       && mv /tmp/cri-dockerd/cri-dockerd /usr/local/bin/cri-dockerd \
       && rm -rf /tmp/cri-dockerd \
