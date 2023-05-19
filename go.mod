@@ -57,7 +57,7 @@ require (
 	golang.org/x/sys v0.8.0
 	golang.org/x/tools v0.9.1
 	google.golang.org/grpc v1.55.0
-	helm.sh/helm/v3 v3.11.3
+	helm.sh/helm/v3 v3.12.0
 )
 
 // Kubernetes
@@ -296,11 +296,6 @@ replace (
 	// compatible to metric v0.35, too.
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.39.0
 	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v0.35.0
-
-	// Use a patched version of Helm so that it compiles using Kubernetes 1.27.
-	// https://github.com/k0sproject/helm/releases/tag/v3.11.3%2Bk0s.0
-	// https://github.com/helm/helm/pull/11894
-	helm.sh/helm/v3 => github.com/k0sproject/helm/v3 v3.11.4-0.20230413092926-aea6ca663276
 )
 
 // Replacements duplicated from upstream Kubernetes
