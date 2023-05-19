@@ -51,10 +51,8 @@ func makePingPong(t *testing.T) *pingPong {
 	require.NoError(t, err)
 	namespace := t.Name() + "_" + guid.String()
 
-	// filepath.Clean is broken for Win32 Device Namespaces ...
-	// https://github.com/golang/go/issues/23467
-	pingPath := `\\.\` + filepath.Join("pipe", namespace, "ping")
-	pongPath := `\\.\` + filepath.Join("pipe", namespace, "pong")
+	pingPath := filepath.Join(`\\.\pipe`, namespace, "ping")
+	pongPath := filepath.Join(`\\.\pipe`, namespace, "pong")
 
 	ping, err := winio.ListenPipe(pingPath, nil)
 	require.NoError(t, err, "Failed to listen ping pipe")
