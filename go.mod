@@ -291,9 +291,9 @@ replace (
 	// which includes https://github.com/open-telemetry/opentelemetry-go/pull/3631.
 	// This is incompatible to the current Kubernetes libraries, which still
 	// use those deprecated packages. Use v0.35.0 instead, which is the last
-	// version that includes those. Use the otelhttp instrumentation which is
+	// version that includes those. Use an otelhttp instrumentation which is
 	// compatible to metric v0.35, too.
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.38.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.39.0
 	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v0.35.0
 
 	// Use a patched version of Helm so that it compiles using Kubernetes 1.27.
