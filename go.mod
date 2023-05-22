@@ -118,7 +118,7 @@ require (
 	github.com/daviddengcn/go-colortext v0.0.0-20160507010035-511bcaf42ccd // indirect
 	github.com/deislabs/oras v0.9.0 // indirect
 	github.com/docker/cli v20.10.11+incompatible // indirect
-	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v20.10.14+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.1-0.20190612165340-fd1b1942c4d5 // indirect
@@ -293,7 +293,7 @@ replace github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-202
 // Replacements duplicated from upstream Kubernetes
 replace (
 	// https://github.com/kubernetes/kubernetes/blob/v1.24.14/go.mod#L342-L343
-	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
+	github.com/docker/distribution => github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.12+incompatible
 
 	// https://github.com/kubernetes/kubernetes/blob/v1.24.14/go.mod#L516-L527
