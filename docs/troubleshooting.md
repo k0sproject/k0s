@@ -124,6 +124,33 @@ With this config you can start your controller as usual. Any workers will need t
 k0s worker --profile coreos [TOKEN]
 ```
 
+## k0s nodes fails to get to 'Ready' State
+
+This could be a sign that your machine IDs are the same among your hosts. I fyou are installing with ```k0sctl```, we check to make sure your machine IDs are unique before doing the install.
+
+Even though k0s worker nodes fails to start you can check your machine IDs in order to verify that you have the same machine IDs all around.
+
+From a controller node:
+
+- ```k0s kubectl get lease -A```
+
+Review the HOLDER section and if anything in the same, your have a machine-id conflict.
+
+### Remediation
+
+Follow these steps on all nodes:
+
+- Stop k0s ```k0s stop```
+- Reset k0s ```k0s reset``` (warning: this removes all k0s configs, etc. do this only if your having serious startup and running issues and backup as well if you had previous config that is worth saving)
+- As root: `rm -f /etc/machine-id && rm -f /var/lib/dbus/machine-id && dbus-uuidgen --ensure=/etc/machine-id && cat /etc/machine-id >> /var/lib/dbus/machine-id`
+- Reboot Host(s). Required for the OS to setup the kernel with the new machine-id.
+- Restart k0s install process via k0sctl or manual steps.
+
+### Possible error messages seen
+
+- Invalid capacity 0 on image filesystem
+- container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized
+
 ## Profiling
 
 We drop any debug related information and symbols from the compiled binary by utilzing `-w -s` linker flags.
