@@ -13,17 +13,18 @@ ARG TARGET_OS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \
-  BUILD_GO_LDFLAGS_EXTRA
+  BUILD_GO_LDFLAGS_EXTRA \
+  KUBERNETES_BINS
 
 RUN \
   set -e; \
   export GOPATH=/go; \
   if [ "${TARGET_OS}" = windows ]; then \
-    commands='kubelet kube-proxy'; \
+    commands="${KUBERNETES_BINS}"; \
     binarySuffix=.exe; \
     export KUBE_BUILD_PLATFORMS=windows/amd64; \
   else \
-    commands='kubelet kube-apiserver kube-scheduler kube-controller-manager'; \
+    commands="${KUBERNETES_BINS}"; \
     binarySuffix=''; \
   fi; \
   # Ensure that all of the binaries are built with CGO \

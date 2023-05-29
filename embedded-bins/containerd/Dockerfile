@@ -6,7 +6,7 @@ ENV GOPATH=/go
 RUN apk upgrade -U -a && apk add \
 	build-base git \
 	btrfs-progs-dev btrfs-progs-static \
-	protoc
+	protoc bash
 
 ARG VERSION
 RUN mkdir -p $GOPATH/src/github.com/containerd/containerd
@@ -19,16 +19,20 @@ ARG TARGET_OS \
   BUILD_SHIM_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
   BUILD_GO_LDFLAGS \
-  BUILD_GO_LDFLAGS_EXTRA
+  BUILD_GO_LDFLAGS_EXTRA \
+  CONTAINERD_BINS
 
 RUN go version
+RUN echo ${CONTAINERD_BINS}
 RUN make \
 	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
 	SHIM_CGO_ENABLED=${BUILD_SHIM_GO_CGO_ENABLED} \
 	GO_TAGS="-tags=${BUILD_GO_TAGS}" \
-	COMMANDS="containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2" \
+	# COMMANDS="containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2" \
+	COMMANDS="${CONTAINERD_BINS}" \
 	GO_BUILD_FLAGS="${BUILD_GO_FLAGS}" \
-	EXTRA_LDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}"
+	EXTRA_LDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" \
+	GOOS="${TARGET_OS}"
 
 FROM scratch
 COPY --from=build /go/src/github.com/containerd/containerd/bin/* /bin/

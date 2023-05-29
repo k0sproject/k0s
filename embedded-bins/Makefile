@@ -8,12 +8,17 @@ export TARGET_OS
 
 bindir = staging/${TARGET_OS}/bin
 posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi
-windows_bins = kubelet.exe kube-proxy.exe
+windows_bins = kubelet.exe kube-proxy.exe containerd.exe containerd-shim-runhcs-v1.exe
 buildmode = docker
 
 ifeq ($(TARGET_OS),windows)
 bins = ${windows_bins}
+# suffix .exe is added to the binaries in the original build pipelines
+containerd_bins = containerd containerd-shim-runhcs-v1
+kubernetes_bins = kubelet kube-proxy
 else
+containerd_bins = containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2
+kubernetes_bins = kubelet kube-apiserver kube-scheduler kube-controller-manager
 bins = ${posix_bins}
 endif
 
@@ -52,7 +57,8 @@ $(bindir)/kubelet $(bindir)/kube-apiserver $(bindir)/kube-scheduler $(bindir)/ku
 $(bindir)/xtables-legacy-multi: .container.iptables
 $(bindir)/xtables-nft-multi: .container.iptables
 
-$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows
+$(bindir)/kubelet.exe $(bindir)/kube-proxy.exe: .container.kubernetes.windows 
+$(bindir)/containerd.exe $(bindir)/containerd-shim-runhcs-v1.exe: .container.containerd.windows
 
 $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
@@ -69,6 +75,8 @@ build_docker_container = \
 build_docker_image = \
 	docker build --iidfile '$@' -t k0sbuild$(basename $@):latest \
 	  --build-arg TARGET_OS=$(if $(findstring .windows.stamp,$@),windows,linux) \
+	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
+	  --build-arg KUBERNETES_BINS="$(kubernetes_bins)" \
 	  --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
 	  --build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
 	  --build-arg BUILD_GO_TAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_tags) \
