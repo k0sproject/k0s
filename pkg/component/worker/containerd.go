@@ -26,10 +26,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -61,15 +63,40 @@ imports = [
 	{{- end }}
 ]
 `
-const confPath = "/etc/k0s/containerd.toml"
-const importsPath = "/etc/k0s/containerd.d/"
+const confPathPosix = "/etc/k0s/containerd.toml"
+const confPathWindows = "C:\\Program Files\\containerd\\config.toml"
+
+const importsPathPosix = "/etc/k0s/containerd.d/"
+const importsPathWindows = "C:\\etc\\k0s\\containerd.d\\"
 
 // ContainerD implement the component interface to manage containerd as k0s component
 type ContainerD struct {
-	supervisor supervisor.Supervisor
-	LogLevel   string
-	K0sVars    *config.CfgVars
-	Profile    *workerconfig.Profile
+	supervisor    supervisor.Supervisor
+	LogLevel      string
+	K0sVars       *config.CfgVars
+	Profile       *workerconfig.Profile
+	binaries      []string
+	confPath      string
+	importsPath   string
+	OCIBundlePath string
+}
+
+func NewContainerd(logLevel string, vars constant.CfgVars) *ContainerD {
+	c := &ContainerD{
+		LogLevel: logLevel,
+		K0sVars:  vars,
+	}
+
+	if runtime.GOOS == "windows" {
+		c.binaries = []string{"containerd.exe", "containerd-shim-runhcs-v1.exe"}
+		c.confPath = confPathWindows
+		c.importsPath = importsPathWindows
+	} else {
+		c.binaries = []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"}
+		c.confPath = confPathPosix
+		c.importsPath = importsPathPosix
+	}
+	return c
 }
 
 var _ manager.Component = (*ContainerD)(nil)
@@ -77,14 +104,25 @@ var _ manager.Component = (*ContainerD)(nil)
 // Init extracts the needed binaries
 func (c *ContainerD) Init(ctx context.Context) error {
 	g, _ := errgroup.WithContext(ctx)
-	for _, bin := range []string{"containerd", "containerd-shim", "containerd-shim-runc-v1", "containerd-shim-runc-v2", "runc"} {
+	for _, bin := range c.binaries {
 		b := bin
 		g.Go(func() error {
 			return assets.Stage(c.K0sVars.BinDir, b, constant.BinDirMode)
 		})
 	}
-
+	if err := c.windowsInit(); err != nil {
+		return fmt.Errorf("windows init failed: %v", err)
+	}
 	return g.Wait()
+}
+
+func (c *ContainerD) windowsInit() error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	// On windows we need always run containerd.exe as a service
+	command := fmt.Sprintf("if (-not (Get-Service -Name containerd -ErrorAction SilentlyContinue)) { %s\\containerd.exe --register-service}", c.K0sVars.BinDir)
+	return winExecute(command)
 }
 
 // Run runs containerD
@@ -94,23 +132,28 @@ func (c *ContainerD) Start(ctx context.Context) error {
 	if err := c.setupConfig(); err != nil {
 		return fmt.Errorf("failed to setup containerd config: %w", err)
 	}
+	if runtime.GOOS == "windows" {
+		if err := c.windowsStart(ctx); err != nil {
+			return fmt.Errorf("failed to start windows server: %v", err)
+		}
+	} else {
+		c.supervisor = supervisor.Supervisor{
+			Name:    "containerd",
+			BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
+			RunDir:  c.K0sVars.RunDir,
+			DataDir: c.K0sVars.DataDir,
+			Args: []string{
+				fmt.Sprintf("--root=%s", filepath.Join(c.K0sVars.DataDir, "containerd")),
+				fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
+				fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
+				fmt.Sprintf("--log-level=%s", c.LogLevel),
+				fmt.Sprintf("--config=%s", c.confPath),
+			},
+		}
 
-	c.supervisor = supervisor.Supervisor{
-		Name:    "containerd",
-		BinPath: assets.BinPath("containerd", c.K0sVars.BinDir),
-		RunDir:  c.K0sVars.RunDir,
-		DataDir: c.K0sVars.DataDir,
-		Args: []string{
-			fmt.Sprintf("--root=%s", filepath.Join(c.K0sVars.DataDir, "containerd")),
-			fmt.Sprintf("--state=%s", filepath.Join(c.K0sVars.RunDir, "containerd")),
-			fmt.Sprintf("--address=%s", filepath.Join(c.K0sVars.RunDir, "containerd.sock")),
-			fmt.Sprintf("--log-level=%s", c.LogLevel),
-			fmt.Sprintf("--config=%s", confPath),
-		},
-	}
-
-	if err := c.supervisor.Supervise(); err != nil {
-		return err
+		if err := c.supervisor.Supervise(); err != nil {
+			return err
+		}
 	}
 
 	go c.watchDropinConfigs(ctx)
@@ -118,32 +161,42 @@ func (c *ContainerD) Start(ctx context.Context) error {
 	return nil
 }
 
+func (c *ContainerD) windowsStart(_ context.Context) error {
+	return winExecute("Start-Service containerd")
+}
+
+func (c *ContainerD) windowsStop() error {
+	return winExecute("Stop-Service containerd")
+}
+
 func (c *ContainerD) setupConfig() error {
 	// Check if the config file is user managed
 	// If it is, we should not touch it
-	k0sManaged, err := isK0sManagedConfig(confPath)
+
+	k0sManaged, err := isK0sManagedConfig(c.confPath)
 	if err != nil {
 		return err
 	}
 
 	if !k0sManaged {
-		logrus.Infof("containerd config file %s is not k0s managed, skipping config generation", confPath)
+		logrus.Infof("containerd config file %s is not k0s managed, skipping config generation", c.confPath)
 		return nil
 	}
-
-	if err := dir.Init(filepath.Dir(confPath), 0755); err != nil {
-		return err
+	if err := dir.Init(filepath.Dir(c.confPath), 0755); err != nil {
+		return fmt.Errorf("can't create containerd config dir: %v", err)
 	}
-	if err := dir.Init(filepath.Dir(importsPath), 0755); err != nil {
-		return err
+	if err := dir.Init(filepath.Dir(c.importsPath), 0755); err != nil {
+		return fmt.Errorf("can't create containerd config imports dir: %v", err)
 	}
-	containerDConfigurer := containerd.NewConfigurer(c.Profile.PauseImage)
+	containerDConfigurer := containerd.NewConfigurer(c.Profile.PauseImage, filepath.Join(c.importsPath, "*.toml"))
 
 	imports, err := containerDConfigurer.HandleImports()
 	if err != nil {
-		return err
+		return fmt.Errorf("can't handle imports: %v", err)
 	}
+	spew.Dump(imports)
 	output := bytes.NewBuffer([]byte{})
+	dbgOutput := bytes.NewBuffer([]byte{})
 	tw := templatewriter.TemplateWriter{
 		Name:     "containerdconfig",
 		Template: confTmpl,
@@ -156,7 +209,11 @@ func (c *ContainerD) setupConfig() error {
 	if err := tw.WriteToBuffer(output); err != nil {
 		return fmt.Errorf("can't create containerd config: %v", err)
 	}
-	return file.WriteContentAtomically(confPath, output.Bytes(), 0644)
+	if err := tw.WriteToBuffer(dbgOutput); err != nil {
+		return fmt.Errorf("can't create containerd config: %v", err)
+	}
+	spew.Dump(dbgOutput.String())
+	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
 }
 
 func (c *ContainerD) watchDropinConfigs(ctx context.Context) {
@@ -168,7 +225,7 @@ func (c *ContainerD) watchDropinConfigs(ctx context.Context) {
 	}
 	defer watcher.Close()
 
-	err = watcher.Add(importsPath)
+	err = watcher.Add(c.importsPath)
 	if err != nil {
 		log.WithError(err).Error("failed to watch for drop-ins")
 		return
@@ -199,7 +256,7 @@ func (c *ContainerD) watchDropinConfigs(ctx context.Context) {
 		}
 	}()
 
-	log.Infof("started to watch events on %s", importsPath)
+	log.Infof("started to watch events on %s", c.importsPath)
 
 	err = debouncer.Run(ctx)
 	if err != nil {
@@ -215,15 +272,30 @@ func (c *ContainerD) restart() {
 		log.WithError(err).Warn("failed to resolve config")
 		return
 	}
+	if runtime.GOOS == "windows" {
 
-	p := c.supervisor.GetProcess()
-	if err := p.Signal(syscall.SIGHUP); err != nil {
-		log.WithError(err).Warn("failed to send SIGHUP")
+		if err := c.windowsStop(); err != nil {
+			log.WithError(err).Warn("failed to stop windows service")
+			return
+		}
+		if err := c.windowsStart(context.Background()); err != nil {
+			log.WithError(err).Warn("failed to start windows service")
+			return
+		}
+	} else {
+		p := c.supervisor.GetProcess()
+		if err := p.Signal(syscall.SIGHUP); err != nil {
+			log.WithError(err).Warn("failed to send SIGHUP")
+		}
+
 	}
 }
 
 // Stop stops containerD
 func (c *ContainerD) Stop() error {
+	if runtime.GOOS == "windows" {
+		return c.windowsStop()
+	}
 	return c.supervisor.Stop()
 }
 

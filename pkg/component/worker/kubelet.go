@@ -179,8 +179,6 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		kubeletConfigData.CgroupsPerQOS = false
 		kubeletConfigData.ResolvConf = ""
 		args["--enforce-node-allocatable"] = ""
-		args["--pod-infra-container-image"] = "mcr.microsoft.com/oss/kubernetes/pause:1.4.1"
-		args["--cni-conf-dir"] = "C:\\k\\cni\\config"
 		args["--hostname-override"] = node
 		args["--hairpin-mode"] = "promiscuous-bridge"
 		args["--cert-dir"] = "C:\\var\\lib\\k0s\\kubelet_certs"
@@ -189,7 +187,8 @@ func (k *Kubelet) Start(ctx context.Context) error {
 		kubeletConfigData.ResolvConf = determineKubeletResolvConfPath()
 	}
 
-	if k.CRISocket == "" {
+	if k.CRISocket == "" && runtime.GOOS != "windows" {
+		// on windows this cli flag is not supported
 		// Still use this deprecated cAdvisor flag that the kubelet leaks until
 		// KEP 2371 lands. ("cAdvisor-less, CRI-full Container and Pod Stats")
 		args["--containerd"] = filepath.Join(k.K0sVars.RunDir, "containerd.sock")
@@ -242,9 +241,11 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 	preparedConfig.CgroupsPerQOS = pointer.Bool(kubeletConfigData.CgroupsPerQOS)
 	preparedConfig.StaticPodURL = kubeletConfigData.StaticPodURL
 
-	if k.CRISocket == "" { // This will never be true for Windows (it needs an externally managed CRI).
+	if k.CRISocket == "" && runtime.GOOS != "windows" {
 		socketPath := filepath.Join(k.K0sVars.RunDir, "containerd.sock")
 		preparedConfig.ContainerRuntimeEndpoint = "unix://" + filepath.ToSlash(socketPath)
+	} else if k.CRISocket == "" && runtime.GOOS == "windows" {
+		preparedConfig.ContainerRuntimeEndpoint = "npipe:////./pipe/containerd-containerd"
 	} else {
 		_, runtimeEndpoint, err := SplitRuntimeConfig(k.CRISocket)
 		if err != nil {

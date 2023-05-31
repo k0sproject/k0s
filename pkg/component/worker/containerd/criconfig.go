@@ -22,7 +22,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
@@ -31,8 +33,11 @@ import (
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 )
 
-const importsPath = "/etc/k0s/containerd.d/*.toml"
-const containerdCRIConfigPath = "/run/k0s/containerd-cri.toml"
+const _importsPath = "/etc/k0s/containerd.d/*.toml"
+const containerdCRIConfigPathPosix = "/run/k0s/containerd-cri.toml"
+
+// TODO: move to K0sVars
+const containerdCRIConfigPathWindows = "C:\\var\\lib\\k0s\\run\\containerd-cri.toml"
 
 type CRIConfigurer struct {
 	loadPath       string
@@ -42,13 +47,20 @@ type CRIConfigurer struct {
 	log *logrus.Entry
 }
 
-func NewConfigurer(pauseImage *v1beta1.ImageSpec) *CRIConfigurer {
-	return &CRIConfigurer{
-		loadPath:       importsPath,
-		criRuntimePath: containerdCRIConfigPath,
-		pauseImage:     pauseImage.URI(),
-		log:            logrus.WithField("component", "containerd"),
+func NewConfigurer(pauseImage *v1beta1.ImageSpec, importsPath string) *CRIConfigurer {
+	c := &CRIConfigurer{
+		loadPath:   importsPath,
+		pauseImage: pauseImage.URI(),
+		log:        logrus.WithField("component", "containerd"),
 	}
+	if runtime.GOOS == "windows" {
+		c.criRuntimePath = containerdCRIConfigPathWindows
+
+	} else {
+		c.criRuntimePath = containerdCRIConfigPathPosix
+	}
+	spew.Dump(c.loadPath, c.criRuntimePath)
+	return c
 }
 
 // HandleImports Resolves containerd imports from the import glob path.

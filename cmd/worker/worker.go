@@ -143,15 +143,8 @@ func (c *Command) Start(ctx context.Context) error {
 		componentManager.Add(ctx, reconciler)
 	}
 
-	if runtime.GOOS == "windows" && c.CriSocket == "" {
-		return fmt.Errorf("windows worker needs to have external CRI")
-	}
 	if c.CriSocket == "" {
-		componentManager.Add(ctx, &worker.ContainerD{
-			LogLevel: c.Logging["containerd"],
-			K0sVars:  c.K0sVars,
-			Profile:  workerConfig,
-		})
+		componentManager.Add(ctx, worker.NewContainerd(c.Logging["containerd"], c.K0sVars, workerConfig))
 	}
 
 	componentManager.Add(ctx, worker.NewOCIBundleReconciler(c.K0sVars))
