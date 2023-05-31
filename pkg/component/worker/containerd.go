@@ -31,7 +31,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -194,9 +193,7 @@ func (c *ContainerD) setupConfig() error {
 	if err != nil {
 		return fmt.Errorf("can't handle imports: %v", err)
 	}
-	spew.Dump(imports)
 	output := bytes.NewBuffer([]byte{})
-	dbgOutput := bytes.NewBuffer([]byte{})
 	tw := templatewriter.TemplateWriter{
 		Name:     "containerdconfig",
 		Template: confTmpl,
@@ -209,10 +206,6 @@ func (c *ContainerD) setupConfig() error {
 	if err := tw.WriteToBuffer(output); err != nil {
 		return fmt.Errorf("can't create containerd config: %v", err)
 	}
-	if err := tw.WriteToBuffer(dbgOutput); err != nil {
-		return fmt.Errorf("can't create containerd config: %v", err)
-	}
-	spew.Dump(dbgOutput.String())
 	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
 }
 

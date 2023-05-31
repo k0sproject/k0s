@@ -28,7 +28,6 @@ RUN make \
 	CGO_ENABLED=${BUILD_GO_CGO_ENABLED} \
 	SHIM_CGO_ENABLED=${BUILD_SHIM_GO_CGO_ENABLED} \
 	GO_TAGS="-tags=${BUILD_GO_TAGS}" \
-	# COMMANDS="containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2" \
 	COMMANDS="${CONTAINERD_BINS}" \
 	GO_BUILD_FLAGS="${BUILD_GO_FLAGS}" \
 	EXTRA_LDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" \
