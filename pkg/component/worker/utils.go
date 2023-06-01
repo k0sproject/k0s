@@ -30,12 +30,12 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/flags"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/node"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	nodeutil "k8s.io/component-helpers/node/util"
 	"k8s.io/kubernetes/pkg/kubelet/certificate/bootstrap"
 
 	"github.com/avast/retry-go"
@@ -136,7 +136,7 @@ func BootstrapKubeletKubeconfig(ctx context.Context, k0sVars *config.CfgVars, wo
 	// path anyways in kubelet. So it's safe to assume that the following code
 	// exactly matches the behavior of kubelet.
 
-	nodeName, err := nodeutil.GetHostname(flags.Split(workerOpts.KubeletExtraArgs)["--hostname-override"])
+	nodeName, err := node.GetNodename(flags.Split(workerOpts.KubeletExtraArgs)["--hostname-override"])
 	if err != nil {
 		return fmt.Errorf("failed to determine node name: %w", err)
 	}

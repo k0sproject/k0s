@@ -17,7 +17,7 @@ package common
 import (
 	"os"
 
-	nodeutil "k8s.io/component-helpers/node/util"
+	"github.com/k0sproject/k0s/pkg/node"
 )
 
 const (
@@ -28,6 +28,5 @@ const (
 // for an AUTOPILOT_HOSTNAME environment variable, falling back to whatever the OS
 // returns.
 func FindEffectiveHostname() (string, error) {
-	// nodeutil.GetHostname will return the "object name safe" hostname, overridden via the env var if non-empty value
-	return nodeutil.GetHostname(os.Getenv(envAutopilotHostname))
+	return node.GetNodename(os.Getenv(envAutopilotHostname))
 }
