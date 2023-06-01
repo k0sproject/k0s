@@ -49,6 +49,7 @@ func (p *PowerShell) execute(args ...string) error {
 }
 
 func getSourceVip() (string, error) {
+	// make it use winExecute and powershell
 	var vip string
 
 	err := retry.Do(func() error {
