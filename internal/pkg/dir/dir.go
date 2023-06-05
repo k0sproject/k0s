@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // IsDirectory check the given path exists and is a directory
@@ -57,4 +58,9 @@ func Init(path string, perm os.FileMode) error {
 		return err
 	}
 	return os.Chmod(path, perm)
+}
+
+// PathListJoin uses the OS path list separator to join a list of strings for things like PATH=x:y:z
+func PathListJoin(elem ...string) string {
+	return strings.Join(elem, string(os.PathListSeparator))
 }
