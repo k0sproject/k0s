@@ -68,16 +68,25 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Generate embedded binaries cache key
+        id: embedded-bins-hash
+        run: |
+          hash=$(find embedded-bins/ -type f -not -path "embedded-bins/staging/*" -print0 | xargs -0 cat | md5sum | awk '{print $1}')
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+          echo "Generated hash key: $hash"
+
       - name: Cache embedded binaries
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-embedded-bins-linux-${{ hashFiles('embedded-bins/**/*') }}
+          key: linux-embedded-bins-${{ steps.embedded-bins-hash.outputs.hash }}
+          restore-keys: |
+            linux-embedded-bins-
           path: |
             .bins.linux.stamp
             bindata_linux
             embedded-bins/staging/linux/bin/
-            embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_linux.go
+      
       - name: Cache GOCACHE
         uses: actions/cache@v3
         with:
@@ -86,6 +95,7 @@ jobs:
             ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-
           path: |
             build/cache/go/build
+     
       - name: Cache GOMODCACHE
         uses: actions/cache@v3
         with:
