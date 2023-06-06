@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,7 @@ func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
     endpoint = ["https://registry-1.docker.io"]
 `
-		c := NewConfigurer()
+		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause)
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.True(t, hasCRIPluginConfig)
@@ -43,7 +44,7 @@ func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
 timeout = 3
 version = 2
 `
-		c := NewConfigurer()
+		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause)
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.False(t, hasCRIPluginConfig)
