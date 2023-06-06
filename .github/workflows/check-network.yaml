@@ -85,6 +85,7 @@ jobs:
             .bins.linux.stamp
             bindata_linux
             embedded-bins/staging/linux/bin/
+            embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_linux.go
       
       - name: Cache GOCACHE

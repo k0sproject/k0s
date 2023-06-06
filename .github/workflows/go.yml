@@ -73,6 +73,7 @@ jobs:
             .bins.${{ matrix.target }}.stamp
             bindata_${{ matrix.target }}
             embedded-bins/staging/${{ matrix.target }}/bin/
+            embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_${{ matrix.target }}.go
 
       - name: Cache GOCACHE
