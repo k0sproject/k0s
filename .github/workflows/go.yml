@@ -68,7 +68,6 @@ jobs:
         with:
           key: ${{ matrix.target }}-embedded-bins-${{ steps.embedded-bins-hash.outputs.hash }}
           restore-keys: |
-            ${{ matrix.target }}-embedded-bins-${{ steps.embedded-bins-hash.outputs.hash }}
             ${{ matrix.target }}-embedded-bins-
           path: |
             .bins.${{ matrix.target }}.stamp
