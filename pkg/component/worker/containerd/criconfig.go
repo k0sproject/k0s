@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 
@@ -42,12 +41,7 @@ type CRIConfigurer struct {
 	log *logrus.Entry
 }
 
-func NewConfigurer() *CRIConfigurer {
-
-	pauseImage := v1beta1.ImageSpec{
-		Image:   constant.KubePauseContainerImage,
-		Version: constant.KubePauseContainerImageVersion,
-	}
+func NewConfigurer(pauseImage *v1beta1.ImageSpec) *CRIConfigurer {
 	return &CRIConfigurer{
 		loadPath:       importsPath,
 		criRuntimePath: containerdCRIConfigPath,

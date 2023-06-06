@@ -145,6 +145,7 @@ func (c *Command) Start(ctx context.Context) error {
 		componentManager.Add(ctx, &worker.ContainerD{
 			LogLevel: c.Logging["containerd"],
 			K0sVars:  c.K0sVars,
+			Profile:  workerConfig,
 		})
 	}
 
