@@ -68,8 +68,6 @@ type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
 	K0sVars    *config.CfgVars
-
-	OCIBundlePath string
 }
 
 var _ manager.Component = (*ContainerD)(nil)
