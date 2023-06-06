@@ -68,6 +68,7 @@ type ClusterImages struct {
 	MetricsServer ImageSpec `json:"metricsserver"`
 	KubeProxy     ImageSpec `json:"kubeproxy"`
 	CoreDNS       ImageSpec `json:"coredns"`
+	Pause         ImageSpec `json:"pause"`
 
 	Calico     CalicoImageSpec     `json:"calico"`
 	KubeRouter KubeRouterImageSpec `json:"kuberouter"`
@@ -131,6 +132,7 @@ func (ci *ClusterImages) overrideImageRepositories() {
 	override(&ci.Calico.KubeControllers)
 	override(&ci.KubeRouter.CNI)
 	override(&ci.KubeRouter.CNIInstaller)
+	override(&ci.Pause)
 }
 
 // CalicoImageSpec config group for calico related image settings
@@ -193,6 +195,10 @@ func DefaultClusterImages() *ClusterImages {
 				Image:   constant.KubeRouterCNIInstallerImage,
 				Version: constant.KubeRouterCNIInstallerImageVersion,
 			},
+		},
+		Pause: ImageSpec{
+			Image:   constant.KubePauseContainerImage,
+			Version: constant.KubePauseContainerImageVersion,
 		},
 	}
 }

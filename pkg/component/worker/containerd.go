@@ -66,9 +66,7 @@ const importsPath = "/etc/k0s/containerd.d/"
 type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
-	K0sVars    constant.CfgVars
-
-	OCIBundlePath string
+	K0sVars    *config.CfgVars
 }
 
 var _ manager.Component = (*ContainerD)(nil)
