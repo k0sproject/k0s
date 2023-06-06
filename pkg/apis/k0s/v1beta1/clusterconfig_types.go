@@ -384,34 +384,6 @@ func (c *ClusterConfig) Validate() (errs []error) {
 	return errs
 }
 
-// GetBootstrappingConfig returns a ClusterConfig object stripped of Cluster-Wide Settings
-func (c *ClusterConfig) GetBootstrappingConfig(storageSpec *StorageSpec) *ClusterConfig {
-	var etcdConfig *EtcdConfig
-	if storageSpec.Type == EtcdStorageType {
-		etcdConfig = &EtcdConfig{
-			ExternalCluster: storageSpec.Etcd.ExternalCluster,
-			PeerAddress:     storageSpec.Etcd.PeerAddress,
-			ExtraArgs:       storageSpec.Etcd.ExtraArgs,
-		}
-		c.Spec.Storage.Etcd = etcdConfig
-	}
-	return &ClusterConfig{
-		ObjectMeta: c.ObjectMeta,
-		TypeMeta:   c.TypeMeta,
-		Spec: &ClusterSpec{
-			API:     c.Spec.API,
-			Storage: storageSpec,
-			Network: &Network{
-				ServiceCIDR:   c.Spec.Network.ServiceCIDR,
-				DualStack:     c.Spec.Network.DualStack,
-				ClusterDomain: c.Spec.Network.ClusterDomain,
-			},
-			Install: c.Spec.Install,
-		},
-		Status: c.Status,
-	}
-}
-
 // HACK: the current ClusterConfig struct holds both bootstrapping config & cluster-wide config
 // this hack strips away the node-specific bootstrapping config so that we write a "clean" config to the CR
 // This function accepts a standard ClusterConfig and returns the same config minus the node specific info:
