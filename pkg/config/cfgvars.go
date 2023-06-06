@@ -17,23 +17,15 @@ limitations under the License.
 package config
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
-	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-
-	"github.com/avast/retry-go"
-	"github.com/imdario/mergo"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CfgVarsOriginType int
@@ -257,63 +249,4 @@ func (c *CfgVars) NodeConfig() (*v1beta1.ClusterConfig, error) {
 	c.nodeConfig = nodeConfig
 
 	return nodeConfig, nil
-}
-
-func (c *CfgVars) FetchDynamicConfig(ctx context.Context, kubeClientFactory kubeutil.ClientFactoryInterface) (*v1beta1.ClusterConfig, error) {
-	if !c.EnableDynamicConfig {
-		logrus.Debug("Dynamic config is disabled, returning static config")
-		return c.NodeConfig()
-	}
-
-	var apiConfig *v1beta1.ClusterConfig
-
-	logrus.Debug("Building config client to fetch dynamic config from API")
-
-	client, err := kubeClientFactory.GetConfigClient()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := retry.Do(
-		func() (err error) {
-			ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-			defer cancel()
-			logrus.Debug("Trying to fetch dynamic config from API")
-			c, err := client.Get(ctx, constant.ClusterConfigObjectName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			logrus.Debug("Successfully fetched dynamic config from API")
-
-			apiConfig = c.GetClusterWideConfig()
-			return nil
-		},
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.Delay(1*time.Second),
-		retry.OnRetry(func(attempt uint, err error) {
-			logrus.WithError(err).Debugf("Failed to get cluster config from API - attempt #%d", attempt+1)
-		}),
-	); err != nil {
-		return nil, err
-	}
-
-	nodeConfig, err := c.NodeConfig()
-	if err != nil {
-		return nil, fmt.Errorf("cluster config: get nodeconfig: %w", err)
-	}
-
-	clusterConfig := &v1beta1.ClusterConfig{}
-
-	// API config takes precedence over Node config. This is why we are merging it first
-	if err := mergo.Merge(clusterConfig, apiConfig); err != nil {
-		return nil, fmt.Errorf("cluster config: merge apiconfig: %w", err)
-	}
-
-	if err := mergo.Merge(clusterConfig, nodeConfig.GetBootstrappingConfig(nodeConfig.Spec.Storage), mergo.WithOverride); err != nil {
-		return nil, fmt.Errorf("cluster config: merge nodeconfig: %w", err)
-	}
-
-	logrus.Debug("Using dynamic config from API")
-	return clusterConfig, nil
 }
