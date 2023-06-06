@@ -436,6 +436,7 @@ If you want the list of default images and their versions to be included, use `k
 - `spec.images.metricsserver`
 - `spec.images.kubeproxy`
 - `spec.images.coredns`
+- `spec.images.pause`
 - `spec.images.calico.cni`
 - `spec.images.calico.flexvolume`
 - `spec.images.calico.node`
