@@ -66,10 +66,10 @@ jobs:
       - name: Cache embedded binaries
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ steps.embedded-bins-hash.hash }}
+          key: ${{ matrix.target }}-embedded-bins-${{ steps.embedded-bins-hash.hash }}
           restore-keys: |
-            ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ steps.embedded-bins-hash.hash }}
-            ${{ runner.os }}-embedded-bins-${{ matrix.target }}-
+            ${{ matrix.target }}-embedded-bins-${{ steps.embedded-bins-hash.hash }}
+            ${{ matrix-target }}-embedded-bins-
           path: |
             .bins.${{ matrix.target }}.stamp
             bindata_${{ matrix.target }}
