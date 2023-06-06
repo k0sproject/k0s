@@ -259,6 +259,14 @@ spec:
                       version:
                         type: string
                     type: object
+                  pause:
+                    description: ImageSpec container image settings
+                    properties:
+                      image:
+                        type: string
+                      version:
+                        type: string
+                    type: object
                   pushgateway:
                     description: ImageSpec container image settings
                     properties:

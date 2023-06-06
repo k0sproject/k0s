@@ -616,6 +616,7 @@ func (r *Reconciler) buildProfile(snapshot *snapshot) *workerconfig.Profile {
 			ServerTLSBootstrap: true,
 			EventRecordQPS:     pointer.Int32(0),
 		},
+		PauseImage:             snapshot.pauseImage.DeepCopy(),
 		NodeLocalLoadBalancing: snapshot.nodeLocalLoadBalancing.DeepCopy(),
 		Konnectivity: workerconfig.Konnectivity{
 			Enabled:   r.konnectivityEnabled,
