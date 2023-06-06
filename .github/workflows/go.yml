@@ -61,6 +61,7 @@ jobs:
         run: |
           hash=$(find embedded-bins/ -type f -not -path "embedded-bins/staging/*" -print0 | xargs -0 cat | md5sum | awk '{print $1}')
           echo "hash=$hash" >> $GITHUB_OUTPUT
+          echo "Generated hash key: $hash"
 
       - name: Cache embedded binaries
         uses: actions/cache@v3
