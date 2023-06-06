@@ -17,14 +17,10 @@ limitations under the License.
 package airgap
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/k0sproject/k0s/pkg/airgap"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/kubernetes"
-	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -42,18 +38,13 @@ func NewAirgapListImagesCmd() *cobra.Command {
 				return err
 			}
 
-			adminClientFactory := kubernetes.NewAdminClientFactory(opts.K0sVars.AdminKubeConfigPath)
+			if opts.EnableDynamicConfig {
+				return fmt.Errorf("dynamic config is not supported for airgap list-images")
+			}
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), 2*time.Minute)
-			defer cancel()
-
-			clusterConfig, err := opts.K0sVars.FetchDynamicConfig(ctx, adminClientFactory)
+			clusterConfig, err := opts.K0sVars.NodeConfig()
 			if err != nil {
-				logrus.WithError(err).Warn("Failed to get cluster config, falling back to local config")
-				clusterConfig, err = opts.K0sVars.NodeConfig()
-				if err != nil {
-					return fmt.Errorf("failed to get local config: %w", err)
-				}
+				return fmt.Errorf("failed to get config: %w", err)
 			}
 
 			for _, uri := range airgap.GetImageURIs(clusterConfig.Spec, all) {
