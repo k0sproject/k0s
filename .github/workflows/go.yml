@@ -56,15 +56,23 @@ jobs:
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
+      - name: Generate embedded binaries cache key
+        id: embedded-bins-hash
+        run: |
+          hash=$(find embedded-bins/ -type f -not -path "embedded-bins/staging/*" -print0 | xargs -0 cat | md5sum | awk '{print $1}')
+          echo "::set-output name=hash::$hash"
+
       - name: Cache embedded binaries
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ hashFiles('embedded-bins/**/*') }}
+          key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ steps.embedded-bins-hash.hash }}
+          restore-keys: |
+            ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ steps.embedded-bins-hash.hash }}
+            ${{ runner.os }}-embedded-bins-${{ matrix.target }}-
           path: |
             .bins.${{ matrix.target }}.stamp
             bindata_${{ matrix.target }}
             embedded-bins/staging/${{ matrix.target }}/bin/
-            embedded-bins/Makefile.variables
             pkg/assets/zz_generated_offsets_${{ matrix.target }}.go
 
       - name: Cache GOCACHE
