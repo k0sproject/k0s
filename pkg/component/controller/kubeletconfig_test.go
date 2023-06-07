@@ -22,17 +22,19 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
-	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
-	config "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
-	"sigs.k8s.io/yaml"
+
+	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 )
 
 func Test_KubeletConfig(t *testing.T) {
-	cfg := config.DefaultClusterConfig()
-	k0sVars := constant.GetConfig(t.TempDir())
+	cfg := v1beta1.DefaultClusterConfig()
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
 		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
@@ -117,9 +119,10 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 }
 
-func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *config.ClusterConfig) {
-	cfg := config.DefaultClusterConfig()
-	k0sVars := constant.GetConfig(t.TempDir())
+func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *v1beta1.ClusterConfig) {
+	cfg := v1beta1.DefaultClusterConfig()
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
 
 	cfgProfileX := map[string]interface{}{
@@ -134,7 +137,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *confi
 		t.Fatal(err)
 	}
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		v1beta1.WorkerProfile{
 			Name:   "profile_XXX",
 			Config: wcx,
 		},
@@ -154,7 +157,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *confi
 	}
 
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		v1beta1.WorkerProfile{
 			Name:   "profile_YYY",
 			Config: wcy,
 		},
@@ -165,7 +168,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *confi
 func requireConfigMap(t *testing.T, spec string, name string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	dst = v1beta1.CleanUpGenericMap(dst)
+	dst = helmv1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "ConfigMap", dst["kind"])
 	require.Equal(t, name, dst["metadata"].(map[string]interface{})["name"])
 	spec, foundSpec := dst["data"].(map[string]interface{})["kubelet"].(string)
@@ -176,7 +179,7 @@ func requireConfigMap(t *testing.T, spec string, name string) {
 func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	dst = v1beta1.CleanUpGenericMap(dst)
+	dst = helmv1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "Role", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
 	var currentResourceNames []string
@@ -189,7 +192,7 @@ func requireRole(t *testing.T, spec string, expectedResourceNames []string) {
 func requireRoleBinding(t *testing.T, spec string) {
 	dst := map[string]interface{}{}
 	require.NoError(t, yaml.Unmarshal([]byte(spec), &dst))
-	dst = v1beta1.CleanUpGenericMap(dst)
+	dst = helmv1beta1.CleanUpGenericMap(dst)
 	require.Equal(t, "RoleBinding", dst["kind"])
 	require.Equal(t, "system:bootstrappers:kubelet-configmaps", dst["metadata"].(map[string]interface{})["name"])
 }

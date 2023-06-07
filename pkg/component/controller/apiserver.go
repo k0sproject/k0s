@@ -37,6 +37,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -44,7 +45,7 @@ import (
 // APIServer implement the component interface to run kube api
 type APIServer struct {
 	ClusterConfig             *v1beta1.ClusterConfig
-	K0sVars                   constant.CfgVars
+	K0sVars                   *config.CfgVars
 	LogLevel                  string
 	Storage                   manager.Component
 	EnableKonnectivity        bool
@@ -243,7 +244,7 @@ func (a *APIServer) Ready() error {
 	return nil
 }
 
-func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars constant.CfgVars) ([]string, error) {
+func getEtcdArgs(storage *v1beta1.StorageSpec, k0sVars *config.CfgVars) ([]string, error) {
 	var args []string
 
 	switch storage.Type {

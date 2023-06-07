@@ -25,6 +25,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 
@@ -34,7 +35,7 @@ import (
 
 // Manager is the Component interface wrapper for Applier
 type Manager struct {
-	K0sVars           constant.CfgVars
+	K0sVars           *config.CfgVars
 	KubeClientFactory kubeutil.ClientFactoryInterface
 
 	// client               kubernetes.Interface

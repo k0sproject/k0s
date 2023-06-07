@@ -33,7 +33,6 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
-	"github.com/k0sproject/k0s/pkg/constant"
 )
 
 // Manager hold configuration for particular backup-restore process
@@ -44,14 +43,13 @@ type Manager struct {
 }
 
 // RunBackup backups cluster
-func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, savePathDir string, out io.Writer) error {
-	configLoader := config.ClientConfigLoadingRules{}
-	_, err := configLoader.Load()
+func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars, savePathDir string, out io.Writer) error {
+	_, err := vars.NodeConfig()
 	if err != nil {
 		return err
 	}
 
-	bm.discoverSteps(configLoader.RuntimeConfigPath, nodeSpec, vars, "backup", "", out)
+	bm.discoverSteps(vars.StartupConfigPath, nodeSpec, vars, "backup", "", out)
 	defer os.RemoveAll(bm.tmpDir)
 	assets := make([]string, 0, len(bm.steps))
 
@@ -82,7 +80,7 @@ func (bm *Manager) RunBackup(nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVar
 	return nil
 }
 
-func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars constant.CfgVars, action string, restoredConfigPath string, out io.Writer) {
+func (bm *Manager) discoverSteps(configFilePath string, nodeSpec *v1beta1.ClusterSpec, vars *config.CfgVars, action string, restoredConfigPath string, out io.Writer) {
 	if nodeSpec.Storage.Type == v1beta1.EtcdStorageType && !nodeSpec.Storage.Etcd.IsExternalClusterUsed() {
 		bm.Add(newEtcdStep(bm.tmpDir, vars.CertRootDir, vars.EtcdCertDir, nodeSpec.Storage.Etcd.PeerAddress, vars.EtcdDataDir))
 	} else if nodeSpec.Storage.Type == v1beta1.KineStorageType && strings.HasPrefix(nodeSpec.Storage.Kine.DataSource, "sqlite:") {
@@ -138,7 +136,7 @@ func (bm Manager) save(backupFileName string, assets []string) error {
 }
 
 // RunRestore restores cluster
-func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desiredRestoredConfigPath string, out io.Writer) error {
+func (bm *Manager) RunRestore(archivePath string, k0sVars *config.CfgVars, desiredRestoredConfigPath string, out io.Writer) error {
 	var input io.Reader
 	if archivePath == "-" {
 		input = os.Stdin
@@ -170,15 +168,11 @@ func (bm *Manager) RunRestore(archivePath string, k0sVars constant.CfgVars, desi
 	return nil
 }
 
-func (bm Manager) getConfigForRestore(k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
+func (bm Manager) getConfigForRestore(k0sVars *config.CfgVars) (*v1beta1.ClusterConfig, error) {
 	configFromBackup := path.Join(bm.tmpDir, "k0s.yaml")
 	logrus.Debugf("Using k0s.yaml from: %s", configFromBackup)
 
-	loadingRules := config.ClientConfigLoadingRules{
-		RuntimeConfigPath: configFromBackup,
-		K0sVars:           k0sVars,
-	}
-	cfg, err := loadingRules.Load()
+	cfg, err := k0sVars.NodeConfig()
 	if err != nil {
 		return nil, err
 	}

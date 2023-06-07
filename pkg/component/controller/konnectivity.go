@@ -36,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/supervisor"
@@ -43,7 +44,7 @@ import (
 
 // Konnectivity implements the component interface of konnectivity server
 type Konnectivity struct {
-	K0sVars    constant.CfgVars
+	K0sVars    *config.CfgVars
 	LogLevel   string
 	SingleNode bool
 	// used for lease lock

@@ -26,6 +26,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -42,7 +43,7 @@ import (
 type Kine struct {
 	Config       *v1beta1.KineConfig
 	gid          int
-	K0sVars      constant.CfgVars
+	K0sVars      *config.CfgVars
 	supervisor   supervisor.Supervisor
 	uid          int
 	bypassClient *etcd.Client

@@ -29,6 +29,7 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	k8sutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -51,13 +52,13 @@ type KubeletConfig struct {
 	log logrus.FieldLogger
 
 	kubeClientFactory k8sutil.ClientFactoryInterface
-	k0sVars           constant.CfgVars
+	k0sVars           *config.CfgVars
 	previousProfiles  v1beta1.WorkerProfiles
 	nodeConfig        *v1beta1.ClusterConfig
 }
 
 // NewKubeletConfig creates new KubeletConfig reconciler
-func NewKubeletConfig(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) *KubeletConfig {
+func NewKubeletConfig(k0sVars *config.CfgVars, clientFactory k8sutil.ClientFactoryInterface, nodeConfig *v1beta1.ClusterConfig) *KubeletConfig {
 	return &KubeletConfig{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeletconfig"}),
 

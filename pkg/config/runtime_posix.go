@@ -2,7 +2,7 @@
 // +build !windows
 
 /*
-Copyright 2020 k0s authors
+Copyright 2023 k0s authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,15 +17,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package constant
+package config
 
-const (
-	// DataDirDefault is the default data directory containing k0s state
-	DataDirDefault                 = "/var/lib/k0s"
-	KubeletVolumePluginDir         = "/usr/libexec/k0s/kubelet-plugins/volume/exec"
-	KineSocket                     = "kine/kine.sock:2379"
-	KubePauseContainerImage        = "registry.k8s.io/pause"
-	KubePauseContainerImageVersion = "3.8"
-	K0sConfigPathDefault           = "/etc/k0s/k0s.yaml"
-	RuntimeConfigPathDefault       = "/run/k0s/k0s.yaml"
+import (
+	"fmt"
+	"os"
+	"syscall"
 )
+
+func checkPid(pid int) error {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("failed to find process: %w", err)
+	}
+
+	if err := proc.Signal(syscall.Signal(0)); err != nil {
+		return fmt.Errorf("failed to signal process: %w", err)
+	}
+
+	return nil
+}

@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -243,7 +244,7 @@ spec:
 type MetricServer struct {
 	log logrus.FieldLogger
 
-	K0sVars           constant.CfgVars
+	K0sVars           *config.CfgVars
 	kubeClientFactory k8sutil.ClientFactoryInterface
 
 	clusterConfig *v1beta1.ClusterConfig
@@ -261,7 +262,7 @@ var _ manager.Component = (*MetricServer)(nil)
 var _ manager.Reconciler = (*MetricServer)(nil)
 
 // NewMetricServer creates new MetricServer reconciler
-func NewMetricServer(k0sVars constant.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {
+func NewMetricServer(k0sVars *config.CfgVars, kubeClientFactory k8sutil.ClientFactoryInterface) *MetricServer {
 	return &MetricServer{
 		log: logrus.WithFields(logrus.Fields{"component": "metricServer"}),
 

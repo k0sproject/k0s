@@ -17,6 +17,12 @@ limitations under the License.
 package config
 
 import (
+	"errors"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -29,11 +35,34 @@ func NewValidateCmd() *cobra.Command {
 		Long: `Example:
    k0s config validate --config path_to_config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.GetCmdOpts()
+			var reader io.Reader
 
-			loadingRules := config.ClientConfigLoadingRules{K0sVars: c.K0sVars}
-			_, err := loadingRules.ParseRuntimeConfig()
-			return err
+			// config.CfgFile is the global value holder for --config flag, set by cobra/pflag
+			switch config.CfgFile {
+			case "-":
+				reader = os.Stdin
+			case "":
+				return errors.New("--config can't be emmpty")
+			default:
+				f, err := os.Open(config.CfgFile)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				reader = f
+			}
+
+			cfg, err := v1beta1.ConfigFromReader(reader)
+			if err != nil {
+				return fmt.Errorf("failed to read config: %w", err)
+			}
+
+			errs := cfg.Validate()
+			if len(errs) > 0 {
+				return fmt.Errorf("config validation failed: %w", errors.Join(errs...))
+			}
+
+			return nil
 		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -41,5 +70,6 @@ func NewValidateCmd() *cobra.Command {
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.FileInputFlag())
+	_ = cmd.MarkFlagRequired("config")
 	return cmd
 }

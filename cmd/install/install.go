@@ -59,12 +59,17 @@ func (c *command) setup(role string, args []string, installFlags *installFlags) 
 		return fmt.Errorf("this command must be run as root")
 	}
 
+	nodeConfig, err := c.K0sVars.NodeConfig()
+	if err != nil {
+		return err
+	}
+
 	if role == "controller" {
-		if err := install.CreateControllerUsers(c.NodeConfig, c.K0sVars); err != nil {
+		if err := install.CreateControllerUsers(nodeConfig, c.K0sVars); err != nil {
 			return fmt.Errorf("failed to create controller users: %v", err)
 		}
 	}
-	err := install.EnsureService(args, installFlags.envVars, installFlags.force)
+	err = install.EnsureService(args, installFlags.envVars, installFlags.force)
 	if err != nil {
 		return fmt.Errorf("failed to install k0s service: %v", err)
 	}
@@ -76,8 +81,8 @@ func (c *command) setup(role string, args []string, installFlags *installFlags) 
 func (c *command) convertFileParamsToAbsolute() (err error) {
 	// don't convert if cfgFile is empty
 
-	if c.CfgFile != "" {
-		c.CfgFile, err = filepath.Abs(c.CfgFile)
+	if c.K0sVars.StartupConfigPath != "" {
+		c.K0sVars.StartupConfigPath, err = filepath.Abs(c.K0sVars.StartupConfigPath)
 		if err != nil {
 			return err
 		}

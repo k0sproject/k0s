@@ -28,6 +28,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 )
@@ -35,7 +36,7 @@ import (
 // Scheduler implement the component interface to run kube scheduler
 type Scheduler struct {
 	gid            int
-	K0sVars        constant.CfgVars
+	K0sVars        *config.CfgVars
 	LogLevel       string
 	SingleNode     bool
 	supervisor     *supervisor.Supervisor

@@ -19,13 +19,10 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	aproot "github.com/k0sproject/k0s/pkg/autopilot/controller/root"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
@@ -42,7 +39,7 @@ var (
 	Debug          bool
 	DebugListenOn  string
 	StatusSocket   string
-	K0sVars        constant.CfgVars
+	K0sVars        CfgVars
 	workerOpts     WorkerOptions
 	Verbose        bool
 	controllerOpts ControllerOptions
@@ -54,14 +51,12 @@ type CLIOptions struct {
 	WorkerOptions
 	ControllerOptions
 	CfgFile          string
-	NodeConfig       *v1beta1.ClusterConfig
 	Debug            bool
 	DebugListenOn    string
 	DefaultLogLevels map[string]string
-	K0sVars          constant.CfgVars
+	K0sVars          *CfgVars
 	Logging          map[string]string // merged outcome of default log levels and cmdLoglevels
 	Verbose          bool
-	AutopilotRoot    aproot.Root
 }
 
 // Shared controller cli flags
@@ -151,7 +146,7 @@ func GetPersistentFlagSet() *pflag.FlagSet {
 	flagset.BoolVarP(&Debug, "debug", "d", false, "Debug logging (default: false)")
 	flagset.BoolVarP(&Verbose, "verbose", "v", false, "Verbose logging (default: false)")
 	flagset.StringVar(&DataDir, "data-dir", "", "Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!")
-	flagset.StringVar(&StatusSocket, "status-socket", filepath.Join(K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
+	flagset.StringVar(&StatusSocket, "status-socket", "", "Full file path to the socket file. (default: <rundir>/status.sock)")
 	flagset.StringVar(&DebugListenOn, "debugListenOn", ":6060", "Http listenOn for Debug pprof handler")
 	return flagset
 }
@@ -245,36 +240,32 @@ func FileInputFlag() *pflag.FlagSet {
 	return flagset
 }
 
-func GetCmdOpts() CLIOptions {
-	K0sVars = constant.GetConfig(DataDir)
+func GetCmdOpts(cobraCmd command) (*CLIOptions, error) {
+	k0sVars, err := NewCfgVars(cobraCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// if a runtime config can be loaded, use it to override the k0sVars
+	if rtc, err := LoadRuntimeConfig(k0sVars); err == nil {
+		k0sVars = rtc.K0sVars
+	}
 
 	if controllerOpts.SingleNode {
 		controllerOpts.EnableWorker = true
-		K0sVars.DefaultStorageType = "kine"
 	}
 
-	// When CfgFile is set, verify the file can be opened
-	if CfgFile != "" {
-		if fd, err := os.Open(CfgFile); err != nil {
-			logrus.WithError(err).Fatalf("Cannot access config file (%s)", CfgFile)
-		} else {
-			_ = fd.Close()
-		}
-	}
-
-	opts := CLIOptions{
+	return &CLIOptions{
 		ControllerOptions: controllerOpts,
 		WorkerOptions:     workerOpts,
 
 		CfgFile:          CfgFile,
-		NodeConfig:       getNodeConfig(K0sVars),
 		Debug:            Debug,
 		Verbose:          Verbose,
 		DefaultLogLevels: DefaultLogLevels(),
-		K0sVars:          K0sVars,
+		K0sVars:          k0sVars,
 		DebugListenOn:    DebugListenOn,
-	}
-	return opts
+	}, nil
 }
 
 // CallParentPersistentPreRun runs the parent command's persistent pre-run.
@@ -282,8 +273,8 @@ func GetCmdOpts() CLIOptions {
 //
 // See: https://github.com/spf13/cobra/issues/216
 // See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
-func CallParentPersistentPreRun(c *cobra.Command, args []string) error {
-	for p := c.Parent(); p != nil; p = p.Parent() {
+func CallParentPersistentPreRun(cmd *cobra.Command, args []string) error {
+	for p := cmd.Parent(); p != nil; p = p.Parent() {
 		preRunE := p.PersistentPreRunE
 		preRun := p.PersistentPreRun
 
@@ -296,37 +287,14 @@ func CallParentPersistentPreRun(c *cobra.Command, args []string) error {
 		}()
 
 		if preRunE != nil {
-			return preRunE(c, args)
+			return preRunE(cmd, args)
 		}
 
 		if preRun != nil {
-			preRun(c, args)
+			preRun(cmd, args)
 			return nil
 		}
 	}
 
 	return nil
-}
-
-func PreRunValidateConfig(k0sVars constant.CfgVars) error {
-	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
-	_, err := loadingRules.ParseRuntimeConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get config: %v", err)
-	}
-	return nil
-}
-
-func getNodeConfig(k0sVars constant.CfgVars) *v1beta1.ClusterConfig {
-	loadingRules := ClientConfigLoadingRules{Nodeconfig: true, K0sVars: k0sVars}
-	cfg, err := loadingRules.Load()
-	if err != nil {
-		return nil
-	}
-	return cfg
-}
-
-func LoadClusterConfig(k0sVars constant.CfgVars) (*v1beta1.ClusterConfig, error) {
-	loadingRules := ClientConfigLoadingRules{K0sVars: k0sVars}
-	return loadingRules.Load()
 }

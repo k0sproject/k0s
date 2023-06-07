@@ -30,6 +30,7 @@ import (
 	k0sAPI "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/controller/leaderelector"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
@@ -40,7 +41,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config"
+	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	ctrlManager "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -62,7 +63,7 @@ var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, concurrencyLevel int) *ExtensionsController {
+func NewExtensionsController(s manifestsSaver, k0sVars *config.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, concurrencyLevel int) *ExtensionsController {
 	return &ExtensionsController{
 		concurrencyLevel: concurrencyLevel,
 		saver:            s,
@@ -353,7 +354,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
-		Controller: config.Controller{
+		Controller: ctrlconfig.Controller{
 			GroupKindConcurrency: map[string]int{gk.String(): 10},
 		},
 	})

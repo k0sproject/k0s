@@ -20,12 +20,12 @@ import (
 	"bytes"
 	"encoding/base64"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/certificate"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -47,7 +47,7 @@ spec:
   api:
     externalAddress: 10.0.0.86
 `
-	configGetter := testutil.NewConfigGetter(s.T(), yamlData, false, constant.GetConfig(""))
+	configGetter := testutil.NewConfigGetter(s.T(), yamlData, false, config.DefaultCfgVars())
 	cfg := configGetter.FakeConfigFromFile()
 
 	caCert := `
@@ -73,7 +73,7 @@ nzXu8A==
 `
 
 	tmpDir := s.T().TempDir()
-	caCertPath := path.Join(tmpDir, "ca-cert")
+	caCertPath := filepath.Join(tmpDir, "ca-cert")
 	s.Require().NoError(os.WriteFile(caCertPath, []byte(caCert), 0644))
 
 	caCertKey := `
@@ -105,7 +105,7 @@ z+5UodDFCnUsfprMjfTdY2Vk99PT4++SrJ5iTOn7xgKRrd1MPkBv7SXwnPtxCBAK
 yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 -----END RSA PRIVATE KEY-----
 `
-	caKeyPath := path.Join(tmpDir, "ca-key")
+	caKeyPath := filepath.Join(tmpDir, "ca-key")
 	s.Require().NoError(os.WriteFile(caKeyPath, []byte(caCertKey), 0644))
 
 	userReq := certificate.Request{
@@ -116,7 +116,9 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 		CAKey:  caKeyPath,
 	}
 
-	k0sVars := constant.GetConfig(s.T().TempDir())
+	k0sVars, err := config.NewCfgVars(nil, s.T().TempDir())
+	s.Require().NoError(err)
+
 	certManager := certificate.Manager{
 		K0sVars: k0sVars,
 	}
@@ -144,7 +146,7 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 	var buf bytes.Buffer
 	s.Require().NoError(userKubeconfigTemplate.Execute(&buf, &data))
 
-	kubeconfigPath := path.Join(tmpDir, "kubeconfig")
+	kubeconfigPath := filepath.Join(tmpDir, "kubeconfig")
 	s.Require().NoError(os.WriteFile(kubeconfigPath, buf.Bytes(), 0644))
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)

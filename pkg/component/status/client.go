@@ -23,9 +23,9 @@ import (
 	"net"
 	"net/http"
 
-	config "github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/prober"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 )
 
 type K0sStatus struct {
@@ -40,8 +40,8 @@ type K0sStatus struct {
 	SingleNode                  bool
 	Args                        []string
 	WorkerToAPIConnectionStatus ProbeStatus
-	ClusterConfig               *config.ClusterConfig
-	K0sVars                     constant.CfgVars
+	ClusterConfig               *v1beta1.ClusterConfig
+	K0sVars                     *config.CfgVars
 }
 
 type ProbeStatus struct {

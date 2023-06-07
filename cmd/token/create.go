@@ -52,13 +52,17 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.GetCmdOpts()
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+
 			expiry, err := time.ParseDuration(tokenExpiry)
 			if err != nil {
 				return err
 			}
 
-			var bootstrapConfig string
+			var bootstrapToken string
 			// we will retry every second for two minutes and then error
 			err = retry.OnError(wait.Backoff{
 				Steps:    120,
@@ -68,12 +72,12 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 			}, func(err error) bool {
 				return waitCreate
 			}, func() error {
-				statusInfo, err := status.GetStatusInfo(config.StatusSocket)
+				statusInfo, err := status.GetStatusInfo(opts.K0sVars.StatusSocketPath)
 				if err != nil {
 					return fmt.Errorf("failed to get k0s status: %w", err)
 				}
 				if statusInfo == nil {
-					return errors.New("k0s is not running")
+					return config.ErrK0sNotRunning
 				}
 				if err = ensureTokenCreationAcceptable(createTokenRole, statusInfo); err != nil {
 					waitCreate = false
@@ -81,13 +85,18 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 					return err
 				}
 
-				bootstrapConfig, err = token.CreateKubeletBootstrapToken(cmd.Context(), c.NodeConfig.Spec.API, c.K0sVars, createTokenRole, expiry)
+				nodeConfig, err := opts.K0sVars.NodeConfig()
+				if err != nil {
+					return err
+				}
+
+				bootstrapToken, err = token.CreateKubeletBootstrapToken(cmd.Context(), nodeConfig.Spec.API, opts.K0sVars, createTokenRole, expiry)
 				return err
 			})
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), bootstrapConfig)
+			fmt.Fprintln(cmd.OutOrStdout(), bootstrapToken)
 			return nil
 		},
 	}

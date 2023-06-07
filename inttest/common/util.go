@@ -63,7 +63,7 @@ func WaitForKubeRouterReady(ctx context.Context, kc *kubernetes.Clientset) error
 func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
 	err := WaitForDeployment(ctx, kc, "coredns", "kube-system")
 	if err != nil {
-		return err
+		return fmt.Errorf("wait for deployment: %w", err)
 	}
 	// Wait till we see the svc endpoints ready
 	return wait.PollImmediateUntilWithContext(ctx, 100*time.Millisecond, func(ctx context.Context) (bool, error) {
@@ -73,7 +73,7 @@ func WaitForCoreDNSReady(ctx context.Context, kc *kubernetes.Clientset) error {
 
 		// NotFound is ok, it might not be created yet
 		if err != nil && !apierrors.IsNotFound(err) {
-			return true, err
+			return true, fmt.Errorf("wait for coredns: list: %w", err)
 		} else if err != nil {
 			return false, nil
 		}

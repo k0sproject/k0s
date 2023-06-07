@@ -17,13 +17,9 @@ limitations under the License.
 package status
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -41,19 +37,23 @@ func NewStatusCmd() *cobra.Command {
 		Short:   "Get k0s instance status information",
 		Example: `The command will return information about system init, PID, k0s role, kubeconfig and similar.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
 			cmd.SilenceUsage = true
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
 
-			statusInfo, err := status.GetStatusInfo(config.StatusSocket)
+			statusInfo, err := status.GetStatusInfo(opts.K0sVars.StatusSocketPath)
 			if err != nil {
 				return err
 			}
 			if statusInfo != nil {
 				printStatus(cmd.OutOrStdout(), statusInfo, output)
 			} else {
-				fmt.Fprintln(cmd.OutOrStdout(), "K0s is not running")
+				return config.ErrK0sNotRunning
 			}
 			return nil
 		},
@@ -73,12 +73,16 @@ func NewStatusSubCmdComponents() *cobra.Command {
 		Short:   "Get k0s instance component status information",
 		Example: `The command will return information about k0s components.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
 			cmd.SilenceUsage = true
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
-			fmt.Fprintln(os.Stderr, "!!! per component status is not yet finally ready, information here might be not full yet")
-			state, err := status.GetComponentStatus(config.StatusSocket, maxCount)
+			fmt.Fprintln(cmd.ErrOrStderr(), "!!! per component status is not yet finally ready, information here might be not full yet")
+			state, err := status.GetComponentStatus(opts.K0sVars.StatusSocketPath, maxCount)
 			if err != nil {
 				return err
 			}
@@ -93,34 +97,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 	cmd.Flags().IntVar(&maxCount, "max-count", 1, "how many latest probes to show")
 	return cmd
 
-}
-
-// TODO: move it somewhere else, now here just for quick manual testing
-func GetOverSocket(socketPath string, path string, tgt interface{}) error {
-
-	httpc := http.Client{
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
-			},
-		},
-	}
-
-	response, err := httpc.Get("http://localhost/" + path)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	responseData, err := io.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(responseData, tgt); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func printStatus(w io.Writer, status *status.K0sStatus, output string) {

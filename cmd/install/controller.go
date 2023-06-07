@@ -17,6 +17,9 @@ limitations under the License.
 package install
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/spf13/cobra"
@@ -34,7 +37,22 @@ With the controller subcommand you can setup a single node cluster by running:
 	k0s install controller --single
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := command(config.GetCmdOpts())
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+
+			c := (*command)(opts)
+
+			nodeConfig, err := c.K0sVars.NodeConfig()
+			if err != nil {
+				return fmt.Errorf("failed to load node config: %v", err)
+			}
+
+			if errs := nodeConfig.Validate(); len(errs) > 0 {
+				return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
+			}
+
 			if err := c.convertFileParamsToAbsolute(); err != nil {
 				cmd.SilenceUsage = true
 				return err
@@ -46,10 +64,6 @@ With the controller subcommand you can setup a single node cluster by running:
 				return err
 			}
 			return nil
-		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			c := command(config.GetCmdOpts())
-			return config.PreRunValidateConfig(c.K0sVars)
 		},
 	}
 	// append flags

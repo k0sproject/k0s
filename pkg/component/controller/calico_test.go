@@ -21,7 +21,8 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
+
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 )
@@ -34,7 +35,8 @@ func (i inMemorySaver) Save(dst string, content []byte) error {
 }
 
 func TestCalicoManifests(t *testing.T) {
-	k0sVars := constant.GetConfig(t.TempDir())
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	clusterConfig := v1beta1.DefaultClusterConfig()
 	clusterConfig.Spec.Network.Calico = v1beta1.DefaultCalico()
 	clusterConfig.Spec.Network.Provider = "calico"

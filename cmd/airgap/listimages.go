@@ -33,13 +33,21 @@ func NewAirgapListImagesCmd() *cobra.Command {
 		Short:   "List image names and version needed for air-gap install",
 		Example: `k0s airgap list-images`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.GetCmdOpts()
-			clusterConfig, err := config.LoadClusterConfig(c.K0sVars)
+			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
-				return fmt.Errorf("failed to load cluster config: %w", err)
+				return err
 			}
-			uris := airgap.GetImageURIs(clusterConfig.Spec, all)
-			for _, uri := range uris {
+
+			if opts.EnableDynamicConfig {
+				return fmt.Errorf("dynamic config is not supported for airgap list-images")
+			}
+
+			clusterConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return fmt.Errorf("failed to get config: %w", err)
+			}
+
+			for _, uri := range airgap.GetImageURIs(clusterConfig.Spec, all) {
 				fmt.Fprintln(cmd.OutOrStdout(), uri)
 			}
 			return nil

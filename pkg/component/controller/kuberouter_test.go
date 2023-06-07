@@ -25,7 +25,7 @@ import (
 	"github.com/k0sproject/dig"
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
-	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
@@ -35,7 +35,8 @@ import (
 )
 
 func TestKubeRouterConfig(t *testing.T) {
-	k0sVars := constant.GetConfig(t.TempDir())
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -114,7 +115,8 @@ func TestGetHairpinConfig(t *testing.T) {
 }
 
 func TestKubeRouterDefaultManifests(t *testing.T) {
-	k0sVars := constant.GetConfig(t.TempDir())
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"
@@ -147,7 +149,8 @@ func TestKubeRouterDefaultManifests(t *testing.T) {
 }
 
 func TestKubeRouterManualMTUManifests(t *testing.T) {
-	k0sVars := constant.GetConfig(t.TempDir())
+	k0sVars, err := config.NewCfgVars(nil, t.TempDir())
+	require.NoError(t, err)
 	cfg := v1beta1.DefaultClusterConfig()
 	cfg.Spec.Network.Calico = nil
 	cfg.Spec.Network.Provider = "kuberouter"

@@ -29,13 +29,14 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/component/prober"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
 
 // OCIBundleReconciler tries to import OCI bundle into the running containerd instance
 type OCIBundleReconciler struct {
-	k0sVars constant.CfgVars
+	k0sVars *config.CfgVars
 	log     *logrus.Entry
 	*prober.EventEmitter
 }
@@ -43,7 +44,7 @@ type OCIBundleReconciler struct {
 var _ manager.Component = (*OCIBundleReconciler)(nil)
 
 // NewOCIBundleReconciler builds new reconciler
-func NewOCIBundleReconciler(vars constant.CfgVars) *OCIBundleReconciler {
+func NewOCIBundleReconciler(vars *config.CfgVars) *OCIBundleReconciler {
 	return &OCIBundleReconciler{
 		k0sVars:      vars,
 		log:          logrus.WithField("component", "OCIBundleReconciler"),

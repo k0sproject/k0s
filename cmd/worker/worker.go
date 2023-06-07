@@ -62,7 +62,12 @@ func NewWorkerCmd() *cobra.Command {
 			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := Command(config.GetCmdOpts())
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+
+			c := (*Command)(opts)
 			if len(args) > 0 {
 				c.TokenArg = args[0]
 			}
@@ -185,26 +190,25 @@ func (c *Command) Start(ctx context.Context) error {
 	}
 
 	certManager := worker.NewCertificateManager(ctx, kubeletKubeconfigPath)
-	if !c.SingleNode && !c.EnableWorker {
-		clusterConfig, err := config.LoadClusterConfig(c.K0sVars)
-		if err != nil {
-			return fmt.Errorf("failed to load cluster config: %w", err)
-		}
 
+	// if running inside a controller, status component is already running
+	if !c.SingleNode && !c.EnableWorker {
 		componentManager.Add(ctx, &status.Status{
 			Prober: prober.DefaultProber,
 			StatusInformation: status.K0sStatus{
-				Pid:           os.Getpid(),
-				Role:          "worker",
-				Args:          os.Args,
-				Version:       build.Version,
-				Workloads:     true,
-				SingleNode:    false,
-				K0sVars:       c.K0sVars,
-				ClusterConfig: clusterConfig,
+				Pid:        os.Getpid(),
+				Role:       "worker",
+				Args:       os.Args,
+				Version:    build.Version,
+				Workloads:  true,
+				SingleNode: false,
+				K0sVars:    c.K0sVars,
+				// worker does not have cluster config. this is only shown in "k0s status -o json".
+				// todo: if it's needed, a worker side config client can be set up and used to load the config
+				ClusterConfig: nil,
 			},
 			CertManager: certManager,
-			Socket:      config.StatusSocket,
+			Socket:      c.K0sVars.StatusSocketPath,
 		})
 	}
 

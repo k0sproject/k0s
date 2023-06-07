@@ -29,6 +29,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/sirupsen/logrus"
 )
@@ -38,7 +39,7 @@ type KubeProxy struct {
 	log logrus.FieldLogger
 
 	nodeConf    *v1beta1.ClusterConfig
-	K0sVars     constant.CfgVars
+	K0sVars     *config.CfgVars
 	manifestDir string
 
 	previousConfig proxyConfig
@@ -48,7 +49,7 @@ var _ manager.Component = (*KubeProxy)(nil)
 var _ manager.Reconciler = (*KubeProxy)(nil)
 
 // NewKubeProxy creates new KubeProxy component
-func NewKubeProxy(k0sVars constant.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {
+func NewKubeProxy(k0sVars *config.CfgVars, nodeConfig *v1beta1.ClusterConfig) *KubeProxy {
 	return &KubeProxy{
 		log: logrus.WithFields(logrus.Fields{"component": "kubeproxy"}),
 

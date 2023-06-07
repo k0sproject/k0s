@@ -33,11 +33,14 @@ func tokenInvalidateCmd() *cobra.Command {
 		Short:   "Invalidates existing join token",
 		Example: "k0s token invalidate xyz123",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.GetCmdOpts()
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
 			if len(args) < 1 {
 				return errors.New("invalidate requires at least one token ID to invalidate")
 			}
-			manager, err := token.NewManager(filepath.Join(c.K0sVars.AdminKubeConfigPath))
+			manager, err := token.NewManager(filepath.Join(opts.K0sVars.AdminKubeConfigPath))
 			if err != nil {
 				return err
 			}

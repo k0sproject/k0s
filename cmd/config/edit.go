@@ -29,8 +29,11 @@ func NewEditCmd() *cobra.Command {
 		Use:   "edit",
 		Short: "Launch the editor configured in your shell to edit k0s configuration",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := config.GetCmdOpts()
-			os.Args = []string{os.Args[0], "kubectl", "--data-dir", c.K0sVars.DataDir, "-n", "kube-system", "edit", "clusterconfig", "k0s"}
+			opts, err := config.GetCmdOpts(cmd)
+			if err != nil {
+				return err
+			}
+			os.Args = []string{os.Args[0], "kubectl", "--data-dir", opts.K0sVars.DataDir, "-n", "kube-system", "edit", "clusterconfig", "k0s"}
 			return cmd.Execute()
 		},
 	}
