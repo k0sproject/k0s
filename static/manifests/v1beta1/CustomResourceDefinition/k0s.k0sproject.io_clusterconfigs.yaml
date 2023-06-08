@@ -353,9 +353,6 @@ spec:
                         description: 'Enable wireguard-based encryption (default:
                           false)'
                         type: boolean
-                      withWindowsNodes:
-                        description: 'Windows Nodes (default: false)'
-                        type: boolean
                     type: object
                   clusterDomain:
                     description: Cluster Domain

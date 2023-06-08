@@ -49,9 +49,6 @@ type Calico struct {
 
 	// The virtual network ID for VXLAN (default: 4096)
 	VxlanVNI int `json:"vxlanVNI"`
-
-	// Windows Nodes (default: false)
-	WithWindowsNodes bool `json:"withWindowsNodes"`
 }
 
 // DefaultCalico returns sane defaults for calico
@@ -63,7 +60,6 @@ func DefaultCalico() *Calico {
 		MTU:                     0,
 		EnableWireguard:         false,
 		FlexVolumeDriverPath:    "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		WithWindowsNodes:        false,
 		Overlay:                 "Always",
 		IPAutodetectionMethod:   "",
 		IPv6AutodetectionMethod: "",
@@ -77,7 +73,6 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.VxlanVNI = 4096
 	c.MTU = 1450
 	c.EnableWireguard = false
-	c.WithWindowsNodes = false
 	c.FlexVolumeDriverPath = "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
 	c.Overlay = "Always"
 	c.IPAutodetectionMethod = ""

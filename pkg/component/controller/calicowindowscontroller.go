@@ -49,9 +49,14 @@ type WindowsStackComponent struct {
 }
 
 type windowsStackRenderingContext struct {
-	CNIBin  string
-	CNIConf string
-	Mode    string
+	CNIBin          string
+	CNIConf         string
+	Mode            string
+	KubeAPIHost     string
+	KubeAPIPort     string
+	IPv4ServiceCIDR string
+	Nameserver      string
+	NodeImage       string
 }
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
@@ -127,21 +132,33 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 	if existingCNI != "" && existingCNI != constant.CNIProviderCalico {
 		return fmt.Errorf("windows node controller available only for %s", constant.CNIProviderCalico)
 	}
-	newConfig := n.makeCalicoRenderingContext(cfg)
+	newConfig, err := n.makeCalicoRenderingContext(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to make calico rendering context: %v", err)
+	}
 	if !reflect.DeepEqual(newConfig, n.prevRenderingContext) {
 		n.prevRenderingContext = newConfig
 	}
 
 	return nil
 }
-func (n *WindowsStackComponent) makeCalicoRenderingContext(cfg *v1beta1.ClusterConfig) windowsStackRenderingContext {
+func (n *WindowsStackComponent) makeCalicoRenderingContext(cfg *v1beta1.ClusterConfig) (windowsStackRenderingContext, error) {
+	dns, err := cfg.Spec.Network.DNSAddress()
+	if err != nil {
+		return windowsStackRenderingContext{}, fmt.Errorf("failed to parse dns address: %v", err)
+	}
 
 	return windowsStackRenderingContext{
 		// template rendering unescapes double backslashes
-		CNIBin:  "c:\\\\opt\\\\cni\\\\bin",
-		CNIConf: "c:\\\\opt\\\\cni\\\\conf",
-		Mode:    cfg.Spec.Network.Calico.Mode,
-	}
+		CNIBin:          "c:\\\\opt\\\\cni\\\\bin",
+		CNIConf:         "c:\\\\opt\\\\cni\\\\conf",
+		Mode:            cfg.Spec.Network.Calico.Mode,
+		KubeAPIHost:     cfg.Spec.API.Address,
+		KubeAPIPort:     fmt.Sprintf("%d", cfg.Spec.API.Port),
+		IPv4ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
+		Nameserver:      dns,
+		NodeImage:       "calico/windows:v3.23.5",
+	}, nil
 }
 
 // Stop no-op
