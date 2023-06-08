@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
@@ -104,7 +105,6 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 			imports = append(imports, escapedPath(file))
 		}
 	}
-
 	// Write the CRI config to a file and add it to imports
 	err = os.WriteFile(c.criRuntimePath, []byte(finalConfig), 0644)
 	if err != nil {
@@ -137,7 +137,11 @@ func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
 	criPluginConfig := criconfig.DefaultConfig()
 	// Set pause image
 	criPluginConfig.SandboxImage = c.pauseImage
-
+	if runtime.GOOS == "windows" {
+		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
+		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
+		spew.Dump("DEFAULT CONFIG FOR WINDOWS WITH CHANGED PATH", criPluginConfig)
+	}
 	containerdConfig := config{
 		Version: 2,
 		Plugins: map[string]interface{}{

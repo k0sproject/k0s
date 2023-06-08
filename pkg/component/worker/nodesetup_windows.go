@@ -18,8 +18,12 @@ package worker
 
 import (
 	"context"
+	"fmt"
+	"os"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	"github.com/sirupsen/logrus"
 )
 
 type CalicoInstaller struct {
@@ -57,6 +61,19 @@ func (c CalicoInstaller) Init(_ context.Context) error {
 	// 		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
 	// 	}
 	// }
+
+	for _, path := range []string{
+		"C:\\opt\\cni\\bin",
+		"C:\\opt\\cni\\conf",
+	} {
+		if err := dir.Init(path, 777); err != nil {
+			if os.IsExist(err) {
+				logrus.Warn("CalicoWindows already set up")
+			} else {
+				return fmt.Errorf("can't create CalicoWindows dir: %v", err)
+			}
+		}
+	}
 	return winExecute(installCalicoPowershell)
 	// return nil
 }

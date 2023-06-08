@@ -48,7 +48,11 @@ type WindowsStackComponent struct {
 	prevRenderingContext windowsStackRenderingContext
 }
 
-type windowsStackRenderingContext struct{}
+type windowsStackRenderingContext struct {
+	CNIBin  string
+	CNIConf string
+	Mode    string
+}
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
 func NewWindowsStackComponent(k0sVars constant.CfgVars, clientFactory k8sutil.ClientFactoryInterface, saver manifestsSaver) *WindowsStackComponent {
@@ -131,7 +135,13 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 	return nil
 }
 func (n *WindowsStackComponent) makeCalicoRenderingContext(cfg *v1beta1.ClusterConfig) windowsStackRenderingContext {
-	return windowsStackRenderingContext{}
+
+	return windowsStackRenderingContext{
+		// template rendering unescapes double backslashes
+		CNIBin:  "c:\\\\opt\\\\cni\\\\bin",
+		CNIConf: "c:\\\\opt\\\\cni\\\\conf",
+		Mode:    cfg.Spec.Network.Calico.Mode,
+	}
 }
 
 // Stop no-op
