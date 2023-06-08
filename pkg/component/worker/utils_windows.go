@@ -22,6 +22,7 @@ import (
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/avast/retry-go"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,10 +47,9 @@ func (p *PowerShell) execute(args ...string) error {
 	}
 	args = append([]string{"-NoProfile", "-NonInteractive"}, args...)
 	cmd := exec.Command(p.powerShell, args...)
-
+	spew.Dump(args)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
@@ -74,5 +74,9 @@ func getSourceVip() (string, error) {
 
 func winExecute(args ...string) error {
 	ps := NewPowershell()
-	return ps.execute(args...)
+	spew.Dump(args)
+
+	r := ps.execute(args...)
+	spew.Dump(r)
+	return r
 }

@@ -417,7 +417,7 @@ func (c *command) start(ctx context.Context) error {
 			return fmt.Errorf("failed to create calico_init manifests saver: %w", err)
 		}
 		clusterComponents.Add(ctx, controller.NewCalico(c.K0sVars, calicoInitSaver, calicoSaver))
-
+		clusterComponents.Add(ctx, controller.NewWindowsStackComponent(c.K0sVars, adminClientFactory, calicoSaver))
 		kubeRouterSaver, err := controller.NewManifestsSaver("kuberouter", c.K0sVars.DataDir)
 		if err != nil {
 			return fmt.Errorf("failed to create kuberouter manifests saver: %w", err)
@@ -456,6 +456,9 @@ func (c *command) start(ctx context.Context) error {
 
 	if !slices.Contains(c.DisableComponents, constant.NodeRoleComponentName) {
 		clusterComponents.Add(ctx, controller.NewNodeRole(c.K0sVars, adminClientFactory))
+	}
+
+	if !slices.Contains(c.DisableComponents, constant.WindowsNodeComponentName) {
 	}
 
 	if enableKonnectivity {

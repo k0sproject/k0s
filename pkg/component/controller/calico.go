@@ -164,7 +164,7 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 			output := bytes.NewBuffer([]byte{})
 			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
 			if err != nil {
-				return fmt.Errorf("failed to unpack manifest %s: %w", filename, err)
+				return fmt.Errorf("can't find manifest %s: %w", manifestName, err)
 			}
 
 			tw := templatewriter.TemplateWriter{

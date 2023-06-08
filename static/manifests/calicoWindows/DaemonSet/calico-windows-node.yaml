@@ -1,0 +1,121 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: calico-node-windows
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      "kubernetes.io/os": windows
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        "kubernetes.io/os": windows
+    spec:
+      serviceAccountName: calico-node
+      securityContext:
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: "NT AUTHORITY\\system"
+      hostNetwork: true
+      tolerations:
+        # Make sure calico-node gets scheduled on all nodes.
+        - effect: NoSchedule
+          operator: Exists
+        # Mark the pod as a critical add-on for rescheduling.
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+      initContainers:
+        - name: install
+          image: calico/windows:v3.23.5
+          args:
+            - ".\\host-process-install.ps1"
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: calico-windows-config
+          workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT"
+          # Calico needs to know the name of the node on which it is running.
+          env:
+            - name: NODENAME
+              value: ip-172-31-1-241.eu-north-1.compute.internal
+      containers:
+        - name: node
+          image: calico/windows:v3.23.5
+          imagePullPolicy: IfNotPresent
+          args:
+            - "C:/CalicoWindows/node/node-service.ps1"
+          # The node container's working dir is in c:\CalicoWindows on the host,
+          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
+          workingDir: "C:/CalicoWindows"
+          envFrom:
+            - configMapRef:
+                name: calico-windows-config
+          # Calico needs to know the name of the node on which it is running.
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+        - name: felix
+          image: calico/windows:v3.23.5
+          imagePullPolicy: IfNotPresent
+          args:
+            - "C:/CalicoWindows/felix/felix-service.ps1"
+          # The felix container's working dir is in c:\CalicoWindows on the host,
+          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
+          workingDir: "C:/CalicoWindows"
+          envFrom:
+            - configMapRef:
+                name: calico-windows-config
+          # Calico needs to know the name of the node on which it is running.
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          livenessProbe:
+            exec:
+              command:
+                - c:\\CalicoWindows\\calico-node.exe
+                - -felix-live
+            periodSeconds: 10
+            initialDelaySeconds: 10
+            failureThreshold: 6
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - c:\\CalicoWindows\\calico-node.exe
+                - -felix-ready
+            periodSeconds: 10
+            timeoutSeconds: 10
+        - name: confd
+          image: calico/windows:v3.23.5
+          imagePullPolicy: IfNotPresent
+          args:
+            - "C:/CalicoWindows/confd/confd-service.ps1"
+          # The confd container's working dir is in c:\CalicoWindows on the host,
+          # which is two-levels up from the CONTAINER_SANDBOX_MOUNT_POINT.
+          workingDir: "C:/CalicoWindows"
+          envFrom:
+            - configMapRef:
+                name: calico-windows-config
+          # Calico needs to know the name of the node on which it is running.
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+      nodeSelector:
+        kubernetes.io/os: windows

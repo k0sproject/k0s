@@ -18,11 +18,8 @@ package worker
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/sirupsen/logrus"
 )
 
 type CalicoInstaller struct {
@@ -37,16 +34,31 @@ var _ manager.Component = (*CalicoInstaller)(nil)
 func (c CalicoInstaller) Init(_ context.Context) error {
 	// path := "C:\\bootstrap.ps1"
 
-	if err := os.Mkdir("C:\\CalicoWindows", 777); err != nil {
-		if os.IsExist(err) {
-			logrus.Warn("CalicoWindows already set up")
-			return nil
-		}
-		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
-	}
-
+	// if err := dir.Init("C:\\CalicoWindows", 777); err != nil {
+	// 	if os.IsExist(err) {
+	// 		logrus.Warn("CalicoWindows already set up")
+	// 		return nil
+	// 	}
+	// 	return fmt.Errorf("can't create CalicoWindows dir: %v", err)
+	// }
+	// // c:\etc\cni\net.d
+	// if err := dir.Init("C:\\etc\\cni\\net.d", 777); err != nil {
+	// 	if os.IsExist(err) {
+	// 		logrus.Warn("CalicoWindows already set up")
+	// 	} else {
+	// 		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
+	// 	}
+	// }
+	// // C:\Program Files\containerd\cni\bin
+	// if err := dir.Init("C:\\Program Files\\containerd\\cni\\bin", 777); err != nil {
+	// 	if os.IsExist(err) {
+	// 		logrus.Warn("CalicoWindows already set up")
+	// 	} else {
+	// 		return fmt.Errorf("can't create CalicoWindows dir: %v", err)
+	// 	}
+	// }
 	return winExecute(installCalicoPowershell)
-
+	// return nil
 }
 
 func (c CalicoInstaller) SaveKubeConfig(path string) error {
@@ -112,5 +124,5 @@ func (c CalicoInstaller) Stop() error {
 // the original script is done by Tigera, Inc
 // and can be accessed over the web on https://docs.projectcalico.org/scripts/install-calico-windows.ps1
 const installCalicoPowershell = `
-New-NetFirewallRule -Name KubectlExec10250 -Description "Enable kubectl exec and log" -Action Allow -LocalPort 10250 -Enabled True -DisplayName "kubectl exec 10250" -Protocol TCP -ErrorAction SilentlyContinue
+$existingRule = Get-NetFirewallRule -DisplayName "kubectl exec 10250" -ErrorAction SilentlyContinue; if ($existingRule -eq $null) { New-NetFirewallRule -Name "KubectlExec10250" -Description "Enable kubectl exec and log" -Action Allow -LocalPort 10250 -Enabled True -DisplayName "kubectl exec 10250" -Protocol TCP -ErrorAction SilentlyContinue } else { Write-Output "The firewall rule already exists." }
 `
