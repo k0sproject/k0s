@@ -32,12 +32,13 @@ const (
 
 // KubeProxy defines the configuration for kube-proxy
 type KubeProxy struct {
-	Disabled           bool                            `json:"disabled,omitempty"`
-	Mode               string                          `json:"mode,omitempty"`
-	MetricsBindAddress string                          `json:"metricsBindAddress,omitempty"`
-	IPTables           *KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
-	IPVS               *KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
-	NodePortAddresses  []string                        `json:"nodePortAddresses,omitempty"`
+	Disabled                          bool                            `json:"disabled,omitempty"`
+	Mode                              string                          `json:"mode,omitempty"`
+	MetricsBindAddress                string                          `json:"metricsBindAddress,omitempty"`
+	IPTables                          *KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
+	IPVS                              *KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
+	NodePortAddresses                 []string                        `json:"nodePortAddresses,omitempty"`
+	DisablePrometheusScrapeAnnotation bool                            `json:"disablePrometheusScrapeAnnotation,omitempty"`
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
@@ -66,11 +67,12 @@ type KubeProxyIPVSConfiguration struct {
 // DefaultKubeProxy creates the default config for kube-proxy
 func DefaultKubeProxy() *KubeProxy {
 	return &KubeProxy{
-		Disabled:           false,
-		Mode:               "iptables",
-		MetricsBindAddress: "0.0.0.0:10249",
-		IPTables:           DefaultKubeProxyIPTables(),
-		IPVS:               DefaultKubeProxyIPVS(),
+		Disabled:                          false,
+		Mode:                              "iptables",
+		MetricsBindAddress:                "0.0.0.0:10249",
+		IPTables:                          DefaultKubeProxyIPTables(),
+		IPVS:                              DefaultKubeProxyIPVS(),
+		DisablePrometheusScrapeAnnotation: false,
 	}
 }
 

@@ -49,20 +49,24 @@ type Calico struct {
 
 	// The virtual network ID for VXLAN (default: 4096)
 	VxlanVNI int `json:"vxlanVNI"`
+
+	// Disable prometheus.io/scrape annotation (default: false)
+	DisablePrometheusScrapeAnnotation bool `json:"disablePrometheusScrapeAnnotation,omitempty"`
 }
 
 // DefaultCalico returns sane defaults for calico
 func DefaultCalico() *Calico {
 	return &Calico{
-		Mode:                    "vxlan",
-		VxlanPort:               4789,
-		VxlanVNI:                4096,
-		MTU:                     0,
-		EnableWireguard:         false,
-		FlexVolumeDriverPath:    "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
-		Overlay:                 "Always",
-		IPAutodetectionMethod:   "",
-		IPv6AutodetectionMethod: "",
+		Mode:                              "vxlan",
+		VxlanPort:                         4789,
+		VxlanVNI:                          4096,
+		MTU:                               0,
+		EnableWireguard:                   false,
+		FlexVolumeDriverPath:              "/usr/libexec/k0s/kubelet-plugins/volume/exec/nodeagent~uds",
+		Overlay:                           "Always",
+		IPAutodetectionMethod:             "",
+		IPv6AutodetectionMethod:           "",
+		DisablePrometheusScrapeAnnotation: false,
 	}
 }
 
@@ -77,6 +81,7 @@ func (c *Calico) UnmarshalJSON(data []byte) error {
 	c.Overlay = "Always"
 	c.IPAutodetectionMethod = ""
 	c.IPv6AutodetectionMethod = ""
+	c.DisablePrometheusScrapeAnnotation = false
 
 	type calico Calico
 	jc := (*calico)(c)

@@ -80,6 +80,14 @@ spec:
                       you want to pass down to the Kubernetes controller manager process
                     type: object
                 type: object
+              coredns:
+                description: CoreDNSSpec defines CoreDNS config options
+                properties:
+                  disablePrometheusScrapeAnnotation:
+                    description: 'Disable prometheus.io/scrape annotation (default:
+                      false)'
+                    type: boolean
+                type: object
               extensions:
                 description: ClusterExtensions specifies cluster extensions
                 properties:
@@ -315,6 +323,11 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  disablePrometheusScrapeAnnotation:
+                    default: false
+                    description: disable prometheus.io/scrape annotation (default
+                      false)
+                    type: boolean
                 type: object
               network:
                 description: Network defines the network related config options
@@ -322,6 +335,10 @@ spec:
                   calico:
                     description: Calico defines the calico related config options
                     properties:
+                      disablePrometheusScrapeAnnotation:
+                        description: 'Disable prometheus.io/scrape annotation (default:
+                          false)'
+                        type: boolean
                       envVars:
                         additionalProperties:
                           type: string
@@ -432,6 +449,8 @@ spec:
                   kubeProxy:
                     description: KubeProxy defines the configuration for kube-proxy
                     properties:
+                      disablePrometheusScrapeAnnotation:
+                        type: boolean
                       disabled:
                         type: boolean
                       iptables:
@@ -490,6 +509,10 @@ spec:
                     properties:
                       autoMTU:
                         description: 'Auto-detection of used MTU (default: true)'
+                        type: boolean
+                      disablePrometheusScrapeAnnotation:
+                        description: 'Disable prometheus.io/scrape annotation (default:
+                          false)'
                         type: boolean
                       extraArgs:
                         additionalProperties:

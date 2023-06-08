@@ -38,13 +38,19 @@ type KonnectivitySpec struct {
 	// +kubebuilder:default=8132
 	// +optional
 	AgentPort int32 `json:"agentPort,omitempty"`
+
+	// disable prometheus.io/scrape annotation (default false)
+	// +kubebuilder:default=false
+	// +optional
+	DisablePrometheusScrapeAnnotation bool `json:"disablePrometheusScrapeAnnotation,omitempty"`
 }
 
 // DefaultKonnectivitySpec builds default KonnectivitySpec
 func DefaultKonnectivitySpec() *KonnectivitySpec {
 	return &KonnectivitySpec{
-		AgentPort: 8132,
-		AdminPort: 8133,
+		AgentPort:                         8132,
+		AdminPort:                         8133,
+		DisablePrometheusScrapeAnnotation: false,
 	}
 }
 

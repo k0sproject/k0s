@@ -46,17 +46,18 @@ var _ manager.Component = (*KubeRouter)(nil)
 var _ manager.Reconciler = (*KubeRouter)(nil)
 
 type kubeRouterConfig struct {
-	MTU               int
-	AutoMTU           bool
-	MetricsPort       int
-	CNIInstallerImage string
-	CNIImage          string
-	CNIHairpin        bool
-	IPMasq            bool
-	PeerRouterIPs     string
-	PeerRouterASNs    string
-	PullPolicy        string
-	Args              []string
+	MTU                               int
+	AutoMTU                           bool
+	MetricsPort                       int
+	CNIInstallerImage                 string
+	CNIImage                          string
+	CNIHairpin                        bool
+	IPMasq                            bool
+	PeerRouterIPs                     string
+	PeerRouterASNs                    string
+	PullPolicy                        string
+	Args                              []string
+	DisablePrometheusScrapeAnnotation bool
 }
 
 // NewKubeRouter creates new KubeRouter reconciler component
@@ -135,15 +136,16 @@ func (k *KubeRouter) Reconcile(_ context.Context, clusterConfig *v1beta1.Cluster
 	args.Merge(clusterConfig.Spec.Network.KubeRouter.ExtraArgs)
 
 	cfg := kubeRouterConfig{
-		AutoMTU:           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
-		MTU:               clusterConfig.Spec.Network.KubeRouter.MTU,
-		MetricsPort:       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
-		IPMasq:            clusterConfig.Spec.Network.KubeRouter.IPMasq,
-		CNIHairpin:        cniHairpin,
-		CNIImage:          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
-		CNIInstallerImage: clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
-		PullPolicy:        clusterConfig.Spec.Images.DefaultPullPolicy,
-		Args:              args.ToDashedArgs(),
+		AutoMTU:                           clusterConfig.Spec.Network.KubeRouter.AutoMTU,
+		MTU:                               clusterConfig.Spec.Network.KubeRouter.MTU,
+		MetricsPort:                       clusterConfig.Spec.Network.KubeRouter.MetricsPort,
+		IPMasq:                            clusterConfig.Spec.Network.KubeRouter.IPMasq,
+		CNIHairpin:                        cniHairpin,
+		CNIImage:                          clusterConfig.Spec.Images.KubeRouter.CNI.URI(),
+		CNIInstallerImage:                 clusterConfig.Spec.Images.KubeRouter.CNIInstaller.URI(),
+		PullPolicy:                        clusterConfig.Spec.Images.DefaultPullPolicy,
+		Args:                              args.ToDashedArgs(),
+		DisablePrometheusScrapeAnnotation: clusterConfig.Spec.Network.KubeRouter.DisablePrometheusScrapeAnnotation,
 	}
 
 	if reflect.DeepEqual(k.previousConfig, cfg) {
@@ -236,7 +238,9 @@ spec:
         tier: node
       {{- if gt .MetricsPort 0 }}
       annotations:
+        {{- if ne .DisablePrometheusScrapeAnnotation true }}
         prometheus.io/scrape: "true"
+        {{- end }}
         prometheus.io/port: "{{ .MetricsPort }}"
       {{- end }}
     spec:

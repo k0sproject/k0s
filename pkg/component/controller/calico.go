@@ -69,13 +69,14 @@ type calicoConfig struct {
 	DualStack            bool
 	EnvVars              map[string]string
 
-	CalicoCNIImage             string
-	CalicoNodeImage            string
-	CalicoKubeControllersImage string
-	Overlay                    string
-	IPAutodetectionMethod      string
-	IPV6AutodetectionMethod    string
-	PullPolicy                 string
+	CalicoCNIImage                    string
+	CalicoNodeImage                   string
+	CalicoKubeControllersImage        string
+	Overlay                           string
+	IPAutodetectionMethod             string
+	IPV6AutodetectionMethod           string
+	PullPolicy                        string
+	DisablePrometheusScrapeAnnotation bool
 }
 
 // NewCalico creates new Calico reconciler component
@@ -185,23 +186,24 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		ipv6AutoDetectionMethod = clusterConfig.Spec.Network.Calico.IPv6AutodetectionMethod
 	}
 	config := calicoConfig{
-		MTU:                        clusterConfig.Spec.Network.Calico.MTU,
-		Mode:                       clusterConfig.Spec.Network.Calico.Mode,
-		VxlanPort:                  clusterConfig.Spec.Network.Calico.VxlanPort,
-		VxlanVNI:                   clusterConfig.Spec.Network.Calico.VxlanVNI,
-		EnableWireguard:            clusterConfig.Spec.Network.Calico.EnableWireguard,
-		EnvVars:                    clusterConfig.Spec.Network.Calico.EnvVars,
-		FlexVolumeDriverPath:       clusterConfig.Spec.Network.Calico.FlexVolumeDriverPath,
-		DualStack:                  clusterConfig.Spec.Network.DualStack.Enabled,
-		ClusterCIDRIPv4:            clusterConfig.Spec.Network.PodCIDR,
-		ClusterCIDRIPv6:            clusterConfig.Spec.Network.DualStack.IPv6PodCIDR,
-		CalicoCNIImage:             clusterConfig.Spec.Images.Calico.CNI.URI(),
-		CalicoNodeImage:            clusterConfig.Spec.Images.Calico.Node.URI(),
-		CalicoKubeControllersImage: clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
-		Overlay:                    clusterConfig.Spec.Network.Calico.Overlay,
-		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
-		IPV6AutodetectionMethod:    ipv6AutoDetectionMethod,
-		PullPolicy:                 clusterConfig.Spec.Images.DefaultPullPolicy,
+		MTU:                               clusterConfig.Spec.Network.Calico.MTU,
+		Mode:                              clusterConfig.Spec.Network.Calico.Mode,
+		VxlanPort:                         clusterConfig.Spec.Network.Calico.VxlanPort,
+		VxlanVNI:                          clusterConfig.Spec.Network.Calico.VxlanVNI,
+		EnableWireguard:                   clusterConfig.Spec.Network.Calico.EnableWireguard,
+		EnvVars:                           clusterConfig.Spec.Network.Calico.EnvVars,
+		FlexVolumeDriverPath:              clusterConfig.Spec.Network.Calico.FlexVolumeDriverPath,
+		DualStack:                         clusterConfig.Spec.Network.DualStack.Enabled,
+		ClusterCIDRIPv4:                   clusterConfig.Spec.Network.PodCIDR,
+		ClusterCIDRIPv6:                   clusterConfig.Spec.Network.DualStack.IPv6PodCIDR,
+		CalicoCNIImage:                    clusterConfig.Spec.Images.Calico.CNI.URI(),
+		CalicoNodeImage:                   clusterConfig.Spec.Images.Calico.Node.URI(),
+		CalicoKubeControllersImage:        clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
+		Overlay:                           clusterConfig.Spec.Network.Calico.Overlay,
+		IPAutodetectionMethod:             clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
+		IPV6AutodetectionMethod:           ipv6AutoDetectionMethod,
+		PullPolicy:                        clusterConfig.Spec.Images.DefaultPullPolicy,
+		DisablePrometheusScrapeAnnotation: clusterConfig.Spec.Network.Calico.DisablePrometheusScrapeAnnotation,
 	}
 
 	return config, nil

@@ -134,14 +134,15 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 	}
 
 	cfg := proxyConfig{
-		ClusterCIDR:          clusterConfig.Spec.Network.BuildPodCIDR(),
-		ControlPlaneEndpoint: controlPlaneEndpoint,
-		Image:                clusterConfig.Spec.Images.KubeProxy.URI(),
-		PullPolicy:           clusterConfig.Spec.Images.DefaultPullPolicy,
-		DualStack:            clusterConfig.Spec.Network.DualStack.Enabled,
-		Mode:                 clusterConfig.Spec.Network.KubeProxy.Mode,
-		MetricsBindAddress:   clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
-		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
+		ClusterCIDR:                       clusterConfig.Spec.Network.BuildPodCIDR(),
+		ControlPlaneEndpoint:              controlPlaneEndpoint,
+		Image:                             clusterConfig.Spec.Images.KubeProxy.URI(),
+		PullPolicy:                        clusterConfig.Spec.Images.DefaultPullPolicy,
+		DualStack:                         clusterConfig.Spec.Network.DualStack.Enabled,
+		Mode:                              clusterConfig.Spec.Network.KubeProxy.Mode,
+		MetricsBindAddress:                clusterConfig.Spec.Network.KubeProxy.MetricsBindAddress,
+		FeatureGates:                      clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
+		DisablePrometheusScrapeAnnotation: clusterConfig.Spec.Network.KubeProxy.DisablePrometheusScrapeAnnotation,
 	}
 
 	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
@@ -166,17 +167,18 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 }
 
 type proxyConfig struct {
-	DualStack            bool
-	ControlPlaneEndpoint string
-	ClusterCIDR          string
-	Image                string
-	PullPolicy           string
-	Mode                 string
-	MetricsBindAddress   string
-	IPTables             string
-	IPVS                 string
-	FeatureGates         map[string]bool
-	NodePortAddresses    string
+	DualStack                         bool
+	ControlPlaneEndpoint              string
+	ClusterCIDR                       string
+	Image                             string
+	PullPolicy                        string
+	Mode                              string
+	MetricsBindAddress                string
+	IPTables                          string
+	IPVS                              string
+	FeatureGates                      map[string]bool
+	NodePortAddresses                 string
+	DisablePrometheusScrapeAnnotation bool
 }
 
 const proxyTemplate = `
@@ -317,7 +319,9 @@ spec:
       labels:
         k8s-app: kube-proxy
       annotations:
+        {{- if ne .DisablePrometheusScrapeAnnotation true }}
         prometheus.io/scrape: 'true'
+        {{- end }}
         prometheus.io/port: '10249'
     spec:
       priorityClassName: system-node-critical
