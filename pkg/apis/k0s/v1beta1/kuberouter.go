@@ -41,6 +41,8 @@ type KubeRouter struct {
 	// ExtraArgs are extra arguments to pass to kube-router
 	// Can be also used to override the default k0s managed kube-router arguments
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
+	// Disable prometheus.io/scrape annotation (default: false)
+	DisablePrometheusScrapeAnnotation bool `json:"disablePrometheusScrapeAnnotation,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=Enabled;Allowed;Disabled
@@ -57,9 +59,10 @@ const (
 // DefaultKubeRouter returns the default config for kube-router
 func DefaultKubeRouter() *KubeRouter {
 	return &KubeRouter{
-		MTU:         0,
-		AutoMTU:     true,
-		MetricsPort: 8080,
-		Hairpin:     HairpinEnabled,
+		MTU:                               0,
+		AutoMTU:                           true,
+		MetricsPort:                       8080,
+		Hairpin:                           HairpinEnabled,
+		DisablePrometheusScrapeAnnotation: false,
 	}
 }

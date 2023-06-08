@@ -115,11 +115,12 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 	cfg := konnectivityAgentConfig{
 		// Since the konnectivity server runs with hostNetwork=true this is the
 		// IP address of the master machine
-		ProxyServerHost: k.NodeConfig.Spec.API.APIAddress(), // TODO: should it be an APIAddress?
-		ProxyServerPort: uint16(k.clusterConfig.Spec.Konnectivity.AgentPort),
-		Image:           k.clusterConfig.Spec.Images.Konnectivity.URI(),
-		ServerCount:     k.serverCount,
-		PullPolicy:      k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		ProxyServerHost:                   k.NodeConfig.Spec.API.APIAddress(), // TODO: should it be an APIAddress?
+		ProxyServerPort:                   uint16(k.clusterConfig.Spec.Konnectivity.AgentPort),
+		Image:                             k.clusterConfig.Spec.Images.Konnectivity.URI(),
+		ServerCount:                       k.serverCount,
+		PullPolicy:                        k.clusterConfig.Spec.Images.DefaultPullPolicy,
+		DisablePrometheusScrapeAnnotation: k.clusterConfig.Spec.Konnectivity.DisablePrometheusScrapeAnnotation,
 	}
 
 	if k.clusterConfig.Spec.Network != nil {
@@ -184,16 +185,17 @@ func (k *KonnectivityAgent) writeKonnectivityAgent() error {
 }
 
 type konnectivityAgentConfig struct {
-	ProxyServerHost      string
-	ProxyServerPort      uint16
-	AgentPort            uint16
-	Image                string
-	ServerCount          int
-	PullPolicy           string
-	HostNetwork          bool
-	BindToNodeIP         bool
-	APIServerPortMapping string
-	FeatureGates         string
+	ProxyServerHost                   string
+	ProxyServerPort                   uint16
+	AgentPort                         uint16
+	Image                             string
+	ServerCount                       int
+	PullPolicy                        string
+	HostNetwork                       bool
+	BindToNodeIP                      bool
+	APIServerPortMapping              string
+	FeatureGates                      string
+	DisablePrometheusScrapeAnnotation bool
 }
 
 const konnectivityAgentTemplate = `
@@ -238,7 +240,9 @@ spec:
       labels:
         k8s-app: konnectivity-agent
       annotations:
-        prometheus.io/scrape: 'true'
+				{{- if ne .DisablePrometheusScrapeAnnotation true }}
+				prometheus.io/scrape: 'true'
+				{{- end }}
         prometheus.io/port: '8093'
     spec:
       nodeSelector:

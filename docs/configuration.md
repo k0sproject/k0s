@@ -58,6 +58,8 @@ spec:
     sans:
     - 192.168.68.104
   controllerManager: {}
+  coredns:
+    disablePrometheusScrapeAnnotation: false
   extensions:
     helm:
       concurrencyLevel: 5
@@ -76,6 +78,7 @@ spec:
   konnectivity:
     adminPort: 8133
     agentPort: 8132
+    disablePrometheusScrapeAnnotation: false
   network:
     calico: null
     clusterDomain: cluster.local
@@ -83,6 +86,7 @@ spec:
     kubeProxy:
       metricsBindAddress: 0.0.0.0:10249
       mode: iptables
+      disablePrometheusScrapeAnnotation: false
     kuberouter:
       autoMTU: true
       hairpin: Enabled
@@ -92,6 +96,7 @@ spec:
       peerRouterASNs: ""
       peerRouterIPs: ""
       extraArgs:
+      disablePrometheusScrapeAnnotation: false
     nodeLocalLoadBalancing:
       enabled: false
       envoyProxy:
