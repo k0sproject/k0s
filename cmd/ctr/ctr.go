@@ -17,10 +17,10 @@ limitations under the License.
 package ctr
 
 import (
-	"fmt"
 	"os"
 	"path"
 
+	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/pkg/config"
 
 	"github.com/containerd/containerd/cmd/ctr/app"
@@ -45,9 +45,7 @@ func NewCtrCommand() *cobra.Command {
 			}
 			setDefaultValues(opts.K0sVars.RunDir, containerdCtr.Flags)
 			args := extractCtrCommand(os.Args)
-			newPath := fmt.Sprintf("%s%s%s", opts.K0sVars.BinDir,
-				string(os.PathListSeparator),
-				os.Getenv(pathEnv))
+			newPath := dir.PathListJoin(opts.K0sVars.BinDir, os.Getenv(pathEnv))
 			os.Setenv(pathEnv, newPath)
 			return containerdCtr.Run(args)
 		},

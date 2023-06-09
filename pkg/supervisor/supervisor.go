@@ -284,9 +284,11 @@ func getEnv(dataDir, component string, keepEnvPrefix bool) []string {
 				overrides[k] = struct{}{}
 			}
 		}
-		env[i] = fmt.Sprintf("%s=%s", k, v)
-		if k == "PATH" {
-			env[i] = fmt.Sprintf("PATH=%s:%s", path.Join(dataDir, "bin"), v)
+		switch k {
+		case "PATH":
+			env[i] = fmt.Sprintf("PATH=%s", dir.PathListJoin(path.Join(dataDir, "bin"), v))
+		default:
+			env[i] = fmt.Sprintf("%s=%s", k, v)
 		}
 		i++
 	}
