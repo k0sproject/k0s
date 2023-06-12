@@ -39,11 +39,11 @@ type KubeProxy struct {
 var _ manager.Component = (*KubeProxy)(nil)
 
 // Init
-func (k KubeProxy) Init(_ context.Context) error {
+func (k *KubeProxy) Init(_ context.Context) error {
 	return assets.Stage(k.K0sVars.BinDir, "kube-proxy.exe", constant.BinDirMode)
 }
 
-func (k KubeProxy) Start(ctx context.Context) error {
+func (k *KubeProxy) Start(ctx context.Context) error {
 	node, err := node.GetNodename("")
 	if err != nil {
 		return fmt.Errorf("can't get hostname: %v", err)
@@ -76,6 +76,6 @@ func (k KubeProxy) Start(ctx context.Context) error {
 	return nil
 }
 
-func (k KubeProxy) Stop() error {
+func (k *KubeProxy) Stop() error {
 	return k.supervisor.Stop()
 }

@@ -26,25 +26,21 @@ import (
 	"github.com/k0sproject/k0s/pkg/config"
 )
 
-type CalicoInstaller struct {
-	Token      string
-	APIAddress string
-	CIDRRange  string
-	ClusterDNS string
+type NodesetupHelper struct {
 }
 
-var _ manager.Component = (*CalicoInstaller)(nil)
+var _ manager.Component = (*NodesetupHelper)(nil)
 
-func (c CalicoInstaller) Init(_ context.Context) error {
-	panic("stub component is used: CalicoInstaller")
+func (c NodesetupHelper) Init(_ context.Context) error {
+	panic("stub component is used: NodesetupHelper which is implemented only for windows")
 }
 
-func (c CalicoInstaller) Start(_ context.Context) error {
-	panic("stub component is used: CalicoInstaller")
+func (c NodesetupHelper) Start(_ context.Context) error {
+	panic("stub component is used: NodesetupHelper which is implemented only for windows")
 }
 
-func (c CalicoInstaller) Stop() error {
-	panic("stub component is used: CalicoInstaller")
+func (c NodesetupHelper) Stop() error {
+	panic("stub component is used: NodesetupHelper which is implemented only for windows")
 }
 
 type KubeProxy struct {
