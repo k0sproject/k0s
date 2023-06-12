@@ -68,7 +68,8 @@ nav:
   - Reference:
       - Architecture: architecture.md
       - Kube-bench Security Benchmark: cis_benchmark.md
-  - Releases: releases.md
+  - Releases & Support: releases.md
+  - Commercial support: commercial-support.md
   - Contributing:
       - Overview: contributors/overview.md
       - GitHub Workflow: contributors/github_workflow.md
@@ -130,6 +131,7 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - footnotes
 
 extra:
   k8s_version: !!python/object/apply:os.getenv ["KUBE_VERSION"]
