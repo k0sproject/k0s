@@ -12,20 +12,20 @@
         <meta name="author" content="Mirantis, Inc.">
       
       
-        <link rel="canonical" href="https://docs.k0sproject.io/head/podsecurity/">
+        <link rel="canonical" href="https://docs.k0sproject.io/head/commercial-support/">
       
       
-        <link rel="prev" href="../selinux/">
+        <link rel="prev" href="../releases/">
       
       
-        <link rel="next" href="../reinstall-k0sctl/">
+        <link rel="next" href="../contributors/overview/">
       
       <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
-        <title>Pod Security Standards - Documentation</title>
+        <title>Commercial support - Documentation</title>
       
     
     
@@ -86,7 +86,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pod-security-standards" class="md-skip">
+        <a href="#commercial-support" class="md-skip">
           Skip to content
         </a>
       
@@ -136,7 +136,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Pod Security Standards
+              Commercial support
             
           </span>
         </div>
@@ -600,16 +600,14 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
       
       
       
@@ -618,7 +616,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
         <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Usage
@@ -895,21 +893,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../podsecurity/" class="md-nav__link">
         Pod Security Standards
       </a>
-      
     </li>
   
 
@@ -1278,11 +1266,21 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../commercial-support/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Commercial support
       </a>
+      
     </li>
   
 
@@ -1411,39 +1409,19 @@
                   
 
 
-<h1 id="pod-security-standards">Pod Security Standards<a class="headerlink" href="#pod-security-standards" title="Permanent link">#</a></h1>
-<p>Since Pod Security Policies have been removed in Kubernetes v1.25, Kubernetes
-offers <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">Pod Security Standards</a> – a new way to enhance cluster security.</p>
-<p>To enable PSS in k0s you need to create an admission controller config file:</p>
-<div class="highlight"><pre><span></span><code>```yaml
-apiVersion: apiserver.config.k8s.io/v1
-kind: AdmissionConfiguration
-plugins:
-- name: PodSecurity
-  configuration:
-    apiVersion: pod-security.admission.config.k8s.io/v1beta1
-    kind: PodSecurityConfiguration
-    # Defaults applied when a mode label is not set.
-    defaults:
-      enforce: &quot;privileged&quot;
-      enforce-version: &quot;latest&quot;
-    exemptions:
-      # Don&#39;t forget to exempt namespaces or users that are responsible for deploying
-      # cluster components, because they need to run privileged containers
-      usernames: [&quot;admin&quot;]
-      namespaces: [&quot;kube-system&quot;]
-```
-</code></pre></div>
-<p>Add these extra arguments to the k0s configuration:</p>
-<div class="highlight"><pre><span></span><code>```yaml
-apiVersion: k0s.k0sproject.io/v1beta1
-kind: ClusterConfig
-spec:
-  api:
-    extraArgs:
-      admission-control-config-file: /path/to/admission/control/config.yaml
-```
-</code></pre></div>
+<h1 id="commercial-support">Commercial support<a class="headerlink" href="#commercial-support" title="Permanent link">#</a></h1>
+<p>Commercial support for k0s if offered by <a href="https://mirantis.com">Mirantis Inc.</a>.</p>
+<p>Mirantis can provide various different levels of support starting from DevCare (9-to-5) all the way to OpsCare+ with fully managed service.</p>
+<p>On top of our normal <a href="../releases/">release and support</a> model our commercial customers have access to critical security patches even for released versions that fall outside of the Open Source maintained releases.<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup> Commercial support also includes support for k0s related tooling such as <a href="https://github.com/k0sproject/k0sctl">k0sctl</a>.</p>
+<p>If you are interested in commercial support for k0s check out our <a href="https://www.mirantis.com/support/enterprise-support-options/">support description</a> and please <a href="https://www.mirantis.com/contact/">contact us</a> for further details.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>This is assuming there is a compatible release of upstream project with the fix&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 

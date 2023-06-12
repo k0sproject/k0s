@@ -18,14 +18,14 @@
         <link rel="prev" href="../cis_benchmark/">
       
       
-        <link rel="next" href="../contributors/overview/">
+        <link rel="next" href="../commercial-support/">
       
       <link rel="icon" href="../img/k0s_social.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
-        <title>Releases - Documentation</title>
+        <title>Releases & Support - Documentation</title>
       
     
     
@@ -136,7 +136,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases
+              Releases & Support
             
           </span>
         </div>
@@ -1263,12 +1263,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Releases
+          Releases & Support
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Releases
+        Releases & Support
       </a>
       
         
@@ -1287,8 +1287,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#release-and-support-model" class="md-nav__link">
-    Release and support model
+  <a href="#upstream-kubernetes-release-support-cycle" class="md-nav__link">
+    Upstream Kubernetes release &amp; support cycle
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k0s-release-and-support-model" class="md-nav__link">
+    k0s release and support model
   </a>
   
 </li>
@@ -1322,23 +1329,38 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../commercial-support/" class="md-nav__link">
+        Commercial support
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
     
     <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
       
       
       
-        <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
           Contributing
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_10">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_11">
           <span class="md-nav__icon md-icon"></span>
           Contributing
         </label>
@@ -1433,8 +1455,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#release-and-support-model" class="md-nav__link">
-    Release and support model
+  <a href="#upstream-kubernetes-release-support-cycle" class="md-nav__link">
+    Upstream Kubernetes release &amp; support cycle
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k0s-release-and-support-model" class="md-nav__link">
+    k0s release and support model
   </a>
   
 </li>
@@ -1469,8 +1498,17 @@
 
 
 <h1 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">#</a></h1>
-<h2 id="release-and-support-model">Release and support model<a class="headerlink" href="#release-and-support-model" title="Permanent link">#</a></h2>
-<p>Starting from the k0s 1.21, k0s started following the Kubernetes project's <a href="https://kubernetes.io/releases/">release and support model</a>. This means that k0s project will support the last three Kubernetes minor releases. Each minor release will receive approximately 1 year of patch support. In addition to Kubernetes, the k0s patch releases include updates from containerd, runc, etcd, kine, konnectivity, Kube-Router, Calico, CoreDNS, Metrics server etc, and k0s itself, to keep the whole stack updated.</p>
+<p>This page describes how we release and support the k0s project. <a href="https://mirantis.com">Mirantis Inc.</a> can also provide <a href="../commercial-support/">commercial support</a> for k0s.</p>
+<h2 id="upstream-kubernetes-release-support-cycle">Upstream Kubernetes release &amp; support cycle<a class="headerlink" href="#upstream-kubernetes-release-support-cycle" title="Permanent link">#</a></h2>
+<p>This <a href="https://kubernetes.io/releases/">release and support cycle</a> is followed for ALL new minor releases. A minor release can be e.g. 1.25, 1.26 and so on. What this means in practice is that every 4 months there is a new minor release published.</p>
+<p>After a minor release is published, the upstream community is maintaining it for 14 months. Maintenance in this case means that upstream Kubernetes provides bug fixes, CVE mitigations and such for 14 months per minor release.</p>
+<p><img alt="Kubernetes release and support cycle" src="../img/k8s_release_cycle.png" /></p>
+<h2 id="k0s-release-and-support-model">k0s release and support model<a class="headerlink" href="#k0s-release-and-support-model" title="Permanent link">#</a></h2>
+<p>Starting from the k0s 1.21, k0s started following the Kubernetes project's <a href="https://kubernetes.io/releases/">release and support model</a>.</p>
+<p>k0s project follows closely the upstream Kubernetes release cycle. The only difference to upstream Kubernetes release / maintenance schedule is that our initial release date is always a few weeks behind the upstream Kubernetes version release date as we are building our version of k0s from the officially released version of Kubernetes and need time for testing the final version before shipping.</p>
+<p><img alt="k0s release model" src="../img/k0s_releases.png" /></p>
+<p>Given the fact that upstream Kubernetes provides support and patch releases for a minor version for roughly 14 months, it means that k0s will follow this same model. Each minor release is maintained for roughly 14 months since its initial release.</p>
+<p>k0s project will typically include patches and fixes included in a Kubernetes upstream patch release for the fixes needed in k0s own codebase. For example, if a bug is identified in 1.26 series k0s project will create and ship a fix for it with the next upstream Kubernetes 1.26.x release. In rare cases where a critical bug is identified we may also ship “out of band” patches. Such out-of-band release would be identified in the version string suffix. For example a normal release following Kubernetes upstream would be 1.26.3+k0s.0 whereas a critical out-of-band patch would be identified as 1.26.3+k0s.1.</p>
 <h2 id="new-features-and-enhancements">New features and enhancements<a class="headerlink" href="#new-features-and-enhancements" title="Permanent link">#</a></h2>
 <p>The biggest new k0s features will typically only be delivered on top of the latest Kubernetes version, but smaller enhancements can be included in older release tracks as well.</p>
 <h2 id="version-string">Version string<a class="headerlink" href="#version-string" title="Permanent link">#</a></h2>
