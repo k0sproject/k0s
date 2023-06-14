@@ -126,11 +126,11 @@ func (c *Calico) dumpCRDs() error {
 			Data:     emptyStruct,
 		}
 		if err := tw.WriteToBuffer(output); err != nil {
-			return fmt.Errorf("failed to write calico crd manifests %s: %v", manifestName, err)
+			return fmt.Errorf("failed to write calico crd manifests %s: %w", manifestName, err)
 		}
 
 		if err := c.crdSaver.Save(manifestName, output.Bytes()); err != nil {
-			return fmt.Errorf("failed to save calico crd manifest %s: %v", manifestName, err)
+			return fmt.Errorf("failed to save calico crd manifest %s: %w", manifestName, err)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (c *Calico) dumpCRDs() error {
 func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 	manifestDirectories, err := static.AssetDir("manifests/calico")
 	if err != nil {
-		return fmt.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
+		return fmt.Errorf("error retrieving calico manifests: %w. will retry", err)
 	}
 
 	for _, dir := range manifestDirectories {
@@ -150,12 +150,12 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 		}
 		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/calico/%s", dir))
 		if err != nil {
-			return fmt.Errorf("error retrieving calico manifests: %s. will retry", err.Error())
+			return fmt.Errorf("error retrieving calico manifests: %w. will retry", err)
 		}
 
 		tryAndLog := func(name string, e error) {
 			if e != nil {
-				c.log.Errorf("failed to write manifest %s: %v, will re-try", name, e)
+				c.log.Errorf("failed to write manifest %s: %w, will re-try", name, e)
 			}
 		}
 
@@ -164,7 +164,7 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 			output := bytes.NewBuffer([]byte{})
 			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
 			if err != nil {
-				return nil
+				return fmt.Errorf("failed to unpack manifest %s: %w", filename, err)
 			}
 
 			tw := templatewriter.TemplateWriter{
