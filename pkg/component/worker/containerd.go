@@ -39,6 +39,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/pkg/assets"
 	"github.com/k0sproject/k0s/pkg/component/manager"
+	workerconfig "github.com/k0sproject/k0s/pkg/component/worker/config"
 	"github.com/k0sproject/k0s/pkg/component/worker/containerd"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
@@ -68,8 +69,7 @@ type ContainerD struct {
 	supervisor supervisor.Supervisor
 	LogLevel   string
 	K0sVars    *config.CfgVars
-
-	OCIBundlePath string
+	Profile    *workerconfig.Profile
 }
 
 var _ manager.Component = (*ContainerD)(nil)
@@ -137,7 +137,7 @@ func (c *ContainerD) setupConfig() error {
 	if err := dir.Init(filepath.Dir(importsPath), 0755); err != nil {
 		return err
 	}
-	containerDConfigurer := containerd.NewConfigurer()
+	containerDConfigurer := containerd.NewConfigurer(c.Profile.PauseImage)
 
 	imports, err := containerDConfigurer.HandleImports()
 	if err != nil {

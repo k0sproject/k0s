@@ -39,6 +39,7 @@ type Profile struct {
 	KubeletConfiguration   kubeletv1beta1.KubeletConfiguration
 	NodeLocalLoadBalancing *v1beta1.NodeLocalLoadBalancing
 	Konnectivity           Konnectivity
+	PauseImage             *v1beta1.ImageSpec
 }
 
 func (p *Profile) DeepCopy() *Profile {
@@ -157,6 +158,7 @@ func forEachConfigMapEntry(profile *Profile, f func(fieldName string, ptr any)) 
 		"kubeletConfiguration":   &profile.KubeletConfiguration,
 		"nodeLocalLoadBalancing": &profile.NodeLocalLoadBalancing,
 		"konnectivity":           &profile.Konnectivity,
+		"pauseImage":             &profile.PauseImage,
 	} {
 		f(fieldName, ptr)
 	}

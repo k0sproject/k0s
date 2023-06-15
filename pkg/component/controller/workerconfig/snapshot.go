@@ -27,11 +27,12 @@ import (
 
 // snapshot holds a snapshot of the parts that influence worker configurations.
 type snapshot struct {
-	// The list of API server addresses that are currently running.
-	apiServers []net.HostPort
 
 	// The snapshot of the cluster configuration.
 	*configSnapshot
+
+	// The list of API server addresses that are currently running.
+	apiServers []net.HostPort
 
 	// A simple counter that can be incremented every time a reconciliation
 	// shall be enforced, even if the rest of the snapshot still matches the
@@ -47,6 +48,7 @@ type configSnapshot struct {
 	defaultImagePullPolicy corev1.PullPolicy
 	profiles               v1beta1.WorkerProfiles
 	featureGates           v1beta1.FeatureGates
+	pauseImage             *v1beta1.ImageSpec
 }
 
 func (s *snapshot) DeepCopy() *snapshot {
@@ -79,6 +81,7 @@ func (s *configSnapshot) DeepCopyInto(out *configSnapshot) {
 	out.profiles = s.profiles.DeepCopy()
 }
 
+// takeConfigSnapshot converts ClusterSpec to a delta snapshot
 func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
 	var konnectivityAgentPort uint16
 	if spec.Konnectivity != nil {
@@ -93,5 +96,6 @@ func takeConfigSnapshot(spec *v1beta1.ClusterSpec) configSnapshot {
 		corev1.PullPolicy(spec.Images.DefaultPullPolicy),
 		spec.WorkerProfiles.DeepCopy(),
 		spec.FeatureGates.DeepCopy(),
+		spec.Images.Pause.DeepCopy(),
 	}
 }
