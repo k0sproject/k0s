@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 	nodeutil "k8s.io/component-helpers/node/util"
 )
@@ -47,7 +46,6 @@ func TestGetNodename(t *testing.T) {
 		nodename, err2 := nodeutil.GetHostname("")
 		require.Nil(t, err)
 		require.Nil(t, err2)
-		spew.Dump(name, nodename, err, err2)
 		require.NotEqual(t, nodename, name)
 	})
 }

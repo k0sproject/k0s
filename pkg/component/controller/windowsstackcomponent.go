@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/static"
 	"github.com/sirupsen/logrus"
@@ -174,7 +173,6 @@ func (n *WindowsStackComponent) createWindowsStack(newConfig windowsStackRenderi
 	if err != nil {
 		return fmt.Errorf("error retrieving manifests: %v", err)
 	}
-	spew.Dump(manifestDirectories)
 	for _, dir := range manifestDirectories {
 		manifestPaths, err := static.AssetDir(fmt.Sprintf("manifests/windows/%s", dir))
 		if err != nil {

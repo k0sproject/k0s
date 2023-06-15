@@ -25,7 +25,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
@@ -140,7 +139,6 @@ func (c *CRIConfigurer) generateDefaultCRIConfig(w io.Writer) error {
 	if runtime.GOOS == "windows" {
 		criPluginConfig.CniConfig.NetworkPluginBinDir = "c:\\opt\\cni\\bin"
 		criPluginConfig.CniConfig.NetworkPluginConfDir = "c:\\opt\\cni\\conf"
-		spew.Dump("DEFAULT CONFIG FOR WINDOWS WITH CHANGED PATH", criPluginConfig)
 	}
 	containerdConfig := config{
 		Version: 2,
