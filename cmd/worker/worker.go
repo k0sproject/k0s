@@ -167,11 +167,6 @@ func (c *Command) Start(ctx context.Context) error {
 	})
 
 	if runtime.GOOS == "windows" {
-		componentManager.Add(ctx, &worker.KubeProxy{
-			K0sVars:   c.K0sVars,
-			LogLevel:  c.Logging["kube-proxy"],
-			CIDRRange: c.CIDRRange,
-		})
 		componentManager.Add(ctx, &worker.NodesetupHelper{})
 	}
 

@@ -23,7 +23,6 @@ import (
 	"context"
 
 	"github.com/k0sproject/k0s/pkg/component/manager"
-	"github.com/k0sproject/k0s/pkg/config"
 )
 
 type NodesetupHelper struct {
@@ -41,24 +40,4 @@ func (c NodesetupHelper) Start(_ context.Context) error {
 
 func (c NodesetupHelper) Stop() error {
 	panic("stub component is used: NodesetupHelper which is implemented only for windows")
-}
-
-type KubeProxy struct {
-	K0sVars   *config.CfgVars
-	CIDRRange string
-	LogLevel  string
-}
-
-var _ manager.Component = (*KubeProxy)(nil)
-
-func (k KubeProxy) Init(_ context.Context) error {
-	panic("stub component is used: KubeProxy")
-}
-
-func (k KubeProxy) Start(_ context.Context) error {
-	panic("stub component is used: KubeProxy")
-}
-
-func (k KubeProxy) Stop() error {
-	panic("stub component is used: KubeProxy")
 }

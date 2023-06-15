@@ -57,6 +57,9 @@ type windowsStackRenderingContext struct {
 	IPv4ServiceCIDR string
 	Nameserver      string
 	NodeImage       string
+
+	KubeProxyImage   string
+	KubeProxyVersion string
 }
 
 // NewWindowsStackComponent creates new WindowsStackComponent reconciler
@@ -132,7 +135,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 	if existingCNI != "" && existingCNI != constant.CNIProviderCalico {
 		return fmt.Errorf("windows node controller available only for %s", constant.CNIProviderCalico)
 	}
-	newConfig, err := n.makeCalicoRenderingContext(cfg)
+	newConfig, err := n.makeRenderingContext(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to make calico rendering context: %v", err)
 	}
@@ -142,7 +145,7 @@ func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.Cluste
 
 	return nil
 }
-func (n *WindowsStackComponent) makeCalicoRenderingContext(cfg *v1beta1.ClusterConfig) (windowsStackRenderingContext, error) {
+func (n *WindowsStackComponent) makeRenderingContext(cfg *v1beta1.ClusterConfig) (windowsStackRenderingContext, error) {
 	dns, err := cfg.Spec.Network.DNSAddress()
 	if err != nil {
 		return windowsStackRenderingContext{}, fmt.Errorf("failed to parse dns address: %v", err)
@@ -150,14 +153,16 @@ func (n *WindowsStackComponent) makeCalicoRenderingContext(cfg *v1beta1.ClusterC
 
 	return windowsStackRenderingContext{
 		// template rendering unescapes double backslashes
-		CNIBin:          "c:\\\\opt\\\\cni\\\\bin",
-		CNIConf:         "c:\\\\opt\\\\cni\\\\conf",
-		Mode:            cfg.Spec.Network.Calico.Mode,
-		KubeAPIHost:     cfg.Spec.API.Address,
-		KubeAPIPort:     fmt.Sprintf("%d", cfg.Spec.API.Port),
-		IPv4ServiceCIDR: cfg.Spec.Network.ServiceCIDR,
-		Nameserver:      dns,
-		NodeImage:       "calico/windows:v3.23.5",
+		CNIBin:           "c:\\\\opt\\\\cni\\\\bin",
+		CNIConf:          "c:\\\\opt\\\\cni\\\\conf",
+		Mode:             cfg.Spec.Network.Calico.Mode,
+		KubeAPIHost:      cfg.Spec.API.Address,
+		KubeAPIPort:      fmt.Sprintf("%d", cfg.Spec.API.Port),
+		IPv4ServiceCIDR:  cfg.Spec.Network.ServiceCIDR,
+		Nameserver:       dns,
+		NodeImage:        "calico/windows:v3.23.5",
+		KubeProxyImage:   "sigwindowstools/kube-proxy",
+		KubeProxyVersion: "v1.27.1-calico-hostprocess",
 	}, nil
 }
 
