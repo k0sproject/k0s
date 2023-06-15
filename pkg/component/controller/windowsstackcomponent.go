@@ -120,20 +120,19 @@ func (n *WindowsStackComponent) handleWindowsNode(ctx context.Context, cfg windo
 	if err := n.createWindowsStack(n.prevRenderingContext); err != nil {
 		n.log.Errorf("failed to create windows stack: %v", err)
 		return fmt.Errorf("failed to create windows stack: %v", err)
-	} else {
-		n.log.Infof("successfully created windows stack")
 	}
+	n.log.Infof("successfully created windows stack")
 	return nil
 }
 
 func (n *WindowsStackComponent) Reconcile(_ context.Context, cfg *v1beta1.ClusterConfig) error {
 	if cfg.Spec.Network.Provider != "calico" {
-		return fmt.Errorf("windows node controller available only for %s", constant.CNIProviderCalico)
+		return nil
 	}
 
 	existingCNI := existingCNIProvider(n.k0sVars.ManifestsDir)
 	if existingCNI != "" && existingCNI != constant.CNIProviderCalico {
-		return fmt.Errorf("windows node controller available only for %s", constant.CNIProviderCalico)
+		return nil
 	}
 	newConfig, err := n.makeRenderingContext(cfg)
 	if err != nil {
