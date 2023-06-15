@@ -33,6 +33,13 @@ spec:
         - effect: NoExecute
           operator: Exists
       initContainers:
+        - name: initfilesystem
+          image: mcr.microsoft.com/powershell
+          command: [
+            'powershell.exe',
+            '-C',
+            "New-Item -Path '{{ .CNIBin }}' -ItemType Directory -Force ; New-Item -Path '{{ .CNIConf }}' -ItemType Directory -Force ; $existingRule = Get-NetFirewallRule -DisplayName 'kubectl exec 10250' -ErrorAction SilentlyContinue; if ($existingRule -eq $null) { New-NetFirewallRule -Name 'KubectlExec10250' -Description 'Enable kubectl exec and log' -Action Allow -LocalPort 10250 -Enabled True -DisplayName 'kubectl exec 10250' -Protocol TCP -ErrorAction SilentlyContinue }"
+          ]
         - name: install
           image: "{{ .NodeImage }}" 
           args:

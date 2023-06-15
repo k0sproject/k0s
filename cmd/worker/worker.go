@@ -166,10 +166,6 @@ func (c *Command) Start(ctx context.Context) error {
 		IPTablesMode:        c.WorkerOptions.IPTablesMode,
 	})
 
-	if runtime.GOOS == "windows" {
-		componentManager.Add(ctx, &worker.NodesetupHelper{})
-	}
-
 	certManager := worker.NewCertificateManager(ctx, kubeletKubeconfigPath)
 
 	// if running inside a controller, status component is already running
