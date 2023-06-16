@@ -24,12 +24,13 @@ all: $(addprefix $(bindir)/, $(bins))
 clean:
 	for i in .container.*; do \
 	  [ -f "$$i" ] || continue; \
-	  docker rm -- $$(cat -- "$$i") && rm -- "$$i"; \
+	  docker rm -- "$$(cat -- "$$i")"; \
+	  rm -- "$$i"; \
 	done
 	for i in .docker-image.*.stamp; do \
 	  [ -f "$$i" ] || continue; \
-	  tags=$$(docker inspect --format='{{range $$tag := .RepoTags}}{{$$tag}} {{end}}' -- $$(cat -- "$$i")) && \
-	  docker rmi -f -- $$tags && \
+	  tags=$$(docker inspect --format='{{range $$tag := .RepoTags}}{{$$tag}} {{end}}' -- "$$(cat -- "$$i")") && \
+	  docker rmi -f -- "$$tags"; \
 	  rm -f -- "$$i"; \
 	done
 	rm -rf staging
