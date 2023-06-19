@@ -127,6 +127,7 @@ The requirements for building k0s from source are as follows:
 - A POSIX shell
 - coreutils
 - findutils
+- tar
 - Docker
 
 All of the compilation steps are performed inside Docker containers, no
