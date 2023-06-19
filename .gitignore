@@ -14,7 +14,6 @@
 /k0s.code
 /k0s.exe
 /k0s.exe.code
-/pkg/assets/zz_generated_offsets*.go
 /spdx.json
 .*.stamp
 *.tmp
