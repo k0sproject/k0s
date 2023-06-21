@@ -29,145 +29,88 @@ on:
       - 'mkdocs.yml'
 
 jobs:
-  build:
-    name: Build
+  prepare:
+    name: Prepare
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [linux, windows]
-        include:
-          - target: linux
-            build-docker-image: k0sbuild
-            airgap-image-bundle: airgap-image-bundle-linux-amd64.tar
-          - target: windows
-            binary-suffix: .exe
 
     outputs:
-      smoke-test-matrix: ${{ steps.list-smoke-tests.outputs.linux-matrix }}
-      airgap-image-bundle-hash-linux: ${{ steps.image-bundle-source.outputs.linux-hash }}
+      smoketest-matrix: ${{ steps.generate-smoketest-matrix.outputs.smoketests }}
+      autopilot-matrix: ${{ steps.generate-autopilot-matrix.outputs.matrix }}
 
     steps:
-      - name: Check out code into the Go module directory
+      - name: "Workflow run :: Checkout"
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # for `git describe`
           persist-credentials: false
 
-      - name: Prepare build environment
-        run: .github/workflows/prepare-build-env.sh
-
-      - name: Cache embedded binaries
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-embedded-bins-${{ matrix.target }}-${{ hashFiles('embedded-bins/**/*') }}
-          path: |
-            .bins.${{ matrix.target }}.stamp
-            bindata_${{ matrix.target }}
-            embedded-bins/staging/${{ matrix.target }}/bin/
-            embedded-bins/Makefile.variables
-            pkg/assets/zz_generated_offsets_${{ matrix.target }}.go
-
-      - name: Cache GOCACHE
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-build-gocache-${{ matrix.target }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-gocache-${{ matrix.target }}-${{ github.ref_name }}-
-          path: |
-            build/cache/go/build
-
-      - name: Cache GOMODCACHE
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-build-gomodcache-${{ matrix.target }}-${{ hashFiles('go.sum') }}
-          path: |
-            build/cache/go/mod
-
-      - name: Build
-        env:
-          TARGET_OS: '${{ matrix.target }}'
-        run: |
-          make bindata
-          make --touch codegen
-          make build
-
-      - name: Upload compiled binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: k0s${{ matrix.binary-suffix }}
-          path: k0s${{ matrix.binary-suffix }}
-
-      - name: List smoke tests
-        id: list-smoke-tests
+      - name: "Generate :: Smoke test matrix"
+        id: generate-smoketest-matrix
         run: |
           ./vars.sh FROM=inttest smoketests | jq --raw-input --raw-output \
-              'split(" ") | [ .[] | select(. != "") ] | "${{ matrix.target }}-matrix=" + tojson' >> $GITHUB_OUTPUT
+              'split(" ") | [ .[] | select(. != "") ] | "smoketests=" + tojson' >>$GITHUB_OUTPUT
 
-      - name: Create airgap image list
-        if: matrix.airgap-image-bundle
-        run: make airgap-images.txt && cat airgap-images.txt
-
-        # Capture the calculated image bundle source hash in a build output, so
-        # it can be shared between the cache actions in this job and in the
-        # integration test matrix. Do this in a separate step, as the hashFiles
-        # function is evaluated before the step execution. So all the required
-        # files need to exist before that. A cleaner solution would have been to
-        # use the cache here, and then upload the cached image bundle, to be
-        # downloaded later on in the integration tests. That's the way it's done
-        # for the k0s binary. Unfortunately, the upload action is significantly
-        # slower than the cache action, for unclear reasons, so stick with this
-        # solution for faster builds. See:
-        # * https://github.com/actions/upload-artifact/issues/199#issuecomment-1190171851
-      - name: Calculate airgap image bundle source hash
-        id: image-bundle-source
-        if: matrix.airgap-image-bundle
+      - name: "Generate :: Autopilot test matrix"
+        id: generate-autopilot-matrix
         env:
-          HASH_KEY: ${{ matrix.target }}-hash
-          HASH_VALUE: ${{ hashFiles('Makefile', 'airgap-images.txt', 'hack/image-bundler/*') }}
-        run: printf '%s=%s\n' "$HASH_KEY" "$HASH_VALUE" >> "$GITHUB_OUTPUT"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
+          k8sVersion="$(./vars.sh kubernetes_version)"
+          majorVersion="${k8sVersion%%.*}"
+          minorVersion=${k8sVersion#$majorVersion.}
+          minorVersion="${minorVersion%%.*}"
 
-      - name: Cache airgap image bundle
-        id: cache-airgap-image-bundle
-        if: matrix.airgap-image-bundle
-        uses: actions/cache@v3
-        # Technically, there's no need to restore the cache here, since this
-        # is more like a create-if-not-exists logic. Currently, there's no way
-        # to achieve this directly via actions/cache. See:
-        # * https://github.com/actions/cache/issues/321
-        # * https://github.com/actions/cache/pull/420
-        with:
-          key: ${{ matrix.airgap-image-bundle }}-${{ steps.image-bundle-source.outputs[format('{0}-hash', matrix.target)] }}
-          path: ${{ matrix.airgap-image-bundle }}
+          {
+            printf matrix=
+            hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Create airgap image bundle if not cached
-        if: matrix.airgap-image-bundle && steps.cache-airgap-image-bundle.outputs.cache-hit != 'true'
-        run: make ${{ matrix.airgap-image-bundle }}
+  build-k0s:
+    strategy:
+      matrix:
+        target-os: [linux, windows]
+        target-arch: [amd64]
 
-  unittest:
-    name: Unit test
-    needs: build
-    runs-on: ubuntu-latest
+    name: "Build :: k0s :: ${{ matrix.target-os }}-${{ matrix.target-arch }}"
+    uses: ./.github/workflows/build-k0s.yml
+    with:
+      target-os: ${{ matrix.target-os }}
+      target-arch: ${{ matrix.target-arch }}
+
+  build-airgap-image-bundle:
+    name: "Build :: Airgap image bundle"
+    needs: [build-k0s]
+    uses: ./.github/workflows/build-airgap-image-bundle.yml
+    with:
+      target-os: linux
+      target-arch: amd64
+
+  unittests-k0s-linux-amd64:
+    name: "Unit tests :: linux-amd64"
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
       - name: Cache GOCACHE
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-unittest-gocache-linux-${{ github.ref_name }}-${{ github.sha }}
+          key: unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-unittest-gocache-linux-${{ github.ref_name }}-
-            ${{ runner.os }}-build-gocache-linux-${{ github.ref_name }}-
+            unittests-k0s-linux-amd64-gocache-${{ github.ref_name }}-
+            build-k0s-linux-amd64-gocache-${{ github.ref_name }}-
           path: |
             build/cache/go/build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-unittest-gomodcache-linux-${{ hashFiles('go.sum') }}
+          key: unittests-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-build-gomodcache-linux-${{ hashFiles('go.sum') }}
+            build-k0s-linux-amd64-gomodcache-${{ hashFiles('go.sum') }}
           path: |
             build/cache/go/mod
 
@@ -182,9 +125,9 @@ jobs:
       - name: Validate OCI images manifests
         run: make check-image-validity
 
-  unittest_windows:
-    name: Unit test (windows)
-    runs-on: windows-latest
+  unittests-k0s-windows-amd64:
+    name: "Unit tests :: windows-amd64"
+    runs-on: windows-2022
 
     defaults:
       run:
@@ -193,6 +136,8 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
@@ -205,18 +150,18 @@ jobs:
       - name: Cache GOCACHE
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-unittest-gocache-windows-${{ github.ref_name }}-${{ github.sha }}
+          key: unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-unittest-gocache-windows-${{ github.ref_name }}-
+            unittests-k0s-windows-amd64-gocache-${{ github.ref_name }}-
           path: |
             ~\AppData\Local\go-build
 
       - name: Cache GOMODCACHE
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-unittest-gomodcache-windows-${{ hashFiles('go.sum') }}
+          key: unittests-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-build-gomodcache-windows-${{ hashFiles('go.sum') }}
+            build-k0s-windows-amd64-gomodcache-${{ hashFiles('go.sum') }}
           path: |
             ~\go\pkg\mod
 
@@ -232,14 +177,15 @@ jobs:
           make --touch codegen
           make check-unit
 
-  smoketest:
-    name: Smoke test
-    needs: build
-    runs-on: ubuntu-latest
+  smoketests:
     strategy:
       fail-fast: false
       matrix:
-        smoke-suite: ${{ fromJson(needs.build.outputs.smoke-test-matrix) }}
+        smoke-suite: ${{ fromJson(needs.prepare.outputs.smoketest-matrix) }}
+
+    name: "Smoke tests :: ${{ matrix.smoke-suite }}"
+    needs: [prepare, build-k0s, build-airgap-image-bundle]
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out code into the Go module directory
@@ -257,10 +203,10 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Download compiled binary
+      - name: Download compiled executable
         uses: actions/download-artifact@v3
         with:
-          name: k0s
+          name: k0s-linux-amd64
 
       - name: k0s sysinfo
         run: |
@@ -272,7 +218,7 @@ jobs:
         if: contains(matrix.smoke-suite, 'airgap')
         uses: actions/cache@v3
         with:
-          key: airgap-image-bundle-linux-amd64.tar-${{ needs.build.outputs.airgap-image-bundle-hash-linux }}
+          key: ${{ needs.build-airgap-image-bundle.outputs.cache-key }}
           path: airgap-image-bundle-linux-amd64.tar
 
       - name: Run inttest
@@ -289,7 +235,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: smoketest-${{ matrix.smoke-suite }}-files
+          name: smoketests-${{ matrix.smoke-suite }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
@@ -298,51 +244,21 @@ jobs:
         if: failure() && contains(matrix.smoke-suite, 'conformance')
         uses: actions/upload-artifact@v3
         with:
-          name: smoketest-${{ matrix.smoke-suite }}-sonobuoy-results
+          name: smoketests-${{ matrix.smoke-suite }}-sonobuoy-results
           path: /tmp/*_sonobuoy_*.tar.gz
 
-  autopilot-smoketest-matrix:
-    name: Release matrix
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Generate Autopilot test matrix
-        id: set-matrix
-        run: |
-          set -x
-          k8sVersion="$(./vars.sh kubernetes_version)"
-          majorVersion="${k8sVersion%%.*}"
-          minorVersion=${k8sVersion#$majorVersion.}
-          minorVersion="${minorVersion%%.*}"
-
-          {
-            printf matrix=
-            hack/tools/gen-matrix.sh "$majorVersion.$(($minorVersion - 1))" "$majorVersion.$minorVersion"
-          } >> "$GITHUB_OUTPUT"
-
-  autopilot-smoketest:
-    name: Autopilot smoke test
-    needs:
-    - build
-    - autopilot-smoketest-matrix
-    runs-on: ubuntu-latest
+  autopilot-tests:
     strategy:
       fail-fast: false
       matrix:
-        version: ${{fromJson(needs.autopilot-smoketest-matrix.outputs.matrix)}}
-        smoke-suite:
-          - check-ap-ha3x3
+        version: ${{fromJson(needs.prepare.outputs.autopilot-matrix)}}
+
+    name: "Autopilot tests :: ${{ matrix.version }}"
+    needs: [prepare, build-k0s]
+    runs-on: ubuntu-22.04
+
+    env:
+      K0S_VERSION: ${{ matrix.version }}
 
     steps:
       - name: Check out code into the Go module directory
@@ -356,18 +272,15 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Download compiled binary
+      - name: Download compiled executable
         uses: actions/download-artifact@v3
         with:
-          name: k0s
+          name: k0s-linux-amd64
 
       - name: Download latest release
-        if: matrix.smoke-suite == 'check-ap-ha3x3'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -L -o k0s-${{ matrix.version }} https://github.com/k0sproject/k0s/releases/download/${{ matrix.version }}/k0s-${{ matrix.version }}-amd64
-          chmod +x k0s-${{ matrix.version }}
+          curl -L -o "k0s-$K0S_VERSION" "https://github.com/k0sproject/k0s/releases/download/$K0S_VERSION/k0s-$K0S_VERSION-amd64"
+          chmod +x "k0s-$K0S_VERSION"
 
       - name: k0s sysinfo
         run: |
@@ -376,13 +289,13 @@ jobs:
 
       - name: Run inttest
         run: |
-          make -C inttest ${{ matrix.smoke-suite }} K0S_UPDATE_FROM_BIN=../k0s-${{ matrix.version }}
+          make -C inttest check-ap-ha3x3 K0S_UPDATE_FROM_BIN="../k0s-$K0S_VERSION"
 
       - name: Collect k0s logs and support bundle
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: autopilot-smoketest-${{ matrix.smoke-suite }}-${{ matrix.version }}-files
+          name: autopilot-tests-${{ matrix.version }}-files
           path: |
             /tmp/*.log
             /tmp/support-bundle.tar.gz
@@ -478,7 +391,7 @@ jobs:
           make --touch codegen
           make build
 
-      - name: Upload compiled binary
+      - name: Upload compiled executable
         uses: actions/upload-artifact@v3
         with:
           name: k0s-${{ matrix.arch }}

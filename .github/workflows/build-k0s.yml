@@ -1,0 +1,92 @@
+name: "Build :: k0s"
+
+on:
+  workflow_call:
+    inputs:
+      target-os:
+        type: string
+        required: true
+        description: The OS to build k0s for (linux or windows).
+      target-arch:
+        type: string
+        required: true
+        description: The architecture to build k0s for.
+
+jobs:
+  build:
+    name: ${{ inputs.target-os }}-${{ inputs.target-arch }}
+    runs-on: ubuntu-22.04
+
+    env:
+      TARGET_OS: ${{ inputs.target-os }}
+      TARGET_ARCH: ${{ inputs.target-arch }}
+
+    steps:
+      - name: "Build :: Checkout"
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # for `git describe`
+          persist-credentials: false
+
+      - name: "Build :: Prepare"
+        id: build-prepare
+        run: |
+          .github/workflows/prepare-build-env.sh
+
+          executableSuffix=''
+          if [ "TARGET_OS" = windows ]; then
+            executableSuffix=.exe
+          fi
+          echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
+
+      - name: "Cache :: embedded binaries"
+        uses: actions/cache@v3
+        with:
+          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-embedded-bins-${{ hashFiles('embedded-bins/**/*') }}
+          path: |
+            .bins.${{ inputs.target-os }}.stamp
+            bindata_${{ inputs.target-os }}
+            embedded-bins/staging/${{ inputs.target-os }}/bin/
+            embedded-bins/Makefile.variables
+            pkg/assets/zz_generated_offsets_${{ inputs.target-os }}.go
+
+      - name: "Cache :: GOCACHE"
+        uses: actions/cache@v3
+        with:
+          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gocache-${{ github.ref_name }}-
+          path: |
+            build/cache/go/build
+
+      - name: "Cache :: GOMODCACHE"
+        uses: actions/cache@v3
+        with:
+          key: build-k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}-gomodcache-${{ hashFiles('go.sum') }}
+          path: |
+            build/cache/go/mod
+
+      - name: "Build :: k0s"
+        run: |
+          make bindata
+          make --touch codegen
+          make build
+
+      - name: "Upload :: k0s"
+        uses: actions/upload-artifact@v3
+        with:
+          name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: |
+            k0s${{ steps.build-prepare.outputs.executable-suffix }}
+            k0s${{ steps.build-prepare.outputs.executable-suffix }}[.]exe
+
+      - name: "Build :: Airgap image list"
+        if: inputs.target-os != 'windows'
+        run: make airgap-images.txt && cat airgap-images.txt
+
+      - name: "Upload :: Airgap image list"
+        if: inputs.target-os != 'windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: airgap-image-list-${{ inputs.target-os }}-${{ inputs.target-arch }}
+          path: airgap-images.txt
