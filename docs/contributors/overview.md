@@ -36,8 +36,19 @@ By contributing, you agree that your contributions will be licensed as followed:
 
 ## Community
 
-Some of you might have noticed we have official community blog hosted on [Medium](https://medium.com/k0sproject). If you are not yet following us, we'd like to invite you to do so now!
-Make sure to [follow us on Twitter](https://twitter.com/k0sproject) as well 😊
-We have also agreed to share Slack with Lens IDE team. They are close friends of the k0s crew, and many of the Kubernetes users are using Lens anyway, so it felt very natural for us to share their Slack.
+Some of you might have noticed we have official community blog hosted on
+[Medium][k0s@medium]. If you are not yet following us, we'd like to invite you
+to do so now! Make sure to [follow us on Twitter][@k0sproject] as well 😊
 
-You’ll find us on dedicated k0s channel. Please [join the k0s Slack channel](https://join.slack.com/t/k8slens/shared_invite/zt-wcl8jq3k-68R5Wcmk1o95MLBE5igUDQ) to hear the latest news, discussions and provide your feedback!
+We have also decided to participate in the [Lens Forums]. As part of our ongoing
+collaboration with the [Lens IDE] team, who are not only close friends of the
+k0s crew but also widely embraced by the Kubernetes user community, it was only
+natural for us to join forces on their platform. By becoming a part of the Lens
+Forums, you can easily connect with us through the dedicated k0s categories.
+Stay in the loop with the latest news, engage in technical discussions, and
+contribute your expertise and feedback!
+
+[k0s@medium]: https://medium.com/k0sproject
+[@k0sproject]: https://twitter.com/k0sproject
+[Lens Forums]: https://forums.k8slens.dev/
+[Lens IDE]: https://k8slens.dev/
