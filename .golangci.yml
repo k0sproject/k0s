@@ -1,6 +1,6 @@
 # options for analysis running
 run:
-  timeout: 8m
+  timeout: 15m
 
   build-tags:
     - hack
