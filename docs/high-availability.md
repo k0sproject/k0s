@@ -75,7 +75,7 @@ Restart HAProxy to apply the configuration changes.
 
 First and foremost, all controllers should utilize the same CA certificates and SA key pair:
 
-```
+```txt
 /var/lib/k0s/pki/ca.key
 /var/lib/k0s/pki/ca.crt
 /var/lib/k0s/pki/sa.key
