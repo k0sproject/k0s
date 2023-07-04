@@ -73,7 +73,20 @@ Restart HAProxy to apply the configuration changes.
 
 ## k0s configuration
 
-The load balancer address must be configured to k0s either by using `k0s.yaml` or by using k0sctl to automatically deploy all controllers with the same configuration:
+First and foremost, all controllers should utilize the same CA certificates and SA key pair:
+
+```txt
+/var/lib/k0s/pki/ca.key
+/var/lib/k0s/pki/ca.crt
+/var/lib/k0s/pki/sa.key
+/var/lib/k0s/pki/sa.pub
+/var/lib/k0s/pki/etcd/ca.key
+/var/lib/k0s/pki/etcd/ca.crt
+```
+
+To generate these certificates, you have two options: either generate them manually using the instructions provided [here](../custom-ca/) and then share it across controller nodes, or utilize k0sctl for automated generation and sharing.
+
+The second important aspect is: the load balancer address must be configured to k0s either by using `k0s.yaml` or by using k0sctl to automatically deploy all controllers with the same configuration:
 
 ### Configuration using k0s.yaml (for each controller)
 

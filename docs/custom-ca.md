@@ -1,15 +1,21 @@
-# Install using custom CA certificate
+# Install using custom CA certificates and SA key pair
 
 k0s generates all needed certificates automatically in the `<data-dir>/pki` directory (`/var/lib/k0s/pki`, by default).  
 
-But sometimes there is a need to have the CA certificate in advance.
-To make it work, just put `ca.key` and `ca.crt` files to the `<data-dir>/pki`:
+But sometimes there is a need to have the CA certificates and SA key pair in advance.
+To make it work, just put files to the `<data-dir>/pki` and `<data-dir>/pki/etcd`:
 
 ```shell
-mkdir -p /var/lib/k0s/pki
+export LIFETIME=365
+mkdir -p /var/lib/k0s/pki/etcd
 cd /var/lib/k0s/pki
 openssl genrsa -out ca.key 2048
-openssl req -x509 -new -nodes -key ca.key -sha256 -days 365 -out ca.crt -subj "/CN=Custom CA"
+openssl req -x509 -new -nodes -key ca.key -sha256 -days $LIFETIME -out ca.crt -subj "/CN=Custom CA"
+openssl genrsa -out sa.key 2048
+openssl rsa -in sa.key -outform PEM -pubout -out sa.pub
+cd ./etcd
+openssl genrsa -out ca.key 2048
+openssl req -x509 -new -nodes -key ca.key -sha256 -days $LIFETIME -out ca.crt -subj "/CN=Custom CA"
 ```
 
 Then you can [install k0s as usual](./install.md).
