@@ -143,7 +143,7 @@ do_release() {
   push_tag_to_upstream_remote
 }
 
-if [ $# = 1 ] && [ "$1" = h ]; then
+if [ $# = 1 ] && [ "$1" = "-h" ]; then
   print_usage
   exit 1
 fi
