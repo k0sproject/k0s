@@ -1608,7 +1608,16 @@ listen stats
 </code></pre></div>
 <p>Restart HAProxy to apply the configuration changes.</p>
 <h2 id="k0s-configuration">k0s configuration<a class="headerlink" href="#k0s-configuration" title="Permanent link">#</a></h2>
-<p>The load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
+<p>First and foremost, all controllers should utilize the same CA certificates and SA key pair:</p>
+<div class="highlight"><pre><span></span><code>/var/lib/k0s/pki/ca.key
+/var/lib/k0s/pki/ca.crt
+/var/lib/k0s/pki/sa.key
+/var/lib/k0s/pki/sa.pub
+/var/lib/k0s/pki/etcd/ca.key
+/var/lib/k0s/pki/etcd/ca.crt
+</code></pre></div>
+<p>To generate these certificates, you have two options: either generate them manually using the instructions provided <a href="../custom-ca/">here</a> and then share it across controller nodes, or utilize k0sctl for automated generation and sharing.</p>
+<p>The second important aspect is: the load balancer address must be configured to k0s either by using <code>k0s.yaml</code> or by using k0sctl to automatically deploy all controllers with the same configuration:</p>
 <h3 id="configuration-using-k0syaml-for-each-controller">Configuration using k0s.yaml (for each controller)<a class="headerlink" href="#configuration-using-k0syaml-for-each-controller" title="Permanent link">#</a></h3>
 <p>Note to update your load balancer's public ip address into two places.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
