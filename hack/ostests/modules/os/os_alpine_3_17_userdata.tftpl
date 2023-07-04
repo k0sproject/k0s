@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+truncate -s0 /etc/motd
+rc-update add machine-id boot
+/etc/init.d/machine-id start
+
+%{if worker}
+rc-update add cgroups boot
+/etc/init.d/cgroups start
+%{endif}
+
+# k0sctl currently doesn't support BusyBox/doas properly.
+apk add coreutils sudo && apk del doas
+echo 'alpine ALL=(ALL:ALL) NOPASSWD: ALL' >/etc/sudoers.d/alpine-all-access

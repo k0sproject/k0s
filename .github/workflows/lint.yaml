@@ -60,3 +60,29 @@ jobs:
           GOLANGCI_LINT_FLAGS: --out-format=github-actions
         run: |
           make lint
+
+  validate-os-tests:
+    name: Validate OS tests
+    runs-on: ubuntu-22.04
+
+    env:
+      TERRAFORM_VERSION: 1.4.6
+
+    defaults:
+      run:
+        working-directory: hack/ostests
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          sparse-checkout: hack/ostests
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - run: terraform fmt -check
+      - run: terraform init
+      - run: terraform validate -no-color

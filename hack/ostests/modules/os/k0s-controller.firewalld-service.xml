@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>k0s-controller</short>
+  <description>k0s - The Zero Friction Kubernetes (controller node)</description>
+
+  <!-- see docs/networking.md: Required ports and protocols -->
+  <port protocol="tcp" port="2380" />  <!-- etcd peers -->
+  <port protocol="tcp" port="6443" />  <!-- kube-apiserver -->
+  <port protocol="tcp" port="8132" />  <!-- konnectivity -->
+  <port protocol="tcp" port="9443" />  <!-- k0s-api -->
+</service>
