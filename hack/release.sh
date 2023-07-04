@@ -60,7 +60,7 @@ determine_k8s_version() {
   set -- ./vars.sh kubernetes_version
   k8sVersion=$("$@" 2>/dev/null) || {
     retVal=$?
-    echo Failed to determine Kuberntes version! 1>&2
+    echo Failed to determine Kubernetes version! 1>&2
     "$@"
     return $retVal
   }
