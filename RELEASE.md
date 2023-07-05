@@ -25,6 +25,9 @@ Once the release notes are done we can publish the release.
 
 If for some reason there is an error triggering the action, it is safe to delete the tag remotely with `git push --delete origin <tag>` and push it again.
 
+The above steps are encapsulated in the [`hack/release.sh`](hack/release.sh)
+shell script for convenience.
+
 ## Semver
 
 We're following [semantic versioning](https://semver.org/) for version numbering. Currently we're working on 0.y.z series so the rules are interpreted in bit more relaxed way.
