@@ -27,7 +27,7 @@ extensions:
       chartname: bitnami/metallb
       version: "2.5.4"
       namespace: default
-      values: |2
+      values: |
         configInline:
           address-pools:
           - name: generic-cluster-pool
