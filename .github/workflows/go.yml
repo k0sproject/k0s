@@ -328,31 +328,10 @@ jobs:
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
-      # We cannot rely on this for arm: https://github.com/actions/setup-go/issues/106
       - name: Set up Go
-        if: matrix.arch != 'arm'
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      # Install Go manually for arm. See above.
-      - name: Set up Go for armv6l
-        if: matrix.arch == 'arm'
-        run: |
-          echo "Setup go stable version $GO_VERSION"
-          rm -rf -- "$HOME/.local/go"
-          mkdir -p -- "$HOME/.local/go"
-          curl --silent -L "https://go.dev/dl/go${GO_VERSION%%.0}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
-
-          echo "$HOME/.local/go/bin" >>"$GITHUB_PATH"
-          export PATH="$PATH:$HOME/.local/go/bin"
-          echo Added go to the path
-
-          echo "Successfully setup go version $GO_VERSION"
-          go version
-          echo ::group::go env
-          go env
-          echo ::endgroup::
 
       - name: Cache embedded binaries
         uses: actions/cache@v3
