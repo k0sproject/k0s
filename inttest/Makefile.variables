@@ -6,34 +6,46 @@ smoketests := \
 	check-ap-platformselect \
 	check-ap-quorum \
 	check-ap-quorumsafety \
+	check-ap-removedapis \
 	check-ap-selector \
 	check-ap-single \
 	check-ap-updater \
-	check-ap-removedapis \
 	check-backup \
 	check-basic \
 	check-byocri \
 	check-calico \
+	check-capitalhostnames \
 	check-cli \
 	check-clusterreboot \
 	check-cnichange \
 	check-configchange \
+	check-containerdimports \
 	check-ctr \
+	check-custom-cidrs \
+	check-customca \
+	check-customdomain \
 	check-customports \
 	check-customports-dynamicconfig \
 	check-defaultstorage \
 	check-disabledcomponents \
 	check-dualstack \
+	check-dualstack-dynamicconfig \
+	check-embedded-binaries \
 	check-externaletcd \
 	check-extraargs \
 	check-hacontrolplane \
 	check-hostnameoverride \
 	check-k0scloudprovider \
+	check-k0sctl \
 	check-kine \
-	check-kuberouter \
+	check-kubectl \
 	check-kubeletcertrotate \
+	check-kuberouter \
 	check-metrics \
+	check-metricsscraper \
 	check-multicontroller \
+	check-network-conformance-calico \
+	check-network-conformance-kuberouter \
 	check-nllb \
 	check-noderole \
 	check-noderole-no-taints \
@@ -43,15 +55,3 @@ smoketests := \
 	check-statussocket \
 	check-tunneledkas \
 	check-upgrade \
-	check-kubectl \
-	check-k0sctl \
-	check-metricsscraper \
-	check-customdomain \
-	check-capitalhostnames \
-	check-customca \
-	check-dualstack-dynamicconfig \
-	check-network-conformance-kuberouter \
-	check-network-conformance-calico \
-	check-embedded-binaries \
-	check-custom-cidrs \
-	check-containerdimports \
