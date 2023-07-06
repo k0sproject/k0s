@@ -34,7 +34,7 @@ jobs:
           .github/workflows/prepare-build-env.sh
 
           executableSuffix=''
-          if [ "TARGET_OS" = windows ]; then
+          if [ "$TARGET_OS" = windows ]; then
             executableSuffix=.exe
           fi
           echo executable-suffix="$executableSuffix" >>"$GITHUB_OUTPUT"
@@ -78,7 +78,6 @@ jobs:
           name: k0s-${{ inputs.target-os }}-${{ inputs.target-arch }}
           path: |
             k0s${{ steps.build-prepare.outputs.executable-suffix }}
-            k0s${{ steps.build-prepare.outputs.executable-suffix }}[.]exe
 
       - name: "Build :: Airgap image list"
         if: inputs.target-os != 'windows'
