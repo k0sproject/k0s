@@ -22,6 +22,7 @@ import (
 
 	"github.com/k0sproject/k0s/internal/pkg/iface"
 	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/yaml"
 )
 
 func TestClusterDefaults(t *testing.T) {
@@ -261,6 +262,12 @@ func TestStripDefaults(t *testing.T) {
 	a.Nil(stripped.Spec.ControllerManager)
 	a.Nil(stripped.Spec.Scheduler)
 	a.Nil(stripped.Spec.Network)
+}
+
+func TestDefaultClusterConfigYaml(t *testing.T) {
+	data, err := yaml.Marshal(DefaultClusterConfig())
+	assert.NoError(t, err)
+	assert.NotContains(t, string(data), "status: {}")
 }
 
 func TestFeatureGates(t *testing.T) {
