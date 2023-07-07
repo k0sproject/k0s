@@ -10,8 +10,8 @@ You will require a [Docker environment](https://docs.docker.com/get-docker/) run
 
 The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:
 
-- docker.io/k0sproject/k0s:latest
-- docker.pkg.github.com/k0sproject/k0s/k0s:"version"
+- docker.io/k0sproject/k0s:v1.26.6-k0s.0
+- ghcr.io/k0sproject/k0s:v1.26.6-k0s.0
 
 **Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v1.26.1+k0s.0` is tagged as `docker.io/k0sproject/k0s:v1.26.1-k0s.0`.
 
