@@ -79,7 +79,7 @@ GO_ENV ?= docker run --rm \
 	-e CGO_ENABLED \
 	-e GOARCH \
 	--user $(BUILD_UID):$(BUILD_GID) \
-	k0sbuild.docker-image.k0s
+	-- '$(shell cat .k0sbuild.docker-image.k0s)'
 GO ?= $(GO_ENV) go
 
 # https://www.gnu.org/software/make/manual/make.html#index-spaces_002c-in-variable-values
@@ -104,11 +104,9 @@ $(K0S_GO_BUILD_CACHE):
 	mkdir -p -- '$@'
 
 .k0sbuild.docker-image.k0s: build/Dockerfile embedded-bins/Makefile.variables | $(K0S_GO_BUILD_CACHE)
-	docker build --rm \
-		--build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
-		-f build/Dockerfile \
-		-t k0sbuild.docker-image.k0s build/
-	touch $@
+	docker build --iidfile '$@' \
+	  --build-arg BUILDIMAGE=$(GOLANG_IMAGE) \
+	  -t k0sbuild.docker-image.k0s - <build/Dockerfile
 
 go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
@@ -231,14 +229,12 @@ airgap-image-bundle-linux-arm64.tar \
 airgap-image-bundle-linux-arm.tar: .k0sbuild.image-bundler.stamp airgap-images.txt
 	docker run --rm -i --privileged \
 	  -e TARGET_PLATFORM='$(TARGET_PLATFORM)' \
-	  k0sbuild.image-bundler < airgap-images.txt > '$@'
+	  '$(shell cat .k0sbuild.image-bundler.stamp)' < airgap-images.txt > '$@'
 
-.k0sbuild.image-bundler.stamp: hack/image-bundler/*
-	docker build \
+.k0sbuild.image-bundler.stamp: hack/image-bundler/* embedded-bins/Makefile.variables
+	docker build --iidfile '$@' \
 	  --build-arg ALPINE_VERSION=$(alpine_patch_version) \
-	  -t k0sbuild.image-bundler \
-	  hack/image-bundler
-	touch -- '$@'
+	  -t k0sbuild.image-bundler -- hack/image-bundler
 
 .PHONY: $(smoketests)
 check-airgap check-ap-airgap: airgap-image-bundle-linux-$(HOST_ARCH).tar
@@ -262,13 +258,16 @@ clean-gocache:
 	-find $(K0S_GO_BUILD_CACHE)/go/mod -type d -exec chmod u+w '{}' \;
 	rm -rf $(K0S_GO_BUILD_CACHE)/go
 
+.PHONY: clean-docker-image
+clean-docker-image: IID_FILES = .k0sbuild.docker-image.k0s
 clean-docker-image:
-	-docker rmi k0sbuild.docker-image.k0s -f
-	-rm -f .k0sbuild.docker-image.k0s
+	$(clean-iid-files)
 
+.PHONY: clean-airgap-image-bundles
+clean-airgap-image-bundles: IID_FILES = .k0sbuild.image-bundler.stamp
 clean-airgap-image-bundles:
-	-docker rmi -f k0sbuild.image-bundler.k0s
-	-rm airgap-images.txt .k0sbuild.image-bundler.stamp
+	$(clean-iid-files)
+	-rm airgap-images.txt
 	-rm airgap-image-bundle-linux-amd64.tar airgap-image-bundle-linux-arm64.tar airgap-image-bundle-linux-arm.tar
 
 .PHONY: clean
