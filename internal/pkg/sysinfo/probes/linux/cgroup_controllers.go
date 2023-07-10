@@ -94,7 +94,7 @@ type cgroupControllerProber struct {
 	err         error
 }
 
-func (p *cgroupControllerProber) probeContoller(s cgroupSystem, controllerName string) (cgroupControllerAvailable, error) {
+func (p *cgroupControllerProber) probeController(s cgroupSystem, controllerName string) (cgroupControllerAvailable, error) {
 	p.once.Do(func() {
 		p.controllers = make(map[string]cgroupControllerAvailable)
 		p.err = s.loadControllers(func(name, msg string) {
