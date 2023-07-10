@@ -39,17 +39,17 @@ func (*cgroupV2) String() string {
 	return "version 2"
 }
 
-func (s *cgroupV2) probeController(controllerName string) (cgroupControllerAvailable, error) {
-	return s.controllers.probeContoller(s, controllerName)
+func (g *cgroupV2) probeController(controllerName string) (cgroupControllerAvailable, error) {
+	return g.controllers.probeController(g, controllerName)
 }
 
-func (s *cgroupV2) loadControllers(seen func(string, string)) error {
+func (g *cgroupV2) loadControllers(seen func(string, string)) error {
 	// Some controllers are implicitly enabled by the kernel. Those controllers
 	// do not appear in /sys/fs/cgroup/cgroup.controllers. Their availability is
 	// assumed based on the kernel version, as it is hard to detect them
 	// directly.
 	// https://github.com/torvalds/linux/blob/v5.3/kernel/cgroup/cgroup.c#L433-L434
-	if major, minor, err := parseKernelRelease(s.probeUname); err == nil {
+	if major, minor, err := parseKernelRelease(g.probeUname); err == nil {
 		/* devices: since 4.15 */ if major > 4 || (major == 4 && minor >= 15) {
 			seen("devices", "assumed")
 		}
@@ -60,7 +60,7 @@ func (s *cgroupV2) loadControllers(seen func(string, string)) error {
 		return err
 	}
 
-	controllerData, err := os.ReadFile(filepath.Join(s.mountPoint, "cgroup.controllers"))
+	controllerData, err := os.ReadFile(filepath.Join(g.mountPoint, "cgroup.controllers"))
 	if err != nil {
 		return err
 	}
@@ -69,9 +69,9 @@ func (s *cgroupV2) loadControllers(seen func(string, string)) error {
 		seen(controllerName, "")
 		switch controllerName {
 		case "cpu": // This is the successor to the version 1 cpu and cpuacct controllers.
-			seen("cpuacct", "via cpu in "+s.String())
+			seen("cpuacct", "via cpu in "+g.String())
 		case "io": // This is the successor of the version 1 blkio controller.
-			seen("blkio", "via io in "+s.String())
+			seen("blkio", "via io in "+g.String())
 		}
 	}
 

@@ -34,11 +34,11 @@ func (*cgroupV1) String() string {
 	return "version 1"
 }
 
-func (s *cgroupV1) probeController(controllerName string) (cgroupControllerAvailable, error) {
-	return s.controllers.probeContoller(s, controllerName)
+func (g *cgroupV1) probeController(controllerName string) (cgroupControllerAvailable, error) {
+	return g.controllers.probeController(g, controllerName)
 }
 
-func (s *cgroupV1) loadControllers(seen func(name, msg string)) error {
+func (g *cgroupV1) loadControllers(seen func(name, msg string)) error {
 	// Get the available controllers from /proc/cgroups.
 	// See https://www.man7.org/linux/man-pages/man7/cgroups.7.html#NOTES
 
