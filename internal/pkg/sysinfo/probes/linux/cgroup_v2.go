@@ -21,11 +21,10 @@ package linux
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
+
+	"github.com/containerd/cgroups/v3/cgroup2"
 )
 
 type cgroupV2 struct {
@@ -44,7 +43,7 @@ func (g *cgroupV2) probeController(controllerName string) (cgroupControllerAvail
 
 func (g *cgroupV2) loadControllers(seen func(string, string)) error {
 	// Some controllers are implicitly enabled by the kernel. Those controllers
-	// do not appear in /sys/fs/cgroup/cgroup.controllers. Their availability is
+	// do not appear in the cgroup.controllers file. Their availability is
 	// assumed based on the kernel version, as it is hard to detect them
 	// directly.
 	// https://github.com/torvalds/linux/blob/v5.3/kernel/cgroup/cgroup.c#L433-L434
@@ -59,13 +58,29 @@ func (g *cgroupV2) loadControllers(seen func(string, string)) error {
 		return err
 	}
 
-	controllerData, err := os.ReadFile(filepath.Join(g.mountPoint, "cgroup.controllers"))
-	if err != nil {
+	if err := g.detectListedRootControllers(seen); err != nil {
 		return err
 	}
 
-	for _, controllerName := range strings.Fields(string(controllerData)) {
-		seen(controllerName, "")
+	return nil
+}
+
+// Detects all the listed root controllers.
+//
+// https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#core-interface-files
+func (g *cgroupV2) detectListedRootControllers(seen func(string, string)) (err error) {
+	root, err := cgroup2.Load("/", cgroup2.WithMountpoint(g.mountPoint))
+	if err != nil {
+		return fmt.Errorf("failed to load root cgroup: %w", err)
+	}
+
+	controllerNames, err := root.RootControllers() // This reads cgroup.controllers
+	if err != nil {
+		return fmt.Errorf("failed to list cgroup root controllers: %w", err)
+	}
+
+	for _, controllerName := range controllerNames {
+		seen(controllerName, "is a listed root controller")
 		switch controllerName {
 		case "cpu": // This is the successor to the version 1 cpu and cpuacct controllers.
 			seen("cpuacct", "via cpu in "+g.String())
