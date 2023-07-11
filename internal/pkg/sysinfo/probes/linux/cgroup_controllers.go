@@ -60,6 +60,9 @@ func (c *cgroupControllerProbe) Probe(reporter probes.Reporter) error {
 	} else if available, err := sys.probeController(c.name); err != nil {
 		return reporter.Error(desc, err)
 	} else if available.available {
+		if available.warning != "" {
+			return reporter.Warn(desc, available, available.warning)
+		}
 		return reporter.Pass(desc, available)
 	} else if c.require {
 		return reporter.Reject(desc, available, "")
@@ -71,10 +74,15 @@ func (c *cgroupControllerProbe) Probe(reporter probes.Reporter) error {
 type cgroupControllerAvailable struct {
 	available bool
 	msg       string
+	warning   string
 }
 
 func (a cgroupControllerAvailable) String() (msg string) {
 	if a.available {
+		if a.warning != "" {
+			return a.msg
+		}
+
 		msg = "available"
 	} else {
 		msg = "unavailable"
@@ -97,7 +105,7 @@ func (p *cgroupControllerProber) probeController(s cgroupSystem, controllerName 
 	p.once.Do(func() {
 		p.controllers = make(map[string]cgroupControllerAvailable)
 		p.err = s.loadControllers(func(name, msg string) {
-			p.controllers[name] = cgroupControllerAvailable{true, msg}
+			p.controllers[name] = cgroupControllerAvailable{true, msg, ""}
 		})
 	})
 	return p.controllers[controllerName], p.err

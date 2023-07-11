@@ -59,7 +59,7 @@ func TestCgroupsProbes_Probe(t *testing.T) {
 	t.Run("Pass", func(t *testing.T) {
 		init()
 
-		available := cgroupControllerAvailable{true, ""}
+		available := cgroupControllerAvailable{true, "", ""}
 
 		reporter.On("Pass", mock.Anything, mockSys).Return(nil)
 		mockSys.On("probeController", "foo").Return(available, nil)

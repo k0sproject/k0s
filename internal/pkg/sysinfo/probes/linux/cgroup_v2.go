@@ -21,6 +21,8 @@ package linux
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
@@ -38,31 +40,77 @@ func (*cgroupV2) String() string {
 }
 
 func (g *cgroupV2) probeController(controllerName string) (cgroupControllerAvailable, error) {
+	switch controllerName {
+	case "devices":
+		return g.detectDevicesController()
+	case "freezer":
+		return g.detectFreezerController()
+	}
 	return g.controllers.probeController(g, controllerName)
 }
 
 func (g *cgroupV2) loadControllers(seen func(string, string)) error {
-	// Some controllers are implicitly enabled by the kernel. Those controllers
-	// do not appear in the cgroup.controllers file. Their availability is
-	// assumed based on the kernel version, as it is hard to detect them
-	// directly.
-	// https://github.com/torvalds/linux/blob/v5.3/kernel/cgroup/cgroup.c#L433-L434
-	if major, minor, err := parseKernelRelease(g.probeUname); err == nil {
-		/* devices: since 4.15 */ if major > 4 || (major == 4 && minor >= 15) {
-			seen("devices", "assumed")
-		}
-		/* freezer: since 5.2 */ if major > 5 || (major == 5 && minor >= 2) {
-			seen("freezer", "assumed")
-		}
-	} else {
-		return err
+	return g.detectListedRootControllers(seen)
+}
+
+// The device controller has no interface files. Its availability is assumed
+// based on the kernel version, as it is hard to detect it directly.
+// https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#device-controller
+func (g *cgroupV2) detectDevicesController() (cgroupControllerAvailable, error) {
+	major, minor, err := parseKernelRelease(g.probeUname)
+	if err != nil {
+		return cgroupControllerAvailable{}, err
 	}
 
-	if err := g.detectListedRootControllers(seen); err != nil {
-		return err
+	// since 4.15
+	available, op := false, "<"
+	if major > 4 || (major == 4 && minor >= 15) {
+		available, op = true, ">="
+	}
+	msg := fmt.Sprintf("kernel %d.%d %s 4.15", major, minor, op)
+	return cgroupControllerAvailable{available, msg, ""}, nil
+}
+
+// Detect the freezer controller. It doesn't appear in the cgroup.controllers
+// file. Check for the existence of the cgroup.freeze file in the k0s cgroup
+// instead, or try to create a dummy cgroup if k0s runs in the root cgroup.
+//
+// https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#core-interface-files
+func (g *cgroupV2) detectFreezerController() (cgroupControllerAvailable, error) {
+
+	// Detect the freezer controller by checking k0s's cgroup for the existence
+	// of the cgroup.freeze file.
+	// https://github.com/torvalds/linux/blob/v5.3/Documentation/admin-guide/cgroup-v2.rst#processes
+	cgroupPath, err := cgroup2.NestedGroupPath("")
+	if err != nil {
+		return cgroupControllerAvailable{}, fmt.Errorf("failed to get k0s cgroup: %w", err)
 	}
 
-	return nil
+	if cgroupPath != "/" {
+		cgroupPath = filepath.Join(g.mountPoint, cgroupPath)
+	} else { // The root cgroup cannot be frozen. Try to create a dummy cgroup.
+		tmpCgroupPath, err := os.MkdirTemp(g.mountPoint, "k0s-freezer-detection-*")
+		if err != nil {
+			if errors.Is(err, os.ErrPermission) && os.Geteuid() != 0 {
+				return cgroupControllerAvailable{true, "unknown", "insufficient permissions, try with elevated permissions"}, nil
+			}
+			if errors.Is(err, unix.EROFS) && os.Geteuid() != 0 {
+				return cgroupControllerAvailable{true, "unknown", fmt.Sprintf("read-only file system: %s", g.mountPoint)}, nil
+			}
+
+			return cgroupControllerAvailable{}, fmt.Errorf("failed to create temporary cgroup: %w", err)
+		}
+		defer func() { err = errors.Join(err, os.Remove(tmpCgroupPath)) }()
+		cgroupPath = tmpCgroupPath
+	}
+
+	// Check if the cgroup.freeze exists
+	if stat, err := os.Stat(filepath.Join(cgroupPath, "cgroup.freeze")); (err == nil && stat.IsDir()) || os.IsNotExist(err) {
+		return cgroupControllerAvailable{false, "cgroup.freeze doesn't exist", ""}, nil
+	} else if err != nil {
+		return cgroupControllerAvailable{}, err
+	}
+	return cgroupControllerAvailable{true, "cgroup.freeze exists", ""}, nil
 }
 
 // Detects all the listed root controllers.
