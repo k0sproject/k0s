@@ -224,6 +224,7 @@ spec:
             - name: CALICO_IPV6POOL_CIDR
               value: "{{ .ClusterCIDRIPv6 }}"
             {{ else }}
+            # Disable IPv6 on Kubernetes.
             - name: FELIX_IPV6SUPPORT
               value: "false"
             {{ end }}
