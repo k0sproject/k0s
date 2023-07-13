@@ -28,7 +28,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 )
 
-func checkApparmor() string {
+func checkAppArmor() string {
 	if dir.IsDirectory("/sys/kernel/security/apparmor") {
 		return "active"
 	}
@@ -39,11 +39,11 @@ func checkApparmor() string {
 	return "unavailable"
 
 }
-func (l *LinuxProbes) AssertApparmor() {
-	l.Set("Apparmor", func(path probes.ProbePath, _ probes.Probe) probes.Probe {
+func (l *LinuxProbes) AssertAppArmor() {
+	l.Set("AppArmor", func(path probes.ProbePath, _ probes.Probe) probes.Probe {
 		return probes.ProbeFn(func(r probes.Reporter) error {
-			desc := probes.NewProbeDesc("Apparmor", path)
-			prop := probes.StringProp(checkApparmor())
+			desc := probes.NewProbeDesc("AppArmor", path)
+			prop := probes.StringProp(checkAppArmor())
 			return r.Pass(desc, prop)
 		})
 	})
