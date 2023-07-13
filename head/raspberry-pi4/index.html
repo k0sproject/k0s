@@ -1743,6 +1743,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">Operating system: Linux (pass)</span>
 <span class="go">  Linux kernel release: 5.15.0-1013-raspi (pass)</span>
 <span class="go">  Max. file descriptors per process: current: 1024 / max: 1048576 (warning: &lt; 65536)</span>
+<span class="go">  AppArmor: unavailable (pass)</span>
 <span class="go">  Executable in path: modprobe: /usr/sbin/modprobe (pass)</span>
 <span class="go">  /proc file system: mounted (0x9fa0) (pass)</span>
 <span class="go">  Control Groups: version 2 (pass)</span>
@@ -1777,6 +1778,7 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">      CONFIG_IPV6: The IPv6 protocol: built-in (pass)</span>
 <span class="go">    CONFIG_NETFILTER: Network packet filtering framework (Netfilter): built-in (pass)</span>
 <span class="go">      CONFIG_NETFILTER_ADVANCED: Advanced netfilter configuration: built-in (pass)</span>
+<span class="go">      CONFIG_NF_CONNTRACK: Netfilter connection tracking support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_XTABLES: Netfilter Xtables support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_TARGET_REDIRECT: REDIRECT target support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_MATCH_COMMENT: &quot;comment&quot; match support: module (pass)</span>
@@ -1790,13 +1792,15 @@ setup, you can invoke <code>k0s sysinfo</code>:</p>
 <span class="go">        CONFIG_NETFILTER_XT_MATCH_RECENT: &quot;recent&quot; match support: module (pass)</span>
 <span class="go">        CONFIG_NETFILTER_XT_MATCH_STATISTIC: &quot;statistic&quot; match support: module (pass)</span>
 <span class="go">      CONFIG_NETFILTER_NETLINK: module (pass)</span>
-<span class="go">      CONFIG_NF_CONNTRACK: Netfilter connection tracking support: module (pass)</span>
 <span class="go">      CONFIG_NF_NAT: module (pass)</span>
 <span class="go">      CONFIG_IP_SET: IP set support: module (pass)</span>
 <span class="go">        CONFIG_IP_SET_HASH_IP: hash:ip set support: module (pass)</span>
 <span class="go">        CONFIG_IP_SET_HASH_NET: hash:net set support: module (pass)</span>
 <span class="go">      CONFIG_IP_VS: IP virtual server support: module (pass)</span>
 <span class="go">        CONFIG_IP_VS_NFCT: Netfilter connection tracking: built-in (pass)</span>
+<span class="go">        CONFIG_IP_VS_SH: Source hashing scheduling: module (pass)</span>
+<span class="go">        CONFIG_IP_VS_RR: Round-robin scheduling: module (pass)</span>
+<span class="go">        CONFIG_IP_VS_WRR: Weighted round-robin scheduling: module (pass)</span>
 <span class="go">      CONFIG_NF_CONNTRACK_IPV4: IPv4 connetion tracking support (required for NAT): unknown (warning)</span>
 <span class="go">      CONFIG_NF_REJECT_IPV4: IPv4 packet rejection: module (pass)</span>
 <span class="go">      CONFIG_NF_NAT_IPV4: IPv4 NAT: unknown (warning)</span>
