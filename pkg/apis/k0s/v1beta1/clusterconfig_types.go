@@ -71,8 +71,8 @@ type ClusterConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	metav1.TypeMeta   `json:",omitempty,inline"`
 
-	Spec   *ClusterSpec        `json:"spec,omitempty"`
-	Status ClusterConfigStatus `json:"status,omitempty"`
+	Spec   *ClusterSpec         `json:"spec,omitempty"`
+	Status *ClusterConfigStatus `json:"status,omitempty"`
 }
 
 // StripDefaults returns a copy of the config where the default values a nilled out
