@@ -252,6 +252,9 @@ spec:
               command:
               - /bin/calico-node
               - -felix-live
+              {{- if eq .Mode "bird" }}
+              - -bird-live
+              {{- end }}
             periodSeconds: 10
             initialDelaySeconds: 10
             failureThreshold: 6
@@ -261,6 +264,9 @@ spec:
               command:
               - /bin/calico-node
               - -felix-ready
+              {{- if eq .Mode "bird" }}
+              - -bird-ready
+              {{- end }}
             periodSeconds: 10
             timeoutSeconds: 10
           volumeMounts:
