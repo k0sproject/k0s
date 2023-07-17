@@ -231,6 +231,9 @@ spec:
               value: "true"
             - name: FELIX_PROMETHEUSMETRICSENABLED
               value: "true"
+            # Disable VXLAN offloading
+            - name: FELIX_FEATUREDETECTOVERRIDE
+              value: ChecksumOffloadBroken=true
             # Setting custom environment variables. These variables could overwrite the ones specified above.
             {{ range $name, $value := .EnvVars }}
             - name: {{ $name }}
