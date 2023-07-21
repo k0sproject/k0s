@@ -16,7 +16,7 @@ Pygments==2.12
 pymdown-extensions==10.0
 pyparsing==3.0.7
 python_dateutil==2.8.2
-PyYAML==6.0
+PyYAML==6.0.1
 pyyaml_env_tag==0.1
 six==1.16.0
 verspec==0.1.0
