@@ -83,7 +83,7 @@ const (
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
 	MetricsImageVersion                = "v0.6.1"
 	KubeProxyImage                     = "registry.k8s.io/kube-proxy"
-	KubeProxyImageVersion              = "v1.25.11"
+	KubeProxyImageVersion              = "v1.25.12"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.9.4"
 	CalicoImage                        = "docker.io/calico/cni"
