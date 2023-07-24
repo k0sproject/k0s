@@ -195,7 +195,10 @@ FELIX_DEFAULTENDPOINTTOHOSTACTION: "ACCEPT"
 FELIX_LOGSEVERITYSCREEN: "info"
 FELIX_HEALTHENABLED: "true"
 FELIX_PROMETHEUSMETRICSENABLED: "true"
+FELIX_FEATUREDETECTOVERRIDE: "ChecksumOffloadBroken=true"
 ```
+
+`FELIX_FEATUREDETECTOVERRIDE: ChecksumOffloadBroken=true` disables VXLAN offloading because of [projectcalico/calico#4727](https://github.com/projectcalico/calico/issues/4727).
 
 In SingleStack mode there are additional vars:
 
