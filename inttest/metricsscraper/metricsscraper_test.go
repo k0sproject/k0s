@@ -33,7 +33,7 @@ type MetricsScraperSuite struct {
 }
 
 func (s *MetricsScraperSuite) TestK0sGetsUp() {
-	s.NoError(s.InitController(0, "--single", "--enable-metrics-scraper"))
+	s.NoError(s.InitController(0, "--enable-worker", "--enable-metrics-scraper"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -71,7 +71,8 @@ func (s *MetricsScraperSuite) waitForMetrics() error {
 		}
 
 		// wait for kube-scheduler and kube-controller-manager metrics
-		return strings.Contains(string(b), `job="kube-scheduler"`) && strings.Contains(string(b), `job="kube-controller-manager"`), nil
+		output := string(b)
+		return strings.Contains(output, `job="kube-scheduler"`) && strings.Contains(output, `job="kube-controller-manager"`) && strings.Contains(output, `job="etcd"`), nil
 	})
 }
 

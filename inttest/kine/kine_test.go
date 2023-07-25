@@ -17,12 +17,16 @@ limitations under the License.
 package kine
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
@@ -33,7 +37,7 @@ type KineSuite struct {
 
 func (s *KineSuite) TestK0sGetsUp() {
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithKine)
-	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml"))
+	s.NoError(s.InitController(0, "--config=/tmp/k0s.yaml", "--enable-metrics-scraper"))
 	s.NoError(s.RunWorkers())
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
@@ -70,6 +74,20 @@ func (s *KineSuite) TestK0sGetsUp() {
 			_, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf("'%s' token create --role=worker", s.K0sFullPath))
 			assert.NoError(t, err)
 		})
+	})
+
+	s.T().Run("metrics", func(t *testing.T) {
+		s.Require().NoError(common.WaitForDeployment(s.Context(), kc, "k0s-pushgateway", "k0s-system"))
+		s.Require().NoError(wait.PollImmediateInfiniteWithContext(s.Context(), 5*time.Second, func(ctx context.Context) (bool, error) {
+			b, err := kc.RESTClient().Get().AbsPath("/api/v1/namespaces/k0s-system/services/http:k0s-pushgateway:http/proxy/metrics").DoRaw(s.Context())
+			if err != nil {
+				return false, nil
+			}
+
+			// wait for kube-scheduler and kube-controller-manager metrics
+			output := string(b)
+			return strings.Contains(output, `job="kube-scheduler"`) && strings.Contains(output, `job="kube-controller-manager"`) && strings.Contains(output, `job="kine"`), nil
+		}))
 	})
 }
 
