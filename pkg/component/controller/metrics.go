@@ -45,10 +45,11 @@ const (
 type Metrics struct {
 	log logrus.FieldLogger
 
-	hostname   string
-	K0sVars    *config.CfgVars
-	saver      manifestsSaver
-	restClient rest.Interface
+	hostname    string
+	K0sVars     *config.CfgVars
+	saver       manifestsSaver
+	restClient  rest.Interface
+	storageType string
 
 	clusterConfig *v1beta1.ClusterConfig
 	tickerDone    context.CancelFunc
@@ -59,7 +60,7 @@ var _ manager.Component = (*Metrics)(nil)
 var _ manager.Reconciler = (*Metrics)(nil)
 
 // NewMetrics creates new Metrics reconciler
-func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface) (*Metrics, error) {
+func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernetes.ClientFactoryInterface, storageType string) (*Metrics, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -71,12 +72,12 @@ func NewMetrics(k0sVars *config.CfgVars, saver manifestsSaver, clientCF kubernet
 	}
 
 	return &Metrics{
-		log: logrus.WithFields(logrus.Fields{"component": "metrics"}),
-
-		hostname:   hostname,
-		K0sVars:    k0sVars,
-		saver:      saver,
-		restClient: restClient,
+		log:         logrus.WithFields(logrus.Fields{"component": "metrics"}),
+		storageType: storageType,
+		hostname:    hostname,
+		K0sVars:     k0sVars,
+		saver:       saver,
+		restClient:  restClient,
 	}, nil
 }
 
@@ -94,6 +95,22 @@ func (m *Metrics) Init(_ context.Context) error {
 		return err
 	}
 	m.jobs = append(m.jobs, j)
+
+	if m.storageType == v1beta1.EtcdStorageType {
+		etcdJob, err := m.newEtcdJob()
+		if err != nil {
+			return err
+		}
+		m.jobs = append(m.jobs, etcdJob)
+	}
+
+	if m.storageType == v1beta1.KineStorageType {
+		kineJob, err := m.newKineJob()
+		if err != nil {
+			return err
+		}
+		m.jobs = append(m.jobs, kineJob)
+	}
 
 	return nil
 }
@@ -159,6 +176,41 @@ type job struct {
 	clusterConfig *v1beta1.ClusterConfig
 	scrapeClient  *http.Client
 	restClient    rest.Interface
+}
+
+func (m *Metrics) newEtcdJob() (*job, error) {
+	certFile := path.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.crt")
+	keyFile := path.Join(m.K0sVars.CertRootDir, "apiserver-etcd-client.key")
+
+	httpClient, err := getClient(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &job{
+		log:          m.log.WithField("metrics_job", "etcd"),
+		scrapeURL:    "https://localhost:2379/metrics",
+		name:         "etcd",
+		hostname:     m.hostname,
+		scrapeClient: httpClient,
+		restClient:   m.restClient,
+	}, nil
+}
+
+func (m *Metrics) newKineJob() (*job, error) {
+	httpClient, err := getClient("", "")
+	if err != nil {
+		return nil, err
+	}
+
+	return &job{
+		log:          m.log.WithField("metrics_job", "kine"),
+		scrapeURL:    "http://localhost:8080/metrics",
+		name:         "kine",
+		hostname:     m.hostname,
+		scrapeClient: httpClient,
+		restClient:   m.restClient,
+	}, nil
 }
 
 func (m *Metrics) newJob(name, scrapeURL string) (*job, error) {

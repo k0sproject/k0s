@@ -441,7 +441,7 @@ func (c *command) start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create metrics manifests saver: %w", err)
 		}
-		metrics, err := controller.NewMetrics(c.K0sVars, metricsSaver, adminClientFactory)
+		metrics, err := controller.NewMetrics(c.K0sVars, metricsSaver, adminClientFactory, nodeConfig.Spec.Storage.Type)
 		if err != nil {
 			return fmt.Errorf("failed to create metrics reconciler: %w", err)
 		}
