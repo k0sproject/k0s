@@ -47,6 +47,10 @@ spec:
         url: https://charts.helm.sh/stable
       - name: prometheus-community
         url: https://prometheus-community.github.io/helm-charts
+      - name: helm-repo-with-auth
+        url: https://can-be-your-own-gitlab-ce-instance.org/api/v4/projects/PROJECTID/packages/helm/main
+        username: access-token-name-as-username
+        password: access-token-value-as-password
       charts:
       - name: prometheus-stack
         chartname: prometheus-community/prometheus
