@@ -49,7 +49,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.9
 	go.etcd.io/etcd/etcdutl/v3 v3.5.9
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.24.0
+	go.uber.org/zap v1.25.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
 	golang.org/x/mod v0.12.0
@@ -255,7 +255,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
