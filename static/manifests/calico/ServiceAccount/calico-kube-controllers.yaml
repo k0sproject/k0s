@@ -1,8 +1,7 @@
 ---
-
+# Source: calico/templates/calico-kube-controllers.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: calico-kube-controllers
   namespace: kube-system
-

@@ -32,13 +32,11 @@ data:
           "nodename": "__KUBERNETES_NODE_NAME__",
           "mtu": __CNI_MTU__,
           "ipam": {
-            {{ if .DualStack }}
-            "type": "calico-ipam",
-            "assign_ipv4": "true",
-            "assign_ipv6": "true"
-            {{ else }}
-            "type": "calico-ipam"
-            {{ end }}
+              {{ if .DualStack }}
+              "assign_ipv4": "true",
+              "assign_ipv6": "true",
+              {{ end }}
+              "type": "calico-ipam"
           },
           "policy": {
               "type": "k8s"
@@ -58,4 +56,3 @@ data:
         }
       ]
     }
-

@@ -166,6 +166,9 @@ spec:
             # Enable or Disable VXLAN on the default IP pool.
             - name: CALICO_IPV4POOL_VXLAN
               value: "Never"
+            # Enable or Disable VXLAN on the default IPv6 IP pool.
+            - name: CALICO_IPV6POOL_VXLAN
+              value: "Never"
             {{- else if eq .Mode "vxlan" }}
             # Disable IPIP
             - name: CALICO_IPV4POOL_IPIP
@@ -221,6 +224,7 @@ spec:
             - name: CALICO_IPV6POOL_CIDR
               value: "{{ .ClusterCIDRIPv6 }}"
             {{ else }}
+            # Disable IPv6 on Kubernetes.
             - name: FELIX_IPV6SUPPORT
               value: "false"
             {{ end }}

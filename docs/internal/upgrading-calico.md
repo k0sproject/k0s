@@ -1,12 +1,12 @@
 # Upgrading Calico
 
 k0s bundles Kubernetes manifests for Calico. The manifests are retrieved
-from the [official Calico docs](https://docs.projectcalico.org/manifests/calico.yaml).
+from the [official Calico repo](https://github.com/projectcalico/calico/blob/master/manifests/calico.yaml).
 
 As fetching and modifying the entire multi-thousand line file is error-prone,
 you may follow these steps to upgrade Calico to the latest version:
 
-1. run `./get-calico.sh`
+1. run `./hack/get-calico.sh <version>`
 2. check the git diff to see if it looks sensible
 3. re-apply our manual adjustments (documented below)
 4. run `make bindata-manifests`

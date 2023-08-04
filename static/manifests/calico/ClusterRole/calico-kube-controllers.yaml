@@ -1,6 +1,5 @@
 ---
 # Source: calico/templates/calico-kube-controllers-rbac.yaml
-
 # Include a clusterrole for the kube-controllers component,
 # and bind it to the calico-kube-controllers serviceaccount.
 kind: ClusterRole

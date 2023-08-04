@@ -1,5 +1,5 @@
 ---
-
+# Source: calico/templates/calico-kube-controllers.yaml
 # This manifest creates a Pod Disruption Budget for Controller to allow K8s Cluster Autoscaler to evict
 
 apiVersion: policy/v1
@@ -14,4 +14,3 @@ spec:
   selector:
     matchLabels:
       k8s-app: calico-kube-controllers
-
