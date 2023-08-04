@@ -1425,11 +1425,11 @@
 
 <h1 id="upgrading-calico">Upgrading Calico<a class="headerlink" href="#upgrading-calico" title="Permanent link">#</a></h1>
 <p>k0s bundles Kubernetes manifests for Calico. The manifests are retrieved
-from the <a href="https://docs.projectcalico.org/manifests/calico.yaml">official Calico docs</a>.</p>
+from the <a href="https://github.com/projectcalico/calico/blob/master/manifests/calico.yaml">official Calico repo</a>.</p>
 <p>As fetching and modifying the entire multi-thousand line file is error-prone,
 you may follow these steps to upgrade Calico to the latest version:</p>
 <ol>
-<li>run <code>./get-calico.sh</code></li>
+<li>run <code>./hack/get-calico.sh &lt;version&gt;</code></li>
 <li>check the git diff to see if it looks sensible</li>
 <li>re-apply our manual adjustments (documented below)</li>
 <li>run <code>make bindata-manifests</code></li>
