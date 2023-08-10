@@ -56,8 +56,10 @@ func (c *Certificates) Init(ctx context.Context) error {
 		return err
 	}
 
+	log := logrus.WithField("component", "certificates")
+
 	// We need CA cert loaded to generate client configs
-	logrus.Debugf("CA key and cert exists, loading")
+	log.Debug("CA key and cert exists, loading")
 	cert, err := os.ReadFile(caCertPath)
 	if err != nil {
 		return fmt.Errorf("failed to read ca cert: %w", err)
@@ -175,7 +177,7 @@ func (c *Certificates) Init(ctx context.Context) error {
 		"127.0.0.1",
 	}
 
-	localIPs, err := detectLocalIPs(ctx)
+	localIPs, err := detectLocalIPs(ctx, log)
 	if err != nil {
 		return fmt.Errorf("error detecting local IP: %w", err)
 	}
@@ -219,12 +221,17 @@ func (c *Certificates) Init(ctx context.Context) error {
 	return eg.Wait()
 }
 
-func detectLocalIPs(ctx context.Context) ([]string, error) {
+func detectLocalIPs(ctx context.Context, log logrus.FieldLogger) ([]string, error) {
 	resolver := net.DefaultResolver
 
 	addrs, err := resolver.LookupIPAddr(ctx, "localhost")
 	if err != nil {
-		return nil, err
+		if errors.Is(err, ctx.Err()) {
+			return nil, err
+		}
+
+		log.WithError(err).Warn("Failed to lookup localhost, this may be a problem for certificate verification when localhost resolves to something other than 127.0.0.1.")
+		addrs = nil
 	}
 
 	if hostname, err := os.Hostname(); err == nil {
@@ -233,6 +240,8 @@ func detectLocalIPs(ctx context.Context) ([]string, error) {
 			addrs = append(addrs, hostnameAddrs...)
 		} else if errors.Is(err, ctx.Err()) {
 			return nil, err
+		} else {
+			log.WithError(err).Warnf("Failed to lookup the machine's hostname %q, this may be a problem for certificate verification.", hostname)
 		}
 	}
 
