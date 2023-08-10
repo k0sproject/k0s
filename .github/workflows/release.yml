@@ -279,10 +279,27 @@ jobs:
       # Need to install Go manually: https://github.com/actions/setup-go/issues/106
       - name: Set up Go for smoke tests (armv6l)
         run: |
-          echo "Setup go stable version $GO_VERSION"
           rm -rf -- "$HOME/.local/go"
           mkdir -p -- "$HOME/.local/go"
-          curl --silent -L "https://go.dev/dl/go${GO_VERSION%%.0}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
+
+          # Remove trailing .0 for go versions before 1.21.0
+          major=$(echo "${GO_VERSION}" | cut -d. -f1)
+          minor=$(echo "${GO_VERSION}" | cut -d. -f2)
+          patch=$(echo "${GO_VERSION}" | cut -d. -f3)
+          if [[ $major -eq 1 && $minor -lt 21 ]]; then
+            _GO_VERSION="${GO_VERSION%%.0}"
+          else
+            if [ -z "${patch}" ]; then
+              # Add a trailing .0 for go versions since 1.21.0 if just 1.x given 
+              _GO_VERSION="${GO_VERSION}.0"
+            else
+              _GO_VERSION="${GO_VERSION}"
+            fi
+          fi
+          
+          echo "Setup go version $GO_VERSION"
+
+          curl --silent -L "https://go.dev/dl/go${_GO_VERSION}.linux-armv6l.tar.gz" | tar -C "$HOME/.local" -xz
 
           echo "$HOME/.local/go/bin" >>"$GITHUB_PATH"
           export PATH="$PATH:$HOME/.local/go/bin"
