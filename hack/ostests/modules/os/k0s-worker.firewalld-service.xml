@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>k0s-worker</short>
+  <description>k0s - The Zero Friction Kubernetes (worker node)</description>
+
+  <!-- see docs/networking.md: Required ports and protocols -->
+  <port protocol="tcp" port="179" />   <!-- kube-router -->
+  <port protocol="udp" port="4789" />  <!-- calico -->
+  <port protocol="tcp" port="10250" /> <!-- kubelet -->
+</service>
