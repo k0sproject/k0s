@@ -23,8 +23,9 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ import (
 var k0sVars = constant.GetConfig("")
 
 func Test_KubeletConfig(t *testing.T) {
-	cfg := config.DefaultClusterConfig()
+	cfg := k0sv1beta1.DefaultClusterConfig()
 	dnsAddr, _ := cfg.Spec.Network.DNSAddress()
 	t.Run("default_profile_only", func(t *testing.T) {
 		k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
@@ -118,7 +119,7 @@ func Test_KubeletConfig(t *testing.T) {
 	})
 }
 
-func defaultConfigWithUserProvidedProfiles(t *testing.T, cfg *config.ClusterConfig) *KubeletConfig {
+func defaultConfigWithUserProvidedProfiles(t *testing.T, cfg *k0sv1beta1.ClusterConfig) *KubeletConfig {
 	k0sVars := constant.GetConfig(t.TempDir())
 	k := NewKubeletConfig(k0sVars, testutil.NewFakeClientFactory(), cfg)
 
@@ -134,9 +135,9 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T, cfg *config.ClusterConf
 		t.Fatal(err)
 	}
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		k0sv1beta1.WorkerProfile{
 			Name:   "profile_XXX",
-			Config: wcx,
+			Config: &runtime.RawExtension{Raw: wcx},
 		},
 	)
 
@@ -154,9 +155,9 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T, cfg *config.ClusterConf
 	}
 
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		k0sv1beta1.WorkerProfile{
 			Name:   "profile_YYY",
-			Config: wcy,
+			Config: &runtime.RawExtension{Raw: wcy},
 		},
 	)
 	return k
