@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/k0sproject/k0s/internal/testutil"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	helmv1beta1 "github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
@@ -139,7 +140,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *v1bet
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
 		v1beta1.WorkerProfile{
 			Name:   "profile_XXX",
-			Config: wcx,
+			Config: &runtime.RawExtension{Raw: wcx},
 		},
 	)
 
@@ -159,7 +160,7 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) (*KubeletConfig, *v1bet
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
 		v1beta1.WorkerProfile{
 			Name:   "profile_YYY",
-			Config: wcy,
+			Config: &runtime.RawExtension{Raw: wcy},
 		},
 	)
 	return k, cfg
