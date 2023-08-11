@@ -51,10 +51,23 @@ func TestConfigSuite(t *testing.T) {
 	suite.Run(t, &s)
 }
 
-func (s *ConfigSuite) TestK0sGetsUp() {
+var config = `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: k0s
+spec:
+  workerProfiles:
+    - name: limit-pods
+      values:
+        maxPods: 20
 
-	s.NoError(s.InitController(0, "--enable-dynamic-config"))
-	s.NoError(s.RunWorkers())
+`
+
+func (s *ConfigSuite) TestK0sGetsUp() {
+	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", config)
+	s.NoError(s.InitController(0, "--enable-dynamic-config", "--config /tmp/k0s.yaml"))
+	s.NoError(s.RunWorkers("--profile limit-pods"))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
@@ -63,6 +76,13 @@ func (s *ConfigSuite) TestK0sGetsUp() {
 	s.NoError(err)
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
+	// Check that the node capacity has only 20 pods
+	for i := range []int{0, 1} {
+		node, err := kc.CoreV1().Nodes().Get(s.Context(), s.WorkerNode(i), metav1.GetOptions{})
+		s.Require().NoError(err)
+		s.EqualValues(20, node.Status.Capacity.Pods().Value())
+	}
+
 	s.T().Log("waiting to see kube-router pods ready")
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "kube-router did not start")
 

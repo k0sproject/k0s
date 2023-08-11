@@ -240,7 +240,7 @@ func TestReconciler_Lifecycle(t *testing.T) {
 			applied := mockApplier.expectApply(t, nil)
 			clusterConfig := v1beta1.DefaultClusterConfig(nil)
 			clusterConfig.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
-				{Name: "foo", Config: json.RawMessage("{}")},
+				{Name: "foo", Config: &runtime.RawExtension{Raw: []byte("{}")}},
 			}
 
 			assert.NoError(t, underTest.Reconcile(testContext(t), clusterConfig))
@@ -359,10 +359,10 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 			},
 			WorkerProfiles: v1beta1.WorkerProfiles{{
 				Name:   "profile_XXX",
-				Config: []byte(`{"authentication": {"anonymous": {"enabled": true}}}`),
+				Config: &runtime.RawExtension{Raw: []byte(`{"authentication": {"anonymous": {"enabled": true}}}`)},
 			}, {
 				Name:   "profile_YYY",
-				Config: []byte(`{"authentication": {"webhook": {"cacheTTL": "15s"}}}`),
+				Config: &runtime.RawExtension{Raw: []byte(`{"authentication": {"webhook": {"cacheTTL": "15s"}}}`)},
 			}},
 		},
 	}))
@@ -520,19 +520,39 @@ func TestReconciler_ReconcilesOnChangesOnly(t *testing.T) {
 	}
 
 	// Set some value that affects worker configs.
-	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{{Name: "foo", Config: json.RawMessage(`{"nodeLeaseDurationSeconds": 1}`)}}
+	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
+		{
+			Name: "foo",
+			Config: &runtime.RawExtension{
+				Raw: []byte(`{"nodeLeaseDurationSeconds": 1}`),
+			},
+		},
+	}
 	t.Run("first_time_apply", expectApply)
 	t.Run("second_time_cached", expectCached)
 
 	// Change that value, so that configs need to be reapplied.
-	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{{Name: "foo", Config: json.RawMessage(`{"nodeLeaseDurationSeconds": 2}`)}}
+	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
+		{
+			Name: "foo",
+			Config: &runtime.RawExtension{
+				Raw: []byte(`{"nodeLeaseDurationSeconds": 2}`),
+			},
+		},
+	}
 	t.Run("third_time_apply_fails", expectApplyButFail)
 
 	// After an error, expect a reapplication in any case.
 	t.Run("fourth_time_apply", expectApply)
 
 	// Even if the last successfully applied config is restored, expect it to be applied after a failure.
-	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{{Name: "foo", Config: json.RawMessage(`{"nodeLeaseDurationSeconds": 1}`)}}
+	cluster.Spec.WorkerProfiles = v1beta1.WorkerProfiles{
+		{
+			Name: "foo",
+			Config: &runtime.RawExtension{
+				Raw: []byte(`{"nodeLeaseDurationSeconds": 1}`),
+			},
+		}}
 	t.Run("fifth_time_apply", expectApply)
 	t.Run("sixth_time_cached", expectCached)
 }
