@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // TestWorkerProfile worker profile test suite
@@ -74,11 +75,11 @@ func TestWorkerProfile(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				b, err := json.Marshal(tc.spec)
+				value, err := json.Marshal(tc.spec)
 				if err != nil {
 					t.Fatal(err)
 				}
-				profile := WorkerProfile{Config: b}
+				profile := WorkerProfile{Config: &runtime.RawExtension{Raw: value}}
 				valid := profile.Validate() == nil
 				assert.Equal(t, valid, tc.valid)
 			})
