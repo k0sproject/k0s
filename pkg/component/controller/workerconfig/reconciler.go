@@ -528,7 +528,7 @@ func (r *Reconciler) buildConfigMaps(snapshot *snapshot) ([]*corev1.ConfigMap, e
 		if !ok {
 			workerProfile = r.buildProfile(snapshot)
 		}
-		if err := yaml.Unmarshal(profile.Config, &workerProfile.KubeletConfiguration); err != nil {
+		if err := yaml.Unmarshal(profile.Config.Raw, &workerProfile.KubeletConfiguration); err != nil {
 			return nil, fmt.Errorf("failed to decode worker profile %q: %w", profile.Name, err)
 		}
 		workerProfiles[profile.Name] = workerProfile

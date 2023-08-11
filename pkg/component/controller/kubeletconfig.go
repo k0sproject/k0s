@@ -151,7 +151,7 @@ func (k *KubeletConfig) createProfiles(clusterSpec *v1beta1.ClusterConfig) (*byt
 		profileConfig := getDefaultProfile(dnsAddress, clusterSpec.Spec.Network.ClusterDomain)
 
 		var workerValues unstructuredYamlObject
-		err := json.Unmarshal(profile.Config, &workerValues)
+		err := json.Unmarshal(profile.Config.Raw, &workerValues)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode worker profile values: %v", err)
 		}

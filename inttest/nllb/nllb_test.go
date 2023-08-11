@@ -32,6 +32,7 @@ import (
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	kubeletv1beta1 "k8s.io/kubelet/config/v1beta1"
@@ -66,13 +67,13 @@ func (s *suite) TestNodeLocalLoadBalancing() {
 				WorkerProfiles: v1beta1.WorkerProfiles{
 					v1beta1.WorkerProfile{
 						Name: "default",
-						Config: func() json.RawMessage {
+						Config: func() *runtime.RawExtension {
 							kubeletConfig := kubeletv1beta1.KubeletConfiguration{
 								NodeStatusUpdateFrequency: metav1.Duration{Duration: 3 * time.Second},
 							}
 							bytes, err := json.Marshal(kubeletConfig)
 							s.Require().NoError(err)
-							return bytes
+							return &runtime.RawExtension{Raw: bytes}
 						}(),
 					},
 				},
