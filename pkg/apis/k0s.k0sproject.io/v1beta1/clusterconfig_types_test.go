@@ -244,7 +244,7 @@ spec:
 	j := c.Spec.WorkerProfiles[1].Config
 	var parsed map[string]interface{}
 
-	err = json.Unmarshal(j, &parsed)
+	err = json.Unmarshal(j.Raw, &parsed)
 	assert.NoError(t, err)
 
 	for field, value := range parsed {

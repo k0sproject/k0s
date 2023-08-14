@@ -19,6 +19,8 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ Validateable = (*WorkerProfiles)(nil)
@@ -42,7 +44,10 @@ type WorkerProfile struct {
 	// String; name to use as profile selector for the worker process
 	Name string `json:"name"`
 	// Worker Mapping object
-	Config json.RawMessage `json:"values"`
+	// +kubebuilder:validation:type=object
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Optional
+	Config *runtime.RawExtension `json:"values"`
 }
 
 var lockedFields = map[string]struct{}{
@@ -56,8 +61,7 @@ var lockedFields = map[string]struct{}{
 // Validate validates instance
 func (wp *WorkerProfile) Validate() error {
 	var parsed map[string]interface{}
-
-	err := json.Unmarshal(wp.Config, &parsed)
+	err := json.Unmarshal(wp.Config.Raw, &parsed)
 	if err != nil {
 		return err
 	}
