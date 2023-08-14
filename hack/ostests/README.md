@@ -72,6 +72,7 @@ terraform apply
 * `centos_9`: CentOS Stream 9
 * `debian_10`: Debian GNU/Linux 10 (buster)
 * `debian_11`: Debian GNU/Linux 11 (bullseye)
+* `debian_12`: Debian GNU/Linux 12 (bookworm)
 * `fcos_38`: Fedora CoreOS 38
 * `fedora_38`: Fedora Linux 38 (Cloud Edition)
 * `flatcar`: Flatcar Container Linux by Kinvolk
