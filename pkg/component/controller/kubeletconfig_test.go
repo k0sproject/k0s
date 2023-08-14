@@ -23,8 +23,9 @@ import (
 
 	"github.com/k0sproject/k0s/internal/testutil"
 	"github.com/k0sproject/k0s/pkg/apis/helm.k0sproject.io/v1beta1"
-	config "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
+	k0sv1beta1 "github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 
 	"github.com/stretchr/testify/require"
@@ -132,9 +133,9 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 		t.Fatal(err)
 	}
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		k0sv1beta1.WorkerProfile{
 			Name:   "profile_XXX",
-			Config: wcx,
+			Config: &runtime.RawExtension{Raw: wcx},
 		},
 	)
 
@@ -152,9 +153,9 @@ func defaultConfigWithUserProvidedProfiles(t *testing.T) *KubeletConfig {
 	}
 
 	cfg.Spec.WorkerProfiles = append(cfg.Spec.WorkerProfiles,
-		config.WorkerProfile{
+		k0sv1beta1.WorkerProfile{
 			Name:   "profile_YYY",
-			Config: wcy,
+			Config: &runtime.RawExtension{Raw: wcy},
 		},
 	)
 	return k
