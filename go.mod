@@ -57,7 +57,7 @@ require (
 	golang.org/x/sys v0.11.0
 	golang.org/x/tools v0.12.0
 	google.golang.org/grpc v1.57.0
-	helm.sh/helm/v3 v3.12.2
+	helm.sh/helm/v3 v3.12.3
 )
 
 // Kubernetes
@@ -272,7 +272,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiserver v0.27.4 // indirect
 	k8s.io/controller-manager v0.27.4 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
+	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kms v0.27.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/metrics v0.27.4 // indirect
