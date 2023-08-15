@@ -292,14 +292,19 @@ func TestFeatureGates(t *testing.T) {
 	assert.Equal(t, 3, len(c.Spec.FeatureGates))
 	assert.Equal(t, "feature_XXX", c.Spec.FeatureGates[0].Name)
 	assert.True(t, c.Spec.FeatureGates[0].Enabled)
-	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("x"))
-	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("y"))
-	assert.True(t, c.Spec.FeatureGates[0].EnabledFor("z"))
+	for _, component := range []string{"x", "y", "z"} {
+		value, found := c.Spec.FeatureGates[0].EnabledFor(component)
+		assert.True(t, value)
+		assert.True(t, found)
+	}
 
 	assert.Equal(t, "feature_YYY", c.Spec.FeatureGates[1].Name)
 	assert.True(t, c.Spec.FeatureGates[1].Enabled)
+
 	for _, k8sComponent := range KubernetesComponents {
-		assert.True(t, c.Spec.FeatureGates[1].EnabledFor(k8sComponent))
+		value, found := c.Spec.FeatureGates[1].EnabledFor(k8sComponent)
+		assert.True(t, value)
+		assert.True(t, found)
 	}
 
 	assert.Equal(t, "feature_ZZZ", c.Spec.FeatureGates[2].Name)
