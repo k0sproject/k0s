@@ -183,7 +183,7 @@ accounts.
 
 #### modprobe
 
-On k0s worker will `modprobe` be executed to load missing kernel modules if they
+On k0s worker `modprobe` will be executed to load missing kernel modules if they
 are not detected.
 
 #### id
