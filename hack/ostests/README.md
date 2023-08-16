@@ -106,3 +106,36 @@ This may be a fixed version number, "stable" or "latest".
 * Test it: Be sure to have the requisites ready, as described at the top of this
   README, then do `terraform apply -var=os=<the-os-id>`. When done, don't
   forget to clean up: `terraform destroy -var=os=<the-os-id>`.
+* Update the [nightly trigger] and [matrix workflow] with the new OS ID.
+
+## GitHub Actions workflows
+
+There's a reusable GitHub Actions workflow available in [ostests-e2e.yaml]. It
+will deploy the Terraform resources and perform Kubernetes conformance tests
+against the provisioned test cluster.
+
+[ostests-e2e.yaml]: ../../.github/workflows/ostests-e2e.yaml
+
+### Launch a workflow run
+
+There's a [nightly trigger] for the OS testing workflow. It will select and run
+a single testing parameter combination each day. There's also a [matrix
+workflow] that exposes more knobs and can be triggered manually, e.g. via [gh]:
+
+```console
+$ gh workflow run ostests-matrix.yaml --ref some/experimental/branch \
+  -f oses='["alpine_3_17"]' \
+  -f network-providers='["calico"]'
+✓ Created workflow_dispatch event for ostests-matrix.yaml at some/experimental/branch
+
+To see runs for this workflow, try: gh run list --workflow=ostests-matrix.yaml
+```
+
+[gh]: https://github.com/cli/cli
+
+## TODO
+
+* Figure out the best/canonical way to change host names of the AWS instances
+
+[nightly trigger]: ../../.github/workflows/ostests-nightly.yaml
+[matrix workflow]: ../../.github/workflows/ostests-matrix.yaml
