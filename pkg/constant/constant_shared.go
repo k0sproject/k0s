@@ -83,7 +83,7 @@ const (
 	PushGatewayImage                   = "quay.io/k0sproject/pushgateway-ttl"
 	PushGatewayImageVersion            = "1.4.0-k0s.0"
 	MetricsImage                       = "registry.k8s.io/metrics-server/metrics-server"
-	MetricsImageVersion                = "v0.6.2"
+	MetricsImageVersion                = "v0.6.4"
 	KubeProxyImage                     = "registry.k8s.io/kube-proxy"
 	KubeProxyImageVersion              = "v1.26.8"
 	CoreDNSImage                       = "docker.io/coredns/coredns"
