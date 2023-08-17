@@ -314,10 +314,10 @@ images:
     version: v3.16.2
   metricsserver:
     image: registry.k8s.io/metrics-server/metrics-server
-    version: v0.6.2
+    version: v0.6.4
 ```
 
-In the runtime the image names are calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/metrics-server/metrics-server:v0.6.2`. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.
+In the runtime the image names are calculated as `my.own.repo/calico/kube-controllers:v3.16.2` and `my.own.repo/metrics-server/metrics-server:v0.6.4`. This only affects the the imgages pull location, and thus omitting an image specification here will not disable component deployment.
 
 ### `spec.extensions.helm`
 
