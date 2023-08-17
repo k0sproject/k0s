@@ -80,10 +80,11 @@ type ContainerD struct {
 	OCIBundlePath string
 }
 
-func NewContainerd(logLevel string, vars constant.CfgVars) *ContainerD {
+func NewContainerd(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *ContainerD {
 	c := &ContainerD{
 		LogLevel: logLevel,
 		K0sVars:  vars,
+		Profile:  profile,
 	}
 
 	if runtime.GOOS == "windows" {
