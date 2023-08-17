@@ -131,7 +131,11 @@ func TestReconcile(t *testing.T) {
 
 	for _, test := range tests {
 		objs := []crcli.Object{test.plan}
-		client := crfake.NewClientBuilder().WithObjects(objs...).WithScheme(scheme).Build()
+		client := crfake.NewClientBuilder().
+			WithScheme(scheme).
+			WithObjects(objs...).
+			WithStatusSubresource(objs...).
+			Build()
 
 		t.Run(test.name, func(t *testing.T) {
 			controller := NewPlanStateController(test.name, logrus.NewEntry(logrus.StandardLogger()), client, test.handler)
