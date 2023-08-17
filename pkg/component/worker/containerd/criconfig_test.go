@@ -100,7 +100,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
-		require.Equal(t, criRuntimePath, imports[0])
+		require.Equal(t, escapedPath(criRuntimePath), imports[0])
 	})
 
 	t.Run("should have single import for all CRI configs", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
-		require.Contains(t, imports, criRuntimePath)
+		require.Contains(t, imports, escapedPath(criRuntimePath))
 
 		// Load the criRuntimeConfig and verify the settings are correct
 		containerdConfig := &srvconfig.Config{}
@@ -153,7 +153,7 @@ version = 2
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 2)
-		require.Contains(t, imports, criRuntimePath)
-		require.Contains(t, imports, nonCriConfigPath)
+		require.Contains(t, imports, escapedPath(criRuntimePath))
+		require.Contains(t, imports, escapedPath(nonCriConfigPath))
 	})
 }

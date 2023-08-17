@@ -28,17 +28,22 @@ import (
 // PowerShell struct
 type PowerShell struct {
 	powerShell string
+	err        error
 }
 
 // New create new session
 func NewPowershell() *PowerShell {
-	ps, _ := exec.LookPath("powershell.exe")
+	ps, err := exec.LookPath("powershell.exe")
 	return &PowerShell{
 		powerShell: ps,
+		err:        err,
 	}
 }
 
 func (p *PowerShell) execute(args ...string) error {
+	if p.err != nil {
+		return p.err
+	}
 	args = append([]string{"-NoProfile", "-NonInteractive"}, args...)
 	cmd := exec.Command(p.powerShell, args...)
 

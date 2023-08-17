@@ -111,7 +111,7 @@ func (c *ContainerD) Init(ctx context.Context) error {
 		})
 	}
 	if err := c.windowsInit(); err != nil {
-		return fmt.Errorf("windows init failed: %v", err)
+		return fmt.Errorf("windows init failed: %w", err)
 	}
 	return g.Wait()
 }
@@ -121,6 +121,7 @@ func (c *ContainerD) windowsInit() error {
 		return nil
 	}
 	// On windows we need always run containerd.exe as a service
+	// https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/#troubleshooting-hostprocess-containers
 	command := fmt.Sprintf("if (-not (Get-Service -Name containerd -ErrorAction SilentlyContinue)) { %s\\containerd.exe --register-service}", c.K0sVars.BinDir)
 	return winExecute(command)
 }
@@ -134,7 +135,7 @@ func (c *ContainerD) Start(ctx context.Context) error {
 	}
 	if runtime.GOOS == "windows" {
 		if err := c.windowsStart(ctx); err != nil {
-			return fmt.Errorf("failed to start windows server: %v", err)
+			return fmt.Errorf("failed to start windows server: %w", err)
 		}
 	} else {
 		c.supervisor = supervisor.Supervisor{
@@ -162,11 +163,17 @@ func (c *ContainerD) Start(ctx context.Context) error {
 }
 
 func (c *ContainerD) windowsStart(_ context.Context) error {
-	return winExecute("Start-Service containerd")
+	if err := winExecute("Start-Service containerd"); err != nil {
+		return fmt.Errorf("failed to start Windows Service %q: %w", "containerd", err)
+	}
+	return nil
 }
 
 func (c *ContainerD) windowsStop() error {
-	return winExecute("Stop-Service containerd")
+	if err := winExecute("Stop-Service containerd"); err != nil {
+		return fmt.Errorf("failed to stop Windows Service %q: %w", "containerd", err)
+	}
+	return nil
 }
 
 func (c *ContainerD) setupConfig() error {
@@ -183,16 +190,16 @@ func (c *ContainerD) setupConfig() error {
 		return nil
 	}
 	if err := dir.Init(filepath.Dir(c.confPath), 0755); err != nil {
-		return fmt.Errorf("can't create containerd config dir: %v", err)
+		return fmt.Errorf("can't create containerd config dir: %w", err)
 	}
 	if err := dir.Init(filepath.Dir(c.importsPath), 0755); err != nil {
-		return fmt.Errorf("can't create containerd config imports dir: %v", err)
+		return fmt.Errorf("can't create containerd config imports dir: %w", err)
 	}
 	containerDConfigurer := containerd.NewConfigurer(c.Profile.PauseImage, filepath.Join(c.importsPath, "*.toml"))
 
 	imports, err := containerDConfigurer.HandleImports()
 	if err != nil {
-		return fmt.Errorf("can't handle imports: %v", err)
+		return fmt.Errorf("can't handle imports: %w", err)
 	}
 	output := bytes.NewBuffer([]byte{})
 	tw := templatewriter.TemplateWriter{
@@ -205,7 +212,7 @@ func (c *ContainerD) setupConfig() error {
 		},
 	}
 	if err := tw.WriteToBuffer(output); err != nil {
-		return fmt.Errorf("can't create containerd config: %v", err)
+		return fmt.Errorf("can't create containerd config: %w", err)
 	}
 	return file.WriteContentAtomically(c.confPath, output.Bytes(), 0644)
 }
