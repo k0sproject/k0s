@@ -1,6 +1,6 @@
 certifi==2023.7.22
 charset-normalizer==2.1.1
-click==8.1.6
+click==8.1.7
 colorama==0.4.6
 ghp-import==2.1.0
 idna==3.4
