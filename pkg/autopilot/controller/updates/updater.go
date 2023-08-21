@@ -16,6 +16,7 @@ package updates
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -27,15 +28,26 @@ import (
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
+	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	"github.com/k0sproject/k0s/pkg/autopilot/controller/signal/k0s"
 	uc "github.com/k0sproject/k0s/pkg/autopilot/updater"
+	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/component/status"
 )
 
+type updater interface {
+	// Run starts the updater
+	Run() error
+	// Stop stops the updater
+	Stop()
+
+	Config() *apv1beta2.UpdateConfig
+}
+
 const defaultCronSchedule = "@hourly"
 
-type updater struct {
+type cronUpdater struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	log            *logrus.Entry
@@ -53,12 +65,23 @@ var patchOpts = []crcli.PatchOption{
 	crcli.ForceOwnership,
 }
 
-func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateServerToken string) (*updater, error) {
+func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, apClientFactory apcli.FactoryInterface, clusterID string, updateServerToken string) (updater, error) {
 	updateClient, err := uc.NewClient(updateConfig.Spec.UpdateServer, updateServerToken)
 	if err != nil {
 		return nil, err
 	}
 
+	switch updateConfig.Spec.UpgradeStrategy.Type {
+	case apv1beta2.UpdateStrategyTypeCron:
+		return newCronUpdater(parentCtx, updateConfig, k8sClient, clusterID, updateClient)
+	case apv1beta2.UpdateStrategyTypePeriodic:
+		return newPeriodicUpdater(parentCtx, updateConfig, k8sClient, apClientFactory, clusterID, build.Version)
+	default:
+		return nil, fmt.Errorf("unknown update strategy type: %s", updateConfig.Spec.UpgradeStrategy.Type)
+	}
+}
+
+func newCronUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, k8sClient crcli.Client, clusterID string, updateClient uc.Client) (updater, error) {
 	schedule := updateConfig.Spec.UpgradeStrategy.Cron
 	if schedule == "" {
 		schedule = defaultCronSchedule
@@ -70,10 +93,10 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	}
 
 	ctx, cancel := context.WithCancel(parentCtx)
-	u := &updater{
+	u := &cronUpdater{
 		ctx:            ctx,
 		cancel:         cancel,
-		log:            logrus.WithField("controller", "update-checker"),
+		log:            logrus.WithField("controller", "update-checker-cron"),
 		updateClient:   updateClient,
 		updateConfig:   updateConfig,
 		updateSchedule: schedule,
@@ -85,14 +108,19 @@ func newUpdater(parentCtx context.Context, updateConfig apv1beta2.UpdateConfig, 
 	return u, nil
 }
 
-func (u *updater) Run() {
-	u.log.Info("running update checker")
+func (u *cronUpdater) Run() error {
+	u.log.Info("running cron update checker")
 	u.cron = cron.New()
 	_ = u.cron.AddFunc(u.updateSchedule, u.checkUpdates)
 	u.cron.Start()
+	return nil
 }
 
-func (u *updater) checkUpdates() {
+func (u *cronUpdater) Config() *apv1beta2.UpdateConfig {
+	return &u.updateConfig
+}
+
+func (u *cronUpdater) checkUpdates() {
 	u.log.Info("checking updates...")
 	var curPlan apv1beta2.Plan
 	err := u.k8sClient.Get(u.ctx, crcli.ObjectKey{Name: "autopilot"}, &curPlan)
@@ -123,14 +151,14 @@ func (u *updater) checkUpdates() {
 	u.log.Info("successfully updated plan")
 }
 
-func (u *updater) Stop() {
+func (u *cronUpdater) Stop() {
 	u.cron.Stop()
 	u.cancel()
 }
 
 // needToUpdate checks the need to update. we'll create the update Plan if:
 // - there's no existing plan
-func (u *updater) needToUpdate() bool {
+func (u *cronUpdater) needToUpdate() bool {
 	var plan apv1beta2.Plan
 	err := u.k8sClient.Get(u.ctx, crcli.ObjectKey{Name: "autopilot"}, &plan)
 	if err != nil && errors.IsNotFound(err) {
@@ -144,7 +172,7 @@ func (u *updater) needToUpdate() bool {
 	return false
 }
 
-func (u *updater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
+func (u *cronUpdater) toPlan(nextVersion *uc.Update) apv1beta2.Plan {
 	p := apv1beta2.Plan{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "Plan",

@@ -15,6 +15,11 @@
 package v1beta2
 
 import (
+	"fmt"
+	"strconv"
+	"time"
+
+	uc "github.com/k0sproject/k0s/pkg/autopilot/channels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,6 +29,13 @@ func init() {
 		&UpdateConfigList{},
 	)
 }
+
+const UpdateConfigFinalizer = "updateconfig.autopilot.k0sproject.io"
+
+const (
+	UpdateStrategyTypeCron     = "cron"
+	UpdateStrategyTypePeriodic = "periodic"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
@@ -38,10 +50,17 @@ type UpdateConfig struct {
 }
 
 type UpdateSpec struct {
-	Channel         string            `json:"channel,omitempty"`
-	UpdateServer    string            `json:"updateServer,omitempty"`
-	UpgradeStrategy UpgradeStrategy   `json:"upgradeStrategy,omitempty"`
-	PlanSpec        AutopilotPlanSpec `json:"planSpec,omitempty"`
+	// Channel defines the update channel to use for this update config
+	// +kubebuilder:default:=stable
+	Channel string `json:"channel,omitempty"`
+	// UpdateServer defines the update server to use for this update config
+	// +kubebuilder:default:="https://updates.k0sproject.io"
+	UpdateServer string `json:"updateServer,omitempty"`
+	// UpdateStrategy defines the update strategy to use for this update config
+	UpgradeStrategy UpgradeStrategy `json:"upgradeStrategy,omitempty"`
+	// PlanSpec defines the plan spec to use for this update config
+	// +kubebuilder:Validation:Required
+	PlanSpec AutopilotPlanSpec `json:"planSpec,omitempty"`
 }
 
 // AutopilotPlanSpec describes the behavior of the autopilot generated `Plan`
@@ -78,7 +97,65 @@ type AutopilotPlanCommandAirgapUpdate struct {
 }
 
 type UpgradeStrategy struct {
-	Cron string `json:"cron"`
+	// Type defines the type of upgrade strategy
+	// +kubebuilder:validation:Enum=periodic;cron
+	Type string `json:"type,omitempty"`
+	// Cron defines the cron expression for the cron upgrade strategy
+	// +kubebuilder:validation:Optional
+	//+kubebuilder:deprecatedversion:warning="Cron is deprecated and will be removed in 1.29"
+	Cron string `json:"cron,omitempty"`
+	// Periodic defines the periodic upgrade strategy
+	Periodic PeriodicUpgradeStrategy `json:"periodic,omitempty"`
+}
+
+type PeriodicUpgradeStrategy struct {
+	Days      []string `json:"days,omitempty"`
+	StartTime string   `json:"startTime,omitempty"`
+	Length    string   `json:"length,omitempty"`
+}
+
+func (p *PeriodicUpgradeStrategy) IsWithinPeriod(t time.Time) bool {
+	days := p.Days
+	if len(p.Days) == 0 {
+		days = []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	}
+
+	// Parse the start time and window length
+	st, err := time.Parse("15:04", p.StartTime)
+	if err != nil {
+		fmt.Println("Error parsing start time:", err)
+		return false
+	}
+
+	startTime := startTimeForCurrentDay(st)
+
+	windowDuration, err := time.ParseDuration(p.Length)
+	if err != nil {
+		fmt.Println("Error parsing window length:", err)
+		return false
+	}
+
+	// Check if the current day is within the specified window days
+	currentDay := t.Weekday().String()
+	isWindowDay := false
+	for _, day := range days {
+		if day == currentDay {
+			isWindowDay = true
+			break
+		}
+	}
+
+	// Check if the current time is within the specified window
+	return isWindowDay &&
+		t.After(startTime) &&
+		t.Before(startTime.Add(windowDuration))
+
+}
+
+// Returns the "adjusted" time for the current day. I.e. if the starTime is 15:00, this function will return the current day at 15:00
+func startTimeForCurrentDay(startTime time.Time) time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), startTime.Hour(), startTime.Minute(), 0, 0, time.Local)
 }
 
 // +kubebuilder:object:root=true
@@ -88,4 +165,93 @@ type UpdateConfigList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []UpdateConfig `json:"items"`
+}
+
+func (uc *UpdateConfig) ToPlan(nextVersion uc.VersionInfo) Plan {
+	p := Plan{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Plan",
+			APIVersion: "autopilot.k0sproject.io/v1beta2",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "autopilot",
+		},
+		Spec: PlanSpec{},
+	}
+
+	platforms := make(PlanPlatformResourceURLMap)
+	airgapPlatforms := make(PlanPlatformResourceURLMap)
+	for _, downloadURL := range nextVersion.DownloadURLs {
+		osArch := fmt.Sprintf("%s-%s", downloadURL.OS, downloadURL.Arch)
+		k0sURL := PlanResourceURL{
+			URL: downloadURL.K0S,
+		}
+		if downloadURL.K0SSha256 != "" {
+			k0sURL.Sha256 = downloadURL.K0SSha256
+		}
+		platforms[osArch] = k0sURL
+
+		airgapURL := PlanResourceURL{
+			URL: downloadURL.AirgapBundle,
+		}
+		if downloadURL.AirgapSha256 != "" {
+			airgapURL.Sha256 = downloadURL.AirgapSha256
+		}
+		airgapPlatforms[osArch] = airgapURL
+	}
+
+	p.Spec.ID = strconv.FormatInt(time.Now().Unix(), 10)
+	p.Spec.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+
+	var updateCommandFound bool
+	for _, cmd := range uc.Spec.PlanSpec.Commands {
+		if cmd.K0sUpdate != nil || cmd.AirgapUpdate != nil {
+			updateCommandFound = true
+			break
+		}
+	}
+
+	// If update command is not specified, we add a default one to update all controller and workers in the cluster
+	if !updateCommandFound {
+		p.Spec.Commands = append(p.Spec.Commands, PlanCommand{
+			K0sUpdate: &PlanCommandK0sUpdate{
+				Version:   string(nextVersion.Version),
+				Platforms: platforms,
+				Targets: PlanCommandTargets{
+					Controllers: PlanCommandTarget{
+						Discovery: PlanCommandTargetDiscovery{
+							Selector: &PlanCommandTargetDiscoverySelector{},
+						},
+					},
+					Workers: PlanCommandTarget{
+						Discovery: PlanCommandTargetDiscovery{
+							Selector: &PlanCommandTargetDiscoverySelector{},
+						},
+					},
+				},
+			},
+		})
+	} else {
+		for _, cmd := range uc.Spec.PlanSpec.Commands {
+			planCmd := PlanCommand{}
+			if cmd.K0sUpdate != nil {
+				planCmd.K0sUpdate = &PlanCommandK0sUpdate{
+					Version:     string(nextVersion.Version),
+					ForceUpdate: cmd.K0sUpdate.ForceUpdate,
+					Platforms:   platforms,
+					Targets:     cmd.K0sUpdate.Targets,
+				}
+			}
+			if cmd.AirgapUpdate != nil {
+				planCmd.AirgapUpdate = &PlanCommandAirgapUpdate{
+					Version:   string(nextVersion.Version),
+					Platforms: airgapPlatforms,
+					Workers:   cmd.AirgapUpdate.Workers,
+				}
+			}
+			p.Spec.Commands = append(p.Spec.Commands, planCmd)
+		}
+	}
+
+	return p
 }

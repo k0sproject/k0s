@@ -49,7 +49,7 @@ check-footloose-alpine-buildx:
 	  $(dir $(K0S_PATH))
 	touch $@
 
-.update-server.stamp: .footloose-alpine.stamp update-server/Dockerfile update-server/html/stable/index.yaml
+.update-server.stamp: .footloose-alpine.stamp update-server/Dockerfile $(wildcard update-server/html/**/*.html)
 	docker build -t update-server --build-arg BASE=footloose-alpine -f update-server/Dockerfile update-server
 	touch $@
 
@@ -101,6 +101,8 @@ check-dualstack-dynamicconfig: export K0S_ENABLE_DYNAMIC_CONFIG=true
 check-dualstack-dynamicconfig: TEST_PACKAGE=dualstack
 
 check-ap-updater: .update-server.stamp
+check-ap-updater-periodic: .update-server.stamp
+check-ap-updater-periodic: TIMEOUT=10m
 
 check-network-conformance-kuberouter: TIMEOUT=15m
 check-network-conformance-kuberouter: export K0S_NETWORK_CONFORMANCE_CNI=kuberouter

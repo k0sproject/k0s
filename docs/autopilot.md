@@ -26,9 +26,16 @@ metadata:
   namespace: default
 spec:
   channel: edge_release
-  updateServer: https://docs.k0sproject.io/
+  updateServer: https://updates.k0sproject.io/
   upgradeStrategy:
-    cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
+    type: periodic
+    periodic:
+      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdsay,Wednesday]
+      startTime: "13:00"
+      length: 2h
+  planSpec: # This defines the plan to be created IF there are updates available
+    ...
 ```
 
 ## Safeguards
@@ -354,11 +361,23 @@ Similar to the **Plan Status**, the individual nodes can have their own statuses
 
 #### `spec.updateServer <string> (optional)`
 
-* Update server url.
+* Update server url. Defaults to `https://updates.k0sproject.io`
 
-#### `spec.upgradeStrategy.cron <string> (optional)`
+#### `spec.upgradeStrategy.type <enum:cron|periodic>`
+
+* Select which update strategy to use.
+
+#### `spec.upgradeStrategy.cron <string> (optional)` **DEPRECATED**
 
 * Schedule to check for updates in crontab format.
+
+#### `spec.upgradeStrategy.cron <object>`
+
+Fields:
+
+* `days`: On which weekdays to check for updates
+* `startTime`: At which time of day to check updates
+* `length`: The length of the update window
 
 #### `spec.planSpec <string> (optional)`
 
@@ -375,7 +394,12 @@ spec:
   channel: stable
   updateServer: https://updates.k0sproject.io/
   upgradeStrategy:
-    cron: "0 12 * * TUE,WED" # Check for updates at 12:00 on Tuesday and Wednesday.
+    type: periodic
+    periodic:
+      # The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00
+      days: [Tuesdsay,Wednesday]
+      startTime: "13:00"
+      length: 2h
   # Optional. Specifies a created Plan object
   planSpec:
     commands:
@@ -410,7 +434,7 @@ spec:
 
 ### Q: How do I apply the `Plan` and `ControlNode` CRDs?
 
-A: These CRD definitions are embedded in the **autopilot** binary and applied on startup.
+A: These CRD definitions are embedded in the **k0s** binary and applied on startup.
 No additional action is needed.
 
 ### Q: How will `ControlNode` instances get removed?

@@ -1,0 +1,12 @@
+channel: latest
+version: v5.6.7
+downloadURLs:
+  - arch: amd64
+    os: linux
+    k0s: http://localhost/dist/k0s
+  - arch: arm64
+    os: linux
+    k0s: http://localhost/dist/k0s
+  - arch: arm
+    os: linux
+    k0s: http://localhost/dist/k0s

@@ -33,10 +33,13 @@ spec:
           spec:
             properties:
               channel:
+                default: stable
+                description: Channel defines the update channel to use for this update
+                  config
                 type: string
               planSpec:
-                description: AutopilotPlanSpec describes the behavior of the autopilot
-                  generated `Plan`
+                description: PlanSpec defines the plan spec to use for this update
+                  config
                 properties:
                   commands:
                     description: Commands are a collection of all of the commands
@@ -232,13 +235,36 @@ spec:
                 - commands
                 type: object
               updateServer:
+                default: https://updates.k0sproject.io
+                description: UpdateServer defines the update server to use for this
+                  update config
                 type: string
               upgradeStrategy:
+                description: UpdateStrategy defines the update strategy to use for
+                  this update config
                 properties:
                   cron:
+                    description: Cron defines the cron expression for the cron upgrade
+                      strategy
                     type: string
-                required:
-                - cron
+                  periodic:
+                    description: Periodic defines the periodic upgrade strategy
+                    properties:
+                      days:
+                        items:
+                          type: string
+                        type: array
+                      length:
+                        type: string
+                      startTime:
+                        type: string
+                    type: object
+                  type:
+                    description: Type defines the type of upgrade strategy
+                    enum:
+                    - periodic
+                    - cron
+                    type: string
                 type: object
             type: object
         required:
