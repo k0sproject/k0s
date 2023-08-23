@@ -107,6 +107,8 @@ const k0sConfigWithHairpinning = `
 spec:
   network:
     provider: kuberouter
+    kubeProxy:
+      nodePortAddresses: ["127.0.0.0/24", "127.0.1.0/24"]
 `
 
 const podManifest = `

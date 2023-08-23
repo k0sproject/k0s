@@ -144,6 +144,12 @@ func (k *KubeProxy) getConfig(clusterConfig *v1beta1.ClusterConfig) (proxyConfig
 		FeatureGates:         clusterConfig.Spec.FeatureGates.AsMap("kube-proxy"),
 	}
 
+	nodePortAddresses, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.NodePortAddresses)
+	if err != nil {
+		return proxyConfig{}, err
+	}
+	cfg.NodePortAddresses = string(nodePortAddresses)
+
 	iptables, err := json.Marshal(clusterConfig.Spec.Network.KubeProxy.IPTables)
 	if err != nil {
 		return proxyConfig{}, err
@@ -170,6 +176,7 @@ type proxyConfig struct {
 	IPTables             string
 	IPVS                 string
 	FeatureGates         map[string]bool
+	NodePortAddresses    string
 }
 
 const proxyTemplate = `
@@ -282,7 +289,7 @@ data:
     ipvs: {{ .IPVS }}
     kind: KubeProxyConfiguration
     metricsBindAddress: {{ .MetricsBindAddress }}
-    nodePortAddresses: null
+    nodePortAddresses: {{ .NodePortAddresses }}
     oomScoreAdj: null
     portRange: ""
     showHiddenMetricsForVersion: ""

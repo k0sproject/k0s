@@ -423,6 +423,10 @@ spec:
                         type: string
                       mode:
                         type: string
+                      nodePortAddresses:
+                        items:
+                          type: string
+                        type: array
                     type: object
                   kuberouter:
                     description: KubeRouter defines the kube-router related config
