@@ -109,8 +109,19 @@ func (a OCIBundleReconciler) unpackBundle(ctx context.Context, client *container
 	if err != nil {
 		return fmt.Errorf("can't import bundle: %v", err)
 	}
+	is := client.ImageService()
 	for _, i := range images {
 		a.log.Infof("Imported image %s", i.Name)
+		// Update labels for each image to include io.cri-containerd.pinned=pinned
+		fieldpaths := []string{"labels.io.cri-containerd.pinned"}
+		if i.Labels == nil {
+			i.Labels = make(map[string]string)
+		}
+		i.Labels["io.cri-containerd.pinned"] = "pinned"
+		_, err := is.Update(ctx, i, fieldpaths...)
+		if err != nil {
+			return fmt.Errorf("failed to add io.cri-containerd.pinned label for image %s: %w", i.Name, err)
+		}
 	}
 	return nil
 }
