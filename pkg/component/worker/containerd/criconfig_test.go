@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	srvconfig "github.com/containerd/containerd/services/server/config"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,39 @@ version = 2
 }
 
 func TestCRIConfigurer_HandleImports(t *testing.T) {
+	t.Run("should merge CRI configs", func(t *testing.T) {
+		tmp := t.TempDir()
+		testLoadPath := filepath.Join(tmp, "*.toml")
+		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
+		criRuntimeConfig := `
+[plugins]
+	[plugins."io.containerd.grpc.v1.cri".containerd]
+    	snapshotter = "zfs"
+`
+		err := os.WriteFile(filepath.Join(tmp, "foo.toml"), []byte(criRuntimeConfig), 0644)
+		require.NoError(t, err)
+		c := CRIConfigurer{
+			loadPath:       testLoadPath,
+			criRuntimePath: criRuntimePath,
+			log:            logrus.New().WithField("test", t.Name()),
+		}
+		_, err = c.HandleImports()
+		require.NoError(t, err)
+
+		// Dump the config for inspection
+		b, _ := os.ReadFile(criRuntimePath)
+		t.Logf("cri config:\n%s", string(b))
+
+		// Load the criRuntimeConfig and verify the settings are correct
+		containerdConfig := &srvconfig.Config{}
+		err = srvconfig.LoadConfig(criRuntimePath, containerdConfig)
+		require.NoError(t, err)
+
+		criConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
+		snapshotter := criConfig.GetPath([]string{"containerd", "snapshotter"})
+		require.Equal(t, "zfs", snapshotter)
+	})
+
 	t.Run("should have single import for CRI if there's nothing in imports dir", func(t *testing.T) {
 		testLoadPath := filepath.Join(t.TempDir(), "*.toml")
 		criRuntimePath := filepath.Join(t.TempDir(), "cri.toml")
@@ -74,6 +108,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		criRuntimeConfig := `
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+    endpoint = ["https://registry-1.docker.io"]
 `
 		err := os.WriteFile(filepath.Join(tmp, "foo.toml"), []byte(criRuntimeConfig), 0644)
 		require.NoError(t, err)
@@ -86,8 +121,15 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
 		require.Contains(t, imports, criRuntimePath)
-		criCfg := loadFile(t, criRuntimePath)
-		require.Contains(t, criCfg, criRuntimeConfig)
+
+		// Load the criRuntimeConfig and verify the settings are correct
+		containerdConfig := &srvconfig.Config{}
+		err = srvconfig.LoadConfig(criRuntimePath, containerdConfig)
+		require.NoError(t, err)
+
+		criConfig := containerdConfig.Plugins["io.containerd.grpc.v1.cri"]
+		ep := criConfig.GetPath([]string{"registry", "mirrors", "docker.io", "endpoint"})
+		require.Equal(t, []interface{}{"https://registry-1.docker.io"}, ep)
 	})
 
 	t.Run("should have two imports when one non CRI snippet", func(t *testing.T) {
@@ -112,12 +154,4 @@ version = 2
 		require.Contains(t, imports, criRuntimePath)
 		require.Contains(t, imports, nonCriConfigPath)
 	})
-}
-
-func loadFile(t *testing.T, path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(data)
 }
