@@ -68,18 +68,31 @@ func TestArgsFeatureGates(t *testing.T) {
 			Name:    "all_k8s_related_components",
 			Enabled: true,
 		}
+		v, found := enabledFeature.EnabledFor("component_a")
+		require.True(t, v, "Must be true for explicitly set component")
+		require.True(t, found, "Must be true for explicitly set component")
 
-		require.True(t, enabledFeature.EnabledFor("component_a"), "Must be true for explicitly set component")
-		require.False(t, enabledFeature.EnabledFor("component_b"), "Must be false for non set component")
+		v, found = enabledFeature.EnabledFor("component_b")
+		require.False(t, v, "Must be false for non set component")
+		require.False(t, found, "Must be false for non set component")
 
-		require.False(t, explicitlyDisabledFeature.EnabledFor("component_a"), "Disabled feature gate must always be false")
-		require.False(t, explicitlyDisabledFeature.EnabledFor("component_b"), "Disabled feature gate must always be false")
+		v, found = explicitlyDisabledFeature.EnabledFor("component_a")
+		require.False(t, v, "Disabled feature gate must always be false")
+		require.True(t, found, "Disabled feature gate must always be found")
+
+		v, found = explicitlyDisabledFeature.EnabledFor("component_b")
+		require.False(t, v, "Not enabled feature gate must always be false")
+		require.False(t, found, "Not enabled feature gate must always be not found")
 
 		for _, k8sComponent := range KubernetesComponents {
-			require.True(t, featureGateWithDefaultComponents.EnabledFor(k8sComponent))
+			v, found := featureGateWithDefaultComponents.EnabledFor(k8sComponent)
+			require.True(t, v, "Must be true for all k8s related components")
+			require.True(t, found, "Must be true for all k8s related components")
 		}
 
-		require.False(t, featureGateWithDefaultComponents.EnabledFor("something"))
+		v, found = featureGateWithDefaultComponents.EnabledFor("something")
+		require.False(t, v)
+		require.False(t, found)
 	})
 
 	t.Run("to_string", func(t *testing.T) {
@@ -96,7 +109,7 @@ func TestArgsFeatureGates(t *testing.T) {
 		}
 
 		require.Equal(t, "some_feature_gate=true", enabledFeature.String("component_a"))
-		require.Equal(t, "some_feature_gate=false", enabledFeature.String("component_b"))
+		require.Equal(t, "", enabledFeature.String("component_b"))
 		require.Equal(t, "another_feature_gate=false", explicitlyDisabledFeature.String("component_a"))
 
 	})

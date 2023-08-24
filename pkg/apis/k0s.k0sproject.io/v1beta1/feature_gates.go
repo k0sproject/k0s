@@ -66,7 +66,10 @@ func (fgs FeatureGates) BuildArgs(args stringmap.StringMap, component string) st
 func (fgs FeatureGates) AsMap(component string) map[string]bool {
 	componentFeatureGates := map[string]bool{}
 	for _, feature := range fgs {
-		componentFeatureGates[feature.Name] = feature.EnabledFor(component)
+		value, found := feature.EnabledFor(component)
+		if found {
+			componentFeatureGates[feature.Name] = value
+		}
 	}
 	return componentFeatureGates
 }
@@ -91,20 +94,21 @@ type FeatureGate struct {
 }
 
 // EnabledFor checks if current feature gate is enabled for a given component
-func (fg *FeatureGate) EnabledFor(component string) bool {
-	if !fg.Enabled {
-		return false
-	}
+func (fg *FeatureGate) EnabledFor(component string) (value bool, found bool) {
 	components := fg.Components
 	if len(components) == 0 {
 		components = KubernetesComponents
 	}
+
 	for _, c := range components {
 		if c == component {
-			return true
+			found = true
 		}
 	}
-	return false
+	if found {
+		value = fg.Enabled
+	}
+	return
 }
 
 // Validate given feature gate
@@ -117,5 +121,9 @@ func (fg *FeatureGate) Validate() error {
 
 // String represents feature gate as a string
 func (fg *FeatureGate) String(component string) string {
-	return fmt.Sprintf("%s=%t", fg.Name, fg.EnabledFor(component))
+	value, found := fg.EnabledFor(component)
+	if !found {
+		return ""
+	}
+	return fmt.Sprintf("%s=%t", fg.Name, value)
 }
