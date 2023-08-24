@@ -1,0 +1,73 @@
+# OS testing matrix. See ../../hack/ostests/README.md for details.
+
+name: "OS tests :: Matrix"
+
+on:
+  workflow_dispatch:
+    inputs:
+      k0s-version:
+        type: string
+        description: The k0s version to test. Will build k0s from source if empty.
+      e2e-concurrency-level:
+        type: number
+        description: The number of tests that may be run concurrently.
+        default: 2
+      e2e-focus:
+        type: string
+        description: The selector for the e2e tests to be run.
+        default: \[Conformance\]
+      oses:
+        type: string
+        description: The operating systems to test.
+        required: true
+        default: >-
+          [
+            "alpine_3_17",
+            "centos_7", "centos_8", "centos_9",
+            "debian_10", "debian_11", "debian_12",
+            "fcos_38",
+            "fedora_38",
+            "flatcar",
+            "oracle_7_9", "oracle_8_7", "oracle_9_1",
+            "rhel_7", "rhel_8", "rhel_9",
+            "rocky_8", "rocky_9",
+            "ubuntu_2004", "ubuntu_2204", "ubuntu_2304"
+          ]
+      network-providers:
+        type: string
+        description: The k0s network providers to test.
+        required: true
+        default: >-
+          [
+            "kuberouter",
+            "calico"
+          ]
+
+jobs:
+  build:
+    name: Build
+    if: inputs.k0s-version == ''
+    uses: ./.github/workflows/build-k0s.yml
+    with: { target-os: linux, target-arch: amd64 }
+
+  e2e-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event.inputs.oses) }}
+        network-provider: ${{ fromJSON(github.event.inputs.network-providers) }}
+
+    name: "${{ matrix.os }} :: ${{ matrix.network-provider }}"
+    needs: build
+    if: always() && (inputs.k0s-version != '' || needs.build.result == 'success')
+    uses: ./.github/workflows/ostests-e2e.yaml
+    with:
+      k0s-version: ${{ inputs.k0s-version }}
+      e2e-concurrency-level: ${{ fromJSON(inputs.e2e-concurrency-level) }} # infamous GH workflows bug that looses type information (actions/runner#2206)
+      e2e-focus: ${{ inputs.e2e-focus }}
+      os: ${{ matrix.os }}
+      network-provider: ${{ matrix.network-provider }}
+    secrets:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}

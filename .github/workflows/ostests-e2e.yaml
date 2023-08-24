@@ -1,0 +1,227 @@
+# OS e2e testing workflow. See ../../hack/ostests/README.md for details.
+
+name: "OS tests :: e2e"
+
+on:
+  workflow_call:
+    inputs:
+      k0s-version:
+        type: string
+        description: The k0s version to test. Will try to download a build artifact if empty.
+      e2e-concurrency-level:
+        type: number
+        description: The number of tests that may be run concurrently.
+        default: 2
+      e2e-focus:
+        type: string
+        description: The selector for the e2e tests to be run.
+        default: \[Conformance\]
+      os:
+        type: string
+        description: The operating system to test.
+        required: true
+      network-provider:
+        type: string
+        description: The k0s network provider to test.
+        required: true
+      terraform-version:
+        type: string
+        description: The Terraform version to use when provisioning test resources.
+        default: 1.4.6
+      k0sctl-version:
+        type: string
+        description: The k0sctl version to use when bootstrapping the test cluster.
+        default: 0.15.0 # k0sproject/k0sctl#495
+    secrets:
+      aws-access-key-id:
+        description: The AWS access key ID to use when provisioning test resources.
+        required: true
+      aws-secret-access-key:
+        description: The AWS secret access key to use when provisioning test resources.
+        required: true
+      aws-session-token:
+        description: The AWS session token to use when provisioning test resources.
+        required: true
+
+env:
+  # This is hopefully somewhat physically close to where the hosted GitHub runners live.
+  # https://github.com/orgs/community/discussions/24969#discussioncomment-3246032
+  AWS_REGION: us-east-1
+
+jobs:
+  e2e-tests:
+    name: e2e tests
+    runs-on: ubuntu-22.04
+
+    env:
+      E2E_FOCUS: ${{ inputs.e2e-focus }}
+      TF_VAR_os: ${{ inputs.os }}
+      TF_VAR_additional_tags: '{
+        "ostests.k0sproject.io/github-run-id"="${{ github.run_id }}",
+        "ostests.k0sproject.io/github-run-attempt"="${{ github.run_attempt }}",
+        }'
+      TF_VAR_cache_dir: ${{ github.workspace }}/.cache/k0s-ostests
+      TF_VAR_k0s_version: ${{ inputs.k0s-version }}
+      TF_VAR_k0sctl_executable_path: ${{ github.workspace }}/.cache/k0sctl
+      TF_VAR_k0s_network_provider: ${{ inputs.network-provider }}
+
+    defaults:
+      run:
+        working-directory: hack/ostests
+
+    steps:
+      - name: "Workflow run :: Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: "Workflow run :: Prepare"
+        working-directory: ./
+        run: |
+          kubernetesVersion="$(./vars.sh kubernetes_version)"
+          echo KUBERNETES_VERSION="$kubernetesVersion" >>"$GITHUB_ENV"
+
+      - name: "Terraform :: Requisites :: Download k0s"
+        if: inputs.k0s-version == ''
+        uses: actions/download-artifact@v3
+        with:
+          name: k0s-linux-amd64
+          path: ${{ github.workspace }}/.cache
+
+      - name: "Terraform :: Requisites :: Prepare"
+        env:
+          K0SCTL_VERSION: ${{ inputs.k0sctl-version }}
+          K0S_VERSION: ${{ inputs.k0s-version }}
+          K0S_EXECUTABLE_PATH: ${{ github.workspace }}/.cache/k0s
+        run: |
+          kubectl version --client
+          jq --version
+
+          mkdir -p "$(dirname -- "$TF_VAR_k0sctl_executable_path")"
+          curl -sSLo "$TF_VAR_k0sctl_executable_path" "https://github.com/k0sproject/k0sctl/releases/download/v${K0SCTL_VERSION}/k0sctl-linux-x64"
+          chmod +x -- "$TF_VAR_k0sctl_executable_path"
+          "$TF_VAR_k0sctl_executable_path" version
+
+          if [ -z "$K0S_VERSION" ]; then
+            chmod +x -- "$K0S_EXECUTABLE_PATH"
+            K0S_VERSION="$("$K0S_EXECUTABLE_PATH" version)"
+            echo TF_VAR_k0s_executable_path="$K0S_EXECUTABLE_PATH" >>"$GITHUB_ENV"
+          fi
+
+          echo TF_VAR_k0s_version="$K0S_VERSION" >>"$GITHUB_ENV"
+
+      - name: "Terraform :: Setup"
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+          terraform_wrapper: false
+
+      - name: "Terraform :: Init"
+        id: tf-init
+        run: terraform init
+
+      - name: "Terraform :: Apply"
+        id: tf-apply
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+          AWS_SESSION_TOKEN: ${{ secrets.aws-session-token }}
+        run: |
+          terraform apply -auto-approve
+
+          kubeconfigPath="$GITHUB_WORKSPACE/.cache/kubeconfig"
+          terraform output -raw k0s_kubeconfig >"$kubeconfigPath"
+          echo "KUBECONFIG=$kubeconfigPath" >>"$GITHUB_ENV"
+
+      # If concurrency is enabled, tests are executed in two phases. First, all
+      # the regular tests that can run in parallel are run with the given
+      # concurrency level. In a second step, all remaining tests that can't be
+      # run in parallel will be executed serially. This is the option B shown here:
+      # https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/conformance-tests.md#running-conformance-tests-with-kubetest
+
+      - name: "e2e tests :: Run parallel tests"
+        id: e2e-run-parallel
+        if: inputs.e2e-concurrency-level > 1
+        timeout-minutes: 180 # three hours
+        working-directory: inttest
+        env:
+          E2E_CONCURRENCY_LEVEL: ${{ inputs.e2e-concurrency-level }}
+        run: |
+          make bin/sonobuoy
+          bin/sonobuoy run -p e2e --wait=120 \
+            --kubernetes-version=v"$KUBERNETES_VERSION" \
+            --plugin-env=e2e.E2E_PARALLEL=true \
+            --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
+            --plugin-env=e2e.E2E_SKIP='\[Serial\]' \
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS="-v --timeout=90m --procs=$E2E_CONCURRENCY_LEVEL"
+
+      - name: "e2e tests :: Retrieve parallel results"
+        id: e2e-retrieve-parallel
+        if: steps.e2e-run-parallel.conclusion != 'skipped'
+        working-directory: inttest
+        run: |
+          sonobuoyTarGz="$(make --silent get-conformance-results)"
+          mv -- "$sonobuoyTarGz" sonobuoy-e2e-parallel.tar.gz
+
+      - name: "e2e tests :: Clear parallel run"
+        if: steps.e2e-run-parallel.conclusion != 'skipped'
+        timeout-minutes: 15
+        working-directory: inttest
+        run: |
+          bin/sonobuoy delete --all --wait=10
+          echo E2E_FOCUS='\[Serial\].*'"$E2E_FOCUS" >>"$GITHUB_ENV"
+
+      - name: "e2e tests :: Run serial tests"
+        working-directory: inttest
+        timeout-minutes: 180 # three hours
+        run: |
+          make bin/sonobuoy
+          bin/sonobuoy run -p e2e --wait=120 \
+            --kubernetes-version=v"$KUBERNETES_VERSION" \
+            --plugin-env=e2e.E2E_FOCUS="$E2E_FOCUS" \
+            --plugin-env=e2e.E2E_EXTRA_GINKGO_ARGS='-v --timeout=90m'
+
+      - name: "e2e tests :: Retrieve serial results"
+        id: e2e-retrieve-serial
+        working-directory: inttest
+        run: |
+          sonobuoyTarGz="$(make --silent get-conformance-results)"
+          mv -- "$sonobuoyTarGz" sonobuoy-e2e-serial.tar.gz
+
+      - name: "Terraform :: Destroy"
+        if: always() && steps.tf-init.conclusion == 'success'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
+          AWS_SESSION_TOKEN: ${{ secrets.aws-session-token }}
+        run: terraform destroy -auto-approve
+
+      - name: "e2e tests :: Upload results"
+        if: always() && (steps.e2e-retrieve-parallel.conclusion == 'success' || steps.e2e-retrieve-serial.conclusion == 'success')
+        uses: actions/upload-artifact@v3
+        with:
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-sonobuoy-results
+          path: |
+            inttest/sonobuoy-e2e-parallel.tar.gz
+            inttest/sonobuoy-e2e-serial.tar.gz
+
+      - name: "e2e tests :: Check"
+        working-directory: inttest
+        run: |
+          fail=0
+          for f in sonobuoy-e2e-*.tar.gz; do
+            echo "::group::$f"
+            bin/sonobuoy results "$f"
+            numNotPassedOrSkipped=$(bin/sonobuoy results "$f" -p=e2e --mode=detailed | jq --slurp '[.[] | select(.status != "passed" and .status != "skipped")] | length')
+            echo "Number of tests that didn't pass and weren't skipped: $numNotPassedOrSkipped"
+            echo ::endgroup::
+            [ "$numNotPassedOrSkipped" = 0 ] || fail=1
+          done
+          [ "$fail" = 0 ] || exit 1
+
+      - name: "e2e tests :: Upload k0sctl logs"
+        if: always() && steps.tf-init.conclusion == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ostests-e2e-${{ inputs.os }}-${{ inputs.network-provider }}-k0sctl-logs
+          path: ~/.cache/k0sctl/k0sctl.log

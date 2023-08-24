@@ -23,6 +23,13 @@ variable "cache_dir" {
   }
 }
 
+variable "additional_tags" {
+  type        = map(string)
+  description = "Additional tags to be added to resources and metrics."
+  default     = {}
+  nullable    = false
+}
+
 variable "os" {
   type        = string
   description = "The underlying OS for the to-be-provisioned cluster."
