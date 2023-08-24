@@ -25,6 +25,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s.k0sproject.io/v1beta1"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/mesosphere/toml-merge/pkg/patch"
 	"github.com/pelletier/go-toml"
 	"github.com/sirupsen/logrus"
 
@@ -75,6 +76,8 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	finalConfig := criConfigBuffer.String()
 	for _, file := range files {
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -86,13 +89,11 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 			return nil, err
 		}
 		if hasCRI {
-			c.log.Debugf("found CRI plugin config in %s, appending to CRI config", file)
-			// Append all CRI plugin configs into single file
-			// and add it to imports
-			criConfigBuffer.WriteString(fmt.Sprintf("# appended from %s\n", file))
-			_, err := criConfigBuffer.Write(data)
+			c.log.Infof("found CRI plugin config in %s, merging to CRI config", file)
+			// Merge to the existing CRI config
+			finalConfig, err = patch.TOMLString(finalConfig, patch.FilePatches(file))
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to merge CRI config from %s: %w", file, err)
 			}
 		} else {
 			c.log.Debugf("adding %s as-is to imports", file)
@@ -102,7 +103,7 @@ func (c *CRIConfigurer) HandleImports() ([]string, error) {
 	}
 
 	// Write the CRI config to a file and add it to imports
-	err = os.WriteFile(c.criRuntimePath, criConfigBuffer.Bytes(), 0644)
+	err = os.WriteFile(c.criRuntimePath, []byte(finalConfig), 0644)
 	if err != nil {
 		return nil, err
 	}
