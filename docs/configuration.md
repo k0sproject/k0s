@@ -232,12 +232,13 @@ CALICO_IPV6POOL_CIDR: "{{ spec.network.dualStack.IPv6podCIDR }}"
 
 #### `spec.network.kubeProxy`
 
-| Element    | Description                                                                                      |
-|------------|--------------------------------------------------------------------------------------------------|
-| `disabled` | Disable kube-proxy altogether (default: `false`).                                                |
-| `mode`     | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
-| `iptables` | Kube proxy iptables settings                                                                     |
-| `ipvs`     | Kube proxy ipvs settings                                                                         |
+| Element             | Description                                                                                      |
+|---------------------|--------------------------------------------------------------------------------------------------|
+| `disabled`          | Disable kube-proxy altogether (default: `false`).                                                |
+| `mode`              | Kube proxy operating mode, supported modes `iptables`, `ipvs`, `userspace` (default: `iptables`) |
+| `iptables`          | Kube proxy iptables settings                                                                     |
+| `ipvs`              | Kube proxy ipvs settings                                                                         |
+| `nodePortAddresses` | Kube proxy [nodePortAddresses](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/) |
 
 Default kube-proxy iptables settings:
 

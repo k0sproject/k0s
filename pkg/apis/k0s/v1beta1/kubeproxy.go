@@ -37,6 +37,7 @@ type KubeProxy struct {
 	MetricsBindAddress string                          `json:"metricsBindAddress,omitempty"`
 	IPTables           *KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
 	IPVS               *KubeProxyIPVSConfiguration     `json:"ipvs,omitempty"`
+	NodePortAddresses  []string                        `json:"nodePortAddresses,omitempty"`
 }
 
 // KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
