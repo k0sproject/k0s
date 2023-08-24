@@ -42,7 +42,7 @@ func (s *K0sSysinfoSpec) addHostSpecificProbes(p probes.Probes) {
 	linux.AssertAppArmor()
 
 	if s.WorkerRoleEnabled {
-		probes.AssertExecutablesInPath(linux, "modprobe")
+		probes.AssertExecutablesInPath(linux, "modprobe", "mount", "umount")
 		linux.RequireProcFS()
 		addCgroups(linux)
 	}

@@ -150,6 +150,14 @@ Optional cgroup controllers:
 [cgroup v1]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v1/
 [cgroup v2]: https://www.kernel.org/doc/html/v5.16/admin-guide/cgroup-v2.html
 
+### External hard dependencies
+
+There are very few external tools that are needed or used.
+
+#### mount/umount
+
+When setting up pods, kubelet will call `mount` binary on the host. Similarly when destroying pods it will call `umount`. `mount` and `umount` are only needed on worker nodes where kubelet runs.
+
 ### External soft dependencies
 
 There are a few external tools that may be needed or used under specific
