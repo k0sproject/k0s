@@ -90,7 +90,7 @@ spec:
       version: v0.5.2
     kubeproxy:
       image: registry.k8s.io/kube-proxy
-      version: v1.24.16
+      version: v1.24.17
     coredns:
       image: docker.io/coredns/coredns
       version: 1.7.4
