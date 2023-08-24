@@ -17,6 +17,7 @@ limitations under the License.
 package airgap
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -24,6 +25,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/inttest/common"
+	"github.com/k0sproject/k0s/pkg/airgap"
+	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 )
 
 const k0sConfig = `
@@ -105,6 +108,15 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 		}
 		s.Fail("Require all images be installed from bundle")
 	}
+	// Check that all the images have io.cri-containerd.pinned=pinned label
+	ssh, err := s.SSH(s.Context(), s.WorkerNode(0))
+	s.Require().NoError(err)
+	for _, i := range airgap.GetImageURIs(v1beta1.DefaultClusterSpec(), true) {
+		output, err := ssh.ExecWithOutput(s.Context(), fmt.Sprintf(`k0s ctr i ls "name==%s"`, i))
+		s.Require().NoError(err)
+		s.Require().Contains(output, "io.cri-containerd.pinned=pinned", "expected %s image to have io.cri-containerd.pinned=pinned label", i)
+	}
+
 }
 
 func TestAirgapSuite(t *testing.T) {
