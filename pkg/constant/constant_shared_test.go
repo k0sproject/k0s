@@ -33,7 +33,7 @@ import (
 
 func TestConstants(t *testing.T) {
 	for _, test := range []struct{ name, constant, varName string }{
-		{"KonnectivityImageVersion", "v" + KonnectivityImageVersion, "konnectivity"},
+		{"KonnectivityImageVersion", KonnectivityImageVersion, "konnectivity"},
 		{"KubeProxyImageVersion", KubeProxyImageVersion, "kubernetes"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
