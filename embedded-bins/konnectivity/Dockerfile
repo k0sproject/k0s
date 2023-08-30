@@ -4,7 +4,7 @@ FROM $BUILDIMAGE AS build
 RUN apk add build-base git make protoc
 
 ARG VERSION
-RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/k0sproject/apiserver-network-proxy.git /apiserver-network-proxy
+RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github.com/kubernetes-sigs/apiserver-network-proxy.git /apiserver-network-proxy
 WORKDIR /apiserver-network-proxy
 
 ARG TARGET_OS \

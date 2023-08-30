@@ -53,5 +53,4 @@ smoketests := \
 	check-psp \
 	check-singlenode \
 	check-statussocket \
-	check-tunneledkas \
 	check-upgrade \

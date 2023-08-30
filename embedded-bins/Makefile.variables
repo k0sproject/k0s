@@ -51,7 +51,7 @@ etcd_build_go_ldflags = "-w -s"
 #etcd_build_go_ldflags_extra =
 
 konnectivity_buildimage = $(golang_buildimage)
-konnectivity_version = 0.0.33-k0s.1
+konnectivity_version = 0.1.4
 #konnectivity_build_go_tags =
 konnectivity_build_go_cgo_enabled = 0
 #konnectivity_build_go_cgo_cflags =
