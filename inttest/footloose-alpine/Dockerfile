@@ -13,9 +13,16 @@ ARG HELM_VERSION
 # Apply our changes to the image
 COPY root/ /
 
-RUN apk add openrc openssh-server bash busybox-openrc coreutils curl haproxy nginx inotify-tools
+RUN apk add --no-cache \
+  alpine-base \
+  openssh-server \
+  bash \
+  coreutils \
+  curl \
+  haproxy \
+  nginx \
+  inotify-tools
 # enable syslog and sshd
-RUN rc-update add cgroups boot
 RUN rc-update add syslog boot
 RUN rc-update add machine-id boot
 RUN rc-update add sshd default
@@ -25,8 +32,6 @@ RUN rc-update add nginx default
 RUN rc-update add k0s-seed default
 # Prevent start-stop-daemon from hanging when max_fds is huge
 RUN sed -Ei -e 's/^[# ](rc_ulimit)=.*/\1="-n 1048576"/' /etc/rc.conf
-# remove -docker keyword so we actually mount cgroups in container
-RUN sed -i -e '/keyword/s/-docker//' /etc/init.d/cgroups
 # disable ttys
 RUN sed -i -e 's/^\(tty[0-9]\)/# \1/' /etc/inittab
 # enable root logins
