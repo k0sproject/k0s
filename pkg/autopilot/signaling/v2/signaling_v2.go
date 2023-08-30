@@ -39,7 +39,7 @@ var _ signaling.Validator = (*Signal)(nil)
 
 // Validate ensures that all of the `Signal` values adhere to validation requirements.
 func (e Signal) Validate() error {
-	validate := validator.New()
+	validate := validator.New(validator.WithRequiredStructEnabled())
 	return validate.Struct(e)
 }
 
@@ -67,7 +67,7 @@ var _ signaling.Validator = (*SignalData)(nil)
 
 // Validate ensures that all of the `SignalData` values adhere to validation requirements.
 func (s SignalData) Validate() error {
-	validate := validator.New()
+	validate := validator.New(validator.WithRequiredStructEnabled())
 	validate.RegisterStructValidation(validateCommand, Command{})
 
 	return validate.Struct(s)

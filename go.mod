@@ -20,7 +20,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-openapi/jsonpointer v0.20.0
-	github.com/go-playground/validator/v10 v10.15.1
+	github.com/go-playground/validator/v10 v10.15.2
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/imdario/mergo v0.3.16
