@@ -214,7 +214,7 @@ func (c *command) start(ctx context.Context) error {
 
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
 	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
-		(nodeConfig.Spec.API.ExternalAddress != "" || nodeConfig.Spec.API.TunneledNetworkingMode)
+		nodeConfig.Spec.API.ExternalAddress != ""
 
 	nodeComponents.Add(ctx, &controller.APIServer{
 		ClusterConfig:             nodeConfig,
@@ -384,14 +384,7 @@ func (c *command) start(ctx context.Context) error {
 		clusterComponents.Add(ctx, controller.NewCRD(manifestsSaver, []string{"autopilot"}))
 	}
 
-	if nodeConfig.Spec.API.TunneledNetworkingMode {
-		clusterComponents.Add(ctx, controller.NewTunneledEndpointReconciler(
-			leaderElector,
-			adminClientFactory,
-		))
-	}
-
-	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && nodeConfig.Spec.API.ExternalAddress != "" && !nodeConfig.Spec.API.TunneledNetworkingMode {
+	if !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) && nodeConfig.Spec.API.ExternalAddress != "" {
 		clusterComponents.Add(ctx, controller.NewEndpointReconciler(
 			nodeConfig,
 			leaderElector,

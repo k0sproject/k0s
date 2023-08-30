@@ -63,12 +63,11 @@ type resources = []*unstructured.Unstructured
 type Reconciler struct {
 	log logrus.FieldLogger
 
-	clusterDomain                  string
-	clusterDNSIP                   net.IP
-	apiServerReconciliationEnabled bool
-	clientFactory                  kubeutil.ClientFactoryInterface
-	leaderElector                  leaderelector.Interface
-	konnectivityEnabled            bool
+	clusterDomain       string
+	clusterDNSIP        net.IP
+	clientFactory       kubeutil.ClientFactoryInterface
+	leaderElector       leaderelector.Interface
+	konnectivityEnabled bool
 
 	mu    sync.Mutex
 	state reconcilerState
@@ -112,12 +111,11 @@ func NewReconciler(k0sVars *config.CfgVars, nodeSpec *v1beta1.ClusterSpec, clien
 	reconciler := &Reconciler{
 		log: log,
 
-		clusterDomain:                  nodeSpec.Network.ClusterDomain,
-		clusterDNSIP:                   clusterDNSIP,
-		apiServerReconciliationEnabled: !nodeSpec.API.TunneledNetworkingMode,
-		clientFactory:                  clientFactory,
-		leaderElector:                  leaderElector,
-		konnectivityEnabled:            konnectivityEnabled,
+		clusterDomain:       nodeSpec.Network.ClusterDomain,
+		clusterDNSIP:        clusterDNSIP,
+		clientFactory:       clientFactory,
+		leaderElector:       leaderElector,
+		konnectivityEnabled: konnectivityEnabled,
 
 		state: reconcilerCreated,
 	}
@@ -187,20 +185,16 @@ func (r *Reconciler) Start(context.Context) error {
 		r.runReconcileLoop(reconcilerCtx, updates, apply)
 	}()
 
-	// Reconcile API server addresses if enabled.
-	if r.apiServerReconciliationEnabled {
-		go func() {
-			wait.UntilWithContext(reconcilerCtx, func(ctx context.Context) {
-				err := r.reconcileAPIServers(ctx, updates, stopped)
-				// Log any reconciliation errors, but only if they don't
-				// indicate that the reconciler has been stopped concurrently.
-				if err != nil && !errors.Is(err, reconcilerCtx.Err()) && !errors.Is(err, errStoppedConcurrently) {
-					r.log.WithError(err).Error("Failed to reconcile API server addresses")
-				}
-			}, 10*time.Second)
-		}()
-	}
-
+	go func() {
+		wait.UntilWithContext(reconcilerCtx, func(ctx context.Context) {
+			err := r.reconcileAPIServers(ctx, updates, stopped)
+			// Log any reconciliation errors, but only if they don't
+			// indicate that the reconciler has been stopped concurrently.
+			if err != nil && !errors.Is(err, reconcilerCtx.Err()) && !errors.Is(err, errStoppedConcurrently) {
+				r.log.WithError(err).Error("Failed to reconcile API server addresses")
+			}
+		}, 10*time.Second)
+	}()
 	// React to leader elector changes. Enforce a reconciliation whenever the
 	// lease is acquired.
 	r.leaderElector.AddAcquiredLeaseCallback(func() {
@@ -261,7 +255,7 @@ func (r *Reconciler) runReconcileLoop(ctx context.Context, updates <-chan update
 			return nil
 		}
 
-		if desiredState.configSnapshot == nil || (r.apiServerReconciliationEnabled && len(desiredState.apiServers) < 1) {
+		if desiredState.configSnapshot == nil || len(desiredState.apiServers) < 1 {
 			r.log.Debug("Skipping reconciliation, snapshot not yet complete")
 			return nil
 		}

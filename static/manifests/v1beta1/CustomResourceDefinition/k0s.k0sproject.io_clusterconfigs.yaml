@@ -64,10 +64,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  tunneledNetworkingMode:
-                    description: TunneledNetworkingMode indicates if we access to
-                      KAS through konnectivity tunnel
-                    type: boolean
                 type: object
               controllerManager:
                 description: ControllerManagerSpec defines the fields for the ControllerManager

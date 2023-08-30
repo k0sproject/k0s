@@ -259,14 +259,6 @@ func (k *Konnectivity) writeKonnectivityAgent() error {
 		PullPolicy:      k.clusterConfig.Spec.Images.DefaultPullPolicy,
 	}
 
-	if k.NodeConfig.Spec.API.TunneledNetworkingMode {
-		cfg.HostNetwork = true
-		cfg.BindToNodeIP = true // agent needs to listen on the node IP to be on pair with the tunneled network reconciler
-		cfg.APIServerPortMapping = fmt.Sprintf("6443:localhost:%d", k.clusterConfig.Spec.API.Port)
-	} else {
-		cfg.FeatureGates = "NodeToMasterTraffic=false"
-	}
-
 	if k.clusterConfig.Spec.Network != nil {
 		nllb := k.clusterConfig.Spec.Network.NodeLocalLoadBalancing
 		if nllb.IsEnabled() {
