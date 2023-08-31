@@ -11,4 +11,5 @@ rc-update add cgroups boot
 
 # k0sctl currently doesn't support BusyBox/doas properly.
 apk add coreutils sudo && apk del doas
+apk add bash # Remove after https://github.com/k0sproject/rig/pull/94
 echo 'alpine ALL=(ALL:ALL) NOPASSWD: ALL' >/etc/sudoers.d/alpine-all-access
