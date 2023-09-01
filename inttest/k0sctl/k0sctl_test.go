@@ -24,18 +24,20 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/exp/slices"
 	"sigs.k8s.io/yaml"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
-const k0sctlVersion = "v0.13.0"
+const k0sctlVersion = "v0.15.5"
 
 type K0sctlSuite struct {
 	common.FootlooseSuite
@@ -121,6 +123,7 @@ func (s *K0sctlSuite) k0sctlInitConfig() map[string]interface{} {
 	if err != nil {
 		s.FailNow("ssh connection failed", "%s", err)
 	}
+	ssh.Disconnect()
 	args := []string{"init", "--controller-count", fmt.Sprintf("%d", s.ControllerCount), "--key-path", ssh.KeyPath, "--user", ssh.User}
 	args = append(args, addresses...)
 	cmd := exec.Command("./k0sctl", args...)
@@ -139,9 +142,10 @@ func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) {
 	plain, err := yaml.Marshal(cfg)
 	s.Require().NoError(err)
 
+	cacheHome := s.T().TempDir()
 	s.T().Logf("Applying k0sctl config:\n%s", plain)
 	cmd := exec.Command("./k0sctl", "apply", "--config", "-")
-	cmd.Env = s.k0sctlEnv
+	cmd.Env = append(slices.Clone(s.k0sctlEnv), fmt.Sprintf("XDG_CACHE_HOME=%s", cacheHome))
 	cmd.Stdin = bytes.NewReader(plain)
 
 	stdout, err := cmd.StdoutPipe()
@@ -173,7 +177,12 @@ func (s *K0sctlSuite) k0sctlApply(cfg map[string]interface{}) {
 
 	err = cmd.Wait()
 	wg.Wait()
-	s.Require().NoError(err)
+	log, logErr := os.ReadFile(filepath.Join(cacheHome, "k0sctl", "k0sctl.log"))
+	if !s.NoError(logErr) {
+		log = []byte{}
+	}
+
+	s.Require().NoError(err, string(log))
 }
 
 func (s *K0sctlSuite) TestK0sGetsUp() {

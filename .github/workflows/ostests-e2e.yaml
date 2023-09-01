@@ -31,7 +31,7 @@ on:
       k0sctl-version:
         type: string
         description: The k0sctl version to use when bootstrapping the test cluster.
-        default: 0.15.0 # k0sproject/k0sctl#495
+        default: 0.15.5
     secrets:
       aws-access-key-id:
         description: The AWS access key ID to use when provisioning test resources.
