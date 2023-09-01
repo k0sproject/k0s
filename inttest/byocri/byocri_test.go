@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/footloose/pkg/config"
 	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/config"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )

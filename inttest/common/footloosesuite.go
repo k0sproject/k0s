@@ -57,10 +57,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/k0sproject/footloose/pkg/cluster"
+	"github.com/k0sproject/footloose/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/cluster"
-	"github.com/weaveworks/footloose/pkg/config"
 	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 )

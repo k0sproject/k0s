@@ -25,6 +25,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/imdario/mergo v0.3.16
 	github.com/k0sproject/dig v0.2.0
+	github.com/k0sproject/footloose v0.0.0-20230901093652-f8f73123bbf6
 	github.com/kardianos/service v1.2.2
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mesosphere/toml-merge v0.2.0
@@ -43,7 +44,6 @@ require (
 	github.com/urfave/cli v1.22.14
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.56.17
-	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v1.0.1
 	go.etcd.io/etcd/api/v3 v3.5.9
 	go.etcd.io/etcd/client/pkg/v3 v3.5.9
@@ -122,7 +122,7 @@ require (
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
 	github.com/docker/cli v23.0.5+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v23.0.5+incompatible // indirect
+	github.com/docker/docker v24.0.5+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.1-0.20190612165340-fd1b1942c4d5 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
@@ -289,8 +289,7 @@ require (
 
 // Replacements specific to k0s
 replace (
-	// https://github.com/weaveworks/footloose/pull/272
-	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
+	github.com/docker/docker => github.com/docker/docker v23.0.5+incompatible
 
 	// containerd 1.7.0 updated to go.opentelemetry.io/otel/metric v0.37.0,
 	// which includes https://github.com/open-telemetry/opentelemetry-go/pull/3631.
