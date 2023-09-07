@@ -1917,9 +1917,6 @@ following:</p>
 <li>The cluster doesn't use an externally managed load balancer, i.e. the cluster
   configuration doesn't specify a non-empty
   <a href="../configuration/#specapi"><code>spec.api.externalAddress</code></a>.</li>
-<li>The cluster doesn't use tunneled networking mode, i.e. the cluster
-  configuration doesn't specify <a href="../configuration/#specapi"><code>spec.api.tunneledNetworkingMode</code></a> as
-  <code>true</code>.</li>
 <li>K0s isn't running as a <a href="../k0s-single-node/">single node</a>, i.e. it isn't
   started using the <code>--single</code> flag.</li>
 <li>The cluster should have multiple controller nodes. Node-local load balancing
