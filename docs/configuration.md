@@ -57,7 +57,6 @@ spec:
     port: 6443
     sans:
     - 192.168.68.104
-    tunneledNetworkingMode: false
   controllerManager: {}
   extensions:
     helm:
@@ -135,7 +134,6 @@ spec:
 | `extraArgs`              | Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process.                                                                                                                          |
 | `port`¹                  | Custom port for kube-api server to listen on (default: 6443)                                                                                                                                                                |
 | `k0sApiPort`¹            | Custom port for k0s-api server to listen on (default: 9443)                                                                                                                                                                 |
-| `tunneledNetworkingMode` | Whether to tunnel Kubernetes access from worker nodes via local port forwarding. (default: `false`)                                                                                                                         |
 
 ¹ If `port` and `k0sApiPort` are used with the `externalAddress` element, the loadbalancer serving at `externalAddress` must listen on the same ports.
 

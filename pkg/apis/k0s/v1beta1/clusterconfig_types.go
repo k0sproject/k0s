@@ -345,10 +345,6 @@ func (s *ClusterSpec) ValidateNodeLocalLoadBalancing() (errs field.ErrorList) {
 	}
 
 	path := field.NewPath("network", "nodeLocalLoadBalancing", "enabled")
-	if s.API.TunneledNetworkingMode {
-		detail := "node-local load balancing cannot be used in tunneled networking mode"
-		errs = append(errs, field.Forbidden(path, detail))
-	}
 
 	if s.API.ExternalAddress != "" {
 		detail := "node-local load balancing cannot be used in conjunction with an external Kubernetes API server address"

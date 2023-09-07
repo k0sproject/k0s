@@ -37,8 +37,6 @@ type APISpec struct {
 
 	// The loadbalancer address (for k0s controllers running behind a loadbalancer)
 	ExternalAddress string `json:"externalAddress,omitempty"`
-	// TunneledNetworkingMode indicates if we access to KAS through konnectivity tunnel
-	TunneledNetworkingMode bool `json:"tunneledNetworkingMode"`
 	// Map of key-values (strings) for any extra arguments to pass down to Kubernetes api-server process
 	ExtraArgs map[string]string `json:"extraArgs,omitempty"`
 	// Custom port for k0s-api server to listen on (default: 9443)
@@ -59,12 +57,11 @@ func DefaultAPISpec() *APISpec {
 	addresses, _ := iface.AllAddresses()
 	publicAddress, _ := iface.FirstPublicAddress()
 	return &APISpec{
-		Port:                   defaultKasPort,
-		K0sAPIPort:             9443,
-		SANs:                   addresses,
-		Address:                publicAddress,
-		ExtraArgs:              make(map[string]string),
-		TunneledNetworkingMode: false,
+		Port:       defaultKasPort,
+		K0sAPIPort: 9443,
+		SANs:       addresses,
+		Address:    publicAddress,
+		ExtraArgs:  make(map[string]string),
 	}
 }
 
@@ -141,9 +138,6 @@ func (a *APISpec) Validate() []error {
 
 	if a.ExternalAddress != "" {
 		validateIPAddressOrDNSName(field.NewPath("externalAddress"), a.ExternalAddress)
-	}
-	if a.TunneledNetworkingMode && a.Port == defaultKasPort {
-		errors = append(errors, fmt.Errorf("can't use default kubeapi port if TunneledNetworkingMode is enabled"))
 	}
 	return errors
 }

@@ -37,9 +37,6 @@ following:
 * The cluster doesn't use an externally managed load balancer, i.e. the cluster
   configuration doesn't specify a non-empty
   [`spec.api.externalAddress`][specapi].
-* The cluster doesn't use tunneled networking mode, i.e. the cluster
-  configuration doesn't specify [`spec.api.tunneledNetworkingMode`][specapi] as
-  `true`.
 * K0s isn't running as a [single node](../k0s-single-node/), i.e. it isn't
   started using the `--single` flag.
 * The cluster should have multiple controller nodes. Node-local load balancing
