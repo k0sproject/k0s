@@ -61,3 +61,11 @@ konnectivity_build_go_ldflags_extra = "-extldflags=-static"
 
 iptables_version = 1.8.7
 iptables_buildimage = docker.io/library/alpine:$(alpine_patch_version)
+
+clean-iid-files = \
+	for i in $(IID_FILES); do \
+	  [ -f "$$i" ] || continue; \
+	  tags=$$(docker inspect --format='{{range $$i,$$tag := .RepoTags}}{{if $$i}} {{end}}{{$$tag}}{{end}}' -- "$$(cat -- "$$i")") && \
+	  [ -z "$$tags" ] || docker rmi -f -- $$tags; \
+	  rm -f -- "$$i"; \
+	done
