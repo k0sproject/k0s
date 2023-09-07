@@ -14,7 +14,7 @@ list_k0s_releases() {
 }
 
 k0s_sort() {
-  go run github.com/k0sproject/version/cmd/k0s_sort@v0.2.2
+  go run github.com/k0sproject/version/cmd/k0s_sort@v0.4.1
 }
 
 latest_release() {
