@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -39,6 +40,22 @@ type networkSuite struct {
 }
 
 func (s *networkSuite) TestK0sGetsUp() {
+	timer := time.NewTicker(10 * time.Second)
+	defer timer.Stop()
+	go func() {
+		for range timer.C {
+
+			// dump out disk space
+			output, err := exec.Command("df", "-h").CombinedOutput()
+			if err != nil {
+				s.T().Logf("failed to get disk usage: %s", err.Error())
+			} else {
+				s.T().Logf("Disk usage:\n%s", string(output))
+			}
+
+		}
+	}()
+
 	// Which cni to test: kuberouter, calico. Default: kuberouter
 	cni := os.Getenv("K0S_NETWORK_CONFORMANCE_CNI")
 	if cni == "" {
