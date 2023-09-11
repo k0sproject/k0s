@@ -76,7 +76,7 @@ cli:
 	ln -s k0s.md cli/README.md
 
 .docker-image.serve-dev.stamp: Dockerfile.serve-dev requirements_pip.txt requirements.txt Makefile.variables ../embedded-bins/Makefile.variables
-	docker build \
+	docker build --progress=plain \
 	  --build-arg PYTHON_IMAGE_VERSION=$(python_version)-alpine$(alpine_version) \
 	  -t 'k0sdocs$(basename $@)' -f '$<' .
 	touch -- '$@'

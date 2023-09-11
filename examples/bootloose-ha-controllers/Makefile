@@ -5,7 +5,7 @@ build:
 
 .PHONY: create-cluster
 create-cluster: build
-	docker build -t k0s-bootloose .
+	docker build --progress=plain -t k0s-bootloose .
 	envsubst < bootloose.yaml.tpl > bootloose.yaml
 	bootloose create
 
