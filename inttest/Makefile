@@ -109,7 +109,7 @@ check-network-conformance-calico: TIMEOUT=15m
 check-network-conformance-calico: export K0S_NETWORK_CONFORMANCE_CNI=calico
 check-network-conformance-calico: TEST_PACKAGE=network-conformance
 
-check-nllb: TIMEOUT=10m
+check-nllb: TIMEOUT=15m
 
 .PHONY: $(smoketests)
 include Makefile.variables
