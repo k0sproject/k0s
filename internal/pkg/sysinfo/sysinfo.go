@@ -19,6 +19,7 @@ package sysinfo
 import (
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo/probes"
@@ -73,6 +74,7 @@ func (s *K0sSysinfoSpec) NewSysinfoProbes() probes.Probes {
 		minFreeDiskSpace = minFreeDiskSpace + 1300*probes.Mi
 	}
 	probes.AssertFreeDiskSpace(p, s.DataDir, minFreeDiskSpace)
+	probes.RequireNameResolution(p, net.LookupIP, "localhost")
 
 	s.addHostSpecificProbes(p)
 
