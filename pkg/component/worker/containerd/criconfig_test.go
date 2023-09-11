@@ -27,6 +27,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testImportsPath = "/etc/k0s/containerd.d/"
+
 func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
 	t.Run("should return true if config has cri plugin configs", func(t *testing.T) {
 		cfg := `
@@ -34,7 +36,7 @@ func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
     endpoint = ["https://registry-1.docker.io"]
 `
-		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause)
+		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause, testImportsPath)
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.True(t, hasCRIPluginConfig)
@@ -45,7 +47,7 @@ func TestCRIConfigurer_hasCRIPluginConfig(t *testing.T) {
 timeout = 3
 version = 2
 `
-		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause)
+		c := NewConfigurer(&v1beta1.DefaultClusterImages().Pause, testImportsPath)
 		hasCRIPluginConfig, err := c.hasCRIPluginConfig([]byte(cfg))
 		require.NoError(t, err)
 		require.False(t, hasCRIPluginConfig)
@@ -98,7 +100,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
-		require.Equal(t, criRuntimePath, imports[0])
+		require.Equal(t, escapedPath(criRuntimePath), imports[0])
 	})
 
 	t.Run("should have single import for all CRI configs", func(t *testing.T) {
@@ -120,7 +122,7 @@ func TestCRIConfigurer_HandleImports(t *testing.T) {
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 1)
-		require.Contains(t, imports, criRuntimePath)
+		require.Contains(t, imports, escapedPath(criRuntimePath))
 
 		// Load the criRuntimeConfig and verify the settings are correct
 		containerdConfig := &srvconfig.Config{}
@@ -151,7 +153,7 @@ version = 2
 		imports, err := c.HandleImports()
 		require.NoError(t, err)
 		require.Len(t, imports, 2)
-		require.Contains(t, imports, criRuntimePath)
-		require.Contains(t, imports, nonCriConfigPath)
+		require.Contains(t, imports, escapedPath(criRuntimePath))
+		require.Contains(t, imports, escapedPath(nonCriConfigPath))
 	})
 }

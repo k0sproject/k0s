@@ -24,16 +24,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
-	"time"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/token"
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/Microsoft/hcsshim"
-	"github.com/avast/retry-go"
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/sirupsen/logrus"
 )
@@ -122,47 +118,6 @@ func (c CalicoInstaller) Start(_ context.Context) error {
 
 func (c CalicoInstaller) Stop() error {
 	return nil
-}
-
-// PowerShell struct
-type PowerShell struct {
-	powerShell string
-}
-
-// New create new session
-func NewPowershell() *PowerShell {
-	ps, _ := exec.LookPath("powershell.exe")
-	return &PowerShell{
-		powerShell: ps,
-	}
-}
-
-func (p *PowerShell) execute(args ...string) error {
-	args = append([]string{"-NoProfile", "-NonInteractive"}, args...)
-	cmd := exec.Command(p.powerShell, args...)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
-}
-
-func getSourceVip() (string, error) {
-	var vip string
-
-	err := retry.Do(func() error {
-		ep, err := hcsshim.GetHNSEndpointByName("Calico_ep")
-		if err != nil {
-			logrus.WithError(err).Warn("can't get Calico_ep endpoint")
-			return err
-		}
-		vip = ep.IPAddress.String()
-		return nil
-	}, retry.Delay(time.Second*5))
-	if err != nil {
-		return "", err
-	}
-	return vip, nil
 }
 
 // installCalicoPowershell is port of the original calico installer
