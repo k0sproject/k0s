@@ -1,12 +1,14 @@
 ARG BUILDIMAGE
 FROM $BUILDIMAGE AS build
 
-RUN apk add build-base git file curl \
-	linux-headers pkgconf bison flex libmnl-dev libmnl-static libnftnl-dev
+RUN apk add build-base curl pkgconf \
+	linux-headers \
+	libmnl-dev libmnl-static \
+	libnftnl-dev
 
 ARG VERSION
-RUN curl -L https://www.netfilter.org/projects/iptables/files/iptables-$VERSION.tar.bz2 \
-	| tar -C / -jx
+RUN curl -L https://www.netfilter.org/projects/iptables/files/iptables-$VERSION.tar.xz \
+	| tar -C / -Jx
 
 ARG TARGET_OS
 RUN cd /iptables-$VERSION && \
