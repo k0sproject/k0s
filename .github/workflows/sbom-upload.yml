@@ -1,0 +1,36 @@
+name: SBOM upload
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  sbom-upload:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate SBOM
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          mkdir -p sbom && chmod 777 sbom
+          echo $COSIGN_KEY | base64 -d > cosign.key
+          make sign-sbom
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom/
+
+      - name: SBOM upload
+        uses: advanced-security/spdx-dependency-submission-action@v0.0.1
+        with:
+          filePath: sbom/spdx.json

@@ -220,7 +220,7 @@ lint-go: .k0sbuild.docker-image.k0s go.sum codegen
 .PHONY: lint
 lint: lint-copyright lint-go
 
-airgap-images.txt: k0s .k0sbuild.docker-image.k0s 
+airgap-images.txt: k0s .k0sbuild.docker-image.k0s
 	$(GO_ENV) ./k0s airgap list-images --all > '$@'
 
 airgap-image-bundle-linux-amd64.tar: TARGET_PLATFORM := linux/amd64
@@ -274,7 +274,7 @@ clean-airgap-image-bundles:
 .PHONY: clean
 clean: clean-gocache clean-docker-image clean-airgap-image-bundles
 	-rm -f pkg/assets/zz_generated_offsets_*.go k0s k0s.exe .bins.*stamp bindata* static/zz_generated_assets.go
-	-rm -rf $(K0S_GO_BUILD_CACHE) 
+	-rm -rf $(K0S_GO_BUILD_CACHE)
 	-find pkg/apis -type f \( -name .client-gen.stamp -or -name .controller-gen.stamp \) -delete
 	-rm -f hack/.copyright.stamp
 	-$(MAKE) -C docs clean
@@ -293,3 +293,22 @@ docs-serve-dev:
 	  -v "$(CURDIR):/k0s:ro" \
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev
+
+spdx/spdx.json:
+	docker run --rm \
+	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
+	  -v "$(CURDIR)/sbom:/out" \
+	  anchore/syft:v0.90.0 \
+	  /k0s -o spdx-json@2.2=/out/spdx.json
+
+.PHONY: sign-sbom
+sign-sbom: spdx/spdx.json
+	docker run --rm \
+	  -v "$(CURDIR):/k0s" \
+	  -v "$(CURDIR)/sbom:/out" \
+	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
+	  gcr.io/projectsigstore/cosign:v2.2.0 \
+	  sign-blob \
+	  --key /k0s/cosign.key \
+	  --tlog-upload=false \
+	  /k0s/sbom/spdx.json --output-file /out/spdx.json.sig
