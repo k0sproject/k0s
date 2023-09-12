@@ -26,6 +26,7 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/cloud-provider/app"
 	"k8s.io/cloud-provider/app/config"
+	"k8s.io/cloud-provider/names"
 	"k8s.io/cloud-provider/options"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +84,7 @@ func NewCommand(c Config) (Command, error) {
 
 	// K0s only supports the cloud-node controller, so only use that.
 	initFuncConstructors := make(map[string]app.ControllerInitFuncConstructor)
-	for _, name := range []string{"cloud-node"} {
+	for _, name := range []string{names.CloudNodeController} {
 		var ok bool
 		initFuncConstructors[name], ok = app.DefaultInitFuncConstructors[name]
 		if !ok {
@@ -94,7 +95,8 @@ func NewCommand(c Config) (Command, error) {
 	additionalFlags := cliflag.NamedFlagSets{}
 
 	return func(stopCh <-chan struct{}) {
-		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, initFuncConstructors, additionalFlags, stopCh)
+		controllerAliases := names.CCMControllerAliases()
+		command := app.NewCloudControllerManagerCommand(ccmo, cloudInitializer, initFuncConstructors, controllerAliases, additionalFlags, stopCh)
 
 		// Override the commands arguments to avoid it by default using `os.Args[]`
 		command.SetArgs([]string{})
