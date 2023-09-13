@@ -64,6 +64,7 @@ $(addprefix $(bindir)/, $(bins)): | $(bindir)
 	docker export $$(cat $<) | tar -C $(dir $(bindir)) -xv bin/$(notdir $@) && touch $@
 
 build_docker_container = \
+	rm -f -- '$@'; \
 	docker create --cidfile='$@' --entrypoint=/dev/null '$(shell cat -- $<)'
 
 .container.%: .docker-image.%.stamp
