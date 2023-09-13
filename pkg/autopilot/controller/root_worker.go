@@ -30,6 +30,8 @@ import (
 	k8sretry "k8s.io/client-go/util/retry"
 	cr "sigs.k8s.io/controller-runtime"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
+	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
@@ -58,8 +60,12 @@ func (w *rootWorker) Run(ctx context.Context) error {
 	logger := w.log
 
 	managerOpts := crman.Options{
-		Port:                   w.cfg.ManagerPort,
-		MetricsBindAddress:     w.cfg.MetricsBindAddr,
+		WebhookServer: crwebhook.NewServer(crwebhook.Options{
+			Port: w.cfg.ManagerPort,
+		}),
+		Metrics: crmetricsserver.Options{
+			BindAddress: w.cfg.MetricsBindAddr,
+		},
 		HealthProbeBindAddress: w.cfg.HealthProbeBindAddr,
 	}
 
