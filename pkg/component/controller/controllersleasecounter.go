@@ -24,8 +24,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/leaderelection"
-
-	nodeutil "k8s.io/component-helpers/node/util"
+	"github.com/k0sproject/k0s/pkg/node"
 
 	"github.com/sirupsen/logrus"
 )
@@ -58,7 +57,7 @@ func (l *K0sControllersLeaseCounter) Start(ctx context.Context) error {
 
 	// hostname used to make the lease names be clear to which controller they belong to
 	// follow kubelet convention for naming so we e.g. use lowercase hostname etc.
-	holderIdentity, err := nodeutil.GetHostname("")
+	holderIdentity, err := node.GetNodename("")
 	if err != nil {
 		return nil
 	}

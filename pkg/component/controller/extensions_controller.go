@@ -340,7 +340,7 @@ func (ec *ExtensionsController) Init(_ context.Context) error {
 	return nil
 }
 
-// Run
+// Start
 func (ec *ExtensionsController) Start(ctx context.Context) error {
 	clientConfig, err := clientcmd.BuildConfigFromFlags("", ec.kubeConfig)
 	if err != nil {

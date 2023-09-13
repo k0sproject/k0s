@@ -75,9 +75,9 @@ type ContainerD struct {
 	K0sVars       *config.CfgVars
 	Profile       *workerconfig.Profile
 	binaries      []string
+	OCIBundlePath string
 	confPath      string
 	importsPath   string
-	OCIBundlePath string
 }
 
 func NewContainerd(logLevel string, vars *config.CfgVars, profile *workerconfig.Profile) *ContainerD {

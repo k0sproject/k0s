@@ -20,9 +20,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -38,6 +36,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/manager"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/node"
 	"github.com/k0sproject/k0s/pkg/supervisor"
 
 	corev1 "k8s.io/api/core/v1"
@@ -172,7 +171,7 @@ func (k *Kubelet) Start(ctx context.Context) error {
 	}
 
 	if runtime.GOOS == "windows" {
-		node, err := getNodeName(ctx)
+		node, err := node.GetNodename("")
 		if err != nil {
 			return fmt.Errorf("can't get hostname: %v", err)
 		}
@@ -271,26 +270,6 @@ func (k *Kubelet) prepareLocalKubeletConfig(kubeletConfigData kubeletConfig) (st
 		return "", fmt.Errorf("can't marshal kubelet config: %v", err)
 	}
 	return string(preparedConfigBytes), nil
-}
-
-const awsMetaInformationURI = "http://169.254.169.254/latest/meta-data/local-hostname"
-
-func getNodeName(ctx context.Context) (string, error) {
-	req, err := http.NewRequest("GET", awsMetaInformationURI, nil)
-	if err != nil {
-		return "", err
-	}
-	req = req.WithContext(ctx)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return os.Hostname()
-	}
-	defer resp.Body.Close()
-	h, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("can't read aws hostname: %v", err)
-	}
-	return string(h), nil
 }
 
 func parseTaint(st string) (corev1.Taint, error) {

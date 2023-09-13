@@ -46,10 +46,8 @@ func (p *PowerShell) execute(args ...string) error {
 	}
 	args = append([]string{"-NoProfile", "-NonInteractive"}, args...)
 	cmd := exec.Command(p.powerShell, args...)
-
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
@@ -74,5 +72,7 @@ func getSourceVip() (string, error) {
 
 func winExecute(args ...string) error {
 	ps := NewPowershell()
-	return ps.execute(args...)
+
+	r := ps.execute(args...)
+	return r
 }

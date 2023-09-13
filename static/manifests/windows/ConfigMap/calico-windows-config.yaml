@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: calico-windows-config
+  namespace: kube-system
+data:
+  CALICO_NETWORKING_BACKEND: "{{ .Mode }}"
+  # The Kubernetes API server host and port. This is required to
+  # bootstrap Calico for Windows.
+  KUBERNETES_SERVICE_HOST: "{{ .KubeAPIHost }}" 
+  KUBERNETES_SERVICE_PORT: "{{ .KubeAPIPort }}" 
+  # The Kubernetes service clusterIP range configured in your cluster.
+  # This must match the service-cluster-ip-range used by kube-apiserver.
+  K8S_SERVICE_CIDR: "{{ .IPv4ServiceCIDR }}" 
+  # The DNS nameservers that will be used in the CNI configuration.
+  DNS_NAME_SERVERS: "{{ .Nameserver }}" 
+  # The CNI bin dir. This must match the containerd configuration on the Windows nodes.
+  CNI_BIN_DIR:  "{{ .CNIBin }}"
+  # The CNI conf dir. This must match the containerd configuration on the Windows nodes.
+  CNI_CONF_DIR: "{{ .CNIConf }}" 
+  FELIX_HEALTHENABLED: "true"

@@ -166,23 +166,6 @@ func (c *Command) Start(ctx context.Context) error {
 		IPTablesMode:        c.WorkerOptions.IPTablesMode,
 	})
 
-	if runtime.GOOS == "windows" {
-		if c.TokenArg == "" {
-			return fmt.Errorf("no join-token given, which is required for windows bootstrap")
-		}
-		componentManager.Add(ctx, &worker.KubeProxy{
-			K0sVars:   c.K0sVars,
-			LogLevel:  c.Logging["kube-proxy"],
-			CIDRRange: c.CIDRRange,
-		})
-		componentManager.Add(ctx, &worker.CalicoInstaller{
-			Token:      c.TokenArg,
-			APIAddress: c.APIServer,
-			CIDRRange:  c.CIDRRange,
-			ClusterDNS: c.ClusterDNS,
-		})
-	}
-
 	certManager := worker.NewCertificateManager(ctx, kubeletKubeconfigPath)
 
 	// if running inside a controller, status component is already running

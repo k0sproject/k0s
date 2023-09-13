@@ -65,7 +65,6 @@ type calicoConfig struct {
 	ClusterCIDRIPv4      string
 	ClusterCIDRIPv6      string
 	EnableWireguard      bool
-	WithWindowsNodes     bool
 	FlexVolumeDriverPath string
 	DualStack            bool
 	EnvVars              map[string]string
@@ -164,7 +163,7 @@ func (c *Calico) processConfigChanges(newConfig calicoConfig) error {
 			output := bytes.NewBuffer([]byte{})
 			contents, err := static.Asset(fmt.Sprintf("manifests/calico/%s/%s", dir, filename))
 			if err != nil {
-				return fmt.Errorf("failed to unpack manifest %s: %w", filename, err)
+				return fmt.Errorf("can't find manifest %s: %w", manifestName, err)
 			}
 
 			tw := templatewriter.TemplateWriter{
@@ -199,7 +198,6 @@ func (c *Calico) getConfig(clusterConfig *v1beta1.ClusterConfig) (calicoConfig, 
 		CalicoCNIImage:             clusterConfig.Spec.Images.Calico.CNI.URI(),
 		CalicoNodeImage:            clusterConfig.Spec.Images.Calico.Node.URI(),
 		CalicoKubeControllersImage: clusterConfig.Spec.Images.Calico.KubeControllers.URI(),
-		WithWindowsNodes:           clusterConfig.Spec.Network.Calico.WithWindowsNodes,
 		Overlay:                    clusterConfig.Spec.Network.Calico.Overlay,
 		IPAutodetectionMethod:      clusterConfig.Spec.Network.Calico.IPAutodetectionMethod,
 		IPV6AutodetectionMethod:    ipv6AutoDetectionMethod,
