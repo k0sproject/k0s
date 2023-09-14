@@ -312,3 +312,13 @@ sign-sbom: spdx/spdx.json
 	  --key /k0s/cosign.key \
 	  --tlog-upload=false \
 	  /k0s/sbom/spdx.json --output-file /out/spdx.json.sig
+
+.PHONY: sign-pub-key
+sign-pub-key:
+	docker run --rm \
+	  -v "$(CURDIR):/k0s" \
+	  -v "$(CURDIR)/sbom:/out" \
+	  -e COSIGN_PASSWORD="$(COSIGN_PASSWORD)" \
+	  gcr.io/projectsigstore/cosign:v2.2.0 \
+	  public-key \
+	  --key /k0s/cosign.key --output-file /out/cosign.pub
