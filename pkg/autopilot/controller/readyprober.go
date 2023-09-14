@@ -75,9 +75,6 @@ func (p *readyProber) AddTargets(targets []apv1beta2.PlanCommandTargetStatus) {
 // inspection. This function blocks until *all* spawned goroutines have completed
 // or timed-out.
 func (p readyProber) Probe() error {
-	errorCh := make(chan error, len(p.targets))
-	defer close(errorCh)
-
 	g := errgroup.Group{}
 
 	for _, target := range p.targets {
