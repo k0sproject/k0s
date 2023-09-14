@@ -36,6 +36,8 @@ import (
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
+	crmetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 type subControllerStartFunc func(ctx context.Context, event LeaseEventStatus) (context.CancelFunc, *errgroup.Group)
@@ -143,8 +145,12 @@ func (c *rootController) Run(ctx context.Context) error {
 // and starts it in a goroutine.
 func (c *rootController) startSubControllerRoutine(ctx context.Context, logger *logrus.Entry, event LeaseEventStatus) error {
 	managerOpts := crman.Options{
-		Port:                   c.cfg.ManagerPort,
-		MetricsBindAddress:     c.cfg.MetricsBindAddr,
+		WebhookServer: crwebhook.NewServer(crwebhook.Options{
+			Port: c.cfg.ManagerPort,
+		}),
+		Metrics: crmetricsserver.Options{
+			BindAddress: c.cfg.MetricsBindAddr,
+		},
 		HealthProbeBindAddress: c.cfg.HealthProbeBindAddr,
 	}
 

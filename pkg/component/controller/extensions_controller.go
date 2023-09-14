@@ -43,7 +43,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	ctrlManager "sigs.k8s.io/controller-runtime/pkg/manager"
+	crman "sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
@@ -351,9 +352,11 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Kind:  "Chart",
 	}
 
-	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
-		MetricsBindAddress: "0",
-		Logger:             logrusr.New(ec.L),
+	mgr, err := crman.New(clientConfig, crman.Options{
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
+		Logger: logrusr.New(ec.L),
 		Controller: ctrlconfig.Controller{
 			GroupKindConcurrency: map[string]int{gk.String(): 10},
 		},
