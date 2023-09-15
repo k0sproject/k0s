@@ -295,9 +295,11 @@ docs-serve-dev:
 	  k0sdocs.docker-image.serve-dev
 
 spdx/spdx.json:
+	mkdir -p -- '$(dir $@)'
 	docker run --rm \
 	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
 	  -v "$(CURDIR)/sbom:/out" \
+	  --user $(BUILD_UID):$(BUILD_GID) \
 	  anchore/syft:v0.90.0 \
 	  /k0s -o spdx-json@2.2=/out/spdx.json
 
