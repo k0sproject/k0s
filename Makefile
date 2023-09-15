@@ -294,7 +294,7 @@ docs-serve-dev:
 	  -p '$(DOCS_DEV_PORT):8000' \
 	  k0sdocs.docker-image.serve-dev
 
-spdx/spdx.json:
+sbom/spdx.json: go.mod
 	mkdir -p -- '$(dir $@)'
 	docker run --rm \
 	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
