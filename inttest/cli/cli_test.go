@@ -73,7 +73,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 
 	s.T().Run("k0sInstall", func(t *testing.T) {
 		// Install with some arbitrary kubelet flags so we see those get properly passed to the kubelet
-		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--event-qps=7 --enable-load-reader=true'")
+		out, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s install controller --enable-worker --disable-components konnectivity-server,metrics-server --kubelet-extra-args='--housekeeping-interval=10s --log-flush-frequency=5s'")
 		assert.NoError(t, err)
 		assert.Equal(t, "", out)
 	})
@@ -114,9 +114,9 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 
 		// Check that the kubelet extra flags are properly set
 		kubeletCmdLine, err := s.GetKubeletCMDLine(s.ControllerNode(0))
-		s.Require().NoError(err)
-		s.Require().Contains(kubeletCmdLine, "--event-qps=7")
-		s.Require().Contains(kubeletCmdLine, "--enable-load-reader=true")
+		require.NoError(err)
+		assert.Contains(kubeletCmdLine, "--housekeeping-interval=10s")
+		assert.Contains(kubeletCmdLine, "--log-flush-frequency=5s")
 	})
 
 	s.T().Log("waiting for k0s to terminate")
