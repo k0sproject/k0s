@@ -148,6 +148,10 @@ func TestCliCommandSuite(t *testing.T) {
 	s := CliSuite{
 		common.FootlooseSuite{
 			ControllerCount: 1,
+			// The tests start and stop k0s manually. Setting the launch mode to
+			// OpenRC here anyways, so that the log collection will pick up the
+			// right paths.
+			LaunchMode: common.LaunchModeOpenRC,
 		},
 	}
 	suite.Run(t, &s)
