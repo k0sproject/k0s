@@ -42,6 +42,15 @@ on:
             "kuberouter",
             "calico"
           ]
+      kube-proxy-modes:
+        type: string
+        description: The k0s kube-proxy modes to test.
+        required: true
+        default: >-
+          [
+            "iptables",
+            "ipvs"
+          ]
 
 jobs:
   build:
@@ -56,8 +65,9 @@ jobs:
       matrix:
         os: ${{ fromJSON(github.event.inputs.oses) }}
         network-provider: ${{ fromJSON(github.event.inputs.network-providers) }}
+        kube-proxy-mode: ${{ fromJSON(github.event.inputs.kube-proxy-modes) }}
 
-    name: "${{ matrix.os }} :: ${{ matrix.network-provider }}"
+    name: "${{ matrix.os }} :: ${{ matrix.network-provider }} :: ${{ matrix.kube-proxy-mode }}"
     needs: build
     if: always() && (inputs.k0s-version != '' || needs.build.result == 'success')
     uses: ./.github/workflows/ostests-e2e.yaml
@@ -67,6 +77,7 @@ jobs:
       e2e-focus: ${{ inputs.e2e-focus }}
       os: ${{ matrix.os }}
       network-provider: ${{ matrix.network-provider }}
+      kube-proxy-mode: ${{ matrix.kube-proxy-mode }}
     secrets:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

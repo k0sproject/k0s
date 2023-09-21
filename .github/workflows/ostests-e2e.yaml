@@ -24,6 +24,10 @@ on:
         type: string
         description: The k0s network provider to test.
         required: true
+      kube-proxy-mode:
+        type: string
+        description: The k0s kube-proxy mode to test.
+        required: true
       terraform-version:
         type: string
         description: The Terraform version to use when provisioning test resources.
@@ -64,6 +68,7 @@ jobs:
       TF_VAR_k0s_version: ${{ inputs.k0s-version }}
       TF_VAR_k0sctl_executable_path: ${{ github.workspace }}/.cache/k0sctl
       TF_VAR_k0s_network_provider: ${{ inputs.network-provider }}
+      TF_VAR_k0s_kube_proxy_mode: ${{ inputs.kube-proxy-mode }}
 
     defaults:
       run:

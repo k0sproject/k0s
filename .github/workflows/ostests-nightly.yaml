@@ -26,6 +26,11 @@ env:
       "kuberouter",
       "calico"
     ]
+  KUBE_PROXY_MODES: >-
+    [
+      "iptables",
+      "ipvs"
+    ]
 
 jobs:
   select:
@@ -49,13 +54,14 @@ jobs:
           script: |
             const distros = JSON.parse(process.env.DISTRIBUTIONS)
             const networkProviders = JSON.parse(process.env.NETWORK_PROVIDERS)
+            const kubeProxyModes = JSON.parse(process.env.KUBE_PROXY_MODES)
 
             const oses = []
             for (let i = 0; ; i++) {
               let added = false
               for (const distro of distros) {
                 if (i < distro.length) {
-                  oses.push(distro[i]);
+                  oses.push(distro[i])
                   added = true
                 }
               }
@@ -65,17 +71,25 @@ jobs:
             }
 
             const combinations = []
-            for (const [i, _] of networkProviders.entries()) {
-              for (const [j, os] of oses.entries()) {
-                combinations.push([os, networkProviders[(i + j) % networkProviders.length]])
+            for (const [kpmIdx, _] of kubeProxyModes.entries()) {
+              for (const [npIdx, _] of networkProviders.entries()) {
+                for (const [osIdx, os] of oses.entries()) {
+                  combinations.push([
+                    os,
+                    networkProviders[(npIdx + osIdx) % networkProviders.length],
+                    kubeProxyModes[(kpmIdx + osIdx) % kubeProxyModes.length],
+                  ])
+                }
               }
             }
 
             const daysSinceEpoch = Math.floor(Date.now() / (24 * 60 * 60 * 1000))
-            const [os, networkProvider] = combinations[daysSinceEpoch % combinations.length]
+            const [os, networkProvider, kubeProxyMode] =
+              combinations[daysSinceEpoch % combinations.length]
             console.log(`Selected ${os}/${networkProvider}`)
             core.setOutput('os', os)
             core.setOutput('network-provider', networkProvider)
+            core.setOutput('kube-proxy-mode', kubeProxyMode)
 
   build:
     name: Build

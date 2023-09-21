@@ -51,6 +51,7 @@ other ways described [here][tf-config].
 export TF_VAR_os=alpine_3_17
 export TF_VAR_k0s_version=stable
 export TF_VAR_k0s_network_provider=calico
+export TF_VAR_k0s_kube_proxy_mode=ipvs
 ```
 
 [aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html
@@ -96,6 +97,15 @@ This may be a fixed version number, "stable" or "latest".
 
 * `kuberouter`
 * `calico`
+
+### `k0s_kube_proxy_mode`: Mode of operation for kube-proxy
+
+* `iptables`
+* `ipvs`
+
+See Kubernetes's [IPVS README] for details.
+
+[IPVS README]: https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/ipvs/README.md
 
 ### Adding a new operating system
 

@@ -79,3 +79,14 @@ variable "k0s_network_provider" {
     error_message = "Unsupported k0s CNI stack."
   }
 }
+
+variable "k0s_kube_proxy_mode" {
+  type        = string
+  description = "The k0s kube-proxy mode to use (either iptables or ipvs)."
+  default     = "iptables"
+
+  validation {
+    condition     = var.k0s_kube_proxy_mode == "iptables" || var.k0s_kube_proxy_mode == "ipvs"
+    error_message = "Unsupported k0s kube-proxy mode."
+  }
+}
