@@ -8,13 +8,13 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Microsoft/go-winio v0.6.1
-	github.com/Microsoft/hcsshim v0.10.0-rc.8
+	github.com/Microsoft/hcsshim v0.11.0
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cloudflare/cfssl v1.6.4
-	github.com/containerd/containerd v1.7.5
+	github.com/containerd/containerd v1.7.6
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/estesp/manifest-tool/v2 v2.0.6
 	github.com/evanphx/json-patch v5.6.0+incompatible
