@@ -1062,19 +1062,19 @@ func (s *FootlooseSuite) initializeFootlooseCluster() error {
 }
 
 // Verifies that kubelet process has the address flag set
-func (s *FootlooseSuite) GetKubeletCMDLine(node string) (string, error) {
+func (s *FootlooseSuite) GetKubeletCMDLine(node string) ([]string, error) {
 	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer ssh.Disconnect()
 
 	output, err := ssh.ExecWithOutput(s.Context(), `cat /proc/$(pidof kubelet)/cmdline`)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return output, nil
+	return strings.Split(output, "\x00"), nil
 }
 
 func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
