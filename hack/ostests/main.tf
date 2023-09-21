@@ -4,6 +4,7 @@ provider "aws" {
       "ostests.k0sproject.io/instance"             = local.resource_name_prefix
       "ostests.k0sproject.io/os"                   = var.os
       "ostests.k0sproject.io/k0s-network-provider" = var.k0s_network_provider
+      "ostests.k0sproject.io/k0s-kube-proxy-mode"  = var.k0s_kube_proxy_mode
     })
   }
 }
@@ -50,6 +51,11 @@ module "k0sctl" {
     network = {
       provider = var.k0s_network_provider
       podCIDR  = local.podCIDR
+
+      kubeProxy = {
+        mode = var.k0s_kube_proxy_mode
+      }
+
       nodeLocalLoadBalancing = {
         enabled = true
       }

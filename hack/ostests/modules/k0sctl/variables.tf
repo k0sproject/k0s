@@ -67,6 +67,9 @@ variable "k0s_config_spec" {
     network = optional(object({
       provider = optional(string),
       podCIDR  = optional(string),
+      kubeProxy = optional(object({
+        mode = string,
+      }))
       nodeLocalLoadBalancing = optional(object({
         enabled = optional(bool),
       })),
