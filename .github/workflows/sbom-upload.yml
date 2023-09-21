@@ -21,6 +21,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
+          make bindata
           mkdir -p sbom && chmod 777 sbom
           echo $COSIGN_KEY | base64 -d > cosign.key
           make sign-sbom

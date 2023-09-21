@@ -298,13 +298,15 @@ sbom/spdx.json: go.mod
 	mkdir -p -- '$(dir $@)'
 	docker run --rm \
 	  -v "$(CURDIR)/go.mod:/k0s/go.mod" \
+	  -v "$(CURDIR)/embedded-bins/staging/linux/bin:/k0s/bin" \
+	  -v "$(CURDIR)/syft.yaml:/tmp/syft.yaml" \
 	  -v "$(CURDIR)/sbom:/out" \
 	  --user $(BUILD_UID):$(BUILD_GID) \
 	  anchore/syft:v0.90.0 \
-	  /k0s -o spdx-json@2.2=/out/spdx.json
+	  /k0s -o spdx-json@2.2=/out/spdx.json -c /tmp/syft.yaml
 
 .PHONY: sign-sbom
-sign-sbom: spdx/spdx.json
+sign-sbom: sbom/spdx.json
 	docker run --rm \
 	  -v "$(CURDIR):/k0s" \
 	  -v "$(CURDIR)/sbom:/out" \
