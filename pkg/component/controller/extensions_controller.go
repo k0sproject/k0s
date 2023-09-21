@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/bombsimon/logrusr/v2"
+	"github.com/bombsimon/logrusr/v4"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	helmapi "github.com/k0sproject/k0s/pkg/apis/helm"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"

@@ -17,8 +17,10 @@ limitations under the License.
 package log
 
 import (
+	"github.com/bombsimon/logrusr/v4"
 	cfssllog "github.com/cloudflare/cfssl/log"
 	"github.com/sirupsen/logrus"
+	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func InitLogging() {
@@ -28,6 +30,7 @@ func InitLogging() {
 	logrus.SetFormatter(customFormatter)
 
 	cfssllog.SetLogger((*cfsslAdapter)(logrus.WithField("component", "cfssl")))
+	crlog.SetLogger(logrusr.New(logrus.WithField("component", "controller-runtime")))
 
 	SetWarnLevel()
 }
