@@ -1,0 +1,4 @@
+file-metadata:
+  cataloger:
+    enabled: true
+  digests: ["sha256"]

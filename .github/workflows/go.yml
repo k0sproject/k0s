@@ -85,6 +85,28 @@ jobs:
       target-os: linux
       target-arch: amd64
 
+  generate-sbom:
+    name: "Build :: SBOM"
+    needs: [build-k0s]
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+
+      - name: Generate SBOM
+        run: |
+          make bindata
+          mkdir -p sbom && chmod 777 sbom
+          make sbom/spdx.json
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: spdx.json
+          path: sbom/spdx.json
+
+
   unittests-k0s-linux-amd64:
     name: "Unit tests :: linux-amd64"
     runs-on: ubuntu-22.04
@@ -193,7 +215,7 @@ jobs:
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
-      
+
       - name: Prepare docker for ipv6 dualstack tests
         if: contains(matrix.smoke-suite, 'dualstack')
         run: .github/workflows/prepare-docker-ipv6.sh
