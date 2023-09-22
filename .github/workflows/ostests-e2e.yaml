@@ -27,7 +27,6 @@ on:
       kube-proxy-mode:
         type: string
         description: The k0s kube-proxy mode to test.
-        required: true
         default: iptables
       terraform-version:
         type: string
