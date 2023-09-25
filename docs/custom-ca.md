@@ -30,3 +30,11 @@ k0s token pre-shared --role worker --cert /var/lib/k0s/pki/ca.crt --url https://
 
 The command above generates a join token and a Secret. A Secret should be deployed to the cluster to authorize the token.
 For example, you can put the Secret under the [manifest](manifests.md) directory and it will be deployed automatically.
+
+Please note that if you are generating a join token for a controller, the port number needs to be 9443 instead of 6443.
+Controller bootstrapping requires talking to the k0s-apiserver instead of the kube-apiserver.
+Here's an example of a command for pre-generating a token for a controller.
+
+```shell
+k0s token pre-shared --role controller --cert /var/lib/k0s/pki/ca.crt --url https://<controller-ip>:9443/
+```
