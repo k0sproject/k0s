@@ -2314,9 +2314,16 @@ There is a public update-server hosted on the same domain as the documentation s
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edge_release</span>
-<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://docs.k0sproject.io/</span>
+<span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span>
 <span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">periodic</span>
+<span class="w">    </span><span class="nt">periodic</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00</span>
+<span class="w">      </span><span class="nt">days</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Tuesdsay</span><span class="p p-Indicator">,</span><span class="nv">Wednesday</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13:00&quot;</span>
+<span class="w">      </span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2h</span>
+<span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span><span class="w"> </span><span class="c1"># This defines the plan to be created IF there are updates available</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 </code></pre></div>
 <h2 id="safeguards">Safeguards<a class="headerlink" href="#safeguards" title="Permanent link">#</a></h2>
 <p>There are a number of safeguards in place to avoid breaking a cluster.</p>
@@ -2673,11 +2680,22 @@ update operation. There are a number of statuses available:</p>
 </ul>
 <h4 id="specupdateserver-string-optional"><code>spec.updateServer &lt;string&gt; (optional)</code><a class="headerlink" href="#specupdateserver-string-optional" title="Permanent link">#</a></h4>
 <ul>
-<li>Update server url.</li>
+<li>Update server url. Defaults to <code>https://updates.k0sproject.io</code></li>
 </ul>
-<h4 id="specupgradestrategycron-string-optional"><code>spec.upgradeStrategy.cron &lt;string&gt; (optional)</code><a class="headerlink" href="#specupgradestrategycron-string-optional" title="Permanent link">#</a></h4>
+<h4 id="specupgradestrategytype-enumcronperiodic"><code>spec.upgradeStrategy.type &lt;enum:cron|periodic&gt;</code><a class="headerlink" href="#specupgradestrategytype-enumcronperiodic" title="Permanent link">#</a></h4>
+<ul>
+<li>Select which update strategy to use.</li>
+</ul>
+<h4 id="specupgradestrategycron-string-optional-deprecated"><code>spec.upgradeStrategy.cron &lt;string&gt; (optional)</code> <strong>DEPRECATED</strong><a class="headerlink" href="#specupgradestrategycron-string-optional-deprecated" title="Permanent link">#</a></h4>
 <ul>
 <li>Schedule to check for updates in crontab format.</li>
+</ul>
+<h4 id="specupgradestrategycron-object"><code>spec.upgradeStrategy.cron &lt;object&gt;</code><a class="headerlink" href="#specupgradestrategycron-object" title="Permanent link">#</a></h4>
+<p>Fields:</p>
+<ul>
+<li><code>days</code>: On which weekdays to check for updates</li>
+<li><code>startTime</code>: At which time of day to check updates</li>
+<li><code>length</code>: The length of the update window</li>
 </ul>
 <h4 id="specplanspec-string-optional"><code>spec.planSpec &lt;string&gt; (optional)</code><a class="headerlink" href="#specplanspec-string-optional" title="Permanent link">#</a></h4>
 <ul>
@@ -2692,7 +2710,12 @@ update operation. There are a number of statuses available:</p>
 <span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span>
 <span class="w">  </span><span class="nt">updateServer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://updates.k0sproject.io/</span>
 <span class="w">  </span><span class="nt">upgradeStrategy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">12</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">TUE,WED&quot;</span><span class="w"> </span><span class="c1"># Check for updates at 12:00 on Tuesday and Wednesday.</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">periodic</span>
+<span class="w">    </span><span class="nt">periodic</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># The folowing fields configures updates to happen only on Tue or Wed at 13:00-15:00</span>
+<span class="w">      </span><span class="nt">days</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Tuesdsay</span><span class="p p-Indicator">,</span><span class="nv">Wednesday</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">startTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13:00&quot;</span>
+<span class="w">      </span><span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2h</span>
 <span class="w">  </span><span class="c1"># Optional. Specifies a created Plan object</span>
 <span class="w">  </span><span class="nt">planSpec</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">commands</span><span class="p">:</span>
@@ -2724,7 +2747,7 @@ update operation. There are a number of statuses available:</p>
 </code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">#</a></h2>
 <h3 id="q-how-do-i-apply-the-plan-and-controlnode-crds">Q: How do I apply the <code>Plan</code> and <code>ControlNode</code> CRDs?<a class="headerlink" href="#q-how-do-i-apply-the-plan-and-controlnode-crds" title="Permanent link">#</a></h3>
-<p>A: These CRD definitions are embedded in the <strong>autopilot</strong> binary and applied on startup.
+<p>A: These CRD definitions are embedded in the <strong>k0s</strong> binary and applied on startup.
 No additional action is needed.</p>
 <h3 id="q-how-will-controlnode-instances-get-removed">Q: How will <code>ControlNode</code> instances get removed?<a class="headerlink" href="#q-how-will-controlnode-instances-get-removed" title="Permanent link">#</a></h3>
 <p>A: <code>ControlNode</code> instances are created by <strong>autopilot</strong> controllers as they startup. When
