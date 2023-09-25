@@ -21,6 +21,7 @@ import (
 	"hash"
 
 	"github.com/cavaliergopher/grab/v3"
+	"github.com/k0sproject/k0s/pkg/autopilot/build"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,6 +57,7 @@ func NewDownloader(config Config, logger *logrus.Entry) Downloader {
 func (d *downloader) Download(ctx context.Context) error {
 	// Setup the library for downloading HTTP content ..
 	dlreq, err := grab.NewRequest(d.config.DownloadDir, d.config.URL)
+
 	if err != nil {
 		return fmt.Errorf("invalid download request: %w", err)
 	}
@@ -71,6 +73,9 @@ func (d *downloader) Download(ctx context.Context) error {
 	}
 
 	client := grab.NewClient()
+	// Set user agent to mitigate 403 errors from GitHub
+	// See https://github.com/cavaliergopher/grab/issues/104
+	client.UserAgent = fmt.Sprintf("k0s/%s", build.Version)
 	d.httpResponse = client.Do(dlreq)
 
 	select {
