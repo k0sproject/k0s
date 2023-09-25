@@ -10,6 +10,7 @@ smoketests := \
 	check-ap-selector \
 	check-ap-single \
 	check-ap-updater \
+	check-ap-updater-periodic \
 	check-backup \
 	check-basic \
 	check-byocri \

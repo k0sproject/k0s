@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	cr "sigs.k8s.io/controller-runtime"
 	crcli "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -34,7 +35,8 @@ type updateController struct {
 
 	clusterID string
 
-	updater *updater
+	updaters  map[string]updater
+	parentCtx context.Context
 }
 
 func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Manager, clientFactory apcli.FactoryInterface, leaderMode bool, clusterID string) error {
@@ -46,6 +48,8 @@ func RegisterControllers(ctx context.Context, logger *logrus.Entry, mgr crman.Ma
 				client:        mgr.GetClient(),
 				clientFactory: clientFactory,
 				clusterID:     clusterID,
+				updaters:      make(map[string]updater),
+				parentCtx:     ctx,
 			},
 		)
 }
@@ -59,20 +63,54 @@ func (u *updateController) Reconcile(ctx context.Context, req cr.Request) (cr.Re
 	var token string
 	tokenSecret := &corev1.Secret{}
 	if err := u.client.Get(ctx, crcli.ObjectKey{Name: "update-server-token", Namespace: "kube-system"}, tokenSecret); err != nil {
-		u.log.Errorf("unable to get plan='%s': %v", req.NamespacedName, err)
+		u.log.Infof("unable to get update server token='%s': %v", req.NamespacedName, err)
 	} else {
 		token = string(tokenSecret.Data["token"])
 	}
 
-	u.log.Infof("processing updater config '%s'", req.NamespacedName)
+	u.log.Debugf("processing updater config '%s'", req.NamespacedName)
 
-	if u.updater == nil {
-		updater, err := newUpdater(ctx, *updaterConfig, u.client, u.clusterID, token)
-		if err != nil {
+	// If the config is being deleted, stop the updater
+	if !updaterConfig.DeletionTimestamp.IsZero() {
+		u.log.Debugf("updater config '%s' is being deleted", req.NamespacedName)
+		if updater, ok := u.updaters[req.NamespacedName.String()]; ok {
+			u.log.Debugf("stopping existing updater for '%s'", req.NamespacedName)
+			updater.Stop()
+			delete(u.updaters, req.NamespacedName.String())
+		}
+		// Remove finalizer
+		controllerutil.RemoveFinalizer(updaterConfig, apv1beta2.UpdateConfigFinalizer)
+		if err := u.client.Update(ctx, updaterConfig); err != nil {
 			return cr.Result{}, err
 		}
-		u.updater = updater
-		u.updater.Run()
+		return cr.Result{}, nil
+	}
+	u.log.Debugf("checking if there's an existing updater for '%s'", req.NamespacedName)
+	// Find the updater for this config if exists
+	if updater, ok := u.updaters[req.NamespacedName.String()]; ok {
+		// Check if there's been updates to the config, if so re-create the updater
+		if updater.Config() == nil || updater.Config().ObjectMeta.ResourceVersion != updaterConfig.ResourceVersion {
+			u.log.Debugf("updater config '%s' has been updated, re-creating updater", req.NamespacedName)
+			updater.Stop()
+			delete(u.updaters, req.NamespacedName.String())
+		}
+	}
+	u.log.Debugf("creating new updater for '%s'", req.NamespacedName)
+	// Create new updater
+	updater, err := newUpdater(u.parentCtx, *updaterConfig, u.client, u.clientFactory, u.clusterID, token)
+	if err != nil {
+		u.log.Errorf("failed to create updater for '%s': %s", req.NamespacedName, err)
+		return cr.Result{}, err
+	}
+	u.updaters[req.NamespacedName.String()] = updater
+	if err := updater.Run(); err != nil {
+		return cr.Result{}, err
+	}
+
+	// Add finalizer if not present
+	controllerutil.AddFinalizer(updaterConfig, apv1beta2.UpdateConfigFinalizer)
+	if err := u.client.Update(ctx, updaterConfig); err != nil {
+		return cr.Result{}, err
 	}
 
 	return cr.Result{}, nil

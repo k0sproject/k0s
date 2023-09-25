@@ -28,6 +28,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/avast/retry-go"
 	workercmd "github.com/k0sproject/k0s/cmd/worker"
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/file"
@@ -36,6 +37,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/sysinfo"
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/applier"
+	apclient "github.com/k0sproject/k0s/pkg/autopilot/client"
 	"github.com/k0sproject/k0s/pkg/build"
 	"github.com/k0sproject/k0s/pkg/certificate"
 	"github.com/k0sproject/k0s/pkg/component/controller"
@@ -48,12 +50,11 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
+	k0sctx "github.com/k0sproject/k0s/pkg/context"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
 	"github.com/k0sproject/k0s/pkg/token"
-
-	"github.com/avast/retry-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
@@ -141,6 +142,9 @@ func (c *command) start(ctx context.Context) error {
 	if errs := nodeConfig.Validate(); len(errs) > 0 {
 		return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 	}
+
+	// Add the node config to the context so it can be used by components deep in the "stack"
+	ctx = context.WithValue(ctx, k0sctx.ContextNodeConfigKey, nodeConfig)
 
 	nodeComponents := manager.New(prober.DefaultProber)
 	clusterComponents := manager.New(prober.DefaultProber)
@@ -504,6 +508,12 @@ func (c *command) start(ctx context.Context) error {
 		AdminClientFactory: adminClientFactory,
 		EnableWorker:       c.EnableWorker,
 	})
+
+	apClientFactory, err := apclient.NewClientFactory(adminClientFactory.GetRESTConfig())
+	if err != nil {
+		return err
+	}
+	clusterComponents.Add(ctx, controller.NewUpdateProber(apClientFactory, leaderElector))
 
 	perfTimer.Checkpoint("starting-cluster-components-init")
 	// init Cluster components
