@@ -1883,6 +1883,11 @@ openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> 
 </code></pre></div>
 <p>The command above generates a join token and a Secret. A Secret should be deployed to the cluster to authorize the token.
 For example, you can put the Secret under the <a href="../manifests/">manifest</a> directory and it will be deployed automatically.</p>
+<p>Please note that if you are generating a join token for a controller, the port number needs to be 9443 instead of 6443.
+Controller bootstrapping requires talking to the k0s-apiserver instead of the kube-apiserver.
+Here's an example of a command for pre-generating a token for a controller.</p>
+<div class="highlight"><pre><span></span><code>k0s<span class="w"> </span>token<span class="w"> </span>pre-shared<span class="w"> </span>--role<span class="w"> </span>controller<span class="w"> </span>--cert<span class="w"> </span>/var/lib/k0s/pki/ca.crt<span class="w"> </span>--url<span class="w"> </span>https://&lt;controller-ip&gt;:9443/
+</code></pre></div>
 
 
 
