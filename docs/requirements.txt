@@ -13,7 +13,7 @@ mike==1.1.2
 mkdocs==1.5.3
 mkdocs-exclude==1.0.2
 mkdocs-macros-plugin==1.0.4
-mkdocs-material==9.3.1
+mkdocs-material==9.3.2
 mkdocs-material-extensions==1.2
 packaging==23.1
 Pygments==2.16.1
@@ -22,7 +22,7 @@ pyparsing==3.1.1
 python-dateutil==2.8.2
 PyYAML==6.0.1
 pyyaml_env_tag==0.1
-regex==2023.8.8
+regex==2022.10.31
 requests==2.31.0
 six==1.16.0
 termcolor==2.3.0
