@@ -26,7 +26,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.19.0
 	github.com/imdario/mergo v0.3.16
 	github.com/k0sproject/dig v0.2.0
-	github.com/k0sproject/version v0.3.1-0.20220411075111-0270bb85e7f8
+	github.com/k0sproject/version v0.4.2
 	github.com/kardianos/service v1.2.2
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mesosphere/toml-merge v0.2.0

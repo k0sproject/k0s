@@ -10,7 +10,7 @@ TESTS=${1:-check-ap-ha3x3}
 VERSIONS="$2"
 ARCH=${TARGET_ARCH:-amd64}
 
-go install github.com/k0sproject/version/cmd/k0s_sort@v0.4.1
+go install github.com/k0sproject/version/cmd/k0s_sort@v0.4.2
 GOBIN="$(go env GOPATH)/bin"
 
 if [[ -z "$VERSIONS" ]]; then
