@@ -353,7 +353,7 @@ jobs:
       - name: Download assets for generating checksums
         uses: robinraju/release-downloader@v1.8
         with:
-          tag: ${{ steps.branch_name.outputs.TAG_NAME }}
+          tag: ${{ needs.release.outputs.tag_name }}
           filename: "*"
           out-file-path: release_assets
       - name: Generate checksums
