@@ -356,6 +356,7 @@ jobs:
           tag: ${{ needs.release.outputs.tag_name }}
           filename: "*"
           out-file-path: release_assets
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate checksums
         run: |
           cd release_assets && sha256sum -b * > ../sha256sums.txt
