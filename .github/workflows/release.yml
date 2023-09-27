@@ -18,6 +18,7 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
+      release_id: ${{ steps.create_release.outputs.id }}
       image_tag: ${{ steps.image_tag.outputs.IMAGE_TAGS }}
     steps:
       # Ugly hack to get the tag name
@@ -353,7 +354,7 @@ jobs:
       - name: Download assets for generating checksums
         uses: robinraju/release-downloader@v1.8
         with:
-          tag: ${{ needs.release.outputs.tag_name }}
+          releaseId: ${{ needs.release.outputs.release_id }}
           filename: "*"
           out-file-path: release_assets
           token: ${{ secrets.GITHUB_TOKEN }}
