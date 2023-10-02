@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../img/k0s_social.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.2">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.3">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.d451bc0e.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.79e020e9.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.a5377069.min.css">
@@ -1869,9 +1869,7 @@ All default values of worker command will be passed to the service stub unless o
 Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;--cluster-dns&quot; will be ignored since install command doesn&#39;t yet support Windows services
 </code></pre></div>
 <h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">#</a></h3>
-<div class="highlight"><pre><span></span><code>      --api-server string           HACK: api-server for the windows worker node
-      --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
-      --cluster-dns string          HACK: cluster dns for the windows worker node (default &quot;10.96.0.10&quot;)
+<div class="highlight"><pre><span></span><code>      --cidr-range string           HACK: cidr range for the windows worker node (default &quot;10.96.0.0/12&quot;)
       --cri-socket string           container runtime socket to use, default to internal containerd. Format: [remote|docker]:[path-to-socket]
       --data-dir string             Data Directory for k0s (default: /var/lib/k0s). DO NOT CHANGE for an existing setup, things will break!
   -d, --debug                       Debug logging (default: false)
@@ -1881,9 +1879,9 @@ Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;
       --iptables-mode string        iptables mode (valid values: nft, legacy, auto). default: auto
       --kubelet-extra-args string   extra args for kubelet
       --labels strings              Node labels, list of key=value pairs
-  -l, --logging stringToString      Logging Levels for the different components (default [kube-proxy=1,etcd=info,containerd=info,konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1])
+  -l, --logging stringToString      Logging Levels for the different components (default [konnectivity-server=1,kube-apiserver=1,kube-controller-manager=1,kube-scheduler=1,kubelet=1,kube-proxy=1,etcd=info,containerd=info])
       --profile string              worker profile to use on the node (default &quot;default&quot;)
-      --status-socket string        Full file path to the socket file. (default &quot;/var/lib/k0s/run/status.sock&quot;)
+      --status-socket string        Full file path to the socket file. (default: &lt;rundir&gt;/status.sock)
       --taints strings              Node taints, list of key=value:effect strings
       --token-file string           Path to the file containing token.
   -v, --verbose                     Verbose logging (default: false)
@@ -1976,10 +1974,11 @@ Windows flags like &quot;--api-server&quot;, &quot;--cidr-range&quot; and &quot;
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+    
     <script id="__config" type="application/json">{"base": "../..", "features": ["toc.autohide", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.726fbb30.min.js"></script>
+      <script src="../../assets/javascripts/bundle.6eac0284.min.js"></script>
       
     
   </body>
