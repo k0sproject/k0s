@@ -1,5 +1,4 @@
 //go:build hack
-// +build hack
 
 /*
 Copyright 2021 k0s authors
