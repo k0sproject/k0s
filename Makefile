@@ -30,7 +30,7 @@ EMBEDDED_BINS_BUILDMODE ?= docker
 TARGET_OS ?= linux
 BUILD_UID ?= $(shell id -u)
 BUILD_GID ?= $(shell id -g)
-BUILD_GO_FLAGS := -tags osusergo
+BUILD_GO_FLAGS := -tags osusergo -buildvcs=false -trimpath
 BUILD_GO_LDFLAGS_EXTRA :=
 DEBUG ?= false
 
