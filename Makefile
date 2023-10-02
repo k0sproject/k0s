@@ -41,13 +41,9 @@ endif
 
 # https://reproducible-builds.org/docs/source-date-epoch/#makefile
 # https://reproducible-builds.org/docs/source-date-epoch/#git
-# https://stackoverflow.com/a/15103333
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
 BUILD_DATE_FMT = %Y-%m-%dT%H:%M:%SZ
-ifdef SOURCE_DATE_EPOCH
-	BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u "+$(BUILD_DATE_FMT)")
-else
-	BUILD_DATE ?= $(shell TZ=UTC git log -1 --pretty=%cd --date='format-local:$(BUILD_DATE_FMT)' || date -u +$(BUILD_DATE_FMT))
-endif
+BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "+$(BUILD_DATE_FMT)" 2>/dev/null || date -u "+$(BUILD_DATE_FMT)")
 
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.Version=$(VERSION)
 LD_FLAGS += -X github.com/k0sproject/k0s/pkg/build.RuncVersion=$(runc_version)
@@ -197,7 +193,9 @@ k0s.exe k0s: $(GO_SRCS) $(codegen_targets) go.sum
 		&& mv $@.tmp $@
 
 .bins.windows.stamp .bins.linux.stamp: embedded-bins/Makefile.variables
-	$(MAKE) -C embedded-bins buildmode=$(EMBEDDED_BINS_BUILDMODE) TARGET_OS=$(patsubst .bins.%.stamp,%,$@)
+	$(MAKE) -C embedded-bins \
+	  TARGET_OS=$(patsubst .bins.%.stamp,%,$@) \
+	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 	touch $@
 
 .PHONY: codegen

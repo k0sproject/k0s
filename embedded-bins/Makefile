@@ -6,6 +6,10 @@ export GOOS
 TARGET_OS ?= linux
 export TARGET_OS
 
+# https://reproducible-builds.org/docs/source-date-epoch/#makefile
+# https://reproducible-builds.org/docs/source-date-epoch/#git
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct || date -u +%s)
+
 bindir = staging/${TARGET_OS}/bin
 posix_bins = runc kubelet containerd containerd-shim containerd-shim-runc-v1 containerd-shim-runc-v2 kube-apiserver kube-scheduler kube-controller-manager etcd kine konnectivity-server xtables-legacy-multi xtables-nft-multi
 windows_bins = kubelet.exe kube-proxy.exe containerd.exe containerd-shim-runhcs-v1.exe
@@ -79,6 +83,7 @@ build_docker_image = \
 	  --build-arg CONTAINERD_BINS="$(containerd_bins)" \
 	  --build-arg KUBERNETES_BINS="$(kubernetes_bins)" \
 	  --build-arg VERSION=$($(patsubst %/Dockerfile,%,$<)_version) \
+	  --build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 	  --build-arg BUILDIMAGE=$($(patsubst %/Dockerfile,%,$<)_buildimage) \
 	  --build-arg BUILD_GO_TAGS=$($(patsubst %/Dockerfile,%,$<)_build_go_tags) \
 	  --build-arg BUILD_GO_CGO_ENABLED=$($(patsubst %/Dockerfile,%,$<)_build_go_cgo_enabled) \
