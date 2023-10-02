@@ -247,7 +247,11 @@ $(smoketests): k0s
 smoketests: $(smoketests)
 
 .PHONY: check-unit
+ifneq (, $(filter $(HOST_ARCH), arm))
+check-unit: GO_TEST_RACE ?=
+else
 check-unit: GO_TEST_RACE ?= -race
+endif
 check-unit: go.sum codegen
 	$(GO) test -tags=hack $(GO_TEST_RACE) -ldflags='$(LD_FLAGS)' `$(GO) list -tags=hack $(GO_CHECK_UNIT_DIRS)`
 
