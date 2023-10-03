@@ -382,10 +382,6 @@ jobs:
           path: |
             build/cache/go/mod
 
-      - name: Disable race checker
-        if: matrix.arch == 'arm'
-        run: echo GO_TEST_RACE= >>"$GITHUB_ENV"
-
       - name: Build
         run: |
           make bindata
