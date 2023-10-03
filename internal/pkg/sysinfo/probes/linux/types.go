@@ -1,5 +1,4 @@
 //go:build linux && !arm
-// +build linux,!arm
 
 /*
 Copyright 2022 k0s authors
