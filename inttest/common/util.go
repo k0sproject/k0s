@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 
@@ -294,17 +295,23 @@ func RetryWatchErrors(logf func(format string, args ...any)) watch.ErrorCallback
 // VerifyKubeletMetrics checks whether we see container and image labels in kubelet metrics.
 // It does it via polling as it takes some time for kubelet to start reporting metrics.
 func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node string) error {
+	image := constant.KubeRouterCNIImage
+	if ver, hash, found := strings.Cut(constant.KubeRouterCNIImageVersion, "@"); found {
+		image = fmt.Sprintf("%s@%s", image, hash)
+	} else {
+		image = fmt.Sprintf("%s:%s", image, ver)
+	}
+
+	re := fmt.Sprintf(`^container_cpu_usage_seconds_total\{container="kube-router".*image="%s"`, regexp.QuoteMeta(image))
+	containerRegex := regexp.MustCompile(re)
+
+	path := fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/cadvisor", node)
 
 	return Poll(ctx, func(ctx context.Context) (done bool, err error) {
-
-		path := fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/cadvisor", node)
 		metrics, err := kc.CoreV1().RESTClient().Get().AbsPath(path).Param("format", "text").DoRaw(ctx)
 		if err != nil {
 			return false, nil // do not return the error so we keep on polling
 		}
-
-		image := fmt.Sprintf("%s:%s", constant.KubeRouterCNIImage, constant.KubeRouterCNIImageVersion)
-		containerRegex := regexp.MustCompile(fmt.Sprintf(`container_cpu_usage_seconds_total{container="kube-router".*image="%s"`, image))
 
 		scanner := bufio.NewScanner(bytes.NewReader(metrics))
 		for scanner.Scan() {
@@ -312,6 +319,9 @@ func VerifyKubeletMetrics(ctx context.Context, kc *kubernetes.Clientset, node st
 			if containerRegex.MatchString(line) {
 				return true, nil
 			}
+		}
+		if err := scanner.Err(); err != nil {
+			return false, err
 		}
 
 		return false, nil
