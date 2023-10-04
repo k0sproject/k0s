@@ -1,5 +1,3 @@
-//go:build linux
-
 /*
 Copyright 2022 k0s authors
 
