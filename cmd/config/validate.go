@@ -42,7 +42,7 @@ func NewValidateCmd() *cobra.Command {
 			case "-":
 				reader = cmd.InOrStdin()
 			case "":
-				return errors.New("--config can't be emmpty")
+				return errors.New("--config can't be empty")
 			default:
 				f, err := os.Open(config.CfgFile)
 				if err != nil {
