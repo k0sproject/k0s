@@ -40,7 +40,7 @@ func NewValidateCmd() *cobra.Command {
 			// config.CfgFile is the global value holder for --config flag, set by cobra/pflag
 			switch config.CfgFile {
 			case "-":
-				reader = os.Stdin
+				reader = cmd.InOrStdin()
 			case "":
 				return errors.New("--config can't be emmpty")
 			default:
