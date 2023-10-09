@@ -57,15 +57,9 @@ func NewValidateCmd() *cobra.Command {
 				return fmt.Errorf("failed to read config: %w", err)
 			}
 
-			errs := cfg.Validate()
-			if len(errs) > 0 {
-				return fmt.Errorf("config validation failed: %w", errors.Join(errs...))
-			}
-
-			return nil
+			return errors.Join(cfg.Validate()...)
 		},
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
