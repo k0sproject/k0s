@@ -85,6 +85,20 @@ jobs:
           name: logs
           path: tests/*.log
 
+      - name: Sign binary
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo $COSIGN_KEY | base64 -d > cosign.key
+          docker run --rm \
+            -v "$(CURDIR):/k0s" \
+            gcr.io/projectsigstore/cosign:v2.2.0 \
+            sign-blob \
+            --key /k0s/cosign.key \
+            --tlog-upload=false \
+            /k0s/k0s --output-file /k0s/k0s.sig
+
       - name: Upload Release Assets - Binary
         id: upload-release-asset
         uses: shogo82148/actions-upload-release-asset@v1.6.6
@@ -92,6 +106,15 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Signature
+        id: upload-release-asset
+        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s.sig
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.sig
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
@@ -145,6 +168,20 @@ jobs:
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
 
+      - name: Sign binary
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo $COSIGN_KEY | base64 -d > cosign.key
+          docker run --rm \
+            -v "$(CURDIR):/k0s" \
+            gcr.io/projectsigstore/cosign:v2.2.0 \
+            sign-blob \
+            --key /k0s/cosign.key \
+            --tlog-upload=false \
+            /k0s/k0s.exe --output-file /k0s/k0s.exe.sig
+
       - name: Clean Docker
         run: |
           docker system prune --all --volumes --force
@@ -156,6 +193,15 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Signature
+        id: upload-release-asset
+        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s.exe.sig
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64.exe.sig
           asset_content_type: application/octet-stream
 
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752
@@ -196,6 +242,20 @@ jobs:
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
 
+      - name: Sign binary
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo $COSIGN_KEY | base64 -d > cosign.key
+          docker run --rm \
+            -v "$(CURDIR):/k0s" \
+            gcr.io/projectsigstore/cosign:v2.2.0 \
+            sign-blob \
+            --key /k0s/cosign.key \
+            --tlog-upload=false \
+            /k0s/k0s --output-file /k0s/k0s.sig
+
       - name: Set up Go for smoke tests
         uses: actions/setup-go@v3
         with:
@@ -221,6 +281,15 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Signature
+        id: upload-release-asset
+        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s.sig
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm64.sig
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
@@ -277,6 +346,20 @@ jobs:
         env:
           VERSION: ${{ needs.release.outputs.tag_name }}
 
+      - name: Sign binary
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo $COSIGN_KEY | base64 -d > cosign.key
+          docker run --rm \
+            -v "$(CURDIR):/k0s" \
+            gcr.io/projectsigstore/cosign:v2.2.0 \
+            sign-blob \
+            --key /k0s/cosign.key \
+            --tlog-upload=false \
+            /k0s/k0s --output-file /k0s/k0s.sig
+
       # Need to install Go manually: https://github.com/actions/setup-go/issues/106
       - name: Set up Go for smoke tests (armv6l)
         run: |
@@ -315,6 +398,15 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Signature
+        id: upload-release-asset
+        uses: shogo82148/actions-upload-release-asset@v1.6.6
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./k0s.sig
+          asset_name: k0s-${{ needs.release.outputs.tag_name }}-arm.sig
           asset_content_type: application/octet-stream
 
       - name: Upload Artifact for use in other Jobs
