@@ -24,6 +24,7 @@ nav:
           - Using custom CA certificate (advanced): custom-ca.md
       - System Requirements: system-requirements.md
       - External runtime dependencies: external-runtime-deps.md
+      - Verifying Signed Binaries: verifying-signs.md
   - Maintenance:
       - Upgrade: upgrade.md
       - Backup/Restore: backup.md
