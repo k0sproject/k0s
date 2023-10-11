@@ -2,522 +2,522 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://docs.k0sproject.io/head/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/CODE_OF_CONDUCT/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/FAQ/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/airgap-install/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/architecture/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/autopilot-multicommand/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/autopilot/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/backup/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cis_benchmark/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cloud-providers/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/commercial-support/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/configuration-validation/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/configuration/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/conformance-testing/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/containerd_config/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/custom-ca/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/custom-cri-runtime/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/dockershim/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/dual-stack/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/dynamic-configuration/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/environment-variables/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/experimental-windows/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/extensions/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/external-runtime-deps/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/helm-charts/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/high-availability/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/install/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/k0s-in-docker/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/k0s-multi-node/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/k0s-single-node/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/k0sctl-install/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/manifests/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/networking/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/nllb/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/podsecurity/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/raspberry-pi4/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/reinstall-k0sctl/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/releases/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/remove_controller/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/reset/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/runtime/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/selinux/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/shell-completion/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/storage/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/system-monitoring/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/system-requirements/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/troubleshooting/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/upgrade/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/user-management/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/worker-node-config/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_airgap/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_airgap_list-images/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_api/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_backup/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_completion/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_config/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_config_create/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_config_edit/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_config_status/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_config_validate/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_controller/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_ctr/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_docs/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_etcd/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_etcd_leave/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_etcd_member-list/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_install/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_install_controller/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_install_worker/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_kubeconfig/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_kubeconfig_admin/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_kubeconfig_create/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_kubectl/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_reset/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_restore/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_start/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_status/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_status_components/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_stop/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_sysinfo/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_token/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_token_create/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_token_invalidate/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_token_list/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_token_pre-shared/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_version/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/cli/k0s_worker/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/contributors/CODE_OF_CONDUCT/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/contributors/github_workflow/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/contributors/overview/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/contributors/testing/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/ambassador-ingress/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/ansible-playbook/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/gitops-flux/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/metallb-loadbalancer/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/nginx-ingress/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/rook-ceph/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/traefik-ingress/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/oidc/oidc-cluster-configuration/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/examples/oidc/oidc-provider-configuration/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/internal/publishing_docs_using_mkdocs/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://docs.k0sproject.io/head/internal/upgrading-calico/</loc>
-         <lastmod>2023-10-10</lastmod>
+         <lastmod>2023-10-11</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
