@@ -195,6 +195,9 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
+      - name: Reclaim runner disk space
+        run: .github/workflows/reclaim-runner-disk-space.bash
+
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
 
@@ -289,6 +292,9 @@ jobs:
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
+
+      - name: Reclaim runner disk space
+        run: .github/workflows/reclaim-runner-disk-space.bash
 
       - name: Prepare build environment
         run: .github/workflows/prepare-build-env.sh
