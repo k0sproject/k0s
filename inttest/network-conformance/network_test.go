@@ -153,11 +153,4 @@ const k0sConfig = `
 spec:
   network:
     provider: %s
-  workerProfiles:
-    - name: default
-      values:
-        # GitHub runners may get low on disk space
-        evictionHard:
-          nodefs.available: 200Mi
-          imagefs.available: 200Mi
 `
