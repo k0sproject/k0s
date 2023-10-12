@@ -12,7 +12,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/bombsimon/logrusr/v4 v4.0.0
-	github.com/carlmjohnson/requests v0.23.4
+	github.com/carlmjohnson/requests v0.23.5
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/cloudflare/cfssl v1.6.4
 	github.com/containerd/containerd v1.7.6
