@@ -1,0 +1,1 @@
+../../../../v0.9.0-beta1/assets/javascripts/lunr/wordcut.js
