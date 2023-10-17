@@ -246,11 +246,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/v1.26.3+k0s.0/cli/</loc>
-         <lastmod>2023-04-06</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/v1.26.3+k0s.0/cli/k0s/</loc>
          <lastmod>2023-04-06</lastmod>
          <changefreq>daily</changefreq>
@@ -362,11 +357,6 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/v1.26.3+k0s.0/cli/k0s_kubeconfig_create/</loc>
-         <lastmod>2023-04-06</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://docs.k0sproject.io/v1.26.3+k0s.0/cli/k0s_kubectl/</loc>
          <lastmod>2023-04-06</lastmod>
          <changefreq>daily</changefreq>
     </url>
