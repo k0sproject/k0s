@@ -1,3 +1,0 @@
-python_version = 3.10.2
-
-k0s_releases_url = https://api.github.com/repos/k0sproject/k0s/releases
