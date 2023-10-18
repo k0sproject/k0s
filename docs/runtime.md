@@ -1,8 +1,14 @@
 # Runtime
 
-k0s uses [containerd](https://github.com/containerd/containerd) as the default Container Runtime Interface (CRI) and runc as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.
+k0s supports any container runtime that implements the [CRI] specification.
+
+k0s comes bundled with [containerd] as the default Container Runtime Interface (CRI) and [runc] as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.
 
 ![k0s_runtime](img/k0s_runtime.png)
+
+[CRI]: https://github.com/kubernetes/cri-api
+[containerd]: https://github.com/containerd/containerd
+[runc]: https://github.com/opencontainers/runc
 
 ## containerd configuration
 

@@ -1,5 +1,9 @@
 # Storage
 
+k0s supports any volume provider that implements the [CSI specification](https://github.com/container-storage-interface/spec). For convenience, k0s comes bundled in with support for [OpenEBS local path provisioner](https://openebs.io/docs/concepts/localpv).
+
+The choise of which CSI provider to use depends heavily on the use case and infrastructure you're running on and the use case you have.
+
 ## Bundled OpenEBS storage
 
 K0s comes out with bundled OpenEBS installation which can be enabled by using [configuration file](./configuration.md)
