@@ -226,11 +226,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/</loc>
-         <lastmod>2023-05-24</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s/</loc>
          <lastmod>2023-05-24</lastmod>
          <changefreq>daily</changefreq>
@@ -346,11 +341,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_kubectl/</loc>
-         <lastmod>2023-05-24</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_reset/</loc>
          <lastmod>2023-05-24</lastmod>
          <changefreq>daily</changefreq>
@@ -367,11 +357,6 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_status/</loc>
-         <lastmod>2023-05-24</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_status_components/</loc>
          <lastmod>2023-05-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -402,11 +387,6 @@
     </url>
     <url>
          <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_token_list/</loc>
-         <lastmod>2023-05-24</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://docs.k0sproject.io/v1.24.14+k0s.0/cli/k0s_token_pre-shared/</loc>
          <lastmod>2023-05-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
