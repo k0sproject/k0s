@@ -2,7 +2,17 @@
 
 ## In-cluster networking
 
-k0s supports two Container Network Interface (CNI) providers out-of-box, [Kube-router](https://github.com/cloudnativelabs/kube-router) and [Calico](https://www.projectcalico.org/). In addition, k0s can support your own CNI configuration.
+k0s supports any standard [CNI] network providers. For convenience, k0s does come bundled with tho built-in providers, [Kube-router] and [Calico].
+
+[CNI]: https://github.com/containernetworking/cni
+[Kube-router]: https://github.com/cloudnativelabs/kube-router
+[Calico]: https://www.projectcalico.org/
+
+### Custom CNI configuration
+
+You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the [network provider] in the k0s configuration file (`k0s.yaml`). To deploy the CNI provider you want to use, you can deploy it using Helm, plain Kubernetes manifests or any other way.
+
+[network provider]: configuration.md#specnetwork
 
 ### Notes
 
@@ -21,16 +31,11 @@ Kube-router is built into k0s, and so by default the distribution uses it for ne
 
 ### Calico
 
-In addition to Kube-router, k0s also offers [Calico](https://www.projectcalico.org/) as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).
+In addition to Kube-router, k0s also offers [Calico] as an alternative, built-in network provider. Calico is a layer 3 container networking solution that routes packets to pods. It supports, for example, pod-specific network policies that help to secure kubernetes clusters in demanding use cases. Calico uses the vxlan overlay network by default, and you can configure it to support ipip (IP-in-IP).
 
-- Does NOT support armv7
 - Uses bit more resources
 - Supports dual-stack (IPv4/IPv6) networking
 - Supports Windows nodes
-
-### Custom CNI configuration
-
-You can opt-out of having k0s manage the network setup and choose instead to use any network plugin that adheres to the CNI specification. To do so, configure `custom` as the network provider in the k0s configuration file (`k0s.yaml`). You can do this, for example, by pushing network provider manifests into `/var/lib/k0s/manifests`, from where k0s controllers will collect them for deployment into the cluster (for more information, refer to [Manifest Deployer](manifests.md).
 
 ## Controller-Worker communication
 
