@@ -38,20 +38,6 @@ spec:
     externalAddress: %s
 `
 
-const network = "quorumsafetynet"
-
-// SetupSuite creates the required network before starting footloose.
-func (s *quorumSafetySuite) SetupSuite() {
-	s.Require().NoError(s.CreateNetwork(network))
-	s.FootlooseSuite.SetupSuite()
-}
-
-// TearDownSuite tears down the network created after footloose has finished.
-func (s *quorumSafetySuite) TearDownSuite() {
-	s.FootlooseSuite.TearDownSuite()
-	s.Require().NoError(s.MaybeDestroyNetwork(network))
-}
-
 // SetupTest prepares the controller and filesystem, getting it into a consistent
 // state which we can run tests against.
 func (s *quorumSafetySuite) SetupTest() {
@@ -163,9 +149,6 @@ func TestQuorumSafetySuite(t *testing.T) {
 			ControllerCount: 2,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,
-
-			ControllerNetworks: []string{network},
-			WorkerNetworks:     []string{network},
 		},
 	})
 }
