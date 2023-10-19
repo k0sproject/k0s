@@ -67,6 +67,7 @@ terraform apply
 
 ### `os`: Operating system stack
 
+* `al2023`: Amazon Linux 2023
 * `alpine_3_17`: Alpine Linux 3.17
 * `centos_7`: CentOS Linux 7 (Core)
 * `centos_8`: CentOS Stream 8
