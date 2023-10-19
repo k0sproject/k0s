@@ -1,3 +1,4 @@
+sonobuoy_version := 0.57.0
 smoketests := \
 	check-addons \
 	check-airgap \
