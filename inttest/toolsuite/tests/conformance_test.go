@@ -28,6 +28,7 @@ import (
 )
 
 type ConformanceConfig struct {
+	SonobuoyVersion   string
 	KubernetesVersion string
 }
 
@@ -38,11 +39,15 @@ type ConformanceSuite struct {
 var config ConformanceConfig
 
 func init() {
+	flag.StringVar(&config.SonobuoyVersion, "sonobuoy-version", "", "The sonobuoy version to use")
 	flag.StringVar(&config.KubernetesVersion, "conformance-kubernetes-version", "", "The kubernetes version of the conformance tests to run")
 }
 
 // TestConformanceSuite runs the Sonobuoy conformance tests for a specific k8s version.
 func TestConformanceSuite(t *testing.T) {
+	if config.SonobuoyVersion == "" {
+		t.Fatal("--sonobuoy-version is a required parameter")
+	}
 	if config.KubernetesVersion == "" {
 		t.Fatal("--conformance-kubernetes-version is a required parameter")
 	}
@@ -51,6 +56,7 @@ func TestConformanceSuite(t *testing.T) {
 		ts.ToolSuite{
 			Operation: tsops.SonobuoyOperation(
 				tsops.SonobuoyConfig{
+					Version: config.SonobuoyVersion,
 					Parameters: []string{
 						"--mode=certified-conformance",
 						"--plugin-env=e2e.E2E_EXTRA_ARGS=\"--ginkgo.v\"",
