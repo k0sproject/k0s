@@ -288,6 +288,7 @@ func (w *Watcher[T]) watch(ctx context.Context, resourceVersion string, conditio
 		ResourceVersion:     resourceVersion,
 		AllowWatchBookmarks: true,
 		FieldSelector:       w.fieldSelector,
+		LabelSelector:       w.labelSelector,
 		TimeoutSeconds:      pointer.Int64(maxWatchDurationSecs),
 	})
 	if err != nil {
