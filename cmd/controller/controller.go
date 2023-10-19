@@ -216,9 +216,31 @@ func (c *command) start(ctx context.Context) error {
 	logrus.Infof("using storage backend %s", nodeConfig.Spec.Storage.Type)
 	nodeComponents.Add(ctx, storageBackend)
 
+	controllerLeaseCounter := &controller.K0sControllersLeaseCounter{
+		ClusterConfig:     nodeConfig,
+		KubeClientFactory: adminClientFactory,
+	}
+
+	if !c.SingleNode {
+		nodeComponents.Add(ctx, controllerLeaseCounter)
+	}
+
 	enableKonnectivity := !c.SingleNode && !slices.Contains(c.DisableComponents, constant.KonnectivityServerComponentName)
 	disableEndpointReconciler := !slices.Contains(c.DisableComponents, constant.APIEndpointReconcilerComponentName) &&
 		nodeConfig.Spec.API.ExternalAddress != ""
+
+	if enableKonnectivity {
+		nodeComponents.Add(ctx, &controller.Konnectivity{
+			SingleNode:                 c.SingleNode,
+			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
+			K0sVars:                    c.K0sVars,
+			KubeClientFactory:          adminClientFactory,
+			NodeConfig:                 nodeConfig,
+			EventEmitter:               prober.NewEventEmitter(),
+			K0sControllersLeaseCounter: controllerLeaseCounter,
+		})
+
+	}
 
 	nodeComponents.Add(ctx, &controller.APIServer{
 		ClusterConfig:             nodeConfig,
@@ -228,13 +250,6 @@ func (c *command) start(ctx context.Context) error {
 		EnableKonnectivity:        enableKonnectivity,
 		DisableEndpointReconciler: disableEndpointReconciler,
 	})
-
-	if !c.SingleNode {
-		nodeComponents.Add(ctx, &controller.K0sControllersLeaseCounter{
-			ClusterConfig:     nodeConfig,
-			KubeClientFactory: adminClientFactory,
-		})
-	}
 
 	var leaderElector interface {
 		leaderelector.Interface
@@ -467,13 +482,14 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	if enableKonnectivity {
-		clusterComponents.Add(ctx, &controller.Konnectivity{
-			SingleNode:        c.SingleNode,
-			LogLevel:          c.Logging[constant.KonnectivityServerComponentName],
-			K0sVars:           c.K0sVars,
-			KubeClientFactory: adminClientFactory,
-			NodeConfig:        nodeConfig,
-			EventEmitter:      prober.NewEventEmitter(),
+		clusterComponents.Add(ctx, &controller.KonnectivityAgent{
+			SingleNode:                 c.SingleNode,
+			LogLevel:                   c.Logging[constant.KonnectivityServerComponentName],
+			K0sVars:                    c.K0sVars,
+			KubeClientFactory:          adminClientFactory,
+			NodeConfig:                 nodeConfig,
+			EventEmitter:               prober.NewEventEmitter(),
+			K0sControllersLeaseCounter: controllerLeaseCounter,
 		})
 	}
 
