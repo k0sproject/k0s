@@ -22,6 +22,7 @@ on:
         required: true
         default: >-
           [
+            "al2023",
             "alpine_3_17",
             "centos_7", "centos_8", "centos_9",
             "debian_10", "debian_11", "debian_12",
