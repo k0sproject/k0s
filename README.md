@@ -18,7 +18,7 @@ In September 2022 we made a human error while creating some build automation scr
 
 Before that mishap we had 4776 stargazers, making k0s one of the most popular Kubernetes distro out there.
 
-**So if you are reading this, and have not yet starred this repo we would highly appreciate the :star: to get our numbers closer to what they used to be.
+**So if you are reading this, and have not yet starred this repo we would highly appreciate the :star: to get our numbers closer to what they used to be.**
 
 ## The Repository
 
