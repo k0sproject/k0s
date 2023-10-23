@@ -28,12 +28,12 @@ import (
 )
 
 const (
-	sonobuoyVersion = "0.56.11"
-	sonobuoyOs      = "linux"
-	sonobuoyArch    = "amd64"
+	sonobuoyOs   = "linux"
+	sonobuoyArch = "amd64"
 )
 
 type SonobuoyConfig struct {
+	Version    string
 	Parameters []string
 }
 
@@ -41,7 +41,7 @@ type SonobuoyConfig struct {
 // using the clusters k0s.kubeconfig. Results are stored in the data directory as `results.tar.gz`
 func SonobuoyOperation(config SonobuoyConfig) ts.ClusterOperation {
 	return func(ctx context.Context, data ts.ClusterData) error {
-		sonobuoyBinary, cleanup, err := downloadSonobuoy(ctx, sonobuoyVersion, sonobuoyOs, sonobuoyArch)
+		sonobuoyBinary, cleanup, err := downloadSonobuoy(ctx, config.Version, sonobuoyOs, sonobuoyArch)
 		defer cleanup()
 
 		if err != nil {
