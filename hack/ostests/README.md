@@ -90,6 +90,27 @@ terraform apply
 * `ubuntu_2204`: Ubuntu 22.04 LTS
 * `ubuntu_2304`: Ubuntu 23.04
 
+### `k0sctl_skip`: Skip k0s provisioning altogether
+
+Just provision the infrastructure, but no k0s cluster. This may be used for
+development and testing purposes.
+
+Assuming the AWS credentials are available, it can be used like this:
+
+```sh
+terraform init
+export TF_VAR_os=alpine_3_17
+export TF_VAR_k0sctl_skip=true
+terraform apply
+terraform output -json | jq -r '
+  (.ssh_private_key_filename.value | @sh) as $keyFile
+    | .hosts.value[]
+    | select(.connection.type = "ssh")
+    | . as {name: $host, ipv4: $ip, connection: {username: $user}}
+    | "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i \($keyFile) \($user)@\($ip) # \($host)"
+'
+```
+
 ### `k0s_version`: The k0s version to deploy
 
 This may be a fixed version number, "stable" or "latest".
