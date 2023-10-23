@@ -41,6 +41,7 @@ import (
 )
 
 // Commands run different helm command in the same way as CLI tool
+// This struct isn't thread-safe. Check on a per function basis.
 type Commands struct {
 	repoFile     string
 	helmCacheDir string
@@ -206,6 +207,8 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 	return true
 }
 
+// InstallChart installs a helm chart
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) InstallChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
@@ -253,6 +256,8 @@ func (hc *Commands) InstallChart(chartName string, version string, releaseName s
 	return chartRelease, nil
 }
 
+// UpgradeChart upgrades a helm chart.
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UpgradeChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
@@ -308,6 +313,8 @@ func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
 	return helmAction.Run()
 }
 
+// UninstallRelease uninstalls a release.
+// InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
 func (hc *Commands) UninstallRelease(releaseName string, namespace string) error {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {

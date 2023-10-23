@@ -354,10 +354,8 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
-		Logger: logrusr.New(ec.L),
-		Controller: ctrlconfig.Controller{
-			GroupKindConcurrency: map[string]int{gk.String(): 10},
-		},
+		Logger:     logrusr.New(ec.L),
+		Controller: ctrlconfig.Controller{},
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
