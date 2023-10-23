@@ -154,7 +154,7 @@ func (w *Watcher[T]) WithObjectName(name string) *Watcher[T] {
 // [Kubernetes codebase].
 //
 // [concept]: https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/
-// [Kubernetes codebase]: https://sourcegraph.com/search?q=lang:go+AddFieldLabelConversionFunc(...)+repo:^github\.com/kubernetes/kubernetes%24+-file:_test\.go%24+select:content&patternType=structural
+// [Kubernetes codebase]: https://sourcegraph.com/search?q=lang:go+AddFieldLabelConversionFunc%28...%29+repo:%5Egithub%5C.com/kubernetes/kubernetes%24+-file:_test%5C.go%24+select:content&patternType=structural
 func (w *Watcher[T]) WithFieldSelector(selector fields.Selector) *Watcher[T] {
 	w.fieldSelector = selector.String()
 	return w
@@ -288,6 +288,7 @@ func (w *Watcher[T]) watch(ctx context.Context, resourceVersion string, conditio
 		ResourceVersion:     resourceVersion,
 		AllowWatchBookmarks: true,
 		FieldSelector:       w.fieldSelector,
+		LabelSelector:       w.labelSelector,
 		TimeoutSeconds:      pointer.Int64(maxWatchDurationSecs),
 	})
 	if err != nil {
