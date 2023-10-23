@@ -1,5 +1,3 @@
-//go:build windows
-
 /*
 Copyright 2023 k0s authors
 
