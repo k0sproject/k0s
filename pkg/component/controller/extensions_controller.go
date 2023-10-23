@@ -350,9 +350,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
-		Controller: config.Controller{
-			GroupKindConcurrency: map[string]int{gk.String(): 10},
-		},
+		Controller:         config.Controller{},
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
