@@ -373,8 +373,6 @@ func (c *command) start(ctx context.Context) error {
 			c.K0sVars,
 			adminClientFactory,
 			leaderElector,
-			// Hardcode until the config loading is fixed
-			10,
 		))
 	}
 
