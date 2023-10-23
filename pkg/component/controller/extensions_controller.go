@@ -49,26 +49,24 @@ import (
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	concurrencyLevel int
-	saver            manifestsSaver
-	L                *logrus.Entry
-	helm             *helm.Commands
-	kubeConfig       string
-	leaderElector    leaderelector.Interface
+	saver         manifestsSaver
+	L             *logrus.Entry
+	helm          *helm.Commands
+	kubeConfig    string
+	leaderElector leaderelector.Interface
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, concurrencyLevel int) *ExtensionsController {
+func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		concurrencyLevel: concurrencyLevel,
-		saver:            s,
-		L:                logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		helm:             helm.NewCommands(k0sVars),
-		kubeConfig:       k0sVars.AdminKubeConfigPath,
-		leaderElector:    leaderElector,
+		saver:         s,
+		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
+		helm:          helm.NewCommands(k0sVars),
+		kubeConfig:    k0sVars.AdminKubeConfigPath,
+		leaderElector: leaderElector,
 	}
 }
 
