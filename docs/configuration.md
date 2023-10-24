@@ -76,7 +76,7 @@ spec:
       version: 0.0.33-k0s
     kubeproxy:
       image: registry.k8s.io/kube-proxy
-      version: v1.26.9
+      version: v1.26.10
     kuberouter:
       cni:
         image: docker.io/cloudnativelabs/kube-router
