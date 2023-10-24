@@ -17,6 +17,10 @@ locals {
   resource_name_prefix = coalesce(var.resource_name_prefix, random_pet.resource_name_prefix.*.id...)
   cache_dir            = pathexpand(coalesce(var.cache_dir, "~/.cache/k0s-ostests"))
   podCIDR              = "10.244.0.0/16"
+
+
+  hosts                    = try(module.infra.nodes, []) # the try allows destruction even if infra provisioning failed
+  ssh_private_key_filename = local_sensitive_file.ssh_private_key.filename
 }
 
 module "os" {
@@ -41,6 +45,8 @@ resource "local_sensitive_file" "ssh_private_key" {
 }
 
 module "k0sctl" {
+  count = var.k0sctl_skip ? 0 : 1
+
   source = "./modules/k0sctl"
 
   k0sctl_executable_path = var.k0sctl_executable_path
@@ -62,6 +68,6 @@ module "k0sctl" {
     }
   }
 
-  hosts                    = try(module.infra.nodes, []) # the try allows destruction even if infra provisioning failed
-  ssh_private_key_filename = local_sensitive_file.ssh_private_key.filename
+  hosts                    = local.hosts
+  ssh_private_key_filename = local.ssh_private_key_filename
 }

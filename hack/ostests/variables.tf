@@ -35,6 +35,13 @@ variable "os" {
   description = "The underlying OS for the to-be-provisioned cluster."
 }
 
+variable "k0sctl_skip" {
+  type        = bool
+  description = "Skip k0s provisoning altogether."
+  default     = false
+  nullable    = false
+}
+
 variable "k0sctl_executable_path" {
   type        = string
   description = "Path to the k0sctl executable to use for local-exec provisioning."
@@ -62,6 +69,7 @@ variable "k0s_version" {
   type        = string
   nullable    = false
   description = "The k0s version to deploy on the nodes. May be an exact version, \"stable\" or \"latest\"."
+  default     = "stable"
 
   validation {
     condition     = length(var.k0s_version) != 0
