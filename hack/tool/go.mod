@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/hashicorp/terraform-exec v0.19.0
-	github.com/k0sproject/k0sctl v0.15.5
+	github.com/k0sproject/k0sctl v0.16.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 )
@@ -13,7 +13,6 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20210404020558-97928f7e12b6 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/a8m/envsubst v1.4.2 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
@@ -21,7 +20,6 @@ require (
 	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/bmatcuk/doublestar/v4 v4.6.0 // indirect
 	github.com/carlmjohnson/versioninfo v0.22.5 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -36,7 +34,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.15.0 // indirect
+	github.com/go-playground/validator/v10 v10.15.5 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -55,7 +53,7 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k0sproject/dig v0.2.0 // indirect
-	github.com/k0sproject/rig v0.12.0 // indirect
+	github.com/k0sproject/rig v0.15.1 // indirect
 	github.com/k0sproject/version v0.4.2 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
