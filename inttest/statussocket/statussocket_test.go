@@ -25,7 +25,7 @@ import (
 )
 
 type StatusSocketSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *StatusSocketSuite) TestK0sGetsUp() {
@@ -42,7 +42,7 @@ func (s *StatusSocketSuite) TestK0sGetsUp() {
 
 func TestStatusSocketSuite(t *testing.T) {
 	s := StatusSocketSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 		},
 	}

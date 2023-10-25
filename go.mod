@@ -27,6 +27,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/terraform-exec v0.19.0
 	github.com/imdario/mergo v0.3.16
+	github.com/k0sproject/bootloose v0.7.1
 	github.com/k0sproject/dig v0.2.0
 	github.com/k0sproject/version v0.4.2
 	github.com/kardianos/service v1.2.2
@@ -48,7 +49,6 @@ require (
 	github.com/urfave/cli v1.22.14
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.57.0
-	github.com/weaveworks/footloose v0.0.0-20210208164054-2862489574a3
 	github.com/zcalusic/sysinfo v1.0.1
 	go.etcd.io/etcd/api/v3 v3.5.9
 	go.etcd.io/etcd/client/pkg/v3 v3.5.9
@@ -102,7 +102,6 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/briandowns/spinner v1.19.0 // indirect
@@ -291,9 +290,6 @@ require (
 
 // Replacements specific to k0s
 replace (
-	// https://github.com/weaveworks/footloose/pull/272
-	github.com/weaveworks/footloose => github.com/ncopa/footloose v0.0.0-20220210144732-fe970537b890
-
 	// containerd 1.7.0 updated to go.opentelemetry.io/otel/metric v0.37.0,
 	// which includes https://github.com/open-telemetry/opentelemetry-go/pull/3631.
 	// This is incompatible to the current Kubernetes libraries, which still

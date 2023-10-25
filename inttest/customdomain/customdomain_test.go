@@ -25,7 +25,7 @@ import (
 )
 
 type CustomDomainSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
@@ -66,7 +66,7 @@ func (s *CustomDomainSuite) TestK0sGetsUpWithCustomDomain() {
 
 func TestCustomDomainSuite(t *testing.T) {
 	s := CustomDomainSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

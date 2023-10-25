@@ -32,7 +32,7 @@ import (
 )
 
 type KineSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *KineSuite) TestK0sGetsUp() {
@@ -93,7 +93,7 @@ func (s *KineSuite) TestK0sGetsUp() {
 
 func TestKineSuite(t *testing.T) {
 	s := KineSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

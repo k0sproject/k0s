@@ -27,7 +27,7 @@ import (
 )
 
 type CtrSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CtrSuite) TestK0sCtrCommand() {
@@ -64,7 +64,7 @@ func (s *CtrSuite) TestK0sCtrCommand() {
 
 func TestCtrCommandSuite(t *testing.T) {
 	s := CtrSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 		},
 	}

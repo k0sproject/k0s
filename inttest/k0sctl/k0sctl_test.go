@@ -40,7 +40,7 @@ import (
 const k0sctlVersion = "v0.16.0"
 
 type K0sctlSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 	k0sctlEnv []string
 }
 
@@ -215,7 +215,7 @@ func (s *K0sctlSuite) TestK0sGetsUp() {
 
 func TestK0sctlSuite(t *testing.T) {
 	s := K0sctlSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

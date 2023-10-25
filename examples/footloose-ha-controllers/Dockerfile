@@ -1,4 +1,4 @@
-FROM quay.io/footloose/ubuntu18.04
+FROM quay.io/k0sproject/bootloose-ubuntu18.04
 
 ADD k0s.service /etc/systemd/system/k0s.service
 

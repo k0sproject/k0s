@@ -29,7 +29,7 @@ import (
 )
 
 type quorumSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 const k0sConfigWithMultiController = `
@@ -45,7 +45,7 @@ func (s *quorumSuite) SetupTest() {
 	ipAddress := s.GetControllerIPAddress(0)
 	var joinToken string
 
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
+	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(k0sConfigWithMultiController, ipAddress))
@@ -69,8 +69,8 @@ func (s *quorumSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
-		s.Require().Len(s.GetMembers(idx), s.FootlooseSuite.ControllerCount)
+	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 }
 
@@ -134,7 +134,7 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestQuorumSuite(t *testing.T) {
 	suite.Run(t, &quorumSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,

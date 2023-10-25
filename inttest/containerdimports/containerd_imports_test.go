@@ -29,7 +29,7 @@ import (
 )
 
 type ContainerDImportsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *ContainerDImportsSuite) TestK0sGetsUp() {
@@ -123,7 +123,7 @@ func (s *ContainerDImportsSuite) addContainerDRuntime() {
 
 func TestContainerDImportsSuite(t *testing.T) {
 	s := ContainerDImportsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			LaunchMode:      common.LaunchModeOpenRC, // so we can easily restart k0s
 			ControllerCount: 1,
 			WorkerCount:     1,

@@ -29,7 +29,7 @@ import (
 )
 
 type platformSelectSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -109,7 +109,7 @@ spec:
 // autopilot upgrade scenarios against it.
 func TestPlatformSelectSuite(t *testing.T) {
 	suite.Run(t, &platformSelectSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,

@@ -39,7 +39,7 @@ import (
 )
 
 type BasicSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 type (
@@ -261,7 +261,7 @@ func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernete
 
 func TestBasicSuite(t *testing.T) {
 	s := BasicSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

@@ -31,7 +31,7 @@ import (
 )
 
 type KubectlSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 const pluginContent = `#!/bin/sh
@@ -226,7 +226,7 @@ func checkServerVersion(t *testing.T, v map[string]any) {
 
 func TestKubectlCommand(t *testing.T) {
 	suite.Run(t, &KubectlSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 		},
 	})

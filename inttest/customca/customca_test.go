@@ -27,7 +27,7 @@ import (
 )
 
 type CustomCASuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CustomCASuite) TestK0sGetsUp() {
@@ -73,7 +73,7 @@ func (s *CustomCASuite) TestK0sGetsUp() {
 
 func TestCustomCASuite(t *testing.T) {
 	s := CustomCASuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

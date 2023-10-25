@@ -27,7 +27,7 @@ import (
 )
 
 type UpgradeSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 const previousVersion = "v1.24.4+k0s.0"
@@ -74,7 +74,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 	s.Require().NoError(g.Wait())
 
-	// use the oldVersion k0s for footloose operations
+	// use the oldVersion k0s for bootloose operations
 	s.K0sFullPath = "/usr/local/bin/k0s"
 
 	s.Require().NoError(s.WaitForKubeAPI(s.ControllerNode(0)))
@@ -170,7 +170,7 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 func TestUpgradeSuite(t *testing.T) {
 	s := UpgradeSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 			LaunchMode:      common.LaunchModeOpenRC,

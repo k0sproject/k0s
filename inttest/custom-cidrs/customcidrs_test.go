@@ -29,7 +29,7 @@ import (
 )
 
 type CustomCIDRsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 const k0sConfig = `
@@ -117,7 +117,7 @@ func (s *CustomCIDRsSuite) TestK0sGetsUp() {
 
 func TestCustomCIDRsSuite(t *testing.T) {
 	s := CustomCIDRsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

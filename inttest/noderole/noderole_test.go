@@ -28,7 +28,7 @@ import (
 )
 
 type NodeRoleSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *NodeRoleSuite) TestK0sGetsUp() {
@@ -69,7 +69,7 @@ func (s *NodeRoleSuite) TestK0sGetsUp() {
 
 func TestNodeRoleSuite(t *testing.T) {
 	s := NodeRoleSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 2,
 			WorkerCount:     1,
 		},

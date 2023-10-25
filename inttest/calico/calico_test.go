@@ -35,7 +35,7 @@ import (
 )
 
 type CalicoSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CalicoSuite) TestK0sGetsUp() {
@@ -126,7 +126,7 @@ func getAlpineVersion(t *testing.T) string {
 
 func TestCalicoSuite(t *testing.T) {
 	s := CalicoSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

@@ -47,7 +47,7 @@ import (
 )
 
 type DualstackSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 
 	client *k8s.Clientset
 }
@@ -89,7 +89,7 @@ func (s *DualstackSuite) SetupSuite() {
 	isDockerIPv6Enabled, err := s.IsDockerIPv6Enabled()
 	s.NoError(err)
 	s.Require().True(isDockerIPv6Enabled, "Please enable IPv6 in docker before running this test")
-	s.FootlooseSuite.SetupSuite()
+	s.BootlooseSuite.SetupSuite()
 
 	s.PutFile(s.ControllerNode(0), "/tmp/k0s.yaml", k0sConfigWithDualStack)
 	controllerArgs := []string{"--config=/tmp/k0s.yaml"}
@@ -180,7 +180,7 @@ func (s *DualstackSuite) SetupSuite() {
 func TestDualStack(t *testing.T) {
 
 	s := DualstackSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

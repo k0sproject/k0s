@@ -26,7 +26,7 @@ import (
 )
 
 type ClusterRebootSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *ClusterRebootSuite) TestK0sClusterReboot() {
@@ -59,7 +59,7 @@ func (s *ClusterRebootSuite) TestK0sClusterReboot() {
 	s.NoError(common.WaitForKubeRouterReady(s.Context(), kc), "CNI did not start")
 }
 
-// rebootCluster reboots the cluster using footloose interfaces because
+// rebootCluster reboots the cluster using bootloose interfaces because
 // running reboot on a container won't bring it up automatically:
 // https://github.com/weaveworks/footloose/issues/254
 func (s *ClusterRebootSuite) rebootCluster() {
@@ -72,7 +72,7 @@ func (s *ClusterRebootSuite) rebootCluster() {
 
 func TestClusterRebootSuite(t *testing.T) {
 	s := ClusterRebootSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,

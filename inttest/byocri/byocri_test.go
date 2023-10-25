@@ -21,14 +21,14 @@ import (
 	"testing"
 
 	"github.com/avast/retry-go"
+	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/config"
 
 	"github.com/k0sproject/k0s/inttest/common"
 )
 
 type BYOCRISuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *BYOCRISuite) TestK0sGetsUp() {
@@ -94,7 +94,7 @@ func (s *BYOCRISuite) runDockerWorker() error {
 
 func TestBYOCRISuite(t *testing.T) {
 	s := BYOCRISuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 			ExtraVolumes: []config.Volume{

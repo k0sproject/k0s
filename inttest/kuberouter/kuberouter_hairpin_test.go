@@ -30,7 +30,7 @@ import (
 )
 
 type KubeRouterHairpinSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
@@ -95,7 +95,7 @@ func (s *KubeRouterHairpinSuite) TestK0sGetsUp() {
 
 func TestKubeRouterHairpinSuite(t *testing.T) {
 	s := KubeRouterHairpinSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

@@ -29,7 +29,7 @@ import (
 )
 
 type MetricsScraperSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *MetricsScraperSuite) TestK0sGetsUp() {
@@ -78,7 +78,7 @@ func (s *MetricsScraperSuite) waitForMetrics() error {
 
 func TestMetricsScraperSuite(t *testing.T) {
 	s := MetricsScraperSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			ControllerUmask: 027,
 		},

@@ -28,7 +28,7 @@ import (
 )
 
 type airgapSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -137,7 +137,7 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestAirgapSuite(t *testing.T) {
 	suite.Run(t, &airgapSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,

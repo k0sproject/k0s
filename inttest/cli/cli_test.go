@@ -29,7 +29,7 @@ import (
 )
 
 type CliSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CliSuite) TestK0sCliCommandNegative() {
@@ -130,7 +130,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		resetOutput, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s reset --debug")
 		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
-		// k0s reset will always exit with an error on footloose, since it's unable to remove /var/lib/k0s
+		// k0s reset will always exit with an error on bootloose, since it's unable to remove /var/lib/k0s
 		// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
 		assert.Error(err)
 
@@ -146,7 +146,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 
 func TestCliCommandSuite(t *testing.T) {
 	s := CliSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			// The tests start and stop k0s manually. Setting the launch mode to
 			// OpenRC here anyways, so that the log collection will pick up the

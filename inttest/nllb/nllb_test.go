@@ -47,7 +47,7 @@ import (
 const kubeSystem = "kube-system"
 
 type suite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *suite) TestNodeLocalLoadBalancing() {
@@ -327,7 +327,7 @@ func (s *suite) checkClusterReadiness(ctx context.Context, clients *kubernetes.C
 
 func TestNodeLocalLoadBalancingSuite(t *testing.T) {
 	s := suite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     2,
 		},

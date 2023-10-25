@@ -42,7 +42,7 @@ spec:
 `
 
 type BackupSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 	backupFunc  func() error
 	restoreFunc func() error
 }
@@ -258,7 +258,7 @@ func (s *BackupSuite) restoreBackupStdin() error {
 
 func TestBackupSuite(t *testing.T) {
 	s := BackupSuite{
-		FootlooseSuite: common.FootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 2,
 			WorkerCount:     2,
 		},
@@ -270,7 +270,7 @@ func TestBackupSuite(t *testing.T) {
 
 func TestBackupSuiteStream(t *testing.T) {
 	s := BackupSuite{
-		FootlooseSuite: common.FootlooseSuite{
+		BootlooseSuite: common.BootlooseSuite{
 			ControllerCount: 2,
 			WorkerCount:     2,
 		},

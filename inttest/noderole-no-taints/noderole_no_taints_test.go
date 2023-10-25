@@ -28,7 +28,7 @@ import (
 )
 
 type NodeRoleNoTaintsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *NodeRoleNoTaintsSuite) TestK0sNoTaints() {
@@ -69,7 +69,7 @@ func (s *NodeRoleNoTaintsSuite) TestK0sNoTaints() {
 
 func TestNodeRoleNoTaintsSuite(t *testing.T) {
 	s := NodeRoleNoTaintsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 2,
 			WorkerCount:     1,
 		},

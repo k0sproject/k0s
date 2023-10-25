@@ -31,7 +31,7 @@ import (
 )
 
 type PSPSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *PSPSuite) TestK0sGetsUp() {
@@ -91,7 +91,7 @@ func (s *PSPSuite) TestK0sGetsUp() {
 
 func TestPSPSuite(t *testing.T) {
 	s := PSPSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 		},
 	}

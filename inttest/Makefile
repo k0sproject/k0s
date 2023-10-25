@@ -11,7 +11,7 @@ bins = bin/sonobuoy
 include ../embedded-bins/Makefile.variables
 
 .PHONY: all
-all: $(bins) .footloose-alpine.stamp
+all: $(bins) .bootloose-alpine.stamp
 
 bin:
 	mkdir -p $@
@@ -19,36 +19,36 @@ bin:
 bin/sonobuoy: | bin
 	$(curl) $(sonobuoy_url) | tar -C bin/ -zxv $(notdir $@)
 
-footloose_alpine_build_cmdline := \
+bootloose_alpine_build_cmdline := \
 	--build-arg GOLANG_IMAGE=$(golang_buildimage) \
 	--build-arg ALPINE_VERSION=$(alpine_patch_version) \
 	--build-arg ETCD_VERSION=$(etcd_version) \
 	--build-arg HELM_VERSION=$(helm_version) \
 	--build-arg KUBE_VERSION=$(kubernetes_version) \
-	-t footloose-alpine \
-	-f footloose-alpine/Dockerfile \
-	footloose-alpine
+	-t bootloose-alpine \
+	-f bootloose-alpine/Dockerfile \
+	bootloose-alpine
 
-.footloose-alpine.stamp: $(shell find footloose-alpine -type f)
-	docker build --build-arg TARGETARCH=$(ARCH) $(footloose_alpine_build_cmdline)
+.bootloose-alpine.stamp: $(shell find bootloose-alpine -type f)
+	docker build --build-arg TARGETARCH=$(ARCH) $(bootloose_alpine_build_cmdline)
 	touch $@
 
-# This is a special target to test the footloose alpine image locally for all supported platforms.
-.PHONY: check-footloose-alpine-buildx
-check-footloose-alpine-buildx:
-	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 $(footloose_alpine_build_cmdline)
+# This is a special target to test the bootloose alpine image locally for all supported platforms.
+.PHONY: check-bootloose-alpine-buildx
+check-bootloose-alpine-buildx:
+	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 $(bootloose_alpine_build_cmdline)
 
-.footloose-k0s.stamp: K0S_PATH ?= $(realpath ../k0s)
-.footloose-k0s.stamp: .footloose-alpine.stamp
+.bootloose-k0s.stamp: K0S_PATH ?= $(realpath ../k0s)
+.bootloose-k0s.stamp: .bootloose-alpine.stamp
 	docker build \
 	  --build-arg K0S_PATH=$(notdir $(K0S_PATH)) \
-	  -t footloose-k0s \
-	  -f footloose-k0s/Dockerfile \
+	  -t bootloose-k0s \
+	  -f bootloose-k0s/Dockerfile \
 	  $(dir $(K0S_PATH))
 	touch $@
 
-.update-server.stamp: .footloose-alpine.stamp update-server/Dockerfile $(wildcard update-server/html/**/*.html)
-	docker build -t update-server --build-arg BASE=footloose-alpine -f update-server/Dockerfile update-server
+.update-server.stamp: .bootloose-alpine.stamp update-server/Dockerfile $(wildcard update-server/html/**/*.html)
+	docker build -t update-server --build-arg BASE=bootloose-alpine -f update-server/Dockerfile update-server
 	touch $@
 
 check-network: bin/sonobuoy
@@ -116,7 +116,7 @@ include Makefile.variables
 
 $(smoketests): K0S_PATH ?= $(realpath ../k0s)
 $(smoketests): K0S_IMAGES_BUNDLE ?= $(realpath ../airgap-image-bundle-linux-$(ARCH).tar)
-$(smoketests): .footloose-alpine.stamp
+$(smoketests): .bootloose-alpine.stamp
 $(smoketests): TEST_PACKAGE ?= $(subst check-,,$@)
 $(smoketests):
 	K0S_PATH='$(K0S_PATH)' \

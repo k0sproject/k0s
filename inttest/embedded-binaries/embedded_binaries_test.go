@@ -25,7 +25,7 @@ import (
 )
 
 type EmbeddedBinariesSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
@@ -107,7 +107,7 @@ func (s *EmbeddedBinariesSuite) TestK0sGetsUp() {
 
 func TestEmbeddedBinariesSuite(t *testing.T) {
 	s := EmbeddedBinariesSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 2,
 		},
 	}

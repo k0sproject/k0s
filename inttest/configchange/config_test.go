@@ -38,12 +38,12 @@ import (
 )
 
 type ConfigSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func TestConfigSuite(t *testing.T) {
 	s := ConfigSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},
