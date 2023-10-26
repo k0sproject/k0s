@@ -17,6 +17,7 @@ limitations under the License.
 package helm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -208,7 +209,7 @@ func (hc *Commands) isInstallable(chart *chart.Chart) bool {
 
 // InstallChart installs a helm chart
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) InstallChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
+func (hc *Commands) InstallChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %v", err)
@@ -248,7 +249,7 @@ func (hc *Commands) InstallChart(chartName string, version string, releaseName s
 	if err != nil {
 		return nil, fmt.Errorf("can't reload loadedChart `%s`: %v", chartDir, err)
 	}
-	chartRelease, err := install.Run(loadedChart, values)
+	chartRelease, err := install.RunWithContext(ctx, loadedChart, values)
 	if err != nil {
 		return nil, fmt.Errorf("can't install loadedChart `%s`: %v", loadedChart.Name(), err)
 	}
@@ -257,7 +258,7 @@ func (hc *Commands) InstallChart(chartName string, version string, releaseName s
 
 // UpgradeChart upgrades a helm chart.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UpgradeChart(chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
+func (hc *Commands) UpgradeChart(ctx context.Context, chartName string, version string, releaseName string, namespace string, values map[string]interface{}, timeout time.Duration) (*release.Release, error) {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't create action configuration: %v", err)
@@ -291,7 +292,7 @@ func (hc *Commands) UpgradeChart(chartName string, version string, releaseName s
 		return nil, fmt.Errorf("can't reload loadedChart `%s`: %v", chartDir, err)
 	}
 
-	chartRelease, err := upgrade.Run(releaseName, loadedChart, values)
+	chartRelease, err := upgrade.RunWithContext(ctx, releaseName, loadedChart, values)
 	if err != nil {
 		return nil, fmt.Errorf("can't upgrade loadedChart `%s`: %v", loadedChart.Metadata.Name, err)
 	}
@@ -314,12 +315,17 @@ func (hc *Commands) ListReleases(namespace string) ([]*release.Release, error) {
 
 // UninstallRelease uninstalls a release.
 // InstallChart, UpgradeChart and UninstallRelease(releaseName are *NOT* thread-safe
-func (hc *Commands) UninstallRelease(releaseName string, namespace string) error {
+func (hc *Commands) UninstallRelease(ctx context.Context, releaseName string, namespace string) error {
 	cfg, err := hc.getActionCfg(namespace)
 	if err != nil {
 		return fmt.Errorf("can't create helmAction configuration: %v", err)
 	}
 	helmAction := action.NewUninstall(cfg)
+	deadline, ok := ctx.Deadline()
+	if ok {
+		helmAction.Timeout = time.Until(deadline)
+	}
+
 	if _, err := helmAction.Run(releaseName); err != nil {
 		return fmt.Errorf("can't uninstall release `%s`: %v", releaseName, err)
 	}
