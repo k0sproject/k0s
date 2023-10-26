@@ -20,7 +20,7 @@ Two workers are a minimum requirement for the Kubernetes conformance tests.
 For the local plumbing:
 
 * A POSIXish environment (`env`, `sh`, `echo`, `printf`)
-* [k0sctl] (tested with ~= 0.15)
+* [k0sctl] (tested with 0.16.0)
 * [jq] (tested with ~= 1.6)
 
 For the AWS infra:
