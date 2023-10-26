@@ -19,7 +19,6 @@ package basic
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -33,7 +32,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/BurntSushi/toml"
@@ -233,27 +231,30 @@ func (s *BasicSuite) verifyContainerdDefaultConfig(ctx context.Context) {
 
 func (s *BasicSuite) probeCoreDNSAntiAffinity(ctx context.Context, kc *kubernetes.Clientset) error {
 	// Wait until both CoreDNS Pods got assigned to a node
-	pods := map[string]types.UID{}
+	pods := map[string]string{}
 
 	return watch.Pods(kc.CoreV1().Pods("kube-system")).
 		WithLabels(labels.Set{"k8s-app": "kube-dns"}).
 		WithErrorCallback(common.RetryWatchErrors(s.T().Logf)).
 		Until(ctx, func(pod *corev1.Pod) (bool, error) {
-			// Keep waiting if there's no node assigned yet.
+			// Keep waiting until there's anti-affinity and node assignment
+			if a := pod.Spec.Affinity; a == nil || a.PodAntiAffinity == nil {
+				s.T().Logf("Pod %s doesn't have any pod anti-affinity", pod.Name)
+				return false, nil
+			}
 			nodeName := pod.Spec.NodeName
 			if nodeName == "" {
 				s.T().Logf("Pod %s not scheduled yet: %+v", pod.ObjectMeta.Name, pod.Status)
 				return false, nil
 			}
 
-			uid := pod.GetUID()
-			if prevUID, ok := pods[nodeName]; ok && uid != prevUID {
-				return false, errors.New("multiple CoreDNS pods scheduled on the same node")
+			if prevName, ok := pods[nodeName]; ok && pod.Name != prevName {
+				return false, fmt.Errorf("multiple CoreDNS pods scheduled on node %s: %s and %s", nodeName, prevName, pod.Name)
 			}
 
-			s.T().Logf("Pod %s scheduled on %s", pod.ObjectMeta.Name, pod.Spec.NodeName)
+			s.T().Logf("Pod %s scheduled on %s", pod.Name, pod.Spec.NodeName)
 
-			pods[nodeName] = pod.GetUID()
+			pods[nodeName] = pod.Name
 			return len(pods) > 1, nil
 		})
 }

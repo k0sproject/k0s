@@ -30,6 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/pointer"
 
 	"github.com/k0sproject/k0s/internal/pkg/dir"
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
@@ -120,11 +121,13 @@ metadata:
     k8s-app: kube-dns
     kubernetes.io/name: "CoreDNS"
 spec:
-  replicas: {{ .Replicas}}
+  replicas: {{ .Replicas }}
   strategy:
     type: RollingUpdate
+    {{- if .MaxUnavailableReplicas }}
     rollingUpdate:
-      maxUnavailable: 1
+      maxUnavailable: {{ .MaxUnavailableReplicas }}
+    {{- end }}
   selector:
     matchLabels:
       k8s-app: kube-dns
@@ -145,6 +148,7 @@ spec:
           effect: "NoSchedule"
       nodeSelector:
         kubernetes.io/os: linux
+      {{- if not .DisablePodAntiAffinity }}
       # Require running coredns replicas on different nodes
       affinity:
         podAntiAffinity:
@@ -155,6 +159,7 @@ spec:
               - key: k8s-app
                 operator: In
                 values: ['kube-dns']
+      {{- end }}
       containers:
       - name: coredns
         image: {{ .Image }}
@@ -203,7 +208,7 @@ spec:
             path: /ready
             port: 8181
             scheme: HTTP
-          initialDelaySeconds: 0
+          initialDelaySeconds: 30 # give loop plugin time to detect loops
           periodSeconds: 2
           timeoutSeconds: 1
           successThreshold: 1
@@ -216,6 +221,22 @@ spec:
             items:
             - key: Corefile
               path: Corefile
+{{- if not .DisablePodDisruptionBudget }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: coredns
+  namespace: kube-system
+  labels:
+    k8s-app: kube-dns
+    kubernetes.io/name: "CoreDNS"
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -264,11 +285,14 @@ type CoreDNS struct {
 }
 
 type coreDNSConfig struct {
-	Replicas      int
-	ClusterDNSIP  string
-	ClusterDomain string
-	Image         string
-	PullPolicy    string
+	Replicas                   int
+	ClusterDNSIP               string
+	ClusterDomain              string
+	Image                      string
+	PullPolicy                 string
+	MaxUnavailableReplicas     *uint
+	DisablePodAntiAffinity     bool
+	DisablePodDisruptionBudget bool
 }
 
 // NewCoreDNS creates new instance of CoreDNS component
@@ -339,14 +363,41 @@ func (c *CoreDNS) getConfig(ctx context.Context, clusterConfig *v1beta1.ClusterC
 	}
 
 	nodeCount := len(nodes.Items)
-	replicas := replicaCount(nodeCount)
 
 	config := coreDNSConfig{
-		Replicas:      replicas,
+		Replicas:      replicaCount(nodeCount),
 		ClusterDomain: nodeConfig.Spec.Network.ClusterDomain,
 		ClusterDNSIP:  dns,
 		Image:         clusterConfig.Spec.Images.CoreDNS.URI(),
 		PullPolicy:    clusterConfig.Spec.Images.DefaultPullPolicy,
+	}
+
+	if config.Replicas <= 1 {
+
+		// No pod anti-affinity for single replica deployments, so that CoreDNS
+		// can be rolled on a single node without downtime, as the single
+		// replica can remain operational until the new replica can take over.
+		config.DisablePodAntiAffinity = true
+
+		// No PodDisruptionBudget for single replica deployments, so that
+		// CoreDNS may be drained from the node running the single replica. This
+		// might leave CoreDNS eligible for eviction due to node pressure, but
+		// such clusters aren't HA in the first place and it seems more
+		// desirable to not block a drain.
+		config.DisablePodDisruptionBudget = true
+
+	} else if config.Replicas == 2 || config.Replicas == 3 {
+
+		// Set maxUnavailable=1 only for deployments with two or three replicas.
+		// Use the Kubernetes defaults (maxUnavailable=25%, rounded down to get
+		// absolute values) for all other cases. For single replica deployments,
+		// maxUnavailable=1 would mean that the deployment's available condition
+		// would be true even with zero ready replicas. For deployments with 4
+		// to 7 replicas, it would be the same as the default, and for
+		// deployments with 8 or more replicas, this would artificially
+		// constrain the rolling update speed.
+		config.MaxUnavailableReplicas = pointer.Uint(1)
+
 	}
 
 	return config, nil
