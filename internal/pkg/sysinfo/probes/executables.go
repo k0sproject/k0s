@@ -21,18 +21,16 @@ import (
 	"os/exec"
 )
 
-func AssertExecutablesInPath(p Probes, executables ...string) {
-	for _, executable := range executables {
-		p.Set(fmt.Sprintf("executableInPath:%s", executable), func(path ProbePath, _ Probe) Probe {
-			return ProbeFn(func(r Reporter) error {
-				desc := NewProbeDesc(fmt.Sprintf("Executable in path: %s", executable), path)
-				path, err := exec.LookPath(executable)
-				if err != nil {
-					return r.Warn(desc, ErrorProp(err), "")
-				}
+func AssertExecutableInPath(p Probes, executable string) {
+	p.Set(fmt.Sprintf("executableInPath:%s", executable), func(path ProbePath, _ Probe) Probe {
+		return ProbeFn(func(r Reporter) error {
+			desc := NewProbeDesc(fmt.Sprintf("Executable in PATH: %s", executable), path)
+			path, err := exec.LookPath(executable)
+			if err != nil {
+				return r.Warn(desc, ErrorProp(err), "")
+			}
 
-				return r.Pass(desc, StringProp(path))
-			})
+			return r.Pass(desc, StringProp(path))
 		})
-	}
+	})
 }
