@@ -84,7 +84,7 @@ require (
 	k8s.io/mount-utils v0.28.3
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	sigs.k8s.io/controller-runtime v0.16.2
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require gopkg.in/yaml.v2 v2.4.0 // indirect
