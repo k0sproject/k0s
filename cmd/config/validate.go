@@ -40,9 +40,9 @@ func NewValidateCmd() *cobra.Command {
 			// config.CfgFile is the global value holder for --config flag, set by cobra/pflag
 			switch config.CfgFile {
 			case "-":
-				reader = os.Stdin
+				reader = cmd.InOrStdin()
 			case "":
-				return errors.New("--config can't be emmpty")
+				return errors.New("--config can't be empty")
 			default:
 				f, err := os.Open(config.CfgFile)
 				if err != nil {
@@ -57,15 +57,9 @@ func NewValidateCmd() *cobra.Command {
 				return fmt.Errorf("failed to read config: %w", err)
 			}
 
-			errs := cfg.Validate()
-			if len(errs) > 0 {
-				return fmt.Errorf("config validation failed: %w", errors.Join(errs...))
-			}
-
-			return nil
+			return errors.Join(cfg.Validate()...)
 		},
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceUsage: true,
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
