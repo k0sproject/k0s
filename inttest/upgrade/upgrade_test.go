@@ -166,6 +166,9 @@ func (s *UpgradeSuite) TestK0sGetsUp() {
 
 	err = s.WaitForNodeReady(s.WorkerNode(1), kc)
 	s.NoError(err)
+
+	s.Require().NoError(common.WaitForPodLogs(s.Context(), kc, "kube-system"))
+
 }
 
 func TestUpgradeSuite(t *testing.T) {
