@@ -49,26 +49,24 @@ import (
 
 // Helm watch for Chart crd
 type ExtensionsController struct {
-	concurrencyLevel int
-	saver            manifestsSaver
-	L                *logrus.Entry
-	helm             *helm.Commands
-	kubeConfig       string
-	leaderElector    leaderelector.Interface
+	saver         manifestsSaver
+	L             *logrus.Entry
+	helm          *helm.Commands
+	kubeConfig    string
+	leaderElector leaderelector.Interface
 }
 
 var _ manager.Component = (*ExtensionsController)(nil)
 var _ manager.Reconciler = (*ExtensionsController)(nil)
 
 // NewExtensionsController builds new HelmAddons
-func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface, concurrencyLevel int) *ExtensionsController {
+func NewExtensionsController(s manifestsSaver, k0sVars constant.CfgVars, kubeClientFactory kubeutil.ClientFactoryInterface, leaderElector leaderelector.Interface) *ExtensionsController {
 	return &ExtensionsController{
-		concurrencyLevel: concurrencyLevel,
-		saver:            s,
-		L:                logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
-		helm:             helm.NewCommands(k0sVars),
-		kubeConfig:       k0sVars.AdminKubeConfigPath,
-		leaderElector:    leaderElector,
+		saver:         s,
+		L:             logrus.WithFields(logrus.Fields{"component": "extensions_controller"}),
+		helm:          helm.NewCommands(k0sVars),
+		kubeConfig:    k0sVars.AdminKubeConfigPath,
+		leaderElector: leaderElector,
 	}
 }
 
@@ -223,7 +221,7 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	return reconcile.Result{}, nil
 }
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
-	if err := cr.helm.UninstallRelease(chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
+	if err := cr.helm.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
@@ -251,7 +249,8 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 	if chart.Status.ReleaseName == "" {
 		// new chartRelease
 		cr.L.Tracef("Start update or install %s", chart.Spec.ChartName)
-		chartRelease, err = cr.helm.InstallChart(chart.Spec.ChartName,
+		chartRelease, err = cr.helm.InstallChart(ctx,
+			chart.Spec.ChartName,
 			chart.Spec.Version,
 			chart.Spec.ReleaseName,
 			chart.Spec.Namespace,
@@ -264,7 +263,8 @@ func (cr *ChartReconciler) updateOrInstallChart(ctx context.Context, chart v1bet
 	} else {
 		if cr.chartNeedsUpgrade(chart) {
 			// update
-			chartRelease, err = cr.helm.UpgradeChart(chart.Spec.ChartName,
+			chartRelease, err = cr.helm.UpgradeChart(ctx,
+				chart.Spec.ChartName,
 				chart.Spec.Version,
 				chart.Status.ReleaseName,
 				chart.Status.Namespace,
@@ -352,9 +352,7 @@ func (ec *ExtensionsController) Start(ctx context.Context) error {
 	mgr, err := ctrlManager.New(clientConfig, ctrlManager.Options{
 		MetricsBindAddress: "0",
 		Logger:             logrusr.New(ec.L),
-		Controller: config.Controller{
-			GroupKindConcurrency: map[string]int{gk.String(): 10},
-		},
+		Controller:         config.Controller{},
 	})
 	if err != nil {
 		return fmt.Errorf("can't build controller-runtime controller for helm extensions: %w", err)
