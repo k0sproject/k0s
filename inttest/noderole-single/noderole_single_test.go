@@ -27,7 +27,7 @@ import (
 )
 
 type NodeRoleSingleSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *NodeRoleSingleSuite) TestK0sSingleNode() {
@@ -47,7 +47,7 @@ func (s *NodeRoleSingleSuite) TestK0sSingleNode() {
 
 func TestNodeRoleSingleSuite(t *testing.T) {
 	s := NodeRoleSingleSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 		},
 	}

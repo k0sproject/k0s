@@ -26,7 +26,7 @@ import (
 )
 
 type MultiControllerSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *MultiControllerSuite) TestK0sGetsUp() {
@@ -61,7 +61,7 @@ func (s *MultiControllerSuite) TestK0sGetsUp() {
 
 func TestMultiControllerSuite(t *testing.T) {
 	s := MultiControllerSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     1,
 		},

@@ -37,7 +37,7 @@ spec:
 `
 
 type ExternalEtcdSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
@@ -103,7 +103,7 @@ func (s *ExternalEtcdSuite) TestK0sWithExternalEtcdCluster() {
 
 func TestExternalEtcdSuite(t *testing.T) {
 	s := ExternalEtcdSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount:  1,
 			WorkerCount:      1,
 			WithExternalEtcd: true,

@@ -30,7 +30,7 @@ import (
 )
 
 type selectorSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 const selectorControllerConfig = `
@@ -46,7 +46,7 @@ func (s *selectorSuite) SetupTest() {
 	ipAddress := s.GetLBAddress()
 	var joinToken string
 
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
+	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
 		s.Require().NoError(s.WaitForSSH(s.ControllerNode(idx), 2*time.Minute, 1*time.Second))
 
 		s.PutFile(s.ControllerNode(idx), "/tmp/k0s.yaml", fmt.Sprintf(selectorControllerConfig, ipAddress))
@@ -70,8 +70,8 @@ func (s *selectorSuite) SetupTest() {
 	}
 
 	// Final sanity -- ensure all nodes see each other according to etcd
-	for idx := 0; idx < s.FootlooseSuite.ControllerCount; idx++ {
-		s.Require().Len(s.GetMembers(idx), s.FootlooseSuite.ControllerCount)
+	for idx := 0; idx < s.BootlooseSuite.ControllerCount; idx++ {
+		s.Require().Len(s.GetMembers(idx), s.BootlooseSuite.ControllerCount)
 	}
 
 	// Create a worker join token
@@ -84,7 +84,7 @@ func (s *selectorSuite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
+	for idx := 0; idx < s.BootlooseSuite.WorkerCount; idx++ {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 }
@@ -160,7 +160,7 @@ spec:
 // autopilot upgrade scenarios against them.
 func TestSelectorSuite(t *testing.T) {
 	suite.Run(t, &selectorSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 3,
 			WorkerCount:     3,
 			WithLB:          true,

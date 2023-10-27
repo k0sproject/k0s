@@ -25,7 +25,7 @@ import (
 )
 
 type hostnameOverrideSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *hostnameOverrideSuite) TestK0sGetsUp() {
@@ -46,7 +46,7 @@ func (s *hostnameOverrideSuite) TestK0sGetsUp() {
 
 func TestHostnameOverrideSuite(t *testing.T) {
 	suite.Run(t, &hostnameOverrideSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

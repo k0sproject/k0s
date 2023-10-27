@@ -36,7 +36,7 @@ const (
 )
 
 type plansSingleControllerSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 var envTemplate = `
@@ -172,7 +172,7 @@ spec:
 // autopilot upgrade scenarios against it.
 func TestPlansSingleControllerSuite(t *testing.T) {
 	suite.Run(t, &plansSingleControllerSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount:  1,
 			WorkerCount:      0,
 			WithUpdateServer: true,

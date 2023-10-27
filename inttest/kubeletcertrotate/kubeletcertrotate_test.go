@@ -32,7 +32,7 @@ import (
 )
 
 type kubeletCertRotateSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 type statusJSON struct {
@@ -63,7 +63,7 @@ func (s *kubeletCertRotateSuite) SetupTest() {
 	client, err := s.KubeClient(s.ControllerNode(0))
 	s.Require().NoError(err)
 
-	for idx := 0; idx < s.FootlooseSuite.WorkerCount; idx++ {
+	for idx := 0; idx < s.BootlooseSuite.WorkerCount; idx++ {
 		s.Require().NoError(s.WaitForNodeReady(s.WorkerNode(idx), client))
 	}
 
@@ -171,7 +171,7 @@ func (s *kubeletCertRotateSuite) TestApply() {
 // autopilot upgrade scenarios against them.
 func TestKubeletCertRotateSuite(t *testing.T) {
 	suite.Run(t, &kubeletCertRotateSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,

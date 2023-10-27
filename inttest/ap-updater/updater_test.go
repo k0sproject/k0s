@@ -33,7 +33,7 @@ const (
 )
 
 type plansSingleControllerSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -103,7 +103,7 @@ spec:
 // autopilot upgrade scenarios against it.
 func TestPlansSingleControllerSuite(t *testing.T) {
 	suite.Run(t, &plansSingleControllerSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount:  1,
 			WorkerCount:      0,
 			WithUpdateServer: true,

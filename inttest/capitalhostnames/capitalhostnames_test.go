@@ -26,7 +26,7 @@ import (
 )
 
 type CapitalHostnamesSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CapitalHostnamesSuite) TestK0sGetsUp() {
@@ -82,7 +82,7 @@ func (s *CapitalHostnamesSuite) setHostname(node, hostname string) error {
 
 func TestCapitalHostnamesSuite(t *testing.T) {
 	s := CapitalHostnamesSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

@@ -25,7 +25,7 @@ import (
 )
 
 type MetricsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *MetricsSuite) TestK0sGetsUp() {
@@ -46,7 +46,7 @@ func (s *MetricsSuite) TestK0sGetsUp() {
 
 func TestMetricsSuite(t *testing.T) {
 	s := MetricsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

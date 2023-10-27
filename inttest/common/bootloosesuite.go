@@ -57,10 +57,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/k0sproject/bootloose/pkg/cluster"
+	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/weaveworks/footloose/pkg/cluster"
-	"github.com/weaveworks/footloose/pkg/config"
 	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
 )
@@ -79,11 +79,11 @@ const (
 
 	defaultK0sUpdateVersion = "v0.0.0"
 
-	defaultFootLooseImage = "footloose-alpine"
+	defaultBootLooseImage = "bootloose-alpine"
 )
 
-// FootlooseSuite defines all the common stuff we need to be able to run k0s testing on footloose.
-type FootlooseSuite struct {
+// BootlooseSuite defines all the common stuff we need to be able to run k0s testing on bootloose.
+type BootlooseSuite struct {
 	suite.Suite
 
 	/* config knobs (initialized via `initializeDefaults`) */
@@ -105,12 +105,12 @@ type FootlooseSuite struct {
 	K0smotronWorkerCount            int
 	WithUpdateServer                bool
 	K0sUpdateVersion                string
-	FootLooseImage                  string
+	BootLooseImage                  string
 
 	ctx      context.Context
 	tearDown func()
 
-	/* footloose cluster setup */
+	/* bootloose cluster setup */
 
 	clusterDir     string
 	clusterConfig  config.Config
@@ -121,7 +121,7 @@ type FootlooseSuite struct {
 }
 
 // initializeDefaults initializes any unset configuration knobs to their defaults.
-func (s *FootlooseSuite) initializeDefaults() {
+func (s *BootlooseSuite) initializeDefaults() {
 	if s.K0sFullPath == "" {
 		s.K0sFullPath = defaultK0sBinaryFullPath
 	}
@@ -155,14 +155,14 @@ func (s *FootlooseSuite) initializeDefaults() {
 		s.Require().Fail("Unknown launch mode", s.LaunchMode)
 	}
 
-	s.FootLooseImage = os.Getenv("FOOTLOOSE_IMAGE")
-	if s.FootLooseImage == "" {
-		s.FootLooseImage = defaultFootLooseImage
+	s.BootLooseImage = os.Getenv("BOOTLOOSE_IMAGE")
+	if s.BootLooseImage == "" {
+		s.BootLooseImage = defaultBootLooseImage
 	}
 }
 
-// SetupSuite does all the setup work, namely boots up footloose cluster.
-func (s *FootlooseSuite) SetupSuite() {
+// SetupSuite does all the setup work, namely boots up bootloose cluster.
+func (s *BootlooseSuite) SetupSuite() {
 	t := s.T()
 
 	s.initializeDefaults()
@@ -188,8 +188,8 @@ func (s *FootlooseSuite) SetupSuite() {
 		t.Log("test suite has no deadline")
 	}
 
-	if err := s.initializeFootlooseCluster(); err != nil {
-		s.FailNow("failed to initialize footloose cluster", err)
+	if err := s.initializeBootlooseCluster(); err != nil {
+		s.FailNow("failed to initialize bootloose cluster", err)
 	}
 
 	// perform a cleanup whenever the suite's context is canceled
@@ -236,9 +236,9 @@ func signalAwareCtx(parent context.Context) (context.Context, context.CancelCaus
 	return ctx, cancel
 }
 
-// waitForSSH waits to get a SSH connection to all footloose machines defined as part of the test suite.
+// waitForSSH waits to get a SSH connection to all bootloose machines defined as part of the test suite.
 // Each node is tried in parallel for ~30secs max
-func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
+func (s *BootlooseSuite) waitForSSH(ctx context.Context) {
 	nodes := []string{}
 	for i := 0; i < s.ControllerCount; i++ {
 		nodes = append(nodes, s.ControllerNode(i))
@@ -281,35 +281,35 @@ func (s *FootlooseSuite) waitForSSH(ctx context.Context) {
 }
 
 // Context returns this suite's context, which should be passed to all blocking operations.
-func (s *FootlooseSuite) Context() context.Context {
+func (s *BootlooseSuite) Context() context.Context {
 	ctx := s.ctx
 	s.Require().NotNil(ctx, "No suite context installed")
 	return ctx
 }
 
 // ControllerNode gets the node name of given controller index
-func (s *FootlooseSuite) ControllerNode(idx int) string {
+func (s *BootlooseSuite) ControllerNode(idx int) string {
 	return fmt.Sprintf(controllerNodeNameFormat, idx)
 }
 
 // WorkerNode gets the node name of given worker index
-func (s *FootlooseSuite) WorkerNode(idx int) string {
+func (s *BootlooseSuite) WorkerNode(idx int) string {
 	return fmt.Sprintf(workerNodeNameFormat, idx)
 }
 
 // K0smotronNode gets the node name of given K0smotron node index
-func (s *FootlooseSuite) K0smotronNode(idx int) string {
+func (s *BootlooseSuite) K0smotronNode(idx int) string {
 	return fmt.Sprintf(k0smotronNodeNameFormat, idx)
 }
 
-func (s *FootlooseSuite) LBNode() string {
+func (s *BootlooseSuite) LBNode() string {
 	if !s.WithLB {
 		s.FailNow("can't get load balancer node name because it's not enabled for this suite")
 	}
 	return fmt.Sprintf(lbNodeNameFormat, 0)
 }
 
-func (s *FootlooseSuite) ExternalEtcdNode() string {
+func (s *BootlooseSuite) ExternalEtcdNode() string {
 	if !s.WithExternalEtcd {
 		s.FailNow("can't get external node name because it's not enabled for this suite")
 	}
@@ -317,27 +317,27 @@ func (s *FootlooseSuite) ExternalEtcdNode() string {
 }
 
 // StartMachines starts specific machines(s) in cluster
-func (s *FootlooseSuite) Start(machineNames []string) error {
+func (s *BootlooseSuite) Start(machineNames []string) error {
 	return s.cluster.Start(machineNames)
 }
 
 // Stop stops the machines in cluster.
-func (s *FootlooseSuite) Stop(machineNames []string) error {
+func (s *BootlooseSuite) Stop(machineNames []string) error {
 	return s.cluster.Stop(machineNames)
 }
 
 // TearDownSuite is called by testify at the very end of the suite's run.
 // It cancels the suite's context in order to free the suite's resources.
-func (s *FootlooseSuite) TearDownSuite() {
+func (s *BootlooseSuite) TearDownSuite() {
 	tearDown := s.tearDown
 	if s.NotNil(tearDown, "Failed to tear down suite") {
 		tearDown()
 	}
 }
 
-// cleanupSuite does the cleanup work, namely destroy the footloose machines.
+// cleanupSuite does the cleanup work, namely destroy the bootloose machines.
 // Intended to be called after the suite's context has been canceled.
-func (s *FootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
+func (s *BootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 	if t.Failed() {
 		var wg sync.WaitGroup
 		tmpDir := os.TempDir()
@@ -372,18 +372,18 @@ func (s *FootlooseSuite) cleanupSuite(ctx context.Context, t *testing.T) {
 	}
 
 	if keepEnvironment(t) {
-		t.Logf("footloose cluster left intact for debugging; needs to be manually cleaned up with: footloose delete --config %s", path.Join(s.clusterDir, "footloose.yaml"))
+		t.Logf("bootloose cluster left intact for debugging; needs to be manually cleaned up with: bootloose delete --config %s", path.Join(s.clusterDir, "bootloose.yaml"))
 		return
 	}
 
 	if err := s.cluster.Delete(); err != nil {
-		t.Logf("Failed to delete footloose cluster: %s", err.Error())
+		t.Logf("Failed to delete bootloose cluster: %s", err.Error())
 	}
 
 	cleanupClusterDir(t, s.clusterDir)
 }
 
-func (s *FootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t *testing.T, filePath string) {
+func (s *BootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t *testing.T, filePath string) {
 	dataDir := constant.DataDirDefault
 	if s.dataDirOpt != "" {
 		dataDir = s.dataDirOpt[len(dataDirOptPrefix):]
@@ -414,7 +414,7 @@ func (s *FootlooseSuite) collectTroubleshootSupportBundle(ctx context.Context, t
 	t.Logf("Collected troubleshoot support bundle on %s into %s", node, filePath)
 }
 
-func (s *FootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, dir string) {
+func (s *BootlooseSuite) dumpNodeLogs(ctx context.Context, t *testing.T, node, dir string) {
 	ssh, err := s.SSH(ctx, node)
 	if err != nil {
 		t.Logf("Failed to ssh into %s to get logs: %s", node, err.Error())
@@ -501,7 +501,7 @@ func getDataDirOpt(args []string) string {
 	return ""
 }
 
-func (s *FootlooseSuite) startHAProxy() {
+func (s *BootlooseSuite) startHAProxy() {
 	addresses := s.getControllersIPAddresses()
 	ssh, err := s.SSH(s.Context(), s.LBNode())
 	s.Require().NoError(err)
@@ -517,7 +517,7 @@ func (s *FootlooseSuite) startHAProxy() {
 	s.Require().NoError(err, "Can't start LB")
 }
 
-func (s *FootlooseSuite) getLBConfig(adresses []string) string {
+func (s *BootlooseSuite) getLBConfig(adresses []string) string {
 	tpl := `
 defaults
     # timeouts are to prevent warning during haproxy -c call
@@ -593,7 +593,7 @@ listen stats
 	return content.String()
 }
 
-func (s *FootlooseSuite) getControllersIPAddresses() []string {
+func (s *BootlooseSuite) getControllersIPAddresses() []string {
 	upstreams := make([]string, s.ControllerCount)
 	addresses := make([]string, s.ControllerCount)
 	for i := 0; i < s.ControllerCount; i++ {
@@ -611,7 +611,7 @@ func (s *FootlooseSuite) getControllersIPAddresses() []string {
 }
 
 // InitController initializes a controller
-func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
+func (s *BootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 	controllerNode := s.ControllerNode(idx)
 	ssh, err := s.SSH(s.Context(), controllerNode)
 	if err != nil {
@@ -633,7 +633,7 @@ func (s *FootlooseSuite) InitController(idx int, k0sArgs ...string) error {
 }
 
 // GetJoinToken generates join token for the asked role
-func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
+func (s *BootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string, error) {
 	// assume we have main on node 0 always
 	controllerNode := s.ControllerNode(0)
 	s.Contains([]string{"controller", "worker"}, role, "Bad role")
@@ -656,7 +656,7 @@ func (s *FootlooseSuite) GetJoinToken(role string, extraArgs ...string) (string,
 }
 
 // ImportK0smotrtonImages imports
-func (s *FootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
+func (s *BootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 	for i := 0; i < s.WorkerCount; i++ {
 		workerNode := s.WorkerNode(i)
 		s.T().Logf("Importing images in %s", workerNode)
@@ -675,7 +675,7 @@ func (s *FootlooseSuite) ImportK0smotronImages(ctx context.Context) error {
 }
 
 // RunWorkers joins all the workers to the cluster
-func (s *FootlooseSuite) RunWorkers(args ...string) error {
+func (s *BootlooseSuite) RunWorkers(args ...string) error {
 	token, err := s.GetJoinToken("worker", getDataDirOpt(args))
 	if err != nil {
 		return err
@@ -684,7 +684,7 @@ func (s *FootlooseSuite) RunWorkers(args ...string) error {
 }
 
 // RunWorkersWithToken joins all the workers to the cluster with the given token
-func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
+func (s *BootlooseSuite) RunWorkersWithToken(token string, args ...string) error {
 	for i := 0; i < s.WorkerCount; i++ {
 		err := s.RunWithToken(s.WorkerNode(i), token, args...)
 		if err != nil {
@@ -695,7 +695,7 @@ func (s *FootlooseSuite) RunWorkersWithToken(token string, args ...string) error
 }
 
 // RunWithToken joins a worker node to the cluster with the given token
-func (s *FootlooseSuite) RunWithToken(worker string, token string, args ...string) error {
+func (s *BootlooseSuite) RunWithToken(worker string, token string, args ...string) error {
 	sshWorker, err := s.SSH(s.Context(), worker)
 	if err != nil {
 		return err
@@ -710,7 +710,7 @@ func (s *FootlooseSuite) RunWithToken(worker string, token string, args ...strin
 }
 
 // SSH establishes an SSH connection to the node
-func (s *FootlooseSuite) SSH(ctx context.Context, node string) (*SSHConnection, error) {
+func (s *BootlooseSuite) SSH(ctx context.Context, node string) (*SSHConnection, error) {
 	m, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -736,12 +736,12 @@ func (s *FootlooseSuite) SSH(ctx context.Context, node string) (*SSHConnection, 
 	return ssh, nil
 }
 
-func (s *FootlooseSuite) InspectMachines(hostnames []string) ([]*cluster.Machine, error) {
+func (s *BootlooseSuite) InspectMachines(hostnames []string) ([]*cluster.Machine, error) {
 	return s.cluster.Inspect(hostnames)
 }
 
 // MachineForName gets the named machine details
-func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
+func (s *BootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	machines, err := s.InspectMachines(nil)
 	if err != nil {
 		return nil, err
@@ -755,7 +755,7 @@ func (s *FootlooseSuite) MachineForName(name string) (*cluster.Machine, error) {
 	return nil, fmt.Errorf("no machine found with name %s", name)
 }
 
-func (s *FootlooseSuite) StopController(name string) error {
+func (s *BootlooseSuite) StopController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -764,28 +764,28 @@ func (s *FootlooseSuite) StopController(name string) error {
 	return s.launchDelegate.StopController(s.Context(), ssh)
 }
 
-func (s *FootlooseSuite) StartController(name string) error {
+func (s *BootlooseSuite) StartController(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	return s.launchDelegate.StartController(s.Context(), ssh)
 }
 
-func (s *FootlooseSuite) StartWorker(name string) error {
+func (s *BootlooseSuite) StartWorker(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	return s.launchDelegate.StartWorker(s.Context(), ssh)
 }
 
-func (s *FootlooseSuite) StopWorker(name string) error {
+func (s *BootlooseSuite) StopWorker(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
 	return s.launchDelegate.StopWorker(s.Context(), ssh)
 }
 
-func (s *FootlooseSuite) Reset(name string) error {
+func (s *BootlooseSuite) Reset(name string) error {
 	ssh, err := s.SSH(s.Context(), name)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -795,7 +795,7 @@ func (s *FootlooseSuite) Reset(name string) error {
 }
 
 // KubeClient return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
+func (s *BootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -824,7 +824,7 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 	}
 	hostPort, err := machine.HostPort(int(port))
 	if err != nil {
-		return nil, fmt.Errorf("footloose machine has to have %d port mapped: %w", port, err)
+		return nil, fmt.Errorf("bootloose machine has to have %d port mapped: %w", port, err)
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil
@@ -832,7 +832,7 @@ func (s *FootlooseSuite) GetKubeConfig(node string, k0sKubeconfigArgs ...string)
 
 // CreateUserAndGetKubeClientConfig creates user and returns the kubeconfig as clientcmdapi.Config struct so it can be
 // used and loaded with clientsets directly
-func (s *FootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
+func (s *BootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username string, k0sKubeconfigArgs ...string) (*rest.Config, error) {
 	machine, err := s.MachineForName(node)
 	if err != nil {
 		return nil, err
@@ -861,14 +861,14 @@ func (s *FootlooseSuite) CreateUserAndGetKubeClientConfig(node string, username 
 	}
 	hostPort, err := machine.HostPort(int(port))
 	if err != nil {
-		return nil, fmt.Errorf("footloose machine has to have %d port mapped: %w", port, err)
+		return nil, fmt.Errorf("bootloose machine has to have %d port mapped: %w", port, err)
 	}
 	cfg.Host = fmt.Sprintf("localhost:%d", hostPort)
 	return cfg, nil
 }
 
 // KubeClient return kube client by loading the admin access config from given node
-func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
+func (s *BootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*kubernetes.Clientset, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
 		return nil, err
@@ -877,7 +877,7 @@ func (s *FootlooseSuite) KubeClient(node string, k0sKubeconfigArgs ...string) (*
 }
 
 // AutopilotClient returns a client for accessing the autopilot schema
-func (s *FootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...string) (apclient.Interface, error) {
+func (s *BootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...string) (apclient.Interface, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
 		return nil, err
@@ -886,7 +886,7 @@ func (s *FootlooseSuite) AutopilotClient(node string, k0sKubeconfigArgs ...strin
 }
 
 // ExtensionsClient returns a client for accessing the extensions schema
-func (s *FootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...string) (*extclient.ApiextensionsV1Client, error) {
+func (s *BootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...string) (*extclient.ApiextensionsV1Client, error) {
 	cfg, err := s.GetKubeConfig(node, k0sKubeconfigArgs...)
 	if err != nil {
 		return nil, err
@@ -896,7 +896,7 @@ func (s *FootlooseSuite) ExtensionsClient(node string, k0sKubeconfigArgs ...stri
 }
 
 // WaitForNodeReady wait that we see the given node in "Ready" state in kubernetes API
-func (s *FootlooseSuite) WaitForNodeReady(name string, kc kubernetes.Interface) error {
+func (s *BootlooseSuite) WaitForNodeReady(name string, kc kubernetes.Interface) error {
 	s.T().Logf("waiting to see %s ready in kube API", name)
 	if err := WaitForNodeReadyStatus(s.Context(), kc, name, corev1.ConditionTrue); err != nil {
 		return err
@@ -906,7 +906,7 @@ func (s *FootlooseSuite) WaitForNodeReady(name string, kc kubernetes.Interface) 
 }
 
 // GetNodeLabels return the labels of given node
-func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (map[string]string, error) {
+func (s *BootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (map[string]string, error) {
 	n, err := kc.CoreV1().Nodes().Get(s.Context(), node, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -916,7 +916,7 @@ func (s *FootlooseSuite) GetNodeLabels(node string, kc *kubernetes.Clientset) (m
 }
 
 // WaitForNodeLabel waits for label be assigned to the node
-func (s *FootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelKey, labelValue string) error {
+func (s *BootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelKey, labelValue string) error {
 	return watch.Nodes(kc.CoreV1().Nodes()).
 		WithObjectName(node).
 		WithErrorCallback(RetryWatchErrors(s.T().Logf)).
@@ -936,7 +936,7 @@ func (s *FootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelK
 }
 
 // GetNodeLabels return the labels of given node
-func (s *FootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
+func (s *BootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
 	n, err := kc.CoreV1().Nodes().Get(s.Context(), node, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -945,12 +945,12 @@ func (s *FootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientse
 }
 
 // AddNodeLabel adds a label to the provided node.
-func (s *FootlooseSuite) AddNodeLabel(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
+func (s *BootlooseSuite) AddNodeLabel(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
 	return nodeValuePatchAdd(s.Context(), node, kc, "/metadata/labels", key, value)
 }
 
 // AddNodeAnnotation adds an annotation to the provided node.
-func (s *FootlooseSuite) AddNodeAnnotation(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
+func (s *BootlooseSuite) AddNodeAnnotation(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
 	return nodeValuePatchAdd(s.Context(), node, kc, "/metadata/annotations", key, value)
 }
 
@@ -963,7 +963,7 @@ func nodeValuePatchAdd(ctx context.Context, node string, kc *kubernetes.Clientse
 
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
-func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
+func (s *BootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
 	s.T().Logf("waiting for kube api to start on node %s", node)
 	return Poll(s.Context(), func(context.Context) (done bool, err error) {
 		kc, err := s.KubeClient(node, k0sKubeconfigArgs...)
@@ -997,7 +997,7 @@ func (s *FootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 
 // WaitJoinApi waits until we see k0s join api up-and-running on a given node
 // Timeouts with error return in 5 mins
-func (s *FootlooseSuite) WaitJoinAPI(node string) error {
+func (s *BootlooseSuite) WaitJoinAPI(node string) error {
 	s.T().Logf("waiting for join api to start on node %s", node)
 	return Poll(s.Context(), func(context.Context) (done bool, err error) {
 		joinAPIStatus, err := s.GetHTTPStatus(node, "/v1beta1/ca")
@@ -1015,7 +1015,7 @@ func (s *FootlooseSuite) WaitJoinAPI(node string) error {
 	})
 }
 
-func (s *FootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
+func (s *BootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
 	m, err := s.MachineForName(node)
 	if err != nil {
 		return 0, err
@@ -1038,13 +1038,13 @@ func (s *FootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func (s *FootlooseSuite) initializeFootlooseCluster() error {
-	dir, err := os.MkdirTemp("", s.T().Name()+"-footloose.")
+func (s *BootlooseSuite) initializeBootlooseCluster() error {
+	dir, err := os.MkdirTemp("", s.T().Name()+"-bootloose.")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory for footloose configuration: %w", err)
+		return fmt.Errorf("failed to create temporary directory for bootloose configuration: %w", err)
 	}
 
-	err = s.initializeFootlooseClusterInDir(dir)
+	err = s.initializeBootlooseClusterInDir(dir)
 	if err != nil {
 		cleanupClusterDir(s.T(), dir)
 	}
@@ -1053,7 +1053,7 @@ func (s *FootlooseSuite) initializeFootlooseCluster() error {
 }
 
 // Verifies that kubelet process has the address flag set
-func (s *FootlooseSuite) GetKubeletCMDLine(node string) ([]string, error) {
+func (s *BootlooseSuite) GetKubeletCMDLine(node string) ([]string, error) {
 	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
 		return nil, err
@@ -1068,7 +1068,7 @@ func (s *FootlooseSuite) GetKubeletCMDLine(node string) ([]string, error) {
 	return strings.Split(output, "\x00"), nil
 }
 
-func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
+func (s *BootlooseSuite) initializeBootlooseClusterInDir(dir string) error {
 	volumes := []config.Volume{
 		{
 			Type:        "volume",
@@ -1117,7 +1117,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		}
 	}
 
-	// Ensure that kernel config is available in the footloose boxes.
+	// Ensure that kernel config is available in the bootloose boxes.
 	// See https://github.com/kubernetes/system-validators/blob/v1.6.0/validators/kernel_validator.go#L180-L190
 
 	bindPaths := []string{
@@ -1182,7 +1182,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			{
 				Count: s.ControllerCount,
 				Spec: config.Machine{
-					Image:        s.FootLooseImage,
+					Image:        s.BootLooseImage,
 					Name:         controllerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
@@ -1192,7 +1192,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			{
 				Count: s.WorkerCount,
 				Spec: config.Machine{
-					Image:        s.FootLooseImage,
+					Image:        s.BootLooseImage,
 					Name:         workerNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
@@ -1202,7 +1202,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 			{
 				Count: s.K0smotronWorkerCount,
 				Spec: config.Machine{
-					Image:        s.FootLooseImage,
+					Image:        s.BootLooseImage,
 					Name:         k0smotronNodeNameFormat,
 					Privileged:   true,
 					Volumes:      volumes,
@@ -1216,11 +1216,10 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         lbNodeNameFormat,
-				Image:        defaultFootLooseImage,
+				Image:        defaultBootLooseImage,
 				Privileged:   true,
 				Volumes:      volumes,
 				PortMappings: portMaps,
-				Ignite:       nil,
 			},
 			Count: 1,
 		})
@@ -1230,7 +1229,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		cfg.Machines = append(cfg.Machines, config.MachineReplicas{
 			Spec: config.Machine{
 				Name:         etcdNodeNameFormat,
-				Image:        defaultFootLooseImage,
+				Image:        defaultBootLooseImage,
 				Privileged:   true,
 				PortMappings: []config.PortMapping{{ContainerPort: 22}},
 			},
@@ -1257,24 +1256,24 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 		})
 	}
 
-	footlooseYaml, err := yaml.Marshal(cfg)
+	bootlooseYaml, err := yaml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal footloose configuration: %w", err)
+		return fmt.Errorf("failed to marshal bootloose configuration: %w", err)
 	}
 
-	if err = os.WriteFile(path.Join(dir, "footloose.yaml"), footlooseYaml, 0700); err != nil {
-		return fmt.Errorf("failed to write footloose configuration to file: %w", err)
+	if err = os.WriteFile(path.Join(dir, "bootloose.yaml"), bootlooseYaml, 0700); err != nil {
+		return fmt.Errorf("failed to write bootloose configuration to file: %w", err)
 	}
 
 	cluster, err := cluster.New(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to setup a new footloose cluster: %w", err)
+		return fmt.Errorf("failed to setup a new bootloose cluster: %w", err)
 	}
 
 	// we first try to delete instances from previous runs, if they happen to exist
 	_ = cluster.Delete()
 	if err := cluster.Create(); err != nil {
-		return fmt.Errorf("failed to create footloose cluster: %w", err)
+		return fmt.Errorf("failed to create bootloose cluster: %w", err)
 	}
 
 	s.clusterDir = dir
@@ -1285,7 +1284,7 @@ func (s *FootlooseSuite) initializeFootlooseClusterInDir(dir string) error {
 
 func cleanupClusterDir(t *testing.T, dir string) {
 	if err := os.RemoveAll(dir); err != nil {
-		t.Logf("failed to remove footloose configuration directory %s: %v", dir, err)
+		t.Logf("failed to remove bootloose configuration directory %s: %v", dir, err)
 	}
 }
 
@@ -1311,23 +1310,23 @@ func newSuiteContext(t *testing.T) (context.Context, context.CancelCauseFunc) {
 }
 
 // GetControllerIPAddress returns controller ip address
-func (s *FootlooseSuite) GetControllerIPAddress(idx int) string {
+func (s *BootlooseSuite) GetControllerIPAddress(idx int) string {
 	return s.getIPAddress(s.ControllerNode(idx))
 }
 
-func (s *FootlooseSuite) GetWorkerIPAddress(idx int) string {
+func (s *BootlooseSuite) GetWorkerIPAddress(idx int) string {
 	return s.getIPAddress(s.WorkerNode(idx))
 }
 
-func (s *FootlooseSuite) GetLBAddress() string {
+func (s *BootlooseSuite) GetLBAddress() string {
 	return s.getIPAddress(s.LBNode())
 }
 
-func (s *FootlooseSuite) GetExternalEtcdIPAddress() string {
+func (s *BootlooseSuite) GetExternalEtcdIPAddress() string {
 	return s.getIPAddress(s.ExternalEtcdNode())
 }
 
-func (s *FootlooseSuite) getIPAddress(nodeName string) string {
+func (s *BootlooseSuite) getIPAddress(nodeName string) string {
 	ssh, err := s.SSH(s.Context(), nodeName)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -1338,7 +1337,7 @@ func (s *FootlooseSuite) getIPAddress(nodeName string) string {
 }
 
 // RunCommandController runs a command via SSH on a specified controller node
-func (s *FootlooseSuite) RunCommandController(idx int, command string) (string, error) {
+func (s *BootlooseSuite) RunCommandController(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.Context(), s.ControllerNode(idx))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -1347,7 +1346,7 @@ func (s *FootlooseSuite) RunCommandController(idx int, command string) (string, 
 }
 
 // RunCommandWorker runs a command via SSH on a specified controller node
-func (s *FootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
+func (s *BootlooseSuite) RunCommandWorker(idx int, command string) (string, error) {
 	ssh, err := s.SSH(s.Context(), s.WorkerNode(idx))
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -1356,7 +1355,7 @@ func (s *FootlooseSuite) RunCommandWorker(idx int, command string) (string, erro
 }
 
 // GetK0sVersion returns the `k0s version` output from a specific node.
-func (s *FootlooseSuite) GetK0sVersion(node string) (string, error) {
+func (s *BootlooseSuite) GetK0sVersion(node string) (string, error) {
 	ssh, err := s.SSH(s.Context(), node)
 	if err != nil {
 		return "", err
@@ -1372,7 +1371,7 @@ func (s *FootlooseSuite) GetK0sVersion(node string) (string, error) {
 }
 
 // GetMembers returns all of the known etcd members for a given node
-func (s *FootlooseSuite) GetMembers(idx int) map[string]string {
+func (s *BootlooseSuite) GetMembers(idx int) map[string]string {
 	// our etcd instances doesn't listen on public IP, so test is performed by calling CLI tools over ssh
 	// which in general even makes sense, we can test tooling as well
 	sshCon, err := s.SSH(s.Context(), s.ControllerNode(idx))
@@ -1401,7 +1400,7 @@ func lastLine(text string) string {
 
 // WaitForSSH ensures that an SSH connection can be successfully obtained, and retries
 // for up to a specific timeout/delay.
-func (s *FootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay time.Duration) error {
+func (s *BootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay time.Duration) error {
 	s.T().Logf("Waiting for SSH connection to '%s'", node)
 	for start := time.Now(); time.Since(start) < timeout; {
 		if conn, err := s.SSH(s.Context(), node); err == nil {
@@ -1417,7 +1416,7 @@ func (s *FootlooseSuite) WaitForSSH(node string, timeout time.Duration, delay ti
 }
 
 // GetUpdateServerIPAddress returns the load balancers ip address
-func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
+func (s *BootlooseSuite) GetUpdateServerIPAddress() string {
 	ssh, err := s.SSH(s.Context(), "updateserver0")
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -1427,7 +1426,7 @@ func (s *FootlooseSuite) GetUpdateServerIPAddress() string {
 	return ipAddress
 }
 
-func (s *FootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
+func (s *BootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) bool {
 	if pods, err := client.CoreV1().Pods("kube-system").List(s.Context(), metav1.ListOptions{
 		Limit: 100,
 	}); s.NoError(err) {
@@ -1438,7 +1437,7 @@ func (s *FootlooseSuite) AssertSomeKubeSystemPods(client *kubernetes.Clientset) 
 	return false
 }
 
-func (s *FootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
+func (s *BootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
 	cmd := exec.Command("docker", "inspect", "bridge", "--format", "\"{{ .EnableIPv6 }}\"")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -1456,7 +1455,7 @@ func (s *FootlooseSuite) IsDockerIPv6Enabled() (bool, error) {
 	return bridgeEnableIPv6, nil
 }
 
-func (s *FootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volume, error) {
+func (s *BootlooseSuite) maybeAddBinPath(volumes []config.Volume) ([]config.Volume, error) {
 	if os.Getenv("K0S_USE_DEFAULT_K0S_BINARIES") == "true" {
 		return volumes, nil
 	}

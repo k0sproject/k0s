@@ -39,7 +39,7 @@ spec:
 `
 
 type SingleNodeSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *SingleNodeSuite) TestK0sGetsUp() {
@@ -117,7 +117,7 @@ spec:
 
 func TestSingleNodeSuite(t *testing.T) {
 	s := SingleNodeSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			ControllerUmask: 027,
 		},

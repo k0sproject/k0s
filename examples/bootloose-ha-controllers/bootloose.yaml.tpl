@@ -5,7 +5,7 @@ machines:
 - count: 3
   backend: docker
   spec:
-    image: k0s-footloose:latest
+    image: k0s-bootloose:latest
     name: controller%d
     privileged: true
     volumes:

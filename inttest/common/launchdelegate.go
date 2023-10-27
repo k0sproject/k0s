@@ -35,7 +35,7 @@ const (
 )
 
 // launchDelegate provides an indirection to the launch operations in
-// [FootlooseSuite] so that alternate behavior can be performed.
+// [BootlooseSuite] so that alternate behavior can be performed.
 type launchDelegate interface {
 	InitController(ctx context.Context, conn *SSHConnection, k0sArgs ...string) error
 	StartController(ctx context.Context, conn *SSHConnection) error

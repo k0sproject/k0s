@@ -26,7 +26,7 @@ import (
 )
 
 // GetFile gets file from the controller with given index
-func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) string {
+func (s *BootlooseSuite) GetFileFromController(controllerIdx int, path string) string {
 	sshCon, err := s.SSH(s.Context(), s.ControllerNode(controllerIdx))
 	s.Require().NoError(err)
 	defer sshCon.Disconnect()
@@ -38,7 +38,7 @@ func (s *FootlooseSuite) GetFileFromController(controllerIdx int, path string) s
 
 // WriteFile writes the data provided by reader to a file at the given path on
 // the given node.
-func (s *FootlooseSuite) WriteFile(node, path string, reader io.Reader) {
+func (s *BootlooseSuite) WriteFile(node, path string, reader io.Reader) {
 	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()
@@ -47,17 +47,17 @@ func (s *FootlooseSuite) WriteFile(node, path string, reader io.Reader) {
 
 // WriteFileContent writes content to a file at the given path on the given
 // node.
-func (s *FootlooseSuite) WriteFileContent(node, path string, content []byte) {
+func (s *BootlooseSuite) WriteFileContent(node, path string, content []byte) {
 	s.WriteFile(node, path, bytes.NewReader(content))
 }
 
 // PutFile writes content to file on given node
-func (s *FootlooseSuite) PutFile(node, path, content string) {
+func (s *BootlooseSuite) PutFile(node, path, content string) {
 	s.WriteFileContent(node, path, []byte(content))
 }
 
 // PutFileTemplate writes content to file on given node using templated data
-func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template string, data interface{}) {
+func (s *BootlooseSuite) PutFileTemplate(node string, filename string, template string, data interface{}) {
 	tw := templatewriter.TemplateWriter{
 		Name:     filepath.Base(filename),
 		Template: template,
@@ -71,7 +71,7 @@ func (s *FootlooseSuite) PutFileTemplate(node string, filename string, template 
 }
 
 // Mkdir makes directory
-func (s *FootlooseSuite) MakeDir(node, path string) {
+func (s *BootlooseSuite) MakeDir(node, path string) {
 	ssh, err := s.SSH(s.Context(), node)
 	s.Require().NoError(err)
 	defer ssh.Disconnect()

@@ -35,7 +35,7 @@ import (
 const defaultCNI = "kuberouter"
 
 type networkSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *networkSuite) TestK0sGetsUp() {
@@ -141,7 +141,7 @@ func retrieveResults(r io.Reader, ec <-chan error) error {
 
 func TestNetworkSuite(t *testing.T) {
 	s := networkSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     2,
 		},

@@ -26,7 +26,7 @@ import (
 )
 
 type ExtraArgsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *ExtraArgsSuite) TestK0sGetsUp() {
@@ -70,7 +70,7 @@ func (s *ExtraArgsSuite) checkFlag(ssh *common.SSHConnection, processName string
 func TestExtraArgsSuite(t *testing.T) {
 	s :=
 		ExtraArgsSuite{
-			common.FootlooseSuite{
+			common.BootlooseSuite{
 				ControllerCount: 1,
 				WorkerCount:     1,
 			},

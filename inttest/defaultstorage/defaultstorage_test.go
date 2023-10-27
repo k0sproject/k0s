@@ -26,7 +26,7 @@ import (
 )
 
 type DefaultStorageSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *DefaultStorageSuite) TestK0sGetsUp() {
@@ -61,7 +61,7 @@ func (s *DefaultStorageSuite) TestK0sGetsUp() {
 
 func TestDefaultStorageSuite(t *testing.T) {
 	s := DefaultStorageSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

@@ -29,7 +29,7 @@ import (
 )
 
 type customPortsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 
 	client *k8s.Clientset
 }
@@ -59,7 +59,7 @@ const adminPort = 9133
 func TestCustomPorts(t *testing.T) {
 
 	s := customPortsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount:       3,
 			WorkerCount:           1,
 			KubeAPIExternalPort:   kubeAPIPort,

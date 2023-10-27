@@ -1,13 +1,13 @@
-# k0s in footloose with mysql
+# k0s in bootloose with mysql
 
-In this example we're gonna use footloose to simulate 2-node control plane setup using mysql as the storage.
+In this example we're gonna use bootloose to simulate 2-node control plane setup using mysql as the storage.
 
 **Note:** All the config files are more like examples, you WILL need to finetune them to fit your env.
 
 ## Prep work
 
 1. Install docker
-2. Get footloose from https://github.com/weaveworks/footloose
+2. Get bootloose from https://github.com/k0sproject/bootloose
 3. Build k0s bin: Run `make build` at repo root
 
 ## Mysql
@@ -31,7 +31,7 @@ Fix the mysql address in `k0s.yaml` config file.
 First we need to bootup the control plane nodes:
 
 ```shell
-footloose create
+bootloose create
 ```
 
 This will start two nodes for us: `controller0` and `controller1`. There's a bind-mount of the whole repo so we easily get the compiled bin into the nodes.
@@ -43,7 +43,7 @@ This will start two nodes for us: `controller0` and `controller1`. There's a bin
 SSH into the node with:
 
 ```shell
-footloose ssh root@controller0
+bootloose ssh root@controller0
 ```
 
 Bootstrap the controlplane:
@@ -70,7 +70,7 @@ This will output the token we'll need in the next step.
 SSH into the node with:
 
 ```shell
-footloose ssh root@controller1
+bootloose ssh root@controller1
 ```
 
 Bootstrap the controlplane:

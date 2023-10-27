@@ -5,11 +5,11 @@ build:
 
 .PHONY: create-cluster
 create-cluster: build
-	docker build -t k0s-footloose .
-	envsubst < footloose.yaml.tpl > footloose.yaml
-	footloose create
+	docker build -t k0s-bootloose .
+	envsubst < bootloose.yaml.tpl > bootloose.yaml
+	bootloose create
 
 .PHONY: delete-cluster
 delete-cluster:
-	footloose delete
+	bootloose delete
 	docker volume prune -f

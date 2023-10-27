@@ -39,7 +39,7 @@ import (
 )
 
 type AddonsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
@@ -233,7 +233,7 @@ func (as *AddonsSuite) doTestAddonUpdate(addonName string, values map[string]int
 func TestAddonsSuite(t *testing.T) {
 
 	s := AddonsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 		},

@@ -36,7 +36,7 @@ spec:
 `
 
 type AirgapSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *AirgapSuite) TestK0sGetsUp() {
@@ -107,7 +107,7 @@ func (s *AirgapSuite) TestK0sGetsUp() {
 
 func TestAirgapSuite(t *testing.T) {
 	s := AirgapSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 

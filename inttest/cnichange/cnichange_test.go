@@ -31,7 +31,7 @@ import (
 )
 
 type CNIChangeSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
@@ -74,7 +74,7 @@ func (s *CNIChangeSuite) TestK0sGetsUpButRejectsToChangeCNI() {
 
 func TestCNIChangeSuite(t *testing.T) {
 	s := CNIChangeSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,

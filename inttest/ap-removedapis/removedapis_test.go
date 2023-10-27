@@ -29,7 +29,7 @@ import (
 )
 
 type plansRemovedAPIsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 // SetupTest prepares the controller and filesystem, getting it into a consistent
@@ -81,7 +81,7 @@ func (s *plansRemovedAPIsSuite) TestApply() {
 // autopilot upgrade scenarios against it.
 func TestPlansRemovedAPIsSuite(t *testing.T) {
 	suite.Run(t, &plansRemovedAPIsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     0,
 			LaunchMode:      common.LaunchModeOpenRC,

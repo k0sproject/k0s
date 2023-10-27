@@ -30,7 +30,7 @@ import (
 )
 
 type K0sCloudProviderSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *K0sCloudProviderSuite) TestK0sGetsUp() {
@@ -118,7 +118,7 @@ func nodeHasAddressWithType(ctx context.Context, kc *kubernetes.Clientset, node 
 
 func TestK0sCloudProviderSuite(t *testing.T) {
 	suite.Run(t, &K0sCloudProviderSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     1,
 			LaunchMode:      common.LaunchModeOpenRC,

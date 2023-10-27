@@ -29,7 +29,7 @@ import (
 )
 
 type HAControlplaneSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *HAControlplaneSuite) getMembers(fromControllerIdx int) map[string]string {
@@ -122,7 +122,7 @@ func (s *HAControlplaneSuite) TestDeregistration() {
 
 func TestHAControlplaneSuite(t *testing.T) {
 	s := HAControlplaneSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 2,
 		},
 	}

@@ -27,7 +27,7 @@ import (
 )
 
 type DisabledComponentsSuite struct {
-	common.FootlooseSuite
+	common.BootlooseSuite
 }
 
 func (s *DisabledComponentsSuite) TestK0sGetsUp() {
@@ -59,7 +59,7 @@ func (s *DisabledComponentsSuite) processExists(procName string, ssh *common.SSH
 
 func TestDisabledComponentsSuite(t *testing.T) {
 	s := DisabledComponentsSuite{
-		common.FootlooseSuite{
+		common.BootlooseSuite{
 			ControllerCount: 1,
 			WorkerCount:     0,
 		},
