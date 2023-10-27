@@ -25,7 +25,7 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/apis/k0s/v1beta1"
 	"github.com/k0sproject/k0s/pkg/build"
-	k0sctx "github.com/k0sproject/k0s/pkg/context"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -73,7 +73,7 @@ func CollectData(ctx context.Context, kc kubernetes.Interface) (*ClusterInfo, er
 	ci.K0sVersion = build.Version
 	ci.Arch = runtime.GOARCH
 
-	nodeConfig := k0sctx.FromContext[v1beta1.ClusterConfig](ctx, k0sctx.ContextNodeConfigKey)
+	nodeConfig := k0scontext.FromContext[v1beta1.ClusterConfig](ctx, k0scontext.ContextNodeConfigKey)
 	if nodeConfig != nil {
 		ci.CNIProvider = nodeConfig.Spec.Network.Provider
 		ci.StorageType = nodeConfig.Spec.Storage.Type

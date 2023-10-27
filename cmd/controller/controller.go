@@ -50,7 +50,7 @@ import (
 	"github.com/k0sproject/k0s/pkg/component/worker"
 	"github.com/k0sproject/k0s/pkg/config"
 	"github.com/k0sproject/k0s/pkg/constant"
-	k0sctx "github.com/k0sproject/k0s/pkg/context"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/k0sproject/k0s/pkg/performance"
 	"github.com/k0sproject/k0s/pkg/telemetry"
@@ -144,7 +144,7 @@ func (c *command) start(ctx context.Context) error {
 	}
 
 	// Add the node config to the context so it can be used by components deep in the "stack"
-	ctx = context.WithValue(ctx, k0sctx.ContextNodeConfigKey, nodeConfig)
+	ctx = context.WithValue(ctx, k0scontext.ContextNodeConfigKey, nodeConfig)
 
 	nodeComponents := manager.New(prober.DefaultProber)
 	clusterComponents := manager.New(prober.DefaultProber)
