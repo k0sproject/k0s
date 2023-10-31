@@ -9,6 +9,7 @@ RUN git -c advice.detachedHead=false clone -b v$VERSION --depth=1 https://github
 WORKDIR /go/src/github.com/kubernetes/kubernetes
 
 ARG TARGET_OS \
+  SOURCE_DATE_EPOCH \
   BUILD_GO_TAGS \
   BUILD_GO_CGO_ENABLED \
   BUILD_GO_FLAGS \
@@ -17,7 +18,7 @@ ARG TARGET_OS \
   KUBERNETES_BINS
 
 RUN \
-  set -e; \
+  set -ex; \
   export GOPATH=/go; \
   if [ "${TARGET_OS}" = windows ]; then \
     commands="${KUBERNETES_BINS}"; \
@@ -34,7 +35,9 @@ RUN \
     export KUBE_STATIC_OVERRIDES=$commands; \
   fi; \
   mkdir /out; \
+  export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH; \
   export FORCE_HOST_GO=y; \
+  export KUBE_VERBOSE=9; \
   export KUBE_GIT_VERSION="v$VERSION+k0s"; \
   for cmd in $commands; do \
     make GOFLAGS="${BUILD_GO_FLAGS} -tags=${BUILD_GO_TAGS}" GOLDFLAGS="${BUILD_GO_LDFLAGS_EXTRA}" WHAT=cmd/$cmd; \

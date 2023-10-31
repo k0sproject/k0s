@@ -30,7 +30,7 @@ kubernetes_build_go_tags = "providerless"
 #kubernetes_build_go_cgo_cflags =
 kubernetes_build_go_flags = "-v"
 #kubernetes_build_go_ldflags =
-kubernetes_build_go_ldflags_extra = "-w -s -extldflags=-static"
+kubernetes_build_go_ldflags_extra = "-extldflags=-static"
 
 kine_version = 0.10.3
 kine_buildimage = $(golang_buildimage)
