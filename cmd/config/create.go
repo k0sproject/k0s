@@ -36,6 +36,7 @@ func NewCreateCmd() *cobra.Command {
 			config := v1beta1.DefaultClusterConfig()
 			if !includeImages {
 				config.Spec.Images = nil
+				config.Spec.Network.NodeLocalLoadBalancing.EnvoyProxy.Image = nil
 			}
 
 			cfg, err := yaml.Marshal(config)
