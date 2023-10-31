@@ -116,7 +116,7 @@ func (n *NodeLocalLoadBalancing) IsEnabled() bool {
 type EnvoyProxy struct {
 	// image specifies the OCI image that's being used for the Envoy Pod.
 	// +optional
-	Image *ImageSpec `json:"image"`
+	Image *ImageSpec `json:"image,omitempty"`
 
 	// imagePullPolicy specifies the pull policy being used for the Envoy Pod.
 	// Defaults to the default image pull policy.
