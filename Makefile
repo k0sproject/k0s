@@ -112,18 +112,19 @@ $(K0S_GO_BUILD_CACHE):
 go.sum: go.mod .k0sbuild.docker-image.k0s
 	$(GO) mod tidy && touch -c -- '$@'
 
-codegen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
+controllergen_targets += pkg/apis/helm/v1beta1/.controller-gen.stamp
 pkg/apis/helm/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/helm/v1beta1/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/helm/v1beta1/.controller-gen.stamp: gen_output_dir = helm
 
-codegen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
+controllergen_targets += pkg/apis/k0s/v1beta1/.controller-gen.stamp
 pkg/apis/k0s/v1beta1/.controller-gen.stamp: $(shell find pkg/apis/k0s/v1beta1/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/k0s/v1beta1/.controller-gen.stamp: gen_output_dir = v1beta1
 
-codegen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
+controllergen_targets += pkg/apis/autopilot/v1beta2/.controller-gen.stamp
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: $(shell find pkg/apis/autopilot/v1beta2/ -maxdepth 1 -type f -name \*.go)
 pkg/apis/autopilot/v1beta2/.controller-gen.stamp: gen_output_dir = autopilot
 
+codegen_targets += $(controllergen_targets)
 pkg/apis/%/.controller-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/boilerplate.go.txt hack/tools/Makefile.variables
 	rm -rf 'static/manifests/$(gen_output_dir)/CustomResourceDefinition'
 	mkdir -p 'static/manifests/$(gen_output_dir)'
@@ -155,12 +156,17 @@ pkg/client/clientset/.client-gen.stamp: .k0sbuild.docker-image.k0s hack/tools/bo
 	touch -- '$@'
 
 codegen_targets += static/zz_generated_assets.go
-static_asset_dirs := static/manifests static/misc
+static/zz_generated_assets.go: $(controllergen_targets) # to generate the CRDs into static/manifests/*/CustomResourceDefinition
+static/zz_generated_assets.go: $(shell find static/manifests/calico static/manifests/windows static/misc -type f)
 static/zz_generated_assets.go: .k0sbuild.docker-image.k0s hack/tools/Makefile.variables
-static/zz_generated_assets.go: $(shell find $(static_asset_dirs) -type f)
-	-rm -f -- '$@'
-	CGO_ENABLED=0 $(GO) install github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version)
-	$(GO_ENV) go-bindata -o '$@' -pkg static -prefix static $(patsubst %,%/...,$(static_asset_dirs))
+	CGO_ENABLED=0 $(GO) run github.com/kevinburke/go-bindata/go-bindata@v$(go-bindata_version) \
+	  -o '$@' -pkg static -prefix static \
+	  static/manifests/helm/CustomResourceDefinition/... \
+	  static/manifests/v1beta1/CustomResourceDefinition/... \
+	  static/manifests/autopilot/CustomResourceDefinition/... \
+	  static/manifests/calico/... \
+	  static/manifests/windows/... \
+	  static/misc/...
 
 ifeq ($(EMBEDDED_BINS_BUILDMODE),none)
 BUILD_GO_TAGS += noembedbins
