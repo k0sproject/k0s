@@ -2004,7 +2004,8 @@
 
 
 <h1 id="runtime">Runtime<a class="headerlink" href="#runtime" title="Permanent link">#</a></h1>
-<p>k0s uses <a href="https://github.com/containerd/containerd">containerd</a> as the default Container Runtime Interface (CRI) and runc as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.</p>
+<p>k0s supports any container runtime that implements the <a href="https://github.com/kubernetes/cri-api">CRI</a> specification.</p>
+<p>k0s comes bundled with <a href="https://github.com/containerd/containerd">containerd</a> as the default Container Runtime Interface (CRI) and <a href="https://github.com/opencontainers/runc">runc</a> as the default low-level runtime. In most cases they don't require any configuration changes. However, if custom configuration is needed, this page provides some examples.</p>
 <p><img alt="k0s_runtime" src="../img/k0s_runtime.png" /></p>
 <h2 id="containerd-configuration">containerd configuration<a class="headerlink" href="#containerd-configuration" title="Permanent link">#</a></h2>
 <p>By default k0s manages the full containerd configuration. User has the option of fully overriding, and thus also managing, the configuration themselves.</p>

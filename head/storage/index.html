@@ -1978,6 +1978,8 @@
 
 
 <h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">#</a></h1>
+<p>k0s supports any volume provider that implements the <a href="https://github.com/container-storage-interface/spec">CSI specification</a>. For convenience, k0s comes bundled in with support for <a href="https://openebs.io/docs/concepts/localpv">OpenEBS local path provisioner</a>.</p>
+<p>The choise of which CSI provider to use depends heavily on the use case and infrastructure you're running on and the use case you have.</p>
 <h2 id="bundled-openebs-storage">Bundled OpenEBS storage<a class="headerlink" href="#bundled-openebs-storage" title="Permanent link">#</a></h2>
 <p>K0s comes out with bundled OpenEBS installation which can be enabled by using <a href="../configuration/">configuration file</a></p>
 <p>Use following configuration as an example:</p>
