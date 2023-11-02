@@ -121,7 +121,7 @@ spec:
         apiServerBindPort: 7443
         image:
           image: docker.io/envoyproxy/envoy-distroless
-          version: v1.24.1
+          version: v1.24.12
         konnectivityServerBindPort: 7132
       type: EnvoyProxy
     podCIDR: 10.244.0.0/16
