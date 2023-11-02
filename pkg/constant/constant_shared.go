@@ -89,7 +89,7 @@ const (
 	CoreDNSImage                       = "docker.io/coredns/coredns"
 	CoreDNSImageVersion                = "1.10.1"
 	EnvoyProxyImage                    = "docker.io/envoyproxy/envoy-distroless"
-	EnvoyProxyImageVersion             = "v1.24.1"
+	EnvoyProxyImageVersion             = "v1.24.12"
 	CalicoImage                        = "docker.io/calico/cni"
 	CalicoComponentImagesVersion       = "v3.24.5"
 	CalicoNodeImage                    = "docker.io/calico/node"
