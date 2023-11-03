@@ -6,7 +6,7 @@ There is a public update-server hosted on the same domain as the documentation s
 ## How it works
 
 * You create a `Plan` YAML
-  * Defining the update payload (new version of `k0s`, URLs for platforms, etc)
+  * Defining the update payload (new version of `k0s`, URLs for platforms, etc) AAAA
   * Add definitions for all the nodes that should receive the update.
     * Either statically, or dynamically using label/field selectors
 * Apply the `Plan`
