@@ -19,7 +19,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.2
 	github.com/containerd/containerd v1.7.8
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/estesp/manifest-tool/v2 v2.0.8
+	github.com/estesp/manifest-tool/v2 v2.1.3
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-openapi/jsonpointer v0.20.0
@@ -279,7 +279,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	k8s.io/metrics v0.28.3 // indirect
 	oras.land/oras-go v1.2.4 // indirect
-	oras.land/oras-go/v2 v2.1.0 // indirect
+	oras.land/oras-go/v2 v2.2.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
