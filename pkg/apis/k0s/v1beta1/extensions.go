@@ -28,6 +28,7 @@ var _ Validateable = (*ClusterExtensions)(nil)
 
 // ClusterExtensions specifies cluster extensions
 type ClusterExtensions struct {
+	//+kubebuilder:deprecatedversion:warning="storage is deprecated and will be ignored in 1.30. https://docs.k0sproject.io/stable/examples/openebs".
 	Storage *StorageExtension `json:"storage"`
 	Helm    *HelmExtensions   `json:"helm"`
 }
