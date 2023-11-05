@@ -49,7 +49,7 @@ With the controller subcommand you can setup a single node cluster by running:
 				return fmt.Errorf("failed to load node config: %v", err)
 			}
 
-			if errs := nodeConfig.Validate(); len(errs) > 0 {
+			if errs := nodeConfig.Validate(true); len(errs) > 0 {
 				return fmt.Errorf("invalid node config: %w", errors.Join(errs...))
 			}
 

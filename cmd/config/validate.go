@@ -29,6 +29,8 @@ import (
 )
 
 func NewValidateCmd() *cobra.Command {
+	var onlineFlag bool
+
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate k0s configuration",
@@ -57,13 +59,14 @@ func NewValidateCmd() *cobra.Command {
 				return fmt.Errorf("failed to read config: %w", err)
 			}
 
-			return errors.Join(cfg.Validate()...)
+			return errors.Join(cfg.Validate(onlineFlag)...)
 		},
 		SilenceUsage: true,
 	}
 
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.FileInputFlag())
+	cmd.Flags().BoolVar(&onlineFlag, "online", false, "Offline/online toggle. False by default")
 	_ = cmd.MarkFlagRequired("config")
 	return cmd
 }

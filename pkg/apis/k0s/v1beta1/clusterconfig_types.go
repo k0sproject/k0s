@@ -21,8 +21,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
+	"net/url"
 	"reflect"
+	"time"
 
+	"golang.org/x/sys/unix"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/strictyaml"
@@ -302,7 +306,7 @@ type Validateable interface {
 	Validate() []error
 }
 
-func (s *ClusterSpec) Validate() (errs []error) {
+func (s *ClusterSpec) Validate(online bool) (errs []error) {
 	if s == nil {
 		return
 	}
@@ -330,6 +334,64 @@ func (s *ClusterSpec) Validate() (errs []error) {
 
 	for _, err := range s.ValidateNodeLocalLoadBalancing() {
 		errs = append(errs, err)
+	}
+
+	for _, err := range s.validateKine(online) {
+		errs = append(errs, err)
+	}
+
+	return
+}
+
+func (s *ClusterSpec) validateKine(online bool) (errs field.ErrorList) {
+	if s.Storage.Type != KineStorageType {
+		return
+	}
+
+	if s.Storage.Kine == nil {
+		errs = append(errs, field.NotFound(field.NewPath("storage", "kine"), "missing"))
+		return
+	}
+
+	dataSource := s.Storage.Kine.DataSource
+
+	if dataSource == "" {
+		// sqlite - defaults
+		return
+	}
+
+	if !online {
+		return
+	}
+
+	path := field.NewPath("storage", "kine", "datasource")
+
+	u, err := url.Parse(dataSource)
+	if err != nil {
+		detail := "unable to parse datasource"
+		errs = append(errs, field.Invalid(path, dataSource, detail))
+		return
+	}
+
+	if u.Scheme == "sqlite" {
+		err = unix.Access(u.Path, unix.W_OK)
+		if err != nil {
+			detail := fmt.Sprintf("datasource (path) %s is not writable", dataSource)
+			errs = append(errs, field.Forbidden(path, detail))
+		}
+
+		return
+	}
+
+	// tcp service
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(u.Hostname(), u.Port()), time.Second)
+	if err != nil {
+		detail := fmt.Sprintf("unable to connect to datasource: %s", err)
+		errs = append(errs, field.Invalid(path, dataSource, detail))
+		return
+	}
+	if conn != nil {
+		defer conn.Close()
 	}
 
 	return
@@ -368,12 +430,12 @@ func (s *ClusterSpec) overrideImageRepositories() {
 }
 
 // Validate validates cluster config
-func (c *ClusterConfig) Validate() (errs []error) {
+func (c *ClusterConfig) Validate(online bool) (errs []error) {
 	if c == nil {
 		return nil
 	}
 
-	for _, err := range c.Spec.Validate() {
+	for _, err := range c.Spec.Validate(online) {
 		errs = append(errs, fmt.Errorf("spec: %w", err))
 	}
 
