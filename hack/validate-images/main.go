@@ -78,8 +78,9 @@ func validateImages(uris []string, architectures []string) (errs []error) {
 		imageRef, err := util.ParseName(name)
 		check(err)
 		memoryStore := store.NewMemoryStore()
-		resolver := util.NewResolver("", "", true, true, "")
-		descriptor, err := registry.FetchDescriptor(resolver, memoryStore, imageRef)
+		err = util.CreateRegistryHost(imageRef, "", "", true, true, "", false)
+		check(err)
+		descriptor, err := registry.FetchDescriptor(util.GetResolver(), memoryStore, imageRef)
 		check(err)
 		_, db, _ := memoryStore.Get(descriptor)
 		switch descriptor.MediaType {
