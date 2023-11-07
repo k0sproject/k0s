@@ -76,10 +76,9 @@ func NewControllerCmd() *cobra.Command {
 	or CLI flag:
 	$ k0s controller --token-file [path_to_file]
 	Note: Token can be passed either as a CLI argument or as a flag`,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			logrus.SetOutput(cmd.OutOrStdout())
 			k0slog.SetInfoLevel()
-			return config.CallParentPersistentPreRun(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)

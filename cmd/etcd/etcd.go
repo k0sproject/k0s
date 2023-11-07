@@ -30,10 +30,6 @@ func NewEtcdCmd() *cobra.Command {
 		Use:   "etcd",
 		Short: "Manage etcd cluster",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := config.CallParentPersistentPreRun(cmd, args); err != nil {
-				return err
-			}
-
 			opts, err := config.GetCmdOpts(cmd)
 			if err != nil {
 				return err

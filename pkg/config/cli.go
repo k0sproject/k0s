@@ -28,7 +28,6 @@ import (
 	"github.com/k0sproject/k0s/pkg/constant"
 	"github.com/k0sproject/k0s/pkg/k0scloudprovider"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
@@ -245,35 +244,4 @@ func GetCmdOpts(cobraCmd command) (*CLIOptions, error) {
 		K0sVars:          k0sVars,
 		DebugListenOn:    DebugListenOn,
 	}, nil
-}
-
-// CallParentPersistentPreRun runs the parent command's persistent pre-run.
-// Cobra does not do this automatically.
-//
-// See: https://github.com/spf13/cobra/issues/216
-// See: https://github.com/spf13/cobra/blob/v1.4.0/command.go#L833-L843
-func CallParentPersistentPreRun(cmd *cobra.Command, args []string) error {
-	for p := cmd.Parent(); p != nil; p = p.Parent() {
-		preRunE := p.PersistentPreRunE
-		preRun := p.PersistentPreRun
-
-		p.PersistentPreRunE = nil
-		p.PersistentPreRun = nil
-
-		defer func() {
-			p.PersistentPreRunE = preRunE
-			p.PersistentPreRun = preRun
-		}()
-
-		if preRunE != nil {
-			return preRunE(cmd, args)
-		}
-
-		if preRun != nil {
-			preRun(cmd, args)
-			return nil
-		}
-	}
-
-	return nil
 }

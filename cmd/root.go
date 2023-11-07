@@ -194,6 +194,7 @@ $ k0s completion fish > ~/.config/fish/completions/k0s.fish
 }
 
 func Execute() {
+	cobra.EnableTraverseRunHooks = true
 	if err := NewRootCmd().Execute(); err != nil {
 		os.Exit(1)
 	}
