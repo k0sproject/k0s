@@ -10,10 +10,10 @@ You will require a [Docker environment](https://docs.docker.com/get-docker/) run
 
 The k0s containers are published both on Docker Hub and GitHub. For reasons of simplicity, the examples given here use Docker Hub (GitHub requires a separate authentication that is not covered). Alternative links include:
 
-- docker.io/k0sproject/k0s:v1.25.15-k0s.0
-- ghcr.io/k0sproject/k0s:v1.25.15-k0s.0
+- docker.io/k0sproject/k0s:v1.25.16-k0s.0
+- ghcr.io/k0sproject/k0s:v1.25.16-k0s.0
 
-**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v1.25.15+k0s.0` is tagged as `docker.io/k0sproject/k0s:v1.25.15-k0s.0`.
+**Note:** Due to Docker Hub tag validation scheme, we have to use `-` as the k0s version separator instead of the usual `+`. So for example k0s version `v1.25.16+k0s.0` is tagged as `docker.io/k0sproject/k0s:v1.25.16-k0s.0`.
 
 ## Start k0s
 
@@ -22,7 +22,7 @@ The k0s containers are published both on Docker Hub and GitHub. For reasons of s
 You can run your own k0s in Docker:
 
 ```sh
-docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:v1.25.15-k0s.0
+docker run -d --name k0s --hostname k0s --privileged -v /var/lib/k0s -p 6443:6443 docker.io/k0sproject/k0s:v1.25.16-k0s.0
 ```
 
 **Note:** If you are using Docker Desktop as the runtime, starting from 4.3.0 version it's using cgroups v2 in the VM that runs the engine. This means you have to add some extra flags to the above command to get kubelet and containerd to properly work with cgroups v2:
@@ -46,7 +46,7 @@ For each required worker:
 2. Run the container to create and join the new worker:
 
     ```sh
-    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.io/k0sproject/k0s:v1.25.15-k0s.0 k0s worker $token
+    docker run -d --name k0s-worker1 --hostname k0s-worker1 --privileged -v /var/lib/k0s docker.io/k0sproject/k0s:v1.25.16-k0s.0 k0s worker $token
     ```
 
 ### 3. Access your cluster
@@ -68,7 +68,7 @@ version: "3.9"
 services:
   k0s:
     container_name: k0s
-    image: docker.io/k0sproject/k0s:v1.25.15-k0s.0
+    image: docker.io/k0sproject/k0s:v1.25.16-k0s.0
     command: k0s controller --config=/etc/k0s/config.yaml --enable-worker
     hostname: k0s
     privileged: true
