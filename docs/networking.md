@@ -57,6 +57,10 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 | TCP      | 9443  | k0s-api        | controller <-> controller      | k0s controller join API, TLS with token auth
 | TCP      | 8132  | konnectivity   | worker <-> controller          | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
 
+You also need enable all traffic to and from the [podCIDR and serviceCIDR] subnets on nodes with a worker role.
+
+[podCIDR and serviceCIDR]: configuration.md#specnetwork
+
 ## iptables
 
 `iptables` can work in two distinct modes, `legacy` and `nftables`. k0s autodetects the mode and prefers `nftables`. To check which mode k0s is configured with check `ls -lah /var/lib/k0s/bin/`. The `iptables` link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
