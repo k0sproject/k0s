@@ -130,9 +130,7 @@ func (s *CliSuite) TestK0sCliKubectlAndResetCommand() {
 		resetOutput, err := ssh.ExecWithOutput(s.Context(), "/usr/local/bin/k0s reset --debug")
 		s.T().Logf("Reset executed with output:\n%s", resetOutput)
 
-		// k0s reset will always exit with an error on bootloose, since it's unable to remove /var/lib/k0s
-		// that is an expected behaviour. therefore, we're only checking if the contents of /var/lib/k0s is empty
-		assert.Error(err)
+		assert.NoError(err)
 
 		fileCount, err := ssh.ExecWithOutput(s.Context(), "find /var/lib/k0s -type f | wc -l")
 		assert.NoError(err)
