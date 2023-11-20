@@ -2050,12 +2050,12 @@
 </code></pre></div>
 <p>Next, add the following default values to the configuration file:</p>
 <div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
-<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/var/lib/k0s/containerd&quot;</span>
-<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd&quot;</span>
+<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/var/lib/k0s/containerd&quot;</span>
+<span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/run/k0s/containerd&quot;</span>
 <span class="p">...</span>
 
 <span class="k">[grpc]</span>
-<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/run/k0s/containerd.sock&quot;</span>
+<span class="w">  </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/run/k0s/containerd.sock&quot;</span>
 </code></pre></div>
 <h2 id="k0s-managed-dynamic-runtime-configuration">k0s managed dynamic runtime configuration<a class="headerlink" href="#k0s-managed-dynamic-runtime-configuration" title="Permanent link">#</a></h2>
 <p>From 1.27.1 onwards k0s enables dynamic configuration on containerd CRI runtimes. This works by k0s creating a special directory in <code>/etc/k0s/containerd.d/</code> where user can drop-in partial containerd configuration snippets.</p>
@@ -2134,13 +2134,13 @@
 sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>nvidia-container-runtime
 </code></pre></div>
 <p>Next, drop in the containerd runtime configuration snippet into <code>/etc/k0s/containerd.d/nvidia.toml</code></p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia]</span>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd.runtimes.nvidia]</span>
 <span class="w">    </span><span class="n">privileged_without_host_devices</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
-<span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<span class="w">    </span><span class="n">runtime_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;io.containerd.runc.v1&quot;</span>
-<span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;.containerd.runtimes.nvidia.options]</span>
-<span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/usr/bin/nvidia-container-runtime&quot;</span>
+<span class="w">    </span><span class="n">runtime_engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="n">runtime_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="n">runtime_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;io.containerd.runc.v1&quot;</span>
+<span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">.containerd.runtimes.nvidia.options]</span>
+<span class="w">    </span><span class="n">BinaryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/usr/bin/nvidia-container-runtime&quot;</span>
 </code></pre></div>
 <p>Create the needed <code>RuntimeClass</code>:</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOF | kubectl apply -f -</span>

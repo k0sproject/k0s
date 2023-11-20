@@ -2041,7 +2041,7 @@ sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w">
 </code></pre></div>
 <h3 id="enable-selinux-in-containerd-of-k0s">Enable SELinux in containerd of k0s<a class="headerlink" href="#enable-selinux-in-containerd-of-k0s" title="Permanent link">#</a></h3>
 <p>Add below lines to <code>/etc/k0s/containerd.toml</code> of the worker nodes. You need to restart k0s service on the node to make the change take effect.</p>
-<div class="highlight"><pre><span></span><code><span class="k">[plugins.&quot;io.containerd.grpc.v1.cri&quot;]</span>
+<div class="highlight"><pre><span></span><code><span class="k">[plugins.</span><span class="s2">&quot;io.containerd.grpc.v1.cri&quot;</span><span class="k">]</span>
 <span class="w">  </span><span class="n">enable_selinux</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
 <h2 id="verify-selinux-works-in-kubernetes-environment">Verify SELinux works in Kubernetes environment<a class="headerlink" href="#verify-selinux-works-in-kubernetes-environment" title="Permanent link">#</a></h2>
