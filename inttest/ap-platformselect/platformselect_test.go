@@ -38,7 +38,7 @@ func (s *platformSelectSuite) SetupTest() {
 	ctx := s.Context()
 	s.Require().NoError(s.WaitForSSH(s.ControllerNode(0), 2*time.Minute, 1*time.Second))
 
-	s.Require().NoError(s.InitController(0), "--disable-components=metrics-server")
+	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
 	client, err := s.ExtensionsClient(s.ControllerNode(0))

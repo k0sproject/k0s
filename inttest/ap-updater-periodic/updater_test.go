@@ -59,7 +59,7 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	}
 	s.PutFileTemplate(s.ControllerNode(0), "/etc/conf.d/k0scontroller", envTemplate, vars)
 
-	s.Require().NoError(s.InitController(0), "--disable-components=metrics-server")
+	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
 	kc, err := s.KubeClient(s.ControllerNode(0))
