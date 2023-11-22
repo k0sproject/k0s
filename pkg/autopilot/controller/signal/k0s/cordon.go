@@ -148,10 +148,19 @@ func (r *cordoning) moveToNextState(ctx context.Context, signalNode crcli.Object
 func (r *cordoning) drainNode(ctx context.Context, signalNode crcli.Object) error {
 	logger := r.log.WithField("signalnode", signalNode.GetName()).WithField("phase", "drain")
 
-	//get node from client
 	node := &corev1.Node{}
-	if err := r.client.Get(ctx, crcli.ObjectKey{Name: signalNode.GetName()}, node); err != nil {
-		return fmt.Errorf("failed to get node: %w", err)
+	// if signalNode is a Node cast it to *corev1.Node
+	if signalNode.GetObjectKind().GroupVersionKind().Kind == "Node" {
+		var ok bool
+		node, ok = signalNode.(*corev1.Node)
+		if !ok {
+			return fmt.Errorf("failed to cast signalNode to *corev1.Node")
+		}
+	} else {
+		//otherwise get node from client
+		if err := r.client.Get(ctx, crcli.ObjectKey{Name: signalNode.GetName()}, node); err != nil {
+			return fmt.Errorf("failed to get node: %w", err)
+		}
 	}
 
 	drainer := &drain.Helper{
