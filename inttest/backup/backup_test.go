@@ -96,10 +96,8 @@ func (s *BackupSuite) TestK0sGetsUp() {
 	s.Require().NoError(s.StopController(s.ControllerNode(0)))
 	_ = s.StopController(s.ControllerNode(1)) // No error check as k0s might have actually exited since etcd is not really happy
 
-	// Reset will return an error because after starting the controller with --enable-worker
-	// k0s reset will try to delete /var/lib/k0s, which is not possible because it's a volume in docker.
-	_ = s.Reset(s.ControllerNode(0))
-	_ = s.Reset(s.ControllerNode(1))
+	s.Require().NoError(s.Reset(s.ControllerNode(0)))
+	s.Require().NoError(s.Reset(s.ControllerNode(1)))
 
 	s.Require().NoError(s.restoreFunc())
 	s.Require().NoError(s.InitController(0, "--enable-worker"))

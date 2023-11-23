@@ -17,9 +17,10 @@ limitations under the License.
 package cleanup
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/mount-utils"
@@ -43,30 +44,54 @@ func (d *directories) Run() error {
 		return err
 	}
 
+	var dataDirMounted bool
+
 	// search and unmount kubelet volume mounts
 	for _, v := range procMounts {
-		if strings.Compare(v.Path, fmt.Sprintf("%s/kubelet", d.Config.dataDir)) == 0 {
+		if v.Path == filepath.Join(d.Config.dataDir, "kubelet") {
 			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
 			if err = mounter.Unmount(v.Path); err != nil {
 				logrus.Warningf("failed to unmount %v", v.Path)
 			}
-		} else if strings.Compare(v.Path, d.Config.dataDir) == 0 {
-			logrus.Debugf("%v is mounted! attempting to unmount...", v.Path)
-			if err = mounter.Unmount(v.Path); err != nil {
-				logrus.Warningf("failed to unmount %v", v.Path)
-			}
+		} else if v.Path == d.Config.dataDir {
+			dataDirMounted = true
 		}
 	}
 
-	logrus.Debugf("deleting k0s generated data-dir (%v) and run-dir (%v)", d.Config.dataDir, d.Config.runDir)
-	if err := os.RemoveAll(d.Config.dataDir); err != nil {
-		fmtError := fmt.Errorf("failed to delete %v. err: %v", d.Config.dataDir, err)
-		return fmtError
+	if dataDirMounted {
+		logrus.Debugf("removing the contents of mounted data-dir (%s)", d.Config.dataDir)
+	} else {
+		logrus.Debugf("removing k0s generated data-dir (%s)", d.Config.dataDir)
 	}
+
+	if err := os.RemoveAll(d.Config.dataDir); err != nil {
+		if !dataDirMounted {
+			return fmt.Errorf("failed to delete k0s generated data-dir: %w", err)
+		}
+		if !errorIsUnlinkat(err, d.Config.dataDir) {
+			return fmt.Errorf("failed to delete contents of mounted data-dir: %w", err)
+		}
+	}
+
+	logrus.Debugf("deleting k0s generated run-dir (%v)", d.Config.runDir)
 	if err := os.RemoveAll(d.Config.runDir); err != nil {
-		fmtError := fmt.Errorf("failed to delete %v. err: %v", d.Config.runDir, err)
-		return fmtError
+		return fmt.Errorf("failed to delete %v. err: %v", d.Config.runDir, err)
 	}
 
 	return nil
+}
+
+// this is for checking if the error retrned by os.RemoveAll is due to
+// it being a mount point. if it is, we can ignore the error. this way
+// we can't rely on os.RemoveAll instead of recursively deleting the
+// contents of the directory
+func errorIsUnlinkat(err error, dir string) bool {
+	if err == nil {
+		return false
+	}
+	var pathErr *os.PathError
+	if !errors.As(err, &pathErr) {
+		return false
+	}
+	return pathErr.Path == dir && pathErr.Op == "unlinkat"
 }
