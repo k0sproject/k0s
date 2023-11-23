@@ -49,7 +49,7 @@ func (s *plansSingleControllerSuite) SetupTest() {
 	_, err = ssh.ExecWithOutput(ctx, "cp /dist/k0s /tmp/k0s")
 	s.Require().NoError(err)
 
-	s.Require().NoError(s.InitController(0), "--disable-components=metrics-server")
+	s.Require().NoError(s.InitController(0, "--disable-components=metrics-server"))
 	s.Require().NoError(s.WaitJoinAPI(s.ControllerNode(0)))
 
 	client, err := s.ExtensionsClient(s.ControllerNode(0))
