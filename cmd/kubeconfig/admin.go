@@ -45,15 +45,17 @@ func kubeConfigAdminCmd() *cobra.Command {
 				return err
 			}
 
+			nodeConfig, err := opts.K0sVars.NodeConfig()
+			if err != nil {
+				return err
+			}
+
+			cmd.SilenceUsage = true
 			content, err := os.ReadFile(opts.K0sVars.AdminKubeConfigPath)
 			if err != nil {
 				return fmt.Errorf("failed to read admin config, check if the control plane is initialized on this node: %w", err)
 			}
 
-			nodeConfig, err := opts.K0sVars.NodeConfig()
-			if err != nil {
-				return err
-			}
 			clusterAPIURL := nodeConfig.Spec.API.APIAddressURL()
 			newContent := strings.Replace(string(content), "https://localhost:6443", clusterAPIURL, -1)
 			_, err = cmd.OutOrStdout().Write([]byte(newContent))
