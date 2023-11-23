@@ -30,7 +30,7 @@ Although the `k0s.yaml` dualStack section enables all of the neccessary feature 
 
 ## Additional Resources
 
-* https://kubernetes.io/docs/concepts/services-networking/dual-stack/
-* https://kubernetes.io/docs/tasks/network/validate-dual-stack/
-* https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/
-* https://docs.projectcalico.org/networking/ipv6
+* <https://kubernetes.io/docs/concepts/services-networking/dual-stack/>
+* <https://kubernetes.io/docs/tasks/network/validate-dual-stack/>
+* <https://www.projectcalico.org/dual-stack-operation-with-calico-on-kubernetes/>
+* <https://docs.projectcalico.org/networking/ipv6>
