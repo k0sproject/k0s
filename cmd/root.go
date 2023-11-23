@@ -54,8 +54,10 @@ func NewRootCmd() *cobra.Command {
 	var longDesc string
 
 	cmd := &cobra.Command{
-		Use:   "k0s",
-		Short: "k0s - Zero Friction Kubernetes",
+		Use:          "k0s",
+		Short:        "k0s - Zero Friction Kubernetes",
+		SilenceUsage: true,
+
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if config.Verbose {
 				k0slog.SetInfoLevel()

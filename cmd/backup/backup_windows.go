@@ -25,13 +25,11 @@ import (
 var savePath string
 
 func NewBackupCmd() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "backup",
 		Short: "Back-Up k0s configuration. Not supported on Windows OS",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return errors.New("unsupported Operating System for this command")
 		},
 	}
-	cmd.SilenceUsage = true
-	return cmd
 }

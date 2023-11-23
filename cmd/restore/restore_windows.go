@@ -25,14 +25,11 @@ import (
 var restoredConfigPath string
 
 func NewRestoreCmd() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "restore",
 		Short: "restore k0s state from given backup archive. Not supported in Windows OS",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return errors.New("unsupported Operating System for this command")
 		},
 	}
-
-	cmd.SilenceUsage = true
-	return cmd
 }

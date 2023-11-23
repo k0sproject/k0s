@@ -45,11 +45,7 @@ func tokenCreateCmd() *cobra.Command {
 k0s token create --role worker --expiry 10m  //sets expiration time to 10 minutes
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := checkTokenRole(createTokenRole)
-			if err != nil {
-				cmd.SilenceUsage = true
-			}
-			return err
+			return checkTokenRole(createTokenRole)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)
@@ -81,7 +77,6 @@ k0s token create --role worker --expiry 10m  //sets expiration time to 10 minute
 				}
 				if err = ensureTokenCreationAcceptable(createTokenRole, statusInfo); err != nil {
 					waitCreate = false
-					cmd.SilenceUsage = true
 					return err
 				}
 

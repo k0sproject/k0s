@@ -51,7 +51,6 @@ func NewEtcdCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.SilenceUsage = true
 	cmd.AddCommand(etcdLeaveCmd())
 	cmd.AddCommand(etcdListCmd())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())

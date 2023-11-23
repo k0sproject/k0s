@@ -26,11 +26,7 @@ func NewKubeConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kubeconfig [command]",
 		Short: "Create a kubeconfig file for a specified user",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return cmd.Usage()
-		},
 	}
-	cmd.SilenceUsage = true
 	cmd.AddCommand(kubeconfigCreateCmd())
 	cmd.AddCommand(kubeConfigAdminCmd())
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())

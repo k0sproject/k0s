@@ -35,11 +35,7 @@ func tokenListCmd() *cobra.Command {
 		Short:   "List join tokens",
 		Example: `k0s token list --role worker // list worker tokens`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := checkTokenRole(listTokenRole)
-			if err != nil {
-				cmd.SilenceUsage = true
-			}
-			return err
+			return checkTokenRole(listTokenRole)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := config.GetCmdOpts(cmd)

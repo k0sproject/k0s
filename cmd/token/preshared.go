@@ -51,15 +51,12 @@ func preSharedCmd() *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := checkTokenRole(preSharedRole)
 			if err != nil {
-				cmd.SilenceUsage = true
 				return err
 			}
 			if certPath == "" {
-				cmd.SilenceUsage = true
 				return fmt.Errorf("please, provide --cert argument")
 			}
 			if joinURL == "" {
-				cmd.SilenceUsage = true
 				return fmt.Errorf("please, provide --url argument")
 			}
 
