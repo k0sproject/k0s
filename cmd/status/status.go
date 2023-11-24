@@ -41,7 +41,6 @@ func NewStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cmd.SilenceUsage = true
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}
@@ -59,7 +58,6 @@ func NewStatusCmd() *cobra.Command {
 		},
 	}
 
-	cmd.SilenceUsage = true
 	cmd.PersistentFlags().StringVarP(&output, "out", "o", "", "sets type of output to json or yaml")
 	cmd.PersistentFlags().StringVar(&config.StatusSocket, "status-socket", filepath.Join(config.K0sVars.RunDir, "status.sock"), "Full file path to the socket file.")
 	cmd.AddCommand(NewStatusSubCmdComponents())
@@ -77,7 +75,6 @@ func NewStatusSubCmdComponents() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cmd.SilenceUsage = true
 			if runtime.GOOS == "windows" {
 				return fmt.Errorf("currently not supported on windows")
 			}

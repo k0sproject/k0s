@@ -47,7 +47,6 @@ func NewResetCmd() *cobra.Command {
 			return c.reset()
 		},
 	}
-	cmd.SilenceUsage = true
 	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
 	cmd.Flags().AddFlagSet(config.GetCriSocketFlag())
 	cmd.Flags().AddFlagSet(config.FileInputFlag())

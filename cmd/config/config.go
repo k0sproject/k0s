@@ -29,6 +29,5 @@ func NewConfigCmd() *cobra.Command {
 	cmd.AddCommand(NewEditCmd())
 	cmd.AddCommand(NewStatusCmd())
 	cmd.AddCommand(NewValidateCmd())
-	cmd.SilenceUsage = true
 	return cmd
 }

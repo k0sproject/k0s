@@ -107,7 +107,6 @@ func NewControllerCmd() *cobra.Command {
 				c.TokenArg = string(bytes)
 			}
 			c.Logging = stringmap.Merge(c.CmdLogLevels, c.DefaultLogLevels)
-			cmd.SilenceUsage = true
 
 			if err := (&sysinfo.K0sSysinfoSpec{
 				ControllerRoleEnabled: true,

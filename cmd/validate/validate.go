@@ -30,7 +30,6 @@ func NewValidateCmd() *cobra.Command {
 		Hidden: true,
 	}
 	cmd.AddCommand(newConfigCmd())
-	cmd.SilenceUsage = true
 	return cmd
 }
 
