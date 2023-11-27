@@ -84,17 +84,13 @@ func (ec *ExtensionsController) Reconcile(ctx context.Context, clusterConfig *k0
 
 	helmSettings := clusterConfig.Spec.Extensions.Helm
 	var err error
-	if clusterConfig.Spec.Extensions.Storage != nil {
-		switch clusterConfig.Spec.Extensions.Storage.Type {
-		case k0sAPI.OpenEBSLocal:
-			helmSettings, err = addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
-			if err != nil {
-				ec.L.WithError(err).Error("Can't add openebs helm extension")
-			}
-		default:
+	switch clusterConfig.Spec.Extensions.Storage.Type {
+	case k0sAPI.OpenEBSLocal:
+		helmSettings, err = addOpenEBSHelmExtension(helmSettings, clusterConfig.Spec.Extensions.Storage)
+		if err != nil {
+			ec.L.WithError(err).Error("Can't add openebs helm extension")
 		}
-	} else {
-		ec.L.Debug("Storage extension is not configured")
+	default:
 	}
 
 	if err := ec.reconcileHelmExtensions(helmSettings); err != nil {
