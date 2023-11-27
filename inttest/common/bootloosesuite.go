@@ -44,6 +44,7 @@ import (
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
 	"github.com/k0sproject/k0s/pkg/constant"
+	"github.com/k0sproject/k0s/pkg/k0scontext"
 	"github.com/k0sproject/k0s/pkg/kubernetes/watch"
 	extclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
@@ -58,6 +59,7 @@ import (
 	"github.com/k0sproject/bootloose/pkg/cluster"
 	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/multierr"
 	"golang.org/x/sync/errgroup"
@@ -278,11 +280,29 @@ func (s *BootlooseSuite) waitForSSH(ctx context.Context) {
 	s.Require().NoError(g.Wait(), "Failed to ssh into all nodes")
 }
 
-// Context returns this suite's context, which should be passed to all blocking operations.
+// Context returns this suite's context, which should be passed to all blocking
+// operations. It captures the current test as a context value, so that it can
+// be retrieved by helper methods later on.
+//
+// Context should only be called once at the beginning of a test function, and
+// then be passed along to all subsequently called functions in the usual way:
+// as the first function parameter. The test framework itself doesn't have any
+// means of smuggling a context to test functions, hence the suite needs to
+// store it as a field, which is usually considered bad practice. However,
+// relying on the context being passed along implicitly makes the test suite a
+// bit edgy concerning API design and cancellation. This is the main reason why
+// the suite context is being replaced during the suite cleanup: Some functions
+// will obtain a context from the suite again, instead of taking it as their
+// first parameter. That replacement should become obsolete once all functions
+// will take the context as parameter.
 func (s *BootlooseSuite) Context() context.Context {
-	ctx := s.ctx
-	s.Require().NotNil(ctx, "No suite context installed")
-	return ctx
+	ctx, t := s.ctx, s.T()
+	require.NotNil(t, ctx, "No suite context installed")
+	if t == nil {
+		return ctx
+	}
+
+	return k0scontext.WithValue(ctx, t)
 }
 
 // ControllerNode gets the node name of given controller index
