@@ -88,7 +88,7 @@ func validateImages(uris []string, architectures []string) (errs []error) {
 			// this is a multi-platform image descriptor; marshal to Index type
 			var idx ocispec.Index
 			check(json.Unmarshal(db, &idx))
-			if validationErrs := validateList(name, architectures, memoryStore, descriptor, idx); validationErrs != nil {
+			if validationErrs := validateList(name, architectures, idx); validationErrs != nil {
 				errs = append(errs, validationErrs...)
 			}
 		case ocispec.MediaTypeImageManifest, types.MediaTypeDockerSchema2Manifest:
@@ -100,7 +100,7 @@ func validateImages(uris []string, architectures []string) (errs []error) {
 	return
 }
 
-func validateList(name string, architectures []string, cs *store.MemoryStore, descriptor ocispec.Descriptor, index ocispec.Index) (errs []error) {
+func validateList(name string, architectures []string, index ocispec.Index) (errs []error) {
 	searchFor := map[string]bool{}
 
 	for _, m := range index.Manifests {
