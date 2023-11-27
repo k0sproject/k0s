@@ -37,6 +37,7 @@ func (l *LinuxProbes) AssertKernelRelease(assert func(string) string) {
 	l.Set("kernelRelease", func(path probes.ProbePath, current probes.Probe) probes.Probe {
 		return probes.ProbeFn(func(r probes.Reporter) error {
 			desc := probes.NewProbeDesc("Linux kernel release", path)
+			//revive:disable:indent-error-flow
 			if uname, err := l.probeUname(); err != nil {
 				return r.Error(desc, err)
 			} else if uname.osRelease.truncated {
