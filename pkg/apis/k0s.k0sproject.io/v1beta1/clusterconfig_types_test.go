@@ -196,6 +196,15 @@ spec:
   telemetry: null
   konnectivity: null
 `
+	extensionsYamlData := `
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: foobar
+spec:
+  extensions:
+    storage: null
+`
 
 	c, err := ConfigFromString(yamlData)
 	assert.NoError(t, err)
@@ -210,6 +219,10 @@ spec:
 	assert.Equal(t, DefaultInstallSpec(), c.Spec.Install)
 	assert.Equal(t, DefaultClusterTelemetry(), c.Spec.Telemetry)
 	assert.Equal(t, DefaultKonnectivitySpec(), c.Spec.Konnectivity)
+
+	e, err := ConfigFromString(extensionsYamlData)
+	assert.NoError(t, err)
+	assert.Equal(t, DefaultExtensions(), e.Spec.Extensions)
 }
 
 func TestWorkerProfileConfig(t *testing.T) {

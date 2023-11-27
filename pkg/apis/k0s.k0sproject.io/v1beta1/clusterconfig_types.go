@@ -239,6 +239,9 @@ func (c *ClusterConfig) UnmarshalJSON(data []byte) error {
 	if jc.Spec.Extensions == nil {
 		jc.Spec.Extensions = DefaultExtensions()
 	}
+	if jc.Spec.Extensions.Storage == nil {
+		jc.Spec.Extensions.Storage = DefaultStorageExtension()
+	}
 	if jc.Spec.Network == nil {
 		jc.Spec.Network = DefaultNetwork()
 	}
