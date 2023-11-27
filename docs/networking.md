@@ -47,15 +47,19 @@ One goal of k0s is to allow for the deployment of an isolated control plane, whi
 
 ## Required ports and protocols
 
-| Protocol  |  Port     | Service                   | Direction                   | Notes
-|-----------|-----------|---------------------------|-----------------------------|--------
-| TCP       | 2380      | etcd peers                | controller <-> controller   |
-| TCP       | 6443      | kube-apiserver            | Worker, CLI => controller   | Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC
-| TCP       | 179       | kube-router               | worker <-> worker           | BGP routing sessions between peers
-| UDP       | 4789      | Calico                    | worker <-> worker           | Calico VXLAN overlay
-| TCP       | 10250     | kubelet                   | Master, Worker => Host `*`  | Authenticated kubelet API for the master node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
-| TCP       | 9443      | k0s-api                   | controller <-> controller   | k0s controller join API, TLS with token auth
-| TCP       | 8132      | konnectivity              | worker <-> controller       | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+| Protocol | Port  | Service        | Direction                      | Notes
+|----------|-------|----------------|--------------------------------|--------
+| TCP      | 2380  | etcd peers     | controller <-> controller      |
+| TCP      | 6443  | kube-apiserver | worker, CLI => controller      | Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC
+| TCP      | 179   | kube-router    | worker <-> worker              | BGP routing sessions between peers
+| UDP      | 4789  | Calico         | worker <-> worker              | Calico VXLAN overlay
+| TCP      | 10250 | kubelet        | controller, worker => host `*` | Authenticated kubelet API for the controller node `kube-apiserver` (and `heapster`/`metrics-server` addons) using TLS client certs
+| TCP      | 9443  | k0s-api        | controller <-> controller      | k0s controller join API, TLS with token auth
+| TCP      | 8132  | konnectivity   | worker <-> controller          | Konnectivity is used as "reverse" tunnel between kube-apiserver and worker kubelets
+
+You also need enable all traffic to and from the [podCIDR and serviceCIDR] subnets on nodes with a worker role.
+
+[podCIDR and serviceCIDR]: configuration.md#specnetwork
 
 ## iptables
 
