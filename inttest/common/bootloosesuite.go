@@ -49,14 +49,12 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 
-	"github.com/go-openapi/jsonpointer"
 	"github.com/k0sproject/bootloose/pkg/cluster"
 	"github.com/k0sproject/bootloose/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -935,32 +933,6 @@ func (s *BootlooseSuite) WaitForNodeLabel(kc *kubernetes.Clientset, node, labelK
 		})
 }
 
-// GetNodeLabels return the labels of given node
-func (s *BootlooseSuite) GetNodeAnnotations(node string, kc *kubernetes.Clientset) (map[string]string, error) {
-	n, err := kc.CoreV1().Nodes().Get(s.Context(), node, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return n.Annotations, nil
-}
-
-// AddNodeLabel adds a label to the provided node.
-func (s *BootlooseSuite) AddNodeLabel(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
-	return nodeValuePatchAdd(s.Context(), node, kc, "/metadata/labels", key, value)
-}
-
-// AddNodeAnnotation adds an annotation to the provided node.
-func (s *BootlooseSuite) AddNodeAnnotation(node string, kc *kubernetes.Clientset, key string, value string) (*corev1.Node, error) {
-	return nodeValuePatchAdd(s.Context(), node, kc, "/metadata/annotations", key, value)
-}
-
-// nodeValuePatchAdd patch-adds a key/value to a specific path via the Node API
-func nodeValuePatchAdd(ctx context.Context, node string, kc *kubernetes.Clientset, path string, key string, value string) (*corev1.Node, error) {
-	keyPath := fmt.Sprintf("%s/%s", path, jsonpointer.Escape(key))
-	patch := fmt.Sprintf(`[{"op":"add", "path":"%s", "value":"%s" }]`, keyPath, value)
-	return kc.CoreV1().Nodes().Patch(ctx, node, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
-}
-
 // WaitForKubeAPI waits until we see kube API online on given node.
 // Timeouts with error return in 5 mins
 func (s *BootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string) error {
@@ -995,47 +967,38 @@ func (s *BootlooseSuite) WaitForKubeAPI(node string, k0sKubeconfigArgs ...string
 	})
 }
 
-// WaitJoinApi waits until we see k0s join api up-and-running on a given node
-// Timeouts with error return in 5 mins
+// WaitJoinApi waits until we see k0s join api up-and-running on a given node.
 func (s *BootlooseSuite) WaitJoinAPI(node string) error {
-	s.T().Logf("waiting for join api to start on node %s", node)
-	return Poll(s.Context(), func(context.Context) (done bool, err error) {
-		joinAPIStatus, err := s.GetHTTPStatus(node, "/v1beta1/ca")
-		if err != nil {
-			return false, nil
-		}
-		// JoinAPI returns always un-authorized when called with no token, but it's a signal that it properly up-and-running still
-		if joinAPIStatus != http.StatusUnauthorized {
-			return false, nil
-		}
+	s.T().Logf("Waiting for k0s join API to start on node %s", node)
 
-		s.T().Logf("join api up-and-running")
-
-		return true, nil
-	})
-}
-
-func (s *BootlooseSuite) GetHTTPStatus(node string, path string) (int, error) {
 	m, err := s.MachineForName(node)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	joinPort, err := m.HostPort(s.K0sAPIExternalPort)
 	if err != nil {
-		return 0, err
+		return err
 	}
-
-	tr := &http.Transport{
+	client := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	checkURL := fmt.Sprintf("https://localhost:%d/%s", joinPort, path)
-	resp, err := client.Get(checkURL)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode, nil
+	}}
+	checkURL := fmt.Sprintf("https://localhost:%d/v1beta1/ca", joinPort)
+
+	return Poll(s.Context(), func(context.Context) (done bool, err error) {
+		resp, err := client.Get(checkURL)
+		if err != nil {
+			return false, nil
+		}
+		defer resp.Body.Close()
+
+		// JoinAPI returns always un-authorized when called with no token, but it's a signal that it properly up-and-running still
+		if resp.StatusCode != http.StatusUnauthorized {
+			return false, nil
+		}
+
+		s.T().Logf("K0s join API up-and-running")
+		return true, nil
+	})
 }
 
 func (s *BootlooseSuite) initializeBootlooseCluster() error {
