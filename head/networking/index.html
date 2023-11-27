@@ -2110,7 +2110,7 @@
 <td>TCP</td>
 <td>6443</td>
 <td>kube-apiserver</td>
-<td>Worker, CLI =&gt; controller</td>
+<td>worker, CLI =&gt; controller</td>
 <td>Authenticated Kube API using Kube TLS client certs, ServiceAccount tokens with RBAC</td>
 </tr>
 <tr>
@@ -2131,8 +2131,8 @@
 <td>TCP</td>
 <td>10250</td>
 <td>kubelet</td>
-<td>Master, Worker =&gt; Host <code>*</code></td>
-<td>Authenticated kubelet API for the master node <code>kube-apiserver</code> (and <code>heapster</code>/<code>metrics-server</code> addons) using TLS client certs</td>
+<td>controller, worker =&gt; host <code>*</code></td>
+<td>Authenticated kubelet API for the controller node <code>kube-apiserver</code> (and <code>heapster</code>/<code>metrics-server</code> addons) using TLS client certs</td>
 </tr>
 <tr>
 <td>TCP</td>
@@ -2150,6 +2150,7 @@
 </tr>
 </tbody>
 </table>
+<p>You also need enable all traffic to and from the <a href="../configuration/#specnetwork">podCIDR and serviceCIDR</a> subnets on nodes with a worker role.</p>
 <h2 id="iptables">iptables<a class="headerlink" href="#iptables" title="Permanent link">#</a></h2>
 <p><code>iptables</code> can work in two distinct modes, <code>legacy</code> and <code>nftables</code>. k0s autodetects the mode and prefers <code>nftables</code>. To check which mode k0s is configured with check <code>ls -lah /var/lib/k0s/bin/</code>. The <code>iptables</code> link target reveals the mode which k0s selected. k0s has the same logic as other k8s components, but to ensure al component have picked up the same mode you can check via:
 <strong>kube-proxy</strong>: <code>nsenter -t $(pidof kube-proxy) -m iptables -V</code>
