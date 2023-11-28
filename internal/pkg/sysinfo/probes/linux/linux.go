@@ -70,6 +70,7 @@ func (l *LinuxProbes) Probe(reporter probes.Reporter) error {
 
 func (l *LinuxProbes) probe(reporter probes.Reporter) error {
 	desc := probes.NewProbeDesc("Operating system", l.path)
+	//revive:disable:indent-error-flow
 	if uname, err := l.probeUname(); err != nil {
 		return reporter.Error(desc, err)
 	} else if uname.osName.value == "Linux" {

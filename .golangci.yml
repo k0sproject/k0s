@@ -25,16 +25,24 @@ linters:
 
 linters-settings:
   depguard:
-    packages:
-      - gopkg.in/yaml*
-    additional-guards:
-      # Only allow usages of the k8s cloud provider from within the k0s cloud
-      # provider package. This is to ensure that it's not leaking global flags
-      # into k0s.
-      - packages:
-          - k8s.io/cloud-provider*
-        ignore-file-rules:
-          - "**/pkg/k0scloudprovider/*.go"
+    rules:
+      yaml:
+        list-mode: lax
+        deny:
+          - pkg: gopkg.in/yaml.v2
+            desc: Use sigs.k8s.io/yaml.
+          - pkg: gopkg.in/yaml.v3
+            desc: Use sigs.k8s.io/yaml.
+      cloud-provider:
+        list-mode: lax
+        files:
+          - "!**/pkg/k0scloudprovider/*.go"
+        deny:
+          - pkg: k8s.io/cloud-provider
+            desc: >-
+              Usages of the k8s cloud provider are only allowed from within the
+              k0s cloud provider package. This is to ensure that it's not
+              leaking global flags into k0s.
   golint:
     min-confidence: 0
   goheader:
@@ -42,6 +50,12 @@ linters-settings:
     values:
       regexp:
         year: 202[0-9]
+
+  revive:
+    rules:
+      # This forbids to name variables "close", which seems natural for "close" functions.
+      - name: redefines-builtin-id
+        disabled: true
 
 issues:
   max-issues-per-linter: 0

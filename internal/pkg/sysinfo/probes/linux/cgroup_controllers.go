@@ -55,6 +55,7 @@ type cgroupControllerProbe struct {
 
 func (c *cgroupControllerProbe) Probe(reporter probes.Reporter) error {
 	desc := probes.NewProbeDesc(fmt.Sprintf("cgroup controller %q", c.name), c.path)
+	//revive:disable:indent-error-flow
 	if sys, err := c.probeSystem(); err != nil {
 		return reportCgroupSystemErr(reporter, desc, err)
 	} else if available, err := sys.probeController(c.name); err != nil {
