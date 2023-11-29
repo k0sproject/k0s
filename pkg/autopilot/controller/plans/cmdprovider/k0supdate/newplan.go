@@ -34,7 +34,7 @@ func (kp *k0supdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand, sta
 	logger.Info("Processing")
 
 	if !cmd.K0sUpdate.ForceUpdate {
-		if err := checks.CanUpdate(kp.cf, cmd.K0sUpdate.Version); err != nil {
+		if err := checks.CanUpdate(logger, kp.cf, cmd.K0sUpdate.Version); err != nil {
 			status.State = appc.PlanWarning
 			status.Description = err.Error()
 			return appc.PlanWarning, false, err

@@ -15,6 +15,7 @@
 package kubernetes
 
 import (
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
@@ -24,11 +25,16 @@ import (
 
 type restClientGetter struct {
 	clientFactory ClientFactoryInterface
+	log           logrus.FieldLogger
 }
 
-func NewRESTClientGetter(clientFactory ClientFactoryInterface) resource.RESTClientGetter {
+func NewRESTClientGetter(clientFactory ClientFactoryInterface, log logrus.FieldLogger) resource.RESTClientGetter {
+	if log == nil {
+		log = logrus.NewEntry(logrus.StandardLogger())
+	}
 	return &restClientGetter{
 		clientFactory: clientFactory,
+		log:           log,
 	}
 }
 
@@ -48,7 +54,9 @@ func (r *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
 	// We need to invalidate the cache. Otherwise, the client will not be aware of the new CRDs deployed after client initialization.
 	discoveryClient.Invalidate()
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
-	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
+	expander := restmapper.NewShortcutExpander(mapper, discoveryClient, func(warning string) {
+		r.log.Warn("Shortcut expansion: ", warning)
+	})
 
 	return expander, nil
 }

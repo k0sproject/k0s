@@ -27,7 +27,7 @@ func (aup *airgapupdate) NewPlan(ctx context.Context, cmd apv1beta2.PlanCommand,
 	logger := aup.logger.WithField("state", "newplan")
 	logger.Info("Processing")
 
-	if err := checks.CanUpdate(aup.cf, cmd.AirgapUpdate.Version); err != nil {
+	if err := checks.CanUpdate(logger, aup.cf, cmd.AirgapUpdate.Version); err != nil {
 		status.State = appc.PlanWarning
 		status.Description = err.Error()
 		return appc.PlanWarning, false, err
