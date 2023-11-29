@@ -61,7 +61,7 @@ spec:
       user: "ubuntu"
     uploadBinary: true
   k0s:
-    version: "1.28.4+k0s.0"
+    version: "1.29.0+k0s.0"
 ```
 
 To deploy a k0s cluster on the AWS machine, run:
@@ -98,9 +98,9 @@ INFO ==> Running phase: Gather host facts
 .
 .
 .
-INFO [ssh] 3.250.52.147:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.28.4+k0s.0
-INFO [ssh] 63.32.21.232:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.28.4+k0s.0
-INFO [ssh] 54.216.71.108:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.28.4+k0s.0
+INFO [ssh] 3.250.52.147:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.29.0+k0s.0
+INFO [ssh] 63.32.21.232:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.29.0+k0s.0
+INFO [ssh] 54.216.71.108:22: uploading k0s binary from /home/ubuntu/.cache/k0sctl/k0s/linux/amd64/k0s-v1.29.0+k0s.0
 INFO ==> Running phase: Configure k0s
 WARN [ssh] 63.32.21.232:22: generating default configuration
 INFO [ssh] 63.32.21.232:22: validating configuration
@@ -124,7 +124,7 @@ INFO [ssh] 3.250.52.147:22: waiting for node to become ready
 INFO ==> Running phase: Release exclusive host lock
 INFO ==> Running phase: Disconnect from hosts
 INFO ==> Finished in 1m42s
-INFO k0s cluster version v1.28.4+k0s.0 is now installed
+INFO k0s cluster version v1.29.0+k0s.0 is now installed
 INFO Tip: To access the cluster you can now fetch the admin kubeconfig using:
 INFO      k0sctl kubeconfig
 ```
@@ -152,7 +152,7 @@ Example Output:
 /home/ubuntu/k0s/inttest/bin/sonobuoy run --wait=1200 \
         --mode=certified-conformance \
         --plugin-env=e2e.E2E_EXTRA_ARGS="--ginkgo.v" \
-        --kubernetes-version=v1.28.4
+        --kubernetes-version=v1.29.0
 INFO[0000] create request issued                         name=sonobuoy namespace= resource=namespaces
 INFO[0000] create request issued                         name=sonobuoy-serviceaccount namespace=sonobuoy resource=serviceaccounts
 INFO[0000] create request issued                         name=sonobuoy-serviceaccount-sonobuoy namespace= resource=clusterrolebindings

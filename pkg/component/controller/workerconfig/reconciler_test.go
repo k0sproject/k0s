@@ -373,22 +373,22 @@ func TestReconciler_ResourceGeneration(t *testing.T) {
 	}))
 
 	configMaps := map[string]func(t *testing.T, expected *kubeletConfig){
-		"worker-config-default-1.28": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-default-1.29": func(t *testing.T, expected *kubeletConfig) {
 			expected.CgroupsPerQOS = pointer.Bool(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-default-windows-1.28": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-default-windows-1.29": func(t *testing.T, expected *kubeletConfig) {
 			expected.CgroupsPerQOS = pointer.Bool(false)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_XXX-1.28": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_XXX-1.29": func(t *testing.T, expected *kubeletConfig) {
 			expected.Authentication.Anonymous.Enabled = pointer.Bool(true)
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
 
-		"worker-config-profile_YYY-1.28": func(t *testing.T, expected *kubeletConfig) {
+		"worker-config-profile_YYY-1.29": func(t *testing.T, expected *kubeletConfig) {
 			expected.Authentication.Webhook.CacheTTL = metav1.Duration{Duration: 15 * time.Second}
 			expected.FeatureGates = map[string]bool{"kubelet-feature": true}
 		},
