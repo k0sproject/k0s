@@ -16,6 +16,7 @@ package ha3x3
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -92,6 +93,9 @@ func (s *ha3x3Suite) SetupTest() {
 // TestApply applies a well-formed `plan` yaml, and asserts that
 // all of the correct values across different objects + controllers are correct.
 func (s *ha3x3Suite) TestApply() {
+	k0sUpdateVersion := os.Getenv("K0S_UPDATE_TO_VERSION")
+	s.Require().NotEmpty(k0sUpdateVersion, "env var not set or empty: K0S_UPDATE_TO_VERSION")
+
 	planTemplate := `
 apiVersion: autopilot.k0sproject.io/v1beta2
 kind: Plan
@@ -102,7 +106,7 @@ spec:
   timestamp: now
   commands:
     - k0supdate:
-        version: ` + s.K0sUpdateVersion + `
+        version: ` + k0sUpdateVersion + `
         platforms:
           linux-amd64:
             url: http://localhost/dist/k0s-new
@@ -162,7 +166,7 @@ spec:
 	}
 
 	if version, err := s.GetK0sVersion(s.ControllerNode(0)); s.NoError(err) {
-		s.Equal(s.K0sUpdateVersion, version)
+		s.Equal(k0sUpdateVersion, version)
 	}
 
 	out, err = ssh.ExecWithOutput(s.Context(), "/var/lib/k0s/bin/iptables-save -V")
