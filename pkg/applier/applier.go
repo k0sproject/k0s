@@ -18,9 +18,7 @@ package applier
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -162,12 +160,9 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 
 	objects, err := r.Infos()
 	if err != nil {
-		// don't return an error on file removal
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("enable to get object infos: %w", err)
-		}
-
+		return nil, fmt.Errorf("unable to build resources: %w", err)
 	}
+
 	for _, o := range objects {
 		item := o.Object.(*unstructured.Unstructured)
 		if item.GetAPIVersion() != "" && item.GetKind() != "" {
