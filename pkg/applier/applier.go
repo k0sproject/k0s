@@ -26,13 +26,10 @@ import (
 
 	"github.com/k0sproject/k0s/pkg/kubernetes"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 
 	"github.com/sirupsen/logrus"
 )
@@ -62,7 +59,7 @@ func NewApplier(dir string, kubeClientFactory kubernetes.ClientFactoryInterface)
 		"bundle":    name,
 	})
 
-	clientGetter := &restClientGetter{clientFactory: kubeClientFactory}
+	clientGetter := kubernetes.NewRESTClientGetter(kubeClientFactory)
 	resourceBuilder := resource.NewBuilder(clientGetter).
 		Unstructured().
 		ContinueOnError().
@@ -177,29 +174,4 @@ func (a *Applier) parseFiles(files []string) ([]*unstructured.Unstructured, erro
 	}
 
 	return resources, nil
-}
-
-type restClientGetter struct {
-	clientFactory kubernetes.ClientFactoryInterface
-}
-
-func (r *restClientGetter) ToRESTConfig() (*rest.Config, error) {
-	return r.clientFactory.GetRESTConfig(), nil
-}
-
-func (r *restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
-	return r.clientFactory.GetDiscoveryClient()
-}
-func (r *restClientGetter) ToRESTMapper() (meta.RESTMapper, error) {
-	discoveryClient, err := r.clientFactory.GetDiscoveryClient()
-	if err != nil {
-		return nil, err
-	}
-
-	// We need to invalidate the cache. Otherwise, the client will not be aware of the new CRDs deployed after client initialization.
-	discoveryClient.Invalidate()
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
-	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
-
-	return expander, nil
 }
