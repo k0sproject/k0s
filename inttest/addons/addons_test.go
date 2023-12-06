@@ -103,9 +103,9 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 	k8sclient, err := k8s.NewForConfig(cfg)
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
-		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Namespace, chart.Name)
-		items, err := k8sclient.CoreV1().Secrets("default").List(pollCtx, metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("name=%s", chart.Name),
+		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Status.Namespace, chart.Status.ReleaseName)
+		items, err := k8sclient.CoreV1().Secrets(chart.Status.Namespace).List(pollCtx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("name=%s", chart.Status.ReleaseName),
 		})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
@@ -114,7 +114,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 			as.T().Log("Error while listing secrets:", err)
 			return false, nil
 		}
-		if len(items.Items) > 1 {
+		if len(items.Items) > 0 {
 			return false, nil
 		}
 		as.T().Log("Release uninstalled successfully")
