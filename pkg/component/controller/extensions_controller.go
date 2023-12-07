@@ -19,6 +19,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -36,15 +37,16 @@ import (
 	"github.com/k0sproject/k0s/pkg/helm"
 	kubeutil "github.com/k0sproject/k0s/pkg/kubernetes"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlconfig "sigs.k8s.io/controller-runtime/pkg/config"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crman "sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -215,10 +217,11 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 
 			cr.L.Debugf("No Helm release found for chart %s, assuming it has already been uninstalled", req)
 		}
-		controllerutil.RemoveFinalizer(&chartInstance, finalizerName)
-		if err := cr.Client.Update(ctx, &chartInstance); err != nil {
-			return reconcile.Result{}, err
+
+		if err := removeFinalizer(ctx, cr.Client, &chartInstance); err != nil {
+			return reconcile.Result{}, fmt.Errorf("while trying to remove finalizer: %w", err)
 		}
+
 		return reconcile.Result{}, nil
 	}
 	cr.L.Debugf("Install or update reconciliation request: %s", req)
@@ -229,11 +232,34 @@ func (cr *ChartReconciler) Reconcile(ctx context.Context, req reconcile.Request)
 	cr.L.Debugf("Installed or updated reconciliation request: %s", req)
 	return reconcile.Result{}, nil
 }
+
 func (cr *ChartReconciler) uninstall(ctx context.Context, chart v1beta1.Chart) error {
 	if err := cr.helm.UninstallRelease(ctx, chart.Status.ReleaseName, chart.Status.Namespace); err != nil {
 		return fmt.Errorf("can't uninstall release `%s/%s`: %w", chart.Status.Namespace, chart.Status.ReleaseName, err)
 	}
 	return nil
+}
+
+func removeFinalizer(ctx context.Context, c client.Client, chart *v1beta1.Chart) error {
+	idx := slices.Index(chart.Finalizers, finalizerName)
+	if idx < 0 {
+		return nil
+	}
+
+	path := fmt.Sprintf("/metadata/finalizers/%d", idx)
+	patch, err := json.Marshal([]struct {
+		Op    string `json:"op"`
+		Path  string `json:"path"`
+		Value string `json:"value,omitempty"`
+	}{
+		{"test", path, finalizerName},
+		{"remove", path, ""},
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.Patch(ctx, chart, client.RawPatch(types.JSONPatchType, patch))
 }
 
 const defaultTimeout = time.Duration(10 * time.Minute)

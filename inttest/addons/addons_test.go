@@ -136,7 +136,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
 		switch {
 		case err == nil:
-			if lastResourceVersion != found.ResourceVersion {
+			if lastResourceVersion == "" || lastResourceVersion != found.ResourceVersion {
 				as.T().Log("Chart not yet deleted")
 				lastResourceVersion = found.ResourceVersion
 			}
