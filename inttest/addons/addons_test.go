@@ -25,17 +25,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/k0sproject/k0s/internal/pkg/templatewriter"
 	"github.com/k0sproject/k0s/inttest/common"
 	"github.com/k0sproject/k0s/pkg/apis/helm/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crlog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
+
+	"github.com/go-logr/logr/testr"
+	"github.com/stretchr/testify/suite"
 )
 
 type AddonsSuite struct {
@@ -43,6 +45,8 @@ type AddonsSuite struct {
 }
 
 func (as *AddonsSuite) TestHelmBasedAddons() {
+	crlog.SetLogger(testr.New(as.T()))
+
 	addonName := "test-addon"
 	ociAddonName := "oci-addon"
 	fileAddonName := "tgz-addon"
@@ -100,7 +104,7 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 	as.Require().NoError(err)
 	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		as.T().Logf("Expecting have no secrets left for release %s/%s", chart.Namespace, chart.Name)
-		items, err := k8sclient.CoreV1().Secrets("default").List(pollCtx, v1.ListOptions{
+		items, err := k8sclient.CoreV1().Secrets("default").List(pollCtx, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("name=%s", chart.Name),
 		})
 		if err != nil {
@@ -189,7 +193,7 @@ func (as *AddonsSuite) checkCustomValues(releaseName string) error {
 	}
 	return wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(pollCtx context.Context) (done bool, err error) {
 		serverDeployment := fmt.Sprintf("%s-echo-server", releaseName)
-		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, v1.GetOptions{})
+		d, err := kc.AppsV1().Deployments("default").Get(pollCtx, serverDeployment, metav1.GetOptions{})
 		if err != nil {
 			if ctxErr := context.Cause(ctx); ctxErr != nil {
 				return false, errors.Join(err, ctxErr)
