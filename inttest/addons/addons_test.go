@@ -32,7 +32,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	crlog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -123,6 +122,34 @@ func (as *AddonsSuite) deleteRelease(chart *v1beta1.Chart) {
 		}
 		as.T().Log("Release uninstalled successfully")
 		return true, nil
+	}))
+
+	helmScheme, err := v1beta1.SchemeBuilder.Build()
+	as.Require().NoError(err)
+	chartClient, err := client.New(cfg, client.Options{Scheme: helmScheme})
+	as.Require().NoError(err)
+
+	as.T().Logf("Expecting chart %s/%s to be deleted", chart.Namespace, chart.Name)
+	var lastResourceVersion string
+	as.Require().NoError(wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (bool, error) {
+		var found v1beta1.Chart
+		err := chartClient.Get(ctx, client.ObjectKey{Namespace: chart.Namespace, Name: chart.Name}, &found)
+		switch {
+		case err == nil:
+			if lastResourceVersion != found.ResourceVersion {
+				as.T().Log("Chart not yet deleted")
+				lastResourceVersion = found.ResourceVersion
+			}
+			return false, nil
+
+		case apierrors.IsNotFound(err):
+			as.T().Log("Chart has been deleted")
+			return true, nil
+
+		default:
+			as.T().Log("Error while getting chart: ", err)
+			return false, nil
+		}
 	}))
 }
 
@@ -215,11 +242,10 @@ func (as *AddonsSuite) waitForTestRelease(addonName, appVersion string, namespac
 
 	cfg, err := as.GetKubeConfig(as.ControllerNode(0))
 	as.Require().NoError(err)
-	err = v1beta1.AddToScheme(scheme.Scheme)
+
+	helmScheme, err := v1beta1.SchemeBuilder.Build()
 	as.Require().NoError(err)
-	chartClient, err := client.New(cfg, client.Options{
-		Scheme: scheme.Scheme,
-	})
+	chartClient, err := client.New(cfg, client.Options{Scheme: helmScheme})
 	as.Require().NoError(err)
 	var chart v1beta1.Chart
 	var lastResourceVersion string
