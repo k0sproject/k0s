@@ -330,51 +330,6 @@ Note that there are several fields that cannot be overridden:
 
 [kubelet-config]: https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 
-### `spec.featureGates`
-
-Available components are:
-
-- kube-apiserver
-- kube-controller-manager
-- kubelet
-- kube-scheduler
-- kube-proxy
-
-If `components` are omitted, propagates to all kube components.
-
-Modifies extraArgs.
-
-#### Example
-
-```yaml
-spec:
-    featureGates:
-      - name: feature-gate-0
-        enabled: true
-        components: ["kube-apiserver", "kube-controller-manager", "kubelet", "kube-scheduler"]
-      - name: feature-gate-1
-        enabled: true
-      - name: feature-gate-2
-        enabled: false
-```
-
-#### Kubelet feature gates example
-
-The below is an example of a k0s config with feature gates enabled:
-
-```yaml
-spec:
-    featureGates:
-      - name: DevicePlugins
-        enabled: true
-        components: ["kubelet"]
-      - name: Accelerators
-        enabled: true
-        components: ["kubelet"]
-      - name: AllowExtTrafficLocalEndpoints
-        enabled: false
-```
-
 #### Configuration examples
 
 ##### Custom volumePluginDir
@@ -413,6 +368,53 @@ spec:
       values:
         allowedUnsafeSysctls:
           - fs.inotify.max_user_instances
+```
+
+### `spec.featureGates`
+
+Available components are:
+
+- kube-apiserver
+- kube-controller-manager
+- kubelet
+- kube-scheduler
+- kube-proxy
+
+If `components` are omitted, propagates to all kube components.
+
+Modifies extraArgs.
+
+#### Examples
+
+##### Generic feature gates example
+
+```yaml
+spec:
+    featureGates:
+      - name: feature-gate-0
+        enabled: true
+        components: ["kube-apiserver", "kube-controller-manager", "kubelet", "kube-scheduler"]
+      - name: feature-gate-1
+        enabled: true
+      - name: feature-gate-2
+        enabled: false
+```
+
+##### Kubelet feature gates example
+
+The below is an example of a k0s config with feature gates enabled:
+
+```yaml
+spec:
+    featureGates:
+      - name: DevicePlugins
+        enabled: true
+        components: ["kubelet"]
+      - name: Accelerators
+        enabled: true
+        components: ["kubelet"]
+      - name: AllowExtTrafficLocalEndpoints
+        enabled: false
 ```
 
 ### `spec.images`
