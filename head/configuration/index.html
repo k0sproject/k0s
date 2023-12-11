@@ -2757,41 +2757,6 @@ by k0s.</p>
 <li><code>kind</code></li>
 <li><code>staticPodURL</code></li>
 </ul>
-<h3 id="specfeaturegates"><code>spec.featureGates</code><a class="headerlink" href="#specfeaturegates" title="Permanent link">#</a></h3>
-<p>Available components are:</p>
-<ul>
-<li>kube-apiserver</li>
-<li>kube-controller-manager</li>
-<li>kubelet</li>
-<li>kube-scheduler</li>
-<li>kube-proxy</li>
-</ul>
-<p>If <code>components</code> are omitted, propagates to all kube components.</p>
-<p>Modifies extraArgs.</p>
-<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h4>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-0</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kube-apiserver&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-controller-manager&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-scheduler&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-1</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-2</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</code></pre></div>
-<h4 id="kubelet-feature-gates-example">Kubelet feature gates example<a class="headerlink" href="#kubelet-feature-gates-example" title="Permanent link">#</a></h4>
-<p>The below is an example of a k0s config with feature gates enabled:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DevicePlugins</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accelerators</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AllowExtTrafficLocalEndpoints</span>
-<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</code></pre></div>
 <h4 id="configuration-examples">Configuration examples<a class="headerlink" href="#configuration-examples" title="Permanent link">#</a></h4>
 <h5 id="custom-volumeplugindir">Custom volumePluginDir<a class="headerlink" href="#custom-volumeplugindir" title="Permanent link">#</a></h5>
 <div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
@@ -2821,6 +2786,42 @@ by k0s.</p>
 <span class="w">      </span><span class="nt">values</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">allowedUnsafeSysctls</span><span class="p">:</span>
 <span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fs.inotify.max_user_instances</span>
+</code></pre></div>
+<h3 id="specfeaturegates"><code>spec.featureGates</code><a class="headerlink" href="#specfeaturegates" title="Permanent link">#</a></h3>
+<p>Available components are:</p>
+<ul>
+<li>kube-apiserver</li>
+<li>kube-controller-manager</li>
+<li>kubelet</li>
+<li>kube-scheduler</li>
+<li>kube-proxy</li>
+</ul>
+<p>If <code>components</code> are omitted, propagates to all kube components.</p>
+<p>Modifies extraArgs.</p>
+<h4 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h4>
+<h5 id="generic-feature-gates-example">Generic feature gates example<a class="headerlink" href="#generic-feature-gates-example" title="Permanent link">#</a></h5>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-0</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kube-apiserver&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-controller-manager&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kube-scheduler&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-1</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature-gate-2</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h5 id="kubelet-feature-gates-example">Kubelet feature gates example<a class="headerlink" href="#kubelet-feature-gates-example" title="Permanent link">#</a></h5>
+<p>The below is an example of a k0s config with feature gates enabled:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spec</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">featureGates</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DevicePlugins</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accelerators</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="nt">components</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;kubelet&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AllowExtTrafficLocalEndpoints</span>
+<span class="w">        </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h3 id="specimages"><code>spec.images</code><a class="headerlink" href="#specimages" title="Permanent link">#</a></h3>
 <p>Nodes under the <code>images</code> key all have the same basic structure:</p>
