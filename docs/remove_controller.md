@@ -15,6 +15,12 @@ k0s kubectl drain --ignore-daemonsets --delete-emptydir-data <controller>
 k0s kubectl delete node <controller>
 ```
 
+Delete Autopilot's `ControlNode` object for the controller node:
+
+```console
+k0s kubectl delete controlnode.autopilot.k0sproject.io <controller>
+```
+
 Then you need to remove it from the Etcd cluster.
 For example, if you want to remove `controller01` from a cluster with 3 controllers:
 
