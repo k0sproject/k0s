@@ -75,8 +75,6 @@ const (
 	k0sBindMountFullPath     = "/dist/k0s"
 	k0sNewBindMountFullPath  = "/dist/k0s-new"
 
-	defaultK0sUpdateVersion = "v0.0.0"
-
 	defaultBootLooseImage = "bootloose-alpine"
 )
 
@@ -102,7 +100,6 @@ type BootlooseSuite struct {
 	WorkerCount                     int
 	K0smotronWorkerCount            int
 	WithUpdateServer                bool
-	K0sUpdateVersion                string
 	BootLooseImage                  string
 
 	ctx      context.Context
@@ -137,11 +134,6 @@ func (s *BootlooseSuite) initializeDefaults() {
 	}
 	if s.LaunchMode == "" {
 		s.LaunchMode = LaunchModeStandalone
-	}
-
-	s.K0sUpdateVersion = os.Getenv("K0S_UPDATE_TO_VERSION")
-	if s.K0sUpdateVersion == "" {
-		s.K0sUpdateVersion = defaultK0sUpdateVersion
 	}
 
 	switch s.LaunchMode {
