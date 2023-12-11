@@ -64,7 +64,6 @@ nav:
       - GitOps with Flux: examples/gitops-flux.md
   - Troubleshooting:
       - FAQ: FAQ.md
-      - Dockershim deprecation: dockershim.md
       - Common Pitfalls: troubleshooting.md
   - Reference:
       - Architecture: architecture.md
