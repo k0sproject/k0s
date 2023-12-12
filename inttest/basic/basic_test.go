@@ -67,7 +67,17 @@ func (s *BasicSuite) TestK0sGetsUp() {
 
 	token, err := s.GetJoinToken("worker", dataDirOpt)
 	s.Require().NoError(err)
-	s.NoError(s.RunWorkersWithToken(token, `--labels="k0sproject.io/foo=bar"`, `--kubelet-extra-args=" --address=0.0.0.0  --event-burst=10"`))
+	s.NoError(s.RunWorkersWithToken(token,
+		// To check that node labels will be applied
+		"--labels=k0sproject.io/foo=bar",
+
+		// To check that kubelet args get processed correctly
+		"--kubelet-extra-args='--address=0.0.0.0 --event-burst=10'",
+
+		// FIXME remove this once the self-hosted GitHub Runner setup passes the
+		// pre-flight checks again.
+		"--ignore-pre-flight-checks",
+	))
 
 	kc, err := s.KubeClient(s.ControllerNode(0), dataDirOpt)
 	if err != nil {
