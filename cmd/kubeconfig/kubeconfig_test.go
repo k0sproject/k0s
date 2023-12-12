@@ -135,12 +135,14 @@ yJm2KSue0toWmkBFK8WMTjAvmAw3Z/qUhJRKoqCu3k6Mf8DNl6t+Uw==
 		ClientKey  string
 		User       string
 		JoinURL    string
+		Name       string
 	}{
 		CACert:     base64.StdEncoding.EncodeToString([]byte(caCert)),
 		ClientCert: base64.StdEncoding.EncodeToString([]byte(userCert.Cert)),
 		ClientKey:  base64.StdEncoding.EncodeToString([]byte(userCert.Key)),
 		User:       "test-user",
 		JoinURL:    clusterAPIURL,
+		Name:       "test-cluster",
 	}
 
 	var buf bytes.Buffer
