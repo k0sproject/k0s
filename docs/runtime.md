@@ -172,13 +172,120 @@ EOF
 
 **Note** Detailed instruction on how to run `nvidia-container-runtime` on your node is available [here](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/install-k8s.html#install-nvidia-container-toolkit-nvidia-docker2).
 
-## Using custom CRI runtime
+## Using custom CRI runtimes
 
 **Warning**: You can use your own CRI runtime with k0s (for example, `docker`). However, k0s will not start or manage the runtime, and configuration is solely your responsibility.
 
 Use the option `--cri-socket` to run a k0s worker with a custom CRI runtime. the option takes input in the form of `<type>:<socket_path>` (for `type`, use `docker` for a pure Docker setup and `remote` for anything else).
 
-### Using dockershim
+### Using Docker as the container runtime
 
-To run k0s with a pre-existing Dockershim setup, run the worker with `k0s worker --cri-socket docker:unix:///var/run/cri-dockerd.sock <token>`.
-A detailed explanation on dockershim and a guide for installing cri-dockerd can be found in our [k0s dockershim guide](./dockershim.md).
+As of Kubernetes 1.24, the use of Docker as a container runtime is [no longer
+supported][dockershim deprecation] out of the box. However, Mirantis provides
+[cri-dockerd], a shim that allows Docker to be controlled via CRI. It's [based
+on the dockershim][future of dockershim] that was previously part of upstream
+Kubernetes.
+
+#### Configuration
+
+In order to use Docker as the container runtime for k0s, the following steps
+need to be taken:
+
+1. Manually install required components.  
+  On each `k0s worker` and `k0s controller --enable-worker` node, both
+  Docker Engine and cri-dockerd need to be installed manually. Follow the
+  official [Docker Engine installation guide][install docker] and [cri-dockerd
+  installation instructions][install cri-dockerd].
+
+2. Configure and restart affected k0s nodes.  
+  Once installations are complete, the nodes needs to be restarted with the
+  `--cri-socket` flag pointing to cri-dockerd's socket, which is typically
+  located at `/var/run/cri-dockerd.sock`. For instance, the commands to start a
+  node would be as follows:
+  
+      k0s worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  
+  or, respectively
+
+  ```console
+  k0s controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  ```
+
+  When running k0s [as a service](cli/k0s_install.md), consider reinstalling the
+  service with the appropriate flags:
+
+  ```console
+  sudo k0s install --force worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  ```
+
+  or, respectively
+
+  ```console
+  sudo k0s install --force controller --enable-worker --cri-socket=docker:unix:///var/run/cri-dockerd.sock
+  ```
+
+In scenarios where Docker is managed via systemd, it is crucial that the
+`cgroupDriver: systemd` setting is included in the Kubelet configuration. It can
+be added to the `workerProfiles` section of the k0s configuration. An example of
+how the k0s configuration might look:
+
+```yaml
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  name: k0s
+spec:
+  workerProfiles:
+    - name: systemd-docker-cri
+      values:
+        cgroupDriver: systemd
+```
+
+Note that this is a cluster-wide configuration setting that must be added to
+the k0s controller's configuration rather than directly to the workers, or to
+the cluster configuration if using [dynamic configuration]. See the [worker
+profiles] section of the documentation for more details. When starting workers,
+both the `--profile=systemd-docker-cri` and `--cri-socket` flags are required.
+The profile name, such as `systemd-docker-cri`, is flexible. Alternatively,
+this setting can be applied to the `default` profile, which will apply to all
+nodes started without a specific profile. In this case, the `--profile` flag is
+not needed.
+
+Please note that there are currently some [pitfalls around container
+metrics][cadvisor-metrics] when using cri-dockerd.
+
+[dockershim deprecation]: https://kubernetes.io/blog/2020/12/02/dockershim-faq/
+[cri-dockerd]: https://github.com/Mirantis/cri-dockerd
+[future of dockershim]: https://www.mirantis.com/blog/the-future-of-dockershim-is-cri-dockerd/
+[install docker]: https://docs.docker.com/engine/install/
+[install cri-dockerd]: https://github.com/Mirantis/cri-dockerd#using-cri-dockerd
+[worker profiles]: worker-node-config.md#worker-profiles
+[dynamic configuration]: dynamic-configuration.md
+[cadvisor-metrics]: ./troubleshooting.md#using-a-custom-container-runtime-and-missing-labels-in-prometheus-metrics
+
+#### Verification
+
+The successful configuration can be verified by executing the following command:
+
+```console
+$ kubectl get nodes -o wide
+NAME              STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+docker-worker-0   Ready    <none>   15m   v{{{ extra.k8s_version }}}+k0s   172.27.77.155   <none>        Ubuntu 22.04.3 LTS   5.15.0-82-generic   docker://24.0.7
+```
+
+On the worker nodes, the Kubernetes containers should be listed as regular
+Docker containers:
+
+```console
+$ docker ps --format "table {{.ID}}\t{{.Names}}\t{{.State}}\t{{.Status}}"
+CONTAINER ID   NAMES                                                                                                   STATE     STATUS
+9167a937af28   k8s_konnectivity-agent_konnectivity-agent-9rnj7_kube-system_430027b4-75c3-487c-b94d-efeb7204616d_1      running   Up 14 minutes
+b6978162a05d   k8s_metrics-server_metrics-server-7556957bb7-wfg8k_kube-system_5f642105-78c8-450a-bfd2-2021b680b932_1   running   Up 14 minutes
+d576abe86c92   k8s_coredns_coredns-85df575cdb-vmdq5_kube-system_6f26626e-d241-4f15-889a-bcae20d04e2c_1                 running   Up 14 minutes
+8f268b180c59   k8s_kube-proxy_kube-proxy-2x6jz_kube-system_34a7a8ba-e15d-4968-8a02-f5c0cb3c8361_1                      running   Up 14 minutes
+ed0a665ec28e   k8s_POD_konnectivity-agent-9rnj7_kube-system_430027b4-75c3-487c-b94d-efeb7204616d_0                     running   Up 14 minutes
+a9861a7beab5   k8s_POD_metrics-server-7556957bb7-wfg8k_kube-system_5f642105-78c8-450a-bfd2-2021b680b932_0              running   Up 14 minutes
+898befa4840e   k8s_POD_kube-router-fftkt_kube-system_940ad783-055e-4fce-8ce1-093ca01625b9_0                            running   Up 14 minutes
+e80dabc23ce7   k8s_POD_kube-proxy-2x6jz_kube-system_34a7a8ba-e15d-4968-8a02-f5c0cb3c8361_0                             running   Up 14 minutes
+430a784b1bdd   k8s_POD_coredns-85df575cdb-vmdq5_kube-system_6f26626e-d241-4f15-889a-bcae20d04e2c_0                     running   Up 14 minutes
+```
