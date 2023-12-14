@@ -54,10 +54,10 @@ k0s fits well in any cloud environment, but can also be used in IoT gateways, Ed
 
 If you'd like to try k0s, please jump in to our:
 
-- [Quick Start Guide](https://docs.k0sproject.io/latest/install/) - Create a full Kubernetes cluster with a single node that includes both the controller and the worker.
-- [Install using k0sctl](https://docs.k0sproject.io/latest/k0sctl-install/) - Deploy and upgrade multi-node clusters with one command.
-- [NanoDemo](https://docs.k0sproject.io/latest/#demo) - Watch a .gif recording on how to create a k0s instance.
-- [Run k0s in Docker](https://docs.k0sproject.io/latest/k0s-in-docker/) - Run k0s controllers and workers in containers.
+- [Quick Start Guide](https://docs.k0sproject.io/stable/install/) - Create a full Kubernetes cluster with a single node that includes both the controller and the worker.
+- [Install using k0sctl](https://docs.k0sproject.io/stable/k0sctl-install/) - Deploy and upgrade multi-node clusters with one command.
+- [NanoDemo](https://docs.k0sproject.io/stable/#demo) - Watch a .gif recording on how to create a k0s instance.
+- [Run k0s in Docker](https://docs.k0sproject.io/stable/k0s-in-docker/) - Run k0s controllers and workers in containers.
 - For docs, tutorials, and other k0s resources, see [docs main page](https://docs.k0sproject.io).
 
 ## Join the Community
@@ -70,8 +70,8 @@ check out the [Contributing Guide] and the [Code of Conduct].
 
 [Lens Forums]: https://forums.k8slens.dev/
 [GitHub Issues]: https://github.com/k0sproject/k0s/issues
-[Contributing Guide]: https://docs.k0sproject.io/latest/contributors/overview/
-[Code of Conduct]:https://docs.k0sproject.io/latest/contributors/CODE_OF_CONDUCT/
+[Contributing Guide]: https://docs.k0sproject.io/stable/contributors/overview/
+[Code of Conduct]:https://docs.k0sproject.io/stable/contributors/CODE_OF_CONDUCT/
 
 ## Motivation
 
